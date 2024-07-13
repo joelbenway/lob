@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 
@@ -29,23 +30,10 @@ enum class ClockAngleT : uint8_t {
   kX
 };
 
-enum class UnitBitmask : uint32_t {
-  kDefaultUnits = 0b0000'0000'0000'0000'0000'0000'0000'0000,
-  kBallisticCoefficentKgsm = 0b0000'0000'0000'0000'0000'0000'0000'0001,
-  kDiameterMm = 0b0000'0000'0000'0000'0000'0000'0000'0010,
-  kLengthMm = 0b0000'0000'0000'0000'0000'0000'0000'0100,
-  kMassGrams = 0b0000'0000'0000'0000'0000'0000'0000'1000,
-  kSectionalDensity = 0b0000'0000'0000'0000'0000'0000'0001'0000,
-  kInitialVelocity = 0b0000'0000'0000'0000'0000'0000'0010'0000,
-  kOpticHeight = 0b0000'0000'0000'0000'0000'0000'0100'0000,
-  kTwistRate = 0b0000'0000'0000'0000'0000'0000'1000'0000,
-
-};
-
 class LOB_EXPORT Lob {
  public:
   Lob(Lob&& other) noexcept;
-  Lob& operator=(Lob rhs);
+  Lob& operator=(const Lob& rhs);
   Lob& operator=(Lob&& rhs) noexcept;
   ~Lob();
 
@@ -219,22 +207,6 @@ class LOB_EXPORT Lob {
      * @return Reference to the Builder object for method chaining.
      */
     Builder& OpticAdjustments(AdjustmentT type);
-
-    /**
-     * @brief Sets the increments of optic adjustment so that adjustment values
-     * can be given in clicks.
-     * @param value The adjustment value per click.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& OpticAdjustmentsPerClick(double value);
-
-    /**
-     * @brief Sets the value of a single turrent revolution so that adjustment
-     * values can be given in revolutions plus clicks.
-     * @param value The number of adjustments per revolution.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& OpticAdjustmentsPerRevolution(double value);
 
     /**
      * @brief Sets the optic height in inches.
@@ -496,6 +468,17 @@ class LOB_EXPORT Lob {
     Builder& LimitTimeOfFlightSec(double value);
 
     /**
+     * @brief Sets the size of the time step the solver uses when calculating a
+     * solution.
+     * @details The smaller the time step, the more precise the solution but at
+     * the cost of speed. By default the solver uses a variable time step
+     * intended to balance speed and accuracy.
+     * @param value The time step size in microseconds.
+     * @return Reference to the Builder object for method chaining.
+     */
+    Builder& SolverStepSizeUsec(uint16_t value);
+
+    /**
      * @brief Sets the angle from the shooter to the target in degrees.
      * @param value The target angle value in degrees.
      * @return Reference to the Builder object for method chaining.
@@ -556,6 +539,8 @@ class LOB_EXPORT Lob {
   Lob();
   Lob(const Lob& other);
   class Impl;
+  const Impl* Pimpl() const;
+  Impl* Pimpl();
   LOB_SUPPRESS_C4251
   std::unique_ptr<Impl> pimpl_;
 };  // class Lob

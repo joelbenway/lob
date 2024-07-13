@@ -7,6 +7,7 @@
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -39,13 +40,12 @@ class Lob::Impl {
   FtLbsT limit_min_energy_ft_lbs_{kNaN};
   SecT limit_time_of_flight_sec_{kNaN};
   LbsT mass_lbs_{kNaN};
-  double optic_adjustment_per_click_{kNaN};
-  double optic_adjustment_per_rev_{kNaN};
   AdjustmentT optic_adjustment_units_{AdjustmentT::kMoa};
   FeetT optic_height_{kNaN};
   double relative_humidity_percent_{kNaN};
   PmsiT sectional_density_psi_{kNaN};
   double stability_factor_{kNaN};
+  SecT step_size_sec_{kNaN};
   RadiansT target_angle_rad_{kNaN};
   FeetT target_distance_ft_{kNaN};
   DegFT temperature_deg_f_{kNaN};
@@ -61,14 +61,13 @@ class Lob::Impl {
   double coefficent_of_drag_coefficent_{kNaN};
   const std::array<float, kTableSize>* pdrag_coefficent_lut_{
       &kG1DragCoefficents};
-  Lob::Solution solution_{};
 
   void ValidateBuild() const;
   void InitializeMembers();
   double GetCoefficentOfDrag(FpsT speed) const;
   void SolveStep(SpvT* ps, SecT* pt) const;
   RadiansT ZeroAngleSearch();
-  void Solve();
+  size_t FullSolve(Lob::Solution* psolution, size_t length) const;
 };  // class Lob::Impl
 
 Lob::Lob() : pimpl_{new Impl} {}
@@ -77,9 +76,9 @@ Lob::Lob(const Lob& other) : pimpl_{new Impl(*other.pimpl_)} {}
 
 Lob::Lob(Lob&& other) noexcept = default;
 
-Lob& Lob::operator=(Lob rhs) {
+Lob& Lob::operator=(const Lob& rhs) {
   if (this != &rhs) {
-    *pimpl_ = *rhs.pimpl_;
+    pimpl_ = std::make_unique<Impl>(*rhs.pimpl_);
   }
   return *this;
 }
@@ -93,75 +92,79 @@ Lob& Lob::operator=(Lob&& rhs) noexcept {
 
 Lob::~Lob() = default;
 
+const Lob::Impl* Lob::Pimpl() const { return pimpl_.get(); }
+
+Lob::Impl* Lob::Pimpl() { return pimpl_.get(); }
+
 Lob::Builder& Lob::Builder::AltitudeFt(double value) {
-  plob_->pimpl_->altitude_ft_ = FeetT(value);
+  plob_->Pimpl()->altitude_ft_ = FeetT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::AltitudeM(double value) {
-  plob_->pimpl_->altitude_ft_ = MeterT(value);
+  plob_->Pimpl()->altitude_ft_ = MeterT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::BallisticCoefficentPsi(double value) {
-  plob_->pimpl_->ballistic_coefficent_psi_ = PmsiT(value);
+  plob_->Pimpl()->ballistic_coefficent_psi_ = PmsiT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::BallisticCoefficentKgSqM(double value) {
-  plob_->pimpl_->ballistic_coefficent_psi_ = KgsmT(value);
+  plob_->Pimpl()->ballistic_coefficent_psi_ = KgsmT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::BarometricPressureInHg(double value) {
-  plob_->pimpl_->barometric_pressure_in_hg_ = InHgT(value);
+  plob_->Pimpl()->barometric_pressure_in_hg_ = InHgT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::BarometricPressurePa(double value) {
-  plob_->pimpl_->barometric_pressure_in_hg_ = PaT(value);
+  plob_->Pimpl()->barometric_pressure_in_hg_ = PaT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::BarometricPressureMBar(double value) {
-  plob_->pimpl_->barometric_pressure_in_hg_ = MillibarT(value);
+  plob_->Pimpl()->barometric_pressure_in_hg_ = MillibarT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::BarometricPressurePsi(double value) {
-  plob_->pimpl_->barometric_pressure_in_hg_ = PsiT(value);
+  plob_->Pimpl()->barometric_pressure_in_hg_ = PsiT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::BCAtmosphere(AtmosphereReferenceT type) {
-  plob_->pimpl_->atmosphere_reference_ = type;
+  plob_->Pimpl()->atmosphere_reference_ = type;
   return *this;
 }
 
 Lob::Builder& Lob::Builder::BCDragFunction(DragFunctionT type) {
   switch (type) {
     case DragFunctionT::kG1: {
-      plob_->pimpl_->pdrag_coefficent_lut_ = &kG1DragCoefficents;
+      plob_->Pimpl()->pdrag_coefficent_lut_ = &kG1DragCoefficents;
       break;
     }
     case DragFunctionT::kG2: {
-      plob_->pimpl_->pdrag_coefficent_lut_ = &kG2DragCoefficents;
+      plob_->Pimpl()->pdrag_coefficent_lut_ = &kG2DragCoefficents;
       break;
     }
     case DragFunctionT::kG5: {
-      plob_->pimpl_->pdrag_coefficent_lut_ = &kG5DragCoefficents;
+      plob_->Pimpl()->pdrag_coefficent_lut_ = &kG5DragCoefficents;
       break;
     }
     case DragFunctionT::kG6: {
-      plob_->pimpl_->pdrag_coefficent_lut_ = &kG6DragCoefficents;
+      plob_->Pimpl()->pdrag_coefficent_lut_ = &kG6DragCoefficents;
       break;
     }
     case DragFunctionT::kG7: {
-      plob_->pimpl_->pdrag_coefficent_lut_ = &kG7DragCoefficents;
+      plob_->Pimpl()->pdrag_coefficent_lut_ = &kG7DragCoefficents;
       break;
     }
     case DragFunctionT::kG8: {
-      plob_->pimpl_->pdrag_coefficent_lut_ = &kG8DragCoefficents;
+      plob_->Pimpl()->pdrag_coefficent_lut_ = &kG8DragCoefficents;
       break;
     }
     default: {
@@ -172,168 +175,163 @@ Lob::Builder& Lob::Builder::BCDragFunction(DragFunctionT type) {
 }
 
 Lob::Builder& Lob::Builder::DiameterInch(double value) {
-  plob_->pimpl_->diameter_ = InchT(value);
+  plob_->Pimpl()->diameter_ = InchT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::DiameterMm(double value) {
-  plob_->pimpl_->diameter_ = MmT(value);
+  plob_->Pimpl()->diameter_ = MmT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::InitialVelocityFps(double value) {
-  plob_->pimpl_->initial_velocity_fps_ = FpsT(value);
+  plob_->Pimpl()->initial_velocity_fps_ = FpsT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::InitialVelocityMps(double value) {
-  plob_->pimpl_->initial_velocity_fps_ = MpsT(value);
+  plob_->Pimpl()->initial_velocity_fps_ = MpsT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::LengthInch(double value) {
-  plob_->pimpl_->length_inch_ = InchT(value);
+  plob_->Pimpl()->length_inch_ = InchT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::LengthMm(double value) {
-  plob_->pimpl_->length_inch_ = MmT(value);
+  plob_->Pimpl()->length_inch_ = MmT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::LimitMaxDistanceFt(double value) {
-  plob_->pimpl_->limit_max_distance_ft_ = FeetT(value);
+  plob_->Pimpl()->limit_max_distance_ft_ = FeetT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::LimitMaxDistanceM(double value) {
-  plob_->pimpl_->limit_max_distance_ft_ = MeterT(value);
+  plob_->Pimpl()->limit_max_distance_ft_ = MeterT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::LimitMaxDistanceYds(double value) {
-  plob_->pimpl_->limit_max_distance_ft_ = YardT(value);
+  plob_->Pimpl()->limit_max_distance_ft_ = YardT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::LimitMinEnergyFtLbs(double value) {
-  plob_->pimpl_->limit_min_energy_ft_lbs_ = FtLbsT(value);
+  plob_->Pimpl()->limit_min_energy_ft_lbs_ = FtLbsT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::LimitMinEnergyJ(double value) {
-  plob_->pimpl_->limit_min_energy_ft_lbs_ = JouleT(value);
+  plob_->Pimpl()->limit_min_energy_ft_lbs_ = JouleT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::LimitTimeOfFlightSec(double value) {
-  plob_->pimpl_->limit_time_of_flight_sec_ = SecT(value);
+  plob_->Pimpl()->limit_time_of_flight_sec_ = SecT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::MassGrains(double value) {
-  plob_->pimpl_->mass_lbs_ = GrainT(value);
+  plob_->Pimpl()->mass_lbs_ = GrainT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::MassGrams(double value) {
-  plob_->pimpl_->mass_lbs_ = GramT(value);
+  plob_->Pimpl()->mass_lbs_ = GramT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::MassKg(double value) {
-  plob_->pimpl_->mass_lbs_ = KgT(value);
+  plob_->Pimpl()->mass_lbs_ = KgT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::MassLbs(double value) {
-  plob_->pimpl_->mass_lbs_ = LbsT(value);
+  plob_->Pimpl()->mass_lbs_ = LbsT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::OpticHeightInches(double value) {
-  plob_->pimpl_->optic_height_ = InchT(value);
+  plob_->Pimpl()->optic_height_ = InchT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::OpticHeightMm(double value) {
-  plob_->pimpl_->optic_height_ = MmT(value);
+  plob_->Pimpl()->optic_height_ = MmT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::OpticAdjustments(AdjustmentT type) {
-  plob_->pimpl_->optic_adjustment_units_ = type;
-  return *this;
-}
-
-Lob::Builder& Lob::Builder::OpticAdjustmentsPerClick(double value) {
-  plob_->pimpl_->optic_adjustment_per_click_ = value;
-  return *this;
-}
-
-Lob::Builder& Lob::Builder::OpticAdjustmentsPerRevolution(double value) {
-  plob_->pimpl_->optic_adjustment_per_rev_ = value;
+  plob_->Pimpl()->optic_adjustment_units_ = type;
   return *this;
 }
 
 Lob::Builder& Lob::Builder::RelativeHumidityPercent(double value) {
-  plob_->pimpl_->relative_humidity_percent_ = value;
+  plob_->Pimpl()->relative_humidity_percent_ = value;
   return *this;
 }
 
 Lob::Builder& Lob::Builder::SectionalDensityPsi(double value) {
-  plob_->pimpl_->sectional_density_psi_ = PmsiT(value);
+  plob_->Pimpl()->sectional_density_psi_ = PmsiT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::SectionalDensityKgSqM(double value) {
-  plob_->pimpl_->sectional_density_psi_ = KgsmT(value);
+  plob_->Pimpl()->sectional_density_psi_ = KgsmT(value);
+  return *this;
+}
+
+Lob::Builder& Lob::Builder::SolverStepSizeUsec(uint16_t value) {
+  plob_->Pimpl()->step_size_sec_ = UsecT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::TargetAngleDeg(double value) {
-  plob_->pimpl_->target_angle_rad_ = DegreesT(value);
+  plob_->Pimpl()->target_angle_rad_ = DegreesT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::TargetDistanceFt(double value) {
-  plob_->pimpl_->target_distance_ft_ = FeetT(value);
+  plob_->Pimpl()->target_distance_ft_ = FeetT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::TargetDistanceYds(double value) {
-  plob_->pimpl_->target_distance_ft_ = YardT(value);
+  plob_->Pimpl()->target_distance_ft_ = YardT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::TargetDistanceM(double value) {
-  plob_->pimpl_->target_distance_ft_ = MeterT(value);
+  plob_->Pimpl()->target_distance_ft_ = MeterT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::TemperatureDegF(double value) {
-  plob_->pimpl_->temperature_deg_f_ = DegFT(value);
+  plob_->Pimpl()->temperature_deg_f_ = DegFT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::TemperatureDegC(double value) {
-  plob_->pimpl_->temperature_deg_f_ = DegCT(value);
+  plob_->Pimpl()->temperature_deg_f_ = DegCT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::TwistInchesPerTurn(double value) {
-  plob_->pimpl_->twist_inches_per_turn_ = InchPerTwistT(value);
+  plob_->Pimpl()->twist_inches_per_turn_ = InchPerTwistT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::TwistMmPerTurn(double value) {
-  plob_->pimpl_->twist_inches_per_turn_ = MmPerTwistT(value);
+  plob_->Pimpl()->twist_inches_per_turn_ = MmPerTwistT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::WindApproachAngle(ClockAngleT value) {
   constexpr int kDegreesPerClockNumber = kDegreesPerTurn / 12;
-  plob_->pimpl_->wind_approach_angle_rad_ =
+  plob_->Pimpl()->wind_approach_angle_rad_ =
       DegreesT(kDegreesPerClockNumber * static_cast<uint8_t>(value));
   return *this;
 }
@@ -361,69 +359,69 @@ Lob::Builder& Lob::Builder::WindApproachAngleCWFromHeadwindDeg(int32_t value) {
   assert(angle >= 0);
   assert(angle < kDegreesPerTurn);
 
-  plob_->pimpl_->wind_approach_angle_rad_ = DegreesT(angle);
+  plob_->Pimpl()->wind_approach_angle_rad_ = DegreesT(angle);
 
   return *this;
 }
 
 Lob::Builder& Lob::Builder::WindSpeedFps(double value) {
-  plob_->pimpl_->wind_speed_fps_ = FpsT(value);
+  plob_->Pimpl()->wind_speed_fps_ = FpsT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::WindSpeedMph(double value) {
-  plob_->pimpl_->wind_speed_fps_ = MphT(value);
+  plob_->Pimpl()->wind_speed_fps_ = MphT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::WindSpeedMps(double value) {
-  plob_->pimpl_->wind_speed_fps_ = MpsT(value);
+  plob_->Pimpl()->wind_speed_fps_ = MpsT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::WindSpeedKph(double value) {
-  plob_->pimpl_->wind_speed_fps_ = KphT(value);
+  plob_->Pimpl()->wind_speed_fps_ = KphT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::WindSpeedKn(double value) {
-  plob_->pimpl_->wind_speed_fps_ = KnT(value);
+  plob_->Pimpl()->wind_speed_fps_ = KnT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::ZeroAngleMOA(double value) {
-  plob_->pimpl_->zero_angle_rad_ = MoaT(value);
+  plob_->Pimpl()->zero_angle_rad_ = MoaT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::ZeroDistanceFt(double value) {
-  plob_->pimpl_->zero_distance_ft_ = FeetT(value);
+  plob_->Pimpl()->zero_distance_ft_ = FeetT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::ZeroDistanceYds(double value) {
-  plob_->pimpl_->zero_distance_ft_ = YardT(value);
+  plob_->Pimpl()->zero_distance_ft_ = YardT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::ZeroDistanceM(double value) {
-  plob_->pimpl_->zero_distance_ft_ = MeterT(value);
+  plob_->Pimpl()->zero_distance_ft_ = MeterT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::ZeroImpactHeightInches(double value) {
-  plob_->pimpl_->zero_impact_height_ = InchT(value);
+  plob_->Pimpl()->zero_impact_height_ = InchT(value);
   return *this;
 }
 
 Lob::Builder& Lob::Builder::ZeroImpactHeightMm(double value) {
-  plob_->pimpl_->zero_impact_height_ = MmT(value);
+  plob_->Pimpl()->zero_impact_height_ = MmT(value);
   return *this;
 }
 
 std::unique_ptr<Lob> Lob::Builder::Build() {
-  plob_->pimpl_->ValidateBuild();
-  plob_->pimpl_->InitializeMembers();
+  plob_->Pimpl()->ValidateBuild();
+  plob_->Pimpl()->InitializeMembers();
   return std::move(plob_);
 }
 
@@ -433,11 +431,9 @@ void Lob::Impl::ValidateBuild() const {
   assert((!std::isnan(diameter_) && !std::isnan(mass_lbs_)) ||
          !std::isnan(sectional_density_psi_));
   assert(!std::isnan(zero_distance_ft_) || !std::isnan(zero_angle_rad_));
-  assert(!std::isnan(target_distance_ft_));
 }
 
 void Lob::Impl::InitializeMembers() {
-  const double kDefaultOpticAdjustmentPerClick = 0.25;
   const FeetT kDefaultOpticHeight = InchT(1.5);
 
   if (std::isnan(zero_impact_height_)) {
@@ -461,10 +457,6 @@ void Lob::Impl::InitializeMembers() {
 
   if (std::isnan(optic_height_)) {
     optic_height_ = kDefaultOpticHeight;
-  }
-
-  if (std::isnan(optic_adjustment_per_click_)) {
-    optic_adjustment_per_click_ = kDefaultOpticAdjustmentPerClick;
   }
 
   if (!std::isnan(altitude_ft_)) {
@@ -566,9 +558,15 @@ void Lob::Impl::SolveStep(SpvT* ps, SecT* pt) const {
     return SpvT{kPosition, velocity};
   };
 
-  const SecT kDt(1 / ps->V().Magnitude().Value());
-  *ps = HeunStep(0.0, *ps, kDt.Value(), ds_dt);
-  *pt += kDt;
+  SecT dt(0);
+  if (std::isnan(step_size_sec_)) {
+    dt = SecT(1 / ps->V().Magnitude().Value());
+  } else {
+    dt = step_size_sec_;
+  }
+
+  *ps = HeunStep(0.0, *ps, dt.Value(), ds_dt);
+  *pt += dt;
 
   coefficent_of_drag = GetCoefficentOfDrag(ps->V().Magnitude());
 }
@@ -604,15 +602,48 @@ RadiansT Lob::Impl::ZeroAngleSearch() {
   return (low_angle + high_angle) / 2;
 }
 
-void Lob::Impl::Solve() {
+size_t Lob::Impl::FullSolve(Lob::Solution* psolution, size_t length) const {
   SpvT s(CartesianT<FeetT>(FeetT(0.0)),
          CartesianT<FpsT>(
              initial_velocity_fps_ * std::cos(zero_angle_rad_).Value(),
              initial_velocity_fps_ * std::sin(zero_angle_rad_).Value(),
              FpsT(0.0)));
   SecT t(0.0);
-  while (s.P().X() < target_distance_ft_) {
+  std::size_t index = 0;
+
+  // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  while (s.P().X() < FeetT(psolution[length - 1].range)) {
     SolveStep(&s, &t);
+
+    if (s.P().X() >= FeetT(psolution[index].range)) {
+      psolution[index].range =
+          static_cast<uint16_t>(std::round(YardT(s.P().X()).Value()));
+
+      psolution[index].velocity =
+          static_cast<uint16_t>(std::round(s.V().Magnitude().Value()));
+
+      psolution[index].energy = static_cast<uint16_t>(std::round(
+          CalculateKineticEnergy(s.V().Magnitude(), mass_lbs_).Value()));
+
+      psolution[index].time_of_flight = static_cast<float>(t.Value());
+
+      psolution[index].elevation_distance =
+          static_cast<float>(InchT(s.P().Y()).Value());
+
+      psolution[index].elevation_adjustments = static_cast<float>(
+          (InchT(s.P().Y()) /
+           (InchT(s.P().X()) * tan(RadiansT(MoaT(1))).Value()))
+              .Value());
+
+      psolution[index].windage_distance =
+          static_cast<float>(InchT(s.P().Z()).Value());
+
+      psolution[index].windage_adjustments = static_cast<float>(
+          (InchT(s.P().Z()) /
+           (InchT(s.P().X()) * tan(RadiansT(MoaT(1))).Value()))
+              .Value());
+      index++;
+    }
 
     if (t > limit_time_of_flight_sec_) {
       break;
@@ -621,23 +652,68 @@ void Lob::Impl::Solve() {
         CalculateKineticEnergy(s.V().Magnitude(), mass_lbs_)) {
       break;
     }
+    if (s.V().Y() > s.V().X() * 4) {
+      break;
+    }
   }
+  return index;
 }
 
 float Lob::GetStabilityFactor() const {
-  if (std::isnan(pimpl_->stability_factor_)) {
+  if (std::isnan(Pimpl()->stability_factor_)) {
     return 0.0F;
   }
-  return static_cast<float>(pimpl_->stability_factor_);
+  return static_cast<float>(Pimpl()->stability_factor_);
 }
 
 float Lob::GetZeroAngleMOA() const {
-  return static_cast<float>(MoaT(pimpl_->zero_angle_rad_).Value());
+  return static_cast<float>(MoaT(Pimpl()->zero_angle_rad_).Value());
 }
 
 // Lob::Solution Lob::Solve() const {}
 
-// size_t Lob::Solve(Lob::Solution* psolution, size_t length) const {}
+size_t Lob::Solve(Lob::Solution* psolution, size_t length) const {
+  bool values_are_ascending = true;
+  bool values_are_in_range = true;
+  for (size_t i = 1; i < length; i++) {
+    if (psolution[i].range <= psolution[i - 1].range) {
+      values_are_ascending = false;
+      break;
+    }
+  }
+
+  if (values_are_in_range && !std::isnan(Pimpl()->limit_max_distance_ft_) &&
+      FeetT(psolution[length - 1].range) > Pimpl()->limit_max_distance_ft_) {
+    values_are_in_range = false;
+  }
+
+  if (values_are_ascending && values_are_in_range) {
+    return Pimpl()->FullSolve(psolution, length);
+  }
+
+  uint16_t range = 0;
+  if (!std::isnan(Pimpl()->target_distance_ft_)) {
+    range =
+        static_cast<uint16_t>(std::round(Pimpl()->target_distance_ft_.Value()));
+  }
+
+  if (!std::isnan(Pimpl()->limit_max_distance_ft_) &&
+      (Pimpl()->limit_max_distance_ft_.Value() < range || range == 0)) {
+    range = static_cast<uint16_t>(
+        std::round(Pimpl()->limit_max_distance_ft_.Value()));
+  }
+
+  if (range == 0) {
+    constexpr uint16_t kDefaultRange = 1'000;
+    range = kDefaultRange;
+  }
+
+  for (size_t i = 0; i < length; i++) {
+    psolution[i].range = range * (i + 1) / length;
+  }
+
+  return Pimpl()->FullSolve(psolution, length);
+}
 
 }  // namespace lob
 

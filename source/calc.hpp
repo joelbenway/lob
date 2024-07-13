@@ -230,7 +230,7 @@ double CalculateMillerTwistRuleCorrectionFactor(LbsPerCuFtT air_density);
 // Page 33 of Modern Exterior Ballistics - McCoy
 SqFtT CalculateProjectileReferenceArea(InchT bullet_diameter);
 
-FtLbsT CalculateKineticEnergy(FpsT velocity, LbsT mass);
+FtLbsT CalculateKineticEnergy(FpsT velocity, SlugT mass);
 
 }  // namespace lob
 

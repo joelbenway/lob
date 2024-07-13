@@ -27,6 +27,7 @@ constexpr double kInHgPerPsi = 2.03602128864;
 constexpr double kInHgPerMillibar = kInHgPerPa * 100;
 // Mass
 constexpr double kGrainsPerLb = 7000.0;
+constexpr double kLbsPerSlug = 32.17405;
 constexpr double kLbsPerKg = 2.204623;
 constexpr double kLbsPerGram = kLbsPerKg / 1000;
 // Sectional Density
@@ -35,6 +36,9 @@ constexpr double kLbsmPerSqInPerKgPerSqM = 703.069579639;
 constexpr double kFpsPerMph = 1.46666667;
 constexpr double kFpsPerKph = 0.91134442;
 constexpr double kFpsPerKn = 1.6878099;
+// Time
+constexpr double kMsecPerSec = 1E3;
+constexpr double kUsecPerSec = 1E6;
 // Temperature
 constexpr double kDegFPerDegC = 1.8;
 constexpr double kFreezePointDegF = 32.0;
@@ -174,6 +178,18 @@ LbsT::operator GrainT() const {
 
 template <>
 template <>
+LbsT::operator SlugT() const {
+  return SlugT(value_ / convert::kLbsPerSlug);
+}
+
+template <>
+template <>
+GrainT::operator SlugT() const {
+  return SlugT(value_ / (convert::kLbsPerSlug * convert::kGrainsPerLb));
+}
+
+template <>
+template <>
 GramT::operator LbsT() const {
   return LbsT(value_ * convert::kLbsPerGram);
 }
@@ -250,7 +266,34 @@ DegKT::operator DegRT() const {
   return DegRT(value_ * convert::kDegFPerDegC);
 }
 
+// Time
+
+template <>
+template <>
+UsecT::operator SecT() const {
+  return SecT(value_ / convert::kUsecPerSec);
+}
+
+template <>
+template <>
+SecT::operator UsecT() const {
+  return UsecT(value_ * convert::kUsecPerSec);
+}
+
+template <>
+template <>
+MsecT::operator SecT() const {
+  return SecT(value_ / convert::kMsecPerSec);
+}
+
+template <>
+template <>
+SecT::operator MsecT() const {
+  return MsecT(value_ * convert::kMsecPerSec);
+}
+
 // TwistRate
+
 template <>
 template <>
 MmPerTwistT::operator InchPerTwistT() const {

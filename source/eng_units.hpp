@@ -310,9 +310,10 @@ template <>
 template <>
 MillibarT::operator InHgT() const;
 
-enum class Mass : uint8_t { kGrains, kPounds, kGrams, kKilograms };
+enum class Mass : uint8_t { kGrains, kPounds, kSlugs, kGrams, kKilograms };
 using GrainT = StrongT<Mass, Mass::kGrains, double>;
 using LbsT = StrongT<Mass, Mass::kPounds, double>;
+using SlugT = StrongT<Mass, Mass::kSlugs, double>;
 using GramT = StrongT<Mass, Mass::kGrams, double>;
 using KgT = StrongT<Mass, Mass::kKilograms, double>;
 
@@ -323,6 +324,14 @@ GrainT::operator LbsT() const;
 template <>
 template <>
 LbsT::operator GrainT() const;
+
+template <>
+template <>
+LbsT::operator SlugT() const;
+
+template <>
+template <>
+GrainT::operator SlugT() const;
 
 template <>
 template <>
@@ -405,6 +414,22 @@ enum class Time : uint8_t { kMicroseconds, kMilliseconds, kSeconds };
 using UsecT = StrongT<Time, Time::kMicroseconds, double>;
 using MsecT = StrongT<Time, Time::kMilliseconds, double>;
 using SecT = StrongT<Time, Time::kSeconds, double>;
+
+template <>
+template <>
+UsecT::operator SecT() const;
+
+template <>
+template <>
+SecT::operator UsecT() const;
+
+template <>
+template <>
+MsecT::operator SecT() const;
+
+template <>
+template <>
+SecT::operator MsecT() const;
 
 enum class TwistRate : uint8_t { kInchesPerTurn, kMillimetersPerTurn };
 using InchPerTwistT = StrongT<TwistRate, TwistRate::kInchesPerTurn, double>;

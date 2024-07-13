@@ -267,6 +267,7 @@ TEST(EngUnitsTests, PressureConversions) {
 
 TEST(EngUnitsTests, MassConversions) {
   constexpr double kTestValueLbs = 1.0;
+  constexpr double kTestValueSlug = 1 / 32.17405;
   constexpr double kTestValueGrain = 7000.0;
   constexpr double kTestValueKg = 1 / 2.204623;
   constexpr double kTestValueGram = kTestValueKg * 1000;
@@ -274,6 +275,10 @@ TEST(EngUnitsTests, MassConversions) {
                    kTestValueLbs);
   EXPECT_DOUBLE_EQ(lob::GrainT(lob::LbsT(kTestValueLbs)).Value(),
                    kTestValueGrain);
+  EXPECT_DOUBLE_EQ(lob::SlugT(lob::LbsT(kTestValueLbs)).Value(),
+                   kTestValueSlug);
+  EXPECT_DOUBLE_EQ(lob::SlugT(lob::GrainT(kTestValueGrain)).Value(),
+                   kTestValueSlug);
   EXPECT_DOUBLE_EQ(lob::LbsT(lob::GramT(kTestValueGram)).Value(),
                    kTestValueLbs);
   EXPECT_DOUBLE_EQ(lob::LbsT(lob::KgT(kTestValueKg)).Value(), kTestValueLbs);
@@ -322,6 +327,21 @@ TEST(EngUnitsTests, TemperatureConversions) {
                    kTestValueDegC);
   EXPECT_DOUBLE_EQ(lob::DegFT(lob::DegCT(lob::DegFT(kTestValueDegF))).Value(),
                    kTestValueDegF);
+}
+
+TEST(EngUnitsTests, TimeConversions) {
+  constexpr double kTestValueSec = 1;
+  constexpr double kTestValueMsec = 1E3;
+  constexpr double kTestValueUsec = 1E6;
+  EXPECT_DOUBLE_EQ(lob::SecT(lob::MsecT(kTestValueMsec)).Value(),
+                   kTestValueSec);
+  EXPECT_DOUBLE_EQ(lob::SecT(lob::UsecT(kTestValueUsec)).Value(),
+                   kTestValueSec);
+  // Round-trip conversions to ensure accuracy is preserved.
+  EXPECT_DOUBLE_EQ(lob::SecT(lob::UsecT(lob::SecT(kTestValueSec))).Value(),
+                   kTestValueSec);
+  EXPECT_DOUBLE_EQ(lob::MsecT(lob::SecT(lob::MsecT(kTestValueMsec))).Value(),
+                   kTestValueMsec);
 }
 
 }  // namespace testing

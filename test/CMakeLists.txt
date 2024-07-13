@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.14)
 
 project(lobTests LANGUAGES CXX)
 
@@ -13,24 +13,16 @@ if(PROJECT_IS_TOP_LEVEL)
   enable_testing()
 endif()
 
-# Set a bunch of uninitialized CMake variables in googletest's project
-set(cxx_base_flags "")
-set(cxx_exception_flags "")
-set(cxx_no_exception_flags "")
-set(cxx_no_rtti_flags "")
-set(cxx_strict_flags "")
-set(CMAKE_THREAD_LIBS_INIT "")
-
 include(FetchContent)
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
   GIT_TAG        v1.14.0
-  FIND_PACKAGE_ARGS NAMES GTest
-  # EXCLUDE_FROM_ALL
+  UPDATE_DISCONNECTED YES
 )
+
 # For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+# set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(googletest)
 
@@ -51,7 +43,7 @@ target_include_directories(
 target_compile_features(
   lob_test PRIVATE cxx_std_14)
 
-function(set_googletest_flags target)
+function(silence target)
   if(MSVC)
     target_compile_options(${target} PRIVATE
       /W0
@@ -63,12 +55,15 @@ function(set_googletest_flags target)
       -Wno-error
     )
   endif()
+  set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
+  set_target_properties(${target} PROPERTIES CXX_CPPCHECK "")
+  set_target_properties(${target} PROPERTIES CXX_CPPLINT "")
 endfunction()
 
-set_googletest_flags(gtest)
-set_googletest_flags(gtest_main)
-set_googletest_flags(gmock)
-set_googletest_flags(gmock_main)
+silence(gtest)
+silence(gtest_main)
+silence(gmock)
+silence(gmock_main)
 
 target_link_libraries(
   lob_test PRIVATE

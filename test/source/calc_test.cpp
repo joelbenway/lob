@@ -216,8 +216,8 @@ TEST(CalcTests, CalculateProjectileReferenceArea) {
 }
 
 TEST(CalcTests, CalculateKineticEnergy) {
-  EXPECT_DOUBLE_EQ(CalculateKineticEnergy(lob::FpsT(100), lob::LbsT(2)).Value(),
-                   10'000);
+  EXPECT_NEAR(CalculateKineticEnergy(lob::FpsT(3000), lob::GrainT(180)).Value(),
+              3596.5, 0.1);
 }
 
 }  // namespace testing

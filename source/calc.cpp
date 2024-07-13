@@ -134,7 +134,7 @@ SqFtT CalculateProjectileReferenceArea(InchT bullet_diameter) {
   return SqFtT((std::pow(FeetT(bullet_diameter), 2) * kPi / 4).Value());
 }
 
-FtLbsT CalculateKineticEnergy(FpsT velocity, LbsT mass) {
+FtLbsT CalculateKineticEnergy(FpsT velocity, SlugT mass) {
   return FtLbsT(mass.Value() * std::pow(velocity.Value(), 2) / 2);
 }
 
