@@ -227,6 +227,9 @@ double CalculateMillerTwistRuleCorrectionFactor(InHgT pressure,
                                                 DegFT temperature);
 double CalculateMillerTwistRuleCorrectionFactor(LbsPerCuFtT air_density);
 
+InchT CalculateGyroscopicSpinDrift(double stability, SecT time,
+                                   bool is_rh_twist = true);
+
 // Page 33 of Modern Exterior Ballistics - McCoy
 SqFtT CalculateProjectileReferenceArea(InchT bullet_diameter);
 

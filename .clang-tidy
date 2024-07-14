@@ -1,14 +1,16 @@
 ---
 Checks: "*,\
   -altera-*,\
+  -cppcoreguidelines-pro-bounds-constant-array-index,\
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,\
   -fuchsia-*,\
   fuchsia-multiple-inheritance,\
   -llvm-header-guard,\
   -llvm-include-order,\
   -llvmlibc-*,\
+  -misc-non-private-member-variables-in-classes,\
   -modernize-use-nodiscard,\
-  -modernize-use-trailing-return-type,\
-  -misc-non-private-member-variables-in-classes"
+  -modernize-use-trailing-return-type"
 WarningsAsErrors: ''
 CheckOptions:
   - key: 'bugprone-argument-comment.StrictMode'

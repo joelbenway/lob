@@ -53,6 +53,7 @@ function(silence target)
     target_compile_options(${target} PRIVATE
       -w
       -Wno-error
+      -fcompare-debug-second
     )
   endif()
   set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")

@@ -109,7 +109,8 @@ double CalculateMillerTwistRuleStabilityFactor(InchT bullet_diameter,
   const auto kDiameter = bullet_diameter.Value();
   const auto kMass = static_cast<double>(bullet_mass);
   const auto kLengthRatio = (bullet_length / bullet_diameter).Value();
-  const auto kTwistRatio = barrel_twist.Value() / bullet_diameter.Value();
+  const auto kTwistRatio =
+      std::abs(barrel_twist.Value() / bullet_diameter.Value());
   const auto kMuzzleVelocity = std::max(FpsT(1120.0), muzzle_velocity).Value();
 
   const auto kFv = std::pow(kMuzzleVelocity / kNominalVelocity, kBVal);
@@ -128,6 +129,15 @@ double CalculateMillerTwistRuleCorrectionFactor(InHgT pressure,
 
 double CalculateMillerTwistRuleCorrectionFactor(LbsPerCuFtT air_density) {
   return kIsaSeaLevelAirDensityLbsPerCuFt / air_density.Value();
+}
+
+InchT CalculateGyroscopicSpinDrift(double stability, SecT time,
+                                   bool is_rh_twist) {
+  const double kAVal = 1.25 * (is_rh_twist ? 1.0 : -1.0);
+  const double kBVal = 1.2;
+  const double kExponent = 1.83;
+
+  return InchT(kAVal * (stability + kBVal) * std::pow(time.Value(), kExponent));
 }
 
 SqFtT CalculateProjectileReferenceArea(InchT bullet_diameter) {

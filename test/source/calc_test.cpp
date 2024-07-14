@@ -206,6 +206,21 @@ TEST(CalcTests, CalculateMillerTwistRuleCorrectionFactor) {
   EXPECT_NEAR(result, kExpectedCorrectionFactor, kError);
 }
 
+TEST(CalcTests, CalculateGyroscopicSpinDrift) {
+  const double kStabilityFactor = 1.83;
+  const lob::SecT kTimeOfFlight1(0.7);
+  const lob::SecT kTimeOfFlight2(1.75);
+  const double kExpectedInches1 = 1.97;
+  const double kExpectedInches2 = 10.54;
+  const double kError = .1;
+  const lob::InchT kActualInches1 =
+      lob::CalculateGyroscopicSpinDrift(kStabilityFactor, kTimeOfFlight1);
+  const lob::InchT kActualInches2 =
+      lob::CalculateGyroscopicSpinDrift(kStabilityFactor, kTimeOfFlight2);
+  EXPECT_NEAR(kExpectedInches1, kActualInches1.Value(), kError);
+  EXPECT_NEAR(kExpectedInches2, kActualInches2.Value(), kError);
+}
+
 TEST(CalcTests, CalculateProjectileReferenceArea) {
   EXPECT_NEAR(CalculateProjectileReferenceArea(lob::InchT(0.308)).Value(),
               0.000518, 1e-5);

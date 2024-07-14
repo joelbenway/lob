@@ -115,8 +115,9 @@ class LOB_EXPORT Lob {
 
     /**
      * @brief Sets the projectile length in inches.
-     * @note Length is only used for calculating stability factor and has no
-     * bearing on the ballistic solution.
+     * @note Length, along with twist rate is used for calculating stability
+     * factor and accounting for the effects of gyroscopic spin drift on the
+     * ballistic solution.
      * @param value The length value in inches.
      * @return Reference to the Builder object for method chaining.
      */
@@ -124,8 +125,9 @@ class LOB_EXPORT Lob {
 
     /**
      * @brief Sets the projectile length in millimeters.
-     * @note Length is only used for calculating stability factor and has no
-     * bearing on the ballistic solution.
+     * @note Length, along with twist rate is used for calculating stability
+     * factor and accounting for the effects of gyroscopic spin drift on the
+     * ballistic solution.
      * @param value The length value in millimeters.
      * @return Reference to the Builder object for method chaining.
      */
@@ -224,8 +226,9 @@ class LOB_EXPORT Lob {
 
     /**
      * @brief Sets the barrel twist rate in inches per turn.
-     * @note This is only used for calculating stability factor and has no
-     * bearing on the ballistic solution.
+     * @note Twist rate, along with projectile length, are used for calculating
+     * stability factor and accounting for the effects of gyroscopic spin drift
+     * on the ballistic solution.
      * @param value The twist rate value in inches per turn.
      * @return Reference to the Builder object for method chaining.
      */
@@ -233,8 +236,9 @@ class LOB_EXPORT Lob {
 
     /**
      * @brief Sets the barrel twist rate in millimeters per turn.
-     * @note This is only used for calculating stability factor and has no
-     * bearing on the ballistic solution.
+     * @note Twist rate, along with projectile length, are used for calculating
+     * stability factor and accounting for the effects of gyroscopic spin drift
+     * on the ballistic solution.
      * @param value The twist rate value in millimeters per turn.
      * @return Reference to the Builder object for method chaining.
      */

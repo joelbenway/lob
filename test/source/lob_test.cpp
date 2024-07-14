@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <vector>
 
 namespace testing {
 
@@ -75,10 +76,10 @@ TEST_F(LobTestFixture, Solve) {
       {800, 1483, 878, -175.9, -21.0, 0.0, 0.0, 1.144},
       {900, 1348, 725, -246.6, -26.2, 0.0, 0.0, 1.357},
       {1000, 1231, 606, -336.5, -32.1, 0.0, 0.0, 1.590}};
-  lob::Lob::Solution solutions[kSolutionLength] = {0};
-  size_t written =
+  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT allow c-style array
+  const size_t kWritten =
       puut->Solve(static_cast<lob::Lob::Solution*>(solutions), kSolutionLength);
-  EXPECT_EQ(written, kSolutionLength);
+  EXPECT_EQ(kWritten, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_NEAR(solutions[i].range, kExpected[i].range, 1);
     EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);

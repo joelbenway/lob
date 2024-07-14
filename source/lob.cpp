@@ -611,7 +611,6 @@ size_t Lob::Impl::FullSolve(Lob::Solution* psolution, size_t length) const {
   SecT t(0.0);
   std::size_t index = 0;
 
-  // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-pointer-arithmetic)
   while (s.P().X() < FeetT(psolution[length - 1].range)) {
     SolveStep(&s, &t);
 
@@ -635,11 +634,18 @@ size_t Lob::Impl::FullSolve(Lob::Solution* psolution, size_t length) const {
            (InchT(s.P().X()) * tan(RadiansT(MoaT(1))).Value()))
               .Value());
 
+      InchT spin_drift(0);
+      if (!std::isnan(stability_factor_) &&
+          !std::isnan(twist_inches_per_turn_)) {
+        spin_drift = CalculateGyroscopicSpinDrift(
+            stability_factor_, t, (twist_inches_per_turn_.Value() > 0));
+      }
+
       psolution[index].windage_distance =
-          static_cast<float>(InchT(s.P().Z()).Value());
+          static_cast<float>((InchT(s.P().Z()) + spin_drift).Value());
 
       psolution[index].windage_adjustments = static_cast<float>(
-          (InchT(s.P().Z()) /
+          ((InchT(s.P().Z()) + spin_drift) /
            (InchT(s.P().X()) * tan(RadiansT(MoaT(1))).Value()))
               .Value());
       index++;
@@ -670,7 +676,11 @@ float Lob::GetZeroAngleMOA() const {
   return static_cast<float>(MoaT(Pimpl()->zero_angle_rad_).Value());
 }
 
-// Lob::Solution Lob::Solve() const {}
+Lob::Solution Lob::Solve() const {
+  Lob::Solution solution = {0};
+  Pimpl()->FullSolve(&solution, 1);
+  return solution;
+}
 
 size_t Lob::Solve(Lob::Solution* psolution, size_t length) const {
   bool values_are_ascending = true;
