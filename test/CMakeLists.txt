@@ -19,6 +19,7 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/google/googletest.git
   GIT_TAG        v1.14.0
   UPDATE_DISCONNECTED YES
+  EXCLUDE_FROM_ALL
 )
 
 # For Windows: Prevent overriding the parent project's compiler/linker settings
@@ -31,29 +32,33 @@ FetchContent_MakeAvailable(googletest)
 add_executable(
   lob_test
   source/lob_test.cpp
+  source/lob_wind_test.cpp
+  source/lob_env_test.cpp
   source/calc_test.cpp
   source/cartesian_test.cpp
   source/ode_test.cpp
-  source/eng_units_test.cpp)
+  source/eng_units_test.cpp
+)
 
 target_include_directories(
   lob_test PUBLIC 
-  ${CMAKE_CURRENT_SOURCE_DIR}/../source)
+  ${CMAKE_CURRENT_SOURCE_DIR}/../source
+)
 
-target_compile_features(
-  lob_test PRIVATE cxx_std_14)
+target_compile_features(lob_test PRIVATE cxx_std_14)
 
 function(silence target)
   if(MSVC)
-    target_compile_options(${target} PRIVATE
+    target_compile_options(
+      ${target} PRIVATE
       /W0
       /WX-
     )
   else()
-    target_compile_options(${target} PRIVATE
+    target_compile_options(
+      ${target} PRIVATE
       -w
       -Wno-error
-      -fcompare-debug-second
     )
   endif()
   set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
@@ -70,7 +75,8 @@ target_link_libraries(
   lob_test PRIVATE
   lob::lob
   GTest::gtest
-  GTest::gtest_main)
+  GTest::gtest_main
+)
 
 include(GoogleTest)
 gtest_discover_tests(lob_test)

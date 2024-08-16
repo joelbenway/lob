@@ -8,7 +8,7 @@
 
 #include <cmath>
 
-namespace testing {
+namespace tests {
 
 TEST(OdeTests, EulerStep) {
   const double kY0 = 1.0;
@@ -94,7 +94,7 @@ TEST(OdeTests, RungeKuttaStep) {
   }
 }
 
-}  // namespace testing
+}  // namespace tests
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

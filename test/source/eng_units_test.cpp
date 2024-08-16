@@ -10,7 +10,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace testing {
+namespace tests {
 
 TEST(EngUnitsTests, StrongTConstructors) {
   enum class Beer : uint8_t { kBottle, kCan, kSixPack, kCase };
@@ -200,20 +200,62 @@ TEST(EngUnitsTests, Max) {
 
 TEST(EngUnitsTests, AngleConversions) {
   constexpr double kTestValueDeg = 180.0;
+  constexpr double kTestValueMoa = kTestValueDeg * 60;
   constexpr double kTestValueRad = 3.14159265358979323846;
-  const lob::DegreesT kTestAngle1 = lob::DegreesT(kTestValueDeg);
-  const lob::RadiansT kTestAngle2 = kTestAngle1;
-  const lob::DegreesT kTestAngle3 = kTestAngle2;
-  EXPECT_DOUBLE_EQ(kTestAngle1.Value(), kTestValueDeg);
-  EXPECT_DOUBLE_EQ(kTestAngle2.Value(), kTestValueRad);
-  EXPECT_DOUBLE_EQ(kTestAngle3.Value(), kTestValueDeg);
+  constexpr double kTestValueMil = kTestValueRad * 1'000;
+  EXPECT_DOUBLE_EQ(lob::DegreesT(lob::MoaT(kTestValueMoa)).Value(),
+                   kTestValueDeg);
+  EXPECT_DOUBLE_EQ(lob::DegreesT(lob::RadiansT(kTestValueRad)).Value(),
+                   kTestValueDeg);
+  EXPECT_DOUBLE_EQ(lob::DegreesT(lob::MilT(kTestValueMil)).Value(),
+                   kTestValueDeg);
+  EXPECT_DOUBLE_EQ(lob::MoaT(lob::DegreesT(kTestValueDeg)).Value(),
+                   kTestValueMoa);
+  EXPECT_DOUBLE_EQ(lob::MoaT(lob::RadiansT(kTestValueRad)).Value(),
+                   kTestValueMoa);
+  EXPECT_DOUBLE_EQ(lob::MoaT(lob::MilT(kTestValueMil)).Value(), kTestValueMoa);
+  EXPECT_DOUBLE_EQ(lob::RadiansT(lob::DegreesT(kTestValueDeg)).Value(),
+                   kTestValueRad);
+  EXPECT_DOUBLE_EQ(lob::RadiansT(lob::MoaT(kTestValueMoa)).Value(),
+                   kTestValueRad);
+  EXPECT_DOUBLE_EQ(lob::RadiansT(lob::MilT(kTestValueMil)).Value(),
+                   kTestValueRad);
+  EXPECT_DOUBLE_EQ(lob::MilT(lob::DegreesT(kTestValueDeg)).Value(),
+                   kTestValueMil);
+  EXPECT_DOUBLE_EQ(lob::MilT(lob::MoaT(kTestValueMoa)).Value(), kTestValueMil);
+  EXPECT_DOUBLE_EQ(lob::MilT(lob::RadiansT(kTestValueRad)).Value(),
+                   kTestValueMil);
   // Round-trip conversions to ensure accuracy is preserved.
+  EXPECT_DOUBLE_EQ(
+      lob::DegreesT(lob::MoaT(lob::DegreesT(kTestValueDeg))).Value(),
+      kTestValueDeg);
   EXPECT_DOUBLE_EQ(
       lob::DegreesT(lob::RadiansT(lob::DegreesT(kTestValueDeg))).Value(),
       kTestValueDeg);
   EXPECT_DOUBLE_EQ(
+      lob::DegreesT(lob::MilT(lob::DegreesT(kTestValueDeg))).Value(),
+      kTestValueDeg);
+  EXPECT_DOUBLE_EQ(lob::MoaT(lob::DegreesT(lob::MoaT(kTestValueMoa))).Value(),
+                   kTestValueMoa);
+  EXPECT_DOUBLE_EQ(lob::MoaT(lob::RadiansT(lob::MoaT(kTestValueMoa))).Value(),
+                   kTestValueMoa);
+  EXPECT_DOUBLE_EQ(lob::MoaT(lob::MilT(lob::MoaT(kTestValueMoa))).Value(),
+                   kTestValueMoa);
+  EXPECT_DOUBLE_EQ(
       lob::RadiansT(lob::DegreesT(lob::RadiansT(kTestValueRad))).Value(),
       kTestValueRad);
+  EXPECT_DOUBLE_EQ(
+      lob::RadiansT(lob::MoaT(lob::RadiansT(kTestValueRad))).Value(),
+      kTestValueRad);
+  EXPECT_DOUBLE_EQ(
+      lob::RadiansT(lob::MilT(lob::RadiansT(kTestValueRad))).Value(),
+      kTestValueRad);
+  EXPECT_DOUBLE_EQ(lob::MilT(lob::DegreesT(lob::MilT(kTestValueMil))).Value(),
+                   kTestValueMil);
+  EXPECT_DOUBLE_EQ(lob::MilT(lob::MoaT(lob::MilT(kTestValueMil))).Value(),
+                   kTestValueMil);
+  EXPECT_DOUBLE_EQ(lob::MilT(lob::RadiansT(lob::MilT(kTestValueMil))).Value(),
+                   kTestValueMil);
 }
 
 TEST(EngUnitsTests, EnergyConversions) {
@@ -237,7 +279,8 @@ TEST(EngUnitsTests, LengthConversions) {
   constexpr double kTestValueInch = 12.0;
   constexpr double kTestValueYard = 1.0 / 3.0;
   constexpr double kTestValueMm = 304.8;
-  constexpr double kTestValueMeter = 0.3048;
+  constexpr double kTestValueCm = kTestValueMm / 10;
+  constexpr double kTestValueMeter = kTestValueMm / 1000;
   EXPECT_DOUBLE_EQ(lob::InchT(lob::FeetT(kTestValueFeet)).Value(),
                    kTestValueInch);
   EXPECT_DOUBLE_EQ(lob::YardT(lob::FeetT(kTestValueFeet)).Value(),
@@ -246,10 +289,35 @@ TEST(EngUnitsTests, LengthConversions) {
                    kTestValueFeet);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::YardT(kTestValueYard)).Value(),
                    kTestValueFeet);
-  // Round-trip conversions to ensure accuracy is preserved.
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::MmT(kTestValueMm)).Value(), kTestValueFeet);
   EXPECT_DOUBLE_EQ(lob::InchT(lob::MmT(kTestValueMm)).Value(), kTestValueInch);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::MeterT(kTestValueMeter)).Value(),
+                   kTestValueFeet);
+  EXPECT_DOUBLE_EQ(lob::MmT(lob::FeetT(kTestValueFeet)).Value(), kTestValueMm);
+  EXPECT_DOUBLE_EQ(lob::CmT(lob::FeetT(kTestValueFeet)).Value(), kTestValueCm);
+  EXPECT_DOUBLE_EQ(lob::MeterT(lob::FeetT(kTestValueFeet)).Value(),
+                   kTestValueMeter);
+  // Round-trip conversions to ensure accuracy is preserved.
+  EXPECT_DOUBLE_EQ(lob::InchT(lob::FeetT(lob::InchT(kTestValueInch))).Value(),
+                   kTestValueInch);
+  EXPECT_DOUBLE_EQ(lob::YardT(lob::FeetT(lob::YardT(kTestValueYard))).Value(),
+                   kTestValueYard);
+  EXPECT_DOUBLE_EQ(lob::MmT(lob::FeetT(lob::MmT(kTestValueMm))).Value(),
+                   kTestValueMm);
+  EXPECT_DOUBLE_EQ(lob::CmT(lob::FeetT(lob::CmT(kTestValueCm))).Value(),
+                   kTestValueCm);
+  EXPECT_DOUBLE_EQ(
+      lob::MeterT(lob::FeetT(lob::MeterT(kTestValueMeter))).Value(),
+      kTestValueMeter);
+  EXPECT_DOUBLE_EQ(lob::FeetT(lob::InchT(lob::FeetT(kTestValueFeet))).Value(),
+                   kTestValueFeet);
+  EXPECT_DOUBLE_EQ(lob::FeetT(lob::YardT(lob::FeetT(kTestValueFeet))).Value(),
+                   kTestValueFeet);
+  EXPECT_DOUBLE_EQ(lob::FeetT(lob::MmT(lob::FeetT(kTestValueFeet))).Value(),
+                   kTestValueFeet);
+  EXPECT_DOUBLE_EQ(lob::FeetT(lob::CmT(lob::FeetT(kTestValueFeet))).Value(),
+                   kTestValueFeet);
+  EXPECT_DOUBLE_EQ(lob::FeetT(lob::MeterT(lob::FeetT(kTestValueFeet))).Value(),
                    kTestValueFeet);
 }
 
@@ -261,7 +329,7 @@ TEST(EngUnitsTests, PressureConversions) {
   EXPECT_DOUBLE_EQ(lob::InHgT(lob::PsiT(kTestValuePsi)).Value(),
                    kTestValueInHg);
   EXPECT_DOUBLE_EQ(lob::InHgT(lob::PaT(kTestValuePa)).Value(), kTestValueInHg);
-  EXPECT_DOUBLE_EQ(lob::InHgT(lob::MillibarT(kTestValueMillibar)).Value(),
+  EXPECT_DOUBLE_EQ(lob::InHgT(lob::MbarT(kTestValueMillibar)).Value(),
                    kTestValueInHg);
 }
 
@@ -308,6 +376,17 @@ TEST(EngUnitsTests, SpeedConversions) {
   EXPECT_DOUBLE_EQ(lob::FpsT(lob::MpsT(kTestValueMps)).Value(), kTestValueFps);
   EXPECT_DOUBLE_EQ(lob::FpsT(lob::KphT(kTestValueKph)).Value(), kTestValueFps);
   EXPECT_DOUBLE_EQ(lob::FpsT(lob::KnT(kTestValueKn)).Value(), kTestValueFps);
+  EXPECT_DOUBLE_EQ(lob::MpsT(lob::FpsT(kTestValueFps)).Value(), kTestValueMps);
+  EXPECT_DOUBLE_EQ(lob::MphT(lob::FpsT(kTestValueFps)).Value(), kTestValueMph);
+  // Round-trip conversions to ensure accuracy is preserved.
+  EXPECT_DOUBLE_EQ(lob::FpsT(lob::MpsT(lob::FpsT(kTestValueFps))).Value(),
+                   kTestValueFps);
+  EXPECT_DOUBLE_EQ(lob::FpsT(lob::MphT(lob::FpsT(kTestValueFps))).Value(),
+                   kTestValueFps);
+  EXPECT_DOUBLE_EQ(lob::MpsT(lob::FpsT(lob::MpsT(kTestValueMps))).Value(),
+                   kTestValueMps);
+  EXPECT_DOUBLE_EQ(lob::MphT(lob::FpsT(lob::MphT(kTestValueMph))).Value(),
+                   kTestValueMph);
 }
 
 TEST(EngUnitsTests, TemperatureConversions) {
@@ -321,11 +400,24 @@ TEST(EngUnitsTests, TemperatureConversions) {
                    kTestValueDegC);
   EXPECT_DOUBLE_EQ(lob::DegRT(lob::DegFT(kTestValueDegF)).Value(),
                    kTestValueDegR);
+  EXPECT_DOUBLE_EQ(lob::DegFT(lob::DegRT(kTestValueDegR)).Value(),
+                   kTestValueDegF);
   EXPECT_DOUBLE_EQ(lob::DegRT(lob::DegKT(kTestValueDegK)).Value(),
                    (kTestValueDegR));
+  EXPECT_DOUBLE_EQ(lob::DegKT(lob::DegRT(kTestValueDegR)).Value(),
+                   (kTestValueDegK));
+  EXPECT_DOUBLE_EQ(lob::DegFT(lob::DegKT(kTestValueDegK)).Value(),
+                   kTestValueDegF);
+  EXPECT_DOUBLE_EQ(lob::DegKT(lob::DegFT(kTestValueDegF)).Value(),
+                   kTestValueDegK);
+  // Round-trip conversions to ensure accuracy is preserved.
   EXPECT_DOUBLE_EQ(lob::DegCT(lob::DegFT(lob::DegCT(kTestValueDegC))).Value(),
                    kTestValueDegC);
+  EXPECT_DOUBLE_EQ(lob::DegRT(lob::DegFT(lob::DegRT(kTestValueDegR))).Value(),
+                   kTestValueDegR);
   EXPECT_DOUBLE_EQ(lob::DegFT(lob::DegCT(lob::DegFT(kTestValueDegF))).Value(),
+                   kTestValueDegF);
+  EXPECT_DOUBLE_EQ(lob::DegFT(lob::DegRT(lob::DegFT(kTestValueDegF))).Value(),
                    kTestValueDegF);
 }
 
@@ -344,7 +436,7 @@ TEST(EngUnitsTests, TimeConversions) {
                    kTestValueMsec);
 }
 
-}  // namespace testing
+}  // namespace tests
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

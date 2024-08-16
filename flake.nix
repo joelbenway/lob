@@ -10,7 +10,7 @@
     let
       supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
       forEachSupportedSystem = f: nixpkgs.lib.genAttrs supportedSystems (system: f {
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
       });
     in
     {
@@ -27,20 +27,98 @@
             codespell
             cppcheck
             doxygen
-            # gbenchmark
             lcov
             mold
-            ninja # not used yet.
+            ninja
+            (vscode-with-extensions.override {
+              vscode = vscodium;
+              vscodeExtensions = with vscode-extensions; [
+                  bbenoist.nix
+                  brettm12345.nixfmt-vscode
+                  mkhl.direnv
+                  llvm-vs-code-extensions.vscode-clangd
+                  ms-vscode.cmake-tools
+                  ms-vscode.cpptools
+                  ms-vscode-remote.remote-ssh
+                  twxs.cmake
+                ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [{
+                  name = "remote-ssh-edit";
+                  publisher = "ms-vscode-remote";
+                  version = "0.47.2";
+                  sha256 = "1hp6gjh4xp2m1xlm1jsdzxw9d8frkiidhph6nvl24d0h8z34w49g";
+                }];
+            })
           ] ++ (if system == "aarch64-darwin" then [ ] else [ gdb ]);
           shellHook = let
+            inherit (pkgs) stdenv;
             projectName = "lob";
             white = "\\[\\033[38;5;015m\\]";
             blue = "\\[\\033[38;5;081m\\]";
             snowflake = "\\342\\235\\204";
             bold = "\\[\\033[01m\\]";
             reset = "\\[$(tput sgr0)\\]";
+            sourceDir = "\${sourceDir}";
+            filename = "CMakeUserPresets.json";
+            os = if stdenv.isLinux then "linux" else if stdenv.isDarwin then "darwin" else "<os>";
           in ''
             export PS1="${white}[${reset}${blue}\w${reset}${white}] ${bold}${projectName} ${blue}${snowflake} ${reset}"
+
+            cores=$(getconf _NPROCESSORS_ONLN)
+
+            json=$(cat <<-EOF
+            {
+              "version": 2,
+              "cmakeMinimumRequired": {
+                "major": 3,
+                "minor": 14,
+                "patch": 0
+              },
+              "configurePresets": [
+                {
+                  "name": "dev",
+                  "binaryDir": "/build/dev",
+                  "inherits": ["dev-mode", "clang-tidy", "cppcheck", "ci-${os}"],
+                  "generator": "Ninja",
+                  "cacheVariables": {
+                    "CMAKE_BUILD_TYPE": "Debug",
+                    "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                    "CMAKE_CXX_FLAGS": "-Og -g3",
+                    "CMAKE_LINKER_TYPE": "mold"
+                  }
+                }
+              ],
+              "buildPresets": [
+                {
+                  "name": "dev",
+                  "configurePreset": "dev",
+                  "configuration": "Debug",
+                  "jobs": "$cores"
+                }
+              ],
+              "testPresets": [
+                {
+                  "name": "dev",
+                  "configurePreset": "dev",
+                  "configuration": "Debug",
+                  "output": {
+                    "outputOnFailure": true
+                  },
+                  "execution": {
+                    "jobs": "$cores",
+                    "noTestsAction": "error"
+                  }
+                }
+              ]
+            }
+            EOF
+            )
+
+            if [ ! -f ${filename} ]; then
+              echo "$json" > ${filename}
+              echo "${filename} created successfully"
+            else
+              echo "${filename} already exists"
+            fi
           '';
         };
       });

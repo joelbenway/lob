@@ -6,50 +6,60 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 
 #include "constants.hpp"
 #include "eng_units.hpp"
 
 namespace lob {
 
-DegFT CalculateTemperatureAtAltitude(FeetT altitude) {
+DegFT CalculateTemperatureAtAltitude(FeetT altitude, DegFT temperature) {
   const DegFT kTemperature =
-      DegFT(kIsaSeaLevelDegF) - DegFT(kIsaLapseDegFPerFt * altitude.Value());
+      temperature - DegFT(kIsaLapseDegFPerFt * altitude.Value());
   return std::max(kTemperature, DegFT(kIsaMinimumTempDegF));
 }
 
-InHgT BarometricFormula(FeetT altitude) {
-  const double kGasConstant =
-      8.9494596E4 / DegRT(DegKT(1)).Value();   // lb·ft^2/(lb-mol·R·s^2)
+DegFT CalculateTemperatureAtAltitudeMcCoy(FeetT altitude,
+                                          DegFT sea_level_temperature) {
+  const double kK = 6.858E-6 + 2.776E-11 * altitude.Value();
+  constexpr double kA = DegRT(DegFT(0)).Value();
+  // Note that the formula printed in 2e of Modern External Ballistics omits the
+  // negative sign. This is remedied here.
+  return (sea_level_temperature + kA) * std::exp(-1.0 * kK * altitude.Value()) -
+         kA;
+}
+
+InHgT BarometricFormula(FeetT altitude, InHgT pressure, DegFT temperature) {
+  constexpr double kGasConstant = 1716.49;     // ft-lb / slug^{-1}R^{-1}
   constexpr double kMolarMassOfAir = 28.9644;  // lb/lb-mol
-  InHgT pressure = InHgT(0.0);
   const FeetT kHeight = std::min(altitude, FeetT(kIsaTropopauseAltitudeFt));
 
-  const double kExponent =
-      kStandardGravity * kMolarMassOfAir / (kIsaLapseDegFPerFt * kGasConstant);
+  constexpr double kExponent =
+      kStandardGravity / (kGasConstant * kIsaLapseDegFPerFt);
 
-  const double kBase = 1.0 - kIsaLapseDegFPerFt * kHeight.Value() /
-                                 DegRT(DegFT(kIsaSeaLevelDegF)).Value();
+  const double kBase =
+      1.0 - (kIsaLapseDegFPerFt * kHeight.Value() / DegRT(temperature).Value());
 
-  pressure = InHgT(kIsaSeaLevelPressureInHg) * std::pow(kBase, kExponent);
+  InHgT output = pressure * std::pow(kBase, kExponent);
 
   if (altitude > FeetT(kIsaTropopauseAltitudeFt)) {
     const double kNumberator = -1.0 * kStandardGravity * kMolarMassOfAir *
-                               (altitude.Value() - kIsaTropopauseAltitudeFt);
+                               (altitude - kIsaTropopauseAltitudeFt).Value();
 
-    const double kDemoninator =
+    constexpr double kDemoninator =
         kGasConstant * DegRT(DegFT(kIsaMinimumTempDegF)).Value();
 
-    pressure *= std::exp(kNumberator / kDemoninator);
+    output *= std::exp(kNumberator / kDemoninator);
   }
 
-  return pressure;
+  return output;
 }
 
-LbsPerCuFtT CalculateAirDensityAtAltitude(FeetT altitude) {
+LbsPerCuFtT CalculateAirDensityAtAltitude(FeetT altitude,
+                                          LbsPerCuFtT sea_level_density) {
   const double kHFactorPerFt = 2.926E-5 + 1E-10 * altitude.Value();
 
-  return LbsPerCuFtT(kIsaSeaLevelAirDensityLbsPerCuFt *
+  return LbsPerCuFtT(sea_level_density *
                      exp(-1.0 * kHFactorPerFt * altitude.Value()));
 }
 
@@ -76,10 +86,8 @@ InHgT CalculateWaterVaporSaturationPressure(DegFT temperature) {
 }
 
 double CalcualteAirDensityRatio(InHgT pressure, DegFT temperature) {
-  const double kAVal = 518.67;
-
-  return pressure.Value() / kIsaSeaLevelPressureInHg * kAVal /
-         DegRT(temperature).Value();
+  return pressure.Value() / kIsaSeaLevelPressureInHg *
+         (DegRT(DegFT(kIsaSeaLevelDegF)) / DegRT(temperature)).Value();
 }
 
 double CalculateAirDensityRatioHumidityCorrection(
@@ -96,6 +104,13 @@ double CalculateSpeedOfSoundHumidityCorrection(double humidity_pct,
 
   return 1.0 + kAVal * humidity_pct * water_vapor_sat_pressure.Value() /
                    kIsaSeaLevelPressureInHg;
+}
+
+double CalculateCdCoefficent(LbsPerCuFtT air_density, PmsiT bc) {
+  constexpr double kSqInPerSqFt = (InchT(FeetT(1)) * InchT(FeetT(1))).Value();
+  constexpr uint8_t kClangTidyPleaserEight = 8;
+  return air_density.Value() * kPi /
+         (bc.Value() * kSqInPerSqFt * kClangTidyPleaserEight);
 }
 
 double CalculateMillerTwistRuleStabilityFactor(InchT bullet_diameter,
@@ -131,13 +146,24 @@ double CalculateMillerTwistRuleCorrectionFactor(LbsPerCuFtT air_density) {
   return kIsaSeaLevelAirDensityLbsPerCuFt / air_density.Value();
 }
 
-InchT CalculateGyroscopicSpinDrift(double stability, SecT time,
-                                   bool is_rh_twist) {
+InchT CalculateLitzGyroscopicSpinDrift(double stability, SecT time,
+                                       bool is_rh_twist) {
   const double kAVal = 1.25 * (is_rh_twist ? 1.0 : -1.0);
   const double kBVal = 1.2;
   const double kExponent = 1.83;
 
   return InchT(kAVal * (stability + kBVal) * std::pow(time.Value(), kExponent));
+}
+
+MoaT CalculateLitzAerodynamicJump(double stability, InchT caliber, InchT length,
+                                  MphT l2r_crosswind, bool is_rh_twist) {
+  const double kSgCoeff = 0.01;
+  const double kLCoeff = 0.0024;
+  const double kIntercept = 0.032;
+  const double kY =
+      kSgCoeff * stability - kLCoeff * (length / caliber).Value() + kIntercept;
+  const double kDirection = is_rh_twist ? -1.0 : 1.0;
+  return MoaT(kDirection * kY * l2r_crosswind.Value());
 }
 
 SqFtT CalculateProjectileReferenceArea(InchT bullet_diameter) {
@@ -146,6 +172,10 @@ SqFtT CalculateProjectileReferenceArea(InchT bullet_diameter) {
 
 FtLbsT CalculateKineticEnergy(FpsT velocity, SlugT mass) {
   return FtLbsT(mass.Value() * std::pow(velocity.Value(), 2) / 2);
+}
+
+PmsiT CalculateSectionalDensity(InchT bullet_diameter, LbsT bullet_mass) {
+  return PmsiT(bullet_mass.Value() / std::pow(bullet_diameter.Value(), 2));
 }
 
 }  // namespace lob

@@ -6,13 +6,14 @@
 
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
 #include "constants.hpp"
 #include "eng_units.hpp"
 
-namespace testing {
+namespace tests {
 
 TEST(CalcTests, CalculateTemperatureAtAltitude) {
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
@@ -22,12 +23,33 @@ TEST(CalcTests, CalculateTemperatureAtAltitude) {
   const std::vector<double> kExpectedResultsDegF = {
       59.0, 57.2, 55.4, 53.7, 51.9, 48.3,  44.7,  41.2,  37.6,
       34.0, 30.5, 26.9, 23.4, 5.5,  -12.3, -30.0, -47.8, -65.6};
-  const double kError = 0.5;
+  const double kError = 0.25;
 
   for (uint32_t i = 0; i < kAltitudesFt.size(); i++) {
     EXPECT_NEAR(
         kExpectedResultsDegF.at(i),
         lob::CalculateTemperatureAtAltitude(lob::FeetT(kAltitudesFt.at(i)))
+            .Value(),
+        kError);
+  }
+}
+
+TEST(CalcTests, CalculateTemperatureAtAltitudeMcCoy) {
+  // Test data from page 167 of Modern Exterior Ballistics - McCoy
+  const std::vector<uint16_t> kAltitudesFt = {
+      0,    500,  1000, 1500,  2000,  3000,  4000,  5000,  6000,
+      7000, 8000, 9000, 10000, 15000, 20000, 25000, 30000, 35000};
+  const std::vector<double> kExpectedResultsDegF = {
+      59.0, 57.2, 55.4, 53.7, 51.9, 48.3,  44.7,  41.2,  37.6,
+      34.0, 30.5, 26.9, 23.4, 5.5,  -12.3, -30.0, -47.8, -65.6};
+  // McCoy formula does not seem quite as accurate as using ISA Lapse rate with
+  // this test data yet is slower and more complicated.
+  const double kError = 0.33;
+
+  for (uint32_t i = 0; i < kAltitudesFt.size(); i++) {
+    EXPECT_NEAR(
+        kExpectedResultsDegF.at(i),
+        lob::CalculateTemperatureAtAltitudeMcCoy(lob::FeetT(kAltitudesFt.at(i)))
             .Value(),
         kError);
   }
@@ -41,12 +63,20 @@ TEST(CalcTests, BarometricFormula) {
   const std::vector<double> kExpectedResultsInHg = {
       29.92, 29.38, 28.86, 28.33, 27.82, 26.82, 25.84, 24.90, 23.98,
       23.09, 22.23, 21.39, 20.58, 16.89, 13.76, 11.12, 8.90,  7.06};
-  const double kError = 0.1;
+  const double kError = 0.025;
   for (uint32_t i = 0; i < kAltitudesFt.size(); i++) {
     EXPECT_NEAR(kExpectedResultsInHg.at(i),
                 lob::BarometricFormula(lob::FeetT(kAltitudesFt.at(i))).Value(),
                 kError);
   }
+}
+
+TEST(CalcTests, BarometricFormulaNegative) {
+  constexpr int16_t kAltitude = -1000;
+  constexpr double kExpectedResult = 31.02;
+  const double kError = 0.025;
+  EXPECT_NEAR(lob::BarometricFormula(lob::FeetT(kAltitude)).Value(),
+              kExpectedResult, kError);
 }
 
 TEST(CalcTests, CalculateAirDensityAtAltitude) {
@@ -175,6 +205,19 @@ TEST(CalcTests, CalculateSpeedOfSoundHumidityCorrection) {
   }
 }
 
+TEST(CalcTests, CalculateCdCoefficent) {
+  // Test data from Ball M1911 round
+  const lob::PmsiT kBC(0.162);
+  const lob::InchT kDiameter(0.452);
+  const lob::LbsT kMass(lob::GrainT(230));
+  const lob::LbsPerCuFtT kAirDensity(0.0765);
+  const double kCdCoeff1 = CalculateCdCoefficent(kAirDensity, kBC);
+  const double kCdcoeff2 = kAirDensity.Value() *
+                           CalculateProjectileReferenceArea(kDiameter).Value() /
+                           (2 * kMass.Value());
+  EXPECT_NEAR(kCdCoeff1, kCdcoeff2, 1E-5);
+}
+
 TEST(CalcTests, CalculateMillerTwistRuleStabilityFactor) {
   // Test data from Sample Calculations section of A New Rule for Estimating
   // Rifling Twist - Miller
@@ -206,19 +249,50 @@ TEST(CalcTests, CalculateMillerTwistRuleCorrectionFactor) {
   EXPECT_NEAR(result, kExpectedCorrectionFactor, kError);
 }
 
-TEST(CalcTests, CalculateGyroscopicSpinDrift) {
+TEST(CalcTests, CalculateLitzGyroscopicSpinDrift) {
   const double kStabilityFactor = 1.83;
   const lob::SecT kTimeOfFlight1(0.7);
   const lob::SecT kTimeOfFlight2(1.75);
   const double kExpectedInches1 = 1.97;
   const double kExpectedInches2 = 10.54;
-  const double kError = .1;
+  const double kError = 0.1;
   const lob::InchT kActualInches1 =
-      lob::CalculateGyroscopicSpinDrift(kStabilityFactor, kTimeOfFlight1);
+      lob::CalculateLitzGyroscopicSpinDrift(kStabilityFactor, kTimeOfFlight1);
   const lob::InchT kActualInches2 =
-      lob::CalculateGyroscopicSpinDrift(kStabilityFactor, kTimeOfFlight2);
+      lob::CalculateLitzGyroscopicSpinDrift(kStabilityFactor, kTimeOfFlight2);
   EXPECT_NEAR(kExpectedInches1, kActualInches1.Value(), kError);
   EXPECT_NEAR(kExpectedInches2, kActualInches2.Value(), kError);
+}
+
+TEST(CalcTests, CalculateLitzAerodynamicJump) {
+  // Test data from Comparison with Litz Vertical-AJ Estimator section of
+  // Calculating Aerodynamic Jump for Firing Point Conditions: A novel and
+  // practical approach for computing the wind-induced jump perturbations
+  // - Boatright & Ruiz
+  const double kError = 0.01;
+  const std::vector<double> kSgs = {1.30, 1.62, 1.73, 1.76, 1.80,
+                                    1.82, 2.01, 2.14, 2.25, 2.27};
+  const std::vector<lob::InchT> kCals = {lob::InchT(0.308), lob::InchT(0.308),
+                                         lob::InchT(0.408), lob::InchT(0.338),
+                                         lob::InchT(0.308), lob::InchT(0.277),
+                                         lob::InchT(0.224), lob::InchT(0.308),
+                                         lob::InchT(0.224), lob::InchT(0.338)};
+  const std::vector<lob::InchT> kLengths = {
+      lob::InchT(1.621), lob::InchT(1.458), lob::InchT(2.085),
+      lob::InchT(1.771), lob::InchT(1.489), lob::InchT(1.293),
+      lob::InchT(1.066), lob::InchT(1.250), lob::InchT(0.976),
+      lob::InchT(1.724)};
+  const lob::MphT kCrosswind = lob::MphT(10.0);
+  const std::vector<double> kExpectedResults = {-0.324, -0.368, -0.370, -0.370,
+                                                -0.384, -0.390, -0.407, -0.437,
+                                                -0.440, -0.425};
+  for (size_t i = 0; i < kSgs.size(); i++) {
+    const double kActualResult =
+        lob::CalculateLitzAerodynamicJump(kSgs.at(i), kCals.at(i),
+                                          kLengths.at(i), kCrosswind)
+            .Value();
+    EXPECT_NEAR(kExpectedResults.at(i), kActualResult, kError);
+  }
 }
 
 TEST(CalcTests, CalculateProjectileReferenceArea) {
@@ -235,7 +309,19 @@ TEST(CalcTests, CalculateKineticEnergy) {
               3596.5, 0.1);
 }
 
-}  // namespace testing
+TEST(CalcTests, CalculateSectionalDensity) {
+  EXPECT_NEAR(
+      CalculateSectionalDensity(lob::InchT(.224), lob::GrainT(77)).Value(),
+      0.219, 0.001);
+  EXPECT_NEAR(
+      CalculateSectionalDensity(lob::InchT(.308), lob::GrainT(168)).Value(),
+      0.253, 0.001);
+  EXPECT_NEAR(
+      CalculateSectionalDensity(lob::InchT(.375), lob::GrainT(270)).Value(),
+      0.274, 0.001);
+}
+
+}  // namespace tests
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

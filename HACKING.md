@@ -6,6 +6,21 @@ potential contributor.
 If you plan to contribute, please read the [CONTRIBUTING](CONTRIBUTING.md)
 guide.
 
+## TL;DR The Nix way
+
+A declaritive development environment for this project is available via the
+[Nix][1] package manager on both linux and mac systems through the included
+[flake](flake.nix). With Nix installed and flakes enabled invoke ```nix
+develop``` in the root project directory. Nix will fetch all the same
+development tools used to author this project and even generate a
+`CMakeUserPresets.json` for your system. This flake installs a sandboxed version
+of [VSCodium][2] preconfigured with relevant extensions specifically for this
+project. Included is a build system comprised from [CMake][3], [Ninja][4], and
+[Mold][5]. Other utilities include [clangd, clang-format, clang-tidy][6],
+[codespell][7], [cppcheck][8], [doxygen][9](), and [lcov][10]. Note that despite
+all of the tools mentioned being FOSS, this flake does enable unfree software
+for certain Microsoft VSCode plugins used with VSCodium.
+
 ## Developer mode
 
 Build system targets that are only useful for developers of this project are
@@ -20,7 +35,7 @@ Developer mode is always set to on in CI workflows.
 
 This project makes use of [presets][1] to simplify the process of configuring
 the project. As a developer, you are recommended to always have the [latest
-CMake version][2] installed to make use of the latest Quality-of-Life
+CMake version][12] installed to make use of the latest Quality-of-Life
 additions.
 
 You have a few options to pass `lob_DEVELOPER_MODE` to the configure
@@ -106,7 +121,7 @@ integration.
 Please note that both the build and test commands accept a `-j` flag to specify
 the number of jobs to use, which should ideally be specified to the number of
 threads your CPU has. You may also want to add that to your preset using the
-`jobs` property, see the [presets documentation][1] for more details.
+`jobs` property, see the [presets documentation][11] for more details.
 
 ### Developer mode targets
 
@@ -170,5 +185,15 @@ Make sure you launch your editor of choice from the console with the above
 script sourced. Look for `(Debug)` in the prompt to confirm, then run e.g.
 `code .` for VScode or `devenv .` for Visual Studio.
 
-[1]: https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html
-[2]: https://cmake.org/download/
+[1]: https://nixos.org/
+[2]: https://vscodium.com/
+[3]: https://cmake.org/
+[4]: https://ninja-build.org/
+[5]: https://github.com/rui314/mold
+[6]: https://clang.llvm.org/extra/index.html
+[7]: https://github.com/codespell-project/codespell
+[8]: http://cppcheck.net/
+[9]: https://www.doxygen.nl/index.html
+[10]: https://github.com/linux-test-project/lcov
+[11]: https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html
+[12]: https://cmake.org/download/

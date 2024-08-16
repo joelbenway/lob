@@ -9,22 +9,24 @@
 #include <cstdint>
 #include <type_traits>
 
+#include "constants.hpp"  // for kPi
+
 namespace lob {
 
 template <typename E, E U, typename T>
 class StrongT {
  public:
-  explicit StrongT<E, U, T>(T value) : value_(value) {}
-  StrongT<E, U, T>(const StrongT<E, U, T>& other) = default;
-  StrongT<E, U, T>(StrongT<E, U, T>&& other) noexcept = default;
+  constexpr explicit StrongT<E, U, T>(T value) : value_(value) {}
+  constexpr StrongT<E, U, T>(const StrongT<E, U, T>& other) = default;
+  constexpr StrongT<E, U, T>(StrongT<E, U, T>&& other) noexcept = default;
   ~StrongT() = default;
-  StrongT<E, U, T>& operator=(const StrongT<E, U, T>& rhs) {
+  constexpr StrongT<E, U, T>& operator=(const StrongT<E, U, T>& rhs) {
     if (this != &rhs) {
       value_ = rhs.value_;
     }
     return *this;
   }
-  StrongT<E, U, T>& operator=(StrongT<E, U, T>&& rhs) noexcept {
+  constexpr StrongT<E, U, T>& operator=(StrongT<E, U, T>&& rhs) noexcept {
     if (this != &rhs) {
       value_ = rhs.value_;
       rhs.value_ = 0;
@@ -33,173 +35,183 @@ class StrongT {
   }
 
   // Conversion operators
-  explicit operator T() const { return value_; }
+  constexpr explicit operator T() const { return value_; }
 
   template <E Other>
-  operator StrongT<E, Other, T>() const;  // NOLINT allow implicit conversions
+  // NOLINTNEXTLINE allow implicit conversions
+  constexpr operator StrongT<E, Other, T>() const;
 
   // Arithmetic operators
-  StrongT<E, U, T> operator+(const StrongT<E, U, T>& rhs) const {
+  constexpr StrongT<E, U, T> operator+(const StrongT<E, U, T>& rhs) const {
     return StrongT<E, U, T>(value_ + rhs.value_);
   }
-  StrongT<E, U, T> operator-(const StrongT<E, U, T>& rhs) const {
+  constexpr StrongT<E, U, T> operator-(const StrongT<E, U, T>& rhs) const {
     return StrongT<E, U, T>(value_ - rhs.value_);
   }
-  StrongT<E, U, T> operator*(const StrongT<E, U, T>& rhs) const {
+  constexpr StrongT<E, U, T> operator*(const StrongT<E, U, T>& rhs) const {
     return StrongT<E, U, T>(value_ * rhs.value_);
   }
-  StrongT<E, U, T> operator/(const StrongT<E, U, T>& rhs) const {
+  constexpr StrongT<E, U, T> operator/(const StrongT<E, U, T>& rhs) const {
     return StrongT<E, U, T>(value_ / rhs.value_);
   }
-  StrongT<E, U, T> operator+(const T& rhs) const {
+  constexpr StrongT<E, U, T> operator+(const T& rhs) const {
     return StrongT<E, U, T>(value_ + rhs);
   }
-  StrongT<E, U, T> operator-(const T& rhs) const {
+  constexpr StrongT<E, U, T> operator-(const T& rhs) const {
     return StrongT<E, U, T>(value_ - rhs);
   }
-  StrongT<E, U, T> operator*(const T& rhs) const {
+  constexpr StrongT<E, U, T> operator*(const T& rhs) const {
     return StrongT<E, U, T>(value_ * rhs);
   }
-  StrongT<E, U, T> operator/(const T& rhs) const {
+  constexpr StrongT<E, U, T> operator/(const T& rhs) const {
     return StrongT<E, U, T>(value_ / rhs);
   }
 
   // Modulo operator
-  StrongT<E, U, T> operator%(const StrongT<E, U, T>& rhs) const {
+  constexpr StrongT<E, U, T> operator%(const StrongT<E, U, T>& rhs) const {
     return StrongT<E, U, T>(value_ % rhs.value_);
   }
-  StrongT<E, U, T> operator%(const T& rhs) const {
+  constexpr StrongT<E, U, T> operator%(const T& rhs) const {
     return StrongT<E, U, T>(value_ % rhs);
   }
 
   // Arithmetic assignment operators
-  StrongT<E, U, T>& operator+=(const StrongT<E, U, T>& rhs) {
+  constexpr StrongT<E, U, T>& operator+=(const StrongT<E, U, T>& rhs) {
     value_ += rhs.value_;
     return *this;
   }
-  StrongT<E, U, T>& operator-=(const StrongT<E, U, T>& rhs) {
+  constexpr StrongT<E, U, T>& operator-=(const StrongT<E, U, T>& rhs) {
     value_ -= rhs.value_;
     return *this;
   }
-  StrongT<E, U, T>& operator*=(const StrongT<E, U, T>& rhs) {
+  constexpr StrongT<E, U, T>& operator*=(const StrongT<E, U, T>& rhs) {
     value_ *= rhs.value_;
     return *this;
   }
-  StrongT<E, U, T>& operator/=(const StrongT<E, U, T>& rhs) {
+  constexpr StrongT<E, U, T>& operator/=(const StrongT<E, U, T>& rhs) {
     value_ /= rhs.value_;
     return *this;
   }
-  StrongT<E, U, T>& operator+=(const T& rhs) {
+  constexpr StrongT<E, U, T>& operator+=(const T& rhs) {
     value_ += rhs;
     return *this;
   }
-  StrongT<E, U, T>& operator-=(const T& rhs) {
+  constexpr StrongT<E, U, T>& operator-=(const T& rhs) {
     value_ -= rhs;
     return *this;
   }
-  StrongT<E, U, T>& operator*=(const T& rhs) {
+  constexpr StrongT<E, U, T>& operator*=(const T& rhs) {
     value_ *= rhs;
     return *this;
   }
-  StrongT<E, U, T>& operator/=(const T& rhs) {
+  constexpr StrongT<E, U, T>& operator/=(const T& rhs) {
     value_ /= rhs;
     return *this;
   }
 
   // Increment operators
-  StrongT<E, U, T>& operator++() {
+  constexpr StrongT<E, U, T>& operator++() {
     ++value_;
     return *this;
   }
-  StrongT<E, U, T> operator++(int) & {  // NOLINT
+  constexpr StrongT<E, U, T> operator++(int) & {  // NOLINT
     StrongT<E, U, T> temp(*this);
     ++value_;
     return temp;
   }
-  StrongT<E, U, T>& operator--() {
+  constexpr StrongT<E, U, T>& operator--() {
     --value_;
     return *this;
   }
-  StrongT<E, U, T> operator--(int) & {  //  NOLINT
+  constexpr StrongT<E, U, T> operator--(int) & {  //  NOLINT
     StrongT<E, U, T> temp(*this);
     --value_;
     return temp;
   }
 
   // Comparison operators
-  bool operator==(const StrongT<E, U, T>& rhs) const {
+  constexpr bool operator==(const StrongT<E, U, T>& rhs) const {
     return value_ == rhs.value_;
   }
-  bool operator!=(const StrongT<E, U, T>& rhs) const {
+  constexpr bool operator!=(const StrongT<E, U, T>& rhs) const {
     return value_ != rhs.value_;
   }
-  bool operator<(const StrongT<E, U, T>& rhs) const {
+  constexpr bool operator<(const StrongT<E, U, T>& rhs) const {
     return value_ < rhs.value_;
   }
-  bool operator>(const StrongT<E, U, T>& rhs) const {
+  constexpr bool operator>(const StrongT<E, U, T>& rhs) const {
     return value_ > rhs.value_;
   }
-  bool operator<=(const StrongT<E, U, T>& rhs) const {
+  constexpr bool operator<=(const StrongT<E, U, T>& rhs) const {
     return value_ <= rhs.value_;
   }
-  bool operator>=(const StrongT<E, U, T>& rhs) const {
+  constexpr bool operator>=(const StrongT<E, U, T>& rhs) const {
     return value_ >= rhs.value_;
   }
 
   // Specialized std functions
-  friend bool isnan(const StrongT& st) {  // NOLINT name styling
+  // NOLINTNEXTLINE name styling
+  friend constexpr bool isnan(const StrongT& st) noexcept {
     return std::isnan(st.value_);
   }
 
-  friend StrongT sqrt(const StrongT& st) {  // NOLINT name styling
+  // NOLINTNEXTLINE name styling
+  friend constexpr StrongT sqrt(const StrongT& st) noexcept {
     return StrongT(std::sqrt(st.value_));
   }
 
-  friend StrongT pow(const StrongT& base,  // NOLINT name styling
-                     double exponent) {
+  // NOLINTNEXTLINE name styling
+  friend constexpr StrongT pow(const StrongT& base, double exponent) noexcept {
     return StrongT(std::pow(base.value_, exponent));
   }
 
-  friend StrongT pow(const StrongT& base,  // NOLINT name styling
-                     const StrongT& exponent) {
+  // NOLINTNEXTLINE name styling
+  friend constexpr StrongT pow(const StrongT& base,
+                               const StrongT& exponent) noexcept {
     return StrongT(std::pow(base.value_, exponent.value_));
   }
 
-  friend StrongT sin(const StrongT& st) {  // NOLINT name styling
+  // NOLINTNEXTLINE name styling
+  friend constexpr StrongT sin(const StrongT& st) noexcept {
     return StrongT(std::sin(st.value_));
   }
 
-  friend StrongT cos(const StrongT& st) {  // NOLINT name styling
+  // NOLINTNEXTLINE name styling
+  friend constexpr StrongT cos(const StrongT& st) noexcept {
     return StrongT(std::cos(st.value_));
   }
 
-  friend StrongT tan(const StrongT& st) {  // NOLINT name styling
+  // NOLINTNEXTLINE name styling
+  friend constexpr StrongT tan(const StrongT& st) noexcept {
     return StrongT(std::tan(st.value_));
   }
 
-  friend StrongT asin(const StrongT& st) {  // NOLINT name styling
+  // NOLINTNEXTLINE name styling
+  friend constexpr StrongT asin(const StrongT& st) noexcept {
     return StrongT(std::sin(st.value_));
   }
 
-  friend StrongT acos(const StrongT& st) {  // NOLINT name styling
+  // NOLINTNEXTLINE name styling
+  friend constexpr StrongT acos(const StrongT& st) noexcept {
     return StrongT(std::cos(st.value_));
   }
 
-  friend StrongT atan(const StrongT& st) {  // NOLINT name styling
+  // NOLINTNEXTLINE name styling
+  friend constexpr StrongT atan(const StrongT& st) noexcept {
     return StrongT(std::tan(st.value_));
   }
 
-  friend StrongT min(const StrongT& a,  // NOLINT name styling
-                     const StrongT& b) {
+  // NOLINTNEXTLINE name styling
+  friend constexpr StrongT min(const StrongT& a, const StrongT& b) noexcept {
     return StrongT(std::min(a.value_, b.value_));
   }
 
-  friend StrongT max(const StrongT& a,  // NOLINT name styling
-                     const StrongT& b) {
+  // NOLINTNEXTLINE name styling
+  friend constexpr StrongT max(const StrongT& a, const StrongT& b) noexcept {
     return StrongT(std::max(a.value_, b.value_));
   }
 
-  T Value() const { return value_; }
+  constexpr T Value() const { return value_; }
 
  private:
   T value_;
@@ -207,37 +219,130 @@ class StrongT {
   static_assert(std::is_arithmetic<T>::value, "T must be an arithmetic type");
 };
 
+namespace convert {
+// Angle
+constexpr double kRadiansPerDegree = kPi / 180.0;
+constexpr double kMoaPerDegree = 60.0;
+constexpr double kMoaPerRadian = kMoaPerDegree / kRadiansPerDegree;
+constexpr double kMilPerRadian = 1'000;
+constexpr double kMilPerDegree = kMilPerRadian * kRadiansPerDegree;
+constexpr double kMoaPerMil = kMoaPerRadian / kMilPerRadian;
+// Energy
+constexpr double kJoulesPerFtLb = 1.3558179483;
+// Length
+constexpr double kInchPerFoot = 12.0;
+constexpr double kFeetPerYard = 3;
+constexpr double kMeterPerFoot = 0.3048;
+constexpr double kMmPerFoot = kMeterPerFoot * 1000;
+constexpr double kCmPerFoot = kMeterPerFoot * 100;
+constexpr double kInchPerMm = kInchPerFoot / kMmPerFoot;
+constexpr double kInchPerCm = kInchPerMm * 10;
+// Pressure
+constexpr double kInHgPerPa = 0.000295299801647;
+constexpr double kInHgPerPsi = 2.03602128864;
+constexpr double kInHgPerMillibar = kInHgPerPa * 100;
+// Mass
+constexpr double kGrainsPerLb = 7000.0;
+constexpr double kLbsPerSlug = 32.17405;
+constexpr double kLbsPerKg = 2.204623;
+constexpr double kLbsPerGram = kLbsPerKg / 1000;
+// Sectional Density
+constexpr double kLbsmPerSqInPerKgPerSqM = 703.069579639;
+// Speed
+constexpr double kFpsPerMph = 1.46666667;
+constexpr double kFpsPerKph = 0.91134442;
+constexpr double kFpsPerKn = 1.6878099;
+// Time
+constexpr double kMsecPerSec = 1E3;
+constexpr double kUsecPerSec = 1E6;
+// Temperature
+constexpr double kDegFPerDegC = 1.8;
+constexpr double kFreezePointDegF = 32.0;
+constexpr double kAbsoluteZeroDegF = -459.67;
+constexpr double kAbsoluteZeroDegC =
+    (kAbsoluteZeroDegF - kFreezePointDegF) / kDegFPerDegC;
+}  // namespace convert
+
 enum class Acceleration : uint8_t { kFeetPerSecondSq };
 using FpsSqT = StrongT<Acceleration, Acceleration::kFeetPerSecondSq, double>;
 
-enum class Angle : uint8_t { kDegrees, kRadians, kMoa };
+enum class Angle : uint8_t { kDegrees, kRadians, kMoa, kMil };
 using DegreesT = StrongT<Angle, Angle::kDegrees, double>;
 using RadiansT = StrongT<Angle, Angle::kRadians, double>;
 using MoaT = StrongT<Angle, Angle::kMoa, double>;
+using MilT = StrongT<Angle, Angle::kMil, double>;
 
 template <>
 template <>
-DegreesT::operator RadiansT() const;
+constexpr DegreesT::operator RadiansT() const {
+  return RadiansT(Value() * convert::kRadiansPerDegree);
+}
 
 template <>
 template <>
-DegreesT::operator MoaT() const;
+constexpr DegreesT::operator MoaT() const {
+  return MoaT(Value() * convert::kMoaPerDegree);
+}
 
 template <>
 template <>
-RadiansT::operator DegreesT() const;
+constexpr DegreesT::operator MilT() const {
+  return MilT(Value() * convert::kMilPerDegree);
+}
 
 template <>
 template <>
-RadiansT::operator MoaT() const;
+constexpr RadiansT::operator DegreesT() const {
+  return DegreesT(Value() / convert::kRadiansPerDegree);
+}
 
 template <>
 template <>
-MoaT::operator DegreesT() const;
+constexpr RadiansT::operator MoaT() const {
+  return MoaT(Value() * convert::kMoaPerRadian);
+}
 
 template <>
 template <>
-MoaT::operator RadiansT() const;
+constexpr RadiansT::operator MilT() const {
+  return MilT(Value() * convert::kMilPerRadian);
+}
+
+template <>
+template <>
+constexpr MoaT::operator DegreesT() const {
+  return DegreesT(Value() / convert::kMoaPerDegree);
+}
+
+template <>
+template <>
+constexpr MoaT::operator RadiansT() const {
+  return RadiansT(Value() / convert::kMoaPerRadian);
+}
+
+template <>
+template <>
+constexpr MoaT::operator MilT() const {
+  return MilT(Value() / convert::kMoaPerMil);
+}
+
+template <>
+template <>
+constexpr MilT::operator DegreesT() const {
+  return DegreesT(Value() / convert::kMilPerDegree);
+}
+
+template <>
+template <>
+constexpr MilT::operator RadiansT() const {
+  return RadiansT(Value() / convert::kMilPerRadian);
+}
+
+template <>
+template <>
+constexpr MilT::operator MoaT() const {
+  return MoaT(Value() * convert::kMoaPerMil);
+}
 
 enum class Area : uint8_t { kSquareFeet };
 using SqFtT = StrongT<Area, Area::kSquareFeet, double>;
@@ -251,64 +356,126 @@ using JouleT = StrongT<Energy, Energy::kJoules, double>;
 
 template <>
 template <>
-FtLbsT::operator JouleT() const;
+constexpr FtLbsT::operator JouleT() const {
+  return JouleT(Value() * convert::kJoulesPerFtLb);
+}
 
 template <>
 template <>
-JouleT::operator FtLbsT() const;
+constexpr JouleT::operator FtLbsT() const {
+  return FtLbsT(Value() / convert::kJoulesPerFtLb);
+}
 
-enum class Length : uint8_t { kInches, kFeet, kYards, kMillimeter, kMeter };
+enum class Length : uint8_t {
+  kInches,
+  kFeet,
+  kYards,
+  kMillimeter,
+  kCentimeter,
+  kMeter
+};
 using InchT = StrongT<Length, Length::kInches, double>;
 using FeetT = StrongT<Length, Length::kFeet, double>;
 using YardT = StrongT<Length, Length::kYards, double>;
 using MmT = StrongT<Length, Length::kMillimeter, double>;
+using CmT = StrongT<Length, Length::kCentimeter, double>;
 using MeterT = StrongT<Length, Length::kMeter, double>;
 
 template <>
 template <>
-InchT::operator FeetT() const;
+constexpr InchT::operator FeetT() const {
+  return FeetT(Value() / convert::kInchPerFoot);
+}
 
 template <>
 template <>
-YardT::operator FeetT() const;
+constexpr YardT::operator FeetT() const {
+  return FeetT(Value() * convert::kFeetPerYard);
+}
 
 template <>
 template <>
-MmT::operator FeetT() const;
+constexpr MmT::operator FeetT() const {
+  return FeetT(Value() / convert::kMmPerFoot);
+}
 
 template <>
 template <>
-MmT::operator InchT() const;
+constexpr MmT::operator InchT() const {
+  return InchT(Value() * convert::kInchPerMm);
+}
 
 template <>
 template <>
-MeterT::operator FeetT() const;
+constexpr CmT::operator FeetT() const {
+  return FeetT(Value() / convert::kCmPerFoot);
+}
 
 template <>
 template <>
-FeetT::operator InchT() const;
+constexpr CmT::operator InchT() const {
+  return InchT(Value() * convert::kInchPerCm);
+}
 
 template <>
 template <>
-FeetT::operator YardT() const;
+constexpr MeterT::operator FeetT() const {
+  return FeetT(Value() / convert::kMeterPerFoot);
+}
+
+template <>
+template <>
+constexpr FeetT::operator InchT() const {
+  return InchT(Value() * convert::kInchPerFoot);
+}
+
+template <>
+template <>
+constexpr FeetT::operator YardT() const {
+  return YardT(Value() / convert::kFeetPerYard);
+}
+
+template <>
+template <>
+constexpr FeetT::operator MmT() const {
+  return MmT(Value() * convert::kMmPerFoot);
+}
+
+template <>
+template <>
+constexpr FeetT::operator CmT() const {
+  return CmT(Value() * convert::kCmPerFoot);
+}
+
+template <>
+template <>
+constexpr FeetT::operator MeterT() const {
+  return MeterT(Value() * convert::kMeterPerFoot);
+}
 
 enum class Pressure : uint8_t { kPsi, kInchesOfMercury, kPascal, kMillibar };
 using InHgT = StrongT<Pressure, Pressure::kInchesOfMercury, double>;
 using PsiT = StrongT<Pressure, Pressure::kPsi, double>;
 using PaT = StrongT<Pressure, Pressure::kPascal, double>;
-using MillibarT = StrongT<Pressure, Pressure::kMillibar, double>;
+using MbarT = StrongT<Pressure, Pressure::kMillibar, double>;
 
 template <>
 template <>
-PsiT::operator InHgT() const;
+constexpr PsiT::operator InHgT() const {
+  return InHgT(Value() * convert::kInHgPerPsi);
+}
 
 template <>
 template <>
-PaT::operator InHgT() const;
+constexpr PaT::operator InHgT() const {
+  return InHgT(Value() * convert::kInHgPerPa);
+}
 
 template <>
 template <>
-MillibarT::operator InHgT() const;
+constexpr MbarT::operator InHgT() const {
+  return InHgT(Value() * convert::kInHgPerMillibar);
+}
 
 enum class Mass : uint8_t { kGrains, kPounds, kSlugs, kGrams, kKilograms };
 using GrainT = StrongT<Mass, Mass::kGrains, double>;
@@ -319,27 +486,39 @@ using KgT = StrongT<Mass, Mass::kKilograms, double>;
 
 template <>
 template <>
-GrainT::operator LbsT() const;
+constexpr GrainT::operator LbsT() const {
+  return LbsT(Value() / convert::kGrainsPerLb);
+}
 
 template <>
 template <>
-LbsT::operator GrainT() const;
+constexpr LbsT::operator GrainT() const {
+  return GrainT(Value() * convert::kGrainsPerLb);
+}
 
 template <>
 template <>
-LbsT::operator SlugT() const;
+constexpr LbsT::operator SlugT() const {
+  return SlugT(Value() / convert::kLbsPerSlug);
+}
 
 template <>
 template <>
-GrainT::operator SlugT() const;
+constexpr GrainT::operator SlugT() const {
+  return SlugT(Value() / (convert::kLbsPerSlug * convert::kGrainsPerLb));
+}
 
 template <>
 template <>
-GramT::operator LbsT() const;
+constexpr GramT::operator LbsT() const {
+  return LbsT(Value() * convert::kLbsPerGram);
+}
 
 template <>
 template <>
-KgT::operator LbsT() const;
+constexpr KgT::operator LbsT() const {
+  return LbsT(Value() * convert::kLbsPerKg);
+}
 
 enum class SectionalDensity : uint8_t {
   kPoundsMassPerSquareInch,
@@ -352,11 +531,15 @@ using KgsmT = StrongT<SectionalDensity,
 
 template <>
 template <>
-KgsmT::operator PmsiT() const;
+constexpr KgsmT::operator PmsiT() const {
+  return PmsiT(Value() * convert::kLbsmPerSqInPerKgPerSqM);
+}
 
 template <>
 template <>
-PmsiT::operator KgsmT() const;
+constexpr PmsiT::operator KgsmT() const {
+  return KgsmT(Value() / convert::kLbsmPerSqInPerKgPerSqM);
+}
 
 enum class Speed : uint8_t {
   kFeetPerSecond,
@@ -374,19 +557,39 @@ using KnT = StrongT<Speed, Speed::kKnot, double>;
 
 template <>
 template <>
-MphT::operator FpsT() const;
+constexpr MphT::operator FpsT() const {
+  return FpsT(Value() * convert::kFpsPerMph);
+}
 
 template <>
 template <>
-MpsT::operator FpsT() const;
+constexpr MpsT::operator FpsT() const {
+  return FpsT(Value() / convert::kMeterPerFoot);
+}
 
 template <>
 template <>
-KphT::operator FpsT() const;
+constexpr KphT::operator FpsT() const {
+  return FpsT(Value() * convert::kFpsPerKph);
+}
 
 template <>
 template <>
-KnT::operator FpsT() const;
+constexpr KnT::operator FpsT() const {
+  return FpsT(Value() * convert::kFpsPerKn);
+}
+
+template <>
+template <>
+constexpr FpsT::operator MpsT() const {
+  return MpsT(Value() * convert::kMeterPerFoot);
+}
+
+template <>
+template <>
+constexpr FpsT::operator MphT() const {
+  return MphT(Value() / convert::kFpsPerMph);
+}
 
 enum class Temperature : uint8_t { kDegreesC, kDegreesF, kDegreesK, kDegreesR };
 using DegCT = StrongT<Temperature, Temperature::kDegreesC, double>;
@@ -396,19 +599,58 @@ using DegRT = StrongT<Temperature, Temperature::kDegreesR, double>;
 
 template <>
 template <>
-DegCT::operator DegFT() const;
+constexpr DegCT::operator DegFT() const {
+  return DegFT(Value() * convert::kDegFPerDegC + convert::kFreezePointDegF);
+}
 
 template <>
 template <>
-DegFT::operator DegCT() const;
+constexpr DegFT::operator DegCT() const {
+  return DegCT((Value() - convert::kFreezePointDegF) / convert::kDegFPerDegC);
+}
 
 template <>
 template <>
-DegFT::operator DegRT() const;
+constexpr DegFT::operator DegRT() const {
+  return DegRT(Value() - convert::kAbsoluteZeroDegF);
+}
 
 template <>
 template <>
-DegKT::operator DegRT() const;
+constexpr DegRT::operator DegFT() const {
+  return DegFT(Value() + convert::kAbsoluteZeroDegF);
+}
+
+template <>
+template <>
+constexpr DegFT::operator DegKT() const {
+  return DegKT((Value() - convert::kFreezePointDegF) / convert::kDegFPerDegC -
+               convert::kAbsoluteZeroDegC);
+}
+
+template <>
+template <>
+constexpr DegKT::operator DegFT() const {
+  return DegFT((Value() + convert::kAbsoluteZeroDegC) * convert::kDegFPerDegC +
+               convert::kFreezePointDegF);
+}
+
+template <>
+template <>
+constexpr DegRT::operator DegKT() const {
+  return DegKT(
+      (Value() + convert::kAbsoluteZeroDegF - convert::kFreezePointDegF) /
+          convert::kDegFPerDegC -
+      convert::kAbsoluteZeroDegC);
+}
+
+template <>
+template <>
+constexpr DegKT::operator DegRT() const {
+  return DegRT((Value() + lob::convert::kAbsoluteZeroDegC) *
+                   convert::kDegFPerDegC -
+               lob::convert::kAbsoluteZeroDegF + convert::kFreezePointDegF);
+}
 
 enum class Time : uint8_t { kMicroseconds, kMilliseconds, kSeconds };
 using UsecT = StrongT<Time, Time::kMicroseconds, double>;
@@ -417,19 +659,27 @@ using SecT = StrongT<Time, Time::kSeconds, double>;
 
 template <>
 template <>
-UsecT::operator SecT() const;
+constexpr UsecT::operator SecT() const {
+  return SecT(Value() / convert::kUsecPerSec);
+}
 
 template <>
 template <>
-SecT::operator UsecT() const;
+constexpr SecT::operator UsecT() const {
+  return UsecT(Value() * convert::kUsecPerSec);
+}
 
 template <>
 template <>
-MsecT::operator SecT() const;
+constexpr MsecT::operator SecT() const {
+  return SecT(Value() / convert::kMsecPerSec);
+}
 
 template <>
 template <>
-SecT::operator MsecT() const;
+constexpr SecT::operator MsecT() const {
+  return MsecT(Value() * convert::kMsecPerSec);
+}
 
 enum class TwistRate : uint8_t { kInchesPerTurn, kMillimetersPerTurn };
 using InchPerTwistT = StrongT<TwistRate, TwistRate::kInchesPerTurn, double>;
@@ -437,7 +687,9 @@ using MmPerTwistT = StrongT<TwistRate, TwistRate::kMillimetersPerTurn, double>;
 
 template <>
 template <>
-MmPerTwistT::operator InchPerTwistT() const;
+constexpr MmPerTwistT::operator InchPerTwistT() const {
+  return InchPerTwistT(Value() * convert::kInchPerMm);
+}
 
 }  // namespace lob
 
@@ -447,66 +699,73 @@ namespace std {
 // specializations for our custom type.
 
 template <typename E, E U, typename T>
-bool isnan(const lob::StrongT<E, U, T>& st) {  // NOLINT
+constexpr bool isnan(const lob::StrongT<E, U, T>& st) {  // NOLINT
   return isnan(st.Value());
 }
 
 template <typename E, E U, typename T>
-lob::StrongT<E, U, T> sqrt(const lob::StrongT<E, U, T>& st) {  // NOLINT
+constexpr lob::StrongT<E, U, T> sqrt(  // NOLINT
+    const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::sqrt(st.Value()));
 }
 
 template <typename E, E U, typename T>
-lob::StrongT<E, U, T> pow(const lob::StrongT<E, U, T>& base,  // NOLINT
-                          const lob::StrongT<E, U, T>& exponent) {
+constexpr lob::StrongT<E, U, T> pow(  // NOLINT
+    const lob::StrongT<E, U, T>& base, const lob::StrongT<E, U, T>& exponent) {
   return lob::StrongT<E, U, T>(std::pow(base.Value(), exponent.Value()));
 }
 
 template <typename E, E U, typename T>
-lob::StrongT<E, U, T> pow(const lob::StrongT<E, U, T>& base,  // NOLINT
-                          double exponent) {
+constexpr lob::StrongT<E, U, T> pow(  // NOLINT
+    const lob::StrongT<E, U, T>& base, double exponent) {
   return lob::StrongT<E, U, T>(std::pow(base.Value(), exponent));
 }
 
 template <typename E, E U, typename T>
-lob::StrongT<E, U, T> sin(const lob::StrongT<E, U, T>& st) {  // NOLINT
+constexpr lob::StrongT<E, U, T> sin(  // NOLINT
+    const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::sin(st.Value()));
 }
 
 template <typename E, E U, typename T>
-lob::StrongT<E, U, T> cos(const lob::StrongT<E, U, T>& st) {  // NOLINT
+constexpr lob::StrongT<E, U, T> cos(  // NOLINT
+    const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::cos(st.Value()));
 }
 
 template <typename E, E U, typename T>
-lob::StrongT<E, U, T> tan(const lob::StrongT<E, U, T>& st) {  // NOLINT
+constexpr lob::StrongT<E, U, T> tan(  // NOLINT
+    const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::tan(st.Value()));
 }
 
 template <typename E, E U, typename T>
-lob::StrongT<E, U, T> asin(const lob::StrongT<E, U, T>& st) {  // NOLINT
+constexpr lob::StrongT<E, U, T> asin(  // NOLINT
+    const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::asin(st.Value()));
 }
 
 template <typename E, E U, typename T>
-lob::StrongT<E, U, T> acos(const lob::StrongT<E, U, T>& st) {  // NOLINT
+constexpr lob::StrongT<E, U, T> acos(  // NOLINT
+    const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::acos(st.Value()));
 }
 
 template <typename E, E U, typename T>
-lob::StrongT<E, U, T> atan(const lob::StrongT<E, U, T>& st) {  // NOLINT
+constexpr lob::StrongT<E, U, T> atan(  // NOLINT
+    const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::atan(st.Value()));
 }
 
 template <typename E, E U, typename T>
-lob::StrongT<E, U, T> min(const lob::StrongT<E, U, T>& a,  // NOLINT
-                          const lob::StrongT<E, U, T>& b) {
+constexpr lob::StrongT<E, U, T> min(const lob::StrongT<E, U, T>& a,  // NOLINT
+                                    const lob::StrongT<E, U, T>& b) {
   return lob::StrongT<E, U, T>(std::min(a.Value(), b.Value()));
 }
 
 template <typename E, E U, typename T>
-lob::StrongT<E, U, T> max(const lob::StrongT<E, U, T>& a,  // NOLINT
-                          const lob::StrongT<E, U, T>& b) {
+constexpr lob::StrongT<E, U, T> max(const lob::StrongT<E, U, T>& a,  // NOLINT
+                                    const lob::StrongT<E, U, T>& b) {
   return lob::StrongT<E, U, T>(std::max(a.Value(), b.Value()));
 }
 

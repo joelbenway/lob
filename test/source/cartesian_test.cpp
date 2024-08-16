@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-namespace testing {
+namespace tests {
 
 TEST(CartesianTypeTests, CartesianTConstructors) {
   const double kVal2 = 5.0;
@@ -89,7 +89,7 @@ TEST(CartesianTypeTests, CartesianTMagnitude) {
   EXPECT_DOUBLE_EQ(kTest3.Magnitude(), kExpectedMagnitude);
 }
 
-}  // namespace testing
+}  // namespace tests
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

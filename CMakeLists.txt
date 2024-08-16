@@ -10,6 +10,13 @@ project(
     LANGUAGES CXX
 )
 
+set(PROJECT_VERSION "${PROJECT_VERSION}")
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/source/version.hpp.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/include/version.hpp"
+)
+
 include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 
@@ -18,7 +25,6 @@ include(cmake/variables.cmake)
 add_library(
     lob_lob
     source/lob.cpp
-    source/eng_units.cpp
     source/calc.cpp
     source/cartesian.cpp
     source/ode.cpp
@@ -51,6 +57,12 @@ target_include_directories(
     lob_lob ${warning_guard}
     PUBLIC
     "\$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+)
+
+target_include_directories(
+    lob_lob ${warning_guard}
+    PUBLIC
+    "\$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>"
 )
 
 target_include_directories(
