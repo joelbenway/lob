@@ -693,8 +693,7 @@ constexpr MmPerTwistT::operator InchPerTwistT() const {
 
 }  // namespace lob
 
-namespace std {
-
+namespace std {  // NOLINT
 // Static analyzers don't like modifications to std but this is just to allow
 // specializations for our custom type.
 

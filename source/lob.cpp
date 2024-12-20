@@ -24,8 +24,13 @@
 namespace lob {
 
 namespace {
-constexpr uint16_t ToU16(double x) {
-  return static_cast<uint16_t>(std::round(x));
+constexpr uint32_t ToU32(double x) {
+  return static_cast<uint32_t>(std::round(x));
+}
+
+template <typename T>
+constexpr bool IsNearZero(T x) {
+  return std::abs(x) <= std::numeric_limits<T>::epsilon();
 }
 }  // namespace
 
@@ -617,19 +622,19 @@ size_t Lob::Impl::FullSolve(Lob::Solution* psolution, uint16_t* pranges,
 
 void Lob::Impl::SaveSolution(Lob::Solution* psolution, const SpvT& s,
                              const SecT& t) const {
-  psolution->range = ToU16(YardT(s.P().X()).Value());
+  psolution->range = ToU32(YardT(s.P().X()).Value());
 
-  psolution->velocity = ToU16(s.V().Magnitude().Value());
+  psolution->velocity = ToU32(s.V().Magnitude().Value());
 
   psolution->energy =
-      ToU16(CalculateKineticEnergy(s.V().Magnitude(), mass_lbs_).Value());
+      ToU32(CalculateKineticEnergy(s.V().Magnitude(), mass_lbs_).Value());
 
   psolution->elevation_distance =
       static_cast<float>(InchT(s.P().Y() - optic_height_ft_).Value());
 
   const double kAngle = RadiansT(MoaT(1)).Value();
 
-  if (InchT(s.P().X()).Value() == 0) {
+  if (IsNearZero(InchT(s.P().X()).Value())) {
     psolution->elevation_adjustments = 0;
   } else {
     psolution->elevation_adjustments =
@@ -647,7 +652,7 @@ void Lob::Impl::SaveSolution(Lob::Solution* psolution, const SpvT& s,
   psolution->windage_distance =
       static_cast<float>(InchT(s.P().Z() + spin_drift).Value());
 
-  if (InchT(s.P().X()).Value() == 0) {
+  if (IsNearZero(InchT(s.P().X()).Value())) {
     psolution->windage_adjustments = 0;
   } else {
     psolution->windage_adjustments =
@@ -685,11 +690,11 @@ float Lob::GetZeroAngleMOA() const {
 }
 
 Lob::Solution Lob::Solve() const {
-  Lob::Solution solution = {0};
+  Lob::Solution solution = {0, 0, 0, 0, 0, 0, 0, 0};
   uint16_t range = 0;
 
   if (!std::isnan(Pimpl()->target_distance_ft_)) {
-    range = ToU16(Pimpl()->target_distance_ft_.Value());
+    range = ToU32(Pimpl()->target_distance_ft_.Value());
   }
 
   Pimpl()->FullSolve(&solution, &range, 1);
@@ -710,7 +715,7 @@ size_t Lob::Solve(Lob::Solution* psolution, const uint16_t* pranges,
     bool values_are_in_range = true;
 
     for (size_t i = 0; i < length; i++) {
-      ranges[i] = ToU16(FeetT(YardT(pranges[i])).Value());
+      ranges[i] = ToU32(FeetT(YardT(pranges[i])).Value());
     }
 
     for (size_t i = 1; i < length; i++) {
@@ -734,7 +739,7 @@ size_t Lob::Solve(Lob::Solution* psolution, const uint16_t* pranges,
   }
 
   for (size_t i = 0; i < length; i++) {
-    ranges[i] = ToU16(Pimpl()->target_distance_ft_.Value()) * (i + 1) / length;
+    ranges[i] = ToU32(Pimpl()->target_distance_ft_.Value()) * (i + 1) / length;
   }
 
   // NOLINTNEXTLINE implicitly decay an array into a pointer

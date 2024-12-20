@@ -36,6 +36,22 @@ enum class ClockAngleT : uint8_t {
   kIV
 };
 
+/*
+template <size_t SIZE>
+struct Input {
+  
+
+};
+
+struct Output {
+
+};
+
+bool Verify(const Input& in);
+
+bool Solve(const Input& in, const Output& out);
+*/
+
 class LOB_EXPORT Lob {
  public:
   Lob(Lob&& other) noexcept;
