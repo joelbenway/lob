@@ -6,49 +6,47 @@
 
   inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1.*.tar.gz";
 
-  outputs = { self, nixpkgs }:
-    let
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
-      forEachSupportedSystem = f: nixpkgs.lib.genAttrs supportedSystems (system: f {
-        pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
-      });
-    in
-    {
-      devShells = forEachSupportedSystem ({ pkgs }: {
-        default = pkgs.mkShell.override {
+  outputs = {
+    self,
+    nixpkgs,
+  }: let
+    supportedSystems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
+    forEachSupportedSystem = f:
+      nixpkgs.lib.genAttrs supportedSystems (system:
+        f {
+          pkgs = import nixpkgs {
+            inherit system;
+            # config.allowUnfree = true;
+          };
+        });
+  in {
+    devShells = forEachSupportedSystem ({pkgs}: {
+      default =
+        pkgs.mkShell.override {
           # Override stdenv in order to change compiler:
           # stdenv = pkgs.clangStdenv;
         }
         {
-          packages = with pkgs; [
-            # Development Tools
-            clang-tools
-            cmake
-            codespell
-            cppcheck
-            doxygen
-            lcov
-            mold
-            ninja
-            (vscode-with-extensions.override {
-              vscode = vscodium;
-              vscodeExtensions = with vscode-extensions; [
-                  bbenoist.nix
-                  brettm12345.nixfmt-vscode
-                  mkhl.direnv
-                  llvm-vs-code-extensions.vscode-clangd
-                  ms-vscode.cmake-tools
-                  ms-vscode.cpptools
-                  ms-vscode-remote.remote-ssh
-                  twxs.cmake
-                ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [{
-                  name = "remote-ssh-edit";
-                  publisher = "ms-vscode-remote";
-                  version = "0.47.2";
-                  sha256 = "1hp6gjh4xp2m1xlm1jsdzxw9d8frkiidhph6nvl24d0h8z34w49g";
-                }];
-            })
-          ] ++ (if system == "aarch64-darwin" then [ ] else [ gdb ]);
+          packages = with pkgs;
+            [
+              # Development Tools
+              clang-tools
+              cmake
+              codespell
+              cppcheck
+              doxygen
+              lcov
+              mold
+              ninja
+              python311
+              python311Packages.jinja2
+              python311Packages.pygments
+            ]
+            ++ (
+              if system == "aarch64-darwin"
+              then []
+              else [gdb]
+            );
           shellHook = let
             inherit (pkgs) stdenv;
             projectName = "lob";
@@ -57,9 +55,13 @@
             snowflake = "\\342\\235\\204";
             bold = "\\[\\033[01m\\]";
             reset = "\\[$(tput sgr0)\\]";
-            sourceDir = "\${sourceDir}";
             filename = "CMakeUserPresets.json";
-            os = if stdenv.isLinux then "linux" else if stdenv.isDarwin then "darwin" else "<os>";
+            os =
+              if stdenv.isLinux
+              then "linux"
+              else if stdenv.isDarwin
+              then "darwin"
+              else "<os>";
           in ''
             export PS1="${white}[${reset}${blue}\w${reset}${white}] ${bold}${projectName} ${blue}${snowflake} ${reset}"
 
@@ -77,13 +79,13 @@
                 {
                   "name": "dev",
                   "binaryDir": "/build/dev",
-                  "inherits": ["dev-mode", "clang-tidy", "cppcheck", "ci-${os}"],
+                  "inherits": ["dev-mode", "ci-${os}"],
                   "generator": "Ninja",
                   "cacheVariables": {
                     "CMAKE_BUILD_TYPE": "Debug",
                     "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                     "CMAKE_CXX_FLAGS": "-Og -g3",
-                    "CMAKE_LINKER_TYPE": "mold"
+                    "CMAKE_LINKER_TYPE": "MOLD"
                   }
                 }
               ],
@@ -121,19 +123,17 @@
             fi
           '';
         };
-      });
-    };
+    });
+  };
 }
-
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+

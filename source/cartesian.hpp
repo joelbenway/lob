@@ -14,14 +14,14 @@ namespace lob {
 template <typename T>
 class CartesianT {
  public:
-  CartesianT() = default;
-  CartesianT(T x, T y, T z)  // NOLINT
+  constexpr CartesianT() = default;
+  constexpr CartesianT(T x, T y, T z)  // NOLINT
       : x_(std::move(x)), y_(std::move(y)), z_(std::move(z)) {}
-  explicit CartesianT(T value) : x_(value), y_(value), z_(value) {}
-  CartesianT(const CartesianT& other) = default;
-  CartesianT(CartesianT&& other) noexcept = default;
+  constexpr explicit CartesianT(T value) : x_(value), y_(value), z_(value) {}
+  constexpr CartesianT(const CartesianT& other) = default;
+  constexpr CartesianT(CartesianT&& other) noexcept = default;
   ~CartesianT() = default;
-  CartesianT& operator=(const CartesianT& rhs) {
+  constexpr CartesianT& operator=(const CartesianT& rhs) {
     if (this != &rhs) {
       x_ = rhs.x_;
       y_ = rhs.y_;
@@ -29,7 +29,7 @@ class CartesianT {
     }
     return *this;
   }
-  CartesianT& operator=(CartesianT&& rhs) noexcept {
+  constexpr CartesianT& operator=(CartesianT&& rhs) noexcept {
     if (this != &rhs) {
       x_ = rhs.x_;
       y_ = rhs.y_;
@@ -42,39 +42,39 @@ class CartesianT {
   }
 
   // Arithmetic operators
-  CartesianT operator+(const CartesianT& rhs) const {
+  constexpr CartesianT operator+(const CartesianT& rhs) const {
     return CartesianT{x_ + rhs.x_, y_ + rhs.y_, z_ + rhs.z_};
   }
-  CartesianT operator+(const T& rhs) const {
+  constexpr CartesianT operator+(const T& rhs) const {
     return CartesianT{x_ + rhs, y_ + rhs, z_ + rhs};
   }
-  CartesianT operator-(const CartesianT& rhs) const {
+  constexpr CartesianT operator-(const CartesianT& rhs) const {
     return CartesianT{x_ - rhs.x_, y_ - rhs.y_, z_ - rhs.z_};
   }
-  CartesianT operator-(const T& rhs) const {
+  constexpr CartesianT operator-(const T& rhs) const {
     return CartesianT{x_ - rhs, y_ - rhs, z_ - rhs};
   }
-  CartesianT operator*(const CartesianT& rhs) const {
+  constexpr CartesianT operator*(const CartesianT& rhs) const {
     return CartesianT{x_ * rhs.x_, y_ * rhs.y_, z_ * rhs.z_};
   }
-  CartesianT operator*(const T& rhs) const {
+  constexpr CartesianT operator*(const T& rhs) const {
     return CartesianT{x_ * rhs, y_ * rhs, z_ * rhs};
   }
-  CartesianT operator/(const CartesianT& rhs) const {
+  constexpr CartesianT operator/(const CartesianT& rhs) const {
     return CartesianT{x_ / rhs.x_, y_ / rhs.y_, z_ / rhs.z_};
   }
-  CartesianT operator/(const T& rhs) const {
+  constexpr CartesianT operator/(const T& rhs) const {
     return CartesianT{x_ / rhs, y_ / rhs, z_ / rhs};
   }
 
-  T X() const { return x_; }
-  T Y() const { return y_; }
-  T Z() const { return z_; }
-  void X(const T& x_in) { x_ = x_in; }
-  void Y(const T& y_in) { y_ = y_in; }
-  void Z(const T& z_in) { z_ = z_in; }
+  constexpr T X() const { return x_; }
+  constexpr T Y() const { return y_; }
+  constexpr T Z() const { return z_; }
+  constexpr void X(const T& x_in) { x_ = x_in; }
+  constexpr void Y(const T& y_in) { y_ = y_in; }
+  constexpr void Z(const T& z_in) { z_ = z_in; }
 
-  T Magnitude() const {
+  constexpr T Magnitude() const {
     return std::sqrt(std::pow(x_, 2) + std::pow(y_, 2) + std::pow(z_, 2));
   }
 
@@ -83,9 +83,16 @@ class CartesianT {
 };
 
 template <>
-FeetT CartesianT<FeetT>::Magnitude() const;
+constexpr FeetT CartesianT<FeetT>::Magnitude() const {
+  return FeetT(std::sqrt(std::pow(x_.Value(), 2) + std::pow(y_.Value(), 2) +
+                         std::pow(z_.Value(), 2)));
+}
+
 template <>
-FpsT CartesianT<FpsT>::Magnitude() const;
+constexpr FpsT CartesianT<FpsT>::Magnitude() const {
+  return FpsT(std::sqrt(std::pow(x_.Value(), 2) + std::pow(y_.Value(), 2) +
+                        std::pow(z_.Value(), 2)));
+}
 
 }  // namespace lob
 

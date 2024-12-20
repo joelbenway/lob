@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -14,23 +15,20 @@
 namespace tests {
 
 struct LobWindTestFixture : public testing::Test {
-  friend class lob::Lob;
-
   // Unit under test
   std::unique_ptr<lob::Lob> puut;
 
   LobWindTestFixture() : puut(nullptr) {}
 
   void SetUp() override {
-    if (puut != nullptr) {
-      puut = nullptr;
-    }
+    puut.reset();
+    ASSERT_EQ(puut, nullptr);
 
     const double kTestBC = 0.425;
     const double kTestDiameter = 0.308;
     const double kTestWeight = 180.0;
     const double kTestMuzzleVelocity = 3000.0;
-    const double kTestZero = 100.0;
+    const double kTestZeroAngle = 3.38;
     const double kTestOpticHeight = 1.5;
     const double kTestTargetDistance = 1000.0;
 
@@ -40,34 +38,36 @@ struct LobWindTestFixture : public testing::Test {
                .DiameterInch(kTestDiameter)
                .MassGrains(kTestWeight)
                .InitialVelocityFps(kTestMuzzleVelocity)
-               .ZeroDistanceYds(kTestZero)
+               .ZeroAngleMOA(kTestZeroAngle)
                .OpticHeightInches(kTestOpticHeight)
                .TargetDistanceYds(kTestTargetDistance)
                .Build();
+
+    ASSERT_NE(puut, nullptr);
   }
 
   void TearDown() override {
-    if (puut == nullptr) {
-      return;
-    }
-
-    puut = nullptr;
+    puut.reset();
+    ASSERT_EQ(puut, nullptr);
   }
 };
 
 TEST_F(LobWindTestFixture, ZeroAngleSearch) {
   ASSERT_NE(puut, nullptr);
-  const float kExpectedZA = 3.38F;
-  const float kZA = puut->GetZeroAngleMOA();
-  const float kError = 0.1F;
-  EXPECT_NEAR(kZA, kExpectedZA, kError);
+  const float kZeroDistanceYards = 100;
+  auto puut2 = lob::Lob::Builder(*puut)
+                   .ZeroAngleMOA(std::numeric_limits<double>::quiet_NaN())
+                   .ZeroDistanceYds(kZeroDistanceYards)
+                   .Build();
+  const float kError = 0.01F;
+  EXPECT_NEAR(puut->GetZeroAngleMOA(), puut2->GetZeroAngleMOA(), kError);
 }
 
 TEST_F(LobWindTestFixture, GetAirDensityLbsPerCuFt) {
   ASSERT_NE(puut, nullptr);
-  const float kExpectedFps = 0.0764742;
+  const float kExpectedLbsPerCuFt = 0.0764742;
   const float kError = 0.001;
-  EXPECT_NEAR(puut->GetAirDensityLbsPerCuFt(), kExpectedFps, kError);
+  EXPECT_NEAR(puut->GetAirDensityLbsPerCuFt(), kExpectedLbsPerCuFt, kError);
 }
 
 TEST_F(LobWindTestFixture, GetSpeedOfSoundFps) {
@@ -77,7 +77,7 @@ TEST_F(LobWindTestFixture, GetSpeedOfSoundFps) {
   EXPECT_NEAR(puut->GetSpeedOfSoundFps(), kExpectedFps, kError);
 }
 
-TEST_F(LobWindTestFixture, SolveAtICAOAtmosphere) {
+TEST_F(LobWindTestFixture, SolveWithoutWind) {
   ASSERT_NE(puut, nullptr);
   // NOLINTNEXTLINE c-style array
   const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
@@ -149,6 +149,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIII) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
@@ -190,6 +191,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindV) {
@@ -231,6 +233,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindV) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
@@ -272,6 +275,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
@@ -313,6 +317,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
@@ -354,6 +359,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
@@ -395,6 +401,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindX) {
@@ -436,6 +443,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindX) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
@@ -477,6 +485,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
@@ -518,6 +527,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindI) {
@@ -559,6 +569,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindI) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindII) {
@@ -600,6 +611,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindII) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
@@ -637,6 +649,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
                 kExpected[i].windage_adjustments, 0.1);
     EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
   }
+  puut2.reset();
 }
 
 }  // namespace tests

@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -14,8 +15,6 @@
 namespace tests {
 
 struct LobEnvTestFixture : public testing::Test {
-  friend class lob::Lob;
-
   // Unit under test
   std::unique_ptr<lob::Lob> puut;
 
@@ -23,6 +22,7 @@ struct LobEnvTestFixture : public testing::Test {
 
   void SetUp() override {
     if (puut != nullptr) {
+      puut.reset();
       puut = nullptr;
     }
 
@@ -31,7 +31,7 @@ struct LobEnvTestFixture : public testing::Test {
     const double kTestDiameter = 0.308;
     const double kTestWeight = 155.0;
     const double kTestMuzzleVelocity = 2800.0;
-    const double kTestZero = 100.0;
+    const double kTestZeroAngle = 3.66;
     const double kTestOpticHeight = 1.5;
     const double kTestTargetDistance = 1000.0;
 
@@ -42,13 +42,14 @@ struct LobEnvTestFixture : public testing::Test {
                .DiameterInch(kTestDiameter)
                .MassGrains(kTestWeight)
                .InitialVelocityFps(kTestMuzzleVelocity)
-               .ZeroDistanceYds(kTestZero)
+               .ZeroAngleMOA(kTestZeroAngle)
                .OpticHeightInches(kTestOpticHeight)
                .TargetDistanceYds(kTestTargetDistance)
                .Build();
   }
 
   void TearDown() override {
+    puut.reset();
     if (puut == nullptr) {
       return;
     }
@@ -59,10 +60,16 @@ struct LobEnvTestFixture : public testing::Test {
 
 TEST_F(LobEnvTestFixture, ZeroAngleSearch) {
   ASSERT_NE(puut, nullptr);
-  const float kExpectedZA = 3.66F;
-  const float kZA = puut->GetZeroAngleMOA();
-  const float kError = 0.1F;
-  EXPECT_NEAR(kZA, kExpectedZA, kError);
+  const double kZeroRange = 100;
+  auto puut2 = lob::Lob::Builder(*puut)
+                   .ZeroAngleMOA(std::numeric_limits<double>::quiet_NaN())
+                   .ZeroDistanceYds(kZeroRange)
+                   .Build();
+  ASSERT_NE(puut2, nullptr);
+  const float kZA = puut2->GetZeroAngleMOA();
+  const float kError = 0.01F;
+  EXPECT_NEAR(puut->GetZeroAngleMOA(), puut2->GetZeroAngleMOA(), kError);
+  puut2.reset();
 }
 
 TEST_F(LobEnvTestFixture, GetAirDensityLbsPerCuFt) {

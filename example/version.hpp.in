@@ -4,11 +4,9 @@
 
 #pragma once
 
-// NOLINTBEGIN
 namespace example {
-constexpr char* kProjectVersion = "@PROJECT_VERSION@";
+constexpr const char* kProjectVersion = "@PROJECT_VERSION@";
 }  // namespace example
-// NOLINTEND
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

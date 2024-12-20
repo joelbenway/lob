@@ -11,13 +11,13 @@ namespace lob {
 
 // Generic implementation of Euler's method
 template <typename T, typename Y, typename F>
-Y EulerStep(const T& t_i, const Y& y_i, T dt, const F& f) {
+constexpr Y EulerStep(const T& t_i, const Y& y_i, T dt, const F& f) {
   return y_i + f(t_i, y_i) * dt;
 }
 
 // Generic implementation of Heun's method
 template <typename T, typename Y, typename F>
-Y HeunStep(const T& t_i, const Y& y_i, T dt, const F& f) {
+constexpr Y HeunStep(const T& t_i, const Y& y_i, T dt, const F& f) {
   const T kQuanta = dt / 2;
   const Y k1 = f(t_i, y_i);
   const Y k2 = f(t_i + dt, y_i + k1 * dt);
@@ -26,7 +26,7 @@ Y HeunStep(const T& t_i, const Y& y_i, T dt, const F& f) {
 
 // Generic implementation of fourth order Runge-Kutta method
 template <typename T, typename Y, typename F>
-Y RungeKuttaStep(const T& t_i, const Y& y_i, T dt, const F& f) {
+constexpr Y RungeKuttaStep(const T& t_i, const Y& y_i, T dt, const F& f) {
   const T kHalfStep = dt / 2;
   const T kQuanta = dt / 6;
   const Y k1 = f(t_i, y_i);
@@ -36,30 +36,57 @@ Y RungeKuttaStep(const T& t_i, const Y& y_i, T dt, const F& f) {
   return y_i + (k1 + k2 * 2 + k3 * 2 + k4) * kQuanta;
 }
 
-// Numerical method friendly container for velocity and posiiton
-struct SpvT {
-  SpvT();
-  SpvT(CartesianT<FeetT> p, CartesianT<FpsT> v);
-  SpvT(const SpvT& other);
-  SpvT(SpvT&& other) noexcept;
+// Numerical method friendly container for velocity_ and posiiton
+class SpvT {
+ public:
+  constexpr SpvT();
+  constexpr SpvT(CartesianT<FeetT> p, CartesianT<FpsT> v)
+      : position_(std::move(p)), velocity_(std::move(v)) {}
+  constexpr SpvT(const SpvT& other) = default;
+  constexpr SpvT(SpvT&& other) noexcept = default;
+  constexpr SpvT& operator=(const SpvT& rhs) {
+    if (this != &rhs) {
+      position_ = rhs.position_;
+      velocity_ = rhs.velocity_;
+    }
+    return *this;
+  }
   ~SpvT() = default;
-  SpvT& operator=(const SpvT& rhs);
-  SpvT& operator=(SpvT&& rhs) noexcept;
+  constexpr SpvT& operator=(SpvT&& rhs) noexcept {
+    if (this != &rhs) {
+      position_ = rhs.position_;
+      velocity_ = rhs.velocity_;
+      rhs.position_ = CartesianT<FeetT>(FeetT(0));
+      rhs.velocity_ = CartesianT<FpsT>(FpsT(0));
+    }
+    return *this;
+  }
 
-  SpvT operator+(const SpvT& rhs) const;
-  SpvT operator+(const double& rhs) const;
-  SpvT operator*(const SpvT& rhs) const;
-  SpvT operator*(const double& rhs) const;
+  constexpr SpvT operator+(const SpvT& rhs) const {
+    return SpvT{position_ + rhs.position_, velocity_ + rhs.velocity_};
+  }
+  constexpr SpvT operator+(const double& rhs) const {
+    return SpvT{position_ + FeetT(rhs), velocity_ + FpsT(rhs)};
+  }
+  constexpr SpvT operator*(const SpvT& rhs) const {
+    return SpvT{position_ + rhs.position_, velocity_ * rhs.velocity_};
+  }
+  constexpr SpvT operator*(const double& rhs) const {
+    return SpvT{position_ * FeetT(rhs), velocity_ * FpsT(rhs)};
+  }
 
-  CartesianT<FeetT> P() const;
-  void P(FeetT input);
-  void P(double input);
-  CartesianT<FpsT> V() const;
-  void V(FpsT input);
-  void V(double input);
+  constexpr CartesianT<FeetT> P() const { return position_; }
+  constexpr void P(FeetT input) { position_ = CartesianT<FeetT>(input); }
+  constexpr void P(double input) {
+    position_ = CartesianT<FeetT>(FeetT(input));
+  }
+  constexpr CartesianT<FpsT> V() const { return velocity_; }
+  constexpr void V(FpsT input) { velocity_ = CartesianT<FpsT>(input); }
+  constexpr void V(double input) { velocity_ = CartesianT<FpsT>(FpsT(input)); }
 
-  CartesianT<FeetT> position;
-  CartesianT<FpsT> velocity;
+ private:
+  CartesianT<FeetT> position_;
+  CartesianT<FpsT> velocity_;
 };
 
 }  // namespace lob

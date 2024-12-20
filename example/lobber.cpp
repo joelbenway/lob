@@ -291,8 +291,7 @@ void PlotSolution(const lob::Lob::Solution solutions[], size_t size) {
   std::vector<std::vector<char>> plot(kHeight, std::vector<char>(kWidth, ' '));
 
   for (size_t i = 0; i < x.size(); i++) {
-    const int kXpos =
-        static_cast<int>((x.at(i) - kXmin) * (kWidth - 1) / (kXmax - kXmin));
+    const int kXpos = (x.at(i) - kXmin) * (kWidth - 1) / (kXmax - kXmin);
     int y_pos =
         static_cast<int>((y.at(i) - kYmin) * (kHeight - 1) / (kYmax - kYmin));
     y_pos = kHeight - 1 - y_pos;  // Invert y-axis

@@ -343,7 +343,7 @@ class LOB_EXPORT Lob {
 
    private:
     LOB_SUPPRESS_C4251
-    std::unique_ptr<Lob> plob_{};
+    std::unique_ptr<Lob> plob_;
   };  // class Builder
 
   /**

@@ -25,9 +25,6 @@ include(cmake/variables.cmake)
 add_library(
     lob_lob
     source/lob.cpp
-    source/calc.cpp
-    source/cartesian.cpp
-    source/ode.cpp
 )
 add_library(lob::lob ALIAS lob_lob)
 

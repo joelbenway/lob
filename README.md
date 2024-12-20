@@ -4,9 +4,14 @@ This is lob, a project that aims to create a useful and free exterior ballistics
 
 ## Design
 
-In the design space lob was intended to be easy to work with, accurate, and fast in that order. Ballistics solutions require many inputs to model all the factors affecting the trajectory of a projectile. Making the most of imperfect or incomplete data is a central goal of lob. Maybe the best environmental data avaialable is from the wrong altitude, lob should adjust it for you. Maybe you know X and Y but not Z. Lob should make an informed estimate on Z or substitude a less demanding formula that doesn't require it. Give lob whatever you do know and it will do its best to fill the gaps with frog DNA! :sauropod:
+#### Goals
+In the design space lob was intended to be easy to work with, accurate, and fast in that order. Ballistics solutions require many inputs to model all the factors affecting the trajectory of a projectile. Making the most of imperfect or incomplete data is a central goal of lob. Maybe the best environmental data available is from the wrong altitude, lob should adjust it for you. Maybe you know X and Y but not Z. Lob should make an informed estimate on Z or substitute a less demanding formula that doesn't require it. Give lob whatever you do know and it will do its best to fill the gaps with frog DNA! :sauropod:
 
-Under the hood lob solves ordinary differental equations (ODEs) which model the projectile motion of a point mass. It does this using a numberical method--a common approach among commercial solvers. What is less common is implementing these methods in industrial strength C++, writing unit tests for each piece along the way, and releasing it as open source software. :mechanical_arm:
+#### Mathematics
+Under the hood lob solves ordinary differental equations (ODEs) which model the projectile motion of a point mass. It does this using a numerical method--a common approach among commercial solvers. What is less common is implementing these methods in industrial strength C++, writing unit tests for each piece along the way, and releasing it as open source software. :mechanical_arm:
+
+#### Software
+Some notable bits of lob's software design are the builder and pimpl patterns apparent in [lob.hpp](include/lob/lob.hpp). The builder pattern provides a nice abstracton for a solver that requires so much configuration. The pimpl pattern is appreciated for it's thouough separation of interface and implementation details. The hope was that this would make the library more user friendly. 
 
 ## Features
 
@@ -33,7 +38,7 @@ In addition to ballistic solutions, lob provides some of the instrumental values
 
 :wave: If you're a human, hi. I've been an embedded software engineer since 2012. I wrote lob in the precious moments after my three little girls were in bed when I should have been cleaning up. Our family currently lives in an old house in Milwaukee, Wisconsin. :sunrise:
 
-This project was a playground for me to further explore a few technologies I already use as a professional and get some of my work out in the wild for others to evaluate and use. A side effect is that I learned quite a bit about exterior ballistics! If you're interested in contacting me about your project please do reach out.
+This project was a playground for me to further explore a few technologies I already use as a professional as well as to get some of my work out in the wild for others to evaluate and maybe even use! As a side effect of this project I learned quite a bit about exterior ballistics. If you're interested in contacting me about your project please do reach out.
 
 ## Resources
 

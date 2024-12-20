@@ -24,7 +24,9 @@
 namespace lob {
 
 namespace {
-uint16_t ToU16(double x) { return static_cast<uint16_t>(std::round(x)); }
+constexpr uint16_t ToU16(double x) {
+  return static_cast<uint16_t>(std::round(x));
+}
 }  // namespace
 
 const char* Version() { return kProjectVersion; }
@@ -462,7 +464,7 @@ void Lob::Impl::InitializeAdvancedMembers() {
 
   if (!std::isnan(azimuth_rad_) && !std::isnan(latitude_rad_)) {
     // Coriolis Effect Page 178 of Modern Exterior Ballistics - McCoy
-    constexpr double kAngularVelocityOfEarth = 7.292115E5;  // Radians/Sec
+    constexpr double kAngularVelocityOfEarth = 7.292115E-5;  // Radians/Sec
     const double kCosL = std::cos(latitude_rad_).Value();
     const double kSinA = std::sin(azimuth_rad_).Value();
     const double kSinL = std::sin(latitude_rad_).Value();
@@ -479,10 +481,8 @@ void Lob::Impl::InitializeAdvancedMembers() {
 }
 
 double Lob::Impl::GetCoefficentOfDrag(const FpsT speed) const {
-  static size_t index = kTableSize - 1;
   const auto kMachSpeed = (speed / local_speed_of_sound_fps_).Value();
-  const double kCd =
-      LobLerp(kMachValues, *pdrag_coefficent_lut_, kMachSpeed, &index);
+  const double kCd = LobLerp(kMachValues, *pdrag_coefficent_lut_, kMachSpeed);
   return coefficent_of_drag_coefficent_ * kCd;
 }
 
@@ -513,9 +513,9 @@ void Lob::Impl::SolveStep(SpvT* ps, SecT* pt) const {
     const auto kScalarVelocity = (s.V() - kWind).Magnitude();
     CartesianT<FpsT> velocity =
         (s.V() - kWind) * FpsT(-1 * cd) * kScalarVelocity;
-    velocity.X(velocity.X() - velocity.Y() * kClSa - velocity.Z() * kSl);
-    velocity.Y(velocity.Y() + velocity.X() * kClSa + velocity.Z() * kClCa);
-    velocity.Z(velocity.Z() + velocity.X() * kSl - velocity.Y() * kClCa);
+    velocity.X(velocity.X() - s.V().Y() * kClSa - s.V().Z() * kSl);
+    velocity.Y(velocity.Y() + s.V().X() * kClSa + s.V().Z() * kClCa);
+    velocity.Z(velocity.Z() + s.V().X() * kSl - s.V().Y() * kClCa);
     velocity.X(velocity.X() + kGravity.X().Value());
     velocity.Y(velocity.Y() + kGravity.Y().Value());
     return SpvT{kPosition, velocity};
@@ -535,7 +535,7 @@ void Lob::Impl::SolveStep(SpvT* ps, SecT* pt) const {
 }
 
 RadiansT Lob::Impl::ZeroAngleSearch() {
-  constexpr RadiansT kZeroAngleError = MoaT(0.01);
+  constexpr RadiansT kZeroAngleError = MoaT(0.001);
   constexpr RadiansT kMaxZeroAngle = DegreesT(45);
   constexpr RadiansT kMinZeroAngle = DegreesT(0.0);
   RadiansT high_angle = kMaxZeroAngle;

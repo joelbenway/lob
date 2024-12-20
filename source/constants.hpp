@@ -24,16 +24,6 @@ constexpr double kArmyToIcaoBcConversionFactor = 0.982;
 
 }  // namespace lob
 
-/*
-Lob is not trying to marshal contributors, a community, or even users but what
-collaboration exists shall govern itself according to the Scout Oath and Scout
-Law as championed by the Boy Scouts of America. These and similar doctrines used
-by scouting organizations worldwide have a proven history of cultivating growth,
-strong character, and a fun environment among boys and men alike. These are
-welcome outcomes for an open source software project. They also have the benefit
-of already being memorized by lob's author.
-*/
-
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or

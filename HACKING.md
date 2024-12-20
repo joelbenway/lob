@@ -8,7 +8,7 @@ guide.
 
 ## TL;DR The Nix way
 
-A declaritive development environment for this project is available via the
+A declarative development environment for this project is available via the
 [Nix][1] package manager on both linux and mac systems through the included
 [flake](flake.nix). With Nix installed and flakes enabled invoke ```nix
 develop``` in the root project directory. Nix will fetch all the same
@@ -17,7 +17,7 @@ development tools used to author this project and even generate a
 of [VSCodium][2] preconfigured with relevant extensions specifically for this
 project. Included is a build system comprised from [CMake][3], [Ninja][4], and
 [Mold][5]. Other utilities include [clangd, clang-format, clang-tidy][6],
-[codespell][7], [cppcheck][8], [doxygen][9](), and [lcov][10]. Note that despite
+[codespell][7], [cppcheck][8], [doxygen][9], and [lcov][10]. Note that despite
 all of the tools mentioned being FOSS, this flake does enable unfree software
 for certain Microsoft VSCode plugins used with VSCodium.
 
