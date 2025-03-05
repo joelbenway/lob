@@ -30,13 +30,16 @@ FetchContent_MakeAvailable(googletest)
 add_executable(
   lob_test
   source/lob_test.cpp
-  source/lob_wind_test.cpp
-  source/lob_env_test.cpp
+  source/lob_builder_test.cpp
   source/lob_coriolis_test.cpp
+  source/lob_env_test.cpp
+  source/lob_spin_test.cpp
+  source/lob_wind_test.cpp
   source/calc_test.cpp
   source/cartesian_test.cpp
-  source/ode_test.cpp
   source/eng_units_test.cpp
+  source/ode_test.cpp
+  source/tables_test.cpp
 )
 
 target_include_directories(

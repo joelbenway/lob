@@ -1,12 +1,13 @@
 // This file is a part of lob, an exterior ballistics calculation library
-// Copyright (c) 2024  Joel Benway
+// Copyright (c) 2025  Joel Benway
 // Please see end of file for extended copyright information
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
-#include <memory>
+#include <limits>
 
 #include "lob/lob_export.hpp"
 
@@ -34,400 +35,104 @@ enum class ClockAngleT : uint8_t {
   kVI,
   kV,
   kIV
-};
+};  // enum class ClockAngleT
 
-/*
-template <size_t SIZE>
+static constexpr auto kNaN = std::numeric_limits<double>::quiet_NaN();
+
 struct Input {
-  
+  static constexpr uint8_t kTableSize{85};
+  std::array<uint16_t, kTableSize> drags{};
+  float table_coefficent{kNaN};
+  float speed_of_sound{kNaN};
+  uint16_t velocity{0};
+  float mass{kNaN};
+  float optic_height{kNaN};
+  struct Gravity {
+    float x{kNaN};
+    float y{kNaN};
+  } gravity;
+  struct Wind {
+    float x{kNaN};
+    float z{kNaN};
+  } wind;
+  struct Coriolis {
+    float cos_l_sin_a{kNaN};
+    float sin_l{kNaN};
+    float cos_l_cos_a{kNaN};
+  } corilolis;
+  float zero_angle{kNaN};
+  float aerodynamic_jump{kNaN};
+  float stability_factor{kNaN};
+};  // struct Input
 
-};
+class Impl;
 
-struct Output {
-
-};
-
-bool Verify(const Input& in);
-
-bool Solve(const Input& in, const Output& out);
-*/
-
-class LOB_EXPORT Lob {
+class LOB_EXPORT Builder {
  public:
-  Lob(Lob&& other) noexcept;
-  Lob& operator=(const Lob& rhs);
-  Lob& operator=(Lob&& rhs) noexcept;
-  ~Lob();
+  Builder();
+  ~Builder();
+  Builder(const Builder& other);
+  Builder(Builder&& other) noexcept;
+  Builder& operator=(const Builder& rhs);
+  Builder& operator=(Builder&& rhs) noexcept;
 
-  class Builder {
-   public:
-    Builder() : plob_{new Lob} {}
-    explicit Builder(const Lob& lob) : plob_{new Lob(lob)} {}
-
-    /**
-     * @brief Sets the ballistic coefficient in pounds mass per square inch
-     * (PSI).
-     * @details Projectile manufacturers don't always publish BC with units in
-     * which case, PSI is a safe assumption.
-     * @note Ballistic Coefficient is required for a well-formed solution.
-     * @param value The ballistic coefficient value in PSI.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& BallisticCoefficentPsi(double value);
-
-    /**
-     * @brief Sets the atmosphere reference type for the ballistic coefficient.
-     * @details When projectile manufacturers publish their BC values, they do
-     * so for a reference set of atmospheric conditions. The two most common
-     * are Army Standard Metro and Icao. When in doubt, here is a guide:
-     * Barnes: Army Standard Metro
-     * Berger: ICAO
-     * GI APG: ICAO
-     * Hornady: Army Standard Metro
-     * Nosler: ICAO
-     * Lapua: ICAO
-     * Sierra: Army Standard Metro
-     * Speer: ICAO
-     * Winchester: Army Standard Metro
-     * @note If no atmospheric reference is specified, Army Standard Metro is
-     * assumed.
-     * @param type The atmosphere reference type.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& BCAtmosphere(AtmosphereReferenceT type);
-
-    /**
-     * @brief Sets the drag function for the ballistic coefficient.
-     * @details BC's are calculated in the context of a specific drag function.
-     * Of these the Gavre models (G1, G2, etc) are the most widely adopted and
-     * one should be published alongside BC.
-     * @note If no drag function is specified, G1 is used.
-     * @param type The drag function type.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& BCDragFunction(DragFunctionT type);
-
-    /**
-     * @brief Sets the projectile diameter in inches.
-     * @note Projectile diameter is required for a well-formed solution.
-     * @param value The diameter value in inches.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& DiameterInch(double value);
-
-    /**
-     * @brief Sets the projectile length in inches.
-     * @note Length, along with twist rate is used for calculating stability
-     * factor and accounting for the effects of gyroscopic spin drift on the
-     * ballistic solution.
-     * @param value The length value in inches.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& LengthInch(double value);
-
-    /**
-     * @brief Sets the projectile mass in grains.
-     * @note Projectile mass is required for a well-formed solution.
-     * @param value The mass value in grains.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& MassGrains(double value);
-
-    /**
-     * @brief Sets the initial velocity in feet per second (fps).
-     * @note Initial velocity is required for a well-formed solution.
-     * @param value The initial velocity value in fps.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& InitialVelocityFps(double value);
-
-    /**
-     * @brief Sets the optic height in inches.
-     * @param value The optic height value in inches.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& OpticHeightInches(double value);
-
-    /**
-     * @brief Sets the barrel twist rate in inches per turn.
-     * @note Twist rate, along with projectile length, are used for calculating
-     * stability factor and accounting for the effects of gyroscopic spin drift
-     * on the ballistic solution.
-     * @param value The twist rate value in inches per turn.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& TwistInchesPerTurn(double value);
-
-    /**
-     * @brief Sets the zero angle in Minutes of Angle (MOA).
-     * @details This value represents the angle between the line of sight and
-     * projectile launch angle of a zeroed rifle. This is not a normal thing for
-     * a marksman to know about their rifle.
-     * @note Either Zero angle or zero distance is required for a well-formed
-     * solution. If angle is provided it does not have to be calculated speeding
-     * up the solution.
-     * @param value The zero angle value in MOA.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& ZeroAngleMOA(double value);
-
-    /**
-     * @brief Sets the zero distance in yards.
-     * @note Either zero angle or zero distance is required for a well-formed
-     * solution.
-     * @param value The zero distance value in yards.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& ZeroDistanceYds(double value);
-
-    /**
-     * @brief Sets the zero impact height in inches.
-     * @details This is intended for those who use a zero such as the "3 inches
-     * high at 100 yards" recommended by Jack O'Connor.
-     * @note This can be omitted for setups with a traditional zero.
-     * @param value The zero impact height value in inches.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& ZeroImpactHeightInches(double value);
-
-    /**
-     * @brief Sets the altitude of the firing site in feet.
-     * @details Altitude is used to estimate temperature and air pressure in the
-     * absence of empirical data. If using pressure or temperature measured at
-     * an elevation different from the firing site, altitude may be used to
-     * adjust the measurements.
-     * @note There is no reason to include this if providing temperature and air
-     * pressure measured at the firing site.
-     * @param value The altitude value in feet.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& AltitudeOfFiringSiteFt(double value);
-
-    /**
-     * @brief Sets the air pressure in inches of mercury (InHg).
-     * @param value The air pressure value in inHg.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& AirPressureInHg(double value);
-
-    /**
-     * @brief Sets the altitude in feet of the site associated with a provided
-     * air pressure measurement.
-     * @details This is intended for use with air pressures measured or adjusted
-     * to altitudes that differ from that of the firing site such as from a
-     * weather station.
-     * @note If this is omitted it will be assumed that air pressure was
-     * measured at the firing site. If using air pressure adjusted for sea level
-     * use a value of 0 feet.
-     * @param value The altitude of the barometer site in feet.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& AltitudeOfBarometerFt(double value);
-
-    /**
-     * @brief Sets the temperature in degrees Fahrenheit.
-     * @param value The temperature value in degrees Fahrenheit.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& TemperatureDegF(double value);
-
-    /**
-     * @brief Sets the altitude in feet of the site associated with a provided
-     * temperature.
-     * @details This is intended for use with temperatures measured or adjusted
-     * to altitudes that differ from that of the firing site such as from a
-     * weather station.
-     * @note If this is omitted it will be assumed that temperature was measured
-     * at the firing site. If using temperature adjusted for sea level use a
-     * value of 0 feet.
-     * @param value The altitude of the thermometer site in feet.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& AltitudeOfThermometerFt(double value);
-
-    /**
-     * @brief Sets the relative humidity at the firing site as a percentage.
-     * @param value The relative humidity value as a percentage.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& RelativeHumidityPercent(double value);
-
-    /**
-     * @brief Sets the wind heading using clock angle notation.
-     * @details 12 o'clock would be a pure tailwind. 6, a headwind.
-     * @param value The wind heading as a ClockAngleT value.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& WindHeading(ClockAngleT value);
-
-    /**
-     * @brief Sets the wind heading in degrees clockwise from a pure tailwind.
-     * @details 0 or 360 would be a pure tailwind, 90 would be left-to-right,
-     * 180 would be a headwind, and 270 would be a right-to-left wind.
-     * @param value The wind heading in degrees.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& WindHeadingDeg(double value);
-
-    /**
-     * @brief Sets the wind speed in feet per second (fps).
-     * @param value The wind speed value in fps.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& WindSpeedFps(double value);
-
-    /**
-     * @brief Sets the wind speed in miles per hour. (mph).
-     * @param value The wind speed value in mph.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& WindSpeedMph(double value);
-
-    /**
-     * @brief Sets the Azimuth angle of fire in degrees, measured clockwise from
-     * North.
-     * @details North is 0 degrees.
-     * @note This value is used for accounting for the Coriolis effect in the
-     * ballistic solution.
-     * @param value The Azimuth angle of fire in degrees clockwise from North.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& AzimuthDeg(double value);
-
-    /**
-     * @brief Sets the latitude of the firing site.
-     * @details Use negative values for the Southern hemisphere.
-     * @note This value is used for accounting for the Coriolis effect in the
-     * ballistic solution.
-     * @param value The latitude in Degrees of the firing site.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& LatitudeDeg(double value);
-
-    /**
-     * @brief Sets the maximum distance in yards before the solver stops.
-     * @param value The maximum distance limit value in yards.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& LimitMaxDistanceYds(double value);
-
-    /**
-     * @brief Sets the minimum energy in foot-pounds before the solver stops.
-     * @param value The minimum energy limit value in foot-pounds.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& LimitMinEnergyFtLbs(double value);
-
-    /**
-     * @brief Sets the time of flight in seconds before the solver stops.
-     * @param value The time of flight limit value in seconds.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& LimitTimeOfFlightSec(double value);
-
-    /**
-     * @brief Sets the size of the time step the solver uses when calculating a
-     * solution.
-     * @note The smaller the time step, the more precise the solution but at
-     * the cost of speed. By default the solver uses a variable time step
-     * intended to balance speed and accuracy.
-     * @param value The time step size in microseconds.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& SolverStepSizeUsec(uint16_t value);
-
-    /**
-     * @brief Sets the angle from the shooter to the target in degrees.
-     * @param value The target angle value in degrees.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& TargetAngleDeg(double value);
-
-    /**
-     * @brief Sets the target distance in yards.
-     * @param value The target distance value in yards.
-     * @return Reference to the Builder object for method chaining.
-     */
-    Builder& TargetDistanceYds(double value);
-
-    /**
-     * @brief Builds and returns a unique pointer to a Lob object.
-     * @return std::unique_ptr<Lob> A unique pointer to the constructed Lob
-     * object.
-     */
-    std::unique_ptr<Lob> Build();
-
-   private:
-    LOB_SUPPRESS_C4251
-    std::unique_ptr<Lob> plob_;
-  };  // class Builder
-
-  /**
-   * @brief Gets the Air Density calculated in the built configuration. Units
-   * are in pounds per cubic foot.
-   * @return float Stability Factor.
-   */
-  float GetAirDensityLbsPerCuFt() const;
-
-  /**
-   * @brief Gets the local speed of sound for the built configuration. Units are
-   * in feet per second.
-   * @return float Stability Factor.
-   */
-  float GetSpeedOfSoundFps() const;
-
-  /**
-   * @brief Gets the Miller Stability Factor for the built configuration.
-   * @return float Stability Factor.
-   */
-  float GetStabilityFactor() const;
-
-  /**
-   * @brief Gets the angle between the line of sight and launch trajectory
-   * required to achieve zero. Angle is given in MOA.
-   * @note Because the adjustments used to zero a rifle are dependent on
-   * variables like environment, this zero angle is a way to preserve that
-   * context for future calculations. There is also a calculation speed benefit
-   * to supplying zero angle vs zero distance.
-   * @return float zero angle in MOA.
-   */
-  float GetZeroAngleMOA() const;
-
-  struct Solution {
-    uint16_t range;
-    uint16_t velocity;
-    uint16_t energy;
-    float elevation_distance;
-    float elevation_adjustments;
-    float windage_distance;
-    float windage_adjustments;
-    float time_of_flight;
-  };  // struct Solution
-
-  Solution Solve() const;
-
-  /**
-   * @brief Solves for the built configuration at specified points.
-   * @param psolution a pointer to an array of solution objects of size length
-   * that will be populated with data upon a successful solve.
-   * @param pranges a pointer to an array of ranges of size length. These should
-   * be ascending values. If nullptr is passed the solution ranges will simply
-   * be increments of target distance divided by length.
-   * @param length size of both psolution and pranges arrays.
-   * @return size of the available length populated with solution data.
-   */
-  size_t Solve(Solution* psolution, const uint16_t* pranges,
-               size_t length) const;
+  Builder& BallisticCoefficentPsi(float value);
+  Builder& BCAtmosphere(AtmosphereReferenceT type);
+  Builder& BCDragFunction(DragFunctionT type);
+  Builder& DiameterInch(float value);
+  Builder& LengthInch(float value);
+  Builder& MassGrains(float value);
+  Builder& InitialVelocityFps(uint16_t value);
+  Builder& OpticHeightInches(float value);
+  Builder& TwistInchesPerTurn(float value);
+  Builder& ZeroAngleMOA(float value);
+  Builder& ZeroDistanceYds(float value);
+  Builder& ZeroImpactHeightInches(float value);
+  Builder& AltitudeOfFiringSiteFt(float value);
+  Builder& AirPressureInHg(float value);
+  Builder& AltitudeOfBarometerFt(float value);
+  Builder& TemperatureDegF(float value);
+  Builder& AltitudeOfThermometerFt(float value);
+  Builder& RelativeHumidityPercent(float value);
+  Builder& WindHeading(ClockAngleT value);
+  Builder& WindHeadingDeg(float value);
+  Builder& WindSpeedFps(float value);
+  Builder& WindSpeedMph(float value);
+  Builder& AzimuthDeg(float value);
+  Builder& LatitudeDeg(float value);
+  Builder& RangeAngleDeg(float value);
+  Input Build();
 
  private:
-  Lob();
-  Lob(const Lob& other);
-  class Impl;
-  const Impl* Pimpl() const;
-  Impl* Pimpl();
-  LOB_SUPPRESS_C4251
-  std::unique_ptr<Impl> pimpl_;
-};  // class Lob
+  static constexpr size_t kBufferSize{392};
+  alignas(double) std::array<uint8_t, kBufferSize> buffer_{};
+  Impl* pimpl_{nullptr};
+};  // class Builder
+
+struct Options {
+  uint16_t min_speed{0};
+  uint16_t min_energy{0};
+  float max_time{kNaN};
+  uint16_t step_size{0};
+};  // struct Options
+
+struct Output {
+  uint32_t range{0};
+  uint16_t velocity{0};
+  uint32_t energy{0};
+  float elevation{0.0F};
+  float deflection{0.0F};
+  float time_of_flight{0.0F};
+};  // struct Output
+
+size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
+             size_t size, const Options& options);
+
+template <size_t N>
+size_t Solve(const Input& in, const std::array<uint32_t, N>* pranges,
+             std::array<Output, N>* pouts, const Options& options = Options{}) {
+  return Solve(in, pranges->data(), pouts->data(), N, options);
+}
 
 /**
  * @brief Converts minutes of angle (MOA) to milliradians (MIL).
@@ -444,6 +149,22 @@ constexpr double MoaToMil(double value);
 constexpr double MoaToDeg(double value);
 
 /**
+ * @brief Converts minutes of angle (MOA) to inches per hundred yards (IPHY).
+ * @param value Angle in MOA.
+ * @return Equivalent angle in IPHY.
+ */
+constexpr double MoaToIphy(double value);
+
+/**
+ * @brief Converts minutes of angle (MOA) to projected inches at a given
+ * range in feet.
+ * @param value Angle in MOA.
+ * @param range_ft Range in feet.
+ * @return Equivalent projected inches.
+ */
+constexpr double MoaToInch(double value, double range_ft);
+
+/**
  * @brief Converts milliradians (MIL) to minutes of angle (MOA).
  * @param value Angle in MIL.
  * @return Equivalent angle in MOA.
@@ -458,6 +179,15 @@ constexpr double MilToMoa(double value);
 constexpr double MilToDeg(double value);
 
 /**
+ * @brief Converts milliradians (MIL) to projected inches at a given
+ * range in feet.
+ * @param value Angle in MIL.
+ * @param range_ft Range in feet.
+ * @return Equivalent projected inches.
+ */
+constexpr double MilToInch(double value, double range_ft);
+
+/**
  * @brief Converts degrees to minutes of angle (MOA).
  * @param value Angle in degrees.
  * @return Equivalent angle in MOA.
@@ -470,6 +200,30 @@ constexpr double DegToMoa(double value);
  * @return Equivalent angle in MIL.
  */
 constexpr double DegToMil(double value);
+
+/**
+ * @brief Inches of projection at a given range to minutes of angle (MOA)
+ * @param value Projected inches.
+ * @param range_ft Range in feet.
+ * @return Equivalent angle in MOA.
+ */
+double InchToMoa(double value, double range_ft);
+
+/**
+ * @brief Inches of projection at a given range to milliradians (MIL)
+ * @param value Projected inches.
+ * @param range_ft Range in feet.
+ * @return Equivalent angle in MIL.
+ */
+constexpr double InchToMil(double value, double range_ft);
+
+/**
+ * @brief Inches of projection at a given range to degrees.
+ * @param value Projected inches.
+ * @param range_ft Range in feet.
+ * @return Equivalent angle in degrees.
+ */
+constexpr double InchToDeg(double value, double range_ft);
 
 /**
  * @brief Converts joules to foot-pounds.
@@ -497,7 +251,7 @@ constexpr double MtoYd(double value);
  * @param value Length in yards.
  * @return Equivalent length in feet.
  */
-constexpr double YdToFt(double value);
+double YdToFt(double value);
 
 /**
  * @brief Converts meters to feet.

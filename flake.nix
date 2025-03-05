@@ -1,5 +1,5 @@
 # This file is a part of lob, an exterior ballistics calculation library
-# Copyright (c) 2024  Joel Benway
+# Copyright (c) 2025  Joel Benway
 # Please see end of file for extended copyright information
 {
   description = "A Nix-flake-based C++ Development Environment";

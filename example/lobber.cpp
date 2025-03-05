@@ -1,5 +1,5 @@
 // This file is a part of lob, an exterior ballistics calculation library
-// Copyright (c) 2024  Joel Benway
+// Copyright (c) 2025  Joel Benway
 // Please see end of file for extended copyright information
 
 #include <algorithm>
@@ -36,16 +36,16 @@ void PrintHelp() {
          "future use as an input file\n";
 }
 
-double Prompt(const std::string& prompt) {
+float Prompt(const std::string& prompt) {
   bool is_valid = false;
-  double input = 0;
+  float input = 0;
   std::string str;
 
   while (!is_valid) {
     std::cout << prompt << '\n' << '>';
     std::getline(std::cin, str);
     if (str.empty()) {
-      input = std::numeric_limits<double>::quiet_NaN();
+      input = std::numeric_limits<float>::quiet_NaN();
       is_valid = true;
     } else {
       std::istringstream iss(str);
@@ -60,10 +60,10 @@ double Prompt(const std::string& prompt) {
   return input;
 }
 
-double Read(std::ifstream* pfile) {
+float Read(std::ifstream* pfile) {
   std::string line;
   std::getline(*pfile, line);
-  double input = std::numeric_limits<double>::quiet_NaN();
+  float input = std::numeric_limits<float>::quiet_NaN();
 
   if (!line.empty() && line != "nan") {
     std::istringstream iss(line);
@@ -72,7 +72,7 @@ double Read(std::ifstream* pfile) {
   return input;
 }
 
-lob::DragFunctionT ConvertDF(double input) {
+lob::DragFunctionT ConvertDF(float input) {
   switch (static_cast<int>(std::round(input))) {
     case 2:  // NOLINT magic number
       return lob::DragFunctionT::kG2;
@@ -90,13 +90,13 @@ lob::DragFunctionT ConvertDF(double input) {
   }
 }
 
-lob::AtmosphereReferenceT ConvertAR(double input) {
+lob::AtmosphereReferenceT ConvertAR(float input) {
   return 2 == static_cast<int>(std::round(input))
              ? lob::AtmosphereReferenceT::kIcao
              : lob::AtmosphereReferenceT::kArmyStandardMetro;
 }
 
-lob::ClockAngleT ConvertCA(double input) {
+lob::ClockAngleT ConvertCA(float input) {
   switch (static_cast<int>(std::round(input))) {
     case 1:  // NOLINT magic number
       return lob::ClockAngleT::kI;
@@ -127,7 +127,7 @@ lob::ClockAngleT ConvertCA(double input) {
 }
 
 bool WriteOutputFile(const std::string& file_name,
-                     const std::vector<double>& inputs) {
+                     const std::vector<float>& inputs) {
   std::ofstream output_file(file_name);
 
   if (!output_file.is_open()) {
@@ -135,7 +135,7 @@ bool WriteOutputFile(const std::string& file_name,
     return false;
   }
 
-  for (const double kValue : inputs) {
+  for (const auto kValue : inputs) {
     output_file << kValue << '\n';
   }
 
@@ -144,12 +144,12 @@ bool WriteOutputFile(const std::string& file_name,
 }
 
 // NOLINTNEXTLINE similar type easily swapped by mistake
-lob::Lob::Builder BuildHelper(const std::string& infile,
-                              const std::string& outfile) {
-  lob::Lob::Builder builder;
+lob::Builder BuildHelper(const std::string& infile,
+                         const std::string& outfile) {
+  lob::Builder builder;
   std::string prompt;
   auto* pprompt = &prompt;
-  std::vector<double> inputs;
+  std::vector<float> inputs;
   auto* pinputs = &inputs;
   std::ifstream file(infile);
   auto* pfile = &file;
@@ -184,7 +184,7 @@ lob::Lob::Builder BuildHelper(const std::string& infile,
 
   prompt = "Enter initial velocity of projectile in FPS";
   collect_inputs();
-  builder.InitialVelocityFps(inputs.back());
+  builder.InitialVelocityFps(static_cast<uint16_t>(std::round(inputs.back())));
 
   prompt = "Enter the rifle's optic height above bore in inches";
   collect_inputs();
@@ -246,24 +246,6 @@ lob::Lob::Builder BuildHelper(const std::string& infile,
   collect_inputs();
   builder.LatitudeDeg(inputs.back());
 
-  prompt = "Enter maximum distance in yards to solve";
-  collect_inputs();
-  builder.LimitMaxDistanceYds(inputs.back());
-
-  prompt = "Enter minimum energy to solve to";
-  collect_inputs();
-  builder.LimitMinEnergyFtLbs(inputs.back());
-
-  prompt = "Enter maximum time of flight to solve to";
-  collect_inputs();
-  builder.LimitTimeOfFlightSec(inputs.back());
-
-  prompt = " Enter angle to target";
-  collect_inputs();
-  builder.TargetAngleDeg(inputs.back());
-
-  builder.TargetDistanceYds(1000);  // NOLINT
-
   if (!outfile.empty() && !file) {
     WriteOutputFile(outfile, inputs);
   }
@@ -272,12 +254,12 @@ lob::Lob::Builder BuildHelper(const std::string& infile,
 }
 
 // NOLINTNEXTLINE
-void PlotSolution(const lob::Lob::Solution solutions[], size_t size) {
+void PlotSolution(const lob::Output solutions[], size_t size) {
   std::vector<uint16_t> x;
   std::vector<float> y;
   for (size_t i = 0; i < size; i++) {
     x.push_back(solutions[i].range);
-    y.push_back(solutions[i].elevation_distance);
+    y.push_back(solutions[i].elevation);
   }
   constexpr int32_t kWidth = 92;
   constexpr int32_t kHeight = kWidth / 10;
@@ -320,7 +302,7 @@ void PlotSolution(const lob::Lob::Solution solutions[], size_t size) {
 }
 
 // NOLINTNEXTLINE c-style array
-void PrintSolutionTable(const lob::Lob::Solution solutions[], size_t size) {
+void PrintSolutionTable(const lob::Output solutions[], size_t size) {
   // Column widths for better formatting
   const int kWidth = 12;
 
@@ -337,10 +319,12 @@ void PrintSolutionTable(const lob::Lob::Solution solutions[], size_t size) {
     std::cout << std::left << std::setw(kWidth) << solutions[i].range
               << std::setw(kWidth) << solutions[i].velocity << std::setw(kWidth)
               << solutions[i].energy << std::setw(kWidth) << std::fixed
-              << std::setprecision(2) << solutions[i].elevation_distance
-              << std::setw(kWidth) << solutions[i].elevation_adjustments
-              << std::setw(kWidth) << solutions[i].windage_distance
-              << std::setw(kWidth) << solutions[i].windage_adjustments
+              << std::setprecision(2) << solutions[i].elevation
+              << std::setw(kWidth)
+              << lob::InchToMoa(solutions[i].elevation, solutions[i].range)
+              << std::setw(kWidth) << solutions[i].deflection
+              << std::setw(kWidth)
+              << lob::InchToMoa(solutions[i].deflection, solutions[i].range)
               << std::setw(kWidth) << std::setprecision(3)
               << solutions[i].time_of_flight << "\n";
   }
@@ -379,17 +363,14 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  lob::Lob::Builder builder = example::BuildHelper(input_file, output_file);
-  auto plob = builder.Build();
+  lob::Builder builder = example::BuildHelper(input_file, output_file);
+  const auto kInput = builder.Build();
 
-  const size_t kSolutionSize = 12;
-  std::array<lob::Lob::Solution, kSolutionSize> solutions = {0};
-  std::array<uint16_t, kSolutionSize> ranges = {
-      0,   50,  100, 200, 300, 400,    // NOLINT
-      500, 600, 700, 800, 900, 1000};  // NOLINT
-
-  const auto kSize =
-      plob->Solve(solutions.data(), ranges.data(), kSolutionSize);
+  constexpr size_t kSolutionSize = 12;
+  constexpr std::array<uint32_t, kSolutionSize> kRanges = {
+      0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+  std::array<lob::Output, kSolutionSize> solutions = {};
+  const auto kSize = lob::Solve(kInput, &kRanges, &solutions);
 
   example::PlotSolution(solutions.data(), kSize);
   std::cout << '\n';

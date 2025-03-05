@@ -1,5 +1,5 @@
 // This file is a part of lob, an exterior ballistics calculation library
-// Copyright (c) 2024  Joel Benway
+// Copyright (c) 2025  Joel Benway
 // Please see end of file for extended copyright information
 
 #include "eng_units.hpp"
@@ -203,28 +203,45 @@ TEST(EngUnitsTests, AngleConversions) {
   constexpr double kTestValueMoa = kTestValueDeg * 60;
   constexpr double kTestValueRad = 3.14159265358979323846;
   constexpr double kTestValueMil = kTestValueRad * 1'000;
+  constexpr double kTestValueIphy = kTestValueMoa * 1.047;
   EXPECT_DOUBLE_EQ(lob::DegreesT(lob::MoaT(kTestValueMoa)).Value(),
                    kTestValueDeg);
   EXPECT_DOUBLE_EQ(lob::DegreesT(lob::RadiansT(kTestValueRad)).Value(),
                    kTestValueDeg);
   EXPECT_DOUBLE_EQ(lob::DegreesT(lob::MilT(kTestValueMil)).Value(),
                    kTestValueDeg);
+  EXPECT_DOUBLE_EQ(lob::DegreesT(lob::IphyT(kTestValueIphy)).Value(),
+                   kTestValueDeg);
   EXPECT_DOUBLE_EQ(lob::MoaT(lob::DegreesT(kTestValueDeg)).Value(),
                    kTestValueMoa);
   EXPECT_DOUBLE_EQ(lob::MoaT(lob::RadiansT(kTestValueRad)).Value(),
                    kTestValueMoa);
   EXPECT_DOUBLE_EQ(lob::MoaT(lob::MilT(kTestValueMil)).Value(), kTestValueMoa);
+  EXPECT_DOUBLE_EQ(lob::MoaT(lob::IphyT(kTestValueIphy)).Value(),
+                   kTestValueMoa);
   EXPECT_DOUBLE_EQ(lob::RadiansT(lob::DegreesT(kTestValueDeg)).Value(),
                    kTestValueRad);
   EXPECT_DOUBLE_EQ(lob::RadiansT(lob::MoaT(kTestValueMoa)).Value(),
                    kTestValueRad);
   EXPECT_DOUBLE_EQ(lob::RadiansT(lob::MilT(kTestValueMil)).Value(),
                    kTestValueRad);
+  EXPECT_DOUBLE_EQ(lob::RadiansT(lob::IphyT(kTestValueIphy)).Value(),
+                   kTestValueRad);
   EXPECT_DOUBLE_EQ(lob::MilT(lob::DegreesT(kTestValueDeg)).Value(),
                    kTestValueMil);
   EXPECT_DOUBLE_EQ(lob::MilT(lob::MoaT(kTestValueMoa)).Value(), kTestValueMil);
   EXPECT_DOUBLE_EQ(lob::MilT(lob::RadiansT(kTestValueRad)).Value(),
                    kTestValueMil);
+  EXPECT_DOUBLE_EQ(lob::MilT(lob::IphyT(kTestValueIphy)).Value(),
+                   kTestValueMil);
+  EXPECT_DOUBLE_EQ(lob::IphyT(lob::DegreesT(kTestValueDeg)).Value(),
+                   kTestValueIphy);
+  EXPECT_DOUBLE_EQ(lob::IphyT(lob::MoaT(kTestValueMoa)).Value(),
+                   kTestValueIphy);
+  EXPECT_DOUBLE_EQ(lob::IphyT(lob::RadiansT(kTestValueRad)).Value(),
+                   kTestValueIphy);
+  EXPECT_DOUBLE_EQ(lob::IphyT(lob::MilT(kTestValueMil)).Value(),
+                   kTestValueIphy);
   // Round-trip conversions to ensure accuracy is preserved.
   EXPECT_DOUBLE_EQ(
       lob::DegreesT(lob::MoaT(lob::DegreesT(kTestValueDeg))).Value(),
@@ -235,11 +252,16 @@ TEST(EngUnitsTests, AngleConversions) {
   EXPECT_DOUBLE_EQ(
       lob::DegreesT(lob::MilT(lob::DegreesT(kTestValueDeg))).Value(),
       kTestValueDeg);
+  EXPECT_DOUBLE_EQ(
+      lob::DegreesT(lob::IphyT(lob::DegreesT(kTestValueDeg))).Value(),
+      kTestValueDeg);
   EXPECT_DOUBLE_EQ(lob::MoaT(lob::DegreesT(lob::MoaT(kTestValueMoa))).Value(),
                    kTestValueMoa);
   EXPECT_DOUBLE_EQ(lob::MoaT(lob::RadiansT(lob::MoaT(kTestValueMoa))).Value(),
                    kTestValueMoa);
   EXPECT_DOUBLE_EQ(lob::MoaT(lob::MilT(lob::MoaT(kTestValueMoa))).Value(),
+                   kTestValueMoa);
+  EXPECT_DOUBLE_EQ(lob::MoaT(lob::IphyT(lob::MoaT(kTestValueMoa))).Value(),
                    kTestValueMoa);
   EXPECT_DOUBLE_EQ(
       lob::RadiansT(lob::DegreesT(lob::RadiansT(kTestValueRad))).Value(),
@@ -250,12 +272,27 @@ TEST(EngUnitsTests, AngleConversions) {
   EXPECT_DOUBLE_EQ(
       lob::RadiansT(lob::MilT(lob::RadiansT(kTestValueRad))).Value(),
       kTestValueRad);
+  EXPECT_DOUBLE_EQ(
+      lob::RadiansT(lob::IphyT(lob::RadiansT(kTestValueRad))).Value(),
+      kTestValueRad);
   EXPECT_DOUBLE_EQ(lob::MilT(lob::DegreesT(lob::MilT(kTestValueMil))).Value(),
                    kTestValueMil);
   EXPECT_DOUBLE_EQ(lob::MilT(lob::MoaT(lob::MilT(kTestValueMil))).Value(),
                    kTestValueMil);
   EXPECT_DOUBLE_EQ(lob::MilT(lob::RadiansT(lob::MilT(kTestValueMil))).Value(),
                    kTestValueMil);
+  EXPECT_DOUBLE_EQ(lob::MilT(lob::IphyT(lob::MilT(kTestValueMil))).Value(),
+                   kTestValueMil);
+  EXPECT_DOUBLE_EQ(
+      lob::IphyT(lob::DegreesT(lob::IphyT(kTestValueIphy))).Value(),
+      kTestValueIphy);
+  EXPECT_DOUBLE_EQ(lob::IphyT(lob::MoaT(lob::IphyT(kTestValueIphy))).Value(),
+                   kTestValueIphy);
+  EXPECT_DOUBLE_EQ(
+      lob::IphyT(lob::RadiansT(lob::IphyT(kTestValueIphy))).Value(),
+      kTestValueIphy);
+  EXPECT_DOUBLE_EQ(lob::IphyT(lob::MilT(lob::IphyT(kTestValueIphy))).Value(),
+                   kTestValueIphy);
 }
 
 TEST(EngUnitsTests, EnergyConversions) {
