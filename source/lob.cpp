@@ -417,12 +417,11 @@ void BuildTable(Impl* pimpl) {
     pimpl->atmosphere_reference = AtmosphereReferenceT::kIcao;
   }
 
-  // static_assert(Input::kTableSize == kTableSize, "Table size not
-  // identical.");
+  static_assert(Input::kTableSize == kTableSize, "Table size not identical.");
   std::copy(pimpl->pdrag_lut->begin(), pimpl->pdrag_lut->end(),
             pimpl->build.drags.begin());
 
-  // scale for air desnity and bc
+  // scale for air density and bc
   const double kCdCoefficent =
       CalculateCdCoefficent(pimpl->air_density_lbs_per_cu_ft,
                             pimpl->ballistic_coefficent_psi) /
