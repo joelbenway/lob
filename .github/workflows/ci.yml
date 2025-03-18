@@ -22,6 +22,9 @@ jobs:
     - name: Install codespell
       run: pip3 install codespell==2.4.1
 
+    - name: Install clang-format
+      run: pip3 install clang-format==17.0.6
+
     - name: Lint
       run: cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake
 
