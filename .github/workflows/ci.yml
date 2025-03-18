@@ -69,7 +69,7 @@ jobs:
 
     runs-on: ubuntu-24.04
 
-    env: { CXX: clang++-14 }
+    env: { CXX: clang++-17 }
 
     steps:
     - uses: actions/checkout@v4
