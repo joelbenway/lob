@@ -11,7 +11,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@v4
@@ -35,7 +35,7 @@ jobs:
   # coverage:
   #   needs: [lint]
 
-  #   runs-on: ubuntu-22.04
+  #   runs-on: ubuntu-24.04
 
   #   if: github.repository_owner == 'joelbenway'
 
@@ -67,7 +67,7 @@ jobs:
   sanitize:
     needs: [lint]
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     env: { CXX: clang++-14 }
 
@@ -96,7 +96,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-12, ubuntu-22.04] #, windows-2022]
+        os: [macos-12, ubuntu-24.04] #, windows-2022]
 
         type: [shared, static]
 
@@ -110,9 +110,9 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install static analyzers
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-24.04'
       run: >-
-        sudo apt-get install cppcheck -y -q
+        sudo apt-get install cppcheck -y -q &&
         pip3 install clang-tidy==17.0.6
 
     - name: Setup MultiToolTask
@@ -149,7 +149,7 @@ jobs:
   # docs:
   #   needs: [sanitize, test]
 
-  #   runs-on: ubuntu-22.04
+  #   runs-on: ubuntu-24.04
 
   #   if: github.ref == 'refs/heads/master'
   #     && github.event_name == 'push'
