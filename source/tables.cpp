@@ -233,16 +233,19 @@ void ExpandMachDragTable(const T* pmachs, const T* pdrags, size_t old_size,
     }
     if (maxdex == 0) {
       pnew_machs[old_size + i] =
-          static_cast<T>(pnew_machs[gapdex] + pnew_machs[gapdex - 1]) / static_cast<T>(2U);
+          static_cast<T>(pnew_machs[gapdex] + pnew_machs[gapdex - 1]) /
+          static_cast<T>(2U);
     } else {
       pnew_machs[old_size + i] =
-          static_cast<T>(pnew_machs[maxdex] + pnew_machs[maxdex - 1]) / static_cast<T>(2U);
+          static_cast<T>(pnew_machs[maxdex] + pnew_machs[maxdex - 1]) /
+          static_cast<T>(2U);
     }
     std::sort(pnew_machs, pnew_machs + old_size + 1U + i);
   }
 
   for (size_t i = 0; i < new_size; i++) {
-    pnew_drags[i] = static_cast<T>(LobQerp(pmachs, pdrags, old_size, pnew_machs[i]));
+    pnew_drags[i] =
+        static_cast<T>(LobQerp(pmachs, pdrags, old_size, pnew_machs[i]));
   }
 }
 
@@ -271,9 +274,11 @@ void CompressMachDragTable(const T* pmachs,  // NOLINT
       const double kX2 = pmachs[indices[j + 1]];
       const double kY1 = pdrags[indices[j - 1]];
       const double kY2 = pdrags[indices[j + 1]];
-      const double kLerp =
-          (kY2 - kY1) / (kX2 - kX1) * (static_cast<double>(pmachs[indices[j]]) - kX1) + kY1;
-      const double kDiff = fabs(kLerp - static_cast<double>(pdrags[indices[j]]));
+      const double kLerp = (kY2 - kY1) / (kX2 - kX1) *
+                               (static_cast<double>(pmachs[indices[j]]) - kX1) +
+                           kY1;
+      const double kDiff =
+          fabs(kLerp - static_cast<double>(pdrags[indices[j]]));
       if (kDiff < min_diff) {
         min_diff = kDiff;
         mindex = j;
