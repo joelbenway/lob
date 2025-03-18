@@ -37,7 +37,7 @@ InHgT BarometricFormula(FeetT altitude, InHgT pressure, DegFT temperature) {
   const FeetT kHeight = std::min(altitude, FeetT(kIsaTropopauseAltitudeFt));
 
   const double kExponent =
-      kStandardGravity / (kGasConstant * kIsaLapseDegFPerFt);
+      kStandardGravityFtPerSecSq / (kGasConstant * kIsaLapseDegFPerFt);
 
   const double kBase =
       1.0 - (kIsaLapseDegFPerFt * kHeight.Value() / DegRT(temperature).Value());
@@ -45,7 +45,8 @@ InHgT BarometricFormula(FeetT altitude, InHgT pressure, DegFT temperature) {
   InHgT output = pressure * std::pow(kBase, kExponent);
 
   if (altitude > FeetT(kIsaTropopauseAltitudeFt)) {
-    const double kNumberator = -1.0 * kStandardGravity * kMolarMassOfAir *
+    const double kNumberator = -1.0 * kStandardGravityFtPerSecSq *
+                               kMolarMassOfAir *
                                (altitude - kIsaTropopauseAltitudeFt).Value();
 
     const double kDemoninator =

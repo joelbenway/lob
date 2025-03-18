@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <limits>
 #include <utility>
 
@@ -38,10 +39,16 @@ constexpr uint32_t ToU32(T x) {
 }
 
 template <typename T>
-constexpr bool IsNearZero(T x) {
-  return std::abs(x) <= std::numeric_limits<T>::epsilon();
+constexpr bool AreEqual(T a, T b) {
+  if (std::isinf(a) || std::isinf(b)) {
+    return !(a > b || b > a);
+  }
+  if (std::isnan(a) || std::isnan(b)) {
+    return std::isnan(a) && std::isnan(b);
+  }
+  return (std::fabs(a - b) <= std::numeric_limits<T>::epsilon() *
+                                  std::fmax(std::fabs(a), std::fabs(b)));
 }
-
 }  // namespace
 
 class Impl {
@@ -300,10 +307,11 @@ void SolveStep(SpvT* ps, SecT* pt, const Input& input, uint16_t step_size = 0) {
     const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
                                  FpsT(input.wind.z));
 
-    const double kCd = LobLerp(kMachs, input.drags,
-                               s.V().Magnitude().Value() /
-                                   input.speed_of_sound * kTableScale) *
-                       input.table_coefficent;
+    const double kCd =
+        LobLerp(kMachs, input.drags,
+                s.V().Magnitude().Value() /
+                    static_cast<double>(input.speed_of_sound) * kTableScale) *
+        static_cast<double>(input.table_coefficent);
     const FpsT kScalarVelocity = (s.V() - kWind).Magnitude();
     CartesianT<FpsT> velocity =
         (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
@@ -350,10 +358,12 @@ void BuildEnvironment(Impl* pimpl) {
     pimpl->range_angle_rad = RadiansT(DegreesT(0));
   }
 
-  pimpl->build.gravity.x = static_cast<float>(
-      kStandardGravity * -1 * std::sin(pimpl->range_angle_rad.Value()));
-  pimpl->build.gravity.y = static_cast<float>(
-      kStandardGravity * -1 * std::cos(pimpl->range_angle_rad.Value()));
+  pimpl->build.gravity.x =
+      static_cast<float>(kStandardGravityFtPerSecSq * -1 *
+                         std::sin(pimpl->range_angle_rad.Value()));
+  pimpl->build.gravity.y =
+      static_cast<float>(kStandardGravityFtPerSecSq * -1 *
+                         std::cos(pimpl->range_angle_rad.Value()));
 
   if (!std::isnan(pimpl->altitude_ft)) {
     altitude_of_firing_site = pimpl->altitude_ft;
@@ -465,6 +475,7 @@ void BuildTwistEffects(Impl* pimpl) {
                                        pimpl->diameter_in, pimpl->length_in,
                                        kXWind)
               .Float();
+      std::cout << "litz jump: " << pimpl->build.aerodynamic_jump << "\n";
     }
   }
 
@@ -481,12 +492,12 @@ void BuildCoriolis(Impl* pimpl) {
     const double kSinL = std::sin(pimpl->latitude_rad).Value();
     const double kCosA = std::cos(pimpl->azimuth_rad).Value();
 
-    pimpl->build.corilolis.cos_l_sin_a =
-        static_cast<float>(2 * kAngularVelocityOfEarth * kCosL * kSinA);
+    pimpl->build.corilolis.cos_l_sin_a = static_cast<float>(
+        2 * kAngularVelocityOfEarthRadPerSec * kCosL * kSinA);
     pimpl->build.corilolis.sin_l =
-        static_cast<float>(2 * kAngularVelocityOfEarth * kSinL);
-    pimpl->build.corilolis.cos_l_cos_a =
-        static_cast<float>(2 * kAngularVelocityOfEarth * kCosL * kCosA);
+        static_cast<float>(2 * kAngularVelocityOfEarthRadPerSec * kSinL);
+    pimpl->build.corilolis.cos_l_cos_a = static_cast<float>(
+        2 * kAngularVelocityOfEarthRadPerSec * kCosL * kCosA);
   } else {
     pimpl->build.corilolis.cos_l_sin_a = 0;
     pimpl->build.corilolis.sin_l = 0;
@@ -591,7 +602,7 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
     if (index >= size) {
       break;
     }
-    if (t > SecT(options.max_time) && !IsNearZero(options.max_time)) {
+    if (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0F)) {
       break;
     }
     if (FtLbsT(options.min_energy) >
@@ -617,7 +628,8 @@ constexpr double MoaToDeg(double value) {
 }
 constexpr double MoaToIphy(double value) { return IphyT(MoaT(value)).Value(); }
 constexpr double MoaToInch(double value, double range_ft) {
-  return IphyT(MoaT(value)).Value() * range_ft / kHundredYardsInFeet;
+  return IphyT(MoaT(value)).Value() * range_ft /
+         static_cast<double>(kHundredYardsInFeet);
 }
 
 constexpr double MilToMoa(double value) { return MoaT(MilT(value)).Value(); }
@@ -626,7 +638,8 @@ constexpr double MilToDeg(double value) {
 }
 constexpr double MilToIphy(double value) { return IphyT(MoaT(value)).Value(); }
 constexpr double MilToInch(double value, double range_ft) {
-  return IphyT(MilT(value)).Value() * range_ft / kHundredYardsInFeet;
+  return IphyT(MilT(value)).Value() * range_ft /
+         static_cast<double>(kHundredYardsInFeet);
 }
 
 constexpr double DegToMoa(double value) {
@@ -637,24 +650,30 @@ constexpr double DegToMil(double value) {
 }
 
 double InchToMoa(double value, double range_ft) {
-  if (IsNearZero(range_ft)) {
+  if (AreEqual(range_ft, 0.0)) {
     return 0;
   }
-  return MoaT(IphyT(value / (range_ft / kHundredYardsInFeet))).Value();
+  return MoaT(IphyT(value /
+                    (range_ft / static_cast<double>(kHundredYardsInFeet))))
+      .Value();
 }
 
 constexpr double InchToMil(double value, double range_ft) {
-  if (IsNearZero(range_ft)) {
+  if (AreEqual(range_ft, 0.0)) {
     return 0;
   }
-  return MilT(IphyT(value / (range_ft / kHundredYardsInFeet))).Value();
+  return MilT(IphyT(value /
+                    (range_ft / static_cast<double>(kHundredYardsInFeet))))
+      .Value();
 }
 
 constexpr double InchToDeg(double value, double range_ft) {
-  if (IsNearZero(range_ft)) {
+  if (AreEqual(range_ft, 0.0)) {
     return 0;
   }
-  return DegreesT(IphyT(value / (range_ft / kHundredYardsInFeet))).Value();
+  return DegreesT(IphyT(value /
+                        (range_ft / static_cast<double>(kHundredYardsInFeet))))
+      .Value();
 }
 
 // Energy

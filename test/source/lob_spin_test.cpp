@@ -26,14 +26,14 @@ struct LobSpinTestFixture : public testing::Test {
     puut = std::make_unique<lob::Builder>();
     ASSERT_NE(puut, nullptr);
 
-    const float kTestBC = 0.310;
+    const float kTestBC = 0.310F;
     const lob::DragFunctionT kDragFunction = lob::DragFunctionT::kG7;
-    const float kTestDiameter = 0.338;
-    const float kTestWeight = 250.0;
-    const float kBulletLength = 1.457;
+    const float kTestDiameter = 0.338F;
+    const float kTestWeight = 250.0F;
+    const float kBulletLength = 1.457F;
     const uint16_t kTestMuzzleVelocity = 3071;
-    const float kTestZeroAngle = 6.53;  // 3.74;
-    const float kTestOpticHeight = 2;
+    const float kTestZeroAngle = 6.53F;
+    const float kTestOpticHeight = 2.0F;
 
     puut->BallisticCoefficentPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -63,8 +63,8 @@ TEST_F(LobSpinTestFixture, ZeroAngleSearch) {
 TEST_F(LobSpinTestFixture, GetSpeedOfSoundFps) {
   ASSERT_NE(puut, nullptr);
   const auto kInput = puut->Build();
-  const float kExpectedFps = 1116.45;
-  const float kError = 0.001;
+  const float kExpectedFps = 1116.45F;
+  const float kError = 0.001F;
   EXPECT_NEAR(kInput.speed_of_sound, kExpectedFps, kError);
 }
 
@@ -82,20 +82,20 @@ TEST_F(LobSpinTestFixture, SolveWithoutSpin) {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
   const std::vector<lob::Output> kExpected = {
-      {0, 3071, 5230, -2, 0, 0},
-      {150, 2992, 4965, 0.95, 0, 0.049},
-      {300, 2914, 4709, 2.93, 0, 0.1},
-      {600, 2761, 4227, 3.76, 0, 0.206},
-      {900, 2612, 3783, 0.03, 0, 0.318},
-      {1200, 2467, 3376, -8.8, 0, 0.436},
-      {1500, 2327, 3004, -23.35, 0, 0.561},
-      {1800, 2192, 2665, -44.32, 0, 0.694},
-      {2100, 2062, 2357, -72.53, 0, 0.835},
-      {2400, 1936, 2078, -108.94, 0, 0.985},
-      {2700, 1814, 1824, -154.62, 0, 1.145},
-      {3000, 1695, 1593, -210.93, 0, 1.316},
-      {4500, 1159, 745, -717.03, 0, 2.388},
-      {6000, 952, 503, -1865.85, 0, 3.851}};
+      {0, 3071, 5230, -2.00F, 0.00F, 0.000F},
+      {150, 2992, 4965, 0.95F, 0.00F, 0.049F},
+      {300, 2914, 4709, 2.93F, 0.00F, 0.100F},
+      {600, 2761, 4227, 3.76F, 0.00F, 0.206F},
+      {900, 2612, 3783, 0.03F, 0.00F, 0.318F},
+      {1200, 2467, 3376, -8.80F, 0.00F, 0.436F},
+      {1500, 2327, 3004, -23.35F, 0.00F, 0.561F},
+      {1800, 2192, 2665, -44.32F, 0.00F, 0.694F},
+      {2100, 2062, 2357, -72.53F, 0.00F, 0.835F},
+      {2400, 1936, 2078, -108.94F, 0.00F, 0.985F},
+      {2700, 1814, 1824, -154.62F, 0.00F, 1.145F},
+      {3000, 1695, 1593, -210.93F, 0.00F, 1.316F},
+      {4500, 1159, 745, -717.03F, 0.00F, 2.388F},
+      {6000, 952, 503, -1865.85F, 0.00F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
@@ -126,7 +126,7 @@ TEST_F(LobSpinTestFixture, SolveWithoutSpin) {
 
 TEST_F(LobSpinTestFixture, RightHandSpinDrift) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kBarrelTwist = 11;
+  constexpr float kBarrelTwist = 11.0F;
   constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
@@ -139,20 +139,20 @@ TEST_F(LobSpinTestFixture, RightHandSpinDrift) {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
   const std::vector<lob::Output> kExpected = {
-      {0, 3071, 5230, -2, 0, 0},
-      {150, 2992, 4965, 0.95, 0.02, 0.049},
-      {300, 2914, 4709, 2.93, 0.06, 0.1},
-      {600, 2761, 4227, 3.76, 0.24, 0.206},
-      {900, 2612, 3783, 0.03, 0.53, 0.318},
-      {1200, 2467, 3376, -8.8, 0.94, 0.436},
-      {1500, 2327, 3004, -23.35, 1.49, 0.561},
-      {1800, 2192, 2665, -44.32, 2.2, 0.694},
-      {2100, 2062, 2357, -72.53, 3.09, 0.835},
-      {2400, 1936, 2078, -108.94, 4.19, 0.985},
-      {2700, 1814, 1824, -154.62, 5.51, 1.145},
-      {3000, 1695, 1593, -210.93, 7.12, 1.316},
-      {4500, 1159, 745, -717.03, 21.15, 2.388},
-      {6000, 952, 503, -1865.85, 50.74, 3.851}};
+      {0, 3071, 5230, -2.00F, 0.00F, 0.000F},
+      {150, 2992, 4965, 0.95F, 0.02F, 0.049F},
+      {300, 2914, 4709, 2.93F, 0.06F, 0.100F},
+      {600, 2761, 4227, 3.76F, 0.24F, 0.206F},
+      {900, 2612, 3783, 0.03F, 0.53F, 0.318F},
+      {1200, 2467, 3376, -8.80F, 0.94F, 0.436F},
+      {1500, 2327, 3004, -23.35F, 1.49F, 0.561F},
+      {1800, 2192, 2665, -44.32F, 2.20F, 0.694F},
+      {2100, 2062, 2357, -72.53F, 3.09F, 0.835F},
+      {2400, 1936, 2078, -108.94F, 4.19F, 0.985F},
+      {2700, 1814, 1824, -154.62F, 5.51F, 1.145F},
+      {3000, 1695, 1593, -210.93F, 7.12F, 1.316F},
+      {4500, 1159, 745, -717.03F, 21.15F, 2.388F},
+      {6000, 952, 503, -1865.85F, 50.74F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
@@ -183,7 +183,7 @@ TEST_F(LobSpinTestFixture, RightHandSpinDrift) {
 
 TEST_F(LobSpinTestFixture, RightHandSpinDriftFast) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kBarrelTwist = 9.375;
+  constexpr float kBarrelTwist = 9.375F;
   constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
@@ -196,20 +196,20 @@ TEST_F(LobSpinTestFixture, RightHandSpinDriftFast) {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
   const std::vector<lob::Output> kExpected = {
-      {0, 3071, 5230, -2, 0, 0},
-      {150, 2992, 4965, 0.95, 0.02, 0.049},
-      {300, 2914, 4709, 2.93, 0.08, 0.1},
-      {600, 2761, 4227, 3.76, 0.3, 0.206},
-      {900, 2612, 3783, 0.03, 0.66, 0.318},
-      {1200, 2467, 3376, -8.8, 1.17, 0.436},
-      {1500, 2327, 3004, -23.35, 1.86, 0.561},
-      {1800, 2192, 2665, -44.32, 2.74, 0.694},
-      {2100, 2062, 2357, -72.53, 3.85, 0.835},
-      {2400, 1936, 2078, -108.94, 5.21, 0.985},
-      {2700, 1814, 1824, -154.62, 6.87, 1.145},
-      {3000, 1695, 1593, -210.93, 8.86, 1.316},
-      {4500, 1159, 745, -717.03, 26.34, 2.388},
-      {6000, 952, 503, -1865.85, 63.19, 3.851}};
+      {0, 3071, 5230, -2.00F, 0.00F, 0.000F},
+      {150, 2992, 4965, 0.95F, 0.02F, 0.049F},
+      {300, 2914, 4709, 2.93F, 0.08F, 0.100F},
+      {600, 2761, 4227, 3.76F, 0.30F, 0.206F},
+      {900, 2612, 3783, 0.03F, 0.66F, 0.318F},
+      {1200, 2467, 3376, -8.80F, 1.17F, 0.436F},
+      {1500, 2327, 3004, -23.35F, 1.86F, 0.561F},
+      {1800, 2192, 2665, -44.32F, 2.74F, 0.694F},
+      {2100, 2062, 2357, -72.53F, 3.85F, 0.835F},
+      {2400, 1936, 2078, -108.94F, 5.21F, 0.985F},
+      {2700, 1814, 1824, -154.62F, 6.87F, 1.145F},
+      {3000, 1695, 1593, -210.93F, 8.86F, 1.316F},
+      {4500, 1159, 745, -717.03F, 26.34F, 2.388F},
+      {6000, 952, 503, -1865.85F, 63.19F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
@@ -240,7 +240,7 @@ TEST_F(LobSpinTestFixture, RightHandSpinDriftFast) {
 
 TEST_F(LobSpinTestFixture, LeftHandSpinDrift) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kBarrelTwist = -11;
+  constexpr float kBarrelTwist = -11.0F;
   constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
@@ -253,20 +253,20 @@ TEST_F(LobSpinTestFixture, LeftHandSpinDrift) {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
   const std::vector<lob::Output> kExpected = {
-      {0, 3071, 5230, -2, 0, 0},
-      {150, 2992, 4965, 0.95, -0.02, 0.049},
-      {300, 2914, 4709, 2.93, -0.06, 0.1},
-      {600, 2761, 4227, 3.76, -0.24, 0.206},
-      {900, 2612, 3783, 0.03, -0.53, 0.318},
-      {1200, 2467, 3376, -8.8, -0.94, 0.436},
-      {1500, 2327, 3004, -23.35, -1.49, 0.561},
-      {1800, 2192, 2665, -44.32, -2.2, 0.694},
-      {2100, 2062, 2357, -72.53, -3.09, 0.835},
-      {2400, 1936, 2078, -108.94, -4.19, 0.985},
-      {2700, 1814, 1824, -154.62, -5.51, 1.145},
-      {3000, 1695, 1593, -210.93, -7.12, 1.316},
-      {4500, 1159, 745, -717.03, -21.15, 2.388},
-      {6000, 952, 503, -1865.85, -50.74, 3.851}};
+      {0, 3071, 5230, -2.00F, 0.00F, 0.000F},
+      {150, 2992, 4965, 0.95F, -0.02F, 0.049F},
+      {300, 2914, 4709, 2.93F, -0.06F, 0.100F},
+      {600, 2761, 4227, 3.76F, -0.24F, 0.206F},
+      {900, 2612, 3783, 0.03F, -0.53F, 0.318F},
+      {1200, 2467, 3376, -8.80F, -0.94F, 0.436F},
+      {1500, 2327, 3004, -23.35F, -1.49F, 0.561F},
+      {1800, 2192, 2665, -44.32F, -2.20F, 0.694F},
+      {2100, 2062, 2357, -72.53F, -3.09F, 0.835F},
+      {2400, 1936, 2078, -108.94F, -4.19F, 0.985F},
+      {2700, 1814, 1824, -154.62F, -5.51F, 1.145F},
+      {3000, 1695, 1593, -210.93F, -7.12F, 1.316F},
+      {4500, 1159, 745, -717.03F, -21.15F, 2.388F},
+      {6000, 952, 503, -1865.85F, -50.74F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
@@ -297,7 +297,7 @@ TEST_F(LobSpinTestFixture, LeftHandSpinDrift) {
 
 TEST_F(LobSpinTestFixture, LeftHandSpinDriftFast) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kBarrelTwist = -9.375;
+  constexpr float kBarrelTwist = -9.375F;
   constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
@@ -310,20 +310,20 @@ TEST_F(LobSpinTestFixture, LeftHandSpinDriftFast) {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
   const std::vector<lob::Output> kExpected = {
-      {0, 3071, 5230, -2, 0, 0},
-      {150, 2992, 4965, 0.95, -0.02, 0.049},
-      {300, 2914, 4709, 2.93, -0.08, 0.1},
-      {600, 2761, 4227, 3.76, -0.3, 0.206},
-      {900, 2612, 3783, 0.03, -0.66, 0.318},
-      {1200, 2467, 3376, -8.8, -1.17, 0.436},
-      {1500, 2327, 3004, -23.35, -1.86, 0.561},
-      {1800, 2192, 2665, -44.32, -2.74, 0.694},
-      {2100, 2062, 2357, -72.53, -3.85, 0.835},
-      {2400, 1936, 2078, -108.94, -5.21, 0.985},
-      {2700, 1814, 1824, -154.62, -6.87, 1.145},
-      {3000, 1695, 1593, -210.93, -8.86, 1.316},
-      {4500, 1159, 745, -717.03, -26.34, 2.388},
-      {6000, 952, 503, -1865.85, -63.19, 3.851}};
+      {0, 3071, 5230, -2.00F, 0.00F, 0.000F},
+      {150, 2992, 4965, 0.95F, -0.02F, 0.049F},
+      {300, 2914, 4709, 2.93F, -0.08F, 0.100F},
+      {600, 2761, 4227, 3.76F, -0.30F, 0.206F},
+      {900, 2612, 3783, 0.03F, -0.66F, 0.318F},
+      {1200, 2467, 3376, -8.80F, -1.17F, 0.436F},
+      {1500, 2327, 3004, -23.35F, -1.86F, 0.561F},
+      {1800, 2192, 2665, -44.32F, -2.74F, 0.694F},
+      {2100, 2062, 2357, -72.53F, -3.85F, 0.835F},
+      {2400, 1936, 2078, -108.94F, -5.21F, 0.985F},
+      {2700, 1814, 1824, -154.62F, -6.87F, 1.145F},
+      {3000, 1695, 1593, -210.93F, -8.86F, 1.316F},
+      {4500, 1159, 745, -717.03F, -26.34F, 2.388F},
+      {6000, 952, 503, -1865.85F, -63.19F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
@@ -354,8 +354,8 @@ TEST_F(LobSpinTestFixture, LeftHandSpinDriftFast) {
 
 TEST_F(LobSpinTestFixture, RightHandSpinDriftWithLitzAeroJump1) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kBarrelTwist = 11;
-  constexpr float kWind = 15;
+  constexpr float kBarrelTwist = 11.0F;
+  constexpr float kWind = 15.0F;
   constexpr lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIX;
   constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
@@ -363,29 +363,31 @@ TEST_F(LobSpinTestFixture, RightHandSpinDriftWithLitzAeroJump1) {
   constexpr double kMoaError = 0.1;
   constexpr double kInchError = 0.5;
   constexpr double kTimeOfFlightError = 0.01;
+  constexpr double kAerodynamicJump = 0.660887;
   constexpr size_t kSolutionLength = 14;
   const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
                           .WindSpeedMph(kWind)
                           .WindHeading(kWindHeading)
                           .Build();
+  EXPECT_NEAR(kInput.aerodynamic_jump, kAerodynamicJump, kMoaError);
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
   const std::vector<lob::Output> kExpected = {
-      {0, 3071, 5230, -2, 0, 0},
-      {150, 2992, 4965, 1.3, -0.15, 0.049},
-      {300, 2914, 4709, 3.62, -0.62, 0.1},
-      {600, 2761, 4227, 5.15, -2.58, 0.206},
-      {900, 2612, 3783, 2.1, -5.99, 0.318},
-      {1200, 2467, 3376, -6.04, -10.99, 0.436},
-      {1500, 2327, 3004, -19.9, -17.7, 0.561},
-      {1800, 2192, 2665, -40.17, -26.27, 0.694},
-      {2100, 2062, 2357, -67.69, -36.84, 0.835},
-      {2400, 1936, 2078, -103.41, -49.61, 0.985},
-      {2700, 1814, 1824, -148.4, -64.76, 1.145},
-      {3000, 1695, 1593, -204.01, -82.56, 1.316},
-      {4500, 1159, 745, -706.66, -222.33, 2.388},
-      {6000, 952, 503, -1852.03, -450.26, 3.851}};
+      {0, 3071, 5230, -2.00F, 0.00F, 0.000F},
+      {150, 2992, 4965, 1.30F, -0.15F, 0.049F},
+      {300, 2914, 4709, 3.62F, -0.62F, 0.100F},
+      {600, 2761, 4227, 5.15F, -2.58F, 0.206F},
+      {900, 2612, 3783, 2.10F, -5.99F, 0.318F},
+      {1200, 2467, 3376, -6.04F, -10.99F, 0.436F},
+      {1500, 2327, 3004, -19.90F, -17.70F, 0.561F},
+      {1800, 2192, 2665, -40.17F, -26.27F, 0.694F},
+      {2100, 2062, 2357, -67.69F, -36.84F, 0.835F},
+      {2400, 1936, 2078, -103.41F, -49.61F, 0.985F},
+      {2700, 1814, 1824, -148.40F, -64.76F, 1.145F},
+      {3000, 1695, 1593, -204.01F, -82.56F, 1.316F},
+      {4500, 1159, 745, -706.66F, -222.33F, 2.388F},
+      {6000, 952, 503, -1852.03F, -450.26F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
@@ -416,8 +418,8 @@ TEST_F(LobSpinTestFixture, RightHandSpinDriftWithLitzAeroJump1) {
 
 TEST_F(LobSpinTestFixture, RightHandSpinDriftWithLitzAeroJump2) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kBarrelTwist = 11;
-  constexpr float kWind = 15;
+  constexpr float kBarrelTwist = 11.0F;
+  constexpr float kWind = 15.0F;
   constexpr lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIII;
   constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
@@ -425,29 +427,31 @@ TEST_F(LobSpinTestFixture, RightHandSpinDriftWithLitzAeroJump2) {
   constexpr double kMoaError = 0.1;
   constexpr double kInchError = 0.5;
   constexpr double kTimeOfFlightError = 0.01;
+  constexpr double kAerodynamicJump = -0.660887;
   constexpr size_t kSolutionLength = 14;
   const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
                           .WindSpeedMph(kWind)
                           .WindHeading(kWindHeading)
                           .Build();
+  EXPECT_NEAR(kInput.aerodynamic_jump, kAerodynamicJump, kMoaError);
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
   const std::vector<lob::Output> kExpected = {
-      {0, 3071, 5230, -2, 0, 0},
-      {150, 2992, 4965, 0.61, 0.19, 0.049},
-      {300, 2914, 4709, 2.24, 0.75, 0.1},
-      {600, 2761, 4227, 2.38, 3.06, 0.206},
-      {900, 2612, 3783, -2.04, 7.05, 0.318},
-      {1200, 2467, 3376, -11.57, 12.87, 0.436},
-      {1500, 2327, 3004, -26.81, 20.69, 0.561},
-      {1800, 2192, 2665, -48.47, 30.67, 0.694},
-      {2100, 2062, 2357, -77.37, 43.03, 0.835},
-      {2400, 1936, 2078, -114.47, 57.98, 0.985},
-      {2700, 1814, 1824, -160.84, 75.79, 1.145},
-      {3000, 1695, 1593, -217.84, 96.79, 1.316},
-      {4500, 1159, 745, -727.39, 264.63, 2.388},
-      {6000, 952, 503, -1879.67, 551.74, 3.851}};
+      {0, 3071, 5230, -2.00F, 0.00F, 0.000F},
+      {150, 2992, 4965, 0.61F, 0.19F, 0.049F},
+      {300, 2914, 4709, 2.24F, 0.75F, 0.100F},
+      {600, 2761, 4227, 2.38F, 3.06F, 0.206F},
+      {900, 2612, 3783, -2.04F, 7.05F, 0.318F},
+      {1200, 2467, 3376, -11.57F, 12.87F, 0.436F},
+      {1500, 2327, 3004, -26.81F, 20.69F, 0.561F},
+      {1800, 2192, 2665, -48.47F, 30.67F, 0.694F},
+      {2100, 2062, 2357, -77.37F, 43.03F, 0.835F},
+      {2400, 1936, 2078, -114.47F, 57.98F, 0.985F},
+      {2700, 1814, 1824, -160.84F, 75.79F, 1.145F},
+      {3000, 1695, 1593, -217.84F, 96.79F, 1.316F},
+      {4500, 1159, 745, -727.39F, 264.63F, 2.388F},
+      {6000, 952, 503, -1879.67F, 551.74F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};

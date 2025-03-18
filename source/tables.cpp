@@ -15,17 +15,31 @@
 
 namespace lob {
 
+namespace {
+template <typename T>
+constexpr bool AreEqual(T a, T b) {
+  if (std::isinf(a) || std::isinf(b)) {
+    return !(a > b || b > a);
+  }
+  if (std::isnan(a) || std::isnan(b)) {
+    return std::isnan(a) && std::isnan(b);
+  }
+  return (std::fabs(a - b) <= std::numeric_limits<T>::epsilon() *
+                                  std::fmax(std::fabs(a), std::fabs(b)));
+}
+}  // namespace
+
 template <typename T>
 double LobLerp(const T* x_lut, const T* y_lut,
                const size_t size,  // NOLINT
                const double x_in) {
-  if (x_in < x_lut[0]) {
+  if (x_in < static_cast<double>(x_lut[0])) {
     return y_lut[0];
   }
 
   size_t index = size - 1;
 
-  while (index > 0 && x_lut[index] > x_in) {
+  while (index > 0 && x_in < static_cast<double>(x_lut[index])) {
     index--;
   }
 
@@ -72,27 +86,30 @@ Circle FitCircle(const Point& p1, const Point& p2, const Point& p3) {
   const double kMid1y = (p1.y + p2.y) / 2;
   const double kMid2x = (p2.x + p3.x) / 2;
   const double kMid2y = (p2.y + p3.y) / 2;
-  const double kSlope1 = (p2.x - p1.x) == 0
+  const double kSlope1 = AreEqual((p2.x - p1.x), 0.0)
                              ? std::numeric_limits<double>::infinity()
                              : (p2.y - p1.y) / (p2.x - p1.x);
-  const double kSlope2 = (p3.x - p2.x) == 0
+  const double kSlope2 = AreEqual((p3.x - p2.x), 0.0)
                              ? std::numeric_limits<double>::infinity()
                              : (p3.y - p2.y) / (p3.x - p2.x);
   const double kPerpendicular1 =
-      (kSlope1 == 0) ? std::numeric_limits<double>::infinity()
-                     : (kSlope1 == std::numeric_limits<double>::infinity()
-                            ? 0
-                            : -1.0 / kSlope1);
+      AreEqual(kSlope1, 0.0)
+          ? std::numeric_limits<double>::infinity()
+          : (AreEqual(kSlope1, std::numeric_limits<double>::infinity())
+                 ? 0
+                 : -1.0 / kSlope1);
   const double kPerpendicular2 =
-      (kSlope2 == 0) ? std::numeric_limits<double>::infinity()
-                     : (kSlope2 == std::numeric_limits<double>::infinity()
-                            ? 0
-                            : -1.0 / kSlope2);
+      AreEqual(kSlope2, 0.0)
+          ? std::numeric_limits<double>::infinity()
+          : (AreEqual(kSlope2, std::numeric_limits<double>::infinity())
+                 ? 0
+                 : -1.0 / kSlope2);
   Point center;
-  if (kPerpendicular1 == std::numeric_limits<double>::infinity()) {
+  if (AreEqual(kPerpendicular1, std::numeric_limits<double>::infinity())) {
     center.x = kMid1x;
     center.y = kPerpendicular2 * (center.x - kMid2x) + kMid2y;
-  } else if (kPerpendicular2 == std::numeric_limits<double>::infinity()) {
+  } else if (AreEqual(kPerpendicular2,
+                      std::numeric_limits<double>::infinity())) {
     center.x = kMid2x;
     center.y = kPerpendicular1 * (center.x - kMid1x) + kMid1y;
   } else {
@@ -127,13 +144,13 @@ double LobQerp(const T* x_lut, const T* y_lut,
     return LobLerp(x_lut, y_lut, size, x_in);
   }
 
-  if (x_in < x_lut[0]) {
+  if (x_in < static_cast<double>(x_lut[0])) {
     return y_lut[0];
   }
 
   size_t index = size - 1;
 
-  while (index > 0 && x_lut[index] > x_in) {
+  while (index > 0 && x_in < static_cast<double>(x_lut[index])) {
     index--;
   }
 
@@ -209,23 +226,23 @@ void ExpandMachDragTable(const T* pmachs, const T* pdrags, size_t old_size,
         max_diff = kDiff;
         maxdex = j;
       }
-      if (kGap > max_gap) {
+      if (static_cast<double>(kGap) > max_gap) {
         max_gap = kGap;
         gapdex = j;
       }
     }
     if (maxdex == 0) {
       pnew_machs[old_size + i] =
-          (pnew_machs[gapdex] + pnew_machs[gapdex - 1]) / 2;
+          static_cast<T>(pnew_machs[gapdex] + pnew_machs[gapdex - 1]) / static_cast<T>(2U);
     } else {
       pnew_machs[old_size + i] =
-          (pnew_machs[maxdex] + pnew_machs[maxdex - 1]) / 2;
+          static_cast<T>(pnew_machs[maxdex] + pnew_machs[maxdex - 1]) / static_cast<T>(2U);
     }
-    std::sort(pnew_machs, pnew_machs + old_size + 1 + i);
+    std::sort(pnew_machs, pnew_machs + old_size + 1U + i);
   }
 
   for (size_t i = 0; i < new_size; i++) {
-    pnew_drags[i] = LobQerp(pmachs, pdrags, old_size, pnew_machs[i]);
+    pnew_drags[i] = static_cast<T>(LobQerp(pmachs, pdrags, old_size, pnew_machs[i]));
   }
 }
 
@@ -255,8 +272,8 @@ void CompressMachDragTable(const T* pmachs,  // NOLINT
       const double kY1 = pdrags[indices[j - 1]];
       const double kY2 = pdrags[indices[j + 1]];
       const double kLerp =
-          (kY2 - kY1) / (kX2 - kX1) * (pmachs[indices[j]] - kX1) + kY1;
-      const double kDiff = fabs(kLerp - pdrags[indices[j]]);
+          (kY2 - kY1) / (kX2 - kX1) * (static_cast<double>(pmachs[indices[j]]) - kX1) + kY1;
+      const double kDiff = fabs(kLerp - static_cast<double>(pdrags[indices[j]]));
       if (kDiff < min_diff) {
         min_diff = kDiff;
         mindex = j;

@@ -50,11 +50,11 @@ TEST_F(BuilderTestFixture, Destructor) {
 }
 
 TEST_F(BuilderTestFixture, CopyConstructor) {
-  const float kTestBC = 0.425;
-  const float kTestDiameter = 0.308;
-  const float kTestWeight = 180.0;
+  const float kTestBC = 0.425F;
+  const float kTestDiameter = 0.308F;
+  const float kTestWeight = 180.0F;
   const uint16_t kTestMuzzleVelocity = 2700U;
-  const float kTestZeroAngle = 3.38;
+  const float kTestZeroAngle = 3.38F;
   puut->BallisticCoefficentPsi(kTestBC)
       .DiameterInch(kTestDiameter)
       .MassGrains(kTestWeight)
@@ -68,11 +68,11 @@ TEST_F(BuilderTestFixture, CopyConstructor) {
 }
 
 TEST_F(BuilderTestFixture, MoveConstructor) {
-  const float kTestBC = 0.425;
-  const float kTestDiameter = 0.308;
-  const float kTestWeight = 180.0;
+  const float kTestBC = 0.425F;
+  const float kTestDiameter = 0.308F;
+  const float kTestWeight = 180.0F;
   const uint16_t kTestMuzzleVelocity = 2700U;
-  const float kTestZeroAngle = 3.38;
+  const float kTestZeroAngle = 3.38F;
   puut->BallisticCoefficentPsi(kTestBC)
       .DiameterInch(kTestDiameter)
       .MassGrains(kTestWeight)
@@ -85,11 +85,11 @@ TEST_F(BuilderTestFixture, MoveConstructor) {
 
 // Test for copy assignment operator
 TEST_F(BuilderTestFixture, CopyAssignmentOperator) {
-  const float kTestBC = 0.425;
-  const float kTestDiameter = 0.308;
-  const float kTestWeight = 180.0;
+  const float kTestBC = 0.425F;
+  const float kTestDiameter = 0.308F;
+  const float kTestWeight = 180.0F;
   const uint16_t kTestMuzzleVelocity = 2700U;
-  const float kTestZeroAngle = 3.38;
+  const float kTestZeroAngle = 3.38F;
   puut->BallisticCoefficentPsi(kTestBC)
       .DiameterInch(kTestDiameter)
       .MassGrains(kTestWeight)
@@ -105,11 +105,11 @@ TEST_F(BuilderTestFixture, CopyAssignmentOperator) {
 
 // Test for move assignment operator
 TEST_F(BuilderTestFixture, MoveAssignmentOperator) {
-  const float kTestBC = 0.425;
-  const float kTestDiameter = 0.308;
-  const float kTestWeight = 180.0;
+  const float kTestBC = 0.425F;
+  const float kTestDiameter = 0.308F;
+  const float kTestWeight = 180.0F;
   const uint16_t kTestMuzzleVelocity = 2700U;
-  const float kTestZeroAngle = 3.38;
+  const float kTestZeroAngle = 3.38F;
   puut->BallisticCoefficentPsi(kTestBC)
       .DiameterInch(kTestDiameter)
       .MassGrains(kTestWeight)
@@ -122,12 +122,12 @@ TEST_F(BuilderTestFixture, MoveAssignmentOperator) {
 }
 
 TEST_F(BuilderTestFixture, BuildMinimalInput) {
-  const float kTestBC = 0.425;
-  const float kTestDiameter = 0.308;
-  const float kTestWeight = 180.0;
+  const float kTestBC = 0.425F;
+  const float kTestDiameter = 0.308F;
+  const float kTestWeight = 180.0F;
   const uint16_t kTestMuzzleVelocity = 2700U;
-  const float kTestZeroAngle = 3.84;
-  const float kZeroDistance = 100;
+  const float kTestZeroAngle = 3.84F;
+  const float kZeroDistance = 100.0F;
   const lob::Input kResult = puut->BallisticCoefficentPsi(kTestBC)
                                  .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
                                  .DiameterInch(kTestDiameter)
@@ -141,10 +141,10 @@ TEST_F(BuilderTestFixture, BuildMinimalInput) {
   EXPECT_NE(kResult.speed_of_sound, lob::kNaN);
   EXPECT_EQ(kResult.velocity, kTestMuzzleVelocity);
   EXPECT_NEAR(kResult.zero_angle, kTestZeroAngle, 0.01);
-  EXPECT_FLOAT_EQ(kResult.gravity.y, -1.0F * lob::kStandardGravity);
+  EXPECT_FLOAT_EQ(kResult.gravity.y,
+                  -1.0F * static_cast<float>(lob::kStandardGravityFtPerSecSq));
 
   const uint32_t kOutSize = 12;
-  const uint32_t kMaxRange = 6000;
   const std::array<uint32_t, kOutSize> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   std::array<lob::Output, kOutSize> out = {};
