@@ -17,12 +17,12 @@ namespace lob {
  * @brief Gets the library version in major.minor.patch format.
  * @return Version string.
  */
-const char* Version();
+ LOB_EXPORT const char* Version();
 
-enum class DragFunctionT : uint8_t { kG1, kG2, kG5, kG6, kG7, kG8 };
-enum class AtmosphereReferenceT : uint8_t { kArmyStandardMetro, kIcao };
+enum class LOB_EXPORT DragFunctionT : uint8_t { kG1, kG2, kG5, kG6, kG7, kG8 };
+enum class LOB_EXPORT AtmosphereReferenceT : uint8_t { kArmyStandardMetro, kIcao };
 
-enum class ClockAngleT : uint8_t {
+enum class LOB_EXPORT ClockAngleT : uint8_t {
   kIII = 0U,
   kII,
   kI,
@@ -39,7 +39,7 @@ enum class ClockAngleT : uint8_t {
 
 static constexpr auto kNaN = std::numeric_limits<double>::quiet_NaN();
 
-struct Input {
+struct LOB_EXPORT Input {
   static constexpr uint8_t kTableSize{85};
   std::array<uint16_t, kTableSize> drags{};
   float table_coefficent{kNaN};
@@ -109,14 +109,14 @@ class LOB_EXPORT Builder {
   Impl* pimpl_{nullptr};
 };  // class Builder
 
-struct Options {
+struct LOB_EXPORT Options {
   uint16_t min_speed{0};
   uint16_t min_energy{0};
   float max_time{kNaN};
   uint16_t step_size{0};
 };  // struct Options
 
-struct Output {
+struct LOB_EXPORT Output {
   uint32_t range{0};
   uint16_t velocity{0};
   uint32_t energy{0};
@@ -125,11 +125,11 @@ struct Output {
   float time_of_flight{0.0F};
 };  // struct Output
 
-size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
+LOB_EXPORT size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
              size_t size, const Options& options);
 
 template <size_t N>
-size_t Solve(const Input& in, const std::array<uint32_t, N>* pranges,
+LOB_EXPORT size_t Solve(const Input& in, const std::array<uint32_t, N>* pranges,
              std::array<Output, N>* pouts, const Options& options = Options{}) {
   return Solve(in, pranges->data(), pouts->data(), N, options);
 }
@@ -207,7 +207,7 @@ constexpr double DegToMil(double value);
  * @param range_ft Range in feet.
  * @return Equivalent angle in MOA.
  */
-double InchToMoa(double value, double range_ft);
+ LOB_EXPORT double InchToMoa(double value, double range_ft);
 
 /**
  * @brief Inches of projection at a given range to milliradians (MIL)
@@ -251,7 +251,7 @@ constexpr double MtoYd(double value);
  * @param value Length in yards.
  * @return Equivalent length in feet.
  */
-double YdToFt(double value);
+ LOB_EXPORT double YdToFt(double value);
 
 /**
  * @brief Converts meters to feet.

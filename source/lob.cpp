@@ -344,6 +344,7 @@ void ValidateBuild(const Impl& impl) {
   assert(!std::isnan(impl.build.mass));
   assert(!std::isnan(impl.zero_distance_ft) ||
          !std::isnan(impl.build.zero_angle));
+  static_cast<void>(impl);  // argument is unused in Release build
 }
 
 void BuildEnvironment(Impl* pimpl) {
