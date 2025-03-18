@@ -17,10 +17,13 @@ namespace lob {
  * @brief Gets the library version in major.minor.patch format.
  * @return Version string.
  */
- LOB_EXPORT const char* Version();
+LOB_EXPORT const char* Version();
 
 enum class LOB_EXPORT DragFunctionT : uint8_t { kG1, kG2, kG5, kG6, kG7, kG8 };
-enum class LOB_EXPORT AtmosphereReferenceT : uint8_t { kArmyStandardMetro, kIcao };
+enum class LOB_EXPORT AtmosphereReferenceT : uint8_t {
+  kArmyStandardMetro,
+  kIcao
+};
 
 enum class LOB_EXPORT ClockAngleT : uint8_t {
   kIII = 0U,
@@ -126,11 +129,12 @@ struct LOB_EXPORT Output {
 };  // struct Output
 
 LOB_EXPORT size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
-             size_t size, const Options& options);
+                        size_t size, const Options& options);
 
 template <size_t N>
 LOB_EXPORT size_t Solve(const Input& in, const std::array<uint32_t, N>* pranges,
-             std::array<Output, N>* pouts, const Options& options = Options{}) {
+                        std::array<Output, N>* pouts,
+                        const Options& options = Options{}) {
   return Solve(in, pranges->data(), pouts->data(), N, options);
 }
 
@@ -207,7 +211,7 @@ constexpr double DegToMil(double value);
  * @param range_ft Range in feet.
  * @return Equivalent angle in MOA.
  */
- LOB_EXPORT double InchToMoa(double value, double range_ft);
+LOB_EXPORT double InchToMoa(double value, double range_ft);
 
 /**
  * @brief Inches of projection at a given range to milliradians (MIL)
@@ -251,7 +255,7 @@ constexpr double MtoYd(double value);
  * @param value Length in yards.
  * @return Equivalent length in feet.
  */
- LOB_EXPORT double YdToFt(double value);
+LOB_EXPORT double YdToFt(double value);
 
 /**
  * @brief Converts meters to feet.
