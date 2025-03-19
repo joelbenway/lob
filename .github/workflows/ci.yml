@@ -15,22 +15,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install Nix and Enter Flake Environment
-      uses: cachix/install-nix-action@v25
-      with:
-        nix_version: "2.18.1"
-        extra_nix_config: |
-          experimental-features = nix-command flakes
-        flake: .
-        extra_nix_command: develop
+    - uses: cachix/install-nix-action@v25
 
     - name: Lint
-      run: cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake
+      run: nix develop --command bash -c "cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake"
 
     - name: Spell check
       if: always()
-      run: cmake -P cmake/spell.cmake
+      run: nix develop --command bash -c "cmake -P cmake/spell.cmake"
 
   # coverage:
   #   needs: [lint]
@@ -73,6 +65,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v25
+
+    - name: Enter Nix Environment
+      run: nix develop
 
     - name: Configure
       run: cmake --preset=ci-sanitize
@@ -112,12 +108,6 @@ jobs:
     - name: Install Nix and Enter Flake Environment
       if: matrix.os == 'ubuntu-latest'
       uses: cachix/install-nix-action@v25
-      with:
-        nix_version: "2.18.1"
-        extra_nix_config: |
-          experimental-features = nix-command flakes
-        flake: .
-        extra_nix_command: develop
 
     - name: Setup MultiToolTask
       if: matrix.os == 'windows-latest'
