@@ -18,6 +18,8 @@ jobs:
 
     - name: Install Nix
       uses: cachix/install-nix-action@v25
+
+    - name: Enter flake environment
       run: nix develop
 
     - name: Lint
@@ -105,9 +107,10 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install Nix
+      if: matrix.os == 'ubuntu-latest'
       uses: cachix/install-nix-action@v25
 
-    - name: Install static analyzers
+    - name: Enter flake environment
       if: matrix.os == 'ubuntu-latest'
       run: >-
         nix develop
