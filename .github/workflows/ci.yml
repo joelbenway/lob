@@ -11,19 +11,14 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v5
-      with: { python-version: "3.11" }
-
-    - name: Install codespell
-      run: pip3 install codespell==2.4.1
-
-    - name: Install clang-format
-      run: pip3 install clang-format==17.0.6
+    - name: Install Nix
+      uses: cachix/install-nix-action@v25
+      run: nix develop
 
     - name: Lint
       run: cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake
@@ -35,7 +30,7 @@ jobs:
   # coverage:
   #   needs: [lint]
 
-  #   runs-on: ubuntu-22.04
+  #   runs-on: ubuntu-latest
 
   #   if: github.repository_owner == 'joelbenway'
 
@@ -67,7 +62,7 @@ jobs:
   sanitize:
     needs: [lint]
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     env: { CXX: clang++-14 }
 
@@ -96,7 +91,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-12, ubuntu-22.04] #, windows-2022]
+        os: [macos-latest, ubuntu-latest] #, windows-latest]
 
         type: [shared, static]
 
@@ -109,14 +104,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install Nix
+      uses: cachix/install-nix-action@v25
+
     - name: Install static analyzers
-      if: matrix.os == 'ubuntu-22.04'
+      if: matrix.os == 'ubuntu-latest'
       run: >-
-        pip3 install cppcheck &&
-        pip3 install clang-tidy==17.0.1
+        nix develop
 
     - name: Setup MultiToolTask
-      if: matrix.os == 'windows-2022'
+      if: matrix.os == 'windows-latest'
       run: |
         Add-Content "$env:GITHUB_ENV" 'UseMultiToolTask=true'
         Add-Content "$env:GITHUB_ENV" 'EnforceProcessCountAcrossBuilds=true'
@@ -127,7 +124,7 @@ jobs:
         -D BUILD_SHARED_LIBS=${{ matrix.shared }}
 
     - name: Setup PATH
-      if: matrix.os == 'windows-2022' && matrix.type == 'shared'
+      if: matrix.os == 'windows-latest' && matrix.type == 'shared'
       run: Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\Release"
 
     - name: Build
@@ -149,7 +146,7 @@ jobs:
   # docs:
   #   needs: [sanitize, test]
 
-  #   runs-on: ubuntu-22.04
+  #   runs-on: ubuntu-latest
 
   #   if: github.ref == 'refs/heads/master'
   #     && github.event_name == 'push'

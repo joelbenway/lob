@@ -300,6 +300,7 @@ Builder& Builder::ZeroImpactHeightInches(float value) {
   return *this;
 }
 
+namespace {
 void SolveStep(SpvT* ps, SecT* pt, const Input& input, uint16_t step_size = 0) {
   auto ds_dt = [input](double t, const SpvT& s) -> SpvT {
     static_cast<void>(t);  // t is unused
@@ -555,6 +556,7 @@ void BuildZeroAngle(Impl* pimpl) {
   }
   pimpl->build.zero_angle = MoaT((low_angle + high_angle) / 2).Float();
 }
+}  // namespace
 
 Input Builder::Build() {
   // This order matters
@@ -633,7 +635,9 @@ double MoaToInch(double value, double range_ft) {
 
 double MilToMoa(double value) { return MoaT(MilT(value)).Value(); }
 double MilToDeg(double value) { return DegreesT(MilT(value)).Value(); }
+namespace {
 double MilToIphy(double value) { return IphyT(MoaT(value)).Value(); }
+}  // namespace
 double MilToInch(double value, double range_ft) {
   return IphyT(MilT(value)).Value() * range_ft /
          static_cast<double>(kHundredYardsInFeet);
@@ -714,7 +718,6 @@ double SToUs(double value) { return UsecT(SecT(value)).Value(); }
 
 // Temperature
 double DegCToDegF(double value) { return DegFT(DegCT(value)).Value(); }
-
 }  // namespace lob
 
 // This program is free software: you can redistribute it and/or modify

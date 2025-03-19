@@ -22,7 +22,7 @@ DegFT CalculateTemperatureAtAltitude(FeetT altitude, DegFT temperature) {
 // Page 166 of Modern Exterior Ballistics - McCoy
 DegFT CalculateTemperatureAtAltitudeMcCoy(FeetT altitude,
                                           DegFT sea_level_temperature) {
-  const double kK = 6.858E-6 + 2.776E-11 * altitude.Value();
+  const double kK = 6.858E-6 + (2.776E-11 * altitude.Value());
   const double kA = DegRT(DegFT(0)).Value();
   // Note that the formula printed in 2e of Modern External Ballistics omits the
   // negative sign. This is remedied here.
@@ -61,7 +61,7 @@ InHgT BarometricFormula(FeetT altitude, InHgT pressure, DegFT temperature) {
 // Page 167 of Modern Exterior Ballistics - McCoy
 LbsPerCuFtT CalculateAirDensityAtAltitude(FeetT altitude,
                                           LbsPerCuFtT sea_level_density) {
-  const double kHFactorPerFt = 2.926E-5 + 1E-10 * altitude.Value();
+  const double kHFactorPerFt = 2.926E-5 + (1E-10 * altitude.Value());
 
   return LbsPerCuFtT(sea_level_density *
                      exp(-1.0 * kHFactorPerFt * altitude.Value()));
@@ -103,8 +103,8 @@ double CalculateAirDensityRatioHumidityCorrection(
     double humidity_pct, InHgT water_vapor_sat_pressure) {
   const double kAVal = 0.00378;
 
-  return 1.0 - kAVal * humidity_pct * water_vapor_sat_pressure.Value() /
-                   kIsaSeaLevelPressureInHg;
+  return 1.0 - (kAVal * humidity_pct * water_vapor_sat_pressure.Value() /
+                kIsaSeaLevelPressureInHg);
 }
 
 // Page 168 of Modern Exterior Ballistics - McCoy
@@ -112,8 +112,8 @@ double CalculateSpeedOfSoundHumidityCorrection(double humidity_pct,
                                                InHgT water_vapor_sat_pressure) {
   const double kAVal = 0.0014;
 
-  return 1.0 + kAVal * humidity_pct * water_vapor_sat_pressure.Value() /
-                   kIsaSeaLevelPressureInHg;
+  return 1.0 + (kAVal * humidity_pct * water_vapor_sat_pressure.Value() /
+                kIsaSeaLevelPressureInHg);
 }
 
 // Page 90 of Modern Exterior Ballistics - McCoy
@@ -178,8 +178,8 @@ MoaT CalculateLitzAerodynamicJump(double stability, InchT caliber, InchT length,
   const double kSgCoeff = 0.01;
   const double kLCoeff = 0.0024;
   const double kIntercept = 0.032;
-  const double kY = kSgCoeff * std::abs(stability) -
-                    kLCoeff * (length / caliber).Value() + kIntercept;
+  const double kY = (kSgCoeff * std::abs(stability)) -
+                    (kLCoeff * (length / caliber).Value()) + kIntercept;
   const double kDirection = stability >= 0 ? -1.0 : 1.0;
   return MoaT(kDirection * kY * l2r_crosswind.Value());
 }

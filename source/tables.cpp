@@ -15,6 +15,16 @@
 
 namespace lob {
 
+struct Point {
+  double x{0};
+  double y{0};
+};
+
+struct Circle {
+  Point center;
+  double radius{0};
+};
+
 namespace {
 template <typename T>
 constexpr bool AreEqual(T a, T b) {
@@ -26,6 +36,71 @@ constexpr bool AreEqual(T a, T b) {
   }
   return (std::fabs(a - b) <= std::numeric_limits<T>::epsilon() *
                                   std::fmax(std::fabs(a), std::fabs(b)));
+}
+
+double CalculatePerpendicularSlope(double slope) {
+  if (AreEqual(slope, 0.0)) {
+    return std::numeric_limits<double>::infinity();
+  }
+  if (AreEqual(slope, std::numeric_limits<double>::infinity())) {
+    return 0.0;
+  }
+  return -1.0 / slope;
+}
+
+Circle FitCircle(const Point& p1, const Point& p2, const Point& p3) {
+  // Calculate the center of the circle using the perpendicular bisectors
+  // method.
+  const double kEpsilon = 1e-6;
+
+  const double kCollinearity =
+      ((p2.y - p1.y) * (p3.x - p2.x)) - ((p3.y - p2.y) * (p2.x - p1.x));
+  if (std::abs(kCollinearity) < kEpsilon) {
+    return {{0, 0}, 0};
+  }
+
+  const double kMid1x = (p1.x + p2.x) / 2;
+  const double kMid1y = (p1.y + p2.y) / 2;
+  const double kMid2x = (p2.x + p3.x) / 2;
+  const double kMid2y = (p2.y + p3.y) / 2;
+  const double kSlope1 = AreEqual((p2.x - p1.x), 0.0)
+                             ? std::numeric_limits<double>::infinity()
+                             : (p2.y - p1.y) / (p2.x - p1.x);
+  const double kSlope2 = AreEqual((p3.x - p2.x), 0.0)
+                             ? std::numeric_limits<double>::infinity()
+                             : (p3.y - p2.y) / (p3.x - p2.x);
+  const double kPerpendicular1 = CalculatePerpendicularSlope(kSlope1);
+  const double kPerpendicular2 = CalculatePerpendicularSlope(kSlope2);
+  Point center;
+  if (AreEqual(kPerpendicular1, std::numeric_limits<double>::infinity())) {
+    center.x = kMid1x;
+    center.y = kPerpendicular2 * (center.x - kMid2x) + kMid2y;
+  } else if (AreEqual(kPerpendicular2,
+                      std::numeric_limits<double>::infinity())) {
+    center.x = kMid2x;
+    center.y = kPerpendicular1 * (center.x - kMid1x) + kMid1y;
+  } else {
+    center.x = (kMid2y - kMid1y + kPerpendicular1 * kMid1x -
+                kPerpendicular2 * kMid2x) /
+               (kPerpendicular1 - kPerpendicular2);
+    center.y = kPerpendicular1 * (center.x - kMid1x) + kMid1y;
+  }
+
+  const double kRadius =
+      std::sqrt(std::pow(p1.x - center.x, 2) + std::pow(p1.y - center.y, 2));
+
+  return {center, kRadius};
+}
+
+double FindAngleToPointOnCircle(Point p, Circle c) {
+  const double kAngle = std::atan2(p.y - c.center.y, p.x - c.center.x);
+  if (kAngle > 2 * kPi) {
+    return kAngle - (2 * kPi);
+  }
+  if (kAngle < 0) {
+    return kAngle + (2 * kPi);
+  }
+  return kAngle;
 }
 }  // namespace
 
@@ -52,7 +127,7 @@ double LobLerp(const T* x_lut, const T* y_lut,
   const double kY0 = y_lut[index];
   const double kY1 = y_lut[index + 1];
 
-  return (kY1 - kY0) / (kX1 - kX0) * (x_in - kX0) + kY0;
+  return ((kY1 - kY0) / (kX1 - kX0) * (x_in - kX0)) + kY0;
 }
 
 template double LobLerp<uint16_t>(const uint16_t* x_lut, const uint16_t* y_lut,
@@ -60,81 +135,6 @@ template double LobLerp<uint16_t>(const uint16_t* x_lut, const uint16_t* y_lut,
 
 template double LobLerp<float>(const float* x_lut, const float* y_lut,
                                const size_t size, const double x_in);
-
-struct Point {
-  double x{0};
-  double y{0};
-};
-
-struct Circle {
-  Point center;
-  double radius{0};
-};
-
-Circle FitCircle(const Point& p1, const Point& p2, const Point& p3) {
-  // Calculate the center of the circle using the perpendicular bisectors
-  // method.
-  const double kEpsilon = 1e-6;
-
-  const double kCollinearity =
-      (p2.y - p1.y) * (p3.x - p2.x) - (p3.y - p2.y) * (p2.x - p1.x);
-  if (std::abs(kCollinearity) < kEpsilon) {
-    return {{0, 0}, 0};
-  }
-
-  const double kMid1x = (p1.x + p2.x) / 2;
-  const double kMid1y = (p1.y + p2.y) / 2;
-  const double kMid2x = (p2.x + p3.x) / 2;
-  const double kMid2y = (p2.y + p3.y) / 2;
-  const double kSlope1 = AreEqual((p2.x - p1.x), 0.0)
-                             ? std::numeric_limits<double>::infinity()
-                             : (p2.y - p1.y) / (p2.x - p1.x);
-  const double kSlope2 = AreEqual((p3.x - p2.x), 0.0)
-                             ? std::numeric_limits<double>::infinity()
-                             : (p3.y - p2.y) / (p3.x - p2.x);
-  const double kPerpendicular1 =
-      AreEqual(kSlope1, 0.0)
-          ? std::numeric_limits<double>::infinity()
-          : (AreEqual(kSlope1, std::numeric_limits<double>::infinity())
-                 ? 0
-                 : -1.0 / kSlope1);
-  const double kPerpendicular2 =
-      AreEqual(kSlope2, 0.0)
-          ? std::numeric_limits<double>::infinity()
-          : (AreEqual(kSlope2, std::numeric_limits<double>::infinity())
-                 ? 0
-                 : -1.0 / kSlope2);
-  Point center;
-  if (AreEqual(kPerpendicular1, std::numeric_limits<double>::infinity())) {
-    center.x = kMid1x;
-    center.y = kPerpendicular2 * (center.x - kMid2x) + kMid2y;
-  } else if (AreEqual(kPerpendicular2,
-                      std::numeric_limits<double>::infinity())) {
-    center.x = kMid2x;
-    center.y = kPerpendicular1 * (center.x - kMid1x) + kMid1y;
-  } else {
-    center.x = (kMid2y - kMid1y + kPerpendicular1 * kMid1x -
-                kPerpendicular2 * kMid2x) /
-               (kPerpendicular1 - kPerpendicular2);
-    center.y = kPerpendicular1 * (center.x - kMid1x) + kMid1y;
-  }
-
-  const double kRadius =
-      std::sqrt(std::pow(p1.x - center.x, 2) + std::pow(p1.y - center.y, 2));
-
-  return {center, kRadius};
-}
-
-double FindAngleToPointOnCircle(Point p, Circle c) {
-  const double kAngle = std::atan2(p.y - c.center.y, p.x - c.center.x);
-  if (kAngle > 2 * kPi) {
-    return kAngle - 2 * kPi;
-  }
-  if (kAngle < 0) {
-    return kAngle + 2 * kPi;
-  }
-  return kAngle;
-}
 
 template <typename T>
 double LobQerp(const T* x_lut, const T* y_lut,
@@ -165,8 +165,8 @@ double LobQerp(const T* x_lut, const T* y_lut,
   const double kY1 = index == 0 ? y_lut[index + 1] : y_lut[index];
   const double kY2 = index == 0 ? y_lut[index + 2] : y_lut[index + 1];
   const double kLerp = x_in >= kX1
-                           ? (kY2 - kY1) / (kX2 - kX1) * (x_in - kX1) + kY1
-                           : (kY1 - kY0) / (kX1 - kX0) * (x_in - kX0) + kY0;
+                           ? ((kY2 - kY1) / (kX2 - kX1) * (x_in - kX1)) + kY1
+                           : ((kY1 - kY0) / (kX1 - kX0) * (x_in - kX0)) + kY0;
 
   const Circle kC = FitCircle({kX0, kY0}, {kX1, kY1}, {kX2, kY2});
 
@@ -205,6 +205,7 @@ template double LobQerp<uint16_t>(const uint16_t* x_lut, const uint16_t* y_lut,
 template double LobQerp<float>(const float* x_lut, const float* y_lut,
                                const size_t size, const double x_in);
 
+namespace {
 template <typename T>
 void ExpandMachDragTable(const T* pmachs, const T* pdrags, size_t old_size,
                          T* pnew_machs, T* pnew_drags, size_t new_size) {
@@ -257,6 +258,7 @@ template void ExpandMachDragTable<float>(const float* pmachs,
                                          const float* pdrags, size_t old_size,
                                          float* pnew_machs, float* pnew_drags,
                                          size_t new_size);
+}  // namespace
 
 template <typename T>
 void CompressMachDragTable(const T* pmachs,  // NOLINT
@@ -274,8 +276,8 @@ void CompressMachDragTable(const T* pmachs,  // NOLINT
       const double kX2 = pmachs[indices[j + 1]];
       const double kY1 = pdrags[indices[j - 1]];
       const double kY2 = pdrags[indices[j + 1]];
-      const double kLerp = (kY2 - kY1) / (kX2 - kX1) *
-                               (static_cast<double>(pmachs[indices[j]]) - kX1) +
+      const double kLerp = ((kY2 - kY1) / (kX2 - kX1) *
+                            (static_cast<double>(pmachs[indices[j]]) - kX1)) +
                            kY1;
       const double kDiff =
           fabs(kLerp - static_cast<double>(pdrags[indices[j]]));

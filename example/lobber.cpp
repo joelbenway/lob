@@ -19,7 +19,7 @@
 #include "version.hpp"
 
 namespace example {
-
+namespace {
 void PrintVersion() {
   std::cout << "Lobber version: " << kProjectVersion << '\n'
             << "Lob version:    " << lob::Version() << '\n';
@@ -142,6 +142,7 @@ bool WriteOutputFile(const std::string& file_name,
   output_file.close();
   return true;
 }
+}  // namespace
 
 // NOLINTNEXTLINE similar type easily swapped by mistake
 lob::Builder BuildHelper(const std::string& infile,

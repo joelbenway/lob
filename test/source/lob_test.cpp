@@ -5,12 +5,14 @@
 #include <gtest/gtest.h>
 
 namespace tests {
+namespace {
 
 int Main() {
   testing::InitGoogleTest();
   return RUN_ALL_TESTS();
 }
 
+}  // namespace
 }  // namespace tests
 
 // This program is free software: you can redistribute it and/or modify

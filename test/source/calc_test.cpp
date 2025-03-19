@@ -179,7 +179,7 @@ TEST(CalcTests, CalculateAirDensityRatioHumidityCorrection) {
   const double kError = 0.1;
   for (uint32_t i = 0; i < kTempsDegF.size(); i++) {
     for (uint32_t j = 0; j < kRelativeHumidities.size(); j++) {
-      EXPECT_NEAR(kExpectedResults.at(i * kRelativeHumidities.size() + j),
+      EXPECT_NEAR(kExpectedResults.at((i * kRelativeHumidities.size()) + j),
                   kUncorrectedDensities.at(i) *
                       lob::CalculateAirDensityRatioHumidityCorrection(
                           kRelativeHumidities.at(j),
@@ -203,7 +203,7 @@ TEST(CalcTests, CalculateSpeedOfSoundHumidityCorrection) {
   const double kError = 1.0;
   for (uint32_t i = 0; i < kTempsDegF.size(); i++) {
     for (uint32_t j = 0; j < kRelativeHumidities.size(); j++) {
-      EXPECT_NEAR(kExpectedResultsFps.at(i * kRelativeHumidities.size() + j),
+      EXPECT_NEAR(kExpectedResultsFps.at((i * kRelativeHumidities.size()) + j),
                   kUncorrectedSpeedOfSoundFps.at(i) *
                       lob::CalculateSpeedOfSoundHumidityCorrection(
                           kRelativeHumidities.at(j),

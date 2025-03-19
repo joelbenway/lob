@@ -651,7 +651,7 @@ using DegRT = StrongT<Temperature, Temperature::kDegreesR, double>;
 template <>
 template <>
 constexpr DegCT::operator DegFT() const {
-  return DegFT(Value() * convert::kDegFPerDegC + convert::kFreezePointDegF);
+  return DegFT((Value() * convert::kDegFPerDegC) + convert::kFreezePointDegF);
 }
 
 template <>
@@ -675,32 +675,33 @@ constexpr DegRT::operator DegFT() const {
 template <>
 template <>
 constexpr DegFT::operator DegKT() const {
-  return DegKT((Value() - convert::kFreezePointDegF) / convert::kDegFPerDegC -
+  return DegKT(((Value() - convert::kFreezePointDegF) / convert::kDegFPerDegC) -
                convert::kAbsoluteZeroDegC);
 }
 
 template <>
 template <>
 constexpr DegKT::operator DegFT() const {
-  return DegFT((Value() + convert::kAbsoluteZeroDegC) * convert::kDegFPerDegC +
-               convert::kFreezePointDegF);
+  return DegFT(
+      ((Value() + convert::kAbsoluteZeroDegC) * convert::kDegFPerDegC) +
+      convert::kFreezePointDegF);
 }
 
 template <>
 template <>
 constexpr DegRT::operator DegKT() const {
   return DegKT(
-      (Value() + convert::kAbsoluteZeroDegF - convert::kFreezePointDegF) /
-          convert::kDegFPerDegC -
+      ((Value() + convert::kAbsoluteZeroDegF - convert::kFreezePointDegF) /
+       convert::kDegFPerDegC) -
       convert::kAbsoluteZeroDegC);
 }
 
 template <>
 template <>
 constexpr DegKT::operator DegRT() const {
-  return DegRT((Value() + lob::convert::kAbsoluteZeroDegC) *
-                   convert::kDegFPerDegC -
-               lob::convert::kAbsoluteZeroDegF + convert::kFreezePointDegF);
+  return DegRT(
+      ((Value() + lob::convert::kAbsoluteZeroDegC) * convert::kDegFPerDegC) -
+      lob::convert::kAbsoluteZeroDegF + convert::kFreezePointDegF);
 }
 
 enum class Time : uint8_t { kMicroseconds, kMilliseconds, kSeconds };
