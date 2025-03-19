@@ -20,6 +20,7 @@ namespace lob {
 LOB_EXPORT const char* Version();
 
 enum class LOB_EXPORT DragFunctionT : uint8_t { kG1, kG2, kG5, kG6, kG7, kG8 };
+
 enum class LOB_EXPORT AtmosphereReferenceT : uint8_t {
   kArmyStandardMetro,
   kIcao
@@ -108,7 +109,11 @@ class LOB_EXPORT Builder {
 
  private:
   static constexpr size_t kBufferSize{392};
-  alignas(double) std::array<uint8_t, kBufferSize> buffer_{};
+  union AlignmentT {
+    double d;
+    size_t s;
+  };
+  alignas(AlignmentT) std::array<uint8_t, kBufferSize> buffer_{};
   Impl* pimpl_{nullptr};
 };  // class Builder
 
@@ -143,21 +148,21 @@ LOB_EXPORT size_t Solve(const Input& in, const std::array<uint32_t, N>* pranges,
  * @param value Angle in MOA.
  * @return Equivalent angle in MIL.
  */
-constexpr double MoaToMil(double value);
+LOB_EXPORT double MoaToMil(double value);
 
 /**
  * @brief Converts minutes of angle (MOA) to degrees.
  * @param value Angle in MOA.
  * @return Equivalent angle in degrees.
  */
-constexpr double MoaToDeg(double value);
+LOB_EXPORT double MoaToDeg(double value);
 
 /**
  * @brief Converts minutes of angle (MOA) to inches per hundred yards (IPHY).
  * @param value Angle in MOA.
  * @return Equivalent angle in IPHY.
  */
-constexpr double MoaToIphy(double value);
+LOB_EXPORT double MoaToIphy(double value);
 
 /**
  * @brief Converts minutes of angle (MOA) to projected inches at a given
@@ -166,21 +171,21 @@ constexpr double MoaToIphy(double value);
  * @param range_ft Range in feet.
  * @return Equivalent projected inches.
  */
-constexpr double MoaToInch(double value, double range_ft);
+LOB_EXPORT double MoaToInch(double value, double range_ft);
 
 /**
  * @brief Converts milliradians (MIL) to minutes of angle (MOA).
  * @param value Angle in MIL.
  * @return Equivalent angle in MOA.
  */
-constexpr double MilToMoa(double value);
+LOB_EXPORT double MilToMoa(double value);
 
 /**
  * @brief Converts milliradians (MIL) to degrees.
  * @param value Angle in MIL.
  * @return Equivalent angle in degrees.
  */
-constexpr double MilToDeg(double value);
+LOB_EXPORT double MilToDeg(double value);
 
 /**
  * @brief Converts milliradians (MIL) to projected inches at a given
@@ -189,21 +194,21 @@ constexpr double MilToDeg(double value);
  * @param range_ft Range in feet.
  * @return Equivalent projected inches.
  */
-constexpr double MilToInch(double value, double range_ft);
+LOB_EXPORT double MilToInch(double value, double range_ft);
 
 /**
  * @brief Converts degrees to minutes of angle (MOA).
  * @param value Angle in degrees.
  * @return Equivalent angle in MOA.
  */
-constexpr double DegToMoa(double value);
+LOB_EXPORT double DegToMoa(double value);
 
 /**
  * @brief Converts degrees to milliradians (MIL).
  * @param value Angle in degrees.
  * @return Equivalent angle in MIL.
  */
-constexpr double DegToMil(double value);
+LOB_EXPORT double DegToMil(double value);
 
 /**
  * @brief Inches of projection at a given range to minutes of angle (MOA)
@@ -219,7 +224,7 @@ LOB_EXPORT double InchToMoa(double value, double range_ft);
  * @param range_ft Range in feet.
  * @return Equivalent angle in MIL.
  */
-constexpr double InchToMil(double value, double range_ft);
+LOB_EXPORT double InchToMil(double value, double range_ft);
 
 /**
  * @brief Inches of projection at a given range to degrees.
@@ -227,28 +232,28 @@ constexpr double InchToMil(double value, double range_ft);
  * @param range_ft Range in feet.
  * @return Equivalent angle in degrees.
  */
-constexpr double InchToDeg(double value, double range_ft);
+LOB_EXPORT double InchToDeg(double value, double range_ft);
 
 /**
  * @brief Converts joules to foot-pounds.
  * @param value Energy in joules.
  * @return Equivalent energy in foot-pounds.
  */
-constexpr double JToFtLbs(double value);
+LOB_EXPORT double JToFtLbs(double value);
 
 /**
  * @brief Converts foot-pounds to joules.
  * @param value Energy in foot-pounds.
  * @return Equivalent energy in joules.
  */
-constexpr double FtLbsToJ(double value);
+LOB_EXPORT double FtLbsToJ(double value);
 
 /**
  * @brief Converts meters to yards.
  * @param value Length in meters.
  * @return Equivalent length in yards.
  */
-constexpr double MtoYd(double value);
+LOB_EXPORT double MtoYd(double value);
 
 /**
  * @brief Converts yards to feet.
@@ -262,182 +267,182 @@ LOB_EXPORT double YdToFt(double value);
  * @param value Length in meters.
  * @return Equivalent length in feet.
  */
-constexpr double MToFt(double value);
+LOB_EXPORT double MToFt(double value);
 
 /**
  * @brief Converts feet to inches.
  * @param value Length in feet.
  * @return Equivalent length in inches.
  */
-constexpr double FtToIn(double value);
+LOB_EXPORT double FtToIn(double value);
 
 /**
  * @brief Converts millimeters to inches.
  * @param value Length in millimeters.
  * @return Equivalent length in inches.
  */
-constexpr double MmToIn(double value);
+LOB_EXPORT double MmToIn(double value);
 
 /**
  * @brief Converts centimeters to inches.
  * @param value Length in centimeters.
  * @return Equivalent length in inches.
  */
-constexpr double CmToIn(double value);
+LOB_EXPORT double CmToIn(double value);
 
 /**
  * @brief Converts yards to meters.
  * @param value Length in yards.
  * @return Equivalent length in meters.
  */
-constexpr double YdToM(double value);
+LOB_EXPORT double YdToM(double value);
 
 /**
  * @brief Converts feet to meters.
  * @param value Length in feet.
  * @return Equivalent length in meters.
  */
-constexpr double FtToM(double value);
+LOB_EXPORT double FtToM(double value);
 
 /**
  * @brief Converts feet to yards.
  * @param value Length in feet.
  * @return Equivalent length in yards.
  */
-constexpr double FtToYd(double value);
+LOB_EXPORT double FtToYd(double value);
 
 /**
  * @brief Converts inches to millimeters.
  * @param value Length in inches.
  * @return Equivalent length in millimeters.
  */
-constexpr double InToMm(double value);
+LOB_EXPORT double InToMm(double value);
 
 /**
  * @brief Converts inches to centimeters.
  * @param value Length in inches.
  * @return Equivalent length in centimeters.
  */
-constexpr double InToCm(double value);
+LOB_EXPORT double InToCm(double value);
 
 /**
  * @brief Converts inches to feet.
  * @param value Length in inches.
  * @return Equivalent length in feet.
  */
-constexpr double InToFt(double value);
+LOB_EXPORT double InToFt(double value);
 
 /**
  * @brief Converts pascals to inches of mercury.
  * @param value Pressure in pascals.
  * @return Equivalent pressure in inches of mercury.
  */
-constexpr double PaToInHg(double value);
+LOB_EXPORT double PaToInHg(double value);
 
 /**
  * @brief Converts millibars to inches of mercury.
  * @param value Pressure in millibars.
  * @return Equivalent pressure in inches of mercury.
  */
-constexpr double MbarToInHg(double value);
+LOB_EXPORT double MbarToInHg(double value);
 
 /**
  * @brief Converts pounds per square inch (PSI) to inches of mercury.
  * @param value Pressure in PSI.
  * @return Equivalent pressure in inches of mercury.
  */
-constexpr double PsiToInHg(double value);
+LOB_EXPORT double PsiToInHg(double value);
 
 /**
  * @brief Converts pounds to grains.
  * @param value Mass in pounds.
  * @return Equivalent mass in grains.
  */
-constexpr double LbsToGrain(double value);
+LOB_EXPORT double LbsToGrain(double value);
 
 /**
  * @brief Converts grams to grains.
  * @param value Mass in grams.
  * @return Equivalent mass in grains.
  */
-constexpr double GToGrain(double value);
+LOB_EXPORT double GToGrain(double value);
 
 /**
  * @brief Converts kilograms to grains.
  * @param value Mass in kilograms.
  * @return Equivalent mass in grains.
  */
-constexpr double KgToGrain(double value);
+LOB_EXPORT double KgToGrain(double value);
 
 /**
  * @brief Converts kilograms per square meter to pounds mass per square inch.
  * @param value Sectional density in Kg/m².
  * @return Equivalent sectional density in lb/in².
  */
-constexpr double KgSqMToPmsi(double value);
+LOB_EXPORT double KgSqMToPmsi(double value);
 
 /**
  * @brief Converts feet per second to meters per second.
  * @param value Speed in feet per second.
  * @return Equivalent speed in meters per second.
  */
-constexpr double FpsToMps(double value);
+LOB_EXPORT double FpsToMps(double value);
 
 /**
  * @brief Converts meters per second to feet per second.
  * @param value Speed in meters per second.
  * @return Equivalent speed in feet per second.
  */
-constexpr double MpsToFps(double value);
+LOB_EXPORT double MpsToFps(double value);
 
 /**
  * @brief Converts kilometers per hour to miles per hour.
  * @param value Speed in kilometers per hour.
  * @return Equivalent speed in miles per hour.
  */
-constexpr double KphToMph(double value);
+LOB_EXPORT double KphToMph(double value);
 
 /**
  * @brief Converts Knots to miles per hour.
  * @param value Speed in Knots.
  * @return Equivalent speed in miles per hour.
  */
-constexpr double KnToMph(double value);
+LOB_EXPORT double KnToMph(double value);
 
 /**
  * @brief Converts milliseconds to seconds.
  * @param value Time in milliseconds.
  * @return Equivalent time in seconds.
  */
-constexpr double MsToS(double value);
+LOB_EXPORT double MsToS(double value);
 
 /**
  * @brief Converts microseconds to seconds.
  * @param value Time in microseconds.
  * @return Equivalent time in seconds.
  */
-constexpr double UsToS(double value);
+LOB_EXPORT double UsToS(double value);
 
 /**
  * @brief Converts seconds to milliseconds.
  * @param value Time in seconds.
  * @return Equivalent time in milliseconds.
  */
-constexpr double SToMs(double value);
+LOB_EXPORT double SToMs(double value);
 
 /**
  * @brief Converts seconds to microseconds.
  * @param value Time in seconds.
  * @return Equivalent time in microseconds.
  */
-constexpr double SToUs(double value);
+LOB_EXPORT double SToUs(double value);
 
 /**
  * @brief Converts degrees celsius to degrees fahrenheit.
  * @param value Temperature in degrees celsius
  * @return Equivalent temperature in Degrees Fahrenheit
  */
-constexpr double DegCToDegF(double value);
+LOB_EXPORT double DegCToDegF(double value);
 
 }  // namespace lob
 

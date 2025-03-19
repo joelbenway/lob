@@ -49,6 +49,8 @@ constexpr bool AreEqual(T a, T b) {
   return (std::fabs(a - b) <= std::numeric_limits<T>::epsilon() *
                                   std::fmax(std::fabs(a), std::fabs(b)));
 }
+
+constexpr float kHundredYardsInFeet = FeetT(YardT(100)).Float();
 }  // namespace
 
 class Impl {
@@ -620,35 +622,25 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
   return index;
 }
 
-static constexpr float kHundredYardsInFeet = FeetT(YardT(100)).Float();
-
 // Angle
-constexpr double MoaToMil(double value) { return MilT(MoaT(value)).Value(); }
-constexpr double MoaToDeg(double value) {
-  return DegreesT(MoaT(value)).Value();
-}
-constexpr double MoaToIphy(double value) { return IphyT(MoaT(value)).Value(); }
-constexpr double MoaToInch(double value, double range_ft) {
+double MoaToMil(double value) { return MilT(MoaT(value)).Value(); }
+double MoaToDeg(double value) { return DegreesT(MoaT(value)).Value(); }
+double MoaToIphy(double value) { return IphyT(MoaT(value)).Value(); }
+double MoaToInch(double value, double range_ft) {
   return IphyT(MoaT(value)).Value() * range_ft /
          static_cast<double>(kHundredYardsInFeet);
 }
 
-constexpr double MilToMoa(double value) { return MoaT(MilT(value)).Value(); }
-constexpr double MilToDeg(double value) {
-  return DegreesT(MilT(value)).Value();
-}
-constexpr double MilToIphy(double value) { return IphyT(MoaT(value)).Value(); }
-constexpr double MilToInch(double value, double range_ft) {
+double MilToMoa(double value) { return MoaT(MilT(value)).Value(); }
+double MilToDeg(double value) { return DegreesT(MilT(value)).Value(); }
+double MilToIphy(double value) { return IphyT(MoaT(value)).Value(); }
+double MilToInch(double value, double range_ft) {
   return IphyT(MilT(value)).Value() * range_ft /
          static_cast<double>(kHundredYardsInFeet);
 }
 
-constexpr double DegToMoa(double value) {
-  return MoaT(DegreesT(value)).Value();
-}
-constexpr double DegToMil(double value) {
-  return MilT(DegreesT(value)).Value();
-}
+double DegToMoa(double value) { return MoaT(DegreesT(value)).Value(); }
+double DegToMil(double value) { return MilT(DegreesT(value)).Value(); }
 
 double InchToMoa(double value, double range_ft) {
   if (AreEqual(range_ft, 0.0)) {
@@ -659,7 +651,7 @@ double InchToMoa(double value, double range_ft) {
       .Value();
 }
 
-constexpr double InchToMil(double value, double range_ft) {
+double InchToMil(double value, double range_ft) {
   if (AreEqual(range_ft, 0.0)) {
     return 0;
   }
@@ -668,7 +660,7 @@ constexpr double InchToMil(double value, double range_ft) {
       .Value();
 }
 
-constexpr double InchToDeg(double value, double range_ft) {
+double InchToDeg(double value, double range_ft) {
   if (AreEqual(range_ft, 0.0)) {
     return 0;
   }
@@ -678,66 +670,50 @@ constexpr double InchToDeg(double value, double range_ft) {
 }
 
 // Energy
-constexpr double JToFtLbs(float value) { return FtLbsT(JouleT(value)).Value(); }
-constexpr double FtLbsToJ(float value) { return JouleT(FtLbsT(value)).Value(); }
+double JToFtLbs(double value) { return FtLbsT(JouleT(value)).Value(); }
+double FtLbsToJ(double value) { return JouleT(FtLbsT(value)).Value(); }
 
 // Length
-constexpr double MtoYd(float value) {
-  return YardT(FeetT(MeterT(value))).Value();
-}
-double YdToFt(float value) { return FeetT(YardT(value)).Value(); }
-constexpr double MToFt(float value) { return FeetT(MeterT(value)).Value(); }
-constexpr double FtToIn(float value) { return InchT(FeetT(value)).Value(); }
-constexpr double MmToIn(float value) { return InchT(MmT(value)).Value(); }
-constexpr double CmToIn(float value) { return InchT(CmT(value)).Value(); }
-constexpr double YdToM(float value) {
-  return MeterT(FeetT(YardT(value))).Value();
-}
-constexpr double FtToM(float value) { return MeterT(FeetT(value)).Value(); }
-constexpr double FtToYd(float value) { return YardT(FeetT(value)).Value(); }
-constexpr double InToMm(float value) {
-  return MmT(FeetT(InchT(value))).Value();
-}
-constexpr double InToCm(float value) {
-  return CmT(FeetT(InchT(value))).Value();
-}
-constexpr double InToFt(float value) { return FeetT(InchT(value)).Value(); }
+double MtoYd(double value) { return YardT(FeetT(MeterT(value))).Value(); }
+double YdToFt(double value) { return FeetT(YardT(value)).Value(); }
+double MToFt(double value) { return FeetT(MeterT(value)).Value(); }
+double FtToIn(double value) { return InchT(FeetT(value)).Value(); }
+double MmToIn(double value) { return InchT(MmT(value)).Value(); }
+double CmToIn(double value) { return InchT(CmT(value)).Value(); }
+double YdToM(double value) { return MeterT(FeetT(YardT(value))).Value(); }
+double FtToM(double value) { return MeterT(FeetT(value)).Value(); }
+double FtToYd(double value) { return YardT(FeetT(value)).Value(); }
+double InToMm(double value) { return MmT(FeetT(InchT(value))).Value(); }
+double InToCm(double value) { return CmT(FeetT(InchT(value))).Value(); }
+double InToFt(double value) { return FeetT(InchT(value)).Value(); }
 
 // Pressure
-constexpr double PaToInHg(float value) { return InHgT(PaT(value)).Value(); }
-constexpr double MbarToInHg(float value) { return InHgT(MbarT(value)).Value(); }
-constexpr double PsiToInHg(float value) { return InHgT(PsiT(value)).Value(); }
+double PaToInHg(double value) { return InHgT(PaT(value)).Value(); }
+double MbarToInHg(double value) { return InHgT(MbarT(value)).Value(); }
+double PsiToInHg(double value) { return InHgT(PsiT(value)).Value(); }
 
 // Mass
-constexpr double LbsToGrain(float value) { return GrainT(LbsT(value)).Value(); }
-constexpr double GToGrain(float value) {
-  return GrainT(LbsT(GramT(value))).Value();
-}
-constexpr double KgToGrain(float value) {
-  return GrainT(LbsT(KgT(value))).Value();
-}
+double LbsToGrain(double value) { return GrainT(LbsT(value)).Value(); }
+double GToGrain(double value) { return GrainT(LbsT(GramT(value))).Value(); }
+double KgToGrain(double value) { return GrainT(LbsT(KgT(value))).Value(); }
 
 // Sectional Density / Ballistic Coefficient
-constexpr double KgSqMToPmsi(float value) {
-  return PmsiT(KgsmT(value)).Value();
-}
+double KgSqMToPmsi(double value) { return PmsiT(KgsmT(value)).Value(); }
 
 // Speed
-constexpr double FpsToMps(float value) { return MpsT(FpsT(value)).Value(); }
-constexpr double MpsToFps(float value) { return FpsT(MpsT(value)).Value(); }
-constexpr double KphToMph(float value) {
-  return MphT(FpsT(KphT(value))).Value();
-}
-constexpr double KnToMph(float value) { return MphT(FpsT(KnT(value))).Value(); }
+double FpsToMps(double value) { return MpsT(FpsT(value)).Value(); }
+double MpsToFps(double value) { return FpsT(MpsT(value)).Value(); }
+double KphToMph(double value) { return MphT(FpsT(KphT(value))).Value(); }
+double KnToMph(double value) { return MphT(FpsT(KnT(value))).Value(); }
 
 // Time
-constexpr double MsToS(float value) { return SecT(MsecT(value)).Value(); }
-constexpr double UsToS(float value) { return SecT(UsecT(value)).Value(); }
-constexpr double SToMs(float value) { return MsecT(SecT(value)).Value(); }
-constexpr double SToUs(float value) { return UsecT(SecT(value)).Value(); }
+double MsToS(double value) { return SecT(MsecT(value)).Value(); }
+double UsToS(double value) { return SecT(UsecT(value)).Value(); }
+double SToMs(double value) { return MsecT(SecT(value)).Value(); }
+double SToUs(double value) { return UsecT(SecT(value)).Value(); }
 
 // Temperature
-constexpr double DegCToDegF(float value) { return DegFT(DegCT(value)).Value(); }
+double DegCToDegF(double value) { return DegFT(DegCT(value)).Value(); }
 
 }  // namespace lob
 
