@@ -69,11 +69,11 @@ jobs:
 
     - name: Configure
       run: nix develop --command bash -c
-        cmake --preset=ci-sanitize
+        "cmake --preset=ci-sanitize"
 
     - name: Build
       run: nix develop --command bash -c
-        cmake --build build/sanitize -j 2
+        "cmake --build build/sanitize -j 2 --verbose"
 
     - name: Test
       working-directory: build/sanitize
@@ -84,8 +84,8 @@ jobs:
           strict_init_order=1:\
           detect_leaks=1"
         UBSAN_OPTIONS: print_stacktrace=1
-      run: nix develop --keep ASAN_OPTIONS UBSAN_OPTIONS --command bash -c
-        ctest --output-on-failure --no-tests=error -j 2
+      run: nix develop --keep ASAN_OPTIONS --keep UBSAN_OPTIONS --command bash -c
+        "ctest --output-on-failure --no-tests=error -j 2"
 
   test:
     needs: [lint]
@@ -119,13 +119,13 @@ jobs:
       if: matrix.os != 'ubuntu-latest'
       shell: pwsh
       run: cmake "--preset=ci-$("${{ matrix.os }}".split("-")[0])"
-        -D BUILD_SHARED_LIBS=${{ matrix.shared }}
+        -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev
 
     - name: Configure for Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: nix develop --command bash -c 
         "cmake --preset=ci-ubuntu
-        -D BUILD_SHARED_LIBS=${{ matrix.shared }}"
+        -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev"
 
     - name: Setup PATH
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
