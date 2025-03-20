@@ -15,7 +15,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      uses: cachix/install-nix-action@v25
+    - uses: cachix/install-nix-action@v25
 
     - name: Lint
       shell: nix develop --command bash -c {0}
