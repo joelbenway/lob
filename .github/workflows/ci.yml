@@ -124,7 +124,7 @@ jobs:
     - name: Configure for Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: nix develop --command bash -c 
-        "cmake --preset=ci-${{ matrix.os | split('-')[0] }}
+        "cmake --preset=ci-ubuntu
         -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev"
 
     - name: Setup PATH
