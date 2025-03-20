@@ -69,11 +69,11 @@ jobs:
 
     - name: Configure
       run: nix develop --command bash -c
-        "cmake --preset=ci-sanitize"
+        cmake --preset=ci-sanitize
 
     - name: Build
       run: nix develop --command bash -c
-        "cmake --build build/sanitize -j 2"
+        cmake --build build/sanitize -j 2
 
     - name: Test
       working-directory: build/sanitize
@@ -85,7 +85,7 @@ jobs:
           detect_leaks=1"
         UBSAN_OPTIONS: print_stacktrace=1
       run: nix develop --keep ASAN_OPTIONS UBSAN_OPTIONS --command bash -c
-        "ctest --output-on-failure --no-tests=error -j 2"
+        ctest --output-on-failure --no-tests=error -j 2
 
   test:
     needs: [lint]
@@ -124,8 +124,8 @@ jobs:
     - name: Configure for Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: nix develop --command bash -c 
-        "cmake \"--preset=ci-$(\"${{ matrix.os }}\".split(\"-\")[0])\"
-        -D BUILD_SHARED_LIBS=${{ matrix.shared }}\""
+        "cmake --preset=ci-ubuntu
+        -D BUILD_SHARED_LIBS=${{ matrix.shared }}"
 
     - name: Setup PATH
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
@@ -140,8 +140,8 @@ jobs:
     - name: Build and Install for Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: |
-        nix develop --command bash -c "cmake --build build --config Release -j 2"
-        nix develop --command bash -c "cmake --install build --config Release --prefix prefix"
+        nix develop --command bash -c cmake --build build --config Release -j 2
+        nix develop --command bash -c cmake --install build --config Release --prefix prefix
 
     - name: Test
       working-directory: build
