@@ -41,12 +41,14 @@ TEST_F(BuilderTestFixture, Constructor) { ASSERT_NE(puut, nullptr); }
 TEST_F(BuilderTestFixture, Destructor) {
   // We can ensure no memory leak by testing a sequence of constructions and
   // destructions
-  const int kTestIterations = 1'000;
-  for (int i = 0; i < kTestIterations; i++) {
+  const uint32_t kTestIterations = 1'000'000;
+  uint32_t i = 0;
+  for (; i < kTestIterations; i++) {
     auto* b = new lob::Builder();
     delete b;  // If there's no crash or memory leak, then the destructor works
                // fine
   }
+  EXPECT_EQ(i, kTestIterations);
 }
 
 TEST_F(BuilderTestFixture, CopyConstructor) {

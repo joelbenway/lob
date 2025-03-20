@@ -18,43 +18,43 @@ jobs:
     - uses: cachix/install-nix-action@v31
 
     - name: Lint
-      run: nix develop --command bash -c "cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake"
+      run: nix develop --command bash -c
+        "cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake"
 
     - name: Spell check
       if: always()
-      run: nix develop --command bash -c "cmake -P cmake/spell.cmake"
+      run: nix develop --command bash -c
+        "cmake -P cmake/spell.cmake"
 
-  # coverage:
-  #   needs: [lint]
+  coverage:
+    needs: [lint]
 
-  #   runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  #   if: github.repository_owner == 'joelbenway'
+    if: github.repository_owner == 'joelbenway'
 
-  #   steps:
-  #   - uses: actions/checkout@v4
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v31
 
-  #   - name: Install LCov
-  #     run: sudo apt-get update -q
-  #       && sudo apt-get install lcov -q -y
+    - name: Configure
+      run: cmake --preset=ci-coverage
 
-  #   - name: Configure
-  #     run: cmake --preset=ci-coverage
+    - name: Build
+      run: cmake --build build/coverage -j 2
 
-  #   - name: Build
-  #     run: cmake --build build/coverage -j 2
+    - name: Test
+      working-directory: build/coverage
+      run: ctest --output-on-failure --no-tests=error -j 2
 
-  #   - name: Test
-  #     working-directory: build/coverage
-  #     run: ctest --output-on-failure --no-tests=error -j 2
+    - name: Process coverage info
+      run: nix develop --command bash -c
+        "cmake --build build/coverage -t coverage"
 
-  #   - name: Process coverage info
-  #     run: cmake --build build/coverage -t coverage
-
-  #   - name: Submit to codecov.io
-  #     uses: codecov/codecov-action@v4
-  #     with:
-  #       file: build/coverage/coverage.info
+    - name: Submit to codecov.io
+      uses: codecov/codecov-action@v4
+      with:
+        file: build/coverage/coverage.info
 
   sanitize:
     needs: [lint]
@@ -92,7 +92,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest] #, windows-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
 
         type: [shared, static]
 
@@ -140,8 +140,10 @@ jobs:
     - name: Build and Install for Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: |
-        nix develop --command bash -c "cmake --build build --config Release -j 2"
-        nix develop --command bash -c "cmake --install build --config Release --prefix prefix"
+        nix develop --command bash -c \
+        "cmake --build build --config Release -j 2"
+        nix develop --command bash -c \
+        "cmake --install build --config Release --prefix prefix"
 
     - name: Test
       working-directory: build
