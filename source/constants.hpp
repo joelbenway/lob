@@ -1,5 +1,5 @@
 // This file is a part of lob, an exterior ballistics calculation library
-// Copyright (c) 2024  Joel Benway
+// Copyright (c) 2025  Joel Benway
 // Please see end of file for extended copyright information
 
 #pragma once
@@ -7,10 +7,9 @@
 #include <cstdint>
 
 namespace lob {
-
 constexpr double kPi = 3.14159265358979323846;
 constexpr int32_t kDegreesPerTurn = 360;
-constexpr double kStandardGravity = 32.1740;
+constexpr double kStandardGravityFtPerSecSq = 32.1740;
 constexpr double kIsaSeaLevelDegF = 59.0;
 constexpr double kIsaSeaLevelHumidityPercent = 0.0;
 constexpr double kIsaSeaLevelPressureInHg = 29.92;
@@ -21,7 +20,7 @@ constexpr double kIsaLapseDegKPerFt = 0.0065;
 constexpr double kIsaTropopauseAltitudeFt = 36'090.0;
 constexpr double kIsaMinimumTempDegF = -69.7;
 constexpr double kArmyToIcaoBcConversionFactor = 0.982;
-
+constexpr double kAngularVelocityOfEarthRadPerSec = 7.292115E-5;
 }  // namespace lob
 
 // This program is free software: you can redistribute it and/or modify

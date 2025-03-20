@@ -1,16 +1,18 @@
 // This file is a part of lob, an exterior ballistics calculation library
-// Copyright (c) 2024  Joel Benway
+// Copyright (c) 2025  Joel Benway
 // Please see end of file for extended copyright information
 
 #include <gtest/gtest.h>
 
 namespace tests {
+namespace {
 
 int Main() {
   testing::InitGoogleTest();
   return RUN_ALL_TESTS();
 }
 
+}  // namespace
 }  // namespace tests
 
 // This program is free software: you can redistribute it and/or modify

@@ -26,18 +26,35 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 # ---- Tests ----
-
-add_executable(
-  lob_test
+set(LOB_TEST_SOURCES
   source/lob_test.cpp
-  source/lob_wind_test.cpp
-  source/lob_env_test.cpp
+  source/lob_builder_test.cpp
   source/lob_coriolis_test.cpp
+  source/lob_env_test.cpp
+  source/lob_spin_test.cpp
+  source/lob_wind_test.cpp
+)
+
+set(HELPER_TEST_SOURCES
   source/calc_test.cpp
   source/cartesian_test.cpp
-  source/ode_test.cpp
   source/eng_units_test.cpp
+  source/ode_test.cpp
+  source/tables_test.cpp
 )
+
+if(BUILD_SHARED_LIBS)
+  add_executable(
+    lob_test
+    ${LOB_TEST_SOURCES}
+  )
+else()
+  add_executable(
+    lob_test
+    ${LOB_TEST_SOURCES}
+    ${HELPER_TEST_SOURCES}
+  )
+endif()
 
 target_include_directories(
   lob_test PUBLIC 

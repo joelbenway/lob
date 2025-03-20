@@ -1,5 +1,5 @@
 # This file is a part of lob, an exterior ballistics calculation library
-# Copyright (c) 2024  Joel Benway
+# Copyright (c) 2025  Joel Benway
 # Please see end of file for extended copyright information
 {
   description = "A Nix-flake-based C++ Development Environment";
@@ -20,8 +20,8 @@
           };
         });
   in {
-    devShells = forEachSupportedSystem ({pkgs}: {
-      default =
+    devShells = forEachSupportedSystem ({pkgs}: let
+      baseShell =
         pkgs.mkShell.override {
           # Override stdenv in order to change compiler:
           # stdenv = pkgs.clangStdenv;
@@ -48,23 +48,31 @@
               else [gdb]
             );
           shellHook = let
-            inherit (pkgs) stdenv;
             projectName = "lob";
             white = "\\[\\033[38;5;015m\\]";
             blue = "\\[\\033[38;5;081m\\]";
             snowflake = "\\342\\235\\204";
             bold = "\\[\\033[01m\\]";
             reset = "\\[$(tput sgr0)\\]";
-            filename = "CMakeUserPresets.json";
-            os =
-              if stdenv.isLinux
-              then "linux"
-              else if stdenv.isDarwin
-              then "darwin"
-              else "<os>";
           in ''
             export PS1="${white}[${reset}${blue}\w${reset}${white}] ${bold}${projectName} ${blue}${snowflake} ${reset}"
+          '';
+        };
+    in {
+      default = baseShell;
 
+      dev = baseShell.overrideAttrs (oldAttrs: {
+        shellHook = let
+          inherit (pkgs) stdenv;
+          filename = "CMakeUserPresets.json";
+          os =
+            if stdenv.isLinux
+            then "linux"
+            else if stdenv.isDarwin
+            then "darwin"
+            else "<os>";
+        in
+          ''
             cores=$(getconf _NPROCESSORS_ONLN)
 
             json=$(cat <<-EOF
@@ -121,8 +129,9 @@
             else
               echo "${filename} already exists"
             fi
-          '';
-        };
+          ''
+          + oldAttrs.shellHook;
+      });
     });
   };
 }

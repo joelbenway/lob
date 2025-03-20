@@ -1,9 +1,10 @@
 // This file is a part of lob, an exterior ballistics calculation library
-// Copyright (c) 2024  Joel Benway
+// Copyright (c) 2025  Joel Benway
 // Please see end of file for extended copyright information
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -16,640 +17,946 @@ namespace tests {
 
 struct LobWindTestFixture : public testing::Test {
   // Unit under test
-  std::unique_ptr<lob::Lob> puut;
+  std::unique_ptr<lob::Builder> puut;
 
   LobWindTestFixture() : puut(nullptr) {}
 
   void SetUp() override {
-    puut.reset();
     ASSERT_EQ(puut, nullptr);
-
-    const double kTestBC = 0.425;
-    const double kTestDiameter = 0.308;
-    const double kTestWeight = 180.0;
-    const double kTestMuzzleVelocity = 3000.0;
-    const double kTestZeroAngle = 3.38;
-    const double kTestOpticHeight = 1.5;
-    const double kTestTargetDistance = 1000.0;
-
-    puut = lob::Lob::Builder()
-               .BallisticCoefficentPsi(kTestBC)
-               .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-               .DiameterInch(kTestDiameter)
-               .MassGrains(kTestWeight)
-               .InitialVelocityFps(kTestMuzzleVelocity)
-               .ZeroAngleMOA(kTestZeroAngle)
-               .OpticHeightInches(kTestOpticHeight)
-               .TargetDistanceYds(kTestTargetDistance)
-               .Build();
-
+    puut = std::make_unique<lob::Builder>();
     ASSERT_NE(puut, nullptr);
+
+    const float kTestBC = 0.372F;
+    const lob::DragFunctionT kDragFunction = lob::DragFunctionT::kG1;
+    const float kTestDiameter = 0.224F;
+    const float kTestWeight = 77.0F;
+    const uint16_t kTestMuzzleVelocity = 2720;
+    const float kTestZeroAngle = 4.78F;
+    const float kTestOpticHeight = 2.5F;
+
+    puut->BallisticCoefficentPsi(kTestBC)
+        .BCDragFunction(kDragFunction)
+        .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+        .DiameterInch(kTestDiameter)
+        .MassGrains(kTestWeight)
+        .InitialVelocityFps(kTestMuzzleVelocity)
+        .ZeroAngleMOA(kTestZeroAngle)
+        .OpticHeightInches(kTestOpticHeight);
   }
 
-  void TearDown() override {
-    puut.reset();
-    ASSERT_EQ(puut, nullptr);
-  }
+  void TearDown() override { puut.reset(); }
 };
 
 TEST_F(LobWindTestFixture, ZeroAngleSearch) {
   ASSERT_NE(puut, nullptr);
-  const float kZeroDistanceYards = 100;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .ZeroAngleMOA(std::numeric_limits<double>::quiet_NaN())
-                   .ZeroDistanceYds(kZeroDistanceYards)
-                   .Build();
+  auto input1 = puut->Build();
+  const float kZeroRange = 100.0F;
+  auto input2 = puut->ZeroAngleMOA(std::numeric_limits<double>::quiet_NaN())
+                    .ZeroDistanceYds(kZeroRange)
+                    .Build();
   const float kError = 0.01F;
-  EXPECT_NEAR(puut->GetZeroAngleMOA(), puut2->GetZeroAngleMOA(), kError);
-}
-
-TEST_F(LobWindTestFixture, GetAirDensityLbsPerCuFt) {
-  ASSERT_NE(puut, nullptr);
-  const float kExpectedLbsPerCuFt = 0.0764742;
-  const float kError = 0.001;
-  EXPECT_NEAR(puut->GetAirDensityLbsPerCuFt(), kExpectedLbsPerCuFt, kError);
+  EXPECT_NEAR(input1.zero_angle, input2.zero_angle, kError);
 }
 
 TEST_F(LobWindTestFixture, GetSpeedOfSoundFps) {
   ASSERT_NE(puut, nullptr);
-  const float kExpectedFps = 1116.45;
-  const float kError = 0.001;
-  EXPECT_NEAR(puut->GetSpeedOfSoundFps(), kExpectedFps, kError);
+  const auto kInput = puut->Build();
+  const float kExpectedFps = 1116.45F;
+  const float kError = 0.001F;
+  EXPECT_NEAR(kInput.speed_of_sound, kExpectedFps, kError);
 }
 
 TEST_F(LobWindTestFixture, SolveWithoutWind) {
   ASSERT_NE(puut, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2885, 3324, -0.2, -0.38, 0, 0, 0.051},
-      {100, 2773, 3071, 0, 0, 0, 0, 0.104},
-      {200, 2558, 2612, -3, -1.43, 0, 0, 0.217},
-      {300, 2352, 2209, -11.4, -3.63, 0, 0, 0.339},
-      {400, 2156, 1857, -26, -6.21, 0, 0, 0.472},
-      {500, 1970, 1549, -48.2, -9.21, 0, 0, 0.618},
-      {600, 1794, 1285, -79.3, -12.62, 0, 0, 0.777},
-      {700, 1629, 1060, -121.3, -16.55, 0, 0, 0.953},
-      {800, 1478, 872, -176.4, -21.06, 0, 0, 1.146},
-      {900, 1343, 720, -247.5, -26.26, 0, 0, 1.359},
-      {1000, 1226, 601, -337.9, -32.27, 0, 0, 1.594}};
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput = puut->Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2597, 1152, -0.60F, 0.00F, 0.056F},
+      {300, 2477, 1048, 0.01F, 0.00F, 0.116F},
+      {600, 2248, 863, -3.18F, 0.00F, 0.243F},
+      {900, 2030, 704, -13.26F, 0.00F, 0.383F},
+      {1200, 1826, 569, -31.80F, 0.00F, 0.539F},
+      {1500, 1636, 457, -60.84F, 0.00F, 0.713F},
+      {1800, 1464, 366, -102.89F, 0.00F, 0.906F},
+      {2100, 1313, 294, -161.25F, 0.00F, 1.123F},
+      {2400, 1187, 241, -239.78F, 0.00F, 1.364F},
+      {2700, 1091, 203, -343.03F, 0.00F, 1.628F},
+      {3000, 1021, 178, -475.40F, 0.00F, 1.913F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_NEAR(solutions[i].range, kExpected[i].range, 1);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindIII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeading(lob::ClockAngleT::kIII)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2885, 3324, -0.2, -0.38, 0.2, 0.38, 0.051},
-      {100, 2773, 3071, 0, 0, 0.7, 0.67, 0.104},
-      {200, 2558, 2612, -3, -1.43, 2.9, 1.38, 0.217},
-      {300, 2352, 2209, -11.4, -3.63, 6.9, 2.2, 0.339},
-      {400, 2156, 1856, -26, -6.21, 12.7, 3.03, 0.472},
-      {500, 1970, 1549, -48.2, -9.21, 20.7, 3.95, 0.618},
-      {600, 1794, 1285, -79.3, -12.62, 31.2, 4.97, 0.777},
-      {700, 1629, 1060, -121.3, -16.55, 44.5, 6.07, 0.953},
-      {800, 1478, 872, -176.4, -21.06, 61, 7.28, 1.146},
-      {900, 1343, 720, -247.5, -26.26, 80.9, 8.58, 1.359},
-      {1000, 1226, 601, -337.9, -32.27, 104.5, 9.98, 1.594}};
+  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIII;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut2->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2597, 1152, -0.60F, 0.23F, 0.056F},
+      {300, 2477, 1048, 0.01F, 0.93F, 0.116F},
+      {600, 2248, 863, -3.18F, 3.90F, 0.243F},
+      {900, 2030, 704, -13.26F, 9.20F, 0.383F},
+      {1200, 1826, 569, -31.80F, 17.22F, 0.539F},
+      {1500, 1636, 457, -60.84F, 28.37F, 0.713F},
+      {1800, 1464, 366, -102.89F, 43.09F, 0.906F},
+      {2100, 1313, 294, -161.25F, 61.81F, 1.123F},
+      {2400, 1187, 241, -239.81F, 84.76F, 1.364F},
+      {2700, 1091, 203, -343.03F, 111.83F, 1.628F},
+      {3000, 1021, 178, -475.40F, 142.55F, 1.913F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions[i].range, kExpected[i].range);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeading(lob::ClockAngleT::kIV)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2885, 3322, -0.2, -0.38, 0.2, 0.38, 0.051},
-      {100, 2772, 3068, 0, 0, 0.6, 0.57, 0.104},
-      {200, 2555, 2608, -3, -1.43, 2.5, 1.19, 0.217},
-      {300, 2349, 2203, -11.4, -3.63, 6, 1.91, 0.339},
-      {400, 2152, 1849, -26.1, -6.23, 11, 2.63, 0.473},
-      {500, 1964, 1541, -48.3, -9.22, 18, 3.44, 0.618},
-      {600, 1787, 1275, -79.5, -12.65, 27.2, 4.33, 0.779},
-      {700, 1622, 1050, -121.7, -16.6, 38.8, 5.29, 0.955},
-      {800, 1470, 863, -177.2, -21.15, 53.1, 6.34, 1.149},
-      {900, 1334, 711, -248.9, -26.41, 70.5, 7.48, 1.364},
-      {1000, 1218, 593, -340.1, -32.48, 91.2, 8.71, 1.599}};
+  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIV;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut2->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2596, 1151, -0.60F, 0.20F, 0.056F},
+      {300, 2476, 1047, 0.00F, 0.81F, 0.116F},
+      {600, 2245, 861, -3.18F, 3.39F, 0.243F},
+      {900, 2026, 701, -13.30F, 8.00F, 0.383F},
+      {1200, 1820, 566, -31.91F, 14.98F, 0.540F},
+      {1500, 1630, 454, -61.07F, 24.70F, 0.714F},
+      {1800, 1457, 362, -103.38F, 37.55F, 0.909F},
+      {2100, 1305, 291, -162.17F, 53.89F, 1.126F},
+      {2400, 1180, 238, -241.47F, 73.94F, 1.369F},
+      {2700, 1085, 201, -345.75F, 97.57F, 1.634F},
+      {3000, 1015, 176, -479.64F, 124.35F, 1.921F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions[i].range, kExpected[i].range);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindV) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeading(lob::ClockAngleT::kV)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2884, 3321, -0.2, -0.38, 0.1, 0.19, 0.051},
-      {100, 2771, 3066, 0, 0, 0.4, 0.38, 0.104},
-      {200, 2554, 2604, -3, -1.43, 1.5, 0.72, 0.217},
-      {300, 2346, 2198, -11.4, -3.63, 3.5, 1.11, 0.339},
-      {400, 2149, 1843, -26.1, -6.23, 6.4, 1.53, 0.473},
-      {500, 1960, 1534, -48.4, -9.24, 10.4, 1.99, 0.619},
-      {600, 1782, 1268, -79.7, -12.68, 15.7, 2.5, 0.78},
-      {700, 1616, 1043, -122.1, -16.66, 22.5, 3.07, 0.956},
-      {800, 1464, 856, -177.8, -21.22, 30.8, 3.68, 1.152},
-      {900, 1328, 704, -249.9, -26.52, 40.9, 4.34, 1.367},
-      {1000, 1212, 587, -341.8, -32.64, 52.9, 5.05, 1.604}};
+  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kV;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut2->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2596, 1151, -0.60F, 0.11F, 0.056F},
+      {300, 2475, 1046, 0.00F, 0.47F, 0.116F},
+      {600, 2243, 859, -3.19F, 1.96F, 0.243F},
+      {900, 2023, 699, -13.31F, 4.63F, 0.384F},
+      {1200, 1817, 564, -31.98F, 8.68F, 0.540F},
+      {1500, 1625, 451, -61.25F, 14.32F, 0.715F},
+      {1800, 1451, 360, -103.75F, 21.78F, 0.910F},
+      {2100, 1300, 288, -162.87F, 31.27F, 1.129F},
+      {2400, 1175, 236, -242.68F, 42.91F, 1.372F},
+      {2700, 1080, 199, -347.81F, 56.64F, 1.639F},
+      {3000, 1011, 175, -482.80F, 72.18F, 1.927F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions[i].range, kExpected[i].range);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeading(lob::ClockAngleT::kVI)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2884, 3321, -0.2, -0.38, 0, 0, 0.051},
-      {100, 2771, 3066, 0, 0, 0, 0, 0.104},
-      {200, 2553, 2603, -3, -1.43, 0, 0, 0.217},
-      {300, 2346, 2197, -11.4, -3.63, 0, 0, 0.339},
-      {400, 2147, 1841, -26.1, -6.23, 0, 0, 0.473},
-      {500, 1959, 1532, -48.4, -9.24, 0, 0, 0.619},
-      {600, 1781, 1266, -79.8, -12.7, 0, 0, 0.78},
-      {700, 1614, 1040, -122.2, -16.67, 0, 0, 0.957},
-      {800, 1462, 853, -178.1, -21.26, 0, 0, 1.152},
-      {900, 1326, 702, -250.3, -26.56, 0, 0, 1.368},
-      {1000, 1210, 585, -342.4, -32.7, 0, 0, 1.605}};
+  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kVI;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut2->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2596, 1151, -0.60F, -0.00F, 0.056F},
+      {300, 2475, 1046, 0.00F, -0.00F, 0.116F},
+      {600, 2242, 859, -3.19F, -0.00F, 0.243F},
+      {900, 2022, 699, -13.32F, -0.00F, 0.384F},
+      {1200, 1815, 563, -32.01F, -0.00F, 0.540F},
+      {1500, 1623, 450, -61.30F, -0.00F, 0.715F},
+      {1800, 1449, 359, -103.88F, -0.00F, 0.911F},
+      {2100, 1298, 288, -163.13F, -0.00F, 1.130F},
+      {2400, 1173, 235, -243.17F, -0.00F, 1.374F},
+      {2700, 1079, 199, -348.55F, -0.00F, 1.641F},
+      {3000, 1009, 174, -483.97F, -0.00F, 1.929F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions[i].range, kExpected[i].range);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeading(lob::ClockAngleT::kVII)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2884, 3321, -0.2, -0.38, -0.1, -0.19, 0.051},
-      {100, 2771, 3066, 0, 0, -0.4, -0.38, 0.104},
-      {200, 2554, 2604, -3, -1.43, -1.5, -0.72, 0.217},
-      {300, 2346, 2198, -11.4, -3.63, -3.5, -1.11, 0.339},
-      {400, 2149, 1843, -26.1, -6.23, -6.4, -1.53, 0.473},
-      {500, 1960, 1534, -48.4, -9.24, -10.4, -1.99, 0.619},
-      {600, 1782, 1268, -79.7, -12.68, -15.7, -2.5, 0.78},
-      {700, 1616, 1043, -122.1, -16.66, -22.5, -3.07, 0.956},
-      {800, 1464, 856, -177.8, -21.22, -30.8, -3.68, 1.152},
-      {900, 1328, 704, -249.9, -26.52, -40.9, -4.34, 1.367},
-      {1000, 1212, 587, -341.8, -32.64, -52.9, -5.05, 1.604}};
+  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kVII;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut2->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2596, 1151, -0.60F, -0.11F, 0.056F},
+      {300, 2475, 1046, 0.00F, -0.47F, 0.116F},
+      {600, 2243, 859, -3.19F, -1.96F, 0.243F},
+      {900, 2023, 699, -13.31F, -4.63F, 0.384F},
+      {1200, 1817, 564, -31.98F, -8.68F, 0.540F},
+      {1500, 1625, 451, -61.25F, -14.32F, 0.715F},
+      {1800, 1451, 360, -103.75F, -21.78F, 0.910F},
+      {2100, 1300, 288, -162.87F, -31.27F, 1.129F},
+      {2400, 1175, 236, -242.68F, -42.91F, 1.372F},
+      {2700, 1080, 199, -347.81F, -56.64F, 1.639F},
+      {3000, 1011, 175, -482.80F, -72.18F, 1.927F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions[i].range, kExpected[i].range);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeading(lob::ClockAngleT::kVIII)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2885, 3322, -0.2, -0.38, -0.2, -0.38, 0.051},
-      {100, 2772, 3068, 0, 0, -0.6, -0.57, 0.104},
-      {200, 2555, 2608, -3, -1.43, -2.5, -1.19, 0.217},
-      {300, 2349, 2203, -11.4, -3.63, -6, -1.91, 0.339},
-      {400, 2152, 1849, -26.1, -6.23, -11, -2.63, 0.473},
-      {500, 1964, 1541, -48.3, -9.22, -18, -3.44, 0.618},
-      {600, 1787, 1275, -79.5, -12.65, -27.2, -4.33, 0.779},
-      {700, 1622, 1050, -121.7, -16.6, -38.8, -5.29, 0.955},
-      {800, 1470, 863, -177.2, -21.15, -53.1, -6.34, 1.149},
-      {900, 1334, 711, -248.9, -26.41, -70.5, -7.48, 1.364},
-      {1000, 1218, 593, -340.1, -32.48, -91.2, -8.71, 1.599}};
+  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kVIII;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut2->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2596, 1151, -0.60F, -0.20F, 0.056F},
+      {300, 2476, 1047, 0.00F, -0.81F, 0.116F},
+      {600, 2245, 861, -3.18F, -3.39F, 0.243F},
+      {900, 2026, 701, -13.30F, -8.00F, 0.383F},
+      {1200, 1820, 566, -31.91F, -14.98F, 0.540F},
+      {1500, 1630, 454, -61.07F, -24.70F, 0.714F},
+      {1800, 1457, 362, -103.38F, -37.55F, 0.909F},
+      {2100, 1305, 291, -162.17F, -53.89F, 1.126F},
+      {2400, 1180, 238, -241.47F, -73.94F, 1.369F},
+      {2700, 1085, 201, -345.75F, -97.57F, 1.634F},
+      {3000, 1015, 176, -479.64F, -124.35F, 1.921F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions[i].range, kExpected[i].range);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeading(lob::ClockAngleT::kIX)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2885, 3324, -0.2, -0.38, -0.2, -0.38, 0.051},
-      {100, 2773, 3071, 0, 0, -0.7, -0.67, 0.104},
-      {200, 2558, 2612, -3, -1.43, -2.9, -1.38, 0.217},
-      {300, 2352, 2209, -11.4, -3.63, -6.9, -2.2, 0.339},
-      {400, 2156, 1856, -26, -6.21, -12.7, -3.03, 0.472},
-      {500, 1970, 1549, -48.2, -9.21, -20.7, -3.95, 0.618},
-      {600, 1794, 1285, -79.3, -12.62, -31.2, -4.97, 0.777},
-      {700, 1629, 1060, -121.3, -16.55, -44.5, -6.07, 0.953},
-      {800, 1478, 872, -176.4, -21.06, -61, -7.28, 1.146},
-      {900, 1343, 720, -247.5, -26.26, -80.9, -8.58, 1.359},
-      {1000, 1226, 601, -337.9, -32.27, -104.5, -9.98, 1.594}};
+  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIX;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut2->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2597, 1152, -0.60F, -0.23F, 0.056F},
+      {300, 2477, 1048, 0.01F, -0.93F, 0.116F},
+      {600, 2248, 863, -3.18F, -3.90F, 0.243F},
+      {900, 2030, 704, -13.26F, -9.20F, 0.383F},
+      {1200, 1826, 569, -31.80F, -17.22F, 0.539F},
+      {1500, 1636, 457, -60.84F, -28.37F, 0.713F},
+      {1800, 1464, 366, -102.89F, -43.09F, 0.906F},
+      {2100, 1313, 294, -161.25F, -61.81F, 1.123F},
+      {2400, 1187, 241, -239.81F, -84.76F, 1.364F},
+      {2700, 1091, 203, -343.03F, -111.83F, 1.628F},
+      {3000, 1021, 178, -475.40F, -142.55F, 1.913F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions[i].range, kExpected[i].range);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindX) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeading(lob::ClockAngleT::kX)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2886, 3325, -0.2, -0.38, -0.2, -0.38, 0.051},
-      {100, 2774, 3073, 0, 0, -0.6, -0.57, 0.104},
-      {200, 2560, 2617, -3, -1.43, -2.5, -1.19, 0.216},
-      {300, 2356, 2215, -11.4, -3.63, -5.9, -1.88, 0.339},
-      {400, 2161, 1864, -26, -6.21, -11, -2.63, 0.472},
-      {500, 1975, 1558, -48.1, -9.19, -17.9, -3.42, 0.617},
-      {600, 1800, 1294, -79.1, -12.59, -26.9, -4.28, 0.776},
-      {700, 1636, 1069, -120.8, -16.48, -38.3, -5.22, 0.951},
-      {800, 1486, 882, -175.6, -20.96, -52.5, -6.27, 1.143},
-      {900, 1351, 729, -246.1, -26.11, -69.6, -7.38, 1.355},
-      {1000, 1235, 609, -335.6, -32.05, -89.8, -8.58, 1.588}};
+  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kX;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut2->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2598, 1153, -0.60F, -0.20F, 0.056F},
+      {300, 2479, 1049, 0.01F, -0.80F, 0.116F},
+      {600, 2250, 865, -3.17F, -3.36F, 0.242F},
+      {900, 2034, 707, -13.22F, -7.93F, 0.383F},
+      {1200, 1831, 573, -31.71F, -14.84F, 0.538F},
+      {1500, 1642, 461, -60.61F, -24.43F, 0.711F},
+      {1800, 1471, 370, -102.41F, -37.09F, 0.904F},
+      {2100, 1320, 298, -160.30F, -53.16F, 1.120F},
+      {2400, 1195, 244, -238.17F, -72.87F, 1.359F},
+      {2700, 1098, 206, -340.32F, -96.13F, 1.622F},
+      {3000, 1026, 180, -471.25F, -122.56F, 1.905F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions[i].range, kExpected[i].range);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeading(lob::ClockAngleT::kXI)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2886, 3326, -0.2, -0.38, -0.1, -0.19, 0.051},
-      {100, 2775, 3075, 0, 0, -0.4, -0.38, 0.104},
-      {200, 2561, 2620, -3, -1.43, -1.5, -0.72, 0.216},
-      {300, 2358, 2220, -11.4, -3.63, -3.4, -1.08, 0.338},
-      {400, 2164, 1870, -25.9, -6.18, -6.3, -1.5, 0.471},
-      {500, 1979, 1564, -48, -9.17, -10.3, -1.97, 0.616},
-      {600, 1805, 1301, -78.9, -12.56, -15.5, -2.47, 0.775},
-      {700, 1642, 1076, -120.5, -16.44, -22, -3, 0.949},
-      {800, 1492, 889, -175, -20.89, -30.2, -3.6, 1.141},
-      {900, 1357, 735, -245.1, -26.01, -40, -4.24, 1.352},
-      {1000, 1241, 615, -334, -31.89, -51.6, -4.93, 1.584}};
+  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kXI;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut2->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2598, 1153, -0.60F, -0.11F, 0.056F},
+      {300, 2480, 1050, 0.01F, -0.46F, 0.116F},
+      {600, 2252, 866, -3.16F, -1.93F, 0.242F},
+      {900, 2037, 709, -13.20F, -4.57F, 0.382F},
+      {1200, 1835, 575, -31.64F, -8.54F, 0.538F},
+      {1500, 1647, 463, -60.43F, -14.05F, 0.710F},
+      {1800, 1476, 372, -102.05F, -21.32F, 0.903F},
+      {2100, 1326, 300, -159.63F, -30.54F, 1.117F},
+      {2400, 1200, 246, -236.97F, -41.85F, 1.356F},
+      {2700, 1103, 208, -338.35F, -55.20F, 1.617F},
+      {3000, 1031, 181, -468.21F, -70.38F, 1.899F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions[i].range, kExpected[i].range);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeading(lob::ClockAngleT::kXII)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2886, 3326, -0.2, -0.38, 0, 0, 0.051},
-      {100, 2775, 3076, 0, 0, 0, 0, 0.104},
-      {200, 2562, 2621, -3, -1.43, 0, 0, 0.216},
-      {300, 2359, 2222, -11.4, -3.63, 0, 0, 0.338},
-      {400, 2165, 1872, -25.9, -6.18, 0, 0, 0.471},
-      {500, 1981, 1566, -47.9, -9.15, 0, 0, 0.616},
-      {600, 1807, 1303, -78.8, -12.54, 0, 0, 0.775},
-      {700, 1644, 1079, -120.4, -16.42, 0, 0, 0.949},
-      {800, 1494, 891, -174.8, -20.87, 0, 0, 1.14},
-      {900, 1359, 738, -244.7, -25.96, 0, 0, 1.351},
-      {1000, 1243, 617, -333.4, -31.84, 0, 0, 1.582}};
+  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kXII;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut2->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2598, 1153, -0.60F, 0.00F, 0.056F},
+      {300, 2480, 1051, 0.01F, 0.00F, 0.116F},
+      {600, 2253, 867, -3.16F, 0.00F, 0.242F},
+      {900, 2038, 709, -13.19F, 0.00F, 0.382F},
+      {1200, 1836, 576, -31.62F, 0.00F, 0.537F},
+      {1500, 1649, 464, -60.38F, 0.00F, 0.710F},
+      {1800, 1478, 373, -101.92F, 0.00F, 0.902F},
+      {2100, 1328, 301, -159.41F, 0.00F, 1.117F},
+      {2400, 1202, 247, -236.53F, 0.00F, 1.354F},
+      {2700, 1105, 208, -337.64F, 0.00F, 1.615F},
+      {3000, 1032, 182, -467.08F, 0.00F, 1.897F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions[i].range, kExpected[i].range);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeading(lob::ClockAngleT::kI)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2886, 3326, -0.2, -0.38, 0.1, 0.19, 0.051},
-      {100, 2775, 3075, 0, 0, 0.4, 0.38, 0.104},
-      {200, 2561, 2620, -3, -1.43, 1.5, 0.72, 0.216},
-      {300, 2358, 2220, -11.4, -3.63, 3.4, 1.08, 0.338},
-      {400, 2164, 1870, -25.9, -6.18, 6.3, 1.5, 0.471},
-      {500, 1979, 1564, -48, -9.17, 10.3, 1.97, 0.616},
-      {600, 1805, 1301, -78.9, -12.56, 15.5, 2.47, 0.775},
-      {700, 1642, 1076, -120.5, -16.44, 22, 3, 0.949},
-      {800, 1492, 889, -175, -20.89, 30.2, 3.6, 1.141},
-      {900, 1357, 735, -245.1, -26.01, 40, 4.24, 1.352},
-      {1000, 1241, 615, -334, -31.89, 51.6, 4.93, 1.584}};
+  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kI;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut2->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2598, 1153, -0.60F, 0.11F, 0.056F},
+      {300, 2480, 1050, 0.01F, 0.46F, 0.116F},
+      {600, 2252, 866, -3.16F, 1.93F, 0.242F},
+      {900, 2037, 709, -13.20F, 4.57F, 0.382F},
+      {1200, 1835, 575, -31.64F, 8.54F, 0.538F},
+      {1500, 1647, 463, -60.43F, 14.05F, 0.710F},
+      {1800, 1476, 372, -102.05F, 21.32F, 0.903F},
+      {2100, 1326, 300, -159.63F, 30.54F, 1.117F},
+      {2400, 1200, 246, -236.97F, 41.85F, 1.356F},
+      {2700, 1103, 208, -338.35F, 55.20F, 1.617F},
+      {3000, 1031, 181, -468.21F, 70.38F, 1.899F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions[i].range, kExpected[i].range);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithClockWindII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeading(lob::ClockAngleT::kII)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  // NOLINTNEXTLINE c-style array
-  const uint16_t kRanges[] = {0,   50,  100, 200, 300, 400,
-                              500, 600, 700, 800, 900, 1000};
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {0, 3000, 3594, -1.5, 0, 0, 0, 0},
-      {50, 2886, 3325, -0.2, -0.38, 0.2, 0.38, 0.051},
-      {100, 2774, 3073, 0, 0, 0.6, 0.57, 0.104},
-      {200, 2560, 2617, -3, -1.43, 2.5, 1.19, 0.216},
-      {300, 2356, 2215, -11.4, -3.63, 5.9, 1.88, 0.339},
-      {400, 2161, 1864, -26, -6.21, 11, 2.63, 0.472},
-      {500, 1975, 1558, -48.1, -9.19, 17.9, 3.42, 0.617},
-      {600, 1800, 1294, -79.1, -12.59, 26.9, 4.28, 0.776},
-      {700, 1636, 1069, -120.8, -16.48, 38.3, 5.22, 0.951},
-      {800, 1486, 882, -175.6, -20.96, 52.5, 6.27, 1.143},
-      {900, 1351, 729, -246.1, -26.11, 69.6, 7.38, 1.355},
-      {1000, 1235, 609, -335.6, -32.05, 89.8, 8.58, 1.588}};
+  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kII;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
   constexpr size_t kSolutionLength = 12;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  // NOLINTNEXTLINE implicitly decay an array into a pointer
-  const size_t kWritten = puut2->Solve(solutions, kRanges, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2598, 1153, -0.60F, 0.20F, 0.056F},
+      {300, 2479, 1049, 0.01F, 0.80F, 0.116F},
+      {600, 2250, 865, -3.17F, 3.36F, 0.242F},
+      {900, 2034, 707, -13.22F, 7.93F, 0.383F},
+      {1200, 1831, 573, -31.71F, 14.84F, 0.538F},
+      {1500, 1642, 461, -60.61F, 24.43F, 0.711F},
+      {1800, 1471, 370, -102.41F, 37.09F, 0.904F},
+      {2100, 1320, 298, -160.30F, 53.16F, 1.120F},
+      {2400, 1195, 244, -238.17F, 72.87F, 1.359F},
+      {2700, 1098, 206, -340.32F, 96.13F, 1.622F},
+      {3000, 1026, 180, -471.25F, 122.56F, 1.905F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions[i].range, kExpected[i].range);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
 }
 
 TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
   ASSERT_NE(puut, nullptr);
-  const int32_t kWindAngle = 150;
   const int32_t kWindSpeed = 20;
-  auto puut2 = lob::Lob::Builder(*puut)
-                   .WindHeadingDeg(kWindAngle)
-                   .WindSpeedMph(kWindSpeed)
-                   .Build();
-  ASSERT_NE(puut2, nullptr);
-  const std::vector<lob::Lob::Solution> kExpected = {
-      {100, 2769, 3062, 0.0, 0.0, 0.7, 0.7, 0.104},
-      {200, 2550, 2596, -3.0, -1.4, 3.0, 1.4, 0.217},
-      {300, 2341, 2188, -11.4, -3.6, 6.9, 2.2, 0.340},
-      {400, 2141, 1830, -26.2, -6.3, 12.9, 3.1, 0.474},
-      {500, 1951, 1519, -48.6, -9.3, 21.1, 4.0, 0.621},
-      {600, 1771, 1252, -80.2, -12.8, 31.8, 5.1, 0.782},
-      {700, 1603, 1026, -123.0, -16.8, 45.5, 6.2, 0.960},
-      {800, 1450, 839, -179.4, -21.4, 62.3, 7.4, 1.157},
-      {900, 1314, 689, -252.5, -26.8, 82.8, 8.8, 1.374},
-      {1000, 1198, 573, -345.9, -33.0, 107.2, 10.2, 1.614}};
-  constexpr size_t kSolutionLength = 10;
-  lob::Lob::Solution solutions[kSolutionLength] = {0};  // NOLINT c-style array
-  const size_t kWritten = puut2->Solve(
-      static_cast<lob::Lob::Solution*>(solutions), nullptr, kSolutionLength);
-  EXPECT_EQ(kWritten, kSolutionLength);
+  const float kWindHeading = 150;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
+  constexpr size_t kSolutionLength = 12;
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeadingDeg(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2595, 1150, -0.60F, 0.23F, 0.056F},
+      {300, 2473, 1044, 0.00F, 0.94F, 0.116F},
+      {600, 2238, 856, -3.20F, 3.94F, 0.243F},
+      {900, 2016, 694, -13.38F, 9.34F, 0.384F},
+      {1200, 1808, 558, -32.15F, 17.51F, 0.541F},
+      {1500, 1614, 445, -61.66F, 28.91F, 0.717F},
+      {1800, 1439, 354, -104.63F, 44.03F, 0.914F},
+      {2100, 1286, 283, -164.57F, 63.30F, 1.135F},
+      {2400, 1162, 231, -245.69F, 86.93F, 1.381F},
+      {2700, 1069, 195, -352.75F, 114.74F, 1.651F},
+      {3000, 1001, 171, -490.37F, 146.17F, 1.941F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_NEAR(solutions[i].range, kExpected[i].range, 1);
-    EXPECT_NEAR(solutions[i].velocity, kExpected[i].velocity, 1);
-    EXPECT_NEAR(solutions[i].energy, kExpected[i].energy, 5);
-    EXPECT_NEAR(solutions[i].elevation_adjustments,
-                kExpected[i].elevation_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].windage_adjustments,
-                kExpected[i].windage_adjustments, 0.1);
-    EXPECT_NEAR(solutions[i].time_of_flight, kExpected[i].time_of_flight, .001);
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
   }
-  puut2.reset();
+}
+
+TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeMagnitude) {
+  ASSERT_NE(puut, nullptr);
+  const int32_t kWindSpeed = -20;
+  const float kWindHeading = 330;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
+  constexpr size_t kSolutionLength = 12;
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeadingDeg(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2595, 1150, -0.60F, 0.23F, 0.056F},
+      {300, 2473, 1044, 0.00F, 0.94F, 0.116F},
+      {600, 2238, 856, -3.20F, 3.94F, 0.243F},
+      {900, 2016, 694, -13.38F, 9.34F, 0.384F},
+      {1200, 1808, 558, -32.15F, 17.51F, 0.541F},
+      {1500, 1614, 445, -61.66F, 28.91F, 0.717F},
+      {1800, 1439, 354, -104.63F, 44.03F, 0.914F},
+      {2100, 1286, 283, -164.57F, 63.30F, 1.135F},
+      {2400, 1162, 231, -245.69F, 86.93F, 1.381F},
+      {2700, 1069, 195, -352.75F, 114.74F, 1.651F},
+      {3000, 1001, 171, -490.37F, 146.17F, 1.941F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  for (size_t i = 0; i < kSolutionLength; i++) {
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
+  }
+}
+
+TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeAngle) {
+  ASSERT_NE(puut, nullptr);
+  const int32_t kWindSpeed = 20;
+  const float kWindHeading = -210;
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kInchError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
+  constexpr size_t kSolutionLength = 12;
+  const auto kInput =
+      puut->WindSpeedMph(kWindSpeed).WindHeadingDeg(kWindHeading).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1264, -2.50F, 0.00F, 0.000F},
+      {150, 2595, 1150, -0.60F, 0.23F, 0.056F},
+      {300, 2473, 1044, 0.00F, 0.94F, 0.116F},
+      {600, 2238, 856, -3.20F, 3.94F, 0.243F},
+      {900, 2016, 694, -13.38F, 9.34F, 0.384F},
+      {1200, 1808, 558, -32.15F, 17.51F, 0.541F},
+      {1500, 1614, 445, -61.66F, 28.91F, 0.717F},
+      {1800, 1439, 354, -104.63F, 44.03F, 0.914F},
+      {2100, 1286, 283, -164.57F, 63.30F, 1.135F},
+      {2400, 1162, 231, -245.69F, 86.93F, 1.381F},
+      {2700, 1069, 195, -352.75F, 114.74F, 1.651F},
+      {3000, 1001, 171, -490.37F, 146.17F, 1.941F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  for (size_t i = 0; i < kSolutionLength; i++) {
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
+                kInchError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
+                kInchError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
+  }
 }
 
 }  // namespace tests

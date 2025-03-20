@@ -1,5 +1,5 @@
 // This file is a part of lob, an exterior ballistics calculation library
-// Copyright (c) 2024  Joel Benway
+// Copyright (c) 2025  Joel Benway
 // Please see end of file for extended copyright information
 
 #include "calc.hpp"
@@ -28,7 +28,8 @@ TEST(CalcTests, CalculateTemperatureAtAltitude) {
   for (uint32_t i = 0; i < kAltitudesFt.size(); i++) {
     EXPECT_NEAR(
         kExpectedResultsDegF.at(i),
-        lob::CalculateTemperatureAtAltitude(lob::FeetT(kAltitudesFt.at(i)))
+        lob::CalculateTemperatureAtAltitude(lob::FeetT(kAltitudesFt.at(i)),
+                                            lob::DegFT(lob::kIsaSeaLevelDegF))
             .Value(),
         kError);
   }
@@ -49,7 +50,8 @@ TEST(CalcTests, CalculateTemperatureAtAltitudeMcCoy) {
   for (uint32_t i = 0; i < kAltitudesFt.size(); i++) {
     EXPECT_NEAR(
         kExpectedResultsDegF.at(i),
-        lob::CalculateTemperatureAtAltitudeMcCoy(lob::FeetT(kAltitudesFt.at(i)))
+        lob::CalculateTemperatureAtAltitudeMcCoy(
+            lob::FeetT(kAltitudesFt.at(i)), lob::DegFT(lob::kIsaSeaLevelDegF))
             .Value(),
         kError);
   }
@@ -65,9 +67,13 @@ TEST(CalcTests, BarometricFormula) {
       23.09, 22.23, 21.39, 20.58, 16.89, 13.76, 11.12, 8.90,  7.06};
   const double kError = 0.025;
   for (uint32_t i = 0; i < kAltitudesFt.size(); i++) {
-    EXPECT_NEAR(kExpectedResultsInHg.at(i),
-                lob::BarometricFormula(lob::FeetT(kAltitudesFt.at(i))).Value(),
-                kError);
+    EXPECT_NEAR(
+        kExpectedResultsInHg.at(i),
+        lob::BarometricFormula(lob::FeetT(kAltitudesFt.at(i)),
+                               lob::InHgT(lob::kIsaSeaLevelPressureInHg),
+                               lob::DegFT(lob::kIsaSeaLevelDegF))
+            .Value(),
+        kError);
   }
 }
 
@@ -75,7 +81,10 @@ TEST(CalcTests, BarometricFormulaNegative) {
   constexpr int16_t kAltitude = -1000;
   constexpr double kExpectedResult = 31.02;
   const double kError = 0.025;
-  EXPECT_NEAR(lob::BarometricFormula(lob::FeetT(kAltitude)).Value(),
+  EXPECT_NEAR(lob::BarometricFormula(lob::FeetT(kAltitude),
+                                     lob::InHgT(lob::kIsaSeaLevelPressureInHg),
+                                     lob::DegFT(lob::kIsaSeaLevelDegF))
+                  .Value(),
               kExpectedResult, kError);
 }
 
@@ -170,7 +179,7 @@ TEST(CalcTests, CalculateAirDensityRatioHumidityCorrection) {
   const double kError = 0.1;
   for (uint32_t i = 0; i < kTempsDegF.size(); i++) {
     for (uint32_t j = 0; j < kRelativeHumidities.size(); j++) {
-      EXPECT_NEAR(kExpectedResults.at(i * kRelativeHumidities.size() + j),
+      EXPECT_NEAR(kExpectedResults.at((i * kRelativeHumidities.size()) + j),
                   kUncorrectedDensities.at(i) *
                       lob::CalculateAirDensityRatioHumidityCorrection(
                           kRelativeHumidities.at(j),
@@ -194,7 +203,7 @@ TEST(CalcTests, CalculateSpeedOfSoundHumidityCorrection) {
   const double kError = 1.0;
   for (uint32_t i = 0; i < kTempsDegF.size(); i++) {
     for (uint32_t j = 0; j < kRelativeHumidities.size(); j++) {
-      EXPECT_NEAR(kExpectedResultsFps.at(i * kRelativeHumidities.size() + j),
+      EXPECT_NEAR(kExpectedResultsFps.at((i * kRelativeHumidities.size()) + j),
                   kUncorrectedSpeedOfSoundFps.at(i) *
                       lob::CalculateSpeedOfSoundHumidityCorrection(
                           kRelativeHumidities.at(j),

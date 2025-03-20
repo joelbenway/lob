@@ -1,5 +1,5 @@
 // This file is a part of lob, an exterior ballistics calculation library
-// Copyright (c) 2024  Joel Benway
+// Copyright (c) 2025  Joel Benway
 // Please see end of file for extended copyright information
 
 #pragma once
@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "constants.hpp"  // for kPi
+#include "constants.hpp"
 
 namespace lob {
 
@@ -212,6 +212,7 @@ class StrongT {
   }
 
   constexpr T Value() const { return value_; }
+  constexpr float Float() const { return static_cast<float>(value_); }
 
  private:
   T value_;
@@ -227,6 +228,7 @@ constexpr double kMoaPerRadian = kMoaPerDegree / kRadiansPerDegree;
 constexpr double kMilPerRadian = 1'000;
 constexpr double kMilPerDegree = kMilPerRadian * kRadiansPerDegree;
 constexpr double kMoaPerMil = kMoaPerRadian / kMilPerRadian;
+constexpr double kIphyPerMoa = 1.047;
 // Energy
 constexpr double kJoulesPerFtLb = 1.3558179483;
 // Length
@@ -266,11 +268,12 @@ constexpr double kAbsoluteZeroDegC =
 enum class Acceleration : uint8_t { kFeetPerSecondSq };
 using FpsSqT = StrongT<Acceleration, Acceleration::kFeetPerSecondSq, double>;
 
-enum class Angle : uint8_t { kDegrees, kRadians, kMoa, kMil };
+enum class Angle : uint8_t { kDegrees, kRadians, kMoa, kMil, kIphy };
 using DegreesT = StrongT<Angle, Angle::kDegrees, double>;
 using RadiansT = StrongT<Angle, Angle::kRadians, double>;
 using MoaT = StrongT<Angle, Angle::kMoa, double>;
 using MilT = StrongT<Angle, Angle::kMil, double>;
+using IphyT = StrongT<Angle, Angle::kIphy, double>;
 
 template <>
 template <>
@@ -288,6 +291,12 @@ template <>
 template <>
 constexpr DegreesT::operator MilT() const {
   return MilT(Value() * convert::kMilPerDegree);
+}
+
+template <>
+template <>
+constexpr DegreesT::operator IphyT() const {
+  return IphyT(Value() * convert::kMoaPerDegree * convert::kIphyPerMoa);
 }
 
 template <>
@@ -310,6 +319,12 @@ constexpr RadiansT::operator MilT() const {
 
 template <>
 template <>
+constexpr RadiansT::operator IphyT() const {
+  return IphyT(Value() * convert::kMoaPerRadian * convert::kIphyPerMoa);
+}
+
+template <>
+template <>
 constexpr MoaT::operator DegreesT() const {
   return DegreesT(Value() / convert::kMoaPerDegree);
 }
@@ -328,6 +343,12 @@ constexpr MoaT::operator MilT() const {
 
 template <>
 template <>
+constexpr MoaT::operator IphyT() const {
+  return IphyT(Value() * convert::kIphyPerMoa);
+}
+
+template <>
+template <>
 constexpr MilT::operator DegreesT() const {
   return DegreesT(Value() / convert::kMilPerDegree);
 }
@@ -342,6 +363,36 @@ template <>
 template <>
 constexpr MilT::operator MoaT() const {
   return MoaT(Value() * convert::kMoaPerMil);
+}
+
+template <>
+template <>
+constexpr MilT::operator IphyT() const {
+  return IphyT(Value() * convert::kMoaPerMil * convert::kIphyPerMoa);
+}
+
+template <>
+template <>
+constexpr IphyT::operator DegreesT() const {
+  return DegreesT(Value() / convert::kIphyPerMoa / convert::kMoaPerDegree);
+}
+
+template <>
+template <>
+constexpr IphyT::operator MoaT() const {
+  return MoaT(Value() / convert::kIphyPerMoa);
+}
+
+template <>
+template <>
+constexpr IphyT::operator RadiansT() const {
+  return RadiansT(Value() / convert::kIphyPerMoa / convert::kMoaPerRadian);
+}
+
+template <>
+template <>
+constexpr IphyT::operator MilT() const {
+  return MilT(Value() / convert::kIphyPerMoa / convert::kMoaPerMil);
 }
 
 enum class Area : uint8_t { kSquareFeet };
@@ -600,7 +651,7 @@ using DegRT = StrongT<Temperature, Temperature::kDegreesR, double>;
 template <>
 template <>
 constexpr DegCT::operator DegFT() const {
-  return DegFT(Value() * convert::kDegFPerDegC + convert::kFreezePointDegF);
+  return DegFT((Value() * convert::kDegFPerDegC) + convert::kFreezePointDegF);
 }
 
 template <>
@@ -624,32 +675,33 @@ constexpr DegRT::operator DegFT() const {
 template <>
 template <>
 constexpr DegFT::operator DegKT() const {
-  return DegKT((Value() - convert::kFreezePointDegF) / convert::kDegFPerDegC -
+  return DegKT(((Value() - convert::kFreezePointDegF) / convert::kDegFPerDegC) -
                convert::kAbsoluteZeroDegC);
 }
 
 template <>
 template <>
 constexpr DegKT::operator DegFT() const {
-  return DegFT((Value() + convert::kAbsoluteZeroDegC) * convert::kDegFPerDegC +
-               convert::kFreezePointDegF);
+  return DegFT(
+      ((Value() + convert::kAbsoluteZeroDegC) * convert::kDegFPerDegC) +
+      convert::kFreezePointDegF);
 }
 
 template <>
 template <>
 constexpr DegRT::operator DegKT() const {
   return DegKT(
-      (Value() + convert::kAbsoluteZeroDegF - convert::kFreezePointDegF) /
-          convert::kDegFPerDegC -
+      ((Value() + convert::kAbsoluteZeroDegF - convert::kFreezePointDegF) /
+       convert::kDegFPerDegC) -
       convert::kAbsoluteZeroDegC);
 }
 
 template <>
 template <>
 constexpr DegKT::operator DegRT() const {
-  return DegRT((Value() + lob::convert::kAbsoluteZeroDegC) *
-                   convert::kDegFPerDegC -
-               lob::convert::kAbsoluteZeroDegF + convert::kFreezePointDegF);
+  return DegRT(
+      ((Value() + lob::convert::kAbsoluteZeroDegC) * convert::kDegFPerDegC) -
+      lob::convert::kAbsoluteZeroDegF + convert::kFreezePointDegF);
 }
 
 enum class Time : uint8_t { kMicroseconds, kMilliseconds, kSeconds };
