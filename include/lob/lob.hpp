@@ -41,7 +41,7 @@ enum class LOB_EXPORT ClockAngleT : uint8_t {
   kIV
 };  // enum class ClockAngleT
 
-static constexpr auto kNaN = std::numeric_limits<double>::quiet_NaN();
+static constexpr auto kNaN = std::numeric_limits<float>::quiet_NaN();
 
 struct LOB_EXPORT Input {
   static constexpr uint8_t kTableSize{85};
@@ -110,8 +110,8 @@ class LOB_EXPORT Builder {
  private:
   static constexpr size_t kBufferSize{392};
   union AlignmentT {
-    double d;
-    size_t s;
+    double foo;
+    size_t bar;
   };
   alignas(AlignmentT) std::array<uint8_t, kBufferSize> buffer_{};
   Impl* pimpl_{nullptr};
@@ -137,9 +137,8 @@ LOB_EXPORT size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
                         size_t size, const Options& options);
 
 template <size_t N>
-LOB_EXPORT size_t Solve(const Input& in, const std::array<uint32_t, N>* pranges,
-                        std::array<Output, N>* pouts,
-                        const Options& options = Options{}) {
+size_t Solve(const Input& in, const std::array<uint32_t, N>* pranges,
+             std::array<Output, N>* pouts, const Options& options = Options{}) {
   return Solve(in, pranges->data(), pouts->data(), N, options);
 }
 
@@ -186,6 +185,13 @@ LOB_EXPORT double MilToMoa(double value);
  * @return Equivalent angle in degrees.
  */
 LOB_EXPORT double MilToDeg(double value);
+
+/**
+ * @brief Converts milliradians (MIL) to inches per hundred yards (IPHY).
+ * @param value Angle in MIL.
+ * @return Equivalent angle in IPHY.
+ */
+LOB_EXPORT double MilToIphy(double value);
 
 /**
  * @brief Converts milliradians (MIL) to projected inches at a given

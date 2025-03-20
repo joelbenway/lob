@@ -635,9 +635,7 @@ double MoaToInch(double value, double range_ft) {
 
 double MilToMoa(double value) { return MoaT(MilT(value)).Value(); }
 double MilToDeg(double value) { return DegreesT(MilT(value)).Value(); }
-namespace {
 double MilToIphy(double value) { return IphyT(MoaT(value)).Value(); }
-}  // namespace
 double MilToInch(double value, double range_ft) {
   return IphyT(MilT(value)).Value() * range_ft /
          static_cast<double>(kHundredYardsInFeet);
