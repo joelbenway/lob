@@ -18,12 +18,12 @@ jobs:
     - uses: cachix/install-nix-action@v25
 
     - name: Lint
-      shell: nix develop --command bash -c {0}
+      shell: nix develop --command bash -c
       run: cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake
 
     - name: Spell check
       if: always()
-      shell: nix develop --command bash -c {0}
+      shell: nix develop --command bash -c
       run: cmake -P cmake/spell.cmake
 
   # coverage:
@@ -70,11 +70,11 @@ jobs:
     - uses: cachix/install-nix-action@v25
 
     - name: Configure
-      shell: nix develop --command bash -c {0}
+      shell: nix develop --command bash -c
       run: cmake --preset=ci-sanitize
 
     - name: Build
-      shell: nix develop --command bash -c {0}
+      shell: nix develop --command bash -c
       run: cmake --build build/sanitize -j 2
 
     - name: Test
@@ -86,7 +86,7 @@ jobs:
           strict_init_order=1:\
           detect_leaks=1"
         UBSAN_OPTIONS: print_stacktrace=1
-      shell: nix develop --command bash -c {0}
+      shell: nix develop --command bash -c
       run: ctest --output-on-failure --no-tests=error -j 2
 
   test:
@@ -125,7 +125,7 @@ jobs:
 
     - name: Configure for Ubuntu
       if: matrix.os == 'ubuntu-latest'
-      shell: nix develop --command bash -c {0}
+      shell: nix develop --command bash -c
       run: cmake "--preset=ci-$("${{ matrix.os }}".split("-")[0])"
         -D BUILD_SHARED_LIBS=${{ matrix.shared }}
 
@@ -141,7 +141,7 @@ jobs:
 
     - name: Build and Install for Ubuntu
       if: matrix.os == 'ubuntu-latest'
-      shell: nix develop --command bash -c {0}
+      shell: nix develop --command bash -c
       run: |
         cmake --build build --config Release -j 2
         cmake --install build --config Release --prefix prefix
