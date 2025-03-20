@@ -15,14 +15,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: cachix/install-nix-action@v25
+      uses: cachix/install-nix-action@v25
 
     - name: Lint
-      run: nix develop --command bash -c "cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake"
+      shell: nix develop --command bash -c {0}
+      run: cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake
 
     - name: Spell check
       if: always()
-      run: nix develop --command bash -c "cmake -P cmake/spell.cmake"
+      shell: nix develop --command bash -c {0}
+      run: cmake -P cmake/spell.cmake
 
   # coverage:
   #   needs: [lint]
@@ -68,10 +70,12 @@ jobs:
     - uses: cachix/install-nix-action@v25
 
     - name: Configure
-      run: nix develop --command bash -c "cmake --preset=ci-sanitize"
+      shell: nix develop --command bash -c {0}
+      run: cmake --preset=ci-sanitize
 
     - name: Build
-      run: nix develop --command bash -c "cmake --build build/sanitize -j 2"
+      shell: nix develop --command bash -c {0}
+      run: cmake --build build/sanitize -j 2
 
     - name: Test
       working-directory: build/sanitize
@@ -82,7 +86,8 @@ jobs:
           strict_init_order=1:\
           detect_leaks=1"
         UBSAN_OPTIONS: print_stacktrace=1
-      run: nix develop --command bash -c "ctest --output-on-failure --no-tests=error -j 2"
+      shell: nix develop --command bash -c {0}
+      run: ctest --output-on-failure --no-tests=error -j 2
 
   test:
     needs: [lint]
@@ -106,18 +111,21 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       uses: cachix/install-nix-action@v25
 
-    - name: Enter Nix Flake Environment
-      if: matrix.os == 'ubuntu-latest'
-      run: nix develop
-
     - name: Setup MultiToolTask
       if: matrix.os == 'windows-latest'
       run: |
         Add-Content "$env:GITHUB_ENV" 'UseMultiToolTask=true'
         Add-Content "$env:GITHUB_ENV" 'EnforceProcessCountAcrossBuilds=true'
 
-    - name: Configure
+    - name: Configure for Windows and Mac
+      if: matrix.os != 'ubuntu-latest'
       shell: pwsh
+      run: cmake "--preset=ci-$("${{ matrix.os }}".split("-")[0])"
+        -D BUILD_SHARED_LIBS=${{ matrix.shared }}
+
+    - name: Configure for Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      shell: nix develop --command bash -c {0}
       run: cmake "--preset=ci-$("${{ matrix.os }}".split("-")[0])"
         -D BUILD_SHARED_LIBS=${{ matrix.shared }}
 
@@ -125,11 +133,18 @@ jobs:
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
       run: Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\Release"
 
-    - name: Build
-      run: cmake --build build --config Release -j 2
+    - name: Build and Install for Windows and Mac
+      if: matrix.os != 'ubuntu-latest'
+      run: |
+        cmake --build build --config Release -j 2
+        cmake --install build --config Release --prefix prefix
 
-    - name: Install
-      run: cmake --install build --config Release --prefix prefix
+    - name: Build and Install for Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      shell: nix develop --command bash -c {0}
+      run: |
+        cmake --build build --config Release -j 2
+        cmake --install build --config Release --prefix prefix
 
     - name: Test
       working-directory: build
