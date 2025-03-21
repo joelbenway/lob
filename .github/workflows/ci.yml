@@ -38,14 +38,17 @@ jobs:
     - uses: cachix/install-nix-action@v31
 
     - name: Configure
-      run: cmake --preset=ci-coverage
+      run: nix develop --command bash -c
+        "cmake --preset=ci-coverage"
 
     - name: Build
-      run: cmake --build build/coverage -j 2
+      run: nix develop --command bash -c
+        "cmake --build build/coverage -j 2"
 
     - name: Test
       working-directory: build/coverage
-      run: ctest --output-on-failure --no-tests=error -j 2
+      run: nix develop --command bash -c
+        "ctest --output-on-failure --no-tests=error -j 2"
 
     - name: Process coverage info
       run: nix develop --command bash -c
@@ -115,13 +118,13 @@ jobs:
         Add-Content "$env:GITHUB_ENV" 'UseMultiToolTask=true'
         Add-Content "$env:GITHUB_ENV" 'EnforceProcessCountAcrossBuilds=true'
 
-    - name: Configure for Windows and Mac
+    - name: Configure Windows and Mac
       if: matrix.os != 'ubuntu-latest'
       shell: pwsh
       run: cmake "--preset=ci-$("${{ matrix.os }}".split("-")[0])"
-        -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev
+        -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev -Wno-dev
 
-    - name: Configure for Ubuntu
+    - name: Configure Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: nix develop --command bash -c 
         "cmake --preset=ci-ubuntu
@@ -131,18 +134,22 @@ jobs:
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
       run: Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\Release"
 
-    - name: Build and Install for Windows and Mac
+    - name: Build on Windows and Mac
       if: matrix.os != 'ubuntu-latest'
-      run: |
-        cmake --build build --config Release -j 2
-        cmake --install build --config Release --prefix prefix
+      run: cmake --build build --config Release -j 2
 
-    - name: Build and Install for Ubuntu
+    - name: Build on Ubuntu
       if: matrix.os == 'ubuntu-latest'
-      run: |
-        nix develop --command bash -c \
+      run: nix develop --command bash -c
         "cmake --build build --config Release -j 2"
-        nix develop --command bash -c \
+
+    - name: Install on Windows and Mac
+      if: matrix.os != 'ubuntu-latest'
+      run: cmake --install build --config Release --prefix prefix
+
+    - name: Install on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: nix develop --command bash -c
         "cmake --install build --config Release --prefix prefix"
 
     - name: Test
