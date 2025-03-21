@@ -162,7 +162,7 @@ jobs:
       working-directory: build/Release
       shell: pwsh
       run: |
-        & "..\test\Release\lob_test.exe" --gtest_output=xml:..\test_results.xml
+        & "..\test\Release\lob_test.exe"
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   # To enable, first you have to create an orphaned gh-pages branch:
