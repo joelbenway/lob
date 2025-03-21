@@ -153,14 +153,17 @@ jobs:
       run: cmake --install build --config Release --prefix prefix
 
     - name: Test
-      if: matrix.os != 'windows-latest' && matrix.type != 'shared'
+      if: matrix.os != 'windows-latest' || matrix.type != 'shared'
       working-directory: build
       run: ctest --output-on-failure --no-tests=error -C Release -j 2
 
     - name: Test for Windows Shared
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
       working-directory: build/Release
-      run: ctest --output-on-failure --no-tests=error -C Release -j 2
+      shell: pwsh
+      run: |
+        & "..\test\Release\lob_test.exe" --gtest_output=xml:..\test_results.xml
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   # To enable, first you have to create an orphaned gh-pages branch:
   #
