@@ -24,13 +24,13 @@ jobs:
     - name: Spell check
       if: always()
       run: nix develop --command bash -c
-        "cmake -P cmake/spell.cmake"
+        "cmake -P cmake/spell.cmake"d
 
   coverage:
     needs: [lint]
 
     runs-on: ubuntu-latest
-
+    
     if: github.repository_owner == 'joelbenway'
 
     steps:
@@ -112,6 +112,22 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       uses: cachix/install-nix-action@v31
 
+    - name: Configure Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: nix develop --command bash -c 
+        "cmake --preset=ci-ubuntu
+        -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev"
+
+    - name: Build on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: nix develop --command bash -c
+        "cmake --build build --config Release -j 2"
+
+    - name: Install on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: nix develop --command bash -c
+        "cmake --install build --config Release --prefix prefix"
+
     - name: Setup MultiToolTask
       if: matrix.os == 'windows-latest'
       run: |
@@ -124,33 +140,17 @@ jobs:
       run: cmake "--preset=ci-$("${{ matrix.os }}".split("-")[0])"
         -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev -Wno-dev
 
-    - name: Configure Ubuntu
-      if: matrix.os == 'ubuntu-latest'
-      run: nix develop --command bash -c 
-        "cmake --preset=ci-ubuntu
-        -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev"
-
     - name: Setup PATH
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
-      run: Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\Release"
+      run: Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\test\Release"
 
     - name: Build on Windows and Mac
       if: matrix.os != 'ubuntu-latest'
       run: cmake --build build --config Release -j 2
 
-    - name: Build on Ubuntu
-      if: matrix.os == 'ubuntu-latest'
-      run: nix develop --command bash -c
-        "cmake --build build --config Release -j 2"
-
     - name: Install on Windows and Mac
       if: matrix.os != 'ubuntu-latest'
       run: cmake --install build --config Release --prefix prefix
-
-    - name: Install on Ubuntu
-      if: matrix.os == 'ubuntu-latest'
-      run: nix develop --command bash -c
-        "cmake --install build --config Release --prefix prefix"
 
     - name: Test
       working-directory: build
