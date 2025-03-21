@@ -147,6 +147,18 @@ jobs:
         Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\Release"
         $env:GITHUB_PATH = "$(Get-Location)\build\test\Release" + "$env:GITHUB_PATH"
 
+    - name: Build lob on Windows Shared
+      if: matrix.os == 'windows-latest' && matrix.type == 'shared'
+      shell: pwsh
+      run: cmake --build build --config Release --target lob
+
+    - name: Copy lob.dll for Windows Shared
+      if: matrix.os == 'windows-latest' && matrix.type == 'shared'
+      shell: pwsh
+      run: Copy-Item -Path "build\Release\liblob.dll" 
+        -Destination "build\test\Release\liblob.dll" 
+        -Force -ErrorAction SilentlyContinue
+
     - name: Build on Windows and Mac
       if: matrix.os != 'ubuntu-latest'
       run: cmake --build build --config Release -j 2
