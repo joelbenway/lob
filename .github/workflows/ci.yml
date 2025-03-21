@@ -155,10 +155,11 @@ jobs:
     - name: Move DLL for Windows Shared
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
       shell: pwsh
-      run: Copy-Item -Path "build\Release\lob.dll" -Destination "build\test\Release\lob.dll" -Force
+      run: |
+        Copy-Item -Path "build\Release\lob.dll" -Destination "build\test\Release\lob.dll" -Force
+        dir "build\test\Release"
 
     - name: Test
-      if: matrix.os != 'windows-latest' || matrix.type != 'shared'
       working-directory: build
       run: ctest --output-on-failure --no-tests=error -C Release -j 2
 
