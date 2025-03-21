@@ -142,7 +142,7 @@ jobs:
 
     - name: Setup PATH
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
-      run: Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\test"
+      run: Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\Release"
 
     - name: Build on Windows and Mac
       if: matrix.os != 'ubuntu-latest'
