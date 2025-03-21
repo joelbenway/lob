@@ -143,19 +143,15 @@ jobs:
     - name: Setup PATH
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
       run: |
-        # Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\Release"
-        $env:PATH = "$(Get-Location)\build\Release;" + $env:PATH
-        Add-Content "$env:GITHUB_ENV" "PATH=$env:PATH"
-
-    - name: Debug DLL Locations 1
-      if: matrix.os == 'windows-latest' && matrix.type == 'shared'
-      run: dir build\Release build\test\Release
+        New-Item -Path "build\test\Release" -ItemType Directory -Force
+        Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\Release"
+        $env:GITHUB_PATH = "$(Get-Location)\build\test\Release" + "$env:GITHUB_PATH"
 
     - name: Build on Windows and Mac
       if: matrix.os != 'ubuntu-latest'
       run: cmake --build build --config Release -j 2
     
-    - name: Debug DLL Locations 2
+    - name: Debug DLL Locations
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
       run: dir build\Release build\test\Release
 
