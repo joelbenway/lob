@@ -24,13 +24,13 @@ jobs:
     - name: Spell check
       if: always()
       run: nix develop --command bash -c
-        "cmake -P cmake/spell.cmake"d
+        "cmake -P cmake/spell.cmake"
 
   coverage:
     needs: [lint]
 
     runs-on: ubuntu-latest
-    
+
     if: github.repository_owner == 'joelbenway'
 
     steps:
