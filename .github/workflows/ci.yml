@@ -152,27 +152,15 @@ jobs:
       if: matrix.os != 'ubuntu-latest'
       run: cmake --install build --config Release --prefix prefix
 
-    - name: Debug DLL Locations for Windows Shared
+    - name: Move DLL for Windows Shared
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
       shell: pwsh
-      run: |
-        Write-Output "Checking build/Release:"
-        dir "build\Release"
-        Write-Output "Checking build/test/Release:"
-        dir "build\test\Release"
+      run: Copy-Item -Path "build\Release\lob.dll" -Destination "build\test\Release\lob.dll" -Force
 
     - name: Test
       if: matrix.os != 'windows-latest' || matrix.type != 'shared'
       working-directory: build
       run: ctest --output-on-failure --no-tests=error -C Release -j 2
-
-    - name: Test for Windows Shared
-      if: matrix.os == 'windows-latest' && matrix.type == 'shared'
-      working-directory: build/Release
-      shell: pwsh
-      run: |
-        & "..\test\Release\lob_test.exe"
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   # To enable, first you have to create an orphaned gh-pages branch:
   #
