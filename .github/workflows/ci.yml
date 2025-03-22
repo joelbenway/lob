@@ -159,10 +159,25 @@ jobs:
         Copy-Item -Path "build\Release\lob.dll" -Destination "build\test\Release\lob.dll" -Force
         Write-Output "build/test/Release contents after copy:"
         dir "build\test\Release"
-        Write-Output "Dependencies of lob_test.exe:"
-        & "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.41.34120\bin\Hostx64\x64\dumpbin.exe" /dependents "build\test\Release\lob_test.exe"
-        Write-Output "Dependencies of lob.dll:"
-        & "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.41.34120\bin\Hostx64\x64\dumpbin.exe" /dependents "build\test\Release\lob.dll"
+        # Find Visual Studio installation
+        $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
+        if ($vsPath) {
+          Write-Output "Visual Studio found at: $vsPath"
+          # Set up VS Developer Command Prompt environment
+          $devCmd = Join-Path $vsPath "Common7\Tools\VsDevCmd.bat"
+          if (Test-Path $devCmd) {
+            # Run dumpbin in the VS environment
+            cmd /c "call `"$devCmd`" && dumpbin /dependents `"build\test\Release\lob_test.exe`" > lob_test_deps.txt && dumpbin /dependents `"build\test\Release\lob.dll`" > lob_dll_deps.txt"
+            Write-Output "Dependencies of lob_test.exe:"
+            Get-Content "lob_test_deps.txt"
+            Write-Output "Dependencies of lob.dll:"
+            Get-Content "lob_dll_deps.txt"
+          } else {
+            Write-Output "VsDevCmd.bat not found at: $devCmd"
+          }
+        } else {
+          Write-Output "Visual Studio not found by vswhere"
+        }
 
     - name: Test
       working-directory: build
