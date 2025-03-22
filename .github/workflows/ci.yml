@@ -18,43 +18,46 @@ jobs:
     - uses: cachix/install-nix-action@v31
 
     - name: Lint
-      run: nix develop --command bash -c "cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake"
+      run: nix develop --command bash -c
+        "cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake"
 
     - name: Spell check
       if: always()
-      run: nix develop --command bash -c "cmake -P cmake/spell.cmake"
+      run: nix develop --command bash -c
+        "cmake -P cmake/spell.cmake"
 
-  # coverage:
-  #   needs: [lint]
+  coverage:
+    needs: [lint]
 
-  #   runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  #   if: github.repository_owner == 'joelbenway'
+    if: github.repository_owner == 'joelbenway'
 
-  #   steps:
-  #   - uses: actions/checkout@v4
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v31
 
-  #   - name: Install LCov
-  #     run: sudo apt-get update -q
-  #       && sudo apt-get install lcov -q -y
+    - name: Configure
+      run: nix develop --command bash -c
+        "cmake --preset=ci-coverage"
 
-  #   - name: Configure
-  #     run: cmake --preset=ci-coverage
+    - name: Build
+      run: nix develop --command bash -c
+        "cmake --build build/coverage -j 2"
 
-  #   - name: Build
-  #     run: cmake --build build/coverage -j 2
+    - name: Test
+      working-directory: build/coverage
+      run: nix develop --command bash -c
+        "ctest --output-on-failure --no-tests=error -j 2"
 
-  #   - name: Test
-  #     working-directory: build/coverage
-  #     run: ctest --output-on-failure --no-tests=error -j 2
+    - name: Process coverage info
+      run: nix develop --command bash -c
+        "cmake --build build/coverage -t coverage"
 
-  #   - name: Process coverage info
-  #     run: cmake --build build/coverage -t coverage
-
-  #   - name: Submit to codecov.io
-  #     uses: codecov/codecov-action@v4
-  #     with:
-  #       file: build/coverage/coverage.info
+    - name: Submit to codecov.io
+      uses: codecov/codecov-action@v4
+      with:
+        file: build/coverage/coverage.info
 
   sanitize:
     needs: [lint]
@@ -92,7 +95,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest] #, windows-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
 
         type: [shared, static]
 
@@ -109,39 +112,51 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       uses: cachix/install-nix-action@v31
 
+    - name: Configure Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: nix develop --command bash -c 
+        "cmake --preset=ci-ubuntu
+        -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev"
+
+    - name: Build on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: nix develop --command bash -c
+        "cmake --build build --config Release -j 2"
+
+    - name: Install on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: nix develop --command bash -c
+        "cmake --install build --config Release --prefix prefix"
+
     - name: Setup MultiToolTask
       if: matrix.os == 'windows-latest'
       run: |
         Add-Content "$env:GITHUB_ENV" 'UseMultiToolTask=true'
         Add-Content "$env:GITHUB_ENV" 'EnforceProcessCountAcrossBuilds=true'
 
-    - name: Configure for Windows and Mac
+    - name: Configure Windows and Mac
       if: matrix.os != 'ubuntu-latest'
       shell: pwsh
       run: cmake "--preset=ci-$("${{ matrix.os }}".split("-")[0])"
-        -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev
-
-    - name: Configure for Ubuntu
-      if: matrix.os == 'ubuntu-latest'
-      run: nix develop --command bash -c 
-        "cmake --preset=ci-ubuntu
-        -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev"
+        -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev -Wno-dev
 
     - name: Setup PATH
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
       run: Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\Release"
 
-    - name: Build and Install for Windows and Mac
+    - name: Build on Windows and Mac
       if: matrix.os != 'ubuntu-latest'
-      run: |
-        cmake --build build --config Release -j 2
-        cmake --install build --config Release --prefix prefix
+      run: cmake --build build --config Release -j 2
 
-    - name: Build and Install for Ubuntu
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        nix develop --command bash -c "cmake --build build --config Release -j 2"
-        nix develop --command bash -c "cmake --install build --config Release --prefix prefix"
+    - name: Install on Windows and Mac
+      if: matrix.os != 'ubuntu-latest'
+      run: cmake --install build --config Release --prefix prefix
+
+    - name: Move DLL for Windows Shared
+      if: matrix.os == 'windows-latest' && matrix.type == 'shared'
+      shell: pwsh
+      run: Copy-Item -Path "build\Release\lob.dll" 
+        -Destination "build\test\Release\lob.dll" -Force
 
     - name: Test
       working-directory: build
