@@ -158,24 +158,10 @@ jobs:
       run: |
         # Copy lob.dll
         Copy-Item -Path "build\Release\lob.dll" -Destination "build\test\Release\lob.dll" -Force
-        # Search and copy GoogleTest DLLs
-        Write-Output "Searching for GoogleTest DLLs:"
-        Get-ChildItem -Path "build\_deps\googletest-build" -Recurse -File -Include "gtest.dll", "gtest_main.dll" | ForEach-Object {
-          Write-Output "Found $($_.Name) at $($_.FullName)"
-          Copy-Item -Path $_.FullName -Destination "build\test\Release\" -Force
-        }
-        # Copy MSVC runtime DLLs
-        $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
-        if ($vsPath) {
-          $redistPath = Join-Path $vsPath "VC\Redist\MSVC" | Get-ChildItem -Directory | Sort-Object Name -Descending | Select-Object -First 1 | Join-Path -ChildPath "x64\Microsoft.VC143.CRT"
-          Write-Output "Copying MSVC runtime from: $redistPath"
-          Copy-Item -Path "$redistPath\MSVCP140.dll" -Destination "build\test\Release\" -Force -ErrorAction SilentlyContinue
-          Copy-Item -Path "$redistPath\VCRUNTIME140.dll" -Destination "build\test\Release\" -Force -ErrorAction SilentlyContinue
-          Copy-Item -Path "$redistPath\VCRUNTIME140_1.dll" -Destination "build\test\Release\" -Force -ErrorAction SilentlyContinue
-        }
         Write-Output "build/test/Release contents after copy:"
         dir "build\test\Release"
-        # Dump dependencies
+        # Debug dependencies
+        $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
         if ($vsPath) {
           Write-Output "Visual Studio found at: $vsPath"
           $devCmd = Join-Path $vsPath "Common7\Tools\VsDevCmd.bat"
@@ -191,8 +177,6 @@ jobs:
         } else {
           Write-Output "Visual Studio not found by vswhere"
         }
-
-
 
     - name: Test
       working-directory: build
