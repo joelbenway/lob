@@ -155,28 +155,8 @@ jobs:
     - name: Move DLL for Windows Shared
       if: matrix.os == 'windows-latest' && matrix.type == 'shared'
       shell: pwsh
-      run: |
-        # Copy lob.dll
-        Copy-Item -Path "build\Release\lob.dll" -Destination "build\test\Release\lob.dll" -Force
-        Write-Output "build/test/Release contents after copy:"
-        dir "build\test\Release"
-        # Debug dependencies
-        $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
-        if ($vsPath) {
-          Write-Output "Visual Studio found at: $vsPath"
-          $devCmd = Join-Path $vsPath "Common7\Tools\VsDevCmd.bat"
-          if (Test-Path $devCmd) {
-            cmd /c "call `"$devCmd`" && dumpbin /dependents `"build\test\Release\lob_test.exe`" > lob_test_deps.txt && dumpbin /dependents `"build\test\Release\lob.dll`" > lob_dll_deps.txt"
-            Write-Output "Dependencies of lob_test.exe:"
-            Get-Content "lob_test_deps.txt"
-            Write-Output "Dependencies of lob.dll:"
-            Get-Content "lob_dll_deps.txt"
-          } else {
-            Write-Output "VsDevCmd.bat not found at: $devCmd"
-          }
-        } else {
-          Write-Output "Visual Studio not found by vswhere"
-        }
+      run: Copy-Item -Path "build\Release\lob.dll" 
+        -Destination "build\test\Release\lob.dll" -Force
 
     - name: Test
       working-directory: build

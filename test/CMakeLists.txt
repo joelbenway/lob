@@ -21,12 +21,12 @@ FetchContent_Declare(
 )
 
 # For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+# set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-set(RECOVER_STATE ${BUILD_SHARED_LIBS})
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static GoogleTest" FORCE)
+# set(RECOVER_STATE ${BUILD_SHARED_LIBS})
+# set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force static GoogleTest" FORCE)
 FetchContent_MakeAvailable(googletest)
-set(BUILD_SHARED_LIBS ${RECOVER_STATE} CACHE BOOL "Restore original setting" FORCE)
+# set(BUILD_SHARED_LIBS ${RECOVER_STATE} CACHE BOOL "Restore original setting" FORCE)
 
 # ---- Tests ----
 set(LOB_TEST_SOURCES
