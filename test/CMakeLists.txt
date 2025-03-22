@@ -99,14 +99,7 @@ target_link_libraries(
 
 include(GoogleTest)
 
-# if(BUILD_SHARED_LIBS)
-#   add_test(NAME lob_tests COMMAND lob_test)
-# else()
-#   gtest_discover_tests(lob_test)
-# endif()
 gtest_discover_tests(lob_test)
-
-# 
 
 # ---- End-of-file commands ----
 
