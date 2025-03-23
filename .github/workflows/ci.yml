@@ -16,6 +16,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Lint
       run: nix develop --command bash -c
@@ -36,6 +38,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Configure
       run: nix develop --command bash -c
@@ -69,6 +73,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Configure
       run: nix develop --command bash -c
@@ -111,6 +117,8 @@ jobs:
     - name: Install Nix
       if: matrix.os == 'ubuntu-latest'
       uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Configure Ubuntu
       if: matrix.os == 'ubuntu-latest'
@@ -162,40 +170,28 @@ jobs:
       working-directory: build
       run: ctest --output-on-failure --no-tests=error -C Release -j 2
 
-  # To enable, first you have to create an orphaned gh-pages branch:
-  #
-  #    git switch --orphan gh-pages
-  #    git commit --allow-empty -m "Initial commit"
-  #    git push -u origin gh-pages
+  docs:
+    needs: [sanitize, test]
 
-  # docs:
-  #   needs: [sanitize, test]
+    runs-on: ubuntu-latest
 
-  #   runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+      && github.event_name == 'push'
+      && github.repository_owner == 'joelbenway'
 
-  #   if: github.ref == 'refs/heads/master'
-  #     && github.event_name == 'push'
-  #     && github.repository_owner == 'joelbenway'
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
-  #   steps:
-  #   - uses: actions/checkout@v4
+    - name: Build docs
+      run: nix develop --command bash -c 
+        "cmake -DPROJECT_SOURCE_DIR=$PWD -DPROJECT_BINARY_DIR=$PWD/build
+        -P cmake/docs-ci.cmake"
 
-  #   - uses: actions/setup-python@v5
-  #     with: { python-version: "3.8" }
-
-  #   - name: Install m.css dependencies
-  #     run: pip3 install jinja2 Pygments
-
-  #   - name: Install Doxygen
-  #     run: sudo apt-get update -q
-  #       && sudo apt-get install doxygen -q -y
-
-  #   - name: Build docs
-  #     run: cmake "-DPROJECT_SOURCE_DIR=$PWD" "-DPROJECT_BINARY_DIR=$PWD/build"
-  #       -P cmake/docs-ci.cmake
-
-  #   - name: Deploy docs
-  #     uses: peaceiris/actions-gh-pages@v3
-  #     with:
-  #       github_token: ${{ secrets.GITHUB_TOKEN }}
-  #       publish_dir: build/docs/html
+    - name: Deploy docs
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: build/docs/html
