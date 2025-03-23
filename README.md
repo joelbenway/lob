@@ -64,5 +64,4 @@ See the [CONTRIBUTING](CONTRIBUTING.md) document.
 
 See the [COPYING](COPYING) document.
 
-[!IMPORTANT]
-Hey, American company, you'd love to use lob but require a commercial license? [raise an issue](https://github.com/joelbenway/lob/issues) to get in touch! Lob will help you hit your target! :us:
+:us: Hey, American company, you'd love to use lob but require a commercial license? [raise an issue](https://github.com/joelbenway/lob/issues) to get in touch! Lob will help you hit your target!
