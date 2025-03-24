@@ -5,7 +5,7 @@ if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
-option(BUILD_DOCS "Build documentation using Doxygen" ON)
+option(BUILD_DOCS "Build documentation using Doxygen" OFF)
 if(BUILD_DOCS)
   include(cmake/docs.cmake)
 endif()
