@@ -10,7 +10,10 @@ set(src "${PROJECT_SOURCE_DIR}")
 
 # ---- Dependencies ----
 
-find_package(Doxygen REQUIRED COMPONENTS doxygen)
+find_program(DOXYGEN_EXECUTABLE NAMES doxygen)
+if(NOT DOXYGEN_EXECUTABLE)
+  message(FATAL_ERROR "Doxygen executable was not found")
+endif()
 
 # ---- Process project() call in CMakeLists.txt ----
 
@@ -40,14 +43,19 @@ function(docs_project name)
   set(PROJECT_NAME "${name}" PARENT_SCOPE)
   if(DEFINED _VERSION)
     set(PROJECT_VERSION "${_VERSION}" PARENT_SCOPE)
-    string(REGEX MATCH "^+(\\.+)*" versions "${_VERSION}")
-    string(REPLACE . ";" versions "${versions}")
-    set(suffixes MAJOR MINOR PATCH TWEAK)
-    while(NOT versions STREQUAL "" AND NOT suffixes STREQUAL "")
-      list_pop_front(versions version)
-      list_pop_front(suffixes suffix)
-      set("PROJECT_VERSION_${suffix}" "${version}" PARENT_SCOPE)
-    endwhile()
+    string(REGEX MATCH "^.*" is_version "${_VERSION}")
+    if(is_version)
+      set(versions "${_VERSION}")
+      string(REPLACE "." ";" versions "${versions}")
+      set(suffixes MAJOR MINOR PATCH TWEAK)
+      while(NOT versions STREQUAL "" AND NOT suffixes STREQUAL "")
+        list_pop_front(versions version)
+        list_pop_front(suffixes suffix)
+        set("PROJECT_VERSION_${suffix}" "${version}" PARENT_SCOPE)
+      endwhile()
+    else()
+      message(WARNING "Project version '${_VERSION}' does not match expected format.")
+    endif()
   endif()
   if(DEFINED _DESCRIPTION)
     set(PROJECT_DESCRIPTION "${_DESCRIPTION}" PARENT_SCOPE)
@@ -69,20 +77,10 @@ set(doxyfile "${bin}/docs/Doxyfile")
 
 configure_file("${src}/docs/Doxyfile.in" "${doxyfile}" @ONLY)
 
-file(REMOVE_RECURSE "${out}/html" "${out}/xml")
-
-set(DOXYGEN_CMD)
-if(TARGET Doxygen::doxygen)
-  set(DOXYGEN_CMD "$<TARGET_FILE:Doxygen::doxygen>")
-elseif(DEFINED DOXYGEN_EXECUTABLE)
-  set(DOXYGEN_CMD "${DOXYGEN_EXECUTABLE}")
-else()
-  message(WARNING "Neither the Doxygen::doxygen import target nor DOXYGEN_EXECUTABLE are defined. Documentation target might not work.")
-  set(DOXYGEN_CMD "doxygen")
-endif()
+file(REMOVE_RECURSE "${out}/html")
 
 execute_process(
-    COMMAND ${DOXYGEN_CMD} "${doxyfile}"
+    COMMAND ${DOXYGEN_EXECUTABLE} "${doxyfile}"
     WORKING_DIRECTORY "${bin}/docs"
     RESULT_VARIABLE result
 )
