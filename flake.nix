@@ -36,6 +36,7 @@
               codespell
               cppcheck
               doxygen
+              ghostscript
               lcov
               mold
               ninja
