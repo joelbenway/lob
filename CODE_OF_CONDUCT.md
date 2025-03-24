@@ -4,7 +4,8 @@ Lob is not trying to marshal contributors, a community, or even users but what c
 ## The Scout Oath
 On my honor, I will do my bestTo do my duty to God and my country and to obey the Scout Law;To help other people at all times;To keep myself physically strong, mentally awake and morally straight.
 
-## The Scout LawA Scout is:
+## The Scout Law
+A Scout is:
 * Trustworthy,
 * Loyal,
 * Helpful,
