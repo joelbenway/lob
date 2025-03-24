@@ -175,9 +175,10 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    if: github.ref == 'refs/heads/master'
-      && github.event_name == 'push'
-      && github.repository_owner == 'joelbenway'
+    if: github.repository_owner == 'joelbenway'
+      # && github.ref == 'refs/heads/master'
+      # && github.event_name == 'push'
+      
 
     steps:
     - uses: actions/checkout@v4
@@ -190,8 +191,13 @@ jobs:
         "cmake -DPROJECT_SOURCE_DIR=$PWD -DPROJECT_BINARY_DIR=$PWD/build
         -P cmake/docs-ci.cmake"
 
-    - name: Deploy docs
-      uses: peaceiris/actions-gh-pages@v3
+    - name: Upload docs
+      if: ${{ github.event.repository.private == false }}
+      uses: actions/upload-pages-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: build/docs/html
+        path: build/docs/html
+
+    - name: Deploy docs to GitHub Pages
+      if: ${{ github.event.repository.private == false }}
+      uses: actions/deploy-pages@v4
+      id: deployment

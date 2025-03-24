@@ -38,7 +38,7 @@ In addition to ballistic solutions, lob provides some of the instrumental values
 
 :wave: I've been an embedded software engineer since 2012. I wrote lob in the precious moments after my three little girls were in bed when I should have been cleaning up. Our family currently lives in an old house in Milwaukee, Wisconsin. :sunrise:
 
-This project was a playground for to explore technologies I was curious about as well as to get a little bit of my work out in the wild for others to evaluate and maybe even use! As a side effect of this project I learned quite a bit about exterior ballistics. Slide into my DMs about your project!
+This project was a playground for me to follow my curiosity about some technologies I'd never used as well as to get a little bit of my work out in the wild. As a side effect of this project I learned quite a bit about exterior ballistics. [Slide into my DMs](https://x.com/joelbenway) about your project!
 
 ## Resources
 

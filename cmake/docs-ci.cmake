@@ -10,33 +10,9 @@ set(src "${PROJECT_SOURCE_DIR}")
 
 # ---- Dependencies ----
 
-set(mcss_SOURCE_DIR "${bin}/docs/.ci")
-if(NOT IS_DIRECTORY "${mcss_SOURCE_DIR}")
-  file(MAKE_DIRECTORY "${mcss_SOURCE_DIR}")
-  file(
-      DOWNLOAD
-      https://github.com/friendlyanon/m.css/releases/download/release-1/mcss.zip
-      "${mcss_SOURCE_DIR}/mcss.zip"
-      STATUS status
-      EXPECTED_MD5 00cd2757ebafb9bcba7f5d399b3bec7f
-  )
-  if(NOT status MATCHES "^0;")
-    message(FATAL_ERROR "Download failed with ${status}")
-  endif()
-  execute_process(
-      COMMAND "${CMAKE_COMMAND}" -E tar xf mcss.zip
-      WORKING_DIRECTORY "${mcss_SOURCE_DIR}"
-      RESULT_VARIABLE result
-  )
-  if(NOT result EQUAL "0")
-    message(FATAL_ERROR "Extraction failed with ${result}")
-  endif()
-  file(REMOVE "${mcss_SOURCE_DIR}/mcss.zip")
-endif()
-
-find_program(Python3_EXECUTABLE NAMES python3 python)
-if(NOT Python3_EXECUTABLE)
-  message(FATAL_ERROR "Python executable was not found")
+find_program(DOXYGEN_EXECUTABLE NAMES doxygen)
+if(NOT DOXYGEN_EXECUTABLE)
+  message(FATAL_ERROR "Doxygen executable was not found")
 endif()
 
 # ---- Process project() call in CMakeLists.txt ----
@@ -67,14 +43,19 @@ function(docs_project name)
   set(PROJECT_NAME "${name}" PARENT_SCOPE)
   if(DEFINED _VERSION)
     set(PROJECT_VERSION "${_VERSION}" PARENT_SCOPE)
-    string(REGEX MATCH "^[0-9]+(\\.[0-9]+)*" versions "${_VERSION}")
-    string(REPLACE . ";" versions "${versions}")
-    set(suffixes MAJOR MINOR PATCH TWEAK)
-    while(NOT versions STREQUAL "" AND NOT suffixes STREQUAL "")
-      list_pop_front(versions version)
-      list_pop_front(suffixes suffix)
-      set("PROJECT_VERSION_${suffix}" "${version}" PARENT_SCOPE)
-    endwhile()
+    string(REGEX MATCH "^.*" is_version "${_VERSION}")
+    if(is_version)
+      set(versions "${_VERSION}")
+      string(REPLACE "." ";" versions "${versions}")
+      set(suffixes MAJOR MINOR PATCH TWEAK)
+      while(NOT versions STREQUAL "" AND NOT suffixes STREQUAL "")
+        list_pop_front(versions version)
+        list_pop_front(suffixes suffix)
+        set("PROJECT_VERSION_${suffix}" "${version}" PARENT_SCOPE)
+      endwhile()
+    else()
+      message(WARNING "Project version '${_VERSION}' does not match expected format.")
+    endif()
   endif()
   if(DEFINED _DESCRIPTION)
     set(PROJECT_DESCRIPTION "${_DESCRIPTION}" PARENT_SCOPE)
@@ -92,21 +73,17 @@ if(NOT DEFINED DOXYGEN_OUTPUT_DIRECTORY)
   set(DOXYGEN_OUTPUT_DIRECTORY "${bin}/docs")
 endif()
 set(out "${DOXYGEN_OUTPUT_DIRECTORY}")
+set(doxyfile "${bin}/docs/Doxyfile")
 
-foreach(file IN ITEMS Doxyfile conf.py)
-  configure_file("${src}/docs/${file}.in" "${bin}/docs/${file}" @ONLY)
-endforeach()
+configure_file("${src}/docs/Doxyfile.in" "${doxyfile}" @ONLY)
 
-set(mcss_script "${mcss_SOURCE_DIR}/documentation/doxygen.py")
-set(config "${bin}/docs/conf.py")
-
-file(REMOVE_RECURSE "${out}/html" "${out}/xml")
+file(REMOVE_RECURSE "${out}/html")
 
 execute_process(
-    COMMAND "${Python3_EXECUTABLE}" "${mcss_script}" "${config}"
+    COMMAND ${DOXYGEN_EXECUTABLE} "${doxyfile}"
     WORKING_DIRECTORY "${bin}/docs"
     RESULT_VARIABLE result
 )
 if(NOT result EQUAL "0")
-  message(FATAL_ERROR "m.css returned with ${result}")
+  message(FATAL_ERROR "Doxygen returned with ${result}")
 endif()

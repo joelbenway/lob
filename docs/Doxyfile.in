@@ -20,13 +20,9 @@ FULL_PATH_NAMES = YES
 STRIP_FROM_PATH = "@PROJECT_SOURCE_DIR@/include" "@PROJECT_SOURCE_DIR@"
 STRIP_FROM_INC_PATH =
 
-# We use m.css to generate the html documentation, so we only need XML output
-GENERATE_XML = YES
-GENERATE_HTML = NO
+# We want HTML output directly from Doxygen
+GENERATE_HTML = YES
 GENERATE_LATEX = NO
+GENERATE_XML = NO
 XML_PROGRAMLISTING = NO
-CREATE_SUBDIRS = NO
-
-# Include all directories, files and namespaces in the documentation
-# Disable to include only explicitly documented objects
-M_SHOW_UNDOCUMENTED = YES
+CREATE_SUBDIRS = YES
