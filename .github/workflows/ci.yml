@@ -180,7 +180,6 @@ jobs:
       && github.ref == 'refs/heads/master'
       && github.event_name == 'push'
       
-
     steps:
     - uses: actions/checkout@v4
     - uses: cachix/install-nix-action@v31
