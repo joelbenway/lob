@@ -1,4 +1,4 @@
-[![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob) [![Continuous Integration](https://github.com/joelbenway/lob/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/joelbenway/lob/actions/workflows/ci.yml)
+[![Continuous Integration](https://github.com/joelbenway/lob/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/joelbenway/lob/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob)
 
 # lob
 
@@ -10,16 +10,16 @@ This is lob, a project that aims to create a useful and free exterior ballistics
 Lob was intended to be easy to work with, accurate, and fast in that order. Ballistics solutions require many inputs to model all the factors affecting the trajectory of a projectile. Making the most of imperfect or incomplete data is a central goal of lob. Maybe the best environmental data available is from the wrong altitude, lob should adjust it for you. Maybe you know X and Y but not Z. Lob should make an informed estimate on Z or substitute a less demanding formula that doesn't require it. Give lob whatever you do know and it will do its best to fill in the gaps with frog DNA! :sauropod:
 
 #### Mathematics
-Under the hood lob solves ordinary differental equations (ODEs) which model the projectile motion of a point mass. It does this using a numerical method--a common approach among commercial solvers. What is less common is implementing these methods in industrial strength C++, writing unit tests for each piece along the way, and releasing it as open source software. :mechanical_arm:
+Under the hood lob solves ordinary differental equations (ODEs) which model the projectile motion of a point mass. It does this using a numerical method--a common approach among commercial solvers. What is less common is implementing these methods in industrial strength C++, comprehensive unit tests, and releasing it all as open source software. :mechanical_arm:
 
 #### Software and API design
 In most cases Lob uses descriptive data structures and simple free functions that act on them. However at the heart of lob is the Builder class which is used to build the final Input consumed by the solver functions. There are so many optional inputs that go into a ballistic solution that the builder pattern is a pleasant abstraction. The Builder class uses a pimpl pattern, which if I'm being honest, is primarily to keep the library header readable. If you just wish to use lob, [the header](include/lob/lob.hpp) should have everything you need. Despite this pimpl pattern, lob does not dynamically allocate memory or throw exceptions and is suitable for use in embedded systems that can handle floating point math.
 
 ## Features
 
-If you wanted to make yourself a ballistics solver application on par with the best commercial offerings, lob has all the math you need covered. :mage_man:
+If you wanted to make yourself a ballistics solver application on par with the best commercial offerings, lob covers the math you need. :mage_man:
 
-The following are accounted for in lob's solutions:
+The following can be accounted for in lob's solutions:
  * Aerodynamic drag
  * Gravity
  * Wind
@@ -32,7 +32,7 @@ The following are accounted for in lob's solutions:
  * Gyroscopic Spin drift
  * Aerodynamic jump
 
-In addition to ballistic solutions, lob provides some of the instrumental values it calculates which may be useful including the local speed of sound, stability factor, and the angle between the line of sight and bore. All native units are :us: USA customary (freedom) units but a suite of free functions to handle unit conversions are included :hammer_and_wrench:
+In addition to ballistic solutions, lob provides some of the instrumental values it calculates which may be useful including the local speed of sound, stability factor, and the angle between the line of sight and bore. All native units are customary American freedom units :us: but a collection of unit conversion functions are included :hammer_and_wrench:
 
 ## About the Author
 
