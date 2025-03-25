@@ -61,7 +61,7 @@ jobs:
     - name: Submit to codecov.io
       uses: codecov/codecov-action@v5
       with:
-        file: build/coverage/coverage.info
+        files: build/coverage/coverage.info
         token: ${{ secrets.CODECOV_TOKEN }}
 
   sanitize:
