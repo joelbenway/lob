@@ -1,0 +1,5 @@
+---
+BasedOnStyle: google
+DerivePointerAlignment: false
+PointerAlignment: Left
+...

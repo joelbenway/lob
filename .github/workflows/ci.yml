@@ -1,0 +1,208 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+    - master
+
+  pull_request:
+    branches:
+    - master
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Lint
+      run: nix develop --command bash -c
+        "cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake"
+
+    - name: Spell check
+      if: always()
+      run: nix develop --command bash -c
+        "cmake -P cmake/spell.cmake"
+
+  coverage:
+    needs: [lint]
+
+    runs-on: ubuntu-latest
+
+    if: github.repository_owner == 'joelbenway'
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Configure
+      run: nix develop --command bash -c
+        "cmake --preset=ci-coverage"
+
+    - name: Build
+      run: nix develop --command bash -c
+        "cmake --build build/coverage -j 2"
+
+    - name: Test
+      working-directory: build/coverage
+      run: nix develop --command bash -c
+        "ctest --output-on-failure --no-tests=error -j 2"
+
+    - name: Process coverage info
+      run: nix develop --command bash -c
+        "cmake --build build/coverage -t coverage"
+
+    - name: Submit to codecov.io
+      uses: codecov/codecov-action@v5
+      with:
+        files: build/coverage/coverage.info
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+  sanitize:
+    needs: [lint]
+
+    runs-on: ubuntu-latest
+
+    env: { CXX: clang++-19 }
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Configure
+      run: nix develop --command bash -c
+        "cmake --preset=ci-sanitize"
+
+    - name: Build
+      run: nix develop --command bash -c
+        "cmake --build build/sanitize -j 2"
+
+    - name: Test
+      working-directory: build/sanitize
+      env:
+        ASAN_OPTIONS: "strict_string_checks=1:\
+          detect_stack_use_after_return=1:\
+          check_initialization_order=1:\
+          strict_init_order=1:\
+          detect_leaks=1"
+        UBSAN_OPTIONS: print_stacktrace=1
+      run: nix develop --command bash -c
+        "ctest --output-on-failure --no-tests=error -j 2"
+
+  test:
+    needs: [lint]
+
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+
+        type: [shared, static]
+
+        include:
+        - { type: shared, shared: YES }
+        - { type: static, shared: NO }
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Nix
+      if: matrix.os == 'ubuntu-latest'
+      uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Configure Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: nix develop --command bash -c 
+        "cmake --preset=ci-ubuntu
+        -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev"
+
+    - name: Build on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: nix develop --command bash -c
+        "cmake --build build --config Release -j 2"
+
+    - name: Install on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: nix develop --command bash -c
+        "cmake --install build --config Release --prefix prefix"
+
+    - name: Setup MultiToolTask
+      if: matrix.os == 'windows-latest'
+      run: |
+        Add-Content "$env:GITHUB_ENV" 'UseMultiToolTask=true'
+        Add-Content "$env:GITHUB_ENV" 'EnforceProcessCountAcrossBuilds=true'
+
+    - name: Configure Windows and Mac
+      if: matrix.os != 'ubuntu-latest'
+      shell: pwsh
+      run: cmake "--preset=ci-$("${{ matrix.os }}".split("-")[0])"
+        -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev -Wno-dev
+
+    - name: Setup PATH
+      if: matrix.os == 'windows-latest' && matrix.type == 'shared'
+      run: Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\Release"
+
+    - name: Build on Windows and Mac
+      if: matrix.os != 'ubuntu-latest'
+      run: cmake --build build --config Release -j 2
+
+    - name: Install on Windows and Mac
+      if: matrix.os != 'ubuntu-latest'
+      run: cmake --install build --config Release --prefix prefix
+
+    - name: Move DLL for Windows Shared
+      if: matrix.os == 'windows-latest' && matrix.type == 'shared'
+      shell: pwsh
+      run: Copy-Item -Path "build\Release\lob.dll" 
+        -Destination "build\test\Release\lob.dll" -Force
+
+    - name: Test
+      working-directory: build
+      run: ctest --output-on-failure --no-tests=error -C Release -j 2
+
+  docs:
+    needs: [sanitize, test]
+
+    runs-on: ubuntu-latest
+
+    if: github.repository_owner == 'joelbenway'
+      && github.ref == 'refs/heads/master'
+      && github.event_name == 'push'
+      
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build docs
+      run: nix develop --command bash -c 
+        "cmake -DPROJECT_SOURCE_DIR=$PWD -DPROJECT_BINARY_DIR=$PWD/build
+        -P cmake/docs-ci.cmake"
+
+    - name: Upload docs
+      if: ${{ github.event.repository.private == false }}
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: build/docs/html
+
+    - name: Deploy docs to GitHub Pages
+      if: ${{ github.event.repository.private == false }}
+      uses: actions/deploy-pages@v4
+      id: deployment
