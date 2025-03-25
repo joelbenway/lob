@@ -10,7 +10,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 #include <limits>
 #include <utility>
 
@@ -479,7 +478,6 @@ void BuildTwistEffects(Impl* pimpl) {
                                        pimpl->diameter_in, pimpl->length_in,
                                        kXWind)
               .Float();
-      std::cout << "litz jump: " << pimpl->build.aerodynamic_jump << "\n";
     }
   }
 
@@ -595,8 +593,10 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
       }
       pouts[index].range = ToU32(s.P().X().Value());
       pouts[index].velocity = ToU16(kVelocity.Value());
-      pouts[index].energy = ToU32(
-          CalculateKineticEnergy(kVelocity, SlugT(LbsT(in.mass))).Value());
+      if (!std::isnan(in.mass)) {
+        pouts[index].energy = ToU32(
+            CalculateKineticEnergy(kVelocity, SlugT(LbsT(in.mass))).Value());
+      }
       pouts[index].elevation =
           InchT(s.P().Y() - FeetT(in.optic_height)).Float();
       pouts[index].deflection = InchT(InchT(s.P().Z()) + spin_drift).Float();

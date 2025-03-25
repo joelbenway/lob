@@ -52,7 +52,7 @@ TEST_F(LobEnvTestFixture, ZeroAngleSearch) {
   ASSERT_NE(puut, nullptr);
   auto input1 = puut->Build();
   const float kZeroRange = 100.0F;
-  auto input2 = puut->ZeroAngleMOA(std::numeric_limits<double>::quiet_NaN())
+  auto input2 = puut->ZeroAngleMOA(std::numeric_limits<float>::quiet_NaN())
                     .ZeroDistanceYds(kZeroRange)
                     .Build();
   const float kError = 0.01F;

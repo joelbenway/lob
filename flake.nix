@@ -36,13 +36,9 @@
               codespell
               cppcheck
               doxygen
-              # ghostscript
               lcov
               mold
               ninja
-              # python311
-              # python311Packages.jinja2
-              # python311Packages.pygments
             ]
             ++ (
               if system == "aarch64-darwin"
