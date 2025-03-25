@@ -42,7 +42,7 @@ enum class LOB_EXPORT AtmosphereReferenceT : uint8_t {
 
 /**
  * @brief Enumerates clock angle positions.
- * @note Values are named with Roman numberals. This is used for reasoning about
+ * @note Values are named with Roman numerals. This is used for reasoning about
  * wind direction.
  */
 enum class LOB_EXPORT ClockAngleT : uint8_t {
@@ -73,7 +73,7 @@ struct LOB_EXPORT Input {
       85};  /// @brief The size of the drag table.
   std::array<uint16_t, kTableSize> drags{};  /// @brief The drag table.
   float table_coefficent{
-      kNaN};  /// @brief A coefficent used to scale the drag table.
+      kNaN};  /// @brief A coefficient used to scale the drag table.
   float speed_of_sound{kNaN};  /// @brief The local speed of sound in Fps.
   uint16_t velocity{0};        /// @brief Initial velocity of projectile in Fps.
   float mass{kNaN};            /// @brief Mass of the projectile in pounds.
@@ -106,7 +106,7 @@ class Impl;
 class LOB_EXPORT Builder {
  public:
   Builder();                          /// @brief Default constructor
-  ~Builder();                         /// @brief Defautl destructor
+  ~Builder();                         /// @brief Default destructor
   Builder(const Builder& other);      /// @brief Copy constructor
   Builder(Builder&& other) noexcept;  /// @brief Move constructor
   Builder& operator=(
@@ -127,7 +127,7 @@ class LOB_EXPORT Builder {
    */
   Builder& BCAtmosphere(AtmosphereReferenceT type);
   /**
-   * @brief Sets the drag function associated with ballistic coefficent.
+   * @brief Sets the drag function associated with ballistic coefficient.
    * @param type The drag function type.
    * @return A reference to the Builder object.
    */

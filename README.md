@@ -1,8 +1,8 @@
+[![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob) [![Continuous Integration](https://github.com/joelbenway/lob/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/joelbenway/lob/actions/workflows/ci.yml)
+
 # lob
 
 This is lob, a project that aims to create a useful and free exterior ballistics calculation library. :comet:
-
-[![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob)
 
 ## Design
 
