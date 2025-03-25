@@ -28,8 +28,8 @@ The following can be accounted for in lob's solutions:
    * Air pressure
    * Temperature
    * Relative humidity
- * Coriolis Effect
- * Gyroscopic Spin drift
+ * Coriolis effect
+ * Gyroscopic spin drift
  * Aerodynamic jump
 
 In addition to ballistic solutions, lob provides some of the instrumental values it calculates which may be useful including the local speed of sound, stability factor, and the angle between the line of sight and bore. All native units are customary American freedom units :us: but a collection of unit conversion functions are included :hammer_and_wrench:
@@ -40,7 +40,7 @@ In addition to ballistic solutions, lob provides some of the instrumental values
 
 :wave: I've been an embedded software engineer since 2012. I wrote lob in the precious moments after my three little girls were in bed when I should have been cleaning up. Our family currently lives in an old house in Milwaukee, Wisconsin. :sunrise:
 
-This project was a playground for me to follow my curiosity about some technologies I'd never used as well as to get a little bit of my work out in the wild. As a side effect of this project I learned quite a bit about exterior ballistics. [Slide into my DMs](https://x.com/joelbenway) and tell me about your project!
+This project was an excuse for me to follow my curiosity and play with some technologies I'd never used. I was also a way to get a little bit of my work out into the wild. As a side effect of this project I learned quite a bit about exterior ballistics. If you have a project you'd like to discuss, reach out!
 
 ## Resources
 
