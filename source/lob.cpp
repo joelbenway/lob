@@ -209,6 +209,19 @@ Builder& Builder::LengthInch(float value) {
   return *this;
 }
 
+Builder& Builder::MachVsDragTable(const float* pmachs, const float* pdrags,
+                                  size_t size) {
+  for (size_t i = 0; i < kTableSize; i++) {
+    const double kMach = static_cast<double>(kMachs.at(i)) / kTableScale;
+    const auto kDrag =
+        ToU16(LobLerp(pmachs, pdrags, size, kMach) * kTableScale);
+    pimpl_->build.drags.at(i) = kDrag;
+  }
+  pimpl_->pdrag_lut = &pimpl_->build.drags;
+  pimpl_->ballistic_coefficent_psi = PmsiT(1);
+  return *this;
+}
+
 Builder& Builder::MassGrains(float value) {
   pimpl_->build.mass = LbsT(GrainT(value)).Float();
   return *this;
@@ -431,9 +444,10 @@ void BuildTable(Impl* pimpl) {
   }
 
   static_assert(Input::kTableSize == kTableSize, "Table size not identical.");
-  std::copy(pimpl->pdrag_lut->begin(), pimpl->pdrag_lut->end(),
-            pimpl->build.drags.begin());
-
+  if (pimpl->pdrag_lut != &pimpl->build.drags) {
+    std::copy(pimpl->pdrag_lut->begin(), pimpl->pdrag_lut->end(),
+              pimpl->build.drags.begin());
+  }
   // scale for air density and bc
   const double kCdCoefficent =
       CalculateCdCoefficent(pimpl->air_density_lbs_per_cu_ft,
