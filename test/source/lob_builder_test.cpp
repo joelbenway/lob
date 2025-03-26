@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -135,7 +136,6 @@ TEST_F(BuilderTestFixture, BuildMinimalInput) {
                                  .DiameterInch(kTestDiameter)
                                  .MassGrains(kTestWeight)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
-                                 // .ZeroAngleMOA(kTestZeroAngle)
                                  .ZeroDistanceYds(kZeroDistance)
                                  .Build();
   EXPECT_EQ(kResult.drags.front(), lob::kG1Drags.front());
@@ -145,12 +145,40 @@ TEST_F(BuilderTestFixture, BuildMinimalInput) {
   EXPECT_NEAR(kResult.zero_angle, kTestZeroAngle, 0.01);
   EXPECT_FLOAT_EQ(kResult.gravity.y,
                   -1.0F * static_cast<float>(lob::kStandardGravityFtPerSecSq));
+}
 
-  const uint32_t kOutSize = 12;
-  const std::array<uint32_t, kOutSize> kRanges = {
-      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
-  std::array<lob::Output, kOutSize> out = {};
-  lob::Solve(kResult, &kRanges, &out);
+TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
+  const float kTestBC = 1.0F;
+  const float kTestDiameter = 1.0F;
+  const float kTestWeight = 7000.0F;
+  const uint16_t kTestMuzzleVelocity = 2500U;
+  const float kTestZeroAngle = 5.59F;
+  std::array<float, lob::kTableSize> machs = {};
+  std::array<float, lob::kTableSize> drags = {};
+
+  const lob::Input kResult1 =
+      puut->BallisticCoefficentPsi(kTestBC)
+          .BCDragFunction(lob::DragFunctionT::kG1)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .DiameterInch(kTestDiameter)
+          .MassGrains(kTestWeight)
+          .InitialVelocityFps(kTestMuzzleVelocity)
+          .ZeroAngleMOA(kTestZeroAngle)
+          .Build();
+
+  for (size_t i = 0; i < lob::kTableSize; i++) {
+    machs.at(i) = static_cast<float>(lob::kMachs.at(i)) / lob::kTableScale;
+    drags.at(i) = static_cast<float>(lob::kG1Drags.at(i)) / lob::kTableScale;
+  }
+
+  const lob::Input kResult2 = puut->BallisticCoefficentPsi(lob::kNaN)
+                                  .BCDragFunction(lob::DragFunctionT::kG7)
+                                  .MachVsDragTable(machs, drags)
+                                  .Build();
+
+  for (size_t i = 0; i < lob::kTableSize; i++) {
+    EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+  }
 }
 
 }  // namespace tests

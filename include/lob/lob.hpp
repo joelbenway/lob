@@ -145,6 +145,32 @@ class LOB_EXPORT Builder {
    */
   Builder& LengthInch(float value);
   /**
+   * @brief Loads a custom Mach vs Drag table for the projectile.
+   * @note This is a direct alternative to using a ballistic coefficient and a
+   * reference drag function.
+   * @tparam N The number of mach-drag pairs in the table.
+   * @param pmachs Pointer to an array of mach values.
+   * @param pdrags Pointer to an array of associated drag values.
+   * @param size The number of mach-drag pairs in the table.
+   * @return A reference to the Builder object.
+   */
+  Builder& MachVsDragTable(const float* pmachs, const float* pdrags,
+                           size_t size);
+  /**
+   * @brief Loads a custom Mach vs Drag table for the projectile.
+   * @note This is a direct alternative to using a ballistic coefficient and a
+   * reference drag function.
+   * @tparam N The number of mach-drag pairs in the table.
+   * @param machs Reference to an array of mach values.
+   * @param drags Reference to an array of associated drag values.
+   * @return A reference to the Builder object.
+   */
+  template <size_t N>
+  Builder& MachVsDragTable(const std::array<float, N>& machs,
+                           const std::array<float, N>& drags) {
+    return MachVsDragTable(machs.data(), drags.data(), N);
+  }
+  /**
    * @brief Sets the projectile mass in grains.
    * @param value The mass in grains.
    * @return A reference to the Builder object.
@@ -320,6 +346,15 @@ struct LOB_EXPORT Output {
   float time_of_flight{0.0F};  /// @brief Time of flight in seconds.
 };  // struct Output
 
+/**
+ * @brief Solves the exterior ballistics problem for a given set of ranges.
+ * @param in Input parameters for the calculation.
+ * @param pranges Pointer to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array wherec the output results will be stored.
+ * @param size The number of ranges to solve for.
+ * @param options Optional parameters for the solver.
+ * @return The number of successful solutions.
+ */
 LOB_EXPORT size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
                         size_t size, const Options& options);
 
