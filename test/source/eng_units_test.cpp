@@ -320,16 +320,18 @@ TEST(EngUnitsTests, LengthConversions) {
   constexpr double kTestValueMeter = kTestValueMm / 1000;
   EXPECT_DOUBLE_EQ(lob::InchT(lob::FeetT(kTestValueFeet)).Value(),
                    kTestValueInch);
-  EXPECT_DOUBLE_EQ(lob::YardT(lob::FeetT(kTestValueFeet)).Value(),
-                   kTestValueYard);
+  EXPECT_DOUBLE_EQ(lob::InchT(lob::MmT(kTestValueMm)).Value(), kTestValueInch);
+  EXPECT_DOUBLE_EQ(lob::InchT(lob::CmT(kTestValueCm)).Value(), kTestValueInch);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::InchT(kTestValueInch)).Value(),
                    kTestValueFeet);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::YardT(kTestValueYard)).Value(),
                    kTestValueFeet);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::MmT(kTestValueMm)).Value(), kTestValueFeet);
-  EXPECT_DOUBLE_EQ(lob::InchT(lob::MmT(kTestValueMm)).Value(), kTestValueInch);
+  EXPECT_DOUBLE_EQ(lob::FeetT(lob::CmT(kTestValueCm)).Value(), kTestValueFeet);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::MeterT(kTestValueMeter)).Value(),
                    kTestValueFeet);
+  EXPECT_DOUBLE_EQ(lob::YardT(lob::FeetT(kTestValueFeet)).Value(),
+                   kTestValueYard);
   EXPECT_DOUBLE_EQ(lob::MmT(lob::FeetT(kTestValueFeet)).Value(), kTestValueMm);
   EXPECT_DOUBLE_EQ(lob::CmT(lob::FeetT(kTestValueFeet)).Value(), kTestValueCm);
   EXPECT_DOUBLE_EQ(lob::MeterT(lob::FeetT(kTestValueFeet)).Value(),
@@ -378,15 +380,15 @@ TEST(EngUnitsTests, MassConversions) {
   constexpr double kTestValueGram = kTestValueKg * 1000;
   EXPECT_DOUBLE_EQ(lob::LbsT(lob::GrainT(kTestValueGrain)).Value(),
                    kTestValueLbs);
+  EXPECT_DOUBLE_EQ(lob::LbsT(lob::GramT(kTestValueGram)).Value(),
+                   kTestValueLbs);
+  EXPECT_DOUBLE_EQ(lob::LbsT(lob::KgT(kTestValueKg)).Value(), kTestValueLbs);
   EXPECT_DOUBLE_EQ(lob::GrainT(lob::LbsT(kTestValueLbs)).Value(),
                    kTestValueGrain);
   EXPECT_DOUBLE_EQ(lob::SlugT(lob::LbsT(kTestValueLbs)).Value(),
                    kTestValueSlug);
   EXPECT_DOUBLE_EQ(lob::SlugT(lob::GrainT(kTestValueGrain)).Value(),
                    kTestValueSlug);
-  EXPECT_DOUBLE_EQ(lob::LbsT(lob::GramT(kTestValueGram)).Value(),
-                   kTestValueLbs);
-  EXPECT_DOUBLE_EQ(lob::LbsT(lob::KgT(kTestValueKg)).Value(), kTestValueLbs);
 }
 
 TEST(EngUnitsTests, SectionalDensityConversions) {
@@ -466,11 +468,23 @@ TEST(EngUnitsTests, TimeConversions) {
                    kTestValueSec);
   EXPECT_DOUBLE_EQ(lob::SecT(lob::UsecT(kTestValueUsec)).Value(),
                    kTestValueSec);
+  EXPECT_DOUBLE_EQ(lob::MsecT(lob::SecT(kTestValueSec)).Value(),
+                   kTestValueMsec);
+  EXPECT_DOUBLE_EQ(lob::UsecT(lob::SecT(kTestValueSec)).Value(),
+                   kTestValueUsec);
   // Round-trip conversions to ensure accuracy is preserved.
   EXPECT_DOUBLE_EQ(lob::SecT(lob::UsecT(lob::SecT(kTestValueSec))).Value(),
                    kTestValueSec);
   EXPECT_DOUBLE_EQ(lob::MsecT(lob::SecT(lob::MsecT(kTestValueMsec))).Value(),
                    kTestValueMsec);
+}
+
+TEST(EngUnitsTests, TwistConversions) {
+  constexpr double kTestValueInchPerTwistT = 12.0;
+  constexpr double kTestValueMmPerTwistT = 304.8;
+  EXPECT_DOUBLE_EQ(
+      lob::InchPerTwistT(lob::MmPerTwistT(kTestValueMmPerTwistT)).Value(),
+      kTestValueInchPerTwistT);
 }
 
 }  // namespace tests
