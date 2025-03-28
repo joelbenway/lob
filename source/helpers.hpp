@@ -5,8 +5,8 @@
 #pragma once
 
 #include <cmath>
+#include <cstdint>
 #include <limits>
-#include <type_traits>
 
 namespace lob {
 
@@ -40,9 +40,18 @@ constexpr T Modulo(T a, T b) {
   return a % b;
 }
 
-constexpr double Modulo(double a, double b) { return std::fmod(a, b); }
+template <typename T>
+constexpr T ConstexprFmod(T a, T b) {
+  if (AreEqual(b, 0)) {
+    return std::numeric_limits<T>::quiet_NaN();
+  }
+  const auto kQuotient = static_cast<int64_t>(a / b);
+  return a - (kQuotient * b);
+}
 
-constexpr float Modulo(float a, float b) { return std::fmod(a, b); }
+constexpr double Modulo(double a, double b) { return ConstexprFmod(a, b); }
+
+constexpr float Modulo(float a, float b) { return ConstexprFmod(a, b); }
 
 }  // namespace lob
 
