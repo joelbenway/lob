@@ -37,7 +37,10 @@ TEST(EngUnitsTests, MoveConstructor) {
 
 TEST(EngUnitsTests, CopyAssignmentOperator) {
   const TestT kA = TestT(100.0);
-  TestT b(0);
+  const double kB = 0.0;
+  TestT b(kB);
+  b = b;
+  EXPECT_DOUBLE_EQ(b.Value(), kB);
   b = kA;
   EXPECT_DOUBLE_EQ(kA.Value(), b.Value());
 }
@@ -45,7 +48,10 @@ TEST(EngUnitsTests, CopyAssignmentOperator) {
 TEST(EngUnitsTests, MoveAssignmentOperator) {
   const double kValue = 100.0;
   TestT a = TestT(kValue);
-  TestT b(0);
+  const double kB = 0.0;
+  TestT b(kB);
+  b = std::move(b);
+  EXPECT_DOUBLE_EQ(b.Value(), kB);
   b = std::move(a);
   EXPECT_NE(a.Value(), kValue);
   EXPECT_DOUBLE_EQ(b.Value(), kValue);
@@ -89,6 +95,7 @@ TEST(EngUnitTests, ModuloOperator) {
   const auto kC = TestT(1);
   EXPECT_EQ(kA % kB, kC);
   EXPECT_EQ(kA % kB.Value(), kC);
+  EXPECT_EQ(kA % 0, TestT(std::numeric_limits<double>::quiet_NaN()));
 }
 
 TEST(EngUnitTests, AdditionAssignmentOperator) {

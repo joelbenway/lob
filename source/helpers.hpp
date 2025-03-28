@@ -46,7 +46,7 @@ constexpr T ConstexprFmod(T a, T b) {
     return std::numeric_limits<T>::quiet_NaN();
   }
   const auto kQuotient = static_cast<int64_t>(a / b);
-  return a - (kQuotient * b);
+  return a - (static_cast<T>(kQuotient) * b);
 }
 
 constexpr double Modulo(double a, double b) { return ConstexprFmod(a, b); }
