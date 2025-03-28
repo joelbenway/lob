@@ -50,7 +50,6 @@ constexpr T ConstexprFmod(T a, T b) {
 }
 
 constexpr double Modulo(double a, double b) { return ConstexprFmod(a, b); }
-
 constexpr float Modulo(float a, float b) { return ConstexprFmod(a, b); }
 
 }  // namespace lob
