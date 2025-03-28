@@ -42,6 +42,7 @@ set(HELPER_TEST_SOURCES
   source/calc_test.cpp
   source/cartesian_test.cpp
   source/eng_units_test.cpp
+  source/helpers_test.cpp
   source/ode_test.cpp
   source/tables_test.cpp
 )

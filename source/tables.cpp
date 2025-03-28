@@ -12,6 +12,7 @@
 #include <numeric>
 
 #include "constants.hpp"
+#include "helpers.hpp"
 
 namespace lob {
 
@@ -26,17 +27,6 @@ struct Circle {
 };
 
 namespace {
-template <typename T>
-constexpr bool AreEqual(T a, T b) {
-  if (std::isinf(a) || std::isinf(b)) {
-    return !(a > b || b > a);
-  }
-  if (std::isnan(a) || std::isnan(b)) {
-    return std::isnan(a) && std::isnan(b);
-  }
-  return (std::fabs(a - b) <= std::numeric_limits<T>::epsilon() *
-                                  std::fmax(std::fabs(a), std::fabs(b)));
-}
 
 double CalculatePerpendicularSlope(double slope) {
   if (AreEqual(slope, 0.0)) {

@@ -10,6 +10,7 @@
 #include <type_traits>
 
 #include "constants.hpp"
+#include "helpers.hpp"
 
 namespace lob {
 
@@ -69,10 +70,10 @@ class StrongT {
 
   // Modulo operator
   constexpr StrongT<E, U, T> operator%(const StrongT<E, U, T>& rhs) const {
-    return StrongT<E, U, T>(value_ % rhs.value_);
+    return StrongT<E, U, T>(Modulo(value_, rhs.value_));
   }
   constexpr StrongT<E, U, T> operator%(const T& rhs) const {
-    return StrongT<E, U, T>(value_ % rhs);
+    return StrongT<E, U, T>(Modulo(value_, rhs));
   }
 
   // Arithmetic assignment operators
@@ -131,10 +132,10 @@ class StrongT {
 
   // Comparison operators
   constexpr bool operator==(const StrongT<E, U, T>& rhs) const {
-    return value_ == rhs.value_;
+    return AreEqual(value_, rhs.value_);
   }
   constexpr bool operator!=(const StrongT<E, U, T>& rhs) const {
-    return value_ != rhs.value_;
+    return !AreEqual(value_, rhs.value_);
   }
   constexpr bool operator<(const StrongT<E, U, T>& rhs) const {
     return value_ < rhs.value_;

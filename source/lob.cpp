@@ -10,13 +10,13 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <utility>
 
 #include "calc.hpp"
 #include "cartesian.hpp"
 #include "constants.hpp"
 #include "eng_units.hpp"
+#include "helpers.hpp"
 #include "ode.hpp"
 #include "tables.hpp"
 #include "version.hpp"
@@ -35,18 +35,6 @@ constexpr uint16_t ToU16(T x) {
 template <typename T>
 constexpr uint32_t ToU32(T x) {
   return static_cast<uint32_t>(std::round(x));
-}
-
-template <typename T>
-constexpr bool AreEqual(T a, T b) {
-  if (std::isinf(a) || std::isinf(b)) {
-    return !(a > b || b > a);
-  }
-  if (std::isnan(a) || std::isnan(b)) {
-    return std::isnan(a) && std::isnan(b);
-  }
-  return (std::fabs(a - b) <= std::numeric_limits<T>::epsilon() *
-                                  std::fmax(std::fabs(a), std::fabs(b)));
 }
 
 constexpr float kHundredYardsInFeet = FeetT(YardT(100)).Float();

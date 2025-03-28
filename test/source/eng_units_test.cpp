@@ -7,195 +7,230 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
-#include <cstdint>
 #include <limits>
 
 namespace tests {
 
-TEST(EngUnitsTests, StrongTConstructors) {
-  enum class Beer : uint8_t { kBottle, kCan, kSixPack, kCase };
-  using BottleT = lob::StrongT<Beer, Beer::kBottle, int>;
-  const BottleT kBreakfast(1);
-  const BottleT kLunch(kBreakfast);
-  const BottleT kDinner = BottleT(1);
-  const double kSum = static_cast<int>(kBreakfast + kLunch + kDinner);
-  EXPECT_DOUBLE_EQ(kSum, 3.0);
+using TestT = lob::FeetT;  // arbitrary type
+
+TEST(EngUnitsTests, Constructor) {
+  TestT* pdegrees = nullptr;
+  const double kValue = 100.0;
+  pdegrees = new TestT(kValue);
+  ASSERT_NE(pdegrees, nullptr);
+  EXPECT_DOUBLE_EQ(pdegrees->Value(), kValue);
+  delete pdegrees;
 }
 
-TEST(EngUnitsTests, StrongTArithmeticAdd) {
-  enum class Waffles : uint8_t { kBelgian, kToaster, kPotato, kStroop };
-  using BelgianT = lob::StrongT<Waffles, Waffles::kBelgian, int>;
-  const int kTest1 = 77;
-  const int kTest2 = 600;
-  constexpr auto kExpectedSum = kTest1 + kTest2;
-  const BelgianT kPlate1(kTest1);
-  const BelgianT kPlate2(kTest2);
-  EXPECT_EQ((kPlate1 + kPlate2).Value(), kExpectedSum);
-  EXPECT_EQ((kPlate1 + kTest2).Value(), kExpectedSum);
-  BelgianT plate3 = kPlate1;
-  plate3 += kPlate2;
-  EXPECT_EQ(plate3.Value(), kExpectedSum);
-  plate3 = kPlate1;
-  plate3 += kTest2;
-  EXPECT_EQ(plate3.Value(), kExpectedSum);
+TEST(EngUnitsTests, CopyConstructor) {
+  const TestT kA = TestT(100.0);
+  const auto kB = kA;
+  EXPECT_DOUBLE_EQ(kA.Value(), kB.Value());
 }
 
-TEST(EngUnitsTests, StrongTArithmeticSubtract) {
-  enum class Waffles : uint8_t { kBelgian, kToaster, kPotato, kStroop };
-  using ToasterT = lob::StrongT<Waffles, Waffles::kToaster, int>;
-  const int kTest1 = 900;
-  const int kTest2 = 600;
-  constexpr auto kExpectedDifference = kTest1 - kTest2;
-  const ToasterT kPlate1(kTest1);
-  const ToasterT kPlate2(kTest2);
-  EXPECT_EQ((kPlate1 - kPlate2).Value(), kExpectedDifference);
-  EXPECT_EQ((kPlate1 - kTest2).Value(), kExpectedDifference);
-  ToasterT plate3 = kPlate1;
-  plate3 -= kPlate2;
-  EXPECT_EQ(plate3.Value(), kExpectedDifference);
-  plate3 = kPlate1;
-  plate3 -= kTest2;
-  EXPECT_EQ(plate3.Value(), kExpectedDifference);
+TEST(EngUnitsTests, MoveConstructor) {
+  const double kValue = 100.0;
+  TestT a = TestT(kValue);
+  const auto kB = std::move(a);
+  EXPECT_DOUBLE_EQ(kB.Value(), kValue);
 }
 
-TEST(EngUnitsTests, StrongTArithmeticMultiply) {
-  enum class Waffles : uint8_t { kBelgian, kToaster, kPotato, kStroop };
-  using PotatoT = lob::StrongT<Waffles, Waffles::kPotato, int>;
-  const int kTest1 = 25;
-  const int kTest2 = -44;
-  constexpr auto kExpectedProduct = kTest1 * kTest2;
-  const PotatoT kPlate1(kTest1);
-  const PotatoT kPlate2(kTest2);
-  EXPECT_EQ((kPlate1 * kPlate2).Value(), kExpectedProduct);
-  EXPECT_EQ((kPlate1 * kTest2).Value(), kExpectedProduct);
-  PotatoT plate3 = kPlate1;
-  plate3 *= kPlate2;
-  EXPECT_EQ(plate3.Value(), kExpectedProduct);
-  plate3 = kPlate1;
-  plate3 *= kTest2;
-  EXPECT_EQ(plate3.Value(), kExpectedProduct);
+TEST(EngUnitsTests, CopyAssignmentOperator) {
+  const TestT kA = TestT(100.0);
+  const double kB = 0.0;
+  TestT b(kB);
+  b = b;
+  EXPECT_DOUBLE_EQ(b.Value(), kB);
+  b = kA;
+  EXPECT_DOUBLE_EQ(kA.Value(), b.Value());
 }
 
-TEST(EngUnitsTests, StrongTArithmeticDivide) {
-  enum class Waffles : uint8_t { kBelgian, kToaster, kPotato, kStroop };
-  using StroopT = lob::StrongT<Waffles, Waffles::kStroop, int>;
-  const int kTest1 = -99;
-  const int kTest2 = 3;
-  constexpr auto kExpectedQuotient = kTest1 / kTest2;
-  const StroopT kPlate1(kTest1);
-  const StroopT kPlate2(kTest2);
-  EXPECT_EQ((kPlate1 / kPlate2).Value(), kExpectedQuotient);
-  EXPECT_EQ((kPlate1 / kTest2).Value(), kExpectedQuotient);
-  StroopT plate3 = kPlate1;
-  plate3 /= kPlate2;
-  EXPECT_EQ(plate3.Value(), kExpectedQuotient);
-  plate3 = kPlate1;
-  plate3 /= kTest2;
-  EXPECT_EQ(plate3.Value(), kExpectedQuotient);
+TEST(EngUnitsTests, MoveAssignmentOperator) {
+  const double kValue = 100.0;
+  TestT a = TestT(kValue);
+  const double kB = 0.0;
+  TestT b(kB);
+  b = std::move(b);
+  EXPECT_DOUBLE_EQ(b.Value(), kB);
+  b = std::move(a);
+  EXPECT_NE(a.Value(), kValue);
+  EXPECT_DOUBLE_EQ(b.Value(), kValue);
 }
 
-TEST(EngUnitsTests, StrongTComparisons) {
-  enum class Money : uint8_t { kDollar, kPeso };
-  using DollarT = lob::StrongT<Money, Money::kDollar, int>;
-  constexpr auto kTestValue1 = 1'000;
-  constexpr auto kTestValue2 = 100;
-  const DollarT kValue1(kTestValue1);
-  const DollarT kValue2(kTestValue2);
-  EXPECT_TRUE(kValue1 > kValue2);
-  EXPECT_FALSE(kValue2 > kValue1);
-  EXPECT_TRUE(kValue2 < kValue1);
-  EXPECT_FALSE(kValue1 < kValue2);
-  EXPECT_TRUE(kValue1 >= kValue2);
-  EXPECT_FALSE(kValue2 >= kValue1);
-  EXPECT_TRUE(kValue1 >= DollarT(kValue1));
-  EXPECT_FALSE(kValue1 <= kValue2);
-  EXPECT_TRUE(kValue2 <= kValue1);
-  EXPECT_TRUE(kValue1 <= DollarT(kValue1));
-  EXPECT_TRUE(kValue1 == DollarT(kValue1));
-  EXPECT_FALSE(kValue1 == kValue2);
-  EXPECT_TRUE(kValue1 != kValue2);
-  EXPECT_FALSE(kValue1 != DollarT(kValue1));
+TEST(EngUnitTests, AdditionOperator) {
+  const auto kA = TestT(100);
+  const auto kB = TestT(50);
+  const auto kC = TestT(150);
+  EXPECT_EQ(kA + kB, kC);
+  EXPECT_EQ(kA + kB.Value(), kC);
+}
+
+TEST(EngUnitTests, SubtractionOperator) {
+  const auto kA = TestT(100);
+  const auto kB = TestT(50);
+  const auto kC = TestT(150);
+  EXPECT_EQ(kC - kB, kA);
+  EXPECT_EQ(kC - kB.Value(), kA);
+}
+
+TEST(EngUnitTests, MultiplicationOperator) {
+  const auto kA = TestT(100);
+  const auto kB = TestT(50);
+  const auto kC = TestT(5000);
+  EXPECT_EQ(kA * kB, kC);
+  EXPECT_EQ(kA * kB.Value(), kC);
+}
+
+TEST(EngUnitTests, DivisionOperator) {
+  const auto kA = TestT(100);
+  const auto kB = TestT(50);
+  const auto kC = TestT(5000);
+  EXPECT_EQ(kC / kB, kA);
+  EXPECT_EQ(kC / kB.Value(), kA);
+}
+
+TEST(EngUnitTests, ModuloOperator) {
+  const auto kA = TestT(100);
+  const auto kB = TestT(3);
+  const auto kC = TestT(1);
+  EXPECT_EQ(kA % kB, kC);
+  EXPECT_EQ(kA % kB.Value(), kC);
+  EXPECT_EQ(kA % 0, TestT(std::numeric_limits<double>::quiet_NaN()));
+}
+
+TEST(EngUnitTests, AdditionAssignmentOperator) {
+  const auto kA = TestT(50);
+  auto b = kA;
+  b += kA;
+  EXPECT_EQ(b, kA + kA);
+  b += kA.Value();
+  EXPECT_EQ(b, kA + kA + kA);
+}
+
+TEST(EngUnitTests, SubtractionAssignmentOperator) {
+  const auto kA = TestT(50);
+  auto b = kA;
+  b -= kA;
+  EXPECT_EQ(b, kA - kA);
+  b -= kA.Value();
+  EXPECT_EQ(b, kA - kA - kA);
+}
+
+TEST(EngUnitTests, MultiplicationAssignmentOperator) {
+  const auto kA = TestT(5);
+  auto b = kA;
+  b *= kA;
+  EXPECT_EQ(b, kA * kA);
+  b *= kA.Value();
+  EXPECT_EQ(b, kA * kA * kA);
+}
+
+TEST(EngUnitTests, DivisionAssignmentOperator) {
+  const auto kA = TestT(50);
+  auto b = kA;
+  b /= kA;
+  EXPECT_EQ(b, kA / kA);
+  b /= kA.Value();
+  EXPECT_EQ(b, kA / kA / kA);
+}
+
+TEST(EngUnitTests, IncrementOperators) {
+  const TestT kNum(1);
+  auto a = kNum;
+  EXPECT_EQ(++a, (kNum + 1));
+  EXPECT_EQ(a++, (kNum + 1));
+  EXPECT_EQ(a--, (kNum + 2));
+  EXPECT_EQ(a, (kNum + 1));
+  EXPECT_EQ(--a, kNum);
+}
+
+TEST(EngUnitTests, Float) {
+  const TestT kA(std::acos(-1));
+  const auto kB(static_cast<float>(std::acos(-1)));
+  EXPECT_FLOAT_EQ(kA.Float(), kB);
+}
+
+TEST(EngUnitTests, Comparisons) {
+  const auto kA = TestT(100);
+  const auto kB = TestT(100);
+  const auto kC = TestT(100 - 1e-10);
+  EXPECT_TRUE(kA == kB);
+  EXPECT_FALSE(kA == kC);
+  EXPECT_FALSE(kA != kB);
+  EXPECT_TRUE(kA != kC);
+  EXPECT_TRUE(kA >= kB);
+  EXPECT_TRUE(kA >= kC);
+  EXPECT_FALSE(kA > kB);
+  EXPECT_TRUE(kA > kC);
+  EXPECT_TRUE(kA <= kB);
+  EXPECT_FALSE(kA <= kC);
+  EXPECT_FALSE(kA < kB);
+  EXPECT_FALSE(kA < kC);
 }
 
 TEST(EngUnitsTests, isnan) {
-  using TestType = lob::DegreesT;  // arbitrary type
-  EXPECT_TRUE(std::isnan(TestType(std::numeric_limits<double>::quiet_NaN())));
-  EXPECT_FALSE(std::isnan(TestType(90)));
+  EXPECT_TRUE(std::isnan(TestT(std::numeric_limits<double>::quiet_NaN())));
+  EXPECT_FALSE(std::isnan(TestT(90)));
 }
 
-TEST(EngUnitsTests, Sqrt) {
-  using TestType = lob::KgT;  // arbitrary type
-  EXPECT_DOUBLE_EQ(sqrt(TestType(4.0)).Value(), 2.0);
-  EXPECT_DOUBLE_EQ(sqrt(TestType(9.0)).Value(), 3.0);
-  EXPECT_TRUE(std::isnan(sqrt(TestType(-1.0)).Value()));
+TEST(EngUnitsTests, sqrt) {
+  const auto kA = TestT(9);
+  const auto kB = TestT(3);
+  EXPECT_TRUE(std::sqrt(TestT(kA)) == kB);
+  EXPECT_DOUBLE_EQ(std::sqrt(kA).Value(), std::sqrt(kA.Value()));
+  EXPECT_TRUE(std::isnan(std::sqrt(TestT(-1.0)).Value()));
 }
 
-TEST(EngUnitsTests, PowWithDoubleExponent) {
-  using TestType = lob::PsiT;  // arbitrary type
-  EXPECT_DOUBLE_EQ(pow(TestType(2.0), 3.0).Value(), 8.0);
-  EXPECT_DOUBLE_EQ(pow(TestType(3.0), 2.0).Value(), 9.0);
-  EXPECT_DOUBLE_EQ(pow(TestType(0.0), 0.0).Value(), 1.0);
+TEST(EngUnitsTests, pow) {
+  const auto kA = TestT(2);
+  const auto kB = TestT(3);
+  EXPECT_TRUE(std::pow(kA, kB.Value()) == pow(kA, kB));
+  EXPECT_DOUBLE_EQ(std::pow(kA, kB).Value(), std::pow(kA.Value(), kB.Value()));
 }
 
-TEST(EngUnitsTests, PowWithStrongTExponent) {
-  using TestType = lob::FpsT;  // arbitrary type
-  EXPECT_DOUBLE_EQ(pow(TestType(2.0), TestType(3.0)).Value(), 8.0);
-  EXPECT_DOUBLE_EQ(pow(TestType(3.0), TestType(2.0)).Value(), 9.0);
-  EXPECT_DOUBLE_EQ(pow(TestType(0.0), TestType(0.0)).Value(), 1.0);
+TEST(EngUnitsTests, sin) {
+  const auto kA = TestT(std::acos(-1));
+  EXPECT_DOUBLE_EQ(std::sin(kA).Value(), std::sin(kA.Value()));
 }
 
-TEST(EngUnitsTests, Sin) {
-  using TestType = lob::KgsmT;  // arbitrary type
-  const double kTestPi = std::acos(-1);
-  EXPECT_NEAR(sin(TestType(kTestPi / 2)).Value(), 1.0, 1e-10);
-  EXPECT_DOUBLE_EQ(sin(TestType(0.0)).Value(), 0.0);
+TEST(EngUnitsTests, cos) {
+  const auto kA = TestT(std::acos(-1));
+  EXPECT_DOUBLE_EQ(std::cos(kA).Value(), std::cos(kA.Value()));
 }
 
-TEST(EngUnitsTests, Cos) {
-  using TestType = lob::InchT;  // arbitrary type
-  const double kTestPi = std::acos(-1);
-  EXPECT_NEAR(cos(TestType(kTestPi)).Value(), -1.0, 1e-10);
-  EXPECT_DOUBLE_EQ(cos(TestType(0.0)).Value(), 1.0);
+TEST(EngUnitsTests, tan) {
+  const auto kA = TestT(std::acos(-1) / 4);
+  EXPECT_DOUBLE_EQ(std::tan(kA).Value(), std::tan(kA.Value()));
 }
 
-TEST(EngUnitsTests, Tan) {
-  using TestType = lob::LbsPerCuFtT;  // arbitrary type
-  const double kTestPi = std::acos(-1);
-  EXPECT_NEAR(tan(TestType(kTestPi / 4)).Value(), 1.0, 1e-10);
-  EXPECT_DOUBLE_EQ(tan(TestType(0.0)).Value(), 0.0);
+TEST(EngUnitsTests, asin) {
+  const auto kA = TestT(1);
+  EXPECT_DOUBLE_EQ(std::asin(kA).Value(), std::asin(kA.Value()));
+  EXPECT_EQ(std::asin(std::sin(kA)), kA);
 }
 
-TEST(EngUnitsTests, Asin) {
-  using TestType = lob::RadiansT;  // arbitrary type
-  EXPECT_NEAR(asin(TestType(0.0)).Value(), 0.0, 1e-10);
-  EXPECT_NEAR(asin(TestType(1.0)).Value(), std::sin(1.0), 1e-10);
-  EXPECT_NEAR(asin(TestType(-1.0)).Value(), std::sin(-1.0), 1e-10);
+TEST(EngUnitsTests, acos) {
+  const auto kA = TestT(1);
+  EXPECT_DOUBLE_EQ(std::acos(kA).Value(), std::acos(kA.Value()));
+  EXPECT_EQ(std::acos(std::cos(kA)), kA);
 }
 
-TEST(EngUnitsTests, Acos) {
-  using TestType = lob::MphT;  // arbitrary type
-  EXPECT_NEAR(acos(TestType(1.0)).Value(), std::cos(1.0), 1e-10);
-  EXPECT_NEAR(acos(TestType(-1.0)).Value(), std::cos(-1.0), 1e-10);
-  EXPECT_NEAR(acos(TestType(0.0)).Value(), std::cos(0.0), 1e-10);
+TEST(EngUnitsTests, atan) {
+  const auto kA = TestT(1);
+  EXPECT_DOUBLE_EQ(std::atan(kA).Value(), std::atan(kA.Value()));
+  EXPECT_EQ(std::atan(std::tan(kA)), kA);
 }
 
-TEST(EngUnitsTests, Atan) {
-  using TestType = lob::FtLbsT;  // arbitrary type
-  EXPECT_NEAR(atan(TestType(0.0)).Value(), 0.0, 1e-10);
-  EXPECT_NEAR(atan(TestType(1.0)).Value(), std::tan(1.0), 1e-10);
-  EXPECT_NEAR(atan(TestType(-1.0)).Value(), std::tan(-1.0), 1e-10);
+TEST(EngUnitsTests, min) {
+  const auto kA = TestT(1);
+  const auto kB = TestT(-1);
+  EXPECT_DOUBLE_EQ(std::min(kA, kB).Value(), std::min(kA.Value(), kB.Value()));
 }
 
-TEST(EngUnitsTests, Min) {
-  using TestType = lob::MeterT;  // arbitrary type
-  EXPECT_DOUBLE_EQ(min(TestType(1.0), TestType(2.0)).Value(), 1.0);
-  EXPECT_DOUBLE_EQ(min(TestType(-1.0), TestType(1.0)).Value(), -1.0);
-}
-
-TEST(EngUnitsTests, Max) {
-  using TestType = lob::SecT;  // arbitrary type
-  EXPECT_DOUBLE_EQ(max(TestType(1.0), TestType(2.0)).Value(), 2.0);
-  EXPECT_DOUBLE_EQ(max(TestType(-1.0), TestType(1.0)).Value(), 1.0);
+TEST(EngUnitsTests, max) {
+  const auto kA = TestT(1);
+  const auto kB = TestT(-1);
+  EXPECT_DOUBLE_EQ(std::max(kA, kB).Value(), std::max(kA.Value(), kB.Value()));
 }
 
 TEST(EngUnitsTests, AngleConversions) {
