@@ -363,6 +363,7 @@ TEST(EngUnitsTests, LengthConversions) {
                    kTestValueFeet);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::MmT(kTestValueMm)).Value(), kTestValueFeet);
   EXPECT_DOUBLE_EQ(lob::InchT(lob::MmT(kTestValueMm)).Value(), kTestValueInch);
+  EXPECT_DOUBLE_EQ(lob::InchT(lob::CmT(kTestValueCm)).Value(), kTestValueInch);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::MeterT(kTestValueMeter)).Value(),
                    kTestValueFeet);
   EXPECT_DOUBLE_EQ(lob::MmT(lob::FeetT(kTestValueFeet)).Value(), kTestValueMm);
@@ -506,6 +507,14 @@ TEST(EngUnitsTests, TimeConversions) {
                    kTestValueSec);
   EXPECT_DOUBLE_EQ(lob::MsecT(lob::SecT(lob::MsecT(kTestValueMsec))).Value(),
                    kTestValueMsec);
+}
+
+TEST(EngUnitsTests, TwistRateConversions) {
+  constexpr double kTestValueInchesPerTwist = 12;
+  constexpr double kTestValueMmPerTwist = 304.8;
+  EXPECT_DOUBLE_EQ(
+      lob::InchPerTwistT(lob::MmPerTwistT(kTestValueMmPerTwist)).Value(),
+      kTestValueInchesPerTwist);
 }
 
 }  // namespace tests

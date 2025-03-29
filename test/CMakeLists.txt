@@ -31,6 +31,7 @@ set(BUILD_SHARED_LIBS ${RECOVER_STATE} CACHE BOOL "Restore original setting" FOR
 # ---- Tests ----
 set(LOB_TEST_SOURCES
   source/lob_test.cpp
+  source/lob_api_test.cpp
   source/lob_builder_test.cpp
   source/lob_coriolis_test.cpp
   source/lob_env_test.cpp

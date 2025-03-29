@@ -35,9 +35,8 @@ enum class LOB_EXPORT DragFunctionT : uint8_t {
  * @brief Enumerates the supported atmosphere reference types.
  */
 enum class LOB_EXPORT AtmosphereReferenceT : uint8_t {
-  kArmyStandardMetro,  /// @brief Army Standard Metro atmosphere
-  kIcao  /// @brief International Civil Aviation Organization (ICAO) standard
-         /// atmosphere
+  kArmyStandardMetro,  /// @brief Army Standard Metro
+  kIcao  /// @brief International Civil Aviation Organization (ICAO)
 };
 
 /**

@@ -11,6 +11,11 @@
 namespace lob {
 
 template <typename T>
+constexpr bool AreEqual(T a, T b) {
+  return a == b;
+}
+
+template <typename T>
 constexpr bool AreFloatingPointsEqual(T a, T b) {
   if (std::isinf(a) || std::isinf(b)) {
     return !(a > b) && !(b > a);
@@ -20,11 +25,6 @@ constexpr bool AreFloatingPointsEqual(T a, T b) {
   }
   return (std::fabs(a - b) <= std::numeric_limits<T>::epsilon() *
                                   std::fmax(std::fabs(a), std::fabs(b)));
-}
-
-template <typename T>
-constexpr bool AreEqual(T a, T b) {
-  return a == b;
 }
 
 constexpr bool AreEqual(double a, double b) {
@@ -50,6 +50,7 @@ constexpr T ConstexprFmod(T a, T b) {
 }
 
 constexpr double Modulo(double a, double b) { return ConstexprFmod(a, b); }
+
 constexpr float Modulo(float a, float b) { return ConstexprFmod(a, b); }
 
 }  // namespace lob

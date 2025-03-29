@@ -8,6 +8,9 @@
 
 #include <cmath>
 
+#include "cartesian.hpp"
+#include "eng_units.hpp"
+
 namespace tests {
 
 TEST(OdeTests, EulerStep) {
@@ -92,6 +95,77 @@ TEST(OdeTests, RungeKuttaStep) {
     const double kExpectedSolution = y_exact(kT0, kY0, t);
     EXPECT_NEAR(y, kExpectedSolution, kError);
   }
+}
+
+TEST(OdeTests, SpvTConstrutor) {
+  const auto kP =
+      lob::CartesianT<lob::FeetT>(lob::FeetT(3), lob::FeetT(4), lob::FeetT(0));
+  const auto kV =
+      lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
+  lob::SpvT* pa = nullptr;
+  lob::SpvT* pb = nullptr;
+  pa = new lob::SpvT;
+  pb = new lob::SpvT(kP, kV);
+  ASSERT_NE(pa, nullptr);
+  ASSERT_NE(pb, nullptr);
+  delete pa;
+  delete pb;
+}
+
+TEST(OdeTests, SpvTCopyAssignment) {
+  const auto kP =
+      lob::CartesianT<lob::FeetT>(lob::FeetT(3), lob::FeetT(4), lob::FeetT(0));
+  const auto kV =
+      lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
+  lob::SpvT a = lob::SpvT(kP, kV);
+  EXPECT_DOUBLE_EQ(a.P().Magnitude().Value(), 5.0);
+  a = a;
+  EXPECT_DOUBLE_EQ(a.P().Magnitude().Value(), 5.0);
+}
+
+TEST(OdeTests, Addition) {
+  const auto kP =
+      lob::CartesianT<lob::FeetT>(lob::FeetT(3), lob::FeetT(4), lob::FeetT(0));
+  const auto kV =
+      lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
+  lob::SpvT a = lob::SpvT(kP, kV);
+  lob::SpvT b;
+  b = b + 1;
+  EXPECT_DOUBLE_EQ(b.P().X().Value(), 1);
+  a = a + b;
+  EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() + b.P().X().Value());
+}
+
+TEST(OdeTests, Multiplication) {
+  const auto kP =
+      lob::CartesianT<lob::FeetT>(lob::FeetT(3), lob::FeetT(4), lob::FeetT(0));
+  const auto kV =
+      lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
+  lob::SpvT a = lob::SpvT(kP, kV);
+  lob::SpvT b = lob::SpvT(kP, kV);
+  a = b * 2;
+  EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() * 2);
+  a = a * b;
+  EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() * kP.X().Value() * 2);
+}
+
+TEST(OdeTests, Input) {
+  const double kA = 3.0;
+  const double kB = 4.0;
+  const auto kP = lob::CartesianT<lob::FeetT>(lob::FeetT(kA), lob::FeetT(kB),
+                                              lob::FeetT(0));
+  const auto kV =
+      lob::CartesianT<lob::FpsT>(lob::FpsT(kA), lob::FpsT(kB), lob::FpsT(0));
+  lob::SpvT a = lob::SpvT(kP, kV);
+  lob::SpvT b = lob::SpvT(kP, kV);
+  a.P(lob::FeetT(kB));
+  a.V(lob::FpsT(kA));
+  b.P(kB);
+  b.V(kA);
+  EXPECT_DOUBLE_EQ(a.P().X().Value(), kB);
+  EXPECT_DOUBLE_EQ(a.V().X().Value(), kA);
+  EXPECT_DOUBLE_EQ(b.P().X().Value(), kB);
+  EXPECT_DOUBLE_EQ(b.V().X().Value(), kA);
 }
 
 }  // namespace tests

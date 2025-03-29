@@ -36,10 +36,10 @@ constexpr Y RungeKuttaStep(const T& t_i, const Y& y_i, T dt, const F& f) {
   return y_i + ((k1 + k2 * 2 + k3 * 2 + k4) * kQuanta);
 }
 
-// Numerical method friendly container for velocity_ and posiiton
+// Numerical method friendly container for velocity and posiiton
 class SpvT {
  public:
-  constexpr SpvT();
+  constexpr SpvT() = default;
   constexpr SpvT(CartesianT<FeetT> p, CartesianT<FpsT> v)
       : position_(std::move(p)), velocity_(std::move(v)) {}
   constexpr SpvT(const SpvT& other) = default;
@@ -69,7 +69,7 @@ class SpvT {
     return SpvT{position_ + FeetT(rhs), velocity_ + FpsT(rhs)};
   }
   constexpr SpvT operator*(const SpvT& rhs) const {
-    return SpvT{position_ + rhs.position_, velocity_ * rhs.velocity_};
+    return SpvT{position_ * rhs.position_, velocity_ * rhs.velocity_};
   }
   constexpr SpvT operator*(const double& rhs) const {
     return SpvT{position_ * FeetT(rhs), velocity_ * FpsT(rhs)};
