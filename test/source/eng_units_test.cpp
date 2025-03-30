@@ -359,13 +359,24 @@ TEST(EngUnitsTests, LengthConversions) {
                    kTestValueYard);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::InchT(kTestValueInch)).Value(),
                    kTestValueFeet);
+  EXPECT_DOUBLE_EQ(lob::MmT(lob::InchT(kTestValueInch)).Value(), kTestValueMm);
+  EXPECT_DOUBLE_EQ(lob::CmT(lob::InchT(kTestValueInch)).Value(), kTestValueCm);
+  EXPECT_DOUBLE_EQ(lob::InchT(lob::YardT(kTestValueYard)).Value(),
+                   kTestValueInch);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::YardT(kTestValueYard)).Value(),
                    kTestValueFeet);
+  EXPECT_DOUBLE_EQ(lob::MeterT(lob::YardT(kTestValueYard)).Value(),
+                   kTestValueMeter);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::MmT(kTestValueMm)).Value(), kTestValueFeet);
   EXPECT_DOUBLE_EQ(lob::InchT(lob::MmT(kTestValueMm)).Value(), kTestValueInch);
   EXPECT_DOUBLE_EQ(lob::InchT(lob::CmT(kTestValueCm)).Value(), kTestValueInch);
+  EXPECT_DOUBLE_EQ(lob::InchT(lob::MeterT(kTestValueMeter)).Value(),
+                   kTestValueInch);
+
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::MeterT(kTestValueMeter)).Value(),
                    kTestValueFeet);
+  EXPECT_DOUBLE_EQ(lob::YardT(lob::MeterT(kTestValueMeter)).Value(),
+                   kTestValueYard);
   EXPECT_DOUBLE_EQ(lob::MmT(lob::FeetT(kTestValueFeet)).Value(), kTestValueMm);
   EXPECT_DOUBLE_EQ(lob::CmT(lob::FeetT(kTestValueFeet)).Value(), kTestValueCm);
   EXPECT_DOUBLE_EQ(lob::MeterT(lob::FeetT(kTestValueFeet)).Value(),

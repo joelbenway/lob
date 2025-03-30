@@ -637,7 +637,7 @@ double MoaToInch(double value, double range_ft) {
 
 double MilToMoa(double value) { return MoaT(MilT(value)).Value(); }
 double MilToDeg(double value) { return DegreesT(MilT(value)).Value(); }
-double MilToIphy(double value) { return IphyT(MoaT(value)).Value(); }
+double MilToIphy(double value) { return IphyT(MilT(value)).Value(); }
 double MilToInch(double value, double range_ft) {
   return IphyT(MilT(value)).Value() * range_ft /
          static_cast<double>(kHundredYardsInFeet);
@@ -678,17 +678,17 @@ double JToFtLbs(double value) { return FtLbsT(JouleT(value)).Value(); }
 double FtLbsToJ(double value) { return JouleT(FtLbsT(value)).Value(); }
 
 // Length
-double MtoYd(double value) { return YardT(FeetT(MeterT(value))).Value(); }
+double MtoYd(double value) { return YardT(MeterT(value)).Value(); }
 double YdToFt(double value) { return FeetT(YardT(value)).Value(); }
 double MToFt(double value) { return FeetT(MeterT(value)).Value(); }
 double FtToIn(double value) { return InchT(FeetT(value)).Value(); }
 double MmToIn(double value) { return InchT(MmT(value)).Value(); }
 double CmToIn(double value) { return InchT(CmT(value)).Value(); }
-double YdToM(double value) { return MeterT(FeetT(YardT(value))).Value(); }
+double YdToM(double value) { return MeterT(YardT(value)).Value(); }
 double FtToM(double value) { return MeterT(FeetT(value)).Value(); }
 double FtToYd(double value) { return YardT(FeetT(value)).Value(); }
-double InToMm(double value) { return MmT(FeetT(InchT(value))).Value(); }
-double InToCm(double value) { return CmT(FeetT(InchT(value))).Value(); }
+double InToMm(double value) { return MmT(InchT(value)).Value(); }
+double InToCm(double value) { return CmT(InchT(value)).Value(); }
 double InToFt(double value) { return FeetT(InchT(value)).Value(); }
 
 // Pressure

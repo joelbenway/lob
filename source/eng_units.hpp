@@ -441,14 +441,32 @@ constexpr InchT::operator FeetT() const {
 
 template <>
 template <>
+constexpr InchT::operator MmT() const {
+  return MmT(Value() / convert::kInchPerMm);
+}
+
+template <>
+template <>
+constexpr InchT::operator CmT() const {
+  return CmT(Value() / convert::kInchPerCm);
+}
+
+template <>
+template <>
+constexpr YardT::operator InchT() const {
+  return InchT(Value() * convert::kFeetPerYard * convert::kInchPerFoot);
+}
+
+template <>
+template <>
 constexpr YardT::operator FeetT() const {
   return FeetT(Value() * convert::kFeetPerYard);
 }
 
 template <>
 template <>
-constexpr MmT::operator FeetT() const {
-  return FeetT(Value() / convert::kMmPerFoot);
+constexpr YardT::operator MeterT() const {
+  return MeterT(Value() * convert::kFeetPerYard * convert::kMeterPerFoot);
 }
 
 template <>
@@ -456,11 +474,10 @@ template <>
 constexpr MmT::operator InchT() const {
   return InchT(Value() * convert::kInchPerMm);
 }
-
 template <>
 template <>
-constexpr CmT::operator FeetT() const {
-  return FeetT(Value() / convert::kCmPerFoot);
+constexpr MmT::operator FeetT() const {
+  return FeetT(Value() / convert::kMmPerFoot);
 }
 
 template <>
@@ -471,8 +488,26 @@ constexpr CmT::operator InchT() const {
 
 template <>
 template <>
+constexpr CmT::operator FeetT() const {
+  return FeetT(Value() / convert::kCmPerFoot);
+}
+
+template <>
+template <>
+constexpr MeterT::operator InchT() const {
+  return InchT(Value() / convert::kMeterPerFoot * convert::kInchPerFoot);
+}
+
+template <>
+template <>
 constexpr MeterT::operator FeetT() const {
   return FeetT(Value() / convert::kMeterPerFoot);
+}
+
+template <>
+template <>
+constexpr MeterT::operator YardT() const {
+  return YardT(Value() / convert::kMeterPerFoot / convert::kFeetPerYard);
 }
 
 template <>
