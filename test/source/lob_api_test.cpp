@@ -179,6 +179,102 @@ TEST(LobAPITest, InToFt) {
   EXPECT_DOUBLE_EQ(kA.Value(), lob::InchT(kB).Value());
 }
 
+TEST(LobAPITest, PaToInHg) {
+  const auto kA = lob::PaT(100);
+  const auto kB = lob::InHgT(lob::PaToInHg(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::PaT(kB).Value());
+}
+
+TEST(LobAPITest, MbarToInHg) {
+  const auto kA = lob::MbarT(100);
+  const auto kB = lob::InHgT(lob::MbarToInHg(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::MbarT(kB).Value());
+}
+
+TEST(LobAPITest, PsiToInHg) {
+  const auto kA = lob::PsiT(100);
+  const auto kB = lob::InHgT(lob::PsiToInHg(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::PsiT(kB).Value());
+}
+
+TEST(LobAPITest, LbsToGrain) {
+  const auto kA = lob::LbsT(100);
+  const auto kB = lob::GrainT(lob::LbsToGrain(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::LbsT(kB).Value());
+}
+
+TEST(LobAPITest, GToGrain) {
+  const auto kA = lob::GramT(100);
+  const auto kB = lob::GrainT(lob::GToGrain(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::GramT(kB).Value());
+}
+
+TEST(LobAPITest, KgToGrain) {
+  const auto kA = lob::KgT(100);
+  const auto kB = lob::GrainT(lob::KgToGrain(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::KgT(kB).Value());
+}
+
+TEST(LobAPITest, KgSqMToPmsi) {
+  const auto kA = lob::KgsmT(100);
+  const auto kB = lob::PmsiT(lob::KgSqMToPmsi(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::KgsmT(kB).Value());
+}
+
+TEST(LobAPITest, FpsToMps) {
+  const auto kA = lob::FpsT(100);
+  const auto kB = lob::MpsT(lob::FpsToMps(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::FpsT(kB).Value());
+}
+
+TEST(LobAPITest, MpsToFps) {
+  const auto kA = lob::MpsT(100);
+  const auto kB = lob::FpsT(lob::MpsToFps(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::MpsT(kB).Value());
+}
+
+TEST(LobAPITest, KphToMph) {
+  const auto kA = lob::KphT(100);
+  const auto kB = lob::MphT(lob::KphToMph(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::KphT(kB).Value());
+}
+
+TEST(LobAPITest, KnToMph) {
+  const auto kA = lob::KnT(100);
+  const auto kB = lob::MphT(lob::KnToMph(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::KnT(kB).Value());
+}
+
+TEST(LobAPITest, MsToS) {
+  const auto kA = lob::MsecT(100);
+  const auto kB = lob::SecT(lob::MsToS(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::MsecT(kB).Value());
+}
+
+TEST(LobAPITest, UsToS) {
+  const auto kA = lob::UsecT(100);
+  const auto kB = lob::SecT(lob::UsToS(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::UsecT(kB).Value());
+}
+
+TEST(LobAPITest, SToMs) {
+  const auto kA = lob::SecT(100);
+  const auto kB = lob::MsecT(lob::SToMs(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::SecT(kB).Value());
+}
+
+TEST(LobAPITest, SToUs) {
+  const auto kA = lob::SecT(100);
+  const auto kB = lob::UsecT(lob::SToUs(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::SecT(kB).Value());
+}
+
+TEST(LobAPITest, DegCToDegF) {
+  const auto kA = lob::DegCT(100);
+  const auto kB = lob::DegFT(lob::DegCToDegF(kA.Value()));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::DegCT(kB).Value());
+}
+
 }  // namespace tests
 
 // This program is free software: you can redistribute it and/or modify

@@ -548,6 +548,24 @@ using MbarT = StrongT<Pressure, Pressure::kMillibar, double>;
 
 template <>
 template <>
+constexpr InHgT::operator PsiT() const {
+  return PsiT(Value() / convert::kInHgPerPsi);
+}
+
+template <>
+template <>
+constexpr InHgT::operator PaT() const {
+  return PaT(Value() / convert::kInHgPerPa);
+}
+
+template <>
+template <>
+constexpr InHgT::operator MbarT() const {
+  return MbarT(Value() / convert::kInHgPerMillibar);
+}
+
+template <>
+template <>
 constexpr PsiT::operator InHgT() const {
   return InHgT(Value() * convert::kInHgPerPsi);
 }
@@ -579,6 +597,24 @@ constexpr GrainT::operator LbsT() const {
 
 template <>
 template <>
+constexpr GrainT::operator SlugT() const {
+  return SlugT(Value() / (convert::kLbsPerSlug * convert::kGrainsPerLb));
+}
+
+template <>
+template <>
+constexpr GrainT::operator GramT() const {
+  return GramT(Value() / convert::kGrainsPerLb / convert::kLbsPerGram);
+}
+
+template <>
+template <>
+constexpr GrainT::operator KgT() const {
+  return KgT(Value() / convert::kGrainsPerLb / convert::kLbsPerKg);
+}
+
+template <>
+template <>
 constexpr LbsT::operator GrainT() const {
   return GrainT(Value() * convert::kGrainsPerLb);
 }
@@ -591,14 +627,14 @@ constexpr LbsT::operator SlugT() const {
 
 template <>
 template <>
-constexpr GrainT::operator SlugT() const {
-  return SlugT(Value() / (convert::kLbsPerSlug * convert::kGrainsPerLb));
+constexpr GramT::operator LbsT() const {
+  return LbsT(Value() * convert::kLbsPerGram);
 }
 
 template <>
 template <>
-constexpr GramT::operator LbsT() const {
-  return LbsT(Value() * convert::kLbsPerGram);
+constexpr KgT::operator GrainT() const {
+  return GrainT(Value() * convert::kLbsPerKg * convert::kGrainsPerLb);
 }
 
 template <>
@@ -644,8 +680,32 @@ using KnT = StrongT<Speed, Speed::kKnot, double>;
 
 template <>
 template <>
+constexpr FpsT::operator MpsT() const {
+  return MpsT(Value() * convert::kMeterPerFoot);
+}
+
+template <>
+template <>
+constexpr FpsT::operator MphT() const {
+  return MphT(Value() / convert::kFpsPerMph);
+}
+
+template <>
+template <>
 constexpr MphT::operator FpsT() const {
   return FpsT(Value() * convert::kFpsPerMph);
+}
+
+template <>
+template <>
+constexpr MphT::operator KphT() const {
+  return KphT(Value() * convert::kFpsPerMph / convert::kFpsPerKph);
+}
+
+template <>
+template <>
+constexpr MphT::operator KnT() const {
+  return KnT(Value() * convert::kFpsPerMph / convert::kFpsPerKn);
 }
 
 template <>
@@ -664,18 +724,6 @@ template <>
 template <>
 constexpr KnT::operator FpsT() const {
   return FpsT(Value() * convert::kFpsPerKn);
-}
-
-template <>
-template <>
-constexpr FpsT::operator MpsT() const {
-  return MpsT(Value() * convert::kMeterPerFoot);
-}
-
-template <>
-template <>
-constexpr FpsT::operator MphT() const {
-  return MphT(Value() / convert::kFpsPerMph);
 }
 
 enum class Temperature : uint8_t { kDegreesC, kDegreesF, kDegreesK, kDegreesR };
