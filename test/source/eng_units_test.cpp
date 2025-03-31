@@ -359,12 +359,24 @@ TEST(EngUnitsTests, LengthConversions) {
                    kTestValueYard);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::InchT(kTestValueInch)).Value(),
                    kTestValueFeet);
+  EXPECT_DOUBLE_EQ(lob::MmT(lob::InchT(kTestValueInch)).Value(), kTestValueMm);
+  EXPECT_DOUBLE_EQ(lob::CmT(lob::InchT(kTestValueInch)).Value(), kTestValueCm);
+  EXPECT_DOUBLE_EQ(lob::InchT(lob::YardT(kTestValueYard)).Value(),
+                   kTestValueInch);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::YardT(kTestValueYard)).Value(),
                    kTestValueFeet);
+  EXPECT_DOUBLE_EQ(lob::MeterT(lob::YardT(kTestValueYard)).Value(),
+                   kTestValueMeter);
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::MmT(kTestValueMm)).Value(), kTestValueFeet);
   EXPECT_DOUBLE_EQ(lob::InchT(lob::MmT(kTestValueMm)).Value(), kTestValueInch);
+  EXPECT_DOUBLE_EQ(lob::InchT(lob::CmT(kTestValueCm)).Value(), kTestValueInch);
+  EXPECT_DOUBLE_EQ(lob::InchT(lob::MeterT(kTestValueMeter)).Value(),
+                   kTestValueInch);
+
   EXPECT_DOUBLE_EQ(lob::FeetT(lob::MeterT(kTestValueMeter)).Value(),
                    kTestValueFeet);
+  EXPECT_DOUBLE_EQ(lob::YardT(lob::MeterT(kTestValueMeter)).Value(),
+                   kTestValueYard);
   EXPECT_DOUBLE_EQ(lob::MmT(lob::FeetT(kTestValueFeet)).Value(), kTestValueMm);
   EXPECT_DOUBLE_EQ(lob::CmT(lob::FeetT(kTestValueFeet)).Value(), kTestValueCm);
   EXPECT_DOUBLE_EQ(lob::MeterT(lob::FeetT(kTestValueFeet)).Value(),
@@ -398,6 +410,11 @@ TEST(EngUnitsTests, PressureConversions) {
   constexpr double kTestValuePa = 1 / 0.000295299801647;
   constexpr double kTestValueMillibar = kTestValuePa / 100;
   constexpr double kTestValuePsi = 1 / 2.03602128864;
+  EXPECT_DOUBLE_EQ(lob::PsiT(lob::InHgT(kTestValueInHg)).Value(),
+                   kTestValuePsi);
+  EXPECT_DOUBLE_EQ(lob::PaT(lob::InHgT(kTestValueInHg)).Value(), kTestValuePa);
+  EXPECT_DOUBLE_EQ(lob::MbarT(lob::InHgT(kTestValueInHg)).Value(),
+                   kTestValueMillibar);
   EXPECT_DOUBLE_EQ(lob::InHgT(lob::PsiT(kTestValuePsi)).Value(),
                    kTestValueInHg);
   EXPECT_DOUBLE_EQ(lob::InHgT(lob::PaT(kTestValuePa)).Value(), kTestValueInHg);
@@ -413,14 +430,20 @@ TEST(EngUnitsTests, MassConversions) {
   constexpr double kTestValueGram = kTestValueKg * 1000;
   EXPECT_DOUBLE_EQ(lob::LbsT(lob::GrainT(kTestValueGrain)).Value(),
                    kTestValueLbs);
+  EXPECT_DOUBLE_EQ(lob::SlugT(lob::GrainT(kTestValueGrain)).Value(),
+                   kTestValueSlug);
+  EXPECT_DOUBLE_EQ(lob::GramT(lob::GrainT(kTestValueGrain)).Value(),
+                   kTestValueGram);
+  EXPECT_DOUBLE_EQ(lob::KgT(lob::GrainT(kTestValueGrain)).Value(),
+                   kTestValueKg);
   EXPECT_DOUBLE_EQ(lob::GrainT(lob::LbsT(kTestValueLbs)).Value(),
                    kTestValueGrain);
   EXPECT_DOUBLE_EQ(lob::SlugT(lob::LbsT(kTestValueLbs)).Value(),
                    kTestValueSlug);
-  EXPECT_DOUBLE_EQ(lob::SlugT(lob::GrainT(kTestValueGrain)).Value(),
-                   kTestValueSlug);
   EXPECT_DOUBLE_EQ(lob::LbsT(lob::GramT(kTestValueGram)).Value(),
                    kTestValueLbs);
+  EXPECT_DOUBLE_EQ(lob::GrainT(lob::KgT(kTestValueKg)).Value(),
+                   kTestValueGrain);
   EXPECT_DOUBLE_EQ(lob::LbsT(lob::KgT(kTestValueKg)).Value(), kTestValueLbs);
 }
 
@@ -444,12 +467,14 @@ TEST(EngUnitsTests, SpeedConversions) {
   constexpr double kTestValueMps = 0.3048;
   constexpr double kTestValueKph = 1.0 / 0.91134442;
   constexpr double kTestValueKn = 1.0 / 1.6878099;
+  EXPECT_DOUBLE_EQ(lob::MpsT(lob::FpsT(kTestValueFps)).Value(), kTestValueMps);
+  EXPECT_DOUBLE_EQ(lob::MphT(lob::FpsT(kTestValueFps)).Value(), kTestValueMph);
   EXPECT_DOUBLE_EQ(lob::FpsT(lob::MphT(kTestValueMph)).Value(), kTestValueFps);
+  EXPECT_DOUBLE_EQ(lob::KphT(lob::MphT(kTestValueMph)).Value(), kTestValueKph);
+  EXPECT_DOUBLE_EQ(lob::KnT(lob::MphT(kTestValueMph)).Value(), kTestValueKn);
   EXPECT_DOUBLE_EQ(lob::FpsT(lob::MpsT(kTestValueMps)).Value(), kTestValueFps);
   EXPECT_DOUBLE_EQ(lob::FpsT(lob::KphT(kTestValueKph)).Value(), kTestValueFps);
   EXPECT_DOUBLE_EQ(lob::FpsT(lob::KnT(kTestValueKn)).Value(), kTestValueFps);
-  EXPECT_DOUBLE_EQ(lob::MpsT(lob::FpsT(kTestValueFps)).Value(), kTestValueMps);
-  EXPECT_DOUBLE_EQ(lob::MphT(lob::FpsT(kTestValueFps)).Value(), kTestValueMph);
   // Round-trip conversions to ensure accuracy is preserved.
   EXPECT_DOUBLE_EQ(lob::FpsT(lob::MpsT(lob::FpsT(kTestValueFps))).Value(),
                    kTestValueFps);
@@ -506,6 +531,14 @@ TEST(EngUnitsTests, TimeConversions) {
                    kTestValueSec);
   EXPECT_DOUBLE_EQ(lob::MsecT(lob::SecT(lob::MsecT(kTestValueMsec))).Value(),
                    kTestValueMsec);
+}
+
+TEST(EngUnitsTests, TwistRateConversions) {
+  constexpr double kTestValueInchesPerTwist = 12;
+  constexpr double kTestValueMmPerTwist = 304.8;
+  EXPECT_DOUBLE_EQ(
+      lob::InchPerTwistT(lob::MmPerTwistT(kTestValueMmPerTwist)).Value(),
+      kTestValueInchesPerTwist);
 }
 
 }  // namespace tests
