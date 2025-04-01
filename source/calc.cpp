@@ -198,6 +198,13 @@ PmsiT CalculateSectionalDensity(InchT bullet_diameter, LbsT bullet_mass) {
   return PmsiT(bullet_mass.Value() / std::pow(bullet_diameter.Value(), 2));
 }
 
+PsiT CalculateDynamicPressure(LbsPerCuFtT air_density, FpsT velocity) {
+  const double kRho = air_density.Value() * SlugT(LbsT(1)).Value();
+  const double kQ = kRho / 2 * velocity.Value() * velocity.Value();
+  const double kSqInPerSqFt = (InchT(FeetT(1)) * InchT(FeetT(1))).Value();
+  return PsiT(kQ / kSqInPerSqFt);
+}
+
 }  // namespace lob
 
 // This program is free software: you can redistribute it and/or modify

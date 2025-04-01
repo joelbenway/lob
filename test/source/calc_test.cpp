@@ -330,6 +330,14 @@ TEST(CalcTests, CalculateSectionalDensity) {
       0.274, 0.001);
 }
 
+TEST(CalcTests, CalculateDynamicPressure) {
+  const lob::LbsPerCuFtT kAirDensity(0.0764742);
+  const lob::FpsT kVelocity(2800);
+  const lob::PsiT kExpected(64.704);
+  const auto kActual = lob::CalculateDynamicPressure(kAirDensity, kVelocity);
+  EXPECT_NEAR(kActual.Value(), kExpected.Value(), 0.001);
+}
+
 }  // namespace tests
 
 // This program is free software: you can redistribute it and/or modify

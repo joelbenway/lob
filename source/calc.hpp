@@ -55,6 +55,8 @@ FtLbsT CalculateKineticEnergy(FpsT velocity, SlugT mass);
 
 PmsiT CalculateSectionalDensity(InchT bullet_diameter, LbsT bullet_mass);
 
+PsiT CalculateDynamicPressure(LbsPerCuFtT air_density, FpsT velocity);
+
 }  // namespace lob
 
 // This program is free software: you can redistribute it and/or modify
