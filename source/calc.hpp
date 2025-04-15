@@ -47,15 +47,73 @@ double CalculateMillerTwistRuleCorrectionFactor(LbsPerCuFtT air_density);
 InchT CalculateLitzGyroscopicSpinDrift(double stability, SecT time);
 
 MoaT CalculateLitzAerodynamicJump(double stability, InchT caliber, InchT length,
-                                  MphT l2r_crosswind);
+                                  MphT zwind);
 
-SqFtT CalculateProjectileReferenceArea(InchT bullet_diameter);
+SqInT CalculateProjectileReferenceArea(InchT bullet_diameter);
 
 FtLbsT CalculateKineticEnergy(FpsT velocity, SlugT mass);
 
 PmsiT CalculateSectionalDensity(InchT bullet_diameter, LbsT bullet_mass);
 
+namespace cwaj {
 PsiT CalculateDynamicPressure(LbsPerCuFtT air_density, FpsT velocity);
+
+CaliberT CalculateRadiusOfTangentOgive(CaliberT nose_length,
+                                       CaliberT meplat_diameter);
+
+CaliberT CalculateFullNoseLength(CaliberT nose_length, CaliberT meplat_diameter,
+                                 double rtr_ratio);
+
+double CalculateRelativeDensity(InchT diameter, InchT length,
+                                InchT meplat_diameter, InchT nose_length,
+                                InchT base_diameter, InchT base_length,
+                                GrainT mass);
+
+double CalculateCoefficentOfLift(CaliberT nose_length, CaliberT meplat_diameter,
+                                 double rtr_ratio, MachT velocity);
+
+double CalculateInertialRatio(InchT caliber, CaliberT length,
+                              CaliberT nose_length, CaliberT full_nose_length,
+                              GrainT mass, double relative_density);
+
+HzT CalculateSpinRate(FpsT velocity, InchPerTwistT twist);
+
+double CalculateAspectRatio(CaliberT length, CaliberT full_nose_length,
+                            CaliberT boat_tail_length, CaliberT base_diameter);
+
+double CalculateYawDragCoefficent(MachT speed, double coefficent_of_lift,
+                                  double aspect_ratio);
+
+double CalculateEpicyclicRatio(double stability);
+
+uint16_t CalculateNutationCyclesNeeded(double epicyclic_ratio);
+
+HzT CalculateGyroscopicRateSum(HzT spin_rate, double inertial_ratio);
+
+HzT CalculateGyroscopicRateF2(HzT gyroscopic_rate_sum, double epicyclic_ratio);
+
+SecT CalculateFirstNutationPeriod(HzT f1, HzT f2);
+
+double CalculateCrosswindAngleGamma(MphT zwind, FpsT velocity);
+
+double CalculateYawDragCoeffiecentOfDragAdjustment(double gamma, double r,
+                                                   double cda);
+
+double CalculateVerticalPitch(double gamma, double r, double n);
+
+double CalculateVerticalImpulse(InchPerTwistT twist, uint16_t n, SecT tn,
+                                PsiT q, SqInT s, double cl, double cd,
+                                double pitch);
+
+}  // namespace cwaj
+
+MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
+                                InchT base_diameter, InchT length,
+                                InchT nose_length, InchT boat_tail_length,
+                                double rtr_ratio, GrainT mass, FpsT velocity,
+                                double stability, InchPerTwistT twist,
+                                FpsT zwind, LbsPerCuFtT air_density,
+                                FpsT speed_of_sound, double cd);
 
 }  // namespace lob
 

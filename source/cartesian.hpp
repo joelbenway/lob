@@ -15,7 +15,7 @@ template <typename T>
 class CartesianT {
  public:
   constexpr CartesianT() = default;
-  constexpr CartesianT(T x, T y, T z)  // NOLINT
+  constexpr CartesianT(T x, T y, T z)
       : x_(std::move(x)), y_(std::move(y)), z_(std::move(z)) {}
   constexpr explicit CartesianT(T value) : x_(value), y_(value), z_(value) {}
   constexpr CartesianT(const CartesianT& other) = default;

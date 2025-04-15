@@ -95,8 +95,7 @@ double FindAngleToPointOnCircle(Point p, Circle c) {
 }  // namespace
 
 template <typename T>
-double LobLerp(const T* x_lut, const T* y_lut,
-               const size_t size,  // NOLINT
+double LobLerp(const T* x_lut, const T* y_lut, const size_t size,
                const double x_in) {
   if (x_in < static_cast<double>(x_lut[0])) {
     return y_lut[0];
@@ -127,8 +126,7 @@ template double LobLerp<float>(const float* x_lut, const float* y_lut,
                                const size_t size, const double x_in);
 
 template <typename T>
-double LobQerp(const T* x_lut, const T* y_lut,
-               const size_t size,  // NOLINT
+double LobQerp(const T* x_lut, const T* y_lut, const size_t size,
                const double x_in) {
   if (size < 3) {
     return LobLerp(x_lut, y_lut, size, x_in);
@@ -248,13 +246,11 @@ template void ExpandMachDragTable<float>(const float* pmachs,
                                          const float* pdrags, size_t old_size,
                                          float* pnew_machs, float* pnew_drags,
                                          size_t new_size);
-}  // namespace
 
 template <typename T>
-void CompressMachDragTable(const T* pmachs,  // NOLINT
-                           const T* pdrags, size_t* indices, size_t old_size,
-                           T* pnew_machs,  // NOLINT
-                           T* pnew_drags, size_t new_size) {
+void CompressMachDragTable(const T* pmachs, const T* pdrags, size_t* indices,
+                           size_t old_size, T* pnew_machs, T* pnew_drags,
+                           size_t new_size) {
   std::iota(indices, indices + old_size, 0);
   for (size_t i = 0; i < old_size - new_size; i++) {
     // measure the cost of replacing each point with lerp
@@ -301,6 +297,7 @@ template void CompressMachDragTable<float>(const float* pmachs,
                                            const float* pdrags, size_t* indices,
                                            size_t old_size, float* pnew_machs,
                                            float* pnew_drags, size_t new_size);
+}  // namespace
 
 template <typename T>
 void ResizeMachDragTable(const T* pmachs, const T* pdrags, size_t* indices,

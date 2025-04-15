@@ -142,9 +142,7 @@ bool WriteOutputFile(const std::string& file_name,
   output_file.close();
   return true;
 }
-}  // namespace
 
-// NOLINTNEXTLINE similar type easily swapped by mistake
 lob::Builder BuildHelper(const std::string& infile,
                          const std::string& outfile) {
   lob::Builder builder;
@@ -254,7 +252,7 @@ lob::Builder BuildHelper(const std::string& infile,
   return builder;
 }
 
-// NOLINTNEXTLINE
+// NOLINTNEXTLINE c-style arrays
 void PlotSolution(const lob::Output solutions[], size_t size) {
   std::vector<uint32_t> x;
   std::vector<float> y;
@@ -330,7 +328,7 @@ void PrintSolutionTable(const lob::Output solutions[], size_t size) {
               << solutions[i].time_of_flight << "\n";
   }
 }
-
+}  // namespace
 }  // namespace example
 
 int main(int argc, char* argv[]) {

@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
@@ -14,12 +15,29 @@ namespace tests {
 using TestT = lob::FeetT;  // arbitrary type
 
 TEST(EngUnitsTests, Constructor) {
-  TestT* pdegrees = nullptr;
+  TestT* ptest = nullptr;
   const double kValue = 100.0;
-  pdegrees = new TestT(kValue);
-  ASSERT_NE(pdegrees, nullptr);
-  EXPECT_DOUBLE_EQ(pdegrees->Value(), kValue);
-  delete pdegrees;
+  ptest = new TestT(kValue);
+  ASSERT_NE(ptest, nullptr);
+  EXPECT_DOUBLE_EQ(ptest->Value(), kValue);
+  delete ptest;
+}
+
+TEST(EngUnitsTests, ConstructorConversion) {
+  using lob::CaliberT;
+  using lob::InchT;
+  CaliberT* ptest = nullptr;
+  const InchT kA(3.0);
+  const InchT kB(1.0 / 0.308);
+  const double kExpected = kA.Value() * kB.Value();
+  ptest = new CaliberT(kA, kB.Value());
+  ASSERT_NE(ptest, nullptr);
+  EXPECT_DOUBLE_EQ(ptest->Value(), kExpected);
+  delete ptest;
+  ptest = new CaliberT(kA, kB);
+  ASSERT_NE(ptest, nullptr);
+  EXPECT_DOUBLE_EQ(ptest->Value(), kExpected);
+  delete ptest;
 }
 
 TEST(EngUnitsTests, CopyConstructor) {
@@ -142,6 +160,15 @@ TEST(EngUnitTests, IncrementOperators) {
   EXPECT_EQ(a--, (kNum + 2));
   EXPECT_EQ(a, (kNum + 1));
   EXPECT_EQ(--a, kNum);
+}
+
+TEST(EngUnitTests, Inverse) {
+  const TestT kA(5);
+  const TestT kB(1E6);
+  const double kC(0.2);
+  const double kD(1E-6);
+  EXPECT_EQ(kA.Inverse().Value(), kC);
+  EXPECT_EQ(kB.Inverse().Value(), kD);
 }
 
 TEST(EngUnitTests, Float) {
@@ -328,6 +355,26 @@ TEST(EngUnitsTests, AngleConversions) {
       kTestValueIphy);
   EXPECT_DOUBLE_EQ(lob::IphyT(lob::MilT(lob::IphyT(kTestValueIphy))).Value(),
                    kTestValueIphy);
+}
+
+TEST(EngUnitsTests, AreaConversions) {
+  constexpr double kTestValueSqFt = 1.0;
+  constexpr double kTestValueSqIn = 144.0;
+  EXPECT_DOUBLE_EQ(lob::SqFtT(lob::SqInT(kTestValueSqIn)).Value(),
+                   kTestValueSqFt);
+  EXPECT_DOUBLE_EQ(lob::SqInT(lob::SqFtT(kTestValueSqFt)).Value(),
+                   kTestValueSqIn);
+}
+
+TEST(EngUnitsTests, DensityConversions) {
+  constexpr double kTestValueLbsPerCuFt = 1.0;
+  constexpr double kTestValueGrPerCuIn = 4.0509259259259256;
+  EXPECT_DOUBLE_EQ(
+      lob::LbsPerCuFtT(lob::GrPerCuInT(kTestValueGrPerCuIn)).Value(),
+      kTestValueLbsPerCuFt);
+  EXPECT_DOUBLE_EQ(
+      lob::GrPerCuInT(lob::LbsPerCuFtT(kTestValueLbsPerCuFt)).Value(),
+      kTestValueGrPerCuIn);
 }
 
 TEST(EngUnitsTests, EnergyConversions) {

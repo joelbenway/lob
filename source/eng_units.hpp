@@ -18,6 +18,22 @@ template <typename E, E U, typename T>
 class StrongT {
  public:
   constexpr explicit StrongT<E, U, T>(T value) : value_(value) {}
+  template <E OtherUnit>
+  constexpr explicit StrongT(const StrongT<E, OtherUnit, T>& other,
+                             T conversion_factor)
+      : value_(other.Value() * conversion_factor) {
+    static_assert(std::is_same<E, decltype(OtherUnit)>::value,
+                  "Units must share the same enum type");
+    static_assert(U != OtherUnit, "Units must be of different types");
+  }
+  template <E OtherUnit>
+  constexpr explicit StrongT(const StrongT<E, OtherUnit, T>& other,
+                             const StrongT<E, OtherUnit, T>& conversion_factor)
+      : value_(other.Value() * conversion_factor.Value()) {
+    static_assert(std::is_same<E, decltype(OtherUnit)>::value,
+                  "Units must share the same enum type");
+    static_assert(U != OtherUnit, "Units must be of different types");
+  }
   constexpr StrongT<E, U, T>(const StrongT<E, U, T>& other) = default;
   constexpr StrongT<E, U, T>(StrongT<E, U, T>&& other) noexcept = default;
   ~StrongT() = default;
@@ -115,7 +131,7 @@ class StrongT {
     ++value_;
     return *this;
   }
-  constexpr StrongT<E, U, T> operator++(int) & {  // NOLINT
+  constexpr StrongT<E, U, T> operator++(int) & {
     StrongT<E, U, T> temp(*this);
     ++value_;
     return temp;
@@ -124,7 +140,7 @@ class StrongT {
     --value_;
     return *this;
   }
-  constexpr StrongT<E, U, T> operator--(int) & {  //  NOLINT
+  constexpr StrongT<E, U, T> operator--(int) & {
     StrongT<E, U, T> temp(*this);
     --value_;
     return temp;
@@ -212,6 +228,9 @@ class StrongT {
     return StrongT(std::max(a.value_, b.value_));
   }
 
+  constexpr StrongT<E, U, T> Inverse() const {
+    return StrongT<E, U, T>(T(1) / value_);
+  }
   constexpr T Value() const { return value_; }
   constexpr float Float() const { return static_cast<float>(value_); }
 
@@ -396,11 +415,39 @@ constexpr IphyT::operator MilT() const {
   return MilT(Value() / convert::kIphyPerMoa / convert::kMoaPerMil);
 }
 
-enum class Area : uint8_t { kSquareFeet };
+enum class Area : uint8_t { kSquareInches, kSquareFeet };
+using SqInT = StrongT<Area, Area::kSquareInches, double>;
 using SqFtT = StrongT<Area, Area::kSquareFeet, double>;
 
-enum class Density : uint8_t { kPoundsPerCubicFoot };
+template <>
+template <>
+constexpr SqFtT::operator SqInT() const {
+  return SqInT(Value() * convert::kInchPerFoot * convert::kInchPerFoot);
+}
+
+template <>
+template <>
+constexpr SqInT::operator SqFtT() const {
+  return SqFtT(Value() / convert::kInchPerFoot / convert::kInchPerFoot);
+}
+
+enum class Density : uint8_t { kGrainsPerCubicInch, kPoundsPerCubicFoot };
+using GrPerCuInT = StrongT<Density, Density::kGrainsPerCubicInch, double>;
 using LbsPerCuFtT = StrongT<Density, Density::kPoundsPerCubicFoot, double>;
+
+template <>
+template <>
+constexpr LbsPerCuFtT::operator GrPerCuInT() const {
+  return GrPerCuInT(Value() * convert::kGrainsPerLb /
+                    std::pow(convert::kInchPerFoot, 3));
+}
+
+template <>
+template <>
+constexpr GrPerCuInT::operator LbsPerCuFtT() const {
+  return LbsPerCuFtT(Value() / convert::kGrainsPerLb *
+                     std::pow(convert::kInchPerFoot, 3));
+}
 
 enum class Energy : uint8_t { kFootPounds, kJoules };
 using FtLbsT = StrongT<Energy, Energy::kFootPounds, double>;
@@ -418,13 +465,18 @@ constexpr JouleT::operator FtLbsT() const {
   return FtLbsT(Value() / convert::kJoulesPerFtLb);
 }
 
+enum class Frequency : uint8_t { kHz };
+
+using HzT = StrongT<Frequency, Frequency::kHz, double>;
+
 enum class Length : uint8_t {
   kInches,
   kFeet,
   kYards,
   kMillimeter,
   kCentimeter,
-  kMeter
+  kMeter,
+  kCaliber
 };
 using InchT = StrongT<Length, Length::kInches, double>;
 using FeetT = StrongT<Length, Length::kFeet, double>;
@@ -432,6 +484,9 @@ using YardT = StrongT<Length, Length::kYards, double>;
 using MmT = StrongT<Length, Length::kMillimeter, double>;
 using CmT = StrongT<Length, Length::kCentimeter, double>;
 using MeterT = StrongT<Length, Length::kMeter, double>;
+
+// Caliber is a relative length and cannot convert to other units.
+using CaliberT = StrongT<Length, Length::kCaliber, double>;
 
 template <>
 template <>
@@ -665,6 +720,7 @@ constexpr PmsiT::operator KgsmT() const {
 }
 
 enum class Speed : uint8_t {
+  kMach,
   kFeetPerSecond,
   kMilesPerHour,
   kMeterPerSecond,
@@ -672,6 +728,7 @@ enum class Speed : uint8_t {
   kKnot
 };
 
+using MachT = StrongT<Speed, Speed::kMach, double>;
 using FpsT = StrongT<Speed, Speed::kFeetPerSecond, double>;
 using MphT = StrongT<Speed, Speed::kMilesPerHour, double>;
 using MpsT = StrongT<Speed, Speed::kMeterPerSecond, double>;

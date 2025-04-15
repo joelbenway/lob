@@ -137,12 +137,49 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& DiameterInch(float value);
+
+  /**
+   * @brief Sets the projectile meplat diameter in inches.
+   * @param value The meplat in inches.
+   * @return A reference to the Builder object.
+   */
+  Builder& MeplatDiameterInch(float value);
+
+  /**
+   * @brief Sets the projectile base diameter in inches.
+   * @param value The base diameter in inches.
+   * @return A reference to the Builder object.
+   */
+  Builder& BaseDiameterInch(float value);
+
   /**
    * @brief Sets the projectile length in inches.
    * @param value The length in inches.
    * @return A reference to the Builder object.
    */
   Builder& LengthInch(float value);
+
+  /**
+   * @brief Sets the projectile nose length in inches.
+   * @param value The nose length in inches.
+   * @return A reference to the Builder object.
+   */
+  Builder& NoseLengthInch(float value);
+
+  /**
+   * @brief Sets the projectile tail length in inches.
+   * @param value The tail length in inches.
+   * @return A reference to the Builder object.
+   */
+  Builder& TailLengthInch(float value);
+
+  /**
+   * @brief Sets the Rt/R ratio of the projectile ogive.
+   * @param value The Rt/R ratio.
+   * @return A reference to the Builder object.
+   */
+  Builder& OgiveRtR(float value);
+
   /**
    * @brief Loads a custom Mach vs Drag table for the projectile.
    * @note This is a direct alternative to using a ballistic coefficient and a
@@ -314,7 +351,7 @@ class LOB_EXPORT Builder {
   Input Build();
 
  private:
-  static constexpr size_t kBufferSize{392};
+  static constexpr size_t kBufferSize{432};
   union AlignmentT {
     double foo;
     size_t bar;

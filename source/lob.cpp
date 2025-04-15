@@ -52,13 +52,18 @@ class Impl {
       AtmosphereReferenceT::kArmyStandardMetro};
   RadiansT azimuth_rad{kNaN};
   PmsiT ballistic_coefficent_psi{kNaN};
+  InchT base_diameter_in{kNaN};
   InHgT air_pressure_in_hg{kNaN};
   InchT diameter_in{kNaN};
   RadiansT latitude_rad{kNaN};
   InchT length_in{kNaN};
+  InchT meplat_diameter_in{kNaN};
+  InchT nose_length_in{kNaN};
+  double ogive_rtr{kNaN};
   const std::array<uint16_t, kTableSize>* pdrag_lut{&kG1Drags};
   RadiansT range_angle_rad{kNaN};
   double relative_humidity_percent{kNaN};
+  InchT tail_length_in{kNaN};
   DegFT temperature_deg_f{kNaN};
   InchPerTwistT twist_inches_per_turn{kNaN};
   RadiansT wind_heading_rad{kNaN};
@@ -139,6 +144,11 @@ Builder& Builder::AirPressureInHg(float value) {
   return *this;
 }
 
+Builder& Builder::BaseDiameterInch(float value) {
+  pimpl_->base_diameter_in = InchT(value);
+  return *this;
+}
+
 Builder& Builder::BCAtmosphere(AtmosphereReferenceT type) {
   pimpl_->atmosphere_reference = type;
   return *this;
@@ -200,7 +210,7 @@ Builder& Builder::LengthInch(float value) {
 Builder& Builder::MachVsDragTable(const float* pmachs, const float* pdrags,
                                   size_t size) {
   for (size_t i = 0; i < kTableSize; i++) {
-    const double kMach = static_cast<double>(kMachs.at(i)) / kTableScale;
+    const auto kMach = static_cast<double>(kMachs.at(i)) / kTableScale;
     const auto kDrag =
         ToU16(LobLerp(pmachs, pdrags, size, kMach) * kTableScale);
     pimpl_->build.drags.at(i) = kDrag;
@@ -212,6 +222,21 @@ Builder& Builder::MachVsDragTable(const float* pmachs, const float* pdrags,
 
 Builder& Builder::MassGrains(float value) {
   pimpl_->build.mass = LbsT(GrainT(value)).Float();
+  return *this;
+}
+
+Builder& Builder::MeplatDiameterInch(float value) {
+  pimpl_->meplat_diameter_in = InchT(value);
+  return *this;
+}
+
+Builder& Builder::NoseLengthInch(float value) {
+  pimpl_->nose_length_in = InchT(value);
+  return *this;
+}
+
+Builder& Builder::OgiveRtR(float value) {
+  pimpl_->ogive_rtr = static_cast<double>(value);
   return *this;
 }
 
@@ -227,6 +252,11 @@ Builder& Builder::RelativeHumidityPercent(float value) {
 
 Builder& Builder::RangeAngleDeg(float value) {
   pimpl_->range_angle_rad = RadiansT(DegreesT(value));
+  return *this;
+}
+
+Builder& Builder::TailLengthInch(float value) {
+  pimpl_->tail_length_in = InchT(value);
   return *this;
 }
 
@@ -309,12 +339,9 @@ void SolveStep(SpvT* ps, SecT* pt, const Input& input, uint16_t step_size = 0) {
                                       FeetT(s.V().Z().Value()));
     const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
                                  FpsT(input.wind.z));
-
-    const double kCd =
-        LobLerp(kMachs, input.drags,
-                s.V().Magnitude().Value() /
-                    static_cast<double>(input.speed_of_sound) * kTableScale) *
-        static_cast<double>(input.table_coefficent);
+    const MachT kMach(s.V().Magnitude(), FpsT(input.speed_of_sound).Inverse());
+    const double kCd = LobLerp(kMachs, input.drags, kMach) *
+                       static_cast<double>(input.table_coefficent);
     const FpsT kScalarVelocity = (s.V() - kWind).Magnitude();
     CartesianT<FpsT> velocity =
         (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
@@ -437,10 +464,8 @@ void BuildTable(Impl* pimpl) {
               pimpl->build.drags.begin());
   }
   // scale for air density and bc
-  const double kCdCoefficent =
-      CalculateCdCoefficent(pimpl->air_density_lbs_per_cu_ft,
-                            pimpl->ballistic_coefficent_psi) /
-      kTableScale;
+  const double kCdCoefficent = CalculateCdCoefficent(
+      pimpl->air_density_lbs_per_cu_ft, pimpl->ballistic_coefficent_psi);
   pimpl->build.table_coefficent = static_cast<float>(kCdCoefficent);
 }
 
@@ -464,7 +489,9 @@ void BuildWind(Impl* pimpl) {
 void BuildTwistEffects(Impl* pimpl) {
   if (!std::isnan(pimpl->length_in) &&
       !std::isnan(pimpl->twist_inches_per_turn) &&
-      !std::isnan(pimpl->build.mass) && !std::isnan(pimpl->diameter_in)) {
+      !std::isnan(pimpl->build.mass) && !std::isnan(pimpl->diameter_in) &&
+      !std::isnan(pimpl->build.velocity) &&
+      !std::isnan(pimpl->air_density_lbs_per_cu_ft)) {
     const double kFtp = CalculateMillerTwistRuleCorrectionFactor(
         pimpl->air_density_lbs_per_cu_ft);
     pimpl->build.stability_factor = static_cast<float>(
@@ -473,18 +500,45 @@ void BuildTwistEffects(Impl* pimpl) {
                    pimpl->length_in, pimpl->twist_inches_per_turn,
                    FpsT(pimpl->build.velocity)));
 
-    if (!std::isnan(pimpl->build.wind.z)) {
-      const MphT kXWind = FpsT(pimpl->build.wind.z);
-      pimpl->build.aerodynamic_jump =
-          CalculateLitzAerodynamicJump(pimpl->build.stability_factor,
-                                       pimpl->diameter_in, pimpl->length_in,
-                                       kXWind)
-              .Float();
+    if (std::isnan(pimpl->build.wind.z) ||
+        AreEqual(pimpl->build.wind.z, 0.0F)) {
+      pimpl->build.aerodynamic_jump = MoaT(0).Float();
+      return;
     }
+
+    if (!std::isnan(pimpl->nose_length_in) &&
+        !std::isnan(pimpl->meplat_diameter_in) &&
+        !std::isnan(pimpl->tail_length_in) &&
+        !std::isnan(pimpl->base_diameter_in) && !std::isnan(pimpl->ogive_rtr) &&
+        !std::isnan(pimpl->build.speed_of_sound)) {
+      const MachT kMach(static_cast<double>(pimpl->build.velocity) /
+                        pimpl->build.speed_of_sound);
+      const double kCd = LobLerp(kMachs, *pimpl->pdrag_lut, kMach) *
+                         pimpl->build.table_coefficent;
+      pimpl->build.aerodynamic_jump =
+          CalculateBRAerodynamicJump(
+              pimpl->diameter_in, pimpl->meplat_diameter_in,
+              pimpl->base_diameter_in, pimpl->length_in, pimpl->nose_length_in,
+              pimpl->tail_length_in, pimpl->ogive_rtr,
+              GrainT(LbsT(pimpl->build.mass)), FpsT(pimpl->build.velocity),
+              pimpl->build.stability_factor, pimpl->twist_inches_per_turn,
+              MphT(FpsT(pimpl->build.wind.z)), pimpl->air_density_lbs_per_cu_ft,
+              FpsT(pimpl->build.speed_of_sound), kCd)
+              .Float();
+      return;
+    }
+
+    pimpl->build.aerodynamic_jump =
+        CalculateLitzAerodynamicJump(pimpl->build.stability_factor,
+                                     pimpl->diameter_in, pimpl->length_in,
+                                     MphT(FpsT(pimpl->build.wind.z)))
+            .Float();
+    return;
   }
 
   if (std::isnan(pimpl->build.aerodynamic_jump)) {
     pimpl->build.aerodynamic_jump = MoaT(0).Float();
+    return;
   }
 }
 

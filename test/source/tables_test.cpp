@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 namespace tests {
@@ -55,7 +56,6 @@ TEST(TableTests, DeriveMachDragTableMachs) {
   machs.erase(it, machs.end());
 
   const bool kTableIsCorrectSize = machs.size() == lob::kMachs.size();
-  EXPECT_TRUE(kTableIsCorrectSize);
   bool tables_are_equal = true;
   for (size_t i = 0; i < lob::kMachs.size(); i++) {
     if (machs.at(i) != lob::kMachs.at(i)) {
@@ -63,14 +63,12 @@ TEST(TableTests, DeriveMachDragTableMachs) {
       break;
     }
   }
-  EXPECT_TRUE(tables_are_equal);
-
-  if (!kTableIsCorrectSize || !tables_are_equal) {
-    for (auto mach : machs) {
-      std::cout << std::fixed << std::setprecision(0) << mach << "U ,";
-    }
-    std::cout << "\n";
+  std::stringstream ss;
+  for (auto mach : machs) {
+    ss << std::fixed << std::setprecision(0) << mach << "U ,";
   }
+  ss << "\n";
+  EXPECT_TRUE(tables_are_equal && kTableIsCorrectSize) << ss.str();
 }
 
 TEST(TableTests, DeriveMachDragTableG1) {
@@ -108,34 +106,29 @@ TEST(TableTests, DeriveMachDragTableG1) {
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
 
-  const bool kTableIsCorrectSize = drags.size() == lob::kTableSize;
-  EXPECT_TRUE(kTableIsCorrectSize);
-  bool tables_are_equal = true;
+  bool table_is_valid = drags.size() == lob::kTableSize;
   for (size_t i = 0; i < lob::kTableSize; i++) {
     if (drags.at(i) != lob::kG1Drags.at(i)) {
-      tables_are_equal = false;
-      std::cout << drags.at(i) << " != " << lob::kG1Drags.at(i) << "\n";
+      table_is_valid = false;
       break;
     }
   }
-  EXPECT_TRUE(tables_are_equal);
+  std::stringstream ss;
+  for (auto drag : drags) {
+    ss << std::fixed << std::setprecision(0) << drag << "U ,";
+  }
+  ss << "\n";
+  EXPECT_TRUE(table_is_valid) << ss.str();
 
-  if (!kTableIsCorrectSize || !tables_are_equal) {
-    for (auto drag : drags) {
-      std::cout << std::fixed << std::setprecision(0) << drag << "U ,";
-    }
-    std::cout << "\n";
-  } else {
-    for (size_t i = 0; i < kG1MachsSize; i++) {
-      const auto kMach =
-          static_cast<uint16_t>(std::round(kG1Machs.at(i) * lob::kTableScale));
-      const auto kDrag = static_cast<uint16_t>(
-          std::round(lob::LobLerp(lob::kMachs, lob::kG1Drags, kMach)));
-      const auto kExpectedDrag = static_cast<uint16_t>(
-          std::round(kG1DragCoefficents.at(i) * lob::kTableScale));
-      EXPECT_EQ(kDrag, kExpectedDrag)
-          << kDrag << " != " << kExpectedDrag << " at " << i << "\n";
-    }
+  for (size_t i = 0; i < kG1MachsSize && table_is_valid; i++) {
+    const auto kMach =
+        static_cast<uint16_t>(std::round(kG1Machs.at(i) * lob::kTableScale));
+    const auto kDrag = static_cast<uint16_t>(
+        std::round(lob::LobLerp(lob::kMachs, lob::kG1Drags, kMach)));
+    const auto kExpectedDrag = static_cast<uint16_t>(
+        std::round(kG1DragCoefficents.at(i) * lob::kTableScale));
+    EXPECT_EQ(kDrag, kExpectedDrag)
+        << kDrag << " != " << kExpectedDrag << " at " << i << "\n";
   }
 }
 
@@ -176,35 +169,19 @@ TEST(TableTests, DeriveMachDragTableG2) {
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
 
-  const bool kTableIsCorrectSize = drags.size() == lob::kTableSize;
-  EXPECT_TRUE(kTableIsCorrectSize);
-  bool tables_are_equal = true;
+  bool table_is_valid = drags.size() == lob::kTableSize;
   for (size_t i = 0; i < lob::kTableSize; i++) {
     if (drags.at(i) != lob::kG2Drags.at(i)) {
-      tables_are_equal = false;
-      std::cout << drags.at(i) << " != " << lob::kG2Drags.at(i) << "\n";
+      table_is_valid = false;
       break;
     }
   }
-  EXPECT_TRUE(tables_are_equal);
-
-  if (!kTableIsCorrectSize || !tables_are_equal) {
-    for (auto drag : drags) {
-      std::cout << std::fixed << std::setprecision(0) << drag << "U ,";
-    }
-    std::cout << "\n";
-  } else {
-    /*for (size_t i = 0; i < kG2MachsSize; i++) {
-      const auto kMach =
-          static_cast<uint16_t>(std::round(kG2Machs.at(i) * lob::kTableScale));
-      const auto kDrag = static_cast<uint16_t>(
-          std::round(lob::LobLerp(lob::kMachs, lob::kG2Drags, kMach)));
-      const auto kExpectedDrag = static_cast<uint16_t>(
-          std::round(kG2DragCoefficents.at(i) * lob::kTableScale));
-      EXPECT_EQ(kDrag, kExpectedDrag)
-          << kDrag << " != " << kExpectedDrag << " at " << i << "\n";
-    }*/
+  std::stringstream ss;
+  for (auto drag : drags) {
+    ss << std::fixed << std::setprecision(0) << drag << "U ,";
   }
+  ss << "\n";
+  EXPECT_TRUE(table_is_valid) << ss.str();
 }
 
 TEST(TableTests, DeriveMachDragTableG5) {
@@ -242,35 +219,19 @@ TEST(TableTests, DeriveMachDragTableG5) {
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
 
-  const bool kTableIsCorrectSize = drags.size() == lob::kTableSize;
-  EXPECT_TRUE(kTableIsCorrectSize);
-  bool tables_are_equal = true;
+  bool table_is_valid = drags.size() == lob::kTableSize;
   for (size_t i = 0; i < lob::kTableSize; i++) {
     if (drags.at(i) != lob::kG5Drags.at(i)) {
-      tables_are_equal = false;
-      std::cout << drags.at(i) << " != " << lob::kG5Drags.at(i) << "\n";
+      table_is_valid = false;
       break;
     }
   }
-  EXPECT_TRUE(tables_are_equal);
-
-  if (!kTableIsCorrectSize || !tables_are_equal) {
-    for (auto drag : drags) {
-      std::cout << std::fixed << std::setprecision(0) << drag << "U ,";
-    }
-    std::cout << "\n";
-  } else {
-    /*for (size_t i = 0; i < kG5MachsSize; i++) {
-      const auto kMach =
-          static_cast<uint16_t>(std::round(kG5Machs.at(i) * lob::kTableScale));
-      const auto kDrag = static_cast<uint16_t>(
-          std::round(lob::LobLerp(lob::kMachs, lob::kG5Drags, kMach)));
-      const auto kExpectedDrag = static_cast<uint16_t>(
-          std::round(kG5DragCoefficents.at(i) * lob::kTableScale));
-      EXPECT_EQ(kDrag, kExpectedDrag)
-          << kDrag << " != " << kExpectedDrag << " at " << i << "\n";
-    }*/
+  std::stringstream ss;
+  for (auto drag : drags) {
+    ss << std::fixed << std::setprecision(0) << drag << "U ,";
   }
+  ss << "\n";
+  EXPECT_TRUE(table_is_valid) << ss.str();
 }
 
 TEST(TableTests, DeriveMachDragTableG6) {
@@ -308,35 +269,19 @@ TEST(TableTests, DeriveMachDragTableG6) {
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
 
-  const bool kTableIsCorrectSize = drags.size() == lob::kTableSize;
-  EXPECT_TRUE(kTableIsCorrectSize);
-  bool tables_are_equal = true;
+  bool table_is_valid = drags.size() == lob::kTableSize;
   for (size_t i = 0; i < lob::kTableSize; i++) {
     if (drags.at(i) != lob::kG6Drags.at(i)) {
-      tables_are_equal = false;
-      std::cout << drags.at(i) << " != " << lob::kG6Drags.at(i) << "\n";
+      table_is_valid = false;
       break;
     }
   }
-  EXPECT_TRUE(tables_are_equal);
-
-  if (!kTableIsCorrectSize || !tables_are_equal) {
-    for (auto drag : drags) {
-      std::cout << std::fixed << std::setprecision(0) << drag << "U ,";
-    }
-    std::cout << "\n";
-  } else {
-    /*for (size_t i = 0; i < kG6MachsSize; i++) {
-      const auto kMach =
-          static_cast<uint16_t>(std::round(kG6Machs.at(i) * lob::kTableScale));
-      const auto kDrag = static_cast<uint16_t>(
-          std::round(lob::LobLerp(lob::kMachs, lob::kG6Drags, kMach)));
-      const auto kExpectedDrag = static_cast<uint16_t>(
-          std::round(kG6DragCoefficents.at(i) * lob::kTableScale));
-      EXPECT_EQ(kDrag, kExpectedDrag)
-          << kDrag << " != " << kExpectedDrag << " at " << i << "\n";
-    }*/
+  std::stringstream ss;
+  for (auto drag : drags) {
+    ss << std::fixed << std::setprecision(0) << drag << "U ,";
   }
+  ss << "\n";
+  EXPECT_TRUE(table_is_valid) << ss.str();
 }
 
 TEST(TableTests, DeriveMachDragTableG7) {
@@ -376,34 +321,29 @@ TEST(TableTests, DeriveMachDragTableG7) {
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
 
-  const bool kTableIsCorrectSize = drags.size() == lob::kTableSize;
-  EXPECT_TRUE(kTableIsCorrectSize);
-  bool tables_are_equal = true;
+  bool table_is_valid = drags.size() == lob::kTableSize;
   for (size_t i = 0; i < lob::kTableSize; i++) {
     if (drags.at(i) != lob::kG7Drags.at(i)) {
-      tables_are_equal = false;
-      std::cout << drags.at(i) << " != " << lob::kG7Drags.at(i) << "\n";
+      table_is_valid = false;
       break;
     }
   }
-  EXPECT_TRUE(tables_are_equal);
+  std::stringstream ss;
+  for (auto drag : drags) {
+    ss << std::fixed << std::setprecision(0) << drag << "U ,";
+  }
+  ss << "\n";
+  EXPECT_TRUE(table_is_valid) << ss.str();
 
-  if (!kTableIsCorrectSize || !tables_are_equal) {
-    for (auto drag : drags) {
-      std::cout << std::fixed << std::setprecision(0) << drag << "U ,";
-    }
-    std::cout << "\n";
-  } else {
-    for (size_t i = 0; i < kG7MachsSize; i++) {
-      const auto kMach =
-          static_cast<uint16_t>(std::round(kG7Machs.at(i) * lob::kTableScale));
-      const auto kDrag = static_cast<uint16_t>(
-          std::round(lob::LobLerp(lob::kMachs, lob::kG7Drags, kMach)));
-      const auto kExpectedDrag = static_cast<uint16_t>(
-          std::round(kG7DragCoefficents.at(i) * lob::kTableScale));
-      EXPECT_EQ(kDrag, kExpectedDrag)
-          << kDrag << " != " << kExpectedDrag << " at " << i << "\n";
-    }
+  for (size_t i = 0; i < kG7MachsSize && table_is_valid; i++) {
+    const auto kMach =
+        static_cast<uint16_t>(std::round(kG7Machs.at(i) * lob::kTableScale));
+    const auto kDrag = static_cast<uint16_t>(
+        std::round(lob::LobLerp(lob::kMachs, lob::kG7Drags, kMach)));
+    const auto kExpectedDrag = static_cast<uint16_t>(
+        std::round(kG7DragCoefficents.at(i) * lob::kTableScale));
+    EXPECT_EQ(kDrag, kExpectedDrag)
+        << kDrag << " != " << kExpectedDrag << " at " << i << "\n";
   }
 }
 
@@ -442,34 +382,29 @@ TEST(TableTests, DeriveMachDragTableG8) {
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
 
-  const bool kTableIsCorrectSize = drags.size() == lob::kTableSize;
-  EXPECT_TRUE(kTableIsCorrectSize);
-  bool tables_are_equal = true;
+  bool table_is_valid = drags.size() == lob::kTableSize;
   for (size_t i = 0; i < lob::kTableSize; i++) {
     if (drags.at(i) != lob::kG8Drags.at(i)) {
-      tables_are_equal = false;
-      std::cout << drags.at(i) << " != " << lob::kG8Drags.at(i) << "\n";
+      table_is_valid = false;
       break;
     }
   }
-  EXPECT_TRUE(tables_are_equal);
+  std::stringstream ss;
+  for (auto drag : drags) {
+    ss << std::fixed << std::setprecision(0) << drag << "U ,";
+  }
+  ss << "\n";
+  EXPECT_TRUE(table_is_valid) << ss.str();
 
-  if (!kTableIsCorrectSize || !tables_are_equal) {
-    for (auto drag : drags) {
-      std::cout << std::fixed << std::setprecision(0) << drag << "U ,";
-    }
-    std::cout << "\n";
-  } else {
-    /*for (size_t i = 0; i < kG8MachsSize; i++) {
-      const auto kMach =
-          static_cast<uint16_t>(std::round(kG8Machs.at(i) * lob::kTableScale));
-      const auto kDrag = static_cast<uint16_t>(
-          std::round(lob::LobLerp(lob::kMachs, lob::kG8Drags, kMach)));
-      const auto kExpectedDrag = static_cast<uint16_t>(
-          std::round(kG8DragCoefficents.at(i) * lob::kTableScale));
-      EXPECT_EQ(kDrag, kExpectedDrag)
-          << kDrag << " != " << kExpectedDrag << " at " << i << "\n";
-    }*/
+  for (size_t i = 0; i < kG8MachsSize && table_is_valid; i++) {
+    const auto kMach =
+        static_cast<uint16_t>(std::round(kG8Machs.at(i) * lob::kTableScale));
+    const auto kDrag = static_cast<uint16_t>(
+        std::round(lob::LobLerp(lob::kMachs, lob::kG8Drags, kMach)));
+    const auto kExpectedDrag = static_cast<uint16_t>(
+        std::round(kG8DragCoefficents.at(i) * lob::kTableScale));
+    EXPECT_EQ(kDrag, kExpectedDrag)
+        << kDrag << " != " << kExpectedDrag << " at " << i << "\n";
   }
 }
 

@@ -23,7 +23,7 @@ TEST(OdeTests, EulerStep) {
   auto ode = [](double t, double y) { return std::pow(std::sin(t), 2) * y; };
 
   // The solved ode will provide an expected solution
-  auto y_exact = [](double t_0, double y_0, double t) {  // NOLINT
+  auto y_exact = [](double t_0, double y_0, double t) {
     auto exponent = ((t - t_0) - (std::sin(t) * std::cos(t) -
                                   std::sin(t_0) * std::cos(t_0))) /
                     2;
@@ -51,7 +51,7 @@ TEST(OdeTests, HeunStep) {
   auto ode = [](double t, double y) { return std::pow(std::sin(t), 2) * y; };
 
   // The solved ode will provide an expected solution
-  auto y_exact = [](double t_0, double y_0, double t) {  // NOLINT
+  auto y_exact = [](double t_0, double y_0, double t) {
     auto exponent = ((t - t_0) - (std::sin(t) * std::cos(t) -
                                   std::sin(t_0) * std::cos(t_0))) /
                     2;
@@ -79,7 +79,7 @@ TEST(OdeTests, RungeKuttaStep) {
   auto ode = [](double t, double y) { return std::pow(std::sin(t), 2) * y; };
 
   // The solved ode will provide an expected solution
-  auto y_exact = [](double t_0, double y_0, double t) {  // NOLINT
+  auto y_exact = [](double t_0, double y_0, double t) {
     auto exponent = ((t - t_0) - (std::sin(t) * std::cos(t) -
                                   std::sin(t_0) * std::cos(t_0))) /
                     2;
@@ -142,10 +142,10 @@ TEST(OdeTests, Multiplication) {
   const auto kV =
       lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
   lob::SpvT a = lob::SpvT(kP, kV);
-  lob::SpvT b = lob::SpvT(kP, kV);
-  a = b * 2;
+  const lob::SpvT kB = lob::SpvT(kP, kV);
+  a = kB * 2;
   EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() * 2);
-  a = a * b;
+  a = a * kB;
   EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() * kP.X().Value() * 2);
 }
 
