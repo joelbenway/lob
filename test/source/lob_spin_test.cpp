@@ -490,7 +490,7 @@ struct Shot {
   float meplat_diameter;
   float ogive_rtr;
   float g1_bc;
-  uint32_t velocity;
+  uint16_t velocity;
   float twist;
   float litz;
   float cwaj;
@@ -542,7 +542,7 @@ const Shot kBarnesLRXBT{0.308F, 1.621F, 200.0F, 0.780F, 0.210F,  0.268F, 0.0F,
                         0.80F,  0.549F, 2900U,  10.0F,  -0.324F, -0.654F};
 const Shot kCuttingEdgeHPBT{0.308F, 1.458F,  180.0F, 0.602F, 0.240F,
                             0.249F, 0.060F,  0.70F,  0.478F, 3000U,
-                            10.0F,  -0.368F, -0.509};
+                            10.0F,  -0.368F, -0.509F};
 const Shot kLehighMatchSolid{0.408F, 2.085F,  400.0F, 1.155F, 0.320F,
                              0.326F, 0.0F,    0.78F,  0.759F, 2700U,
                              11.0F,  -0.370F, -0.449F};
@@ -564,7 +564,7 @@ const Shot kHornadyBTHPMatch{0.338F, 1.724F,  285.0F, 0.871F, 0.260F,
                              0.265F, 0.075F,  0.82F,  0.696F, 2800U,
                              9.0F,   -0.425F, -0.306F};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CWAJTests, CWAJParameterizedFixture,
     ::testing::Values(
         kBarnesLRXBT,         // Barnes .308 caliber 200 gr LRXBT
@@ -574,7 +574,7 @@ INSTANTIATE_TEST_CASE_P(
         kSMK220,              // Sierra .308 caliber 220 gr MatchKing
         kNoslerBT,            // Nosler .270 caliber 140 gr Ballistic Tip
         kSMK80,               // Sierra .224 caliber 80 gr MatchKing
-        kBergerBTFB,          // Berger .308 cajliber 155.5 gr BT FULLBORE
+        kBergerBTFB,          // Berger .308 caliber 155.5 gr BT FULLBORE
         kBergerVLD,           // Berger .224 caliber 70 gr VLD
         kHornadyBTHPMatch));  // Hornady .338 caliber 285 gr BTHP Match
 

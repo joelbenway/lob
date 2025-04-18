@@ -325,7 +325,7 @@ double CalculateCrosswindAngleGamma(MphT zwind, FpsT velocity) {
   return kGamma;
 }
 
-double CalculateZeroYawDragCoeffiecentOfDrag(double cd_ref, GrainT mass,
+double CalculateZeroYawDragCoefficientOfDrag(double cd_ref, GrainT mass,
                                              InchT diameter, PmsiT bc) {
   const double kCD0 = cd_ref * (LbsT(mass).Value() /
                                 (diameter * diameter).Value() / bc.Value());
@@ -394,7 +394,7 @@ MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
   const auto kTn = cwaj::CalculateFirstNutationPeriod(kF1F2Sum - kF2, kF2);
   const auto kGamma = cwaj::CalculateCrosswindAngleGamma(zwind, velocity);
   const auto kCD0 =
-      cwaj::CalculateZeroYawDragCoeffiecentOfDrag(cd_ref, mass, diameter, bc);
+      cwaj::CalculateZeroYawDragCoefficientOfDrag(cd_ref, mass, diameter, bc);
   const auto kCDAdjustment = cwaj::CalculateYawDragAdjustment(kGamma, kR, kCDa);
   const auto kCD = kCD0 + kCDAdjustment;
   const auto kPitch = cwaj::CalculateVerticalPitch(kGamma, kR, kN);

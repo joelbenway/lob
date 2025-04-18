@@ -210,7 +210,7 @@ void ExpandMachDragTable(const T* pmachs, const T* pdrags, size_t old_size,
       const double kQerp =
           LobQerp(pnew_machs, pnew_drags, old_size + i, kMidPoint);
       const double kDiff = std::fabs(kLerp - kQerp);
-      const T kGap = pnew_machs[j] - pnew_machs[j - 1];
+      const T kGap = static_cast<T>(pnew_machs[j] - pnew_machs[j - 1]);
       if (kDiff > max_diff) {
         max_diff = kDiff;
         maxdex = j;
@@ -222,12 +222,12 @@ void ExpandMachDragTable(const T* pmachs, const T* pdrags, size_t old_size,
     }
     if (maxdex == 0) {
       pnew_machs[old_size + i] =
-          static_cast<T>(pnew_machs[gapdex] + pnew_machs[gapdex - 1]) /
-          static_cast<T>(2U);
+          (pnew_machs[gapdex] + pnew_machs[gapdex - 1]) /
+          static_cast<T>(2);
     } else {
       pnew_machs[old_size + i] =
-          static_cast<T>(pnew_machs[maxdex] + pnew_machs[maxdex - 1]) /
-          static_cast<T>(2U);
+          pnew_machs[maxdex] + pnew_machs[maxdex - 1] /
+          static_cast<T>(2);
     }
     std::sort(pnew_machs, pnew_machs + old_size + 1U + i);
   }

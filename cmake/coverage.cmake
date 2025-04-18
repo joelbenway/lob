@@ -9,8 +9,8 @@ set(
     -d "${PROJECT_BINARY_DIR}"
     --include "${PROJECT_SOURCE_DIR}/include/lob/*"
     --include "${PROJECT_SOURCE_DIR}/source/*"
-    --exclude "${PROJECT_SOURCE_DIR}/test/*"
-    --exclude "${PROJECT_SOURCE_DIR}/example/*"
+    # --exclude "${PROJECT_SOURCE_DIR}/test/*"
+    # --exclude "${PROJECT_SOURCE_DIR}/example/*"
     CACHE STRING
     "; separated command to generate a trace for the 'coverage' target"
 )

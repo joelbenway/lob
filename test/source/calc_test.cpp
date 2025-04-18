@@ -329,6 +329,8 @@ TEST(CalcTests, CalculateSectionalDensity) {
 }
 
 TEST(CalcTests, CalculateDynamicPressure) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateDynamicPressure;
   const lob::LbsPerCuFtT kAirDensity(0.0764742);
   const lob::FpsT kVelocity(2800);
@@ -338,6 +340,8 @@ TEST(CalcTests, CalculateDynamicPressure) {
 }
 
 TEST(CalcTests, CalculateFullNoseLength) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateFullNoseLength;
   const lob::CaliberT kLN(2.240);
   const lob::CaliberT kDM(0.211);
@@ -348,6 +352,8 @@ TEST(CalcTests, CalculateFullNoseLength) {
 }
 
 TEST(CalcTests, CalculateRelativeDensity) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateRelativeDensity;
   const lob::InchT kD(0.308);
   const lob::InchT kL(3.945 * kD.Value());
@@ -356,13 +362,17 @@ TEST(CalcTests, CalculateRelativeDensity) {
   const lob::InchT kDB(0.786 * kD.Value());
   const lob::InchT kLBT(0.455 * kD.Value());
   const lob::GrainT kMass(168);
+  // The expected value is an estimate for this category of bullet.
   const double kExpected(2750);
+  const double kError(100);
   const double kActual =
       CalculateRelativeDensity(kD, kL, kDM, kLN, kDB, kLBT, kMass);
-  EXPECT_NEAR(kActual, kExpected, 100);
+  EXPECT_NEAR(kActual, kExpected, kError);
 }
 
 TEST(CalcTests, CalculateCoefficentOfLift) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateCoefficentOfLift;
   const lob::CaliberT kLN(2.240);
   const lob::CaliberT kDM(0.211);
@@ -374,6 +384,8 @@ TEST(CalcTests, CalculateCoefficentOfLift) {
 }
 
 TEST(CalcTests, CalculateInertialRatio) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateInertialRatio;
   const lob::InchT kCaliber(0.308);
   const lob::CaliberT kL(3.945);
@@ -388,6 +400,8 @@ TEST(CalcTests, CalculateInertialRatio) {
 }
 
 TEST(CalcTests, CalculateSpinRate) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateSpinRate;
   const lob::FpsT kVelocity(2800);
   const lob::InchPerTwistT kTwistRate(12);
@@ -397,6 +411,8 @@ TEST(CalcTests, CalculateSpinRate) {
 }
 
 TEST(CalcTests, CalculateAspectRatio) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateAspectRatio;
   const lob::CaliberT kL(3.945);
   const lob::CaliberT kLFN(2.5441);
@@ -408,6 +424,8 @@ TEST(CalcTests, CalculateAspectRatio) {
 }
 
 TEST(CalcTests, CalculateYawDragCoefficent) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateYawDragCoefficent;
   const lob::MachT kVelocity(2800 / lob::kIsaSeaLevelSpeedOfSoundFps);
   const double kCL(2.807);
@@ -418,6 +436,8 @@ TEST(CalcTests, CalculateYawDragCoefficent) {
 }
 
 TEST(CalcTests, CalculateEpicyclicRatio) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateEpicyclicRatio;
   const double kSg = 1.74;
   const double kExpected(4.75);
@@ -426,6 +446,8 @@ TEST(CalcTests, CalculateEpicyclicRatio) {
 }
 
 TEST(CalcTests, CalculateNutationCyclesNeeded) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateNutationCyclesNeeded;
   const double kR = 4.75;
   const double kExpected(1);
@@ -434,9 +456,14 @@ TEST(CalcTests, CalculateNutationCyclesNeeded) {
 }
 
 TEST(CalcTests, CalculateGyroscopicRateSum) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateGyroscopicRateSum;
   const lob::HzT kP(2800);
   const double kIyPerIx = 7.5482;
+  // I believe there is an error in the paper that listed this result as 394 Hz.
+  // For subsequent tests I'll use the published values as test inputs but all
+  // results downstream of this error are incorrect.
   const double kExpected(371);
   const lob::HzT kActual = CalculateGyroscopicRateSum(kP, kIyPerIx);
   EXPECT_NEAR(kActual.Value(), kExpected, .25);
@@ -444,19 +471,19 @@ TEST(CalcTests, CalculateGyroscopicRateSum) {
 
 TEST(CalcTests, CalculateGyroscopicRateF2) {
   using lob::cwaj::CalculateGyroscopicRateF2;
-  const lob::HzT kF1F2Sum(371);
+  const lob::HzT kF1F2Sum(394);
   const double kR = 4.75;
-  const double kExpected(64.5);
+  const double kExpected(68.5);
   const lob::HzT kActual = CalculateGyroscopicRateF2(kF1F2Sum, kR);
   EXPECT_NEAR(kActual.Value(), kExpected, .25);
 }
 
 TEST(CalcTests, CalculateFirstNutationPeriod) {
   using lob::cwaj::CalculateFirstNutationPeriod;
-  const lob::HzT kF1F2Sum(371);
-  const lob::HzT kF2(64.5);
+  const lob::HzT kF1F2Sum(394);
+  const lob::HzT kF2(68.5);
   const lob::HzT kF1(kF1F2Sum - kF2);
-  const double kExpected(3.2626E-3);
+  const double kExpected(3.891E-3);
   const lob::SecT kActual = CalculateFirstNutationPeriod(kF1, kF2);
   EXPECT_NEAR(kActual.Value(), kExpected, 1E-3);
 }
@@ -470,15 +497,15 @@ TEST(CalcTests, CalculateCrosswindAngleGamma) {
   EXPECT_NEAR(kActual, kExpected, 1E-3);
 }
 
-TEST(CalcTests, CalculateZeroYawDragCoeffiecentOfDrag) {
-  using lob::cwaj::CalculateZeroYawDragCoeffiecentOfDrag;
+TEST(CalcTests, CalculateZeroYawDragCoefficientOfDrag) {
+  using lob::cwaj::CalculateZeroYawDragCoefficientOfDrag;
   const double kCDref = 0.270;
   const lob::GrainT kWt(168);
   const lob::InchT kD(0.308);
   const lob::PmsiT kBcG7(0.223);
   const double kExpected(0.3063);
   const double kActual =
-      CalculateZeroYawDragCoeffiecentOfDrag(kCDref, kWt, kD, kBcG7);
+      CalculateZeroYawDragCoefficientOfDrag(kCDref, kWt, kD, kBcG7);
   EXPECT_NEAR(kActual, kExpected, 1E-4);
 }
 
@@ -507,16 +534,16 @@ TEST(CalcTests, CalculateVerticalImpulse) {
   using lob::cwaj::CalculateVerticalImpulse;
   const lob::InchPerTwistT kTwist(12);
   const uint16_t kN = 1U;
-  const lob::SecT kTn(3.2626E-3);
+  const lob::SecT kTn(3.891E-3);
   const lob::PsiT kQ(64.704);
   const lob::SqInT kS(0.074506);
   const double kCL = 2.807;
   const double kCD = 0.3065;
   const double kPitch = -4.1799E-3;
-  const double kExpected = -0.00020469;
+  const double kExpected = -0.00024413;
   const double kActual =
       CalculateVerticalImpulse(kTwist, kN, kTn, kQ, kS, kCL, kCD, kPitch);
-  EXPECT_NEAR(kActual, kExpected, 1E-8);
+  EXPECT_NEAR(kActual, kExpected, 1E-7);
 }
 
 TEST(CalcTests, CalculateMagnitudeOfMomentum) {

@@ -96,7 +96,7 @@ SecT CalculateFirstNutationPeriod(HzT f1, HzT f2);
 
 double CalculateCrosswindAngleGamma(MphT zwind, FpsT velocity);
 
-double CalculateZeroYawDragCoeffiecentOfDrag(double cd_ref, GrainT mass,
+double CalculateZeroYawDragCoefficientOfDrag(double cd_ref, GrainT mass,
                                              InchT diameter, PmsiT bc);
 
 double CalculateYawDragAdjustment(double gamma, double r, double cda);
