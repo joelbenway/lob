@@ -214,11 +214,11 @@ CaliberT CalculateRadiusOfTangentOgive(CaliberT nose_length,
 }
 
 CaliberT CalculateFullNoseLength(CaliberT nose_length, CaliberT meplat_diameter,
-                                 double rtr_ratio) {
+                                 double ogive_rtr) {
   const auto kRT = CalculateRadiusOfTangentOgive(nose_length, meplat_diameter);
   const auto kLFT = std::sqrt(kRT - 0.25);
   const auto kLFC = nose_length / (1 - meplat_diameter.Value());
-  return (kLFT * rtr_ratio) + (kLFC * (1 - rtr_ratio));
+  return (kLFT * ogive_rtr) + (kLFC * (1 - ogive_rtr));
 }
 
 double CalculateRelativeDensity(InchT diameter, InchT length,
@@ -228,9 +228,7 @@ double CalculateRelativeDensity(InchT diameter, InchT length,
   auto frustum_volume = [](double r1, double r2, double length) {
     return length * kPi / 3 * ((r1 * r1) + (r1 * r2) + (r2 * r2));
   };
-  // Modeling the nose as a frustum ensures volume is underestimated. Fudge
-  // factor is here to improve this. An alternative is to integrate over the
-  // length of the nose.
+  // Modeling the nose as a frustum ensures volume is underestimated.
   const double kNoseFudgeFactor = 1.1;
   const double kNoseVolume =
       kNoseFudgeFactor * frustum_volume(diameter.Value() / 2,
@@ -246,9 +244,9 @@ double CalculateRelativeDensity(InchT diameter, InchT length,
 }
 
 double CalculateCoefficentOfLift(CaliberT nose_length, CaliberT meplat_diameter,
-                                 double rtr_ratio, MachT velocity) {
+                                 double ogive_rtr, MachT velocity) {
   const auto kLFN =
-      CalculateFullNoseLength(nose_length, meplat_diameter, rtr_ratio);
+      CalculateFullNoseLength(nose_length, meplat_diameter, ogive_rtr);
   const double kB = std::sqrt((velocity * velocity) - 1).Value();
   const double kNum1 = 1.974;
   const double kNum2 = 0.921;
@@ -327,10 +325,16 @@ double CalculateCrosswindAngleGamma(MphT zwind, FpsT velocity) {
   return kGamma;
 }
 
-double CalculateYawDragCoeffiecentOfDragAdjustment(double gamma, double r,
-                                                   double cda) {
-  const double kInitialSwerveMagnitude = gamma * r / (r - 1);
-  const double kAdjustment = std::pow(kInitialSwerveMagnitude, 2) * cda;
+double CalculateZeroYawDragCoeffiecentOfDrag(double cd_ref, GrainT mass,
+                                             InchT diameter, PmsiT bc) {
+  const double kCD0 = cd_ref * (LbsT(mass).Value() /
+                                (diameter * diameter).Value() / bc.Value());
+  return kCD0;
+}
+
+double CalculateYawDragAdjustment(double gamma, double r, double cda) {
+  const double kEpicyclicSwerveMagnitude = gamma * r / (r - 1);
+  const double kAdjustment = std::pow(kEpicyclicSwerveMagnitude, 2) * cda;
   return kAdjustment;
 }
 
@@ -343,10 +347,16 @@ double CalculateVerticalPitch(double gamma, double r, double n) {
 double CalculateVerticalImpulse(InchPerTwistT twist, uint16_t n, SecT tn,
                                 PsiT q, SqInT s, double cl, double cd,
                                 double pitch) {
-  const double kSign = twist.Value() > 0 ? 1.0 : -1.0;
+  const double kSign = twist.Value() < 0 ? -1.0 : 1.0;
   const double kJv = kSign * (n * tn.Value()) * (q.Value() * s.Value()) *
                      (cl + cd) * std::sin(pitch);
   return kJv;
+}
+
+double CalculateMagnitudeOfMomentum(GrainT mass, FpsT velocity) {
+  const double kMOM =
+      LbsT(mass).Value() / kStandardGravityFtPerSecSq * velocity.Value();
+  return kMOM;
 }
 
 }  // namespace cwaj
@@ -354,16 +364,16 @@ double CalculateVerticalImpulse(InchPerTwistT twist, uint16_t n, SecT tn,
 MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
                                 InchT base_diameter, InchT length,
                                 InchT nose_length, InchT boat_tail_length,
-                                double rtr_ratio, GrainT mass, FpsT velocity,
+                                double ogive_rtr, GrainT mass, FpsT velocity,
                                 double stability, InchPerTwistT twist,
                                 FpsT zwind, LbsPerCuFtT air_density,
-                                FpsT speed_of_sound, double cd) {
+                                FpsT speed_of_sound, PmsiT bc, double cd_ref) {
   const CaliberT kDM(meplat_diameter, diameter.Inverse());
   const CaliberT kDB(base_diameter, diameter.Inverse());
   const CaliberT kL(length, diameter.Inverse());
   const CaliberT kLN(nose_length, diameter.Inverse());
   const CaliberT kLBT(boat_tail_length, diameter.Inverse());
-  const auto kRTR(rtr_ratio);
+  const auto kRTR(ogive_rtr);
   const CaliberT kLFN = cwaj::CalculateFullNoseLength(kLN, kDM, kRTR);
   const PsiT kQ = cwaj::CalculateDynamicPressure(air_density, velocity);
   const SqInT kS = CalculateProjectileReferenceArea(diameter);
@@ -383,14 +393,14 @@ MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
   const auto kF2 = cwaj::CalculateGyroscopicRateF2(kF1F2Sum, kR);
   const auto kTn = cwaj::CalculateFirstNutationPeriod(kF1F2Sum - kF2, kF2);
   const auto kGamma = cwaj::CalculateCrosswindAngleGamma(zwind, velocity);
-  const auto kCDAdjustment =
-      cwaj::CalculateYawDragCoeffiecentOfDragAdjustment(kGamma, kR, kCDa);
-  const auto kCD = cd + kCDAdjustment;
+  const auto kCD0 =
+      cwaj::CalculateZeroYawDragCoeffiecentOfDrag(cd_ref, mass, diameter, bc);
+  const auto kCDAdjustment = cwaj::CalculateYawDragAdjustment(kGamma, kR, kCDa);
+  const auto kCD = kCD0 + kCDAdjustment;
   const auto kPitch = cwaj::CalculateVerticalPitch(kGamma, kR, kN);
   const auto kJv =
       cwaj::CalculateVerticalImpulse(twist, kN, kTn, kQ, kS, kCL, kCD, kPitch);
-  const auto kMOM =
-      LbsT(mass).Value() / kStandardGravityFtPerSecSq * velocity.Value();
+  const auto kMOM = cwaj::CalculateMagnitudeOfMomentum(mass, velocity);
   const auto kJump = -1 * kJv / kMOM;
   return MoaT(RadiansT(kJump));
 }

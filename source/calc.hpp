@@ -62,7 +62,7 @@ CaliberT CalculateRadiusOfTangentOgive(CaliberT nose_length,
                                        CaliberT meplat_diameter);
 
 CaliberT CalculateFullNoseLength(CaliberT nose_length, CaliberT meplat_diameter,
-                                 double rtr_ratio);
+                                 double ogive_rtr);
 
 double CalculateRelativeDensity(InchT diameter, InchT length,
                                 InchT meplat_diameter, InchT nose_length,
@@ -70,7 +70,7 @@ double CalculateRelativeDensity(InchT diameter, InchT length,
                                 GrainT mass);
 
 double CalculateCoefficentOfLift(CaliberT nose_length, CaliberT meplat_diameter,
-                                 double rtr_ratio, MachT velocity);
+                                 double ogive_rtr, MachT velocity);
 
 double CalculateInertialRatio(InchT caliber, CaliberT length,
                               CaliberT nose_length, CaliberT full_nose_length,
@@ -96,24 +96,26 @@ SecT CalculateFirstNutationPeriod(HzT f1, HzT f2);
 
 double CalculateCrosswindAngleGamma(MphT zwind, FpsT velocity);
 
-double CalculateYawDragCoeffiecentOfDragAdjustment(double gamma, double r,
-                                                   double cda);
+double CalculateZeroYawDragCoeffiecentOfDrag(double cd_ref, GrainT mass,
+                                             InchT diameter, PmsiT bc);
+
+double CalculateYawDragAdjustment(double gamma, double r, double cda);
 
 double CalculateVerticalPitch(double gamma, double r, double n);
 
 double CalculateVerticalImpulse(InchPerTwistT twist, uint16_t n, SecT tn,
                                 PsiT q, SqInT s, double cl, double cd,
                                 double pitch);
-
+double CalculateMagnitudeOfMomentum(GrainT mass, FpsT velocity);
 }  // namespace cwaj
 
 MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
                                 InchT base_diameter, InchT length,
                                 InchT nose_length, InchT boat_tail_length,
-                                double rtr_ratio, GrainT mass, FpsT velocity,
+                                double ogive_rtr, GrainT mass, FpsT velocity,
                                 double stability, InchPerTwistT twist,
                                 FpsT zwind, LbsPerCuFtT air_density,
-                                FpsT speed_of_sound, double cd);
+                                FpsT speed_of_sound, PmsiT bc, double cd_ref);
 
 }  // namespace lob
 

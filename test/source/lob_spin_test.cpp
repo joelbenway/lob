@@ -480,6 +480,104 @@ TEST_F(LobSpinTestFixture, RightHandSpinDriftWithLitzAeroJump2) {
   }
 }
 
+struct Shot {
+  float diameter;
+  float length;
+  float mass;
+  float nose_length;
+  float tail_length;
+  float base_diameter;
+  float meplat_diameter;
+  float ogive_rtr;
+  float g1_bc;
+  uint32_t velocity;
+  float twist;
+  float litz;
+  float cwaj;
+};
+
+struct CWAJParameterizedFixture : public ::testing::TestWithParam<Shot> {
+  lob::Builder builder;
+  void SetUp() override {
+    const float kZero = 5.0F;
+    const float kZWind = 10.0F;
+    builder.BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+        .BCDragFunction(lob::DragFunctionT::kG1)
+        .ZeroAngleMOA(kZero)
+        .WindHeading(lob::ClockAngleT::kIII)
+        .WindSpeedMph(kZWind);
+  }
+};
+/* // TODO(Joel) get this to pass!
+TEST_P(CWAJParameterizedFixture, Boatright) {
+  const Shot kShot = GetParam();
+  const auto kA = builder.DiameterInch(kShot.diameter)
+                      .LengthInch(kShot.length)
+                      .MassGrains(kShot.mass)
+                      .NoseLengthInch(kShot.nose_length)
+                      .TailLengthInch(kShot.tail_length)
+                      .BaseDiameterInch(kShot.base_diameter)
+                      .MeplatDiameterInch(kShot.meplat_diameter)
+                      .OgiveRtR(kShot.ogive_rtr)
+                      .BallisticCoefficentPsi(kShot.g1_bc)
+                      .InitialVelocityFps(kShot.velocity)
+                      .TwistInchesPerTurn(kShot.twist)
+                      .Build();
+  EXPECT_NEAR(kA.aerodynamic_jump, kShot.cwaj, .01);
+}
+*/
+TEST_P(CWAJParameterizedFixture, Litz) {
+  const Shot kShot = GetParam();
+  const auto kA = builder.DiameterInch(kShot.diameter)
+                      .LengthInch(kShot.length)
+                      .MassGrains(kShot.mass)
+                      .BallisticCoefficentPsi(kShot.g1_bc)
+                      .InitialVelocityFps(kShot.velocity)
+                      .TwistInchesPerTurn(kShot.twist)
+                      .Build();
+  EXPECT_NEAR(kA.aerodynamic_jump, kShot.litz, .01);
+}
+
+const Shot kBarnesLRXBT{0.308F, 1.621F, 200.0F, 0.780F, 0.210F,  0.268F, 0.0F,
+                        0.80F,  0.549F, 2900U,  10.0F,  -0.324F, -0.654F};
+const Shot kCuttingEdgeHPBT{0.308F, 1.458F,  180.0F, 0.602F, 0.240F,
+                            0.249F, 0.060F,  0.70F,  0.478F, 3000U,
+                            10.0F,  -0.368F, -0.509};
+const Shot kLehighMatchSolid{0.408F, 2.085F,  400.0F, 1.155F, 0.320F,
+                             0.326F, 0.0F,    0.78F,  0.759F, 2700U,
+                             11.0F,  -0.370F, -0.449F};
+/*const Shot kSMK168{0.308F, 1.215F, 168.0F, 0.690F, 0.1401F, 0.242F, 0.065F,
+                   0.900F, 0.426F, 2800U,  12.0,   -0.40F,  -0.402F};*/
+const Shot kGSCustomSP{0.338F, 1.771F, 232.0F, 1.036F, 0.346F,  0.238F, 0.020F,
+                       0.60F,  0.604F, 3100U,  9.0F,   -0.370F, -0.389F};
+const Shot kSMK220{0.308F, 1.489F, 220.0F, 0.672F, 0.230F,  0.234F, 0.070F,
+                   0.95F,  0.607F, 2700U,  10.0F,  -0.384F, -0.371F};
+const Shot kNoslerBT{0.277F, 1.293F, 140.0F, 0.688F, 0.080F,  0.243F, 0.00F,
+                     1.00F,  0.440F, 3100U,  9.0F,   -0.390F, -0.365F};
+const Shot kSMK80{0.224F, 1.066F, 80.0F, 0.629F, 0.135F,  0.183F, 0.060F,
+                  0.98F,  0.425F, 3100U, 7.0F,   -0.407F, -0.316F};
+const Shot kBergerBTFB{0.308F, 1.250F, 155.5F, 0.825F, 0.160F,  0.264F, 0.062F,
+                       0.96F,  0.464F, 2800U,  10.0F,  -0.437F, -0.341F};
+const Shot kBergerVLD{0.224F, 0.976F, 70.0F, 0.471F, 0.150F,  0.177F, 0.052F,
+                      0.53F,  0.371F, 3000U, 7.0F,   -0.440F, -0.311F};
+const Shot kHornadyBTHPMatch{0.338F, 1.724F,  285.0F, 0.871F, 0.260F,
+                             0.265F, 0.075F,  0.82F,  0.696F, 2800U,
+                             9.0F,   -0.425F, -0.306F};
+
+INSTANTIATE_TEST_CASE_P(
+    CWAJTests, CWAJParameterizedFixture,
+    ::testing::Values(
+        kBarnesLRXBT,         // Barnes .308 caliber 200 gr LRXBT
+        kCuttingEdgeHPBT,     // Cutting Edge .308 caliber 180 gr HPBT
+        kLehighMatchSolid,    // Lehigh .408 caliber 400 gr Match Solid
+        kGSCustomSP,          // GS Custom .338 caliber 232 gr SP
+        kSMK220,              // Sierra .308 caliber 220 gr MatchKing
+        kNoslerBT,            // Nosler .270 caliber 140 gr Ballistic Tip
+        kSMK80,               // Sierra .224 caliber 80 gr MatchKing
+        kBergerBTFB,          // Berger .308 cajliber 155.5 gr BT FULLBORE
+        kBergerVLD,           // Berger .224 caliber 70 gr VLD
+        kHornadyBTHPMatch));  // Hornady .338 caliber 285 gr BTHP Match
+
 }  // namespace tests
 
 // This program is free software: you can redistribute it and/or modify

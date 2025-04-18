@@ -487,11 +487,15 @@ void BuildWind(Impl* pimpl) {
 }
 
 void BuildTwistEffects(Impl* pimpl) {
+  assert(!std::isnan(pimpl->diameter_in));
+  assert(!std::isnan(pimpl->build.velocity));
+  assert(!std::isnan(pimpl->ballistic_coefficent_psi));
+  assert(!std::isnan(pimpl->build.speed_of_sound));
+  assert(!std::isnan(pimpl->build.wind.z));
+
   if (!std::isnan(pimpl->length_in) &&
       !std::isnan(pimpl->twist_inches_per_turn) &&
-      !std::isnan(pimpl->build.mass) && !std::isnan(pimpl->diameter_in) &&
-      !std::isnan(pimpl->build.velocity) &&
-      !std::isnan(pimpl->air_density_lbs_per_cu_ft)) {
+      !std::isnan(pimpl->build.mass)) {
     const double kFtp = CalculateMillerTwistRuleCorrectionFactor(
         pimpl->air_density_lbs_per_cu_ft);
     pimpl->build.stability_factor = static_cast<float>(
@@ -500,8 +504,7 @@ void BuildTwistEffects(Impl* pimpl) {
                    pimpl->length_in, pimpl->twist_inches_per_turn,
                    FpsT(pimpl->build.velocity)));
 
-    if (std::isnan(pimpl->build.wind.z) ||
-        AreEqual(pimpl->build.wind.z, 0.0F)) {
+    if (AreEqual(pimpl->build.wind.z, 0.0F)) {
       pimpl->build.aerodynamic_jump = MoaT(0).Float();
       return;
     }
@@ -509,12 +512,10 @@ void BuildTwistEffects(Impl* pimpl) {
     if (!std::isnan(pimpl->nose_length_in) &&
         !std::isnan(pimpl->meplat_diameter_in) &&
         !std::isnan(pimpl->tail_length_in) &&
-        !std::isnan(pimpl->base_diameter_in) && !std::isnan(pimpl->ogive_rtr) &&
-        !std::isnan(pimpl->build.speed_of_sound)) {
-      const MachT kMach(static_cast<double>(pimpl->build.velocity) /
-                        pimpl->build.speed_of_sound);
-      const double kCd = LobLerp(kMachs, *pimpl->pdrag_lut, kMach) *
-                         pimpl->build.table_coefficent;
+        !std::isnan(pimpl->base_diameter_in) && !std::isnan(pimpl->ogive_rtr)) {
+      const MachT kMach(FpsT(pimpl->build.velocity),
+                        FpsT(pimpl->build.speed_of_sound).Inverse());
+      const double kCDref = LobLerp(kMachs, *pimpl->pdrag_lut, kMach);
       pimpl->build.aerodynamic_jump =
           CalculateBRAerodynamicJump(
               pimpl->diameter_in, pimpl->meplat_diameter_in,
@@ -523,7 +524,8 @@ void BuildTwistEffects(Impl* pimpl) {
               GrainT(LbsT(pimpl->build.mass)), FpsT(pimpl->build.velocity),
               pimpl->build.stability_factor, pimpl->twist_inches_per_turn,
               MphT(FpsT(pimpl->build.wind.z)), pimpl->air_density_lbs_per_cu_ft,
-              FpsT(pimpl->build.speed_of_sound), kCd)
+              FpsT(pimpl->build.speed_of_sound),
+              pimpl->ballistic_coefficent_psi, kCDref)
               .Float();
       return;
     }

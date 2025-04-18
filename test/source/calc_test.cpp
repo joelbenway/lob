@@ -456,7 +456,6 @@ TEST(CalcTests, CalculateFirstNutationPeriod) {
   const lob::HzT kF1F2Sum(371);
   const lob::HzT kF2(64.5);
   const lob::HzT kF1(kF1F2Sum - kF2);
-  const double kR = 4.75;
   const double kExpected(3.2626E-3);
   const lob::SecT kActual = CalculateFirstNutationPeriod(kF1, kF2);
   EXPECT_NEAR(kActual.Value(), kExpected, 1E-3);
@@ -471,15 +470,26 @@ TEST(CalcTests, CalculateCrosswindAngleGamma) {
   EXPECT_NEAR(kActual, kExpected, 1E-3);
 }
 
-TEST(CalcTests, CalculateYawDragCoeffiecentOfDragAdjustment) {
-  using lob::cwaj::CalculateYawDragCoeffiecentOfDragAdjustment;
+TEST(CalcTests, CalculateZeroYawDragCoeffiecentOfDrag) {
+  using lob::cwaj::CalculateZeroYawDragCoeffiecentOfDrag;
+  const double kCDref = 0.270;
+  const lob::GrainT kWt(168);
+  const lob::InchT kD(0.308);
+  const lob::PmsiT kBcG7(0.223);
+  const double kExpected(0.3063);
+  const double kActual =
+      CalculateZeroYawDragCoeffiecentOfDrag(kCDref, kWt, kD, kBcG7);
+  EXPECT_NEAR(kActual, kExpected, 1E-4);
+}
+
+TEST(CalcTests, CalculateYawDragAdjustment) {
+  using lob::cwaj::CalculateYawDragAdjustment;
   const double kGamma = -5.239E-3;
   const double kR = 4.75;
   const double kCDa = 4.4212;
   const double kCD0 = 0.3063;
   const double kExpected(0.3065 - kCD0);
-  const double kActual =
-      CalculateYawDragCoeffiecentOfDragAdjustment(kGamma, kR, kCDa);
+  const double kActual = CalculateYawDragAdjustment(kGamma, kR, kCDa);
   EXPECT_NEAR(kActual, kExpected, 1E-4);
 }
 
@@ -509,6 +519,15 @@ TEST(CalcTests, CalculateVerticalImpulse) {
   EXPECT_NEAR(kActual, kExpected, 1E-8);
 }
 
+TEST(CalcTests, CalculateMagnitudeOfMomentum) {
+  using lob::cwaj::CalculateMagnitudeOfMomentum;
+  const lob::GrainT kMass(168);
+  const lob::FpsT kVelocity(2800);
+  const double kExpected = 2.0886;
+  const double kActual = CalculateMagnitudeOfMomentum(kMass, kVelocity);
+  EXPECT_NEAR(kActual, kExpected, 1E-4);
+}
+
 TEST(CalcTests, CalculateBRAerodynamicJump) {
   const lob::InchT kD(0.308);
   const lob::InchT kDM(0.211 * kD.Value());
@@ -517,6 +536,7 @@ TEST(CalcTests, CalculateBRAerodynamicJump) {
   const lob::InchT kLN(2.240 * kD.Value());
   const lob::InchT kLBT(0.455 * kD.Value());
   const double kRTR(.900);
+  const lob::PmsiT kBcG7(0.223);
   const lob::GrainT kMass(168.0);
   const lob::FpsT kV(2800);
   const double kSg(1.74);
@@ -524,16 +544,13 @@ TEST(CalcTests, CalculateBRAerodynamicJump) {
   const lob::MphT kZwind(10);
   const lob::LbsPerCuFtT kAirDensity(0.0764742);
   const lob::FpsT kSos(1116.45);
-  const double kJv = -0.00020469;
-  const double kCdRef =
+  const double kCDref =
       lob::LobLerp(lob::kMachs, lob::kG7Drags, lob::MachT(kV, kSos.Inverse()));
 
-  const double kCd =
-      kCdRef * (lob::LbsT(kMass).Value() / (kD * kD).Value()) / 0.223;
   const double kExpected(-0.402);
   const lob::MoaT kActual = lob::CalculateBRAerodynamicJump(
       kD, kDM, kDB, kL, kLN, kLBT, kRTR, kMass, kV, kSg, kTwist, kZwind,
-      kAirDensity, kSos, kCd);
+      kAirDensity, kSos, kBcG7, kCDref);
   EXPECT_NEAR(kActual.Value(), kExpected, 0.1);
 }
 

@@ -438,15 +438,17 @@ using LbsPerCuFtT = StrongT<Density, Density::kPoundsPerCubicFoot, double>;
 template <>
 template <>
 constexpr LbsPerCuFtT::operator GrPerCuInT() const {
+  using convert::kInchPerFoot;
   return GrPerCuInT(Value() * convert::kGrainsPerLb /
-                    std::pow(convert::kInchPerFoot, 3));
+                    (kInchPerFoot * kInchPerFoot * kInchPerFoot));
 }
 
 template <>
 template <>
 constexpr GrPerCuInT::operator LbsPerCuFtT() const {
+  using convert::kInchPerFoot;
   return LbsPerCuFtT(Value() / convert::kGrainsPerLb *
-                     std::pow(convert::kInchPerFoot, 3));
+                     (kInchPerFoot * kInchPerFoot * kInchPerFoot));
 }
 
 enum class Energy : uint8_t { kFootPounds, kJoules };
