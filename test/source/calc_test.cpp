@@ -470,6 +470,8 @@ TEST(CalcTests, CalculateGyroscopicRateSum) {
 }
 
 TEST(CalcTests, CalculateGyroscopicRateF2) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateGyroscopicRateF2;
   const lob::HzT kF1F2Sum(394);
   const double kR = 4.75;
@@ -479,6 +481,8 @@ TEST(CalcTests, CalculateGyroscopicRateF2) {
 }
 
 TEST(CalcTests, CalculateFirstNutationPeriod) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateFirstNutationPeriod;
   const lob::HzT kF1F2Sum(394);
   const lob::HzT kF2(68.5);
@@ -489,6 +493,8 @@ TEST(CalcTests, CalculateFirstNutationPeriod) {
 }
 
 TEST(CalcTests, CalculateCrosswindAngleGamma) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateCrosswindAngleGamma;
   const lob::FpsT kZWind(14.67);
   const lob::FpsT kVelocity(2800.0);
@@ -498,6 +504,8 @@ TEST(CalcTests, CalculateCrosswindAngleGamma) {
 }
 
 TEST(CalcTests, CalculateZeroYawDragCoefficientOfDrag) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateZeroYawDragCoefficientOfDrag;
   const double kCDref = 0.270;
   const lob::GrainT kWt(168);
@@ -510,6 +518,8 @@ TEST(CalcTests, CalculateZeroYawDragCoefficientOfDrag) {
 }
 
 TEST(CalcTests, CalculateYawDragAdjustment) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateYawDragAdjustment;
   const double kGamma = -5.239E-3;
   const double kR = 4.75;
@@ -521,6 +531,8 @@ TEST(CalcTests, CalculateYawDragAdjustment) {
 }
 
 TEST(CalcTests, CalculateVerticalPitch) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateVerticalPitch;
   const double kGamma = -5.239E-3;
   const double kR = 4.75;
@@ -531,6 +543,8 @@ TEST(CalcTests, CalculateVerticalPitch) {
 }
 
 TEST(CalcTests, CalculateVerticalImpulse) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateVerticalImpulse;
   const lob::InchPerTwistT kTwist(12);
   const uint16_t kN = 1U;
@@ -547,6 +561,8 @@ TEST(CalcTests, CalculateVerticalImpulse) {
 }
 
 TEST(CalcTests, CalculateMagnitudeOfMomentum) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::cwaj::CalculateMagnitudeOfMomentum;
   const lob::GrainT kMass(168);
   const lob::FpsT kVelocity(2800);
@@ -556,6 +572,8 @@ TEST(CalcTests, CalculateMagnitudeOfMomentum) {
 }
 
 TEST(CalcTests, CalculateBRAerodynamicJump) {
+  // Test data from Sample Calculations of Calculating Aerodynamic Jump for
+  // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   const lob::InchT kD(0.308);
   const lob::InchT kDM(0.211 * kD.Value());
   const lob::InchT kDB(0.786 * kD.Value());
@@ -573,12 +591,13 @@ TEST(CalcTests, CalculateBRAerodynamicJump) {
   const lob::FpsT kSos(1116.45);
   const double kCDref =
       lob::LobLerp(lob::kMachs, lob::kG7Drags, lob::MachT(kV, kSos.Inverse()));
-
-  const double kExpected(-0.402);
+  // Reference paper sample calculation publishes a result of -0.402 which I
+  // believe is the result of an improperly calculated gyroscopic rates.
+  const double kExpected(-0.424);
   const lob::MoaT kActual = lob::CalculateBRAerodynamicJump(
       kD, kDM, kDB, kL, kLN, kLBT, kRTR, kMass, kV, kSg, kTwist, kZwind,
       kAirDensity, kSos, kBcG7, kCDref);
-  EXPECT_NEAR(kActual.Value(), kExpected, 0.1);
+  EXPECT_NEAR(kActual.Value(), kExpected, 1E-3);
 }
 
 }  // namespace tests
