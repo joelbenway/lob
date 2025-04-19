@@ -225,13 +225,14 @@ double CalculateRelativeDensity(InchT diameter, InchT length,
                                 InchT meplat_diameter, InchT nose_length,
                                 InchT base_diameter, InchT base_length,
                                 GrainT mass) {
-  auto frustum_volume = [](double r1, double r2, double length) {
-    return length * kPi / 3 * ((r1 * r1) + (r1 * r2) + (r2 * r2));
+  auto frustum_volume = [](double r1, double r2, double l) {
+    return l * kPi / 3 * ((r1 * r1) + (r1 * r2) + (r2 * r2));
   };
-  // Modeling the nose as a frustum ensures volume is underestimated.
-  const double kNoseFudgeFactor = 1.1;
+  // Modeling the nose as a frustum ensures volume is underestimated. This
+  // factor makes it a little larger for an improved estimate.
+  const double kPinocchioFactor = 1.1;
   const double kNoseVolume =
-      kNoseFudgeFactor * frustum_volume(diameter.Value() / 2,
+      kPinocchioFactor * frustum_volume(diameter.Value() / 2,
                                         meplat_diameter.Value() / 2,
                                         nose_length.Value());
   const double kBodyVolume =

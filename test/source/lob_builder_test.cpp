@@ -127,7 +127,7 @@ TEST_F(BuilderTestFixture, BuildMinimalInput) {
                                  .Build();
   EXPECT_EQ(kResult.drags.front(), lob::kG1Drags.front());
   EXPECT_EQ(kResult.drags.back(), lob::kG1Drags.back());
-  EXPECT_NE(kResult.speed_of_sound, lob::kNaN);
+  EXPECT_NE(kResult.speed_of_sound, lob::NaN());
   EXPECT_EQ(kResult.velocity, kTestMuzzleVelocity);
   EXPECT_NEAR(kResult.zero_angle, kTestZeroAngle, 0.01);
   EXPECT_FLOAT_EQ(kResult.gravity.y,
@@ -158,7 +158,7 @@ TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
     drags.at(i) = static_cast<float>(lob::kG1Drags.at(i)) / lob::kTableScale;
   }
 
-  const lob::Input kResult2 = puut->BallisticCoefficentPsi(lob::kNaN)
+  const lob::Input kResult2 = puut->BallisticCoefficentPsi(lob::NaN())
                                   .BCDragFunction(lob::DragFunctionT::kG7)
                                   .MachVsDragTable(machs, drags)
                                   .Build();

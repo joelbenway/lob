@@ -44,32 +44,32 @@ class Impl {
   friend class Builder;
 
  public:
-  LbsPerCuFtT air_density_lbs_per_cu_ft{kNaN};
-  FeetT altitude_ft{kNaN};
-  FeetT altitude_of_barometer_ft{kNaN};
-  FeetT altitude_of_thermometer_ft{kNaN};
+  LbsPerCuFtT air_density_lbs_per_cu_ft{NaN()};
+  FeetT altitude_ft{NaN()};
+  FeetT altitude_of_barometer_ft{NaN()};
+  FeetT altitude_of_thermometer_ft{NaN()};
   AtmosphereReferenceT atmosphere_reference{
       AtmosphereReferenceT::kArmyStandardMetro};
-  RadiansT azimuth_rad{kNaN};
-  PmsiT ballistic_coefficent_psi{kNaN};
-  InchT base_diameter_in{kNaN};
-  InHgT air_pressure_in_hg{kNaN};
-  InchT diameter_in{kNaN};
-  RadiansT latitude_rad{kNaN};
-  InchT length_in{kNaN};
-  InchT meplat_diameter_in{kNaN};
-  InchT nose_length_in{kNaN};
-  double ogive_rtr{kNaN};
+  RadiansT azimuth_rad{NaN()};
+  PmsiT ballistic_coefficent_psi{NaN()};
+  InchT base_diameter_in{NaN()};
+  InHgT air_pressure_in_hg{NaN()};
+  InchT diameter_in{NaN()};
+  RadiansT latitude_rad{NaN()};
+  InchT length_in{NaN()};
+  InchT meplat_diameter_in{NaN()};
+  InchT nose_length_in{NaN()};
+  double ogive_rtr{NaN()};
   const std::array<uint16_t, kTableSize>* pdrag_lut{&kG1Drags};
-  RadiansT range_angle_rad{kNaN};
-  double relative_humidity_percent{kNaN};
-  InchT tail_length_in{kNaN};
-  DegFT temperature_deg_f{kNaN};
-  InchPerTwistT twist_inches_per_turn{kNaN};
-  RadiansT wind_heading_rad{kNaN};
-  FpsT wind_speed_fps{kNaN};
-  FeetT zero_distance_ft{kNaN};
-  FeetT zero_impact_height{kNaN};
+  RadiansT range_angle_rad{NaN()};
+  double relative_humidity_percent{NaN()};
+  InchT tail_length_in{NaN()};
+  DegFT temperature_deg_f{NaN()};
+  InchPerTwistT twist_inches_per_turn{NaN()};
+  RadiansT wind_heading_rad{NaN()};
+  FpsT wind_speed_fps{NaN()};
+  FeetT zero_distance_ft{NaN()};
+  FeetT zero_impact_height{NaN()};
 
   Input build{};
 };

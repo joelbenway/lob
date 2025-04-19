@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <memory>
 
 #include "cartesian.hpp"
 #include "eng_units.hpp"
@@ -102,14 +103,14 @@ TEST(OdeTests, SpvTConstrutor) {
       lob::CartesianT<lob::FeetT>(lob::FeetT(3), lob::FeetT(4), lob::FeetT(0));
   const auto kV =
       lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
-  lob::SpvT* pa = nullptr;
-  lob::SpvT* pb = nullptr;
-  pa = new lob::SpvT;
-  pb = new lob::SpvT(kP, kV);
-  ASSERT_NE(pa, nullptr);
-  ASSERT_NE(pb, nullptr);
-  delete pa;
-  delete pb;
+  std::unique_ptr<lob::SpvT> pa = nullptr;
+  std::unique_ptr<lob::SpvT> pb = nullptr;
+  pa = std::make_unique<lob::SpvT>();
+  pb = std::make_unique<lob::SpvT>(kP, kV);
+  ASSERT_NE(pa.get(), nullptr);
+  ASSERT_NE(pb.get(), nullptr);
+  pa.reset();
+  pb.reset();
 }
 
 TEST(OdeTests, SpvTCopyAssignment) {

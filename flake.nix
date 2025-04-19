@@ -37,8 +37,9 @@
               cppcheck
               doxygen
               lcov
-              mold
+              mold-wrapped
               ninja
+              valgrind
             ]
             ++ (
               if system == "aarch64-darwin"

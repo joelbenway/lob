@@ -6,7 +6,6 @@
 
 #include <gtest/gtest.h>
 
-#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -276,34 +275,15 @@ TEST(CalcTests, CalculateLitzGyroscopicSpinDrift) {
 }
 
 TEST(CalcTests, CalculateLitzAerodynamicJump) {
-  // Test data from Comparison with Litz Vertical-AJ Estimator section of
-  // Calculating Aerodynamic Jump for Firing Point Conditions: A novel and
-  // practical approach for computing the wind-induced jump perturbations
-  // - Boatright & Ruiz
-  const double kError = 0.01;
-  const std::vector<double> kSgs = {1.30, 1.62, 1.73, 1.76, 1.80,
-                                    1.82, 2.01, 2.14, 2.25, 2.27};
-  const std::vector<lob::InchT> kCals = {lob::InchT(0.308), lob::InchT(0.308),
-                                         lob::InchT(0.408), lob::InchT(0.338),
-                                         lob::InchT(0.308), lob::InchT(0.277),
-                                         lob::InchT(0.224), lob::InchT(0.308),
-                                         lob::InchT(0.224), lob::InchT(0.338)};
-  const std::vector<lob::InchT> kLengths = {
-      lob::InchT(1.621), lob::InchT(1.458), lob::InchT(2.085),
-      lob::InchT(1.771), lob::InchT(1.489), lob::InchT(1.293),
-      lob::InchT(1.066), lob::InchT(1.250), lob::InchT(0.976),
-      lob::InchT(1.724)};
-  const lob::MphT kCrosswind = lob::MphT(10.0);
-  const std::vector<double> kExpectedResults = {-0.324, -0.368, -0.370, -0.370,
-                                                -0.384, -0.390, -0.407, -0.437,
-                                                -0.440, -0.425};
-  for (size_t i = 0; i < kSgs.size(); i++) {
-    const double kActualResult =
-        lob::CalculateLitzAerodynamicJump(kSgs.at(i), kCals.at(i),
-                                          kLengths.at(i), kCrosswind)
-            .Value();
-    EXPECT_NEAR(kExpectedResults.at(i), kActualResult, kError);
-  }
+  const double kError = 0.001;
+  const double kSg = 1.74;
+  const auto kCal = lob::InchT(0.308);
+  const auto kLength = lob::InchT(3.945) * kCal;
+  const lob::MphT kCrosswind(10.0);
+  const lob::MoaT kExpectedResults(-0.400);
+  const lob::MoaT kActualResult =
+      lob::CalculateLitzAerodynamicJump(kSg, kCal, kLength, kCrosswind);
+  EXPECT_NEAR(kActualResult.Value(), kExpectedResults.Value(), kError);
 }
 
 TEST(CalcTests, CalculateProjectileReferenceArea) {

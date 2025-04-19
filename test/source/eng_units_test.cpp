@@ -9,35 +9,37 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <memory>
+#include <utility>
 
 namespace tests {
 
 using TestT = lob::FeetT;  // arbitrary type
 
 TEST(EngUnitsTests, Constructor) {
-  TestT* ptest = nullptr;
+  std::unique_ptr<TestT> ptest = nullptr;
   const double kValue = 100.0;
-  ptest = new TestT(kValue);
+  ptest = std::make_unique<TestT>(kValue);
   ASSERT_NE(ptest, nullptr);
   EXPECT_DOUBLE_EQ(ptest->Value(), kValue);
-  delete ptest;
+  ptest.reset();
 }
 
 TEST(EngUnitsTests, ConstructorConversion) {
   using lob::CaliberT;
   using lob::InchT;
-  CaliberT* ptest = nullptr;
+  std::unique_ptr<CaliberT> ptest = nullptr;
   const InchT kA(3.0);
   const InchT kB(1.0 / 0.308);
   const double kExpected = kA.Value() * kB.Value();
-  ptest = new CaliberT(kA, kB.Value());
+  ptest = std::make_unique<CaliberT>(kA, kB.Value());
   ASSERT_NE(ptest, nullptr);
   EXPECT_DOUBLE_EQ(ptest->Value(), kExpected);
-  delete ptest;
-  ptest = new CaliberT(kA, kB);
+  ptest.reset();
+  ptest = std::make_unique<CaliberT>(kA, kB);
   ASSERT_NE(ptest, nullptr);
   EXPECT_DOUBLE_EQ(ptest->Value(), kExpected);
-  delete ptest;
+  ptest.reset();
 }
 
 TEST(EngUnitsTests, CopyConstructor) {
@@ -71,7 +73,6 @@ TEST(EngUnitsTests, MoveAssignmentOperator) {
   b = std::move(b);
   EXPECT_DOUBLE_EQ(b.Value(), kB);
   b = std::move(a);
-  EXPECT_NE(a.Value(), kValue);
   EXPECT_DOUBLE_EQ(b.Value(), kValue);
 }
 

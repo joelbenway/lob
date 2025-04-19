@@ -66,6 +66,7 @@ TEST_F(LobCoriolisTestFixture, GetSpeedOfSoundFps) {
   EXPECT_NEAR(kInput.speed_of_sound, kExpectedFps, kError);
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
   ASSERT_NE(puut, nullptr);
   constexpr uint16_t kTestStepSize = 100;
@@ -97,7 +98,7 @@ TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
       {9000, 761, 848, -8096.45F, 0.00F, 7.707F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -144,7 +145,7 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
   lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
@@ -181,7 +182,7 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
   lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
@@ -219,7 +220,7 @@ TEST_F(LobCoriolisTestFixture,
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
   lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
@@ -256,7 +257,7 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionSouth) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
   lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
@@ -294,7 +295,7 @@ TEST_F(LobCoriolisTestFixture,
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
   lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
@@ -331,7 +332,7 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereCoriolisDeflectionWest) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
   lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
@@ -369,7 +370,7 @@ TEST_F(LobCoriolisTestFixture,
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
   lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
@@ -406,7 +407,7 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionNorth) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
   lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
@@ -443,7 +444,7 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
   lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
@@ -480,7 +481,7 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionSouth) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
   lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
@@ -517,7 +518,7 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionWest) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
   lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {

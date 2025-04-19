@@ -67,6 +67,7 @@ TEST_F(LobEnvTestFixture, GetSpeedOfSoundFps) {
   EXPECT_NEAR(kInput.speed_of_sound, kExpectedFps, kError);
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
   ASSERT_NE(puut, nullptr);
   constexpr uint16_t kTestStepSize = 100;
@@ -92,7 +93,7 @@ TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
       {3000, 1149, 454, -374.36F, 0.00F, 1.674F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(puut->Build(), &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -115,6 +116,7 @@ TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
   const int32_t kAltitude = 4500;
   const auto kInput = puut->AltitudeOfFiringSiteFt(kAltitude)
@@ -143,7 +145,7 @@ TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
       {3000, 1353, 629, -329.05F, 0.00F, 1.542F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -165,6 +167,7 @@ TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobEnvTestFixture, SolveWithTempAndAirPressure) {
   const int32_t kTemperature = 100;
   const int32_t kAirPressure = 25;
@@ -193,7 +196,7 @@ TEST_F(LobEnvTestFixture, SolveWithTempAndAirPressure) {
       {3000, 1437, 710, -313.59F, 0.00F, 1.496F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -215,6 +218,7 @@ TEST_F(LobEnvTestFixture, SolveWithTempAndAirPressure) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
   const int32_t kAltitude = 5'280;
   const int32_t kAirPressure = 30;
@@ -247,7 +251,7 @@ TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
       {3000, 1376, 651, -324.63F, 0.00F, 1.529F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -269,6 +273,7 @@ TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobEnvTestFixture, SolveWithPressureTempHumidity) {
   const int32_t kAirPressure = 29;
   const int32_t kTemperature = 75;
@@ -300,7 +305,7 @@ TEST_F(LobEnvTestFixture, SolveWithPressureTempHumidity) {
       {3000, 1227, 517, -355.17F, 0.00F, 1.619F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   const auto kSize = lob::Solve(kInput, &kRanges, &solutions, kOptions);
   EXPECT_EQ(kSize, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
