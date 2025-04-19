@@ -34,7 +34,7 @@ struct LobCoriolisTestFixture : public testing::Test {
     const float kTestZeroAngle = 5.06F;
     const float kTestOpticHeight = 3.0F;
 
-    puut->BallisticCoefficentPsi(kTestBC)
+    puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
         .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
         .DiameterInch(kTestDiameter)

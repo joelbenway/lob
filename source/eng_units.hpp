@@ -55,7 +55,7 @@ class StrongT {
   constexpr explicit operator T() const { return value_; }
 
   template <E Other>
-  // NOLINTNEXTLINE allow implicit conversions
+  // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
   constexpr operator StrongT<E, Other, T>() const;
 
   // Arithmetic operators
@@ -167,63 +167,63 @@ class StrongT {
   }
 
   // Specialized std functions
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr bool isnan(const StrongT& st) noexcept {
     return std::isnan(st.value_);
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT sqrt(const StrongT& st) noexcept {
     return StrongT(std::sqrt(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT pow(const StrongT& base, double exponent) noexcept {
     return StrongT(std::pow(base.value_, exponent));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT pow(const StrongT& base,
                                const StrongT& exponent) noexcept {
     return StrongT(std::pow(base.value_, exponent.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT sin(const StrongT& st) noexcept {
     return StrongT(std::sin(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT cos(const StrongT& st) noexcept {
     return StrongT(std::cos(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT tan(const StrongT& st) noexcept {
     return StrongT(std::tan(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT asin(const StrongT& st) noexcept {
     return StrongT(std::sin(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT acos(const StrongT& st) noexcept {
     return StrongT(std::cos(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT atan(const StrongT& st) noexcept {
     return StrongT(std::tan(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT min(const StrongT& a, const StrongT& b) noexcept {
     return StrongT(std::min(a.value_, b.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT max(const StrongT& a, const StrongT& b) noexcept {
     return StrongT(std::max(a.value_, b.value_));
   }
@@ -888,77 +888,82 @@ constexpr MmPerTwistT::operator InchPerTwistT() const {
 
 }  // namespace lob
 
-namespace std {  // NOLINT
+namespace std {
 // Static analyzers don't like modifications to std but this is just to allow
 // specializations for our custom type.
 
 template <typename E, E U, typename T>
-constexpr bool isnan(const lob::StrongT<E, U, T>& st) {  // NOLINT
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr bool isnan(const lob::StrongT<E, U, T>& st) {
   return isnan(st.Value());
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> sqrt(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> sqrt(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::sqrt(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> pow(  // NOLINT
-    const lob::StrongT<E, U, T>& base, const lob::StrongT<E, U, T>& exponent) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> pow(const lob::StrongT<E, U, T>& base,
+                                    const lob::StrongT<E, U, T>& exponent) {
   return lob::StrongT<E, U, T>(std::pow(base.Value(), exponent.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> pow(  // NOLINT
-    const lob::StrongT<E, U, T>& base, double exponent) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> pow(const lob::StrongT<E, U, T>& base,
+                                    double exponent) {
   return lob::StrongT<E, U, T>(std::pow(base.Value(), exponent));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> sin(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> sin(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::sin(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> cos(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> cos(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::cos(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> tan(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> tan(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::tan(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> asin(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> asin(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::asin(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> acos(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> acos(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::acos(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> atan(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> atan(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::atan(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> min(const lob::StrongT<E, U, T>& a,  // NOLINT
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> min(const lob::StrongT<E, U, T>& a,
                                     const lob::StrongT<E, U, T>& b) {
   return lob::StrongT<E, U, T>(std::min(a.Value(), b.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> max(const lob::StrongT<E, U, T>& a,  // NOLINT
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> max(const lob::StrongT<E, U, T>& a,
                                     const lob::StrongT<E, U, T>& b) {
   return lob::StrongT<E, U, T>(std::max(a.Value(), b.Value()));
 }

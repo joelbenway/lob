@@ -34,7 +34,7 @@ struct LobWindTestFixture : public testing::Test {
     const float kTestZeroAngle = 4.78F;
     const float kTestOpticHeight = 2.5F;
 
-    puut->BallisticCoefficentPsi(kTestBC)
+    puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
         .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
         .DiameterInch(kTestDiameter)

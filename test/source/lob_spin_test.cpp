@@ -35,15 +35,15 @@ struct LobSpinTestFixture : public testing::Test {
     const float kTestZeroAngle = 6.53F;
     const float kTestOpticHeight = 2.0F;
 
-    puut->BallisticCoefficentPsi(kTestBC)
+    puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
         .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
         .DiameterInch(kTestDiameter)
         .MassGrains(kTestWeight)
         .LengthInch(kBulletLength)
         .InitialVelocityFps(kTestMuzzleVelocity)
-        .ZeroAngleMOA(kTestZeroAngle)
-        .OpticHeightInches(kTestOpticHeight);
+        .OpticHeightInches(kTestOpticHeight)
+        .ZeroAngleMOA(kTestZeroAngle);
   }
 
   void TearDown() override { puut.reset(); }
@@ -526,7 +526,7 @@ TEST_P(CWAJParameterizedFixture, Boatright) {
                       .BaseDiameterInch(kShot.base_diameter)
                       .MeplatDiameterInch(kShot.meplat_diameter)
                       .OgiveRtR(kShot.ogive_rtr)
-                      .BallisticCoefficentPsi(kShot.g1_bc)
+                      .BallisticCoefficientPsi(kShot.g1_bc)
                       .InitialVelocityFps(kShot.velocity)
                       .TwistInchesPerTurn(kShot.twist)
                       .Build();
@@ -538,7 +538,7 @@ TEST_P(CWAJParameterizedFixture, Litz) {
   const auto kA = builder.DiameterInch(kShot.diameter)
                       .LengthInch(kShot.length)
                       .MassGrains(kShot.mass)
-                      .BallisticCoefficentPsi(kShot.g1_bc)
+                      .BallisticCoefficientPsi(kShot.g1_bc)
                       .InitialVelocityFps(kShot.velocity)
                       .TwistInchesPerTurn(kShot.twist)
                       .Build();

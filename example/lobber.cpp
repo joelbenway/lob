@@ -159,7 +159,7 @@ lob::Builder BuildHelper(const std::string& infile,
 
   prompt = "Enter Ballistic Coefficient in PSI";
   collect_inputs();
-  builder.BallisticCoefficentPsi(inputs.back());
+  builder.BallisticCoefficientPsi(inputs.back());
 
   prompt = "Enter 1 for Army Standard Metro or 2 for ICAO reference atmosphere";
   collect_inputs();

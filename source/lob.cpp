@@ -51,7 +51,7 @@ class Impl {
   AtmosphereReferenceT atmosphere_reference{
       AtmosphereReferenceT::kArmyStandardMetro};
   RadiansT azimuth_rad{NaN()};
-  PmsiT ballistic_coefficent_psi{NaN()};
+  PmsiT ballistic_coefficient_psi{NaN()};
   InchT base_diameter_in{NaN()};
   InHgT air_pressure_in_hg{NaN()};
   InchT diameter_in{NaN()};
@@ -134,8 +134,8 @@ Builder& Builder::AzimuthDeg(float value) {
   return *this;
 }
 
-Builder& Builder::BallisticCoefficentPsi(float value) {
-  pimpl_->ballistic_coefficent_psi = PmsiT(value);
+Builder& Builder::BallisticCoefficientPsi(float value) {
+  pimpl_->ballistic_coefficient_psi = PmsiT(value);
   return *this;
 }
 
@@ -216,7 +216,7 @@ Builder& Builder::MachVsDragTable(const float* pmachs, const float* pdrags,
     pimpl_->build.drags.at(i) = kDrag;
   }
   pimpl_->pdrag_lut = &pimpl_->build.drags;
-  pimpl_->ballistic_coefficent_psi = PmsiT(1);
+  pimpl_->ballistic_coefficient_psi = PmsiT(1);
   return *this;
 }
 
@@ -341,7 +341,7 @@ void SolveStep(SpvT* ps, SecT* pt, const Input& input, uint16_t step_size = 0) {
                                  FpsT(input.wind.z));
     const MachT kMach(s.V().Magnitude(), FpsT(input.speed_of_sound).Inverse());
     const double kCd = LobLerp(kMachs, input.drags, kMach) *
-                       static_cast<double>(input.table_coefficent);
+                       static_cast<double>(input.table_coefficient);
     const FpsT kScalarVelocity = (s.V() - kWind).Magnitude();
     CartesianT<FpsT> velocity =
         (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
@@ -368,7 +368,7 @@ void SolveStep(SpvT* ps, SecT* pt, const Input& input, uint16_t step_size = 0) {
 }
 
 void ValidateBuild(const Impl& impl) {
-  assert(!std::isnan(impl.ballistic_coefficent_psi));
+  assert(!std::isnan(impl.ballistic_coefficient_psi));
   assert(!std::isnan(impl.build.velocity));
   assert(!std::isnan(impl.diameter_in));
   assert(!std::isnan(impl.build.mass));
@@ -450,11 +450,11 @@ void BuildEnvironment(Impl* pimpl) {
 }
 
 void BuildTable(Impl* pimpl) {
-  assert(!std::isnan(pimpl->ballistic_coefficent_psi));
+  assert(!std::isnan(pimpl->ballistic_coefficient_psi));
   assert(!std::isnan(pimpl->air_density_lbs_per_cu_ft));
 
   if (pimpl->atmosphere_reference == AtmosphereReferenceT::kArmyStandardMetro) {
-    pimpl->ballistic_coefficent_psi *= kArmyToIcaoBcConversionFactor;
+    pimpl->ballistic_coefficient_psi *= kArmyToIcaoBcConversionFactor;
     pimpl->atmosphere_reference = AtmosphereReferenceT::kIcao;
   }
 
@@ -464,9 +464,9 @@ void BuildTable(Impl* pimpl) {
               pimpl->build.drags.begin());
   }
   // scale for air density and bc
-  const double kCdCoefficent = CalculateCdCoefficent(
-      pimpl->air_density_lbs_per_cu_ft, pimpl->ballistic_coefficent_psi);
-  pimpl->build.table_coefficent = static_cast<float>(kCdCoefficent);
+  const double kCdCoefficient = CalculateCdCoefficient(
+      pimpl->air_density_lbs_per_cu_ft, pimpl->ballistic_coefficient_psi);
+  pimpl->build.table_coefficient = static_cast<float>(kCdCoefficient);
 }
 
 void BuildWind(Impl* pimpl) {
@@ -489,7 +489,7 @@ void BuildWind(Impl* pimpl) {
 void BuildTwistEffects(Impl* pimpl) {
   assert(!std::isnan(pimpl->diameter_in));
   assert(!std::isnan(pimpl->build.velocity));
-  assert(!std::isnan(pimpl->ballistic_coefficent_psi));
+  assert(!std::isnan(pimpl->ballistic_coefficient_psi));
   assert(!std::isnan(pimpl->build.speed_of_sound));
   assert(!std::isnan(pimpl->build.wind.z));
 
@@ -525,7 +525,7 @@ void BuildTwistEffects(Impl* pimpl) {
               pimpl->build.stability_factor, pimpl->twist_inches_per_turn,
               MphT(FpsT(pimpl->build.wind.z)), pimpl->air_density_lbs_per_cu_ft,
               FpsT(pimpl->build.speed_of_sound),
-              pimpl->ballistic_coefficent_psi, kCDref)
+              pimpl->ballistic_coefficient_psi, kCDref)
               .Float();
       return;
     }

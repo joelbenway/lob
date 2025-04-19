@@ -117,7 +117,7 @@ double CalculateSpeedOfSoundHumidityCorrection(double humidity_pct,
 }
 
 // Page 90 of Modern Exterior Ballistics - McCoy
-double CalculateCdCoefficent(LbsPerCuFtT air_density, PmsiT bc) {
+double CalculateCdCoefficient(LbsPerCuFtT air_density, PmsiT bc) {
   const double kSqInPerSqFt = (InchT(FeetT(1)) * InchT(FeetT(1))).Value();
   const uint8_t kClangTidyPleaserEight = 8;
   return air_density.Value() * kPi /
@@ -225,8 +225,8 @@ double CalculateRelativeDensity(InchT diameter, InchT length,
                                 InchT meplat_diameter, InchT nose_length,
                                 InchT base_diameter, InchT base_length,
                                 GrainT mass) {
-  auto frustum_volume = [](double r1, double r2, double l) {
-    return l * kPi / 3 * ((r1 * r1) + (r1 * r2) + (r2 * r2));
+  auto frustum_volume = [](double r1, double r2, double height) {
+    return height * kPi / 3 * ((r1 * r1) + (r1 * r2) + (r2 * r2));
   };
   // Modeling the nose as a frustum ensures volume is underestimated. This
   // factor makes it a little larger for an improved estimate.
@@ -244,8 +244,9 @@ double CalculateRelativeDensity(InchT diameter, InchT length,
   return mass.Value() / (kNoseVolume + kBodyVolume + kBaseVolume);
 }
 
-double CalculateCoefficentOfLift(CaliberT nose_length, CaliberT meplat_diameter,
-                                 double ogive_rtr, MachT velocity) {
+double CalculateCoefficientOfLift(CaliberT nose_length,
+                                  CaliberT meplat_diameter, double ogive_rtr,
+                                  MachT velocity) {
   const auto kLFN =
       CalculateFullNoseLength(nose_length, meplat_diameter, ogive_rtr);
   const double kB = std::sqrt((velocity * velocity) - 1).Value();
@@ -286,9 +287,9 @@ double CalculateAspectRatio(CaliberT length, CaliberT full_nose_length,
   return kAR;
 }
 
-double CalculateYawDragCoefficent(MachT speed, double coefficent_of_lift,
-                                  double aspect_ratio) {
-  const double kCLSquared = coefficent_of_lift * coefficent_of_lift;
+double CalculateYawDragCoefficient(MachT speed, double coefficient_of_lift,
+                                   double aspect_ratio) {
+  const double kCLSquared = coefficient_of_lift * coefficient_of_lift;
   const double kCDa =
       1.33 * (1.41 - 0.18 * speed.Value()) *
       (9.825 - 3.95 * speed.Value() +
@@ -380,8 +381,8 @@ MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
   const SqInT kS = CalculateProjectileReferenceArea(diameter);
   const auto kAR = cwaj::CalculateAspectRatio(kL, kLFN, kLBT, kDB);
   const auto kM = lob::MachT(velocity, speed_of_sound.Inverse());
-  const auto kCL = cwaj::CalculateCoefficentOfLift(kLN, kDM, kRTR, kM);
-  const auto kCDa = cwaj::CalculateYawDragCoefficent(kM, kCL, kAR);
+  const auto kCL = cwaj::CalculateCoefficientOfLift(kLN, kDM, kRTR, kM);
+  const auto kCDa = cwaj::CalculateYawDragCoefficient(kM, kCL, kAR);
   const auto kRD = cwaj::CalculateRelativeDensity(
       diameter, length, meplat_diameter, nose_length, base_diameter,
       boat_tail_length, mass);

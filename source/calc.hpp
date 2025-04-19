@@ -31,7 +31,7 @@ double CalculateAirDensityRatioHumidityCorrection(
 double CalculateSpeedOfSoundHumidityCorrection(double humidity_pct,
                                                InHgT water_vapor_sat_pressure);
 
-double CalculateCdCoefficent(LbsPerCuFtT air_density, PmsiT bc);
+double CalculateCdCoefficient(LbsPerCuFtT air_density, PmsiT bc);
 
 double CalculateMillerTwistRuleStabilityFactor(InchT bullet_diameter,
                                                GrainT bullet_mass,
@@ -69,8 +69,9 @@ double CalculateRelativeDensity(InchT diameter, InchT length,
                                 InchT base_diameter, InchT base_length,
                                 GrainT mass);
 
-double CalculateCoefficentOfLift(CaliberT nose_length, CaliberT meplat_diameter,
-                                 double ogive_rtr, MachT velocity);
+double CalculateCoefficientOfLift(CaliberT nose_length,
+                                  CaliberT meplat_diameter, double ogive_rtr,
+                                  MachT velocity);
 
 double CalculateInertialRatio(InchT caliber, CaliberT length,
                               CaliberT nose_length, CaliberT full_nose_length,
@@ -81,8 +82,8 @@ HzT CalculateSpinRate(FpsT velocity, InchPerTwistT twist);
 double CalculateAspectRatio(CaliberT length, CaliberT full_nose_length,
                             CaliberT boat_tail_length, CaliberT base_diameter);
 
-double CalculateYawDragCoefficent(MachT speed, double coefficent_of_lift,
-                                  double aspect_ratio);
+double CalculateYawDragCoefficient(MachT speed, double coefficient_of_lift,
+                                   double aspect_ratio);
 
 double CalculateEpicyclicRatio(double stability);
 

@@ -45,7 +45,7 @@ TEST_F(BuilderTestFixture, CopyConstructor) {
   const float kTestWeight = 180.0F;
   const uint16_t kTestMuzzleVelocity = 2700U;
   const float kTestZeroAngle = 3.38F;
-  puut->BallisticCoefficentPsi(kTestBC)
+  puut->BallisticCoefficientPsi(kTestBC)
       .DiameterInch(kTestDiameter)
       .MassGrains(kTestWeight)
       .InitialVelocityFps(kTestMuzzleVelocity)
@@ -63,7 +63,7 @@ TEST_F(BuilderTestFixture, MoveConstructor) {
   const float kTestWeight = 180.0F;
   const uint16_t kTestMuzzleVelocity = 2700U;
   const float kTestZeroAngle = 3.38F;
-  puut->BallisticCoefficentPsi(kTestBC)
+  puut->BallisticCoefficientPsi(kTestBC)
       .DiameterInch(kTestDiameter)
       .MassGrains(kTestWeight)
       .InitialVelocityFps(kTestMuzzleVelocity)
@@ -80,7 +80,7 @@ TEST_F(BuilderTestFixture, CopyAssignmentOperator) {
   const float kTestWeight = 180.0F;
   const uint16_t kTestMuzzleVelocity = 2700U;
   const float kTestZeroAngle = 3.38F;
-  puut->BallisticCoefficentPsi(kTestBC)
+  puut->BallisticCoefficientPsi(kTestBC)
       .DiameterInch(kTestDiameter)
       .MassGrains(kTestWeight)
       .InitialVelocityFps(kTestMuzzleVelocity)
@@ -100,7 +100,7 @@ TEST_F(BuilderTestFixture, MoveAssignmentOperator) {
   const float kTestWeight = 180.0F;
   const uint16_t kTestMuzzleVelocity = 2700U;
   const float kTestZeroAngle = 3.38F;
-  puut->BallisticCoefficentPsi(kTestBC)
+  puut->BallisticCoefficientPsi(kTestBC)
       .DiameterInch(kTestDiameter)
       .MassGrains(kTestWeight)
       .InitialVelocityFps(kTestMuzzleVelocity)
@@ -118,7 +118,7 @@ TEST_F(BuilderTestFixture, BuildMinimalInput) {
   const uint16_t kTestMuzzleVelocity = 2700U;
   const float kTestZeroAngle = 3.84F;
   const float kZeroDistance = 100.0F;
-  const lob::Input kResult = puut->BallisticCoefficentPsi(kTestBC)
+  const lob::Input kResult = puut->BallisticCoefficientPsi(kTestBC)
                                  .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
                                  .DiameterInch(kTestDiameter)
                                  .MassGrains(kTestWeight)
@@ -144,7 +144,7 @@ TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
   std::array<float, lob::kTableSize> drags = {};
 
   const lob::Input kResult1 =
-      puut->BallisticCoefficentPsi(kTestBC)
+      puut->BallisticCoefficientPsi(kTestBC)
           .BCDragFunction(lob::DragFunctionT::kG1)
           .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
           .DiameterInch(kTestDiameter)
@@ -158,7 +158,7 @@ TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
     drags.at(i) = static_cast<float>(lob::kG1Drags.at(i)) / lob::kTableScale;
   }
 
-  const lob::Input kResult2 = puut->BallisticCoefficentPsi(lob::NaN())
+  const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
                                   .BCDragFunction(lob::DragFunctionT::kG7)
                                   .MachVsDragTable(machs, drags)
                                   .Build();

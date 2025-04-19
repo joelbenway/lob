@@ -77,7 +77,7 @@ struct LOB_EXPORT Input {
   static constexpr uint8_t kTableSize{
       85};  /// @brief The size of the drag table.
   std::array<uint16_t, kTableSize> drags{};  /// @brief The drag table.
-  float table_coefficent{
+  float table_coefficient{
       NaN()};  /// @brief A coefficient used to scale the drag table.
   float speed_of_sound{NaN()};  /// @brief The local speed of sound in Fps.
   uint16_t velocity{0};       /// @brief Initial velocity of projectile in Fps.
@@ -124,7 +124,7 @@ class LOB_EXPORT Builder {
    * @param value The ballistic coefficient value.
    * @return A reference to the Builder object.
    */
-  Builder& BallisticCoefficentPsi(float value);
+  Builder& BallisticCoefficientPsi(float value);
   /**
    * @brief Sets the atmosphere reference associated with ballistic coefficient.
    * @param type The atmosphere reference type.

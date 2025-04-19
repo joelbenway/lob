@@ -214,13 +214,13 @@ TEST(CalcTests, CalculateSpeedOfSoundHumidityCorrection) {
   }
 }
 
-TEST(CalcTests, CalculateCdCoefficent) {
+TEST(CalcTests, CalculateCdCoefficient) {
   // Test data from Ball M1911 round
   const lob::PmsiT kBC(0.162);
   const lob::InchT kDiameter(0.452);
   const lob::LbsT kMass(lob::GrainT(230));
   const lob::LbsPerCuFtT kAirDensity(0.0765);
-  const double kCdCoeff1 = CalculateCdCoefficent(kAirDensity, kBC);
+  const double kCdCoeff1 = CalculateCdCoefficient(kAirDensity, kBC);
   const double kCdcoeff2 =
       kAirDensity.Value() *
       lob::SqFtT(CalculateProjectileReferenceArea(kDiameter)).Value() /
@@ -350,16 +350,16 @@ TEST(CalcTests, CalculateRelativeDensity) {
   EXPECT_NEAR(kActual, kExpected, kError);
 }
 
-TEST(CalcTests, CalculateCoefficentOfLift) {
+TEST(CalcTests, CalculateCoefficientOfLift) {
   // Test data from Sample Calculations of Calculating Aerodynamic Jump for
   // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
-  using lob::cwaj::CalculateCoefficentOfLift;
+  using lob::cwaj::CalculateCoefficientOfLift;
   const lob::CaliberT kLN(2.240);
   const lob::CaliberT kDM(0.211);
   const double kRTR(0.900);
   const lob::MachT kVelocity(2800 / lob::kIsaSeaLevelSpeedOfSoundFps);
   const double kExpected(2.807);
-  const double kActual = CalculateCoefficentOfLift(kLN, kDM, kRTR, kVelocity);
+  const double kActual = CalculateCoefficientOfLift(kLN, kDM, kRTR, kVelocity);
   EXPECT_NEAR(kActual, kExpected, 1E-3);
 }
 
@@ -403,15 +403,15 @@ TEST(CalcTests, CalculateAspectRatio) {
   EXPECT_NEAR(kActual, kExpected, 1E-4);
 }
 
-TEST(CalcTests, CalculateYawDragCoefficent) {
+TEST(CalcTests, CalculateYawDragCoefficient) {
   // Test data from Sample Calculations of Calculating Aerodynamic Jump for
   // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
-  using lob::cwaj::CalculateYawDragCoefficent;
+  using lob::cwaj::CalculateYawDragCoefficient;
   const lob::MachT kVelocity(2800 / lob::kIsaSeaLevelSpeedOfSoundFps);
   const double kCL(2.807);
   const double kAR(2.1840);
   const double kExpected(4.4212);
-  const double kActual = CalculateYawDragCoefficent(kVelocity, kCL, kAR);
+  const double kActual = CalculateYawDragCoefficient(kVelocity, kCL, kAR);
   EXPECT_NEAR(kActual, kExpected, 1E-4);
 }
 
