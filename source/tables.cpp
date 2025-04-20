@@ -15,18 +15,7 @@
 #include "helpers.hpp"
 
 namespace lob {
-
-struct Point {
-  double x{0};
-  double y{0};
-};
-
-struct Circle {
-  Point center;
-  double radius{0};
-};
-
-namespace {
+namespace help {
 
 double CalculatePerpendicularSlope(double slope) {
   if (AreEqual(slope, 0.0)) {
@@ -92,108 +81,7 @@ double FindAngleToPointOnCircle(Point p, Circle c) {
   }
   return kAngle;
 }
-}  // namespace
 
-template <typename T>
-double LobLerp(const T* x_lut, const T* y_lut, const size_t size,
-               const double x_in) {
-  if (x_in < static_cast<double>(x_lut[0])) {
-    return y_lut[0];
-  }
-
-  size_t index = size - 1;
-
-  while (index > 0 && x_in < static_cast<double>(x_lut[index])) {
-    index--;
-  }
-
-  if (index == size - 1) {
-    return y_lut[size - 1];
-  }
-
-  const double kX0 = x_lut[index];
-  const double kX1 = x_lut[index + 1];
-  const double kY0 = y_lut[index];
-  const double kY1 = y_lut[index + 1];
-
-  return ((kY1 - kY0) / (kX1 - kX0) * (x_in - kX0)) + kY0;
-}
-
-template double LobLerp<uint16_t>(const uint16_t* x_lut, const uint16_t* y_lut,
-                                  const size_t size, const double x_in);
-
-template double LobLerp<float>(const float* x_lut, const float* y_lut,
-                               const size_t size, const double x_in);
-
-template <typename T>
-double LobQerp(const T* x_lut, const T* y_lut, const size_t size,
-               const double x_in) {
-  if (size < 3) {
-    return LobLerp(x_lut, y_lut, size, x_in);
-  }
-
-  if (x_in < static_cast<double>(x_lut[0])) {
-    return y_lut[0];
-  }
-
-  size_t index = size - 1;
-
-  while (index > 0 && x_in < static_cast<double>(x_lut[index])) {
-    index--;
-  }
-
-  if (index == size - 1) {
-    return y_lut[size - 1];
-  }
-
-  const double kX0 = index == 0 ? x_lut[index] : x_lut[index - 1];
-  const double kX1 = index == 0 ? x_lut[index + 1] : x_lut[index];
-  const double kX2 = index == 0 ? x_lut[index + 2] : x_lut[index + 1];
-  const double kY0 = index == 0 ? y_lut[index] : y_lut[index - 1];
-  const double kY1 = index == 0 ? y_lut[index + 1] : y_lut[index];
-  const double kY2 = index == 0 ? y_lut[index + 2] : y_lut[index + 1];
-  const double kLerp = x_in >= kX1
-                           ? ((kY2 - kY1) / (kX2 - kX1) * (x_in - kX1)) + kY1
-                           : ((kY1 - kY0) / (kX1 - kX0) * (x_in - kX0)) + kY0;
-
-  const Circle kC = FitCircle({kX0, kY0}, {kX1, kY1}, {kX2, kY2});
-
-  const double kMinimumRadius = 0.0001;
-
-  if (kC.radius < kMinimumRadius) {
-    return kLerp;
-  }
-
-  const double kDiscriminant =
-      std::pow(kC.radius, 2) - std::pow(x_in - kC.center.x, 2);
-
-  const double kResult1 = kC.center.y + std::sqrt(kDiscriminant);
-  const double kResult2 = kC.center.y - std::sqrt(kDiscriminant);
-
-  const double kAnglePoint0 = FindAngleToPointOnCircle({kX0, kY0}, kC);
-  const double kAnglePoint2 = FindAngleToPointOnCircle({kX2, kY2}, kC);
-  const double kAngleResult1 = FindAngleToPointOnCircle({x_in, kResult1}, kC);
-  const double kAngleResult2 = FindAngleToPointOnCircle({x_in, kResult2}, kC);
-
-  if (kAngleResult1 >= std::min(kAnglePoint0, kAnglePoint2) &&
-      kAngleResult1 <= std::max(kAnglePoint0, kAnglePoint2)) {
-    return kResult1;
-  }
-
-  if (kAngleResult2 >= std::min(kAnglePoint0, kAnglePoint2) &&
-      kAngleResult2 <= std::max(kAnglePoint0, kAnglePoint2)) {
-    return kResult2;
-  }
-  return kLerp;
-}
-
-template double LobQerp<uint16_t>(const uint16_t* x_lut, const uint16_t* y_lut,
-                                  const size_t size, const double x_in);
-
-template double LobQerp<float>(const float* x_lut, const float* y_lut,
-                               const size_t size, const double x_in);
-
-namespace {
 template <typename T>
 void ExpandMachDragTable(const T* pmachs, const T* pdrags, size_t old_size,
                          T* pnew_machs, T* pnew_drags, size_t new_size) {
@@ -221,11 +109,13 @@ void ExpandMachDragTable(const T* pmachs, const T* pdrags, size_t old_size,
       }
     }
     if (maxdex == 0) {
-      pnew_machs[old_size + i] =
-          (pnew_machs[gapdex] + pnew_machs[gapdex - 1]) / static_cast<T>(2);
+      pnew_machs[old_size + i] = static_cast<T>(
+          (static_cast<double>(pnew_machs[gapdex]) + pnew_machs[gapdex - 1]) /
+          2);
     } else {
-      pnew_machs[old_size + i] =
-          pnew_machs[maxdex] + pnew_machs[maxdex - 1] / static_cast<T>(2);
+      pnew_machs[old_size + i] = static_cast<T>(
+          (static_cast<double>(pnew_machs[maxdex]) + pnew_machs[maxdex - 1]) /
+          2);
     }
     std::sort(pnew_machs, pnew_machs + old_size + 1U + i);
   }
@@ -295,7 +185,106 @@ template void CompressMachDragTable<float>(const float* pmachs,
                                            const float* pdrags, size_t* indices,
                                            size_t old_size, float* pnew_machs,
                                            float* pnew_drags, size_t new_size);
-}  // namespace
+}  // namespace help
+
+template <typename T>
+double LobLerp(const T* x_lut, const T* y_lut, const size_t size,
+               const double x_in) {
+  if (x_in < static_cast<double>(x_lut[0])) {
+    return y_lut[0];
+  }
+
+  size_t index = size - 1;
+
+  while (index > 0 && x_in < static_cast<double>(x_lut[index])) {
+    index--;
+  }
+
+  if (index == size - 1) {
+    return y_lut[size - 1];
+  }
+
+  const double kX0 = x_lut[index];
+  const double kX1 = x_lut[index + 1];
+  const double kY0 = y_lut[index];
+  const double kY1 = y_lut[index + 1];
+
+  return ((kY1 - kY0) / (kX1 - kX0) * (x_in - kX0)) + kY0;
+}
+
+template double LobLerp<uint16_t>(const uint16_t* x_lut, const uint16_t* y_lut,
+                                  const size_t size, const double x_in);
+
+template double LobLerp<float>(const float* x_lut, const float* y_lut,
+                               const size_t size, const double x_in);
+
+template <typename T>
+double LobQerp(const T* x_lut, const T* y_lut, const size_t size,
+               const double x_in) {
+  if (size < 3) {
+    return LobLerp(x_lut, y_lut, size, x_in);
+  }
+
+  if (x_in < static_cast<double>(x_lut[0])) {
+    return y_lut[0];
+  }
+
+  size_t index = size - 1;
+
+  while (index > 0 && x_in < static_cast<double>(x_lut[index])) {
+    index--;
+  }
+
+  if (index == size - 1) {
+    return y_lut[size - 1];
+  }
+
+  const double kX0 = index == 0 ? x_lut[index] : x_lut[index - 1];
+  const double kX1 = index == 0 ? x_lut[index + 1] : x_lut[index];
+  const double kX2 = index == 0 ? x_lut[index + 2] : x_lut[index + 1];
+  const double kY0 = index == 0 ? y_lut[index] : y_lut[index - 1];
+  const double kY1 = index == 0 ? y_lut[index + 1] : y_lut[index];
+  const double kY2 = index == 0 ? y_lut[index + 2] : y_lut[index + 1];
+  const double kLerp = x_in >= kX1
+                           ? ((kY2 - kY1) / (kX2 - kX1) * (x_in - kX1)) + kY1
+                           : ((kY1 - kY0) / (kX1 - kX0) * (x_in - kX0)) + kY0;
+
+  const help::Circle kC = help::FitCircle({kX0, kY0}, {kX1, kY1}, {kX2, kY2});
+
+  const double kMinimumRadius = 0.0001;
+
+  if (kC.radius < kMinimumRadius) {
+    return kLerp;
+  }
+
+  const double kDiscriminant =
+      std::pow(kC.radius, 2) - std::pow(x_in - kC.center.x, 2);
+
+  const double kResult1 = kC.center.y + std::sqrt(kDiscriminant);
+  const double kResult2 = kC.center.y - std::sqrt(kDiscriminant);
+
+  const double kAnglePoint0 = FindAngleToPointOnCircle({kX0, kY0}, kC);
+  const double kAnglePoint2 = FindAngleToPointOnCircle({kX2, kY2}, kC);
+  const double kAngleResult1 = FindAngleToPointOnCircle({x_in, kResult1}, kC);
+  const double kAngleResult2 = FindAngleToPointOnCircle({x_in, kResult2}, kC);
+
+  if (kAngleResult1 >= std::min(kAnglePoint0, kAnglePoint2) &&
+      kAngleResult1 <= std::max(kAnglePoint0, kAnglePoint2)) {
+    return kResult1;
+  }
+
+  if (kAngleResult2 >= std::min(kAnglePoint0, kAnglePoint2) &&
+      kAngleResult2 <= std::max(kAnglePoint0, kAnglePoint2)) {
+    return kResult2;
+  }
+  return kLerp;
+}
+
+template double LobQerp<uint16_t>(const uint16_t* x_lut, const uint16_t* y_lut,
+                                  const size_t size, const double x_in);
+
+template double LobQerp<float>(const float* x_lut, const float* y_lut,
+                               const size_t size, const double x_in);
 
 template <typename T>
 void ResizeMachDragTable(const T* pmachs, const T* pdrags, size_t* indices,
@@ -305,11 +294,11 @@ void ResizeMachDragTable(const T* pmachs, const T* pdrags, size_t* indices,
     std::copy(pmachs, pmachs + old_size, pnew_machs);
     std::copy(pdrags, pdrags + old_size, pnew_drags);
   } else if (old_size < new_size) {
-    ExpandMachDragTable(pmachs, pdrags, old_size, pnew_machs, pnew_drags,
-                        new_size);
+    help::ExpandMachDragTable(pmachs, pdrags, old_size, pnew_machs, pnew_drags,
+                              new_size);
   } else {
-    CompressMachDragTable(pmachs, pdrags, indices, old_size, pnew_machs,
-                          pnew_drags, new_size);
+    help::CompressMachDragTable(pmachs, pdrags, indices, old_size, pnew_machs,
+                                pnew_drags, new_size);
   }
 }
 
