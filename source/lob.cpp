@@ -44,32 +44,32 @@ class Impl {
   friend class Builder;
 
  public:
-  LbsPerCuFtT air_density_lbs_per_cu_ft{NaN()};
-  FeetT altitude_ft{NaN()};
-  FeetT altitude_of_barometer_ft{NaN()};
-  FeetT altitude_of_thermometer_ft{NaN()};
+  LbsPerCuFtT air_density_lbs_per_cu_ft{NaN<double>()};
+  FeetT altitude_ft{NaN<double>()};
+  FeetT altitude_of_barometer_ft{NaN<double>()};
+  FeetT altitude_of_thermometer_ft{NaN<double>()};
   AtmosphereReferenceT atmosphere_reference{
       AtmosphereReferenceT::kArmyStandardMetro};
-  RadiansT azimuth_rad{NaN()};
-  PmsiT ballistic_coefficient_psi{NaN()};
-  InchT base_diameter_in{NaN()};
-  InHgT air_pressure_in_hg{NaN()};
-  InchT diameter_in{NaN()};
-  RadiansT latitude_rad{NaN()};
-  InchT length_in{NaN()};
-  InchT meplat_diameter_in{NaN()};
-  InchT nose_length_in{NaN()};
-  double ogive_rtr{NaN()};
+  RadiansT azimuth_rad{NaN<double>()};
+  PmsiT ballistic_coefficient_psi{NaN<double>()};
+  InchT base_diameter_in{NaN<double>()};
+  InHgT air_pressure_in_hg{NaN<double>()};
+  InchT diameter_in{NaN<double>()};
+  RadiansT latitude_rad{NaN<double>()};
+  InchT length_in{NaN<double>()};
+  InchT meplat_diameter_in{NaN<double>()};
+  InchT nose_length_in{NaN<double>()};
+  double ogive_rtr{NaN<double>()};
   const std::array<uint16_t, kTableSize>* pdrag_lut{&kG1Drags};
-  RadiansT range_angle_rad{NaN()};
-  double relative_humidity_percent{NaN()};
-  InchT tail_length_in{NaN()};
-  DegFT temperature_deg_f{NaN()};
-  InchPerTwistT twist_inches_per_turn{NaN()};
-  RadiansT wind_heading_rad{NaN()};
-  FpsT wind_speed_fps{NaN()};
-  FeetT zero_distance_ft{NaN()};
-  FeetT zero_impact_height{NaN()};
+  RadiansT range_angle_rad{NaN<double>()};
+  double relative_humidity_percent{NaN<double>()};
+  InchT tail_length_in{NaN<double>()};
+  DegFT temperature_deg_f{NaN<double>()};
+  InchPerTwistT twist_inches_per_turn{NaN<double>()};
+  RadiansT wind_heading_rad{NaN<double>()};
+  FpsT wind_speed_fps{NaN<double>()};
+  FeetT zero_distance_ft{NaN<double>()};
+  FeetT zero_impact_height{NaN<double>()};
 
   Input build{};
 };
