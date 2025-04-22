@@ -18,6 +18,22 @@ template <typename E, E U, typename T>
 class StrongT {
  public:
   constexpr explicit StrongT<E, U, T>(T value) : value_(value) {}
+  template <E OtherUnit>
+  constexpr explicit StrongT(const StrongT<E, OtherUnit, T>& other,
+                             T conversion_factor)
+      : value_(other.Value() * conversion_factor) {
+    static_assert(std::is_same<E, decltype(OtherUnit)>::value,
+                  "Units must share the same enum type");
+    static_assert(U != OtherUnit, "Units must be of different types");
+  }
+  template <E OtherUnit>
+  constexpr explicit StrongT(const StrongT<E, OtherUnit, T>& other,
+                             const StrongT<E, OtherUnit, T>& conversion_factor)
+      : value_(other.Value() * conversion_factor.Value()) {
+    static_assert(std::is_same<E, decltype(OtherUnit)>::value,
+                  "Units must share the same enum type");
+    static_assert(U != OtherUnit, "Units must be of different types");
+  }
   constexpr StrongT<E, U, T>(const StrongT<E, U, T>& other) = default;
   constexpr StrongT<E, U, T>(StrongT<E, U, T>&& other) noexcept = default;
   ~StrongT() = default;
@@ -39,7 +55,7 @@ class StrongT {
   constexpr explicit operator T() const { return value_; }
 
   template <E Other>
-  // NOLINTNEXTLINE allow implicit conversions
+  // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
   constexpr operator StrongT<E, Other, T>() const;
 
   // Arithmetic operators
@@ -115,7 +131,7 @@ class StrongT {
     ++value_;
     return *this;
   }
-  constexpr StrongT<E, U, T> operator++(int) & {  // NOLINT
+  constexpr StrongT<E, U, T> operator++(int) & {
     StrongT<E, U, T> temp(*this);
     ++value_;
     return temp;
@@ -124,7 +140,7 @@ class StrongT {
     --value_;
     return *this;
   }
-  constexpr StrongT<E, U, T> operator--(int) & {  //  NOLINT
+  constexpr StrongT<E, U, T> operator--(int) & {
     StrongT<E, U, T> temp(*this);
     --value_;
     return temp;
@@ -151,67 +167,70 @@ class StrongT {
   }
 
   // Specialized std functions
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr bool isnan(const StrongT& st) noexcept {
     return std::isnan(st.value_);
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT sqrt(const StrongT& st) noexcept {
     return StrongT(std::sqrt(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT pow(const StrongT& base, double exponent) noexcept {
     return StrongT(std::pow(base.value_, exponent));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT pow(const StrongT& base,
                                const StrongT& exponent) noexcept {
     return StrongT(std::pow(base.value_, exponent.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT sin(const StrongT& st) noexcept {
     return StrongT(std::sin(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT cos(const StrongT& st) noexcept {
     return StrongT(std::cos(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT tan(const StrongT& st) noexcept {
     return StrongT(std::tan(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT asin(const StrongT& st) noexcept {
     return StrongT(std::sin(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT acos(const StrongT& st) noexcept {
     return StrongT(std::cos(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT atan(const StrongT& st) noexcept {
     return StrongT(std::tan(st.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT min(const StrongT& a, const StrongT& b) noexcept {
     return StrongT(std::min(a.value_, b.value_));
   }
 
-  // NOLINTNEXTLINE name styling
+  // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT max(const StrongT& a, const StrongT& b) noexcept {
     return StrongT(std::max(a.value_, b.value_));
   }
 
+  constexpr StrongT<E, U, T> Inverse() const {
+    return StrongT<E, U, T>(T(1) / value_);
+  }
   constexpr T Value() const { return value_; }
   constexpr float Float() const { return static_cast<float>(value_); }
 
@@ -396,11 +415,41 @@ constexpr IphyT::operator MilT() const {
   return MilT(Value() / convert::kIphyPerMoa / convert::kMoaPerMil);
 }
 
-enum class Area : uint8_t { kSquareFeet };
+enum class Area : uint8_t { kSquareInches, kSquareFeet };
+using SqInT = StrongT<Area, Area::kSquareInches, double>;
 using SqFtT = StrongT<Area, Area::kSquareFeet, double>;
 
-enum class Density : uint8_t { kPoundsPerCubicFoot };
+template <>
+template <>
+constexpr SqFtT::operator SqInT() const {
+  return SqInT(Value() * convert::kInchPerFoot * convert::kInchPerFoot);
+}
+
+template <>
+template <>
+constexpr SqInT::operator SqFtT() const {
+  return SqFtT(Value() / convert::kInchPerFoot / convert::kInchPerFoot);
+}
+
+enum class Density : uint8_t { kGrainsPerCubicInch, kPoundsPerCubicFoot };
+using GrPerCuInT = StrongT<Density, Density::kGrainsPerCubicInch, double>;
 using LbsPerCuFtT = StrongT<Density, Density::kPoundsPerCubicFoot, double>;
+
+template <>
+template <>
+constexpr LbsPerCuFtT::operator GrPerCuInT() const {
+  using convert::kInchPerFoot;
+  return GrPerCuInT(Value() * convert::kGrainsPerLb /
+                    (kInchPerFoot * kInchPerFoot * kInchPerFoot));
+}
+
+template <>
+template <>
+constexpr GrPerCuInT::operator LbsPerCuFtT() const {
+  using convert::kInchPerFoot;
+  return LbsPerCuFtT(Value() / convert::kGrainsPerLb *
+                     (kInchPerFoot * kInchPerFoot * kInchPerFoot));
+}
 
 enum class Energy : uint8_t { kFootPounds, kJoules };
 using FtLbsT = StrongT<Energy, Energy::kFootPounds, double>;
@@ -418,13 +467,18 @@ constexpr JouleT::operator FtLbsT() const {
   return FtLbsT(Value() / convert::kJoulesPerFtLb);
 }
 
+enum class Frequency : uint8_t { kHz };
+
+using HzT = StrongT<Frequency, Frequency::kHz, double>;
+
 enum class Length : uint8_t {
   kInches,
   kFeet,
   kYards,
   kMillimeter,
   kCentimeter,
-  kMeter
+  kMeter,
+  kCaliber
 };
 using InchT = StrongT<Length, Length::kInches, double>;
 using FeetT = StrongT<Length, Length::kFeet, double>;
@@ -432,6 +486,9 @@ using YardT = StrongT<Length, Length::kYards, double>;
 using MmT = StrongT<Length, Length::kMillimeter, double>;
 using CmT = StrongT<Length, Length::kCentimeter, double>;
 using MeterT = StrongT<Length, Length::kMeter, double>;
+
+// Caliber is a relative length and cannot convert to other units.
+using CaliberT = StrongT<Length, Length::kCaliber, double>;
 
 template <>
 template <>
@@ -665,6 +722,7 @@ constexpr PmsiT::operator KgsmT() const {
 }
 
 enum class Speed : uint8_t {
+  kMach,
   kFeetPerSecond,
   kMilesPerHour,
   kMeterPerSecond,
@@ -672,6 +730,7 @@ enum class Speed : uint8_t {
   kKnot
 };
 
+using MachT = StrongT<Speed, Speed::kMach, double>;
 using FpsT = StrongT<Speed, Speed::kFeetPerSecond, double>;
 using MphT = StrongT<Speed, Speed::kMilesPerHour, double>;
 using MpsT = StrongT<Speed, Speed::kMeterPerSecond, double>;
@@ -829,77 +888,82 @@ constexpr MmPerTwistT::operator InchPerTwistT() const {
 
 }  // namespace lob
 
-namespace std {  // NOLINT
+namespace std {
 // Static analyzers don't like modifications to std but this is just to allow
 // specializations for our custom type.
 
 template <typename E, E U, typename T>
-constexpr bool isnan(const lob::StrongT<E, U, T>& st) {  // NOLINT
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr bool isnan(const lob::StrongT<E, U, T>& st) {
   return isnan(st.Value());
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> sqrt(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> sqrt(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::sqrt(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> pow(  // NOLINT
-    const lob::StrongT<E, U, T>& base, const lob::StrongT<E, U, T>& exponent) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> pow(const lob::StrongT<E, U, T>& base,
+                                    const lob::StrongT<E, U, T>& exponent) {
   return lob::StrongT<E, U, T>(std::pow(base.Value(), exponent.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> pow(  // NOLINT
-    const lob::StrongT<E, U, T>& base, double exponent) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> pow(const lob::StrongT<E, U, T>& base,
+                                    double exponent) {
   return lob::StrongT<E, U, T>(std::pow(base.Value(), exponent));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> sin(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> sin(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::sin(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> cos(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> cos(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::cos(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> tan(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> tan(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::tan(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> asin(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> asin(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::asin(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> acos(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> acos(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::acos(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> atan(  // NOLINT
-    const lob::StrongT<E, U, T>& st) {
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> atan(const lob::StrongT<E, U, T>& st) {
   return lob::StrongT<E, U, T>(std::atan(st.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> min(const lob::StrongT<E, U, T>& a,  // NOLINT
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> min(const lob::StrongT<E, U, T>& a,
                                     const lob::StrongT<E, U, T>& b) {
   return lob::StrongT<E, U, T>(std::min(a.Value(), b.Value()));
 }
 
 template <typename E, E U, typename T>
-constexpr lob::StrongT<E, U, T> max(const lob::StrongT<E, U, T>& a,  // NOLINT
+// NOLINTNEXTLINE(cert-dcl58-cpp, readability-identifier-naming)
+constexpr lob::StrongT<E, U, T> max(const lob::StrongT<E, U, T>& a,
                                     const lob::StrongT<E, U, T>& b) {
   return lob::StrongT<E, U, T>(std::max(a.Value(), b.Value()));
 }

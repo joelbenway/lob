@@ -8,6 +8,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "eng_units.hpp"
+
 namespace lob {
 
 static constexpr size_t kTableSize = 85;
@@ -86,9 +88,7 @@ constexpr std::array<uint16_t, kTableSize> kG8Drags = {
     2019U, 1983U, 1950U, 1890U, 1837U, 1791U, 1750U, 1713U};
 
 template <typename T>
-double LobLerp(const T* x_lut, const T* y_lut,
-               const size_t size,  // NOLINT
-               double x_in);
+double LobLerp(const T* x_lut, const T* y_lut, size_t size, double x_in);
 
 template <typename T, size_t N>
 double LobLerp(const std::array<T, N>& x_lut, const std::array<T, N>& y_lut,
@@ -96,10 +96,15 @@ double LobLerp(const std::array<T, N>& x_lut, const std::array<T, N>& y_lut,
   return LobLerp(x_lut.data(), y_lut.data(), N, x_in);
 }
 
+template <size_t N>
+double LobLerp(const std::array<uint16_t, N>& x_lut,
+               const std::array<uint16_t, N>& y_lut, MachT x_in) {
+  const double kX = x_in.Value() * kTableScale;
+  return LobLerp(x_lut.data(), y_lut.data(), N, kX) / kTableScale;
+}
+
 template <typename T>
-double LobQerp(const T* x_lut, const T* y_lut,
-               const size_t size,  // NOLINT
-               double x_in);
+double LobQerp(const T* x_lut, const T* y_lut, size_t size, double x_in);
 
 template <typename T, size_t N>
 double LobQerp(const std::array<T, N>& x_lut, const std::array<T, N>& y_lut,
@@ -113,15 +118,43 @@ void ResizeMachDragTable(const T* pmachs, const T* pdrags, size_t* indices,
                          size_t new_size);
 
 template <typename T, size_t OldSize, size_t NewSize>
-void ResizeMachDragTable(const std::array<T, OldSize>& machs,  // NOLINT
+void ResizeMachDragTable(const std::array<T, OldSize>& machs,
                          const std::array<T, OldSize>& drags,
-                         std::array<T, NewSize>* pnew_machs,  // NOLINT
+                         std::array<T, NewSize>* pnew_machs,
                          std::array<T, NewSize>* pnew_drags) {
   std::array<size_t, OldSize> indices = {};
   ResizeMachDragTable(machs.data(), drags.data(), indices.data(), OldSize,
                       pnew_machs->data(), pnew_drags->data(), NewSize);
 }
 
+namespace help {
+
+struct Point {
+  double x{0};
+  double y{0};
+};
+
+struct Circle {
+  Point center;
+  double radius{0};
+};
+
+double CalculatePerpendicularSlope(double slope);
+
+Circle FitCircle(const Point& p1, const Point& p2, const Point& p3);
+
+double FindAngleToPointOnCircle(Point p, Circle c);
+
+template <typename T>
+void ExpandMachDragTable(const T* pmachs, const T* pdrags, size_t old_size,
+                         T* pnew_machs, T* pnew_drags, size_t new_size);
+
+template <typename T>
+void CompressMachDragTable(const T* pmachs, const T* pdrags, size_t* indices,
+                           size_t old_size, T* pnew_machs, T* pnew_drags,
+                           size_t new_size);
+
+}  // namespace help
 }  // namespace lob
 
 // This program is free software: you can redistribute it and/or modify

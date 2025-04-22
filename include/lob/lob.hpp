@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <type_traits>
 
 #include "lob/lob_export.hpp"
 
@@ -60,7 +61,12 @@ enum class LOB_EXPORT ClockAngleT : uint8_t {
 };  // enum class ClockAngleT
 
 /// @brief Not-a-Number for floating-point values.
-static constexpr auto kNaN = std::numeric_limits<float>::quiet_NaN();
+template <typename T = float>
+constexpr T NaN() {
+  static_assert(std::is_floating_point<T>::value,
+                "NaN() only supports floating-point types");
+  return std::numeric_limits<T>::quiet_NaN();
+}
 
 /**
  * @brief Structure of input parameters consumed by the solver.
@@ -71,29 +77,29 @@ struct LOB_EXPORT Input {
   static constexpr uint8_t kTableSize{
       85};  /// @brief The size of the drag table.
   std::array<uint16_t, kTableSize> drags{};  /// @brief The drag table.
-  float table_coefficent{
-      kNaN};  /// @brief A coefficient used to scale the drag table.
-  float speed_of_sound{kNaN};  /// @brief The local speed of sound in Fps.
-  uint16_t velocity{0};        /// @brief Initial velocity of projectile in Fps.
-  float mass{kNaN};            /// @brief Mass of the projectile in pounds.
-  float optic_height{kNaN};    /// @brief Height of the optic above the bore.
-  struct Gravity {             /// @brief Gravity vector.
-    float x{kNaN};  /// @brief Acceleration ft/s/s in the x-direction.
-    float y{kNaN};  /// @brief Acceleration ft/s/s in the y-direction.
+  float table_coefficient{
+      NaN()};  /// @brief A coefficient used to scale the drag table.
+  float speed_of_sound{NaN()};  /// @brief The local speed of sound in Fps.
+  uint16_t velocity{0};       /// @brief Initial velocity of projectile in Fps.
+  float mass{NaN()};          /// @brief Mass of the projectile in pounds.
+  float optic_height{NaN()};  /// @brief Height of the optic above the bore.
+  struct Gravity {            /// @brief Gravity vector.
+    float x{NaN()};           /// @brief Acceleration ft/s/s in the x-direction.
+    float y{NaN()};           /// @brief Acceleration ft/s/s in the y-direction.
   } gravity;
-  struct Wind {     /// @brief Wind vector.
-    float x{kNaN};  /// @brief Wind speed in fps in the x-direction.
-    float z{kNaN};  /// @brief Wind speed in fps in the z-direction.
+  struct Wind {      /// @brief Wind vector.
+    float x{NaN()};  /// @brief Wind speed in fps in the x-direction.
+    float z{NaN()};  /// @brief Wind speed in fps in the z-direction.
   } wind;
-  struct Coriolis {           /// @brief Coriolis effect parameters.
-    float cos_l_sin_a{kNaN};  /// @brief 2Ωcos(latitude)sin(azimuth)
-    float sin_l{kNaN};        /// @brief 2Ωsin(latitude)
-    float cos_l_cos_a{kNaN};  /// @brief 2Ωcos(latitude)cos(azimuth)
+  struct Coriolis {            /// @brief Coriolis effect parameters.
+    float cos_l_sin_a{NaN()};  /// @brief 2Ωcos(latitude)sin(azimuth)
+    float sin_l{NaN()};        /// @brief 2Ωsin(latitude)
+    float cos_l_cos_a{NaN()};  /// @brief 2Ωcos(latitude)cos(azimuth)
   } corilolis;
   float zero_angle{
-      kNaN};  /// @brief Angle between the sight and initial trajectory.
-  float aerodynamic_jump{kNaN};  /// @brief Aerodynamic jump effect in Moa.
-  float stability_factor{kNaN};  /// @brief Miller stability factor.
+      NaN()};  /// @brief Angle between the sight and initial trajectory.
+  float aerodynamic_jump{NaN()};  /// @brief Aerodynamic jump effect in Moa.
+  float stability_factor{NaN()};  /// @brief Miller stability factor.
 };  // struct Input
 
 class Impl;
@@ -118,7 +124,7 @@ class LOB_EXPORT Builder {
    * @param value The ballistic coefficient value.
    * @return A reference to the Builder object.
    */
-  Builder& BallisticCoefficentPsi(float value);
+  Builder& BallisticCoefficientPsi(float value);
   /**
    * @brief Sets the atmosphere reference associated with ballistic coefficient.
    * @param type The atmosphere reference type.
@@ -137,12 +143,49 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& DiameterInch(float value);
+
+  /**
+   * @brief Sets the projectile meplat diameter in inches.
+   * @param value The meplat in inches.
+   * @return A reference to the Builder object.
+   */
+  Builder& MeplatDiameterInch(float value);
+
+  /**
+   * @brief Sets the projectile base diameter in inches.
+   * @param value The base diameter in inches.
+   * @return A reference to the Builder object.
+   */
+  Builder& BaseDiameterInch(float value);
+
   /**
    * @brief Sets the projectile length in inches.
    * @param value The length in inches.
    * @return A reference to the Builder object.
    */
   Builder& LengthInch(float value);
+
+  /**
+   * @brief Sets the projectile nose length in inches.
+   * @param value The nose length in inches.
+   * @return A reference to the Builder object.
+   */
+  Builder& NoseLengthInch(float value);
+
+  /**
+   * @brief Sets the projectile tail length in inches.
+   * @param value The tail length in inches.
+   * @return A reference to the Builder object.
+   */
+  Builder& TailLengthInch(float value);
+
+  /**
+   * @brief Sets the Rt/R ratio of the projectile ogive.
+   * @param value The Rt/R ratio.
+   * @return A reference to the Builder object.
+   */
+  Builder& OgiveRtR(float value);
+
   /**
    * @brief Loads a custom Mach vs Drag table for the projectile.
    * @note This is a direct alternative to using a ballistic coefficient and a
@@ -314,7 +357,7 @@ class LOB_EXPORT Builder {
   Input Build();
 
  private:
-  static constexpr size_t kBufferSize{392};
+  static constexpr size_t kBufferSize{432};
   union AlignmentT {
     double foo;
     size_t bar;
@@ -329,7 +372,7 @@ class LOB_EXPORT Builder {
 struct LOB_EXPORT Options {
   uint16_t min_speed{0};  /// @brief Minimum speed threshold in feet per second.
   uint16_t min_energy{0};  /// @brief Minimum energy threshold in foot-pounds.
-  float max_time{kNaN};    /// @brief Maximum time of flight in seconds.
+  float max_time{NaN()};   /// @brief Maximum time of flight in seconds.
   uint16_t step_size{0};   /// @brief Solver's step size in microseconds.
 };  // struct Options
 

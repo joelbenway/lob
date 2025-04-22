@@ -54,6 +54,8 @@ This project was an excuse for me to follow my curiosity and play with some tech
 
 [A Simple Accurate Formula for Calculating Saturation Vapor Pressure of Water and Ice by Jianhua Huang](https://journals.ametsoc.org/view/journals/apme/57/6/jamc-d-17-0334.1.xml) This is an academic article published in the Journal of Applied Meteorology and Climatology showcasing a nice formula. This was found while trying to avoid implementing a look up table to do the same thing.
 
+[Calculating Aerodynamic Jump for Firing Point Conditions by James Boatright & Gustavo Ruiz](https://www.researchgate.net/publication/327427851_Updated_Calculation_of_Crosswind_Aerodynamic_Jump_for_Firing_Point_Conditions-A_novel_and_practical_approach_for_computing_the_wind-induced_jump_perturbations) This paper offers a sophisticated method for calculating aerodynamic jump that promises greater accuracy but requires more inputs and calculation.
+
 # Building and Installing
 
 See the [BUILDING](BUILDING.md) document.

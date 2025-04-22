@@ -35,15 +35,15 @@ struct LobSpinTestFixture : public testing::Test {
     const float kTestZeroAngle = 6.53F;
     const float kTestOpticHeight = 2.0F;
 
-    puut->BallisticCoefficentPsi(kTestBC)
+    puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
         .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
         .DiameterInch(kTestDiameter)
         .MassGrains(kTestWeight)
         .LengthInch(kBulletLength)
         .InitialVelocityFps(kTestMuzzleVelocity)
-        .ZeroAngleMOA(kTestZeroAngle)
-        .OpticHeightInches(kTestOpticHeight);
+        .OpticHeightInches(kTestOpticHeight)
+        .ZeroAngleMOA(kTestZeroAngle);
   }
 
   void TearDown() override { puut.reset(); }
@@ -68,6 +68,7 @@ TEST_F(LobSpinTestFixture, GetSpeedOfSoundFps) {
   EXPECT_NEAR(kInput.speed_of_sound, kExpectedFps, kError);
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, SolveWithoutSpin) {
   ASSERT_NE(puut, nullptr);
   constexpr uint16_t kTestStepSize = 100;
@@ -98,7 +99,7 @@ TEST_F(LobSpinTestFixture, SolveWithoutSpin) {
       {6000, 952, 503, -1865.85F, 0.00F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -124,6 +125,7 @@ TEST_F(LobSpinTestFixture, SolveWithoutSpin) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, RightHandSpinDrift) {
   ASSERT_NE(puut, nullptr);
   constexpr float kBarrelTwist = 11.0F;
@@ -155,7 +157,7 @@ TEST_F(LobSpinTestFixture, RightHandSpinDrift) {
       {6000, 952, 503, -1865.85F, 50.74F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -181,6 +183,7 @@ TEST_F(LobSpinTestFixture, RightHandSpinDrift) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, RightHandSpinDriftFast) {
   ASSERT_NE(puut, nullptr);
   constexpr float kBarrelTwist = 9.375F;
@@ -212,7 +215,7 @@ TEST_F(LobSpinTestFixture, RightHandSpinDriftFast) {
       {6000, 952, 503, -1865.85F, 63.19F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -238,6 +241,7 @@ TEST_F(LobSpinTestFixture, RightHandSpinDriftFast) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, LeftHandSpinDrift) {
   ASSERT_NE(puut, nullptr);
   constexpr float kBarrelTwist = -11.0F;
@@ -269,7 +273,7 @@ TEST_F(LobSpinTestFixture, LeftHandSpinDrift) {
       {6000, 952, 503, -1865.85F, -50.74F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -295,6 +299,7 @@ TEST_F(LobSpinTestFixture, LeftHandSpinDrift) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, LeftHandSpinDriftFast) {
   ASSERT_NE(puut, nullptr);
   constexpr float kBarrelTwist = -9.375F;
@@ -326,7 +331,7 @@ TEST_F(LobSpinTestFixture, LeftHandSpinDriftFast) {
       {6000, 952, 503, -1865.85F, -63.19F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -352,6 +357,7 @@ TEST_F(LobSpinTestFixture, LeftHandSpinDriftFast) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, RightHandSpinDriftWithLitzAeroJump1) {
   ASSERT_NE(puut, nullptr);
   constexpr float kBarrelTwist = 11.0F;
@@ -390,7 +396,7 @@ TEST_F(LobSpinTestFixture, RightHandSpinDriftWithLitzAeroJump1) {
       {6000, 952, 503, -1852.03F, -450.26F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -416,6 +422,7 @@ TEST_F(LobSpinTestFixture, RightHandSpinDriftWithLitzAeroJump1) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, RightHandSpinDriftWithLitzAeroJump2) {
   ASSERT_NE(puut, nullptr);
   constexpr float kBarrelTwist = 11.0F;
@@ -454,7 +461,7 @@ TEST_F(LobSpinTestFixture, RightHandSpinDriftWithLitzAeroJump2) {
       {6000, 952, 503, -1879.67F, 551.74F, 3.851F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -480,6 +487,111 @@ TEST_F(LobSpinTestFixture, RightHandSpinDriftWithLitzAeroJump2) {
   }
 }
 
+struct Shot {
+  float diameter;
+  float length;
+  float mass;
+  float nose_length;
+  float tail_length;
+  float base_diameter;
+  float meplat_diameter;
+  float ogive_rtr;
+  float g1_bc;
+  uint16_t velocity;
+  float twist;
+  float litz;
+  float boatright;
+};
+
+struct CWAJParameterizedFixture : public ::testing::TestWithParam<Shot> {
+  lob::Builder builder;
+  void SetUp() override {
+    const float kZero = 5.0F;
+    const float kZWind = 10.0F;
+    builder.BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+        .BCDragFunction(lob::DragFunctionT::kG1)
+        .ZeroAngleMOA(kZero)
+        .WindHeading(lob::ClockAngleT::kIII)
+        .WindSpeedMph(kZWind);
+  }
+};
+
+TEST_P(CWAJParameterizedFixture, Boatright) {
+  const Shot kShot = GetParam();
+  const auto kA = builder.DiameterInch(kShot.diameter)
+                      .LengthInch(kShot.length)
+                      .MassGrains(kShot.mass)
+                      .NoseLengthInch(kShot.nose_length)
+                      .TailLengthInch(kShot.tail_length)
+                      .BaseDiameterInch(kShot.base_diameter)
+                      .MeplatDiameterInch(kShot.meplat_diameter)
+                      .OgiveRtR(kShot.ogive_rtr)
+                      .BallisticCoefficientPsi(kShot.g1_bc)
+                      .InitialVelocityFps(kShot.velocity)
+                      .TwistInchesPerTurn(kShot.twist)
+                      .Build();
+  EXPECT_NEAR(kA.aerodynamic_jump, kShot.boatright, .01);
+}
+
+TEST_P(CWAJParameterizedFixture, Litz) {
+  const Shot kShot = GetParam();
+  const auto kA = builder.DiameterInch(kShot.diameter)
+                      .LengthInch(kShot.length)
+                      .MassGrains(kShot.mass)
+                      .BallisticCoefficientPsi(kShot.g1_bc)
+                      .InitialVelocityFps(kShot.velocity)
+                      .TwistInchesPerTurn(kShot.twist)
+                      .Build();
+  EXPECT_NEAR(kA.aerodynamic_jump, kShot.litz, .01);
+}
+
+namespace testdata {
+// This test data was originally supposed to come from the solution data
+// presented in Calculating Aerodynamic Jump for Firing Point Conditions –
+// Boatright & Ruiz – rev. June/2018
+// However, I believe the table of solutions published to be the result of
+// errant calculations so they may not match the data here. Oddly enough the
+// Litz calculations are fine.
+
+const Shot kBarnesLRXBT{0.308F, 1.621F, 200.0F, 0.780F, 0.210F,  0.268F, 0.0F,
+                        0.80F,  0.549F, 2900U,  10.0F,  -0.324F, -0.598F};
+const Shot kCuttingEdgeHPBT{0.308F, 1.458F,  180.0F, 0.602F, 0.240F,
+                            0.249F, 0.060F,  0.70F,  0.478F, 3000U,
+                            10.0F,  -0.368F, -0.539F};
+const Shot kLehighMatchSolid{0.408F, 2.085F,  400.0F, 1.155F, 0.320F,
+                             0.326F, 0.0F,    0.78F,  0.759F, 2700U,
+                             11.0F,  -0.370F, -0.389F};
+/*const Shot kSMK168{0.308F, 1.215F, 168.0F, 0.690F, 0.1401F, 0.242F, 0.065F,
+                   0.900F, 0.426F, 2800U,  12.0,   -0.400F,  -0.424F};*/
+const Shot kGSCustomSP{0.338F, 1.771F, 232.0F, 1.036F, 0.346F,  0.238F, 0.020F,
+                       0.60F,  0.604F, 3100U,  9.0F,   -0.370F, -0.338F};
+const Shot kSMK220{0.308F, 1.489F, 220.0F, 0.672F, 0.230F,  0.234F, 0.070F,
+                   0.95F,  0.607F, 2700U,  10.0F,  -0.384F, -0.386F};
+const Shot kNoslerBT{0.277F, 1.293F, 140.0F, 0.688F, 0.080F,  0.243F, 0.00F,
+                     1.00F,  0.440F, 3100U,  9.0F,   -0.390F, -0.663F};
+const Shot kSMK80{0.224F, 1.066F, 80.0F, 0.629F, 0.135F,  0.183F, 0.060F,
+                  0.98F,  0.425F, 3100U, 7.0F,   -0.407F, -0.689F};
+const Shot kBergerBTFB{0.308F, 1.250F, 155.5F, 0.825F, 0.160F,  0.264F, 0.062F,
+                       0.96F,  0.464F, 2800U,  10.0F,  -0.437F, -0.729F};
+const Shot kBergerVLD{0.224F, 0.976F, 70.0F, 0.471F, 0.150F,  0.177F, 0.052F,
+                      0.53F,  0.371F, 3000U, 7.0F,   -0.440F, -0.678F};
+const Shot kHornadyBTHP{0.338F, 1.724F, 285.0F, 0.871F, 0.260F,  0.265F, 0.075F,
+                        0.82F,  0.696F, 2800U,  9.0F,   -0.425F, -0.634F};
+}  // namespace testdata
+
+INSTANTIATE_TEST_SUITE_P(
+    CWAJTests, CWAJParameterizedFixture,
+    ::testing::Values(
+        testdata::kBarnesLRXBT,       // Barnes .308 caliber 200 gr LRXBT
+        testdata::kCuttingEdgeHPBT,   // Cutting Edge .308 caliber 180 gr HPBT
+        testdata::kLehighMatchSolid,  // Lehigh .408 caliber 400 gr Match Solid
+        testdata::kGSCustomSP,        // GS Custom .338 caliber 232 gr SP
+        testdata::kSMK220,            // Sierra .308 caliber 220 gr MatchKing
+        testdata::kNoslerBT,       // Nosler .270 caliber 140 gr Ballistic Tip
+        testdata::kSMK80,          // Sierra .224 caliber 80 gr MatchKing
+        testdata::kBergerBTFB,     // Berger .308 caliber 155.5 gr BT FULLBORE
+        testdata::kBergerVLD,      // Berger .224 caliber 70 gr VLD
+        testdata::kHornadyBTHP));  // Hornady .338 caliber 285 gr BTHP Match
 }  // namespace tests
 
 // This program is free software: you can redistribute it and/or modify

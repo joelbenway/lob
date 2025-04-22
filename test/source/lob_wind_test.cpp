@@ -34,7 +34,7 @@ struct LobWindTestFixture : public testing::Test {
     const float kTestZeroAngle = 4.78F;
     const float kTestOpticHeight = 2.5F;
 
-    puut->BallisticCoefficentPsi(kTestBC)
+    puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
         .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
         .DiameterInch(kTestDiameter)
@@ -66,6 +66,7 @@ TEST_F(LobWindTestFixture, GetSpeedOfSoundFps) {
   EXPECT_NEAR(kInput.speed_of_sound, kExpectedFps, kError);
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithoutWind) {
   ASSERT_NE(puut, nullptr);
   constexpr uint16_t kTestStepSize = 100;
@@ -93,7 +94,7 @@ TEST_F(LobWindTestFixture, SolveWithoutWind) {
       {3000, 1021, 178, -475.40F, 0.00F, 1.913F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -119,6 +120,7 @@ TEST_F(LobWindTestFixture, SolveWithoutWind) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindIII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -149,7 +151,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIII) {
       {3000, 1021, 178, -475.40F, 142.55F, 1.913F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -175,6 +177,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIII) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -205,7 +208,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
       {3000, 1015, 176, -479.64F, 124.35F, 1.921F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -231,6 +234,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindV) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -261,7 +265,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindV) {
       {3000, 1011, 175, -482.80F, 72.18F, 1.927F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -287,6 +291,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindV) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -317,7 +322,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
       {3000, 1009, 174, -483.97F, -0.00F, 1.929F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -343,6 +348,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -373,7 +379,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
       {3000, 1011, 175, -482.80F, -72.18F, 1.927F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -399,6 +405,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -429,7 +436,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
       {3000, 1015, 176, -479.64F, -124.35F, 1.921F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -455,6 +462,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -485,7 +493,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
       {3000, 1021, 178, -475.40F, -142.55F, 1.913F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -511,6 +519,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindX) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -541,7 +550,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindX) {
       {3000, 1026, 180, -471.25F, -122.56F, 1.905F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -567,6 +576,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindX) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -597,7 +607,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
       {3000, 1031, 181, -468.21F, -70.38F, 1.899F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -623,6 +633,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -653,7 +664,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
       {3000, 1032, 182, -467.08F, 0.00F, 1.897F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -679,6 +690,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -709,7 +721,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindI) {
       {3000, 1031, 181, -468.21F, 70.38F, 1.899F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -735,6 +747,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindI) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -765,7 +778,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindII) {
       {3000, 1026, 180, -471.25F, 122.56F, 1.905F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -791,6 +804,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindII) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 20;
@@ -821,7 +835,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
       {3000, 1001, 171, -490.37F, 146.17F, 1.941F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -847,6 +861,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeMagnitude) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = -20;
@@ -877,7 +892,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeMagnitude) {
       {3000, 1001, 171, -490.37F, 146.17F, 1.941F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -903,6 +918,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeMagnitude) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeAngle) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 20;
@@ -933,7 +949,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeAngle) {
       {3000, 1001, 171, -490.37F, 146.17F, 1.941F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);

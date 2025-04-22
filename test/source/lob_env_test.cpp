@@ -35,7 +35,7 @@ struct LobEnvTestFixture : public testing::Test {
     const float kTestZeroAngle = 3.66F;
     const float kTestOpticHeight = 1.5F;
 
-    puut->BallisticCoefficentPsi(kTestBC)
+    puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
         .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
         .DiameterInch(kTestDiameter)
@@ -67,6 +67,7 @@ TEST_F(LobEnvTestFixture, GetSpeedOfSoundFps) {
   EXPECT_NEAR(kInput.speed_of_sound, kExpectedFps, kError);
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
   ASSERT_NE(puut, nullptr);
   constexpr uint16_t kTestStepSize = 100;
@@ -92,7 +93,7 @@ TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
       {3000, 1149, 454, -374.36F, 0.00F, 1.674F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(puut->Build(), &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -115,6 +116,7 @@ TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
   const int32_t kAltitude = 4500;
   const auto kInput = puut->AltitudeOfFiringSiteFt(kAltitude)
@@ -143,7 +145,7 @@ TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
       {3000, 1353, 629, -329.05F, 0.00F, 1.542F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -165,6 +167,7 @@ TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobEnvTestFixture, SolveWithTempAndAirPressure) {
   const int32_t kTemperature = 100;
   const int32_t kAirPressure = 25;
@@ -193,7 +196,7 @@ TEST_F(LobEnvTestFixture, SolveWithTempAndAirPressure) {
       {3000, 1437, 710, -313.59F, 0.00F, 1.496F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -215,6 +218,7 @@ TEST_F(LobEnvTestFixture, SolveWithTempAndAirPressure) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
   const int32_t kAltitude = 5'280;
   const int32_t kAirPressure = 30;
@@ -247,7 +251,7 @@ TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
       {3000, 1376, 651, -324.63F, 0.00F, 1.529F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -269,6 +273,7 @@ TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobEnvTestFixture, SolveWithPressureTempHumidity) {
   const int32_t kAirPressure = 29;
   const int32_t kTemperature = 75;
@@ -300,9 +305,67 @@ TEST_F(LobEnvTestFixture, SolveWithPressureTempHumidity) {
       {3000, 1227, 517, -355.17F, 0.00F, 1.619F}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::kNaN, kTestStepSize};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
   const auto kSize = lob::Solve(kInput, &kRanges, &solutions, kOptions);
   EXPECT_EQ(kSize, kSolutionLength);
+  for (size_t i = 0; i < kSolutionLength; i++) {
+    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
+    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
+                kVelocityError);
+    EXPECT_NEAR(solutions.at(i).energy, kExpected.at(i).energy, kEnergyError);
+    const double kSolutionElevationMoa =
+        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
+    const double kSolutionDeflectionMoa =
+        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
+    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
+    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
+                kTimeOfFlightError);
+  }
+}
+
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+TEST_F(LobEnvTestFixture, SolveWithWeatherStationData) {
+  const float kAltitudeOfFiringSite = 5'280.0F;
+  const float kAirPressure = 30.0F;
+  const float kAltitudeOfBarometer = 0.0F;
+  const float kTemperature = 65.0F;
+  const float kAltitudeOfThermometer = 3'598.0F;
+  const auto kInput = puut->AltitudeOfFiringSiteFt(kAltitudeOfFiringSite)
+                          .AirPressureInHg(kAirPressure)
+                          .AltitudeOfBarometerFt(kAltitudeOfBarometer)
+                          .TemperatureDegF(kTemperature)
+                          .AltitudeOfThermometerFt(kAltitudeOfThermometer)
+                          .Build();
+  constexpr uint16_t kTestStepSize = 100;
+  constexpr uint16_t kVelocityError = 1;
+  constexpr uint16_t kEnergyError = 5;
+  constexpr double kMoaError = 0.1;
+  constexpr double kTimeOfFlightError = 0.01;
+  constexpr size_t kSolutionLength = 12;
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2800, 2696, -1.50F, 0.00F, 0.000F},
+      {150, 2716, 2537, -0.15F, 0.00F, 0.054F},
+      {300, 2634, 2385, 0.02F, 0.00F, 0.110F},
+      {600, 2472, 2102, -3.47F, 0.00F, 0.228F},
+      {900, 2317, 1846, -12.66F, 0.00F, 0.353F},
+      {1200, 2168, 1615, -28.33F, 0.00F, 0.487F},
+      {1500, 2024, 1408, -51.41F, 0.00F, 0.630F},
+      {1800, 1885, 1222, -83.00F, 0.00F, 0.784F},
+      {2100, 1752, 1055, -124.38F, 0.00F, 0.949F},
+      {2400, 1622, 905, -177.12F, 0.00F, 1.127F},
+      {2700, 1497, 770, -243.08F, 0.00F, 1.320F},
+      {3000, 1376, 651, -324.63F, 0.00F, 1.529F}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
+  lob::Solve(kInput, &kRanges, &solutions, kOptions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,

@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <limits>
 
 namespace tests {
@@ -21,7 +22,7 @@ TEST(HelpersTest, AreEqual) {
   const double kDoubleB(kIntB);
   const double kDoubleC(kIntC);
   const double kInfinity(std::numeric_limits<double>::infinity());
-  const double kNan(std::numeric_limits<double>::quiet_NaN());
+  const double kNaN(std::numeric_limits<double>::quiet_NaN());
   EXPECT_TRUE(lob::AreEqual(kIntA, kIntB));
   EXPECT_TRUE(lob::AreEqual(kFloatA, kFloatB));
   EXPECT_TRUE(lob::AreEqual(kDoubleA, kDoubleB));
@@ -29,7 +30,7 @@ TEST(HelpersTest, AreEqual) {
   EXPECT_FALSE(lob::AreEqual(kFloatA, kFloatC));
   EXPECT_FALSE(lob::AreEqual(kDoubleA, kDoubleC));
   EXPECT_TRUE(lob::AreEqual(kInfinity, kInfinity));
-  EXPECT_TRUE(lob::AreEqual(kNan, kNan));
+  EXPECT_TRUE(lob::AreEqual(kNaN, kNaN));
 }
 
 TEST(HelpersTest, Modulo) {

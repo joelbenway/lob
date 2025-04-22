@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include <cstddef>
+#include <cstdint>
 
 #include "eng_units.hpp"
 #include "lob/lob.hpp"
