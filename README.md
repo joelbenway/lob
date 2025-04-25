@@ -44,7 +44,7 @@ This repo ships with a tiny example program, lobber, which demonstrates the libr
 
 :wave: I've been an embedded software engineer since 2012. I wrote lob in the precious moments after my three little girls were in bed when I should have been cleaning up. Our family currently lives in an old house in Milwaukee, Wisconsin. :sunrise:
 
-This project was an excuse for me to follow my curiosity and explore some technologies I hadn't used. It was also a way to get a little bit of my work out into the wild. As a side effect of this project I learned quite a bit about exterior ballistics. If you have a project you'd like to discuss, reach out!
+This project was an excuse for me to follow my curiosity and explore some technologies I'd been meaning to try. It was also a way to get a little bit of my work out into the wild. As a side effect of this project, I learned quite a bit about exterior ballistics. If you have a project you'd like to discuss, reach out!
 
 ## Resources
 

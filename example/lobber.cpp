@@ -97,14 +97,6 @@ void GetInput(const std::string& prompt, std::vector<float>* inputs,
   }
 }
 
-void SkipInput(std::vector<float>* inputs, std::ifstream* pfile) {
-  if (!*pfile) {
-    inputs->push_back(std::numeric_limits<float>::quiet_NaN());
-  } else {
-    inputs->push_back(Read(pfile));
-  }
-}
-
 lob::DragFunctionT ConvertDF(float input) {
   switch (static_cast<int>(std::round(input))) {
     case 2:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
@@ -194,172 +186,242 @@ bool WriteOutputFile(const std::string& file_name,
   return true;
 }
 
+enum class BuildState : uint8_t {
+  kBallisticCoefficientPsi,
+  kBCAtmosphere,
+  kBCDragFunction,
+  kDiameterInch,
+  kMeplatDiameterInch,
+  kBaseDiameterInch,
+  kLengthInch,
+  kNoseLengthInch,
+  kTailLengthInch,
+  kOgiveRtR,
+  kMachVsDragTable,
+  kMassGrains,
+  kInitialVelocityFps,
+  kOpticHeightInches,
+  kTwistInchesPerTurn,
+  kZeroAngleMOA,
+  kZeroDistanceYds,
+  kZeroImpactHeightInches,
+  kAltitudeOfFiringSiteFt,
+  kAirPressureInHg,
+  kAltitudeOfBarometerFt,
+  kTemperatureDegF,
+  kAltitudeOfThermometerFt,
+  kRelativeHumidityPercent,
+  kWindHeading,
+  kWindSpeedMph,
+  kAzimuthDeg,
+  kLatitudeDeg,
+  kRangeAngleDeg
+};
+
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 lob::Builder BuildHelper(std::ifstream* pinfile, std::vector<float>* pinputs) {
   lob::Builder builder;
-
+  BuildState state = BuildState::kBallisticCoefficientPsi;
   std::string prompt = "Enter Ballistic Coefficient in PSI";
-  GetInput(prompt, pinputs, pinfile);
-  builder.BallisticCoefficientPsi(pinputs->back());
-
-  prompt = "Enter 1 for Army Standard Metro or 2 for ICAO reference atmosphere";
-  GetInput(prompt, pinputs, pinfile);
-  builder.BCAtmosphere(ConvertAR(pinputs->back()));
-
-  prompt = "Enter 1, 2, 5, 6, 7, or 8 for associated drag function";
-  GetInput(prompt, pinputs, pinfile);
-  builder.BCDragFunction(ConvertDF(pinputs->back()));
-
-  prompt = "Enter projectile diameter in inches";
-  GetInput(prompt, pinputs, pinfile);
-  builder.DiameterInch(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    SkipInput(pinputs, pinfile);
-  } else {
-    prompt = "Enter projectile length in inches";
-    GetInput(prompt, pinputs, pinfile);
+  while (true) {
+    switch (state) {
+      case BuildState::kBallisticCoefficientPsi:
+        GetInput(prompt, pinputs, pinfile);
+        builder.BallisticCoefficientPsi(pinputs->back());
+        state = std::isnan(pinputs->back())
+                    ? BuildState::kBallisticCoefficientPsi
+                    : BuildState::kBCAtmosphere;
+        break;
+      case BuildState::kBCAtmosphere:
+        prompt =
+            "Enter 1 for Army Standard Metro or 2 for ICAO reference "
+            "atmosphere";
+        GetInput(prompt, pinputs, pinfile);
+        builder.BCAtmosphere(ConvertAR(pinputs->back()));
+        state = BuildState::kBCDragFunction;
+        break;
+      case BuildState::kBCDragFunction:
+        prompt = "Enter 1, 2, 5, 6, 7, or 8 for associated drag function";
+        GetInput(prompt, pinputs, pinfile);
+        builder.BCDragFunction(ConvertDF(pinputs->back()));
+        state = BuildState::kDiameterInch;
+        break;
+      case BuildState::kDiameterInch:
+        prompt = "Enter projectile diameter in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.DiameterInch(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kMassGrains
+                                            : BuildState::kLengthInch;
+        break;
+      case BuildState::kMeplatDiameterInch:
+        prompt = "Enter projectile meplat diameter in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.MeplatDiameterInch(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kTwistInchesPerTurn
+                                            : BuildState::kBaseDiameterInch;
+        break;
+      case BuildState::kBaseDiameterInch:
+        prompt = "Enter projectile base diameter in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.BaseDiameterInch(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kTwistInchesPerTurn
+                                            : BuildState::kTailLengthInch;
+        break;
+      case BuildState::kLengthInch:
+        prompt = "Enter projectile length in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.LengthInch(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kMassGrains
+                                            : BuildState::kNoseLengthInch;
+        break;
+      case BuildState::kNoseLengthInch:
+        prompt = "Enter projectile ogive (nose) length in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.NoseLengthInch(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kTwistInchesPerTurn
+                                            : BuildState::kMeplatDiameterInch;
+        break;
+      case BuildState::kTailLengthInch:
+        prompt = "Enter projectile boat tail length in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.TailLengthInch(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kTwistInchesPerTurn
+                                            : BuildState::kOgiveRtR;
+        break;
+      case BuildState::kOgiveRtR:
+        prompt = "Enter ogive Rt/R ratio";
+        GetInput(prompt, pinputs, pinfile);
+        builder.OgiveRtR(pinputs->back());
+        state = BuildState::kTwistInchesPerTurn;
+        break;
+      case BuildState::kMachVsDragTable:
+        break;
+      case BuildState::kMassGrains:
+        prompt = "Enter projectile mass in grains";
+        GetInput(prompt, pinputs, pinfile);
+        builder.MassGrains(pinputs->back());
+        state = BuildState::kInitialVelocityFps;
+        break;
+      case BuildState::kInitialVelocityFps:
+        prompt = "Enter initial velocity of projectile in FPS";
+        GetInput(prompt, pinputs, pinfile);
+        builder.InitialVelocityFps(
+            static_cast<uint16_t>(std::round(pinputs->back())));
+        state = std::isnan(pinputs->back()) ? BuildState::kInitialVelocityFps
+                                            : BuildState::kOpticHeightInches;
+        break;
+      case BuildState::kOpticHeightInches:
+        prompt = "Enter the rifle's optic height above bore in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.OpticHeightInches(pinputs->back());
+        state = BuildState::kZeroAngleMOA;
+        break;
+      case BuildState::kTwistInchesPerTurn:
+        prompt = "Enter rifle's barrel twist rate in inches per turn";
+        GetInput(prompt, pinputs, pinfile);
+        builder.TwistInchesPerTurn(pinputs->back());
+        state = BuildState::kMassGrains;
+        break;
+      case BuildState::kZeroAngleMOA:
+        prompt = "Enter angle in MOA between optic's line of sight and bore";
+        GetInput(prompt, pinputs, pinfile);
+        builder.ZeroAngleMOA(pinputs->back());
+        state = std::isnan(pinputs->back())
+                    ? BuildState::kZeroDistanceYds
+                    : BuildState::kAltitudeOfFiringSiteFt;
+        break;
+      case BuildState::kZeroDistanceYds:
+        prompt = "Enter range in yards of the rifle's zero";
+        GetInput(prompt, pinputs, pinfile);
+        builder.ZeroDistanceYds(pinputs->back());
+        state = std::isnan(pinputs->back())
+                    ? BuildState::kZeroAngleMOA
+                    : BuildState::kZeroImpactHeightInches;
+        break;
+      case BuildState::kZeroImpactHeightInches:
+        prompt =
+            "Enter height in inches for zero impact above zero aiming point";
+        GetInput(prompt, pinputs, pinfile);
+        builder.ZeroImpactHeightInches(pinputs->back());
+        state = BuildState::kAltitudeOfFiringSiteFt;
+        break;
+      case BuildState::kAltitudeOfFiringSiteFt:
+        prompt = "Enter altitude in feet of firing site";
+        GetInput(prompt, pinputs, pinfile);
+        builder.AltitudeOfFiringSiteFt(pinputs->back());
+        state = BuildState::kAirPressureInHg;
+        break;
+      case BuildState::kAirPressureInHg:
+        prompt = "Enter air pressure in inches of mercury";
+        GetInput(prompt, pinputs, pinfile);
+        builder.AirPressureInHg(pinputs->back());
+        state = std::isnan(pinputs->back())
+                    ? BuildState::kTemperatureDegF
+                    : BuildState::kAltitudeOfBarometerFt;
+        break;
+      case BuildState::kAltitudeOfBarometerFt:
+        prompt = "Enter altitude in feet of air pressure measurement";
+        GetInput(prompt, pinputs, pinfile);
+        builder.AltitudeOfBarometerFt(pinputs->back());
+        state = BuildState::kTemperatureDegF;
+        break;
+      case BuildState::kTemperatureDegF:
+        prompt = "Enter temperature in degrees F";
+        GetInput(prompt, pinputs, pinfile);
+        builder.TemperatureDegF(pinputs->back());
+        state = std::isnan(pinputs->back())
+                    ? BuildState::kRelativeHumidityPercent
+                    : BuildState::kAltitudeOfThermometerFt;
+        break;
+      case BuildState::kAltitudeOfThermometerFt:
+        prompt = "Enter altitude in feet of temperature measurement";
+        GetInput(prompt, pinputs, pinfile);
+        builder.AltitudeOfThermometerFt(pinputs->back());
+        state = BuildState::kRelativeHumidityPercent;
+        break;
+      case BuildState::kRelativeHumidityPercent:
+        prompt = "Enter relative humidity percent";
+        GetInput(prompt, pinputs, pinfile);
+        builder.RelativeHumidityPercent(pinputs->back());
+        state = BuildState::kWindSpeedMph;
+        break;
+      case BuildState::kWindHeading:
+        prompt = "Enter wind heading as a clock direction 1-12";
+        GetInput(prompt, pinputs, pinfile);
+        builder.WindHeading(ConvertCA(pinputs->back()));
+        state = BuildState::kAzimuthDeg;
+        break;
+      case BuildState::kWindSpeedMph:
+        prompt = "Enter wind speed as Mph";
+        GetInput(prompt, pinputs, pinfile);
+        builder.WindSpeedFps(pinputs->back());
+        if (std::isnan(pinputs->back()) ||
+            pinputs->back() < std::numeric_limits<float>::epsilon()) {
+          state = BuildState::kAzimuthDeg;
+        } else {
+          state = BuildState::kWindHeading;
+        }
+        break;
+      case BuildState::kAzimuthDeg:
+        prompt = "Enter azimuth in degrees";
+        GetInput(prompt, pinputs, pinfile);
+        builder.AzimuthDeg(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kRangeAngleDeg
+                                            : BuildState::kLatitudeDeg;
+        break;
+      case BuildState::kLatitudeDeg:
+        prompt = "Enter latitude in degrees";
+        GetInput(prompt, pinputs, pinfile);
+        builder.LatitudeDeg(pinputs->back());
+        state = BuildState::kRangeAngleDeg;
+        break;
+      case BuildState::kRangeAngleDeg:
+        prompt = "Enter the angle of incline (or decline) in degrees";
+        GetInput(prompt, pinputs, pinfile);
+        builder.RangeAngleDeg(pinputs->back());
+        return builder;
+    }
   }
-  builder.LengthInch(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    SkipInput(pinputs, pinfile);
-  } else {
-    prompt = "Enter rifle's barrel twist rate in inches per turn";
-    GetInput(prompt, pinputs, pinfile);
-  }
-  builder.TwistInchesPerTurn(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    SkipInput(pinputs, pinfile);
-  } else {
-    prompt = "Enter projectile ogive (nose) length in inches";
-    GetInput(prompt, pinputs, pinfile);
-  }
-  builder.NoseLengthInch(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    SkipInput(pinputs, pinfile);
-  } else {
-    prompt = "Enter projectile meplat diameter in inches";
-    GetInput(prompt, pinputs, pinfile);
-  }
-  builder.MeplatDiameterInch(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    SkipInput(pinputs, pinfile);
-  } else {
-    prompt = "Enter projectile boat tail length in inches";
-    GetInput(prompt, pinputs, pinfile);
-  }
-  builder.TailLengthInch(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    SkipInput(pinputs, pinfile);
-  } else {
-    prompt = "Enter projectile base diameter in inches";
-    GetInput(prompt, pinputs, pinfile);
-  }
-  builder.BaseDiameterInch(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    SkipInput(pinputs, pinfile);
-  } else {
-    prompt = "Enter ogive Rt/R ratio";
-    GetInput(prompt, pinputs, pinfile);
-  }
-  builder.OgiveRtR(pinputs->back());
-
-  prompt = "Enter projectile mass in grains";
-  GetInput(prompt, pinputs, pinfile);
-  builder.MassGrains(pinputs->back());
-
-  prompt = "Enter initial velocity of projectile in FPS";
-  GetInput(prompt, pinputs, pinfile);
-  auto velocity = static_cast<uint16_t>(std::round(pinputs->back()));
-  builder.InitialVelocityFps(velocity);
-
-  prompt = "Enter the rifle's optic height above bore in inches";
-  GetInput(prompt, pinputs, pinfile);
-  builder.OpticHeightInches(pinputs->back());
-
-  prompt = "Enter angle in MOA between optic's line of sight and bore";
-  GetInput(prompt, pinputs, pinfile);
-  builder.ZeroAngleMOA(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    prompt = "Enter range in yards of the rifle's zero";
-    GetInput(prompt, pinputs, pinfile);
-  } else {
-    SkipInput(pinputs, pinfile);
-  }
-  builder.ZeroDistanceYds(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    SkipInput(pinputs, pinfile);
-  } else {
-    prompt = "Enter height in inches for zero impact above zero aiming point";
-    GetInput(prompt, pinputs, pinfile);
-  }
-  builder.ZeroImpactHeightInches(pinputs->back());
-
-  prompt = "Enter altitude in feet of firing site";
-  GetInput(prompt, pinputs, pinfile);
-  builder.AltitudeOfFiringSiteFt(pinputs->back());
-
-  prompt = "Enter air pressure in inches of mercury";
-  GetInput(prompt, pinputs, pinfile);
-  builder.AirPressureInHg(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    SkipInput(pinputs, pinfile);
-  } else {
-    prompt = "Enter altitude in feet of air pressure measurement";
-    GetInput(prompt, pinputs, pinfile);
-  }
-  builder.AltitudeOfBarometerFt(pinputs->back());
-
-  prompt = "Enter temperature in degrees F";
-  GetInput(prompt, pinputs, pinfile);
-  builder.TemperatureDegF(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    SkipInput(pinputs, pinfile);
-  } else {
-    prompt = "Enter altitude in feet of temperature measurement";
-    GetInput(prompt, pinputs, pinfile);
-  }
-  builder.AltitudeOfThermometerFt(pinputs->back());
-
-  prompt = "Enter relative humidity percent";
-  GetInput(prompt, pinputs, pinfile);
-  builder.RelativeHumidityPercent(pinputs->back());
-
-  prompt = "Enter wind speed as Mph";
-  GetInput(prompt, pinputs, pinfile);
-  builder.WindSpeedFps(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    SkipInput(pinputs, pinfile);
-  } else {
-    prompt = "Enter wind heading as a clock direction 1-12";
-    GetInput(prompt, pinputs, pinfile);
-  }
-  builder.WindHeading(ConvertCA(pinputs->back()));
-
-  prompt = "Enter azimuth in degrees";
-  GetInput(prompt, pinputs, pinfile);
-  builder.AzimuthDeg(pinputs->back());
-
-  if (std::isnan(pinputs->back())) {
-    SkipInput(pinputs, pinfile);
-  } else {
-    prompt = "Enter latitude in degrees";
-    GetInput(prompt, pinputs, pinfile);
-  }
-  builder.LatitudeDeg(pinputs->back());
-
-  return builder;
 }
 
 std::vector<uint32_t> RangeHelper(std::ifstream* pinfile,
@@ -450,7 +512,7 @@ std::unique_ptr<SolverData> Wizard(const std::string& infile,
   lob::Builder builder = BuildHelper(pfile, pinputs);
   pwizard->input = builder.Build();
   pwizard->ranges = RangeHelper(pfile, pinputs);
-  pwizard->solutions.reserve(pwizard->ranges.size());
+  pwizard->solutions.resize(pwizard->ranges.size());
   pwizard->options = OptionsHelper(pfile, pinputs);
 
   if (!outfile.empty() && !file) {
@@ -547,6 +609,7 @@ int main(int argc, char* argv[]) {
 
   while (std::isnan(psolver_data->input.table_coefficient)) {
     psolver_data.reset();
+    input_file.clear();  // prevent bad file loop
     std::cout << "\nOOPS! INVALID DATA, let's start over.\n";
     psolver_data = example::Wizard(input_file, output_file);
   }
