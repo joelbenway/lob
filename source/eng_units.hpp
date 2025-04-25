@@ -17,7 +17,13 @@ namespace lob {
 template <typename E, E U, typename T>
 class StrongT {
  public:
-  constexpr explicit StrongT<E, U, T>(T value) : value_(value) {}
+  constexpr explicit StrongT(T value) : value_(value) {}
+  template <typename V, std::enable_if_t<std::is_arithmetic<V>::value &&
+                                             !std::is_same<V, T>::value &&
+                                             !(std::is_unsigned<T>::value &&
+                                               !std::is_unsigned<V>::value),
+                                         bool> = true>
+  constexpr explicit StrongT(V value) : value_(static_cast<T>(value)) {}
   template <E OtherUnit>
   constexpr explicit StrongT(const StrongT<E, OtherUnit, T>& other,
                              T conversion_factor)
@@ -34,16 +40,16 @@ class StrongT {
                   "Units must share the same enum type");
     static_assert(U != OtherUnit, "Units must be of different types");
   }
-  constexpr StrongT<E, U, T>(const StrongT<E, U, T>& other) = default;
-  constexpr StrongT<E, U, T>(StrongT<E, U, T>&& other) noexcept = default;
+  constexpr StrongT(const StrongT& other) = default;
+  constexpr StrongT(StrongT&& other) noexcept = default;
   ~StrongT() = default;
-  constexpr StrongT<E, U, T>& operator=(const StrongT<E, U, T>& rhs) {
+  constexpr StrongT& operator=(const StrongT& rhs) {
     if (this != &rhs) {
       value_ = rhs.value_;
     }
     return *this;
   }
-  constexpr StrongT<E, U, T>& operator=(StrongT<E, U, T>&& rhs) noexcept {
+  constexpr StrongT& operator=(StrongT&& rhs) noexcept {
     if (this != &rhs) {
       value_ = rhs.value_;
       rhs.value_ = 0;
@@ -59,110 +65,110 @@ class StrongT {
   constexpr operator StrongT<E, Other, T>() const;
 
   // Arithmetic operators
-  constexpr StrongT<E, U, T> operator+(const StrongT<E, U, T>& rhs) const {
-    return StrongT<E, U, T>(value_ + rhs.value_);
+  constexpr StrongT operator+(const StrongT& rhs) const {
+    return StrongT(value_ + rhs.value_);
   }
-  constexpr StrongT<E, U, T> operator-(const StrongT<E, U, T>& rhs) const {
-    return StrongT<E, U, T>(value_ - rhs.value_);
+  constexpr StrongT operator-(const StrongT& rhs) const {
+    return StrongT(value_ - rhs.value_);
   }
-  constexpr StrongT<E, U, T> operator*(const StrongT<E, U, T>& rhs) const {
-    return StrongT<E, U, T>(value_ * rhs.value_);
+  constexpr StrongT operator*(const StrongT& rhs) const {
+    return StrongT(value_ * rhs.value_);
   }
-  constexpr StrongT<E, U, T> operator/(const StrongT<E, U, T>& rhs) const {
-    return StrongT<E, U, T>(value_ / rhs.value_);
+  constexpr StrongT operator/(const StrongT& rhs) const {
+    return StrongT(value_ / rhs.value_);
   }
-  constexpr StrongT<E, U, T> operator+(const T& rhs) const {
-    return StrongT<E, U, T>(value_ + rhs);
+  constexpr StrongT operator+(const T& rhs) const {
+    return StrongT(value_ + rhs);
   }
-  constexpr StrongT<E, U, T> operator-(const T& rhs) const {
-    return StrongT<E, U, T>(value_ - rhs);
+  constexpr StrongT operator-(const T& rhs) const {
+    return StrongT(value_ - rhs);
   }
-  constexpr StrongT<E, U, T> operator*(const T& rhs) const {
-    return StrongT<E, U, T>(value_ * rhs);
+  constexpr StrongT operator*(const T& rhs) const {
+    return StrongT(value_ * rhs);
   }
-  constexpr StrongT<E, U, T> operator/(const T& rhs) const {
-    return StrongT<E, U, T>(value_ / rhs);
+  constexpr StrongT operator/(const T& rhs) const {
+    return StrongT(value_ / rhs);
   }
 
   // Modulo operator
-  constexpr StrongT<E, U, T> operator%(const StrongT<E, U, T>& rhs) const {
-    return StrongT<E, U, T>(Modulo(value_, rhs.value_));
+  constexpr StrongT operator%(const StrongT& rhs) const {
+    return StrongT(Modulo(value_, rhs.value_));
   }
-  constexpr StrongT<E, U, T> operator%(const T& rhs) const {
-    return StrongT<E, U, T>(Modulo(value_, rhs));
+  constexpr StrongT operator%(const T& rhs) const {
+    return StrongT(Modulo(value_, rhs));
   }
 
   // Arithmetic assignment operators
-  constexpr StrongT<E, U, T>& operator+=(const StrongT<E, U, T>& rhs) {
+  constexpr StrongT& operator+=(const StrongT& rhs) {
     value_ += rhs.value_;
     return *this;
   }
-  constexpr StrongT<E, U, T>& operator-=(const StrongT<E, U, T>& rhs) {
+  constexpr StrongT& operator-=(const StrongT& rhs) {
     value_ -= rhs.value_;
     return *this;
   }
-  constexpr StrongT<E, U, T>& operator*=(const StrongT<E, U, T>& rhs) {
+  constexpr StrongT& operator*=(const StrongT& rhs) {
     value_ *= rhs.value_;
     return *this;
   }
-  constexpr StrongT<E, U, T>& operator/=(const StrongT<E, U, T>& rhs) {
+  constexpr StrongT& operator/=(const StrongT& rhs) {
     value_ /= rhs.value_;
     return *this;
   }
-  constexpr StrongT<E, U, T>& operator+=(const T& rhs) {
+  constexpr StrongT& operator+=(const T& rhs) {
     value_ += rhs;
     return *this;
   }
-  constexpr StrongT<E, U, T>& operator-=(const T& rhs) {
+  constexpr StrongT& operator-=(const T& rhs) {
     value_ -= rhs;
     return *this;
   }
-  constexpr StrongT<E, U, T>& operator*=(const T& rhs) {
+  constexpr StrongT& operator*=(const T& rhs) {
     value_ *= rhs;
     return *this;
   }
-  constexpr StrongT<E, U, T>& operator/=(const T& rhs) {
+  constexpr StrongT& operator/=(const T& rhs) {
     value_ /= rhs;
     return *this;
   }
 
   // Increment operators
-  constexpr StrongT<E, U, T>& operator++() {
+  constexpr StrongT& operator++() {
     ++value_;
     return *this;
   }
-  constexpr StrongT<E, U, T> operator++(int) & {
-    StrongT<E, U, T> temp(*this);
+  constexpr StrongT operator++(int) & {
+    StrongT temp(*this);
     ++value_;
     return temp;
   }
-  constexpr StrongT<E, U, T>& operator--() {
+  constexpr StrongT& operator--() {
     --value_;
     return *this;
   }
-  constexpr StrongT<E, U, T> operator--(int) & {
-    StrongT<E, U, T> temp(*this);
+  constexpr StrongT operator--(int) & {
+    StrongT temp(*this);
     --value_;
     return temp;
   }
 
   // Comparison operators
-  constexpr bool operator==(const StrongT<E, U, T>& rhs) const {
+  constexpr bool operator==(const StrongT& rhs) const {
     return AreEqual(value_, rhs.value_);
   }
-  constexpr bool operator!=(const StrongT<E, U, T>& rhs) const {
+  constexpr bool operator!=(const StrongT& rhs) const {
     return !AreEqual(value_, rhs.value_);
   }
-  constexpr bool operator<(const StrongT<E, U, T>& rhs) const {
+  constexpr bool operator<(const StrongT& rhs) const {
     return value_ < rhs.value_;
   }
-  constexpr bool operator>(const StrongT<E, U, T>& rhs) const {
+  constexpr bool operator>(const StrongT& rhs) const {
     return value_ > rhs.value_;
   }
-  constexpr bool operator<=(const StrongT<E, U, T>& rhs) const {
+  constexpr bool operator<=(const StrongT& rhs) const {
     return value_ <= rhs.value_;
   }
-  constexpr bool operator>=(const StrongT<E, U, T>& rhs) const {
+  constexpr bool operator>=(const StrongT& rhs) const {
     return value_ >= rhs.value_;
   }
 
@@ -228,9 +234,7 @@ class StrongT {
     return StrongT(std::max(a.value_, b.value_));
   }
 
-  constexpr StrongT<E, U, T> Inverse() const {
-    return StrongT<E, U, T>(T(1) / value_);
-  }
+  constexpr StrongT Inverse() const { return StrongT(T(1) / value_); }
   constexpr T Value() const { return value_; }
   constexpr float Float() const { return static_cast<float>(value_); }
 

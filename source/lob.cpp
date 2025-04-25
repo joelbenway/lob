@@ -367,14 +367,13 @@ void SolveStep(SpvT* ps, SecT* pt, const Input& input, uint16_t step_size = 0) {
   *pt += dt;
 }
 
-void ValidateBuild(const Impl& impl) {
-  assert(!std::isnan(impl.ballistic_coefficient_psi));
-  assert(!std::isnan(impl.build.velocity));
-  assert(!std::isnan(impl.diameter_in));
-  assert(!std::isnan(impl.build.mass));
-  assert(!std::isnan(impl.zero_distance_ft) ||
-         !std::isnan(impl.build.zero_angle));
-  static_cast<void>(impl);  // argument is unused in Release build
+bool ValidateBuild(const Impl& impl) {
+  const bool kBCisOk = !std::isnan(impl.ballistic_coefficient_psi);
+  const bool kVelocityIsOk = impl.build.velocity > 0;
+  const bool kZeroIsOk =
+      !std::isnan(impl.zero_distance_ft) || !std::isnan(impl.build.zero_angle);
+
+  return (kBCisOk && kVelocityIsOk && kZeroIsOk);
 }
 
 void BuildEnvironment(Impl* pimpl) {
@@ -487,13 +486,12 @@ void BuildWind(Impl* pimpl) {
 }
 
 void BuildTwistEffects(Impl* pimpl) {
-  assert(!std::isnan(pimpl->diameter_in));
-  assert(!std::isnan(pimpl->build.velocity));
+  assert(pimpl->build.velocity > 0);
   assert(!std::isnan(pimpl->ballistic_coefficient_psi));
   assert(!std::isnan(pimpl->build.speed_of_sound));
   assert(!std::isnan(pimpl->build.wind.z));
 
-  if (!std::isnan(pimpl->length_in) &&
+  if (!std::isnan(pimpl->diameter_in) && !std::isnan(pimpl->length_in) &&
       !std::isnan(pimpl->twist_inches_per_turn) &&
       !std::isnan(pimpl->build.mass)) {
     const double kFtp = CalculateMillerTwistRuleCorrectionFactor(
@@ -571,6 +569,8 @@ void BuildZeroAngle(Impl* pimpl) {
   }
 
   assert(!std::isnan(pimpl->zero_distance_ft));
+  assert(pimpl->build.velocity > 0);
+  assert(!std::isnan(pimpl->build.aerodynamic_jump));
 
   if (std::isnan(pimpl->zero_impact_height)) {
     pimpl->zero_impact_height = FeetT(0.0);
@@ -615,23 +615,27 @@ void BuildZeroAngle(Impl* pimpl) {
 }  // namespace
 
 Input Builder::Build() {
-  // This order matters
-  ValidateBuild(*pimpl_);
-  BuildEnvironment(pimpl_);
-  BuildTable(pimpl_);
-  BuildWind(pimpl_);
-  if (std::isnan(pimpl_->build.optic_height)) {
-    constexpr FeetT kDefaultOpticHeight = InchT(1.5);
-    pimpl_->build.optic_height = kDefaultOpticHeight.Float();
+  if (ValidateBuild(*pimpl_)) {
+    // This order matters
+    BuildEnvironment(pimpl_);
+    BuildTable(pimpl_);
+    BuildWind(pimpl_);
+    if (std::isnan(pimpl_->build.optic_height)) {
+      constexpr FeetT kDefaultOpticHeight = InchT(1.5);
+      pimpl_->build.optic_height = kDefaultOpticHeight.Float();
+    }
+    BuildTwistEffects(pimpl_);
+    BuildCoriolis(pimpl_);
+    BuildZeroAngle(pimpl_);
   }
-  BuildTwistEffects(pimpl_);
-  BuildCoriolis(pimpl_);
-  BuildZeroAngle(pimpl_);
   return pimpl_->build;
 }
 
 size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
              size_t size, const Options& options) {
+  if (std::isnan(in.table_coefficient)) {
+    return 0;
+  }
   const auto kAngle =
       RadiansT(MoaT(in.zero_angle + in.aerodynamic_jump)).Value();
   SpvT s(CartesianT<FeetT>(FeetT(0.0)),
@@ -643,6 +647,10 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
   while (true) {
     SolveStep(&s, &t, in, options.step_size);
     const FpsT kVelocity = s.V().Magnitude();
+    const FtLbsT kEnergy =
+        std::isnan(in.mass)
+            ? FtLbsT(0.0)
+            : CalculateKineticEnergy(kVelocity, SlugT(LbsT(in.mass)));
 
     if (s.P().X() >= FeetT(pranges[index])) {
       InchT spin_drift(0);
@@ -651,10 +659,7 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
       }
       pouts[index].range = ToU32(s.P().X().Value());
       pouts[index].velocity = ToU16(kVelocity.Value());
-      if (!std::isnan(in.mass)) {
-        pouts[index].energy = ToU32(
-            CalculateKineticEnergy(kVelocity, SlugT(LbsT(in.mass))).Value());
-      }
+      pouts[index].energy = ToU32(kEnergy.Value());
       pouts[index].elevation =
           InchT(s.P().Y() - FeetT(in.optic_height)).Float();
       pouts[index].deflection = InchT(InchT(s.P().Z()) + spin_drift).Float();
@@ -668,8 +673,7 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
     if (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0F)) {
       break;
     }
-    if (FtLbsT(options.min_energy) >
-        CalculateKineticEnergy(kVelocity, LbsT(in.mass))) {
+    if ((FtLbsT(options.min_energy) > kEnergy) && (options.min_energy > 0U)) {
       break;
     }
     if (kVelocity < FpsT(options.min_speed)) {

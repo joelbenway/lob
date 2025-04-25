@@ -109,13 +109,15 @@ void ExpandMachDragTable(const T* pmachs, const T* pdrags, size_t old_size,
       }
     }
     if (maxdex == 0) {
-      pnew_machs[old_size + i] = static_cast<T>(
-          (static_cast<double>(pnew_machs[gapdex]) + pnew_machs[gapdex - 1]) /
-          2);
+      pnew_machs[old_size + i] =
+          static_cast<T>((static_cast<double>(pnew_machs[gapdex]) +
+                          static_cast<double>(pnew_machs[gapdex - 1])) /
+                         2);
     } else {
-      pnew_machs[old_size + i] = static_cast<T>(
-          (static_cast<double>(pnew_machs[maxdex]) + pnew_machs[maxdex - 1]) /
-          2);
+      pnew_machs[old_size + i] =
+          static_cast<T>((static_cast<double>(pnew_machs[maxdex]) +
+                          static_cast<double>(pnew_machs[maxdex - 1])) /
+                         2);
     }
     std::sort(pnew_machs, pnew_machs + old_size + 1U + i);
   }
