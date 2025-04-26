@@ -13,15 +13,15 @@ set(
     "; separated command to generate a trace for the 'coverage' target"
 )
 
-set(
-    COVERAGE_MOD_COMMAND
-    lcov -r "${PROJECT_BINARY_DIR}/coverage.info"
-    "${PROJECT_BINARY_DIR}/example/*"
-    "${PROJECT_BINARY_DIR}/test/*"
-    -o "${PROJECT_BINARY_DIR}/coverage.info"
-    CACHE STRING
-    "; separated command to modify the trace for the 'coverage' target"
-)
+# set(
+#     COVERAGE_MOD_COMMAND
+#     lcov -r "${PROJECT_BINARY_DIR}/coverage.info"
+#     "${PROJECT_BINARY_DIR}/example/*"
+#     "${PROJECT_BINARY_DIR}/test/*"
+#     -o "${PROJECT_BINARY_DIR}/coverage.info"
+#     CACHE STRING
+#     "; separated command to modify the trace for the 'coverage' target"
+# )
 
 set(
     COVERAGE_HTML_COMMAND
@@ -38,7 +38,7 @@ set(
 add_custom_target(
     coverage
     COMMAND ${COVERAGE_TRACE_COMMAND}
-    COMMAND ${COVERAGE_MOD_COMMAND}
+    # COMMAND ${COVERAGE_MOD_COMMAND}
     COMMAND ${COVERAGE_HTML_COMMAND}
     COMMENT "Generating coverage report"
     VERBATIM
