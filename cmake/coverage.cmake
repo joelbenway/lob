@@ -7,6 +7,8 @@ set(
     lcov -c -q
     -o "${PROJECT_BINARY_DIR}/coverage.info"
     -d "${PROJECT_BINARY_DIR}"
+    --include "${PROJECT_BINARY_DIR}/include/lob/*"
+    --include "${PROJECT_BINARY_DIR}/source/*"
     CACHE STRING
     "; separated command to generate a trace for the 'coverage' target"
 )
@@ -36,7 +38,7 @@ set(
 add_custom_target(
     coverage
     COMMAND ${COVERAGE_TRACE_COMMAND}
-    #COMMAND ${COVERAGE_MOD_COMMAND}
+    COMMAND ${COVERAGE_MOD_COMMAND}
     COMMAND ${COVERAGE_HTML_COMMAND}
     COMMENT "Generating coverage report"
     VERBATIM
