@@ -16,8 +16,8 @@ set(
 set(
     COVERAGE_MOD_COMMAND
     lcov -r "${PROJECT_BINARY_DIR}/coverage.info"
-    "${PROJECT_BINARY_DIR}/example/*"
-    "${PROJECT_BINARY_DIR}/test/*"
+    "${PROJECT_SOURCE_DIR}/example/*"
+    "${PROJECT_SOURCE_DIR}/test/*"
     -o "${PROJECT_BINARY_DIR}/coverage.info"
     CACHE STRING
     "; separated command to modify the trace for the 'coverage' target"
