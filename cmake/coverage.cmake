@@ -36,7 +36,7 @@ set(
 add_custom_target(
     coverage
     COMMAND ${COVERAGE_TRACE_COMMAND}
-    COMMAND ${COVERAGE_MOD_COMMAND}
+    #COMMAND ${COVERAGE_MOD_COMMAND}
     COMMAND ${COVERAGE_HTML_COMMAND}
     COMMENT "Generating coverage report"
     VERBATIM
