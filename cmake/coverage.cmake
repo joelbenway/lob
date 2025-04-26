@@ -7,7 +7,7 @@ set(
     lcov -c -q
     -o "${PROJECT_BINARY_DIR}/coverage.info"
     -d "${PROJECT_BINARY_DIR}"
-    lcov -r "${PROJECT_BINARY_DIR}/coverage.info"
+    && lcov -r "${PROJECT_BINARY_DIR}/coverage.info"
     "${PROJECT_BINARY_DIR}/example/*"
     "${PROJECT_BINARY_DIR}/test/*"
     -o "${PROJECT_BINARY_DIR}/coverage.info"
