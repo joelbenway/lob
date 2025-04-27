@@ -237,6 +237,12 @@ class StrongT {
   constexpr StrongT Inverse() const { return StrongT(T(1) / value_); }
   constexpr T Value() const { return value_; }
   constexpr float Float() const { return static_cast<float>(value_); }
+  constexpr uint32_t U32() const {
+    return value_ < 0 ? 0U : static_cast<uint32_t>(std::round(value_));
+  };
+  constexpr uint16_t U16() const {
+    return value_ < 0 ? 0U : static_cast<uint16_t>(std::round(value_));
+  };
 
  private:
   T value_;

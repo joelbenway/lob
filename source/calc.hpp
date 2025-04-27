@@ -53,6 +53,8 @@ SqInT CalculateProjectileReferenceArea(InchT bullet_diameter);
 
 FtLbsT CalculateKineticEnergy(FpsT velocity, SlugT mass);
 
+FpsT CalculateVelocityFromKineticEnergy(FtLbsT energy, SlugT mass);
+
 PmsiT CalculateSectionalDensity(InchT bullet_diameter, LbsT bullet_mass);
 
 namespace cwaj {

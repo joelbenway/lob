@@ -25,21 +25,6 @@ namespace lob {
 
 const char* Version() { return kProjectVersion; }
 
-namespace {
-
-template <typename T>
-constexpr uint16_t ToU16(T x) {
-  return static_cast<uint16_t>(std::round(x));
-}
-
-template <typename T>
-constexpr uint32_t ToU32(T x) {
-  return static_cast<uint32_t>(std::round(x));
-}
-
-constexpr float kHundredYardsInFeet = FeetT(YardT(100)).Float();
-}  // namespace
-
 class Impl {
   friend class Builder;
 
@@ -193,7 +178,7 @@ Builder& Builder::DiameterInch(float value) {
 }
 
 Builder& Builder::InitialVelocityFps(uint16_t value) {
-  pimpl_->build.velocity = ToU16(value);
+  pimpl_->build.velocity = FpsT(value).U16();
   return *this;
 }
 
@@ -211,8 +196,8 @@ Builder& Builder::MachVsDragTable(const float* pmachs, const float* pdrags,
                                   size_t size) {
   for (size_t i = 0; i < kTableSize; i++) {
     const auto kMach = static_cast<double>(kMachs.at(i)) / kTableScale;
-    const auto kDrag =
-        ToU16(LobLerp(pmachs, pdrags, size, kMach) * kTableScale);
+    const auto kDrag = static_cast<uint16_t>(
+        std::round(LobLerp(pmachs, pdrags, size, kMach) * kTableScale));
     pimpl_->build.drags.at(i) = kDrag;
   }
   pimpl_->pdrag_lut = &pimpl_->build.drags;
@@ -631,6 +616,34 @@ Input Builder::Build() {
   return pimpl_->build;
 }
 
+namespace {
+FpsT CalculateMinimumVelocity(FpsT min_speed, FtLbsT min_energy, SlugT mass) {
+  return std::max(CalculateVelocityFromKineticEnergy(min_energy, mass),
+                  min_speed);
+}
+}  // namespace
+
+namespace {
+Output Save(FeetT range, FpsT velocity, InchT elevation, InchT deflection,
+            SecT time_of_flight, GrainT mass, float stability) {
+  Output out;
+  const FtLbsT kEnergy = std::isnan(mass)
+                             ? FtLbsT(0.0)
+                             : CalculateKineticEnergy(velocity, SlugT(mass));
+  const InchT kSpinDrift =
+      std::isnan(stability)
+          ? InchT(0.0)
+          : CalculateLitzGyroscopicSpinDrift(stability, time_of_flight);
+  out.range = range.U32();
+  out.velocity = velocity.U16();
+  out.energy = kEnergy.U32();
+  out.elevation = elevation.Float();
+  out.deflection = (deflection + kSpinDrift).Float();
+  out.time_of_flight = time_of_flight.Float();
+  return out;
+}
+}  // namespace
+
 size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
              size_t size, const Options& options) {
   if (std::isnan(in.table_coefficient)) {
@@ -641,50 +654,45 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
   SpvT s(CartesianT<FeetT>(FeetT(0.0)),
          CartesianT<FpsT>(FpsT(in.velocity) * std::cos(kAngle),
                           FpsT(in.velocity) * std::sin(kAngle), FpsT(0.0)));
+  const FpsT kMinimumVelocity = CalculateMinimumVelocity(
+      FpsT(options.min_speed), FtLbsT(options.min_energy),
+      SlugT(LbsT(in.mass)));
   SecT t(0.0);
   size_t index = 0;
 
   while (true) {
     SolveStep(&s, &t, in, options.step_size);
     const FpsT kVelocity = s.V().Magnitude();
-    const FtLbsT kEnergy =
-        std::isnan(in.mass)
-            ? FtLbsT(0.0)
-            : CalculateKineticEnergy(kVelocity, SlugT(LbsT(in.mass)));
-
     if (s.P().X() >= FeetT(pranges[index])) {
-      InchT spin_drift(0);
-      if (!std::isnan(in.stability_factor)) {
-        spin_drift = CalculateLitzGyroscopicSpinDrift(in.stability_factor, t);
-      }
-      pouts[index].range = ToU32(s.P().X().Value());
-      pouts[index].velocity = ToU16(kVelocity.Value());
-      pouts[index].energy = ToU32(kEnergy.Value());
-      pouts[index].elevation =
-          InchT(s.P().Y() - FeetT(in.optic_height)).Float();
-      pouts[index].deflection = InchT(InchT(s.P().Z()) + spin_drift).Float();
-      pouts[index].time_of_flight = t.Float();
+      pouts[index] =
+          Save(s.P().X(), kVelocity, InchT(s.P().Y() - FeetT(in.optic_height)),
+               InchT(s.P().Z()), t, LbsT(in.mass), in.stability_factor);
       index++;
     }
 
     if (index >= size) {
       break;
     }
-    if (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0F)) {
-      break;
-    }
-    if ((FtLbsT(options.min_energy) > kEnergy) && (options.min_energy > 0U)) {
-      break;
-    }
-    if (kVelocity < FpsT(options.min_speed)) {
-      break;
-    }
-    if (s.V().Y() > s.V().X() * 4) {
+
+    const bool kTimeMaxLimit =
+        (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0F));
+    const bool kVelocityLimit = (kVelocity < kMinimumVelocity);
+    const bool kFallLimit = (s.V().Y() > s.V().X() * 3);
+
+    if (kTimeMaxLimit || kVelocityLimit || kFallLimit) {
+      pouts[index] =
+          Save(s.P().X(), kVelocity, InchT(s.P().Y() - FeetT(in.optic_height)),
+               InchT(s.P().Z()), t, LbsT(in.mass), in.stability_factor);
+      index++;
       break;
     }
   }
   return index;
 }
+
+namespace {
+constexpr float kHundredYardsInFeet = FeetT(YardT(100)).Float();
+}  // namespace
 
 // Angle
 double MoaToMil(double value) { return MilT(MoaT(value)).Value(); }

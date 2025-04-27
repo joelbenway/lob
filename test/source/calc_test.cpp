@@ -296,6 +296,14 @@ TEST(CalcTests, CalculateKineticEnergy) {
               3596.5, 0.1);
 }
 
+TEST(CalcTests, CalculateVelocityFromKineticEnergy) {
+  const auto kVelocity = lob::FpsT(3'000);
+  const auto kMass = lob::GrainT(180.0);
+  const auto kEnergy = CalculateKineticEnergy(kVelocity, kMass);
+  const auto kResult = lob::CalculateVelocityFromKineticEnergy(kEnergy, kMass);
+  EXPECT_DOUBLE_EQ(kResult.Value(), kVelocity.Value());
+}
+
 TEST(CalcTests, CalculateSectionalDensity) {
   EXPECT_NEAR(
       CalculateSectionalDensity(lob::InchT(.224), lob::GrainT(77)).Value(),

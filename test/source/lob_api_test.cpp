@@ -23,6 +23,71 @@ TEST(LobAPITest, Version) {
   EXPECT_EQ(2, dot_count) << version_string;
 }
 
+TEST(LobAPITest, SolverSkipsPoorlyFormedInput) {
+  const lob::Input kA;
+  const uint32_t kB = 100U;
+  lob::Output out;
+  const lob::Options kC;
+  const auto kSize = lob::Solve(kA, &kB, &out, 1U, kC);
+  EXPECT_EQ(kSize, 0);
+}
+
+TEST(LobAPITest, OptionsMaximumTimeOfFlight) {
+  const float kTestBC = 0.436F;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const float kTestZeroAngle = 6.11F;
+  const lob::Input kResult = lob::Builder()
+                                 .BallisticCoefficientPsi(kTestBC)
+                                 .InitialVelocityFps(kTestMuzzleVelocity)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .Build();
+  const float kMaxTime = 1.5F;
+  const uint32_t kRange = 5'000U;
+  lob::Output out;
+  const lob::Options kOptions{0, 0, kMaxTime, 100U};
+  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U, kOptions);
+  EXPECT_EQ(kSize, 1);
+  EXPECT_NEAR(out.time_of_flight, kMaxTime, 1E-3);
+}
+
+TEST(LobAPITest, OptionsMinimumVelocity) {
+  const float kTestBC = 0.436F;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const float kTestZeroAngle = 6.11F;
+  const lob::Input kResult = lob::Builder()
+                                 .BallisticCoefficientPsi(kTestBC)
+                                 .InitialVelocityFps(kTestMuzzleVelocity)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .Build();
+  const uint16_t kMinimumVelocity = 2'000U;
+  const uint32_t kRange = 5'000U;
+  lob::Output out;
+  const lob::Options kOptions{kMinimumVelocity, 0, lob::NaN(), 100U};
+  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U, kOptions);
+  EXPECT_EQ(kSize, 1);
+  EXPECT_EQ(out.velocity, kMinimumVelocity);
+}
+
+TEST(LobAPITest, OptionsMinimumEnergy) {
+  const float kTestBC = 0.436F;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const float kGrains = 130.0F;
+  const float kTestZeroAngle = 6.11F;
+  const lob::Input kResult = lob::Builder()
+                                 .BallisticCoefficientPsi(kTestBC)
+                                 .InitialVelocityFps(kTestMuzzleVelocity)
+                                 .MassGrains(kGrains)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .Build();
+  const uint16_t kMinimumEnergy = 1'000U;
+  const uint32_t kRange = 5'000U;
+  lob::Output out;
+  const lob::Options kOptions{0, kMinimumEnergy, lob::NaN(), 100U};
+  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U, kOptions);
+  EXPECT_EQ(kSize, 1);
+  EXPECT_EQ(out.energy, kMinimumEnergy);
+}
+
 TEST(LobAPITest, MoaToMil) {
   const auto kA = lob::MoaT(5);
   const auto kB = lob::MilT(lob::MoaToMil(kA.Value()));

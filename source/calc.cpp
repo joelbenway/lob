@@ -193,6 +193,13 @@ FtLbsT CalculateKineticEnergy(FpsT velocity, SlugT mass) {
   return FtLbsT(mass.Value() * std::pow(velocity.Value(), 2) / 2);
 }
 
+FpsT CalculateVelocityFromKineticEnergy(FtLbsT energy, SlugT mass) {
+  if (!(mass.Value() > 0)) {
+    return FpsT(0);
+  }
+  return FpsT(std::sqrt(2 * energy.Value() / mass.Value()));
+}
+
 // Page 90 of Modern Exterior Ballistics - McCoy
 PmsiT CalculateSectionalDensity(InchT bullet_diameter, LbsT bullet_mass) {
   return PmsiT(bullet_mass.Value() / std::pow(bullet_diameter.Value(), 2));
