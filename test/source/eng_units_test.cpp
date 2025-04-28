@@ -178,6 +178,18 @@ TEST(EngUnitTests, Float) {
   EXPECT_FLOAT_EQ(kA.Float(), kB);
 }
 
+TEST(EngUnitTests, U32) {
+  const TestT kA(std::acos(-1));
+  const auto kB(static_cast<uint32_t>(std::round(std::acos(-1))));
+  EXPECT_EQ(kA.U32(), kB);
+}
+
+TEST(EngUnitTests, U16) {
+  const TestT kA(std::acos(-1));
+  const auto kB(static_cast<uint16_t>(std::round(std::acos(-1))));
+  EXPECT_EQ(kA.U16(), kB);
+}
+
 TEST(EngUnitTests, Comparisons) {
   const auto kA = TestT(100);
   const auto kB = TestT(100);

@@ -101,7 +101,7 @@ TEST(TableTests, DeriveMachDragTableG1) {
   for (size_t i = 0; i < lob::kTableSize; i++) {
     const double kMach =
         static_cast<double>(lob::kMachs.at(i)) / lob::kTableScale;
-    const double kDrag = lob::LobQerp(kG1Machs, kG1DragCoefficients, kMach);
+  const double kDrag = lob::LobQerp(kG1Machs, kG1DragCoefficients, kMach);
     drags.push_back(
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
@@ -405,51 +405,6 @@ TEST(TableTests, DeriveMachDragTableG8) {
         std::round(kG8DragCoefficients.at(i) * lob::kTableScale));
     EXPECT_EQ(kDrag, kExpectedDrag)
         << kDrag << " != " << kExpectedDrag << " at " << i << "\n";
-  }
-}
-
-TEST(TableTests, ResizeToEqualTable) {
-  static const size_t kNewTableSize = lob::kTableSize;
-  std::array<uint16_t, kNewTableSize> new_table_machs = {};
-  std::array<uint16_t, kNewTableSize> new_table_drags = {};
-  lob::ResizeMachDragTable(lob::kMachs, lob::kG1Drags, &new_table_machs,
-                           &new_table_drags);
-  for (auto mach : lob::kMachs) {
-    const double kOldResult = lob::LobLerp(lob::kMachs, lob::kG1Drags, mach);
-    const double kNewResult =
-        lob::LobLerp(new_table_machs, new_table_drags, mach);
-    EXPECT_DOUBLE_EQ(kOldResult, kNewResult);
-  }
-}
-
-TEST(TableTests, ResizeToLargerTable) {
-  static const uint16_t kError = 100;
-  static const size_t kNewTableSize = 200;
-  std::array<uint16_t, kNewTableSize> new_table_machs = {};
-  std::array<uint16_t, kNewTableSize> new_table_drags = {};
-  lob::ResizeMachDragTable(lob::kMachs, lob::kG1Drags, &new_table_machs,
-                           &new_table_drags);
-
-  for (auto mach : new_table_machs) {
-    const double kOldResult = lob::LobLerp(lob::kMachs, lob::kG1Drags, mach);
-    const double kNewResult =
-        lob::LobLerp(new_table_machs, new_table_drags, mach);
-    EXPECT_NEAR(kOldResult, kNewResult, kError);
-  }
-}
-
-TEST(TableTests, ResizeToSmallerTable) {
-  static const uint16_t kError = 100;
-  static const size_t kNewTableSize = 60;
-  std::array<uint16_t, kNewTableSize> new_table_machs = {};
-  std::array<uint16_t, kNewTableSize> new_table_drags = {};
-  lob::ResizeMachDragTable(lob::kMachs, lob::kG1Drags, &new_table_machs,
-                           &new_table_drags);
-  for (auto mach : lob::kMachs) {
-    const double kOldResult = lob::LobLerp(lob::kMachs, lob::kG1Drags, mach);
-    const double kNewResult =
-        lob::LobLerp(new_table_machs, new_table_drags, mach);
-    EXPECT_NEAR(kOldResult, kNewResult, kError);
   }
 }
 

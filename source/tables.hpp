@@ -112,21 +112,6 @@ double LobQerp(const std::array<T, N>& x_lut, const std::array<T, N>& y_lut,
   return LobQerp(x_lut.data(), y_lut.data(), N, x_in);
 }
 
-template <typename T>
-void ResizeMachDragTable(const T* pmachs, const T* pdrags, size_t* indices,
-                         size_t old_size, T* pnew_machs, T* pnew_drags,
-                         size_t new_size);
-
-template <typename T, size_t OldSize, size_t NewSize>
-void ResizeMachDragTable(const std::array<T, OldSize>& machs,
-                         const std::array<T, OldSize>& drags,
-                         std::array<T, NewSize>* pnew_machs,
-                         std::array<T, NewSize>* pnew_drags) {
-  std::array<size_t, OldSize> indices = {};
-  ResizeMachDragTable(machs.data(), drags.data(), indices.data(), OldSize,
-                      pnew_machs->data(), pnew_drags->data(), NewSize);
-}
-
 namespace help {
 
 struct Point {
@@ -144,15 +129,6 @@ double CalculatePerpendicularSlope(double slope);
 Circle FitCircle(const Point& p1, const Point& p2, const Point& p3);
 
 double FindAngleToPointOnCircle(Point p, Circle c);
-
-template <typename T>
-void ExpandMachDragTable(const T* pmachs, const T* pdrags, size_t old_size,
-                         T* pnew_machs, T* pnew_drags, size_t new_size);
-
-template <typename T>
-void CompressMachDragTable(const T* pmachs, const T* pdrags, size_t* indices,
-                           size_t old_size, T* pnew_machs, T* pnew_drags,
-                           size_t new_size);
 
 }  // namespace help
 }  // namespace lob
