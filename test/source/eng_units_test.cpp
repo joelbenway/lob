@@ -163,6 +163,19 @@ TEST(EngUnitTests, IncrementOperators) {
   EXPECT_EQ(--a, kNum);
 }
 
+TEST(EngUnitTests, IsNaN) {
+  const TestT kA(5);
+  const TestT kB(std::numeric_limits<double>::quiet_NaN());
+  EXPECT_FALSE(kA.IsNaN());
+  EXPECT_TRUE(kB.IsNaN());
+
+  enum class Beer : uint8_t { kBottle, kCan };
+  using BottleT = lob::StrongT<Beer, Beer::kBottle, uint32_t>;
+  const BottleT kC(5);
+  EXPECT_FALSE(kC.IsNaN());
+  EXPECT_FALSE(BottleT(std::numeric_limits<uint32_t>::quiet_NaN()).IsNaN());
+}
+
 TEST(EngUnitTests, Inverse) {
   const TestT kA(5);
   const TestT kB(1E6);
@@ -176,6 +189,18 @@ TEST(EngUnitTests, Float) {
   const TestT kA(std::acos(-1));
   const auto kB(static_cast<float>(std::acos(-1)));
   EXPECT_FLOAT_EQ(kA.Float(), kB);
+}
+
+TEST(EngUnitTests, U32) {
+  const TestT kA(std::acos(-1));
+  const auto kB(static_cast<uint32_t>(std::round(std::acos(-1))));
+  EXPECT_EQ(kA.U32(), kB);
+}
+
+TEST(EngUnitTests, U16) {
+  const TestT kA(std::acos(-1));
+  const auto kB(static_cast<uint16_t>(std::round(std::acos(-1))));
+  EXPECT_EQ(kA.U16(), kB);
 }
 
 TEST(EngUnitTests, Comparisons) {

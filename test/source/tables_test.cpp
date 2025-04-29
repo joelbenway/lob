@@ -408,51 +408,6 @@ TEST(TableTests, DeriveMachDragTableG8) {
   }
 }
 
-TEST(TableTests, ResizeToEqualTable) {
-  static const size_t kNewTableSize = lob::kTableSize;
-  std::array<uint16_t, kNewTableSize> new_table_machs = {};
-  std::array<uint16_t, kNewTableSize> new_table_drags = {};
-  lob::ResizeMachDragTable(lob::kMachs, lob::kG1Drags, &new_table_machs,
-                           &new_table_drags);
-  for (auto mach : lob::kMachs) {
-    const double kOldResult = lob::LobLerp(lob::kMachs, lob::kG1Drags, mach);
-    const double kNewResult =
-        lob::LobLerp(new_table_machs, new_table_drags, mach);
-    EXPECT_DOUBLE_EQ(kOldResult, kNewResult);
-  }
-}
-
-TEST(TableTests, ResizeToLargerTable) {
-  static const uint16_t kError = 100;
-  static const size_t kNewTableSize = 200;
-  std::array<uint16_t, kNewTableSize> new_table_machs = {};
-  std::array<uint16_t, kNewTableSize> new_table_drags = {};
-  lob::ResizeMachDragTable(lob::kMachs, lob::kG1Drags, &new_table_machs,
-                           &new_table_drags);
-
-  for (auto mach : new_table_machs) {
-    const double kOldResult = lob::LobLerp(lob::kMachs, lob::kG1Drags, mach);
-    const double kNewResult =
-        lob::LobLerp(new_table_machs, new_table_drags, mach);
-    EXPECT_NEAR(kOldResult, kNewResult, kError);
-  }
-}
-
-TEST(TableTests, ResizeToSmallerTable) {
-  static const uint16_t kError = 100;
-  static const size_t kNewTableSize = 60;
-  std::array<uint16_t, kNewTableSize> new_table_machs = {};
-  std::array<uint16_t, kNewTableSize> new_table_drags = {};
-  lob::ResizeMachDragTable(lob::kMachs, lob::kG1Drags, &new_table_machs,
-                           &new_table_drags);
-  for (auto mach : lob::kMachs) {
-    const double kOldResult = lob::LobLerp(lob::kMachs, lob::kG1Drags, mach);
-    const double kNewResult =
-        lob::LobLerp(new_table_machs, new_table_drags, mach);
-    EXPECT_NEAR(kOldResult, kNewResult, kError);
-  }
-}
-
 }  // namespace tests
 
 // This program is free software: you can redistribute it and/or modify

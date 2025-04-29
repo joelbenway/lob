@@ -9,7 +9,6 @@
 #include <cstddef>
 #include <cstring>
 #include <limits>
-#include <numeric>
 
 #include "constants.hpp"
 #include "helpers.hpp"
@@ -81,110 +80,6 @@ double FindAngleToPointOnCircle(Point p, Circle c) {
   }
   return kAngle;
 }
-
-template <typename T>
-void ExpandMachDragTable(const T* pmachs, const T* pdrags, size_t old_size,
-                         T* pnew_machs, T* pnew_drags, size_t new_size) {
-  std::copy(pmachs, pmachs + old_size, pnew_machs);
-  for (size_t i = 0; i < new_size - old_size; i++) {
-    double max_diff = 0.0;
-    size_t maxdex = 0;
-    double max_gap = 0.0;
-    size_t gapdex = 0;
-    for (size_t j = 1; (j < old_size + i); j++) {
-      const auto kMidPoint = (pnew_machs[j] + pnew_machs[j - 1]) / 2;
-      const double kLerp =
-          LobLerp(pnew_machs, pnew_drags, old_size + i, kMidPoint);
-      const double kQerp =
-          LobQerp(pnew_machs, pnew_drags, old_size + i, kMidPoint);
-      const double kDiff = std::fabs(kLerp - kQerp);
-      const T kGap = static_cast<T>(pnew_machs[j] - pnew_machs[j - 1]);
-      if (kDiff > max_diff) {
-        max_diff = kDiff;
-        maxdex = j;
-      }
-      if (static_cast<double>(kGap) > max_gap) {
-        max_gap = kGap;
-        gapdex = j;
-      }
-    }
-    if (maxdex == 0) {
-      pnew_machs[old_size + i] = static_cast<T>(
-          (static_cast<double>(pnew_machs[gapdex]) + pnew_machs[gapdex - 1]) /
-          2);
-    } else {
-      pnew_machs[old_size + i] = static_cast<T>(
-          (static_cast<double>(pnew_machs[maxdex]) + pnew_machs[maxdex - 1]) /
-          2);
-    }
-    std::sort(pnew_machs, pnew_machs + old_size + 1U + i);
-  }
-
-  for (size_t i = 0; i < new_size; i++) {
-    pnew_drags[i] =
-        static_cast<T>(LobQerp(pmachs, pdrags, old_size, pnew_machs[i]));
-  }
-}
-
-template void ExpandMachDragTable<uint16_t>(
-    const uint16_t* pmachs, const uint16_t* pdrags, size_t old_size,
-    uint16_t* pnew_machs, uint16_t* pnew_drags, size_t new_size);
-
-template void ExpandMachDragTable<float>(const float* pmachs,
-                                         const float* pdrags, size_t old_size,
-                                         float* pnew_machs, float* pnew_drags,
-                                         size_t new_size);
-
-template <typename T>
-void CompressMachDragTable(const T* pmachs, const T* pdrags, size_t* indices,
-                           size_t old_size, T* pnew_machs, T* pnew_drags,
-                           size_t new_size) {
-  std::iota(indices, indices + old_size, 0);
-  for (size_t i = 0; i < old_size - new_size; i++) {
-    // measure the cost of replacing each point with lerp
-    double min_diff = std::numeric_limits<double>::max();
-    size_t mindex = old_size;
-    // keep first and last points
-    for (size_t j = 1; j < old_size - i - 1; j++) {
-      const double kX1 = pmachs[indices[j - 1]];
-      const double kX2 = pmachs[indices[j + 1]];
-      const double kY1 = pdrags[indices[j - 1]];
-      const double kY2 = pdrags[indices[j + 1]];
-      const double kLerp = ((kY2 - kY1) / (kX2 - kX1) *
-                            (static_cast<double>(pmachs[indices[j]]) - kX1)) +
-                           kY1;
-      const double kDiff =
-          fabs(kLerp - static_cast<double>(pdrags[indices[j]]));
-      if (kDiff < min_diff) {
-        min_diff = kDiff;
-        mindex = j;
-      }
-    }
-    // swap most replaceable index with the end
-    indices[old_size - i - 1] = mindex;
-    indices[mindex] = old_size - 1;
-
-    // sort the most irreplaceable by mach speed
-    std::sort(indices, indices + old_size - i - 1,
-              [pmachs](size_t a, size_t b) { return pmachs[a] < pmachs[b]; });
-  }
-  for (size_t i = 0; i < new_size; i++) {
-    pnew_machs[i] = pmachs[indices[i]];
-    pnew_drags[i] = pdrags[indices[i]];
-  }
-}
-
-template void CompressMachDragTable<uint16_t>(const uint16_t* pmachs,
-                                              const uint16_t* pdrags,
-                                              size_t* indices, size_t old_size,
-                                              uint16_t* pnew_machs,
-                                              uint16_t* pnew_drags,
-                                              size_t new_size);
-
-template void CompressMachDragTable<float>(const float* pmachs,
-                                           const float* pdrags, size_t* indices,
-                                           size_t old_size, float* pnew_machs,
-                                           float* pnew_drags, size_t new_size);
 }  // namespace help
 
 template <typename T>
@@ -285,35 +180,6 @@ template double LobQerp<uint16_t>(const uint16_t* x_lut, const uint16_t* y_lut,
 
 template double LobQerp<float>(const float* x_lut, const float* y_lut,
                                const size_t size, const double x_in);
-
-template <typename T>
-void ResizeMachDragTable(const T* pmachs, const T* pdrags, size_t* indices,
-                         size_t old_size, T* pnew_machs, T* pnew_drags,
-                         size_t new_size) {
-  if (old_size == new_size) {
-    std::copy(pmachs, pmachs + old_size, pnew_machs);
-    std::copy(pdrags, pdrags + old_size, pnew_drags);
-  } else if (old_size < new_size) {
-    help::ExpandMachDragTable(pmachs, pdrags, old_size, pnew_machs, pnew_drags,
-                              new_size);
-  } else {
-    help::CompressMachDragTable(pmachs, pdrags, indices, old_size, pnew_machs,
-                                pnew_drags, new_size);
-  }
-}
-
-template void ResizeMachDragTable<uint16_t>(const uint16_t* pmachs,
-                                            const uint16_t* pdrags,
-                                            size_t* indices, size_t old_size,
-                                            uint16_t* pnew_machs,
-                                            uint16_t* pnew_drags,
-                                            size_t new_size);
-
-template void ResizeMachDragTable<float>(const float* pmachs,
-                                         const float* pdrags, size_t* indices,
-                                         size_t old_size, float* pnew_machs,
-                                         float* pnew_drags, size_t new_size);
-
 }  // namespace lob
 
 // This program is free software: you can redistribute it and/or modify

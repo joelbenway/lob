@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -113,31 +114,50 @@ TEST_F(BuilderTestFixture, MoveAssignmentOperator) {
 
 TEST_F(BuilderTestFixture, BuildMinimalInput) {
   const float kTestBC = 0.425F;
-  const float kTestDiameter = 0.308F;
-  const float kTestWeight = 180.0F;
   const uint16_t kTestMuzzleVelocity = 2700U;
   const float kTestZeroAngle = 3.84F;
   const float kZeroDistance = 100.0F;
   const lob::Input kResult = puut->BallisticCoefficientPsi(kTestBC)
-                                 .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-                                 .DiameterInch(kTestDiameter)
-                                 .MassGrains(kTestWeight)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .ZeroDistanceYds(kZeroDistance)
                                  .Build();
-  EXPECT_EQ(kResult.drags.front(), lob::kG1Drags.front());
-  EXPECT_EQ(kResult.drags.back(), lob::kG1Drags.back());
-  EXPECT_NE(kResult.speed_of_sound, lob::NaN());
+  EXPECT_FALSE(std::isnan(kResult.table_coefficient));
+  EXPECT_FALSE(std::isnan(kResult.speed_of_sound));
   EXPECT_EQ(kResult.velocity, kTestMuzzleVelocity);
   EXPECT_NEAR(kResult.zero_angle, kTestZeroAngle, 0.01);
   EXPECT_FLOAT_EQ(kResult.gravity.y,
                   -1.0F * static_cast<float>(lob::kStandardGravityFtPerSecSq));
 }
 
+TEST_F(BuilderTestFixture, BuildInvalidVelocityInput) {
+  const float kTestBC = 0.425F;
+  const float kTestZeroAngle = 3.84F;
+  const lob::Input kResult = puut->BallisticCoefficientPsi(kTestBC)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .Build();
+  EXPECT_TRUE(std::isnan(kResult.table_coefficient));
+}
+
+TEST_F(BuilderTestFixture, BuildInvalidBCInput) {
+  const uint16_t kTestMuzzleVelocity = 2700U;
+  const float kTestZeroAngle = 3.84F;
+  const lob::Input kResult = puut->InitialVelocityFps(kTestMuzzleVelocity)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .Build();
+  EXPECT_TRUE(std::isnan(kResult.table_coefficient));
+}
+
+TEST_F(BuilderTestFixture, BuildInvalidZeroInput) {
+  const float kTestBC = 0.425F;
+  const uint16_t kTestMuzzleVelocity = 2700U;
+  const lob::Input kResult = puut->BallisticCoefficientPsi(kTestBC)
+                                 .InitialVelocityFps(kTestMuzzleVelocity)
+                                 .Build();
+  EXPECT_TRUE(std::isnan(kResult.table_coefficient));
+}
+
 TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
   const float kTestBC = 1.0F;
-  const float kTestDiameter = 1.0F;
-  const float kTestWeight = 7000.0F;
   const uint16_t kTestMuzzleVelocity = 2500U;
   const float kTestZeroAngle = 5.59F;
   std::array<float, lob::kTableSize> machs = {};
@@ -147,8 +167,6 @@ TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
       puut->BallisticCoefficientPsi(kTestBC)
           .BCDragFunction(lob::DragFunctionT::kG1)
           .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-          .DiameterInch(kTestDiameter)
-          .MassGrains(kTestWeight)
           .InitialVelocityFps(kTestMuzzleVelocity)
           .ZeroAngleMOA(kTestZeroAngle)
           .Build();
@@ -159,13 +177,174 @@ TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
   }
 
   const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
-                                  .BCDragFunction(lob::DragFunctionT::kG7)
                                   .MachVsDragTable(machs, drags)
                                   .Build();
 
   for (size_t i = 0; i < lob::kTableSize; i++) {
     EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
   }
+}
+
+TEST_F(BuilderTestFixture, BuildG2UsingCustomTable) {
+  const float kTestBC = 1.0F;
+  const uint16_t kTestMuzzleVelocity = 2500U;
+  const float kTestZeroAngle = 5.0F;
+  std::array<float, lob::kTableSize> machs = {};
+  std::array<float, lob::kTableSize> drags = {};
+
+  const lob::Input kResult1 =
+      puut->BallisticCoefficientPsi(kTestBC)
+          .BCDragFunction(lob::DragFunctionT::kG2)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .InitialVelocityFps(kTestMuzzleVelocity)
+          .ZeroAngleMOA(kTestZeroAngle)
+          .Build();
+
+  for (size_t i = 0; i < lob::kTableSize; i++) {
+    machs.at(i) = static_cast<float>(lob::kMachs.at(i)) / lob::kTableScale;
+    drags.at(i) = static_cast<float>(lob::kG2Drags.at(i)) / lob::kTableScale;
+  }
+
+  const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
+                                  .MachVsDragTable(machs, drags)
+                                  .Build();
+
+  for (size_t i = 0; i < lob::kTableSize; i++) {
+    EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+  }
+}
+
+TEST_F(BuilderTestFixture, BuildG5UsingCustomTable) {
+  const float kTestBC = 1.0F;
+  const uint16_t kTestMuzzleVelocity = 2500U;
+  const float kTestZeroAngle = 5.0F;
+  std::array<float, lob::kTableSize> machs = {};
+  std::array<float, lob::kTableSize> drags = {};
+
+  const lob::Input kResult1 =
+      puut->BallisticCoefficientPsi(kTestBC)
+          .BCDragFunction(lob::DragFunctionT::kG5)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .InitialVelocityFps(kTestMuzzleVelocity)
+          .ZeroAngleMOA(kTestZeroAngle)
+          .Build();
+
+  for (size_t i = 0; i < lob::kTableSize; i++) {
+    machs.at(i) = static_cast<float>(lob::kMachs.at(i)) / lob::kTableScale;
+    drags.at(i) = static_cast<float>(lob::kG5Drags.at(i)) / lob::kTableScale;
+  }
+
+  const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
+                                  .MachVsDragTable(machs, drags)
+                                  .Build();
+
+  for (size_t i = 0; i < lob::kTableSize; i++) {
+    EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+  }
+}
+
+TEST_F(BuilderTestFixture, BuildG6UsingCustomTable) {
+  const float kTestBC = 1.0F;
+  const uint16_t kTestMuzzleVelocity = 2500U;
+  const float kTestZeroAngle = 5.0F;
+  std::array<float, lob::kTableSize> machs = {};
+  std::array<float, lob::kTableSize> drags = {};
+
+  const lob::Input kResult1 =
+      puut->BallisticCoefficientPsi(kTestBC)
+          .BCDragFunction(lob::DragFunctionT::kG6)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .InitialVelocityFps(kTestMuzzleVelocity)
+          .ZeroAngleMOA(kTestZeroAngle)
+          .Build();
+
+  for (size_t i = 0; i < lob::kTableSize; i++) {
+    machs.at(i) = static_cast<float>(lob::kMachs.at(i)) / lob::kTableScale;
+    drags.at(i) = static_cast<float>(lob::kG6Drags.at(i)) / lob::kTableScale;
+  }
+
+  const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
+                                  .MachVsDragTable(machs, drags)
+                                  .Build();
+
+  for (size_t i = 0; i < lob::kTableSize; i++) {
+    EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+  }
+}
+
+TEST_F(BuilderTestFixture, BuildG7UsingCustomTable) {
+  const float kTestBC = 1.0F;
+  const uint16_t kTestMuzzleVelocity = 2500U;
+  const float kTestZeroAngle = 5.0F;
+  std::array<float, lob::kTableSize> machs = {};
+  std::array<float, lob::kTableSize> drags = {};
+
+  const lob::Input kResult1 =
+      puut->BallisticCoefficientPsi(kTestBC)
+          .BCDragFunction(lob::DragFunctionT::kG7)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .InitialVelocityFps(kTestMuzzleVelocity)
+          .ZeroAngleMOA(kTestZeroAngle)
+          .Build();
+
+  for (size_t i = 0; i < lob::kTableSize; i++) {
+    machs.at(i) = static_cast<float>(lob::kMachs.at(i)) / lob::kTableScale;
+    drags.at(i) = static_cast<float>(lob::kG7Drags.at(i)) / lob::kTableScale;
+  }
+
+  const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
+                                  .MachVsDragTable(machs, drags)
+                                  .Build();
+
+  for (size_t i = 0; i < lob::kTableSize; i++) {
+    EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+  }
+}
+
+TEST_F(BuilderTestFixture, BuildG8UsingCustomTable) {
+  const float kTestBC = 1.0F;
+  const uint16_t kTestMuzzleVelocity = 2500U;
+  const float kTestZeroAngle = 5.0F;
+  std::array<float, lob::kTableSize> machs = {};
+  std::array<float, lob::kTableSize> drags = {};
+
+  const lob::Input kResult1 =
+      puut->BallisticCoefficientPsi(kTestBC)
+          .BCDragFunction(lob::DragFunctionT::kG8)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .InitialVelocityFps(kTestMuzzleVelocity)
+          .ZeroAngleMOA(kTestZeroAngle)
+          .Build();
+
+  for (size_t i = 0; i < lob::kTableSize; i++) {
+    machs.at(i) = static_cast<float>(lob::kMachs.at(i)) / lob::kTableScale;
+    drags.at(i) = static_cast<float>(lob::kG8Drags.at(i)) / lob::kTableScale;
+  }
+
+  const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
+                                  .MachVsDragTable(machs, drags)
+                                  .Build();
+
+  for (size_t i = 0; i < lob::kTableSize; i++) {
+    EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+  }
+}
+
+TEST_F(BuilderTestFixture, JackOConnorZero) {
+  const float kSierraGameKingBC = 0.436F;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const float kZeroYardage = 100.0F;
+  const float kZeroHeight = 3.0F;
+  const float kExpectedZeroAngle = 6.11F;
+  const float kError = 0.01F;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .Build();
+  EXPECT_NEAR(kJack.zero_angle, kExpectedZeroAngle, kError);
 }
 
 }  // namespace tests

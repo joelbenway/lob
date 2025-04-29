@@ -3,14 +3,15 @@
 // Please see end of file for extended copyright information
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
+#include <initializer_list>
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -20,20 +21,35 @@
 
 namespace example {
 namespace {
+void PrintGH() {
+  std::cout << "Report bugs or give feedback here: "
+               "https://github.com/joelbenway/lob\n";
+}
+
 void PrintVersion() {
-  std::cout << "Lobber version: " << kProjectVersion << '\n'
-            << "Lob version:    " << lob::Version() << '\n';
+  std::cout << "Lobber version: " << kProjectVersion << "\n"
+            << "Lob version:    " << lob::Version() << "\n\n";
+  PrintGH();
 }
 
 void PrintHelp() {
+  std::cout << "Usage: lobber [options]\n"
+            << "Options:\n"
+            << "  --h, --help     Show this help message\n"
+            << "  --v, --version  Show version information\n"
+            << "  --if=FILE       Input file containing data to use instead of "
+               "user prompts\n"
+            << "  --of=FILE       Output file where data is saved for future "
+               "use as an input file\n"
+            << "Example:\n"
+            << "  lobber --of=my_rifle_load.txt\n\n";
+  PrintGH();
+}
+
+void PrintGreeting() {
   std::cout
-      << "Usage: lobber [options]\n"
-      << "Options:\n"
-      << "  --h, --help     Show this help message\n"
-      << "  --v, --version  Show version information\n"
-      << "  --if=FILE       Input file containing input data for calculation\n"
-      << "  --of=FILE       Output file where input data may be saved for "
-         "future use as an input file\n";
+      << "Welcome to lobber, a minimal example program included with the lob "
+         "ballistics library. Follow the prompts to enter data.\n\n";
 }
 
 float Prompt(const std::string& prompt) {
@@ -72,19 +88,34 @@ float Read(std::ifstream* pfile) {
   return input;
 }
 
+void GetInput(const std::string& prompt, std::vector<float>* inputs,
+              std::ifstream* pfile) {
+  if (!*pfile) {
+    inputs->push_back(Prompt(prompt));
+  } else {
+    inputs->push_back(Read(pfile));
+  }
+}
+
 lob::DragFunctionT ConvertDF(float input) {
   switch (static_cast<int>(std::round(input))) {
-    case 2:  // NOLINT magic number
+    case 2:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::DragFunctionT::kG2;
-    case 5:  // NOLINT magic number
+    case 5:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::DragFunctionT::kG5;
-    case 6:  // NOLINT magic number
+    case 6:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::DragFunctionT::kG6;
-    case 7:  // NOLINT magic number
+    case 7:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::DragFunctionT::kG7;
-    case 8:  // NOLINT magic number
+    case 8:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::DragFunctionT::kG8;
-    case 1:  // NOLINT magic number
+    case 1:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
     default:
       return lob::DragFunctionT::kG1;
   }
@@ -98,29 +129,41 @@ lob::AtmosphereReferenceT ConvertAR(float input) {
 
 lob::ClockAngleT ConvertCA(float input) {
   switch (static_cast<int>(std::round(input))) {
-    case 1:  // NOLINT magic number
+    case 1:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::ClockAngleT::kI;
-    case 2:  // NOLINT magic number
+    case 2:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::ClockAngleT::kII;
-    case 3:  // NOLINT magic number
+    case 3:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::ClockAngleT::kIII;
-    case 4:  // NOLINT magic number
+    case 4:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::ClockAngleT::kIV;
-    case 5:  // NOLINT magic number
+    case 5:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::ClockAngleT::kV;
-    case 6:  // NOLINT magic number
+    case 6:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::ClockAngleT::kVI;
-    case 7:  // NOLINT magic number
+    case 7:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::ClockAngleT::kVII;
-    case 8:  // NOLINT magic number
+    case 8:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::ClockAngleT::kVIII;
-    case 9:  // NOLINT magic number
+    case 9:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+             // readability-magic-numbers)
       return lob::ClockAngleT::kIX;
-    case 10:  // NOLINT magic number
+    case 10:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+              // readability-magic-numbers)
       return lob::ClockAngleT::kX;
-    case 11:  // NOLINT magic number
+    case 11:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+              // readability-magic-numbers)
       return lob::ClockAngleT::kXI;
-    case 12:  // NOLINT magic number
+    case 12:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
+              // readability-magic-numbers)
     default:
       return lob::ClockAngleT::kXII;
   }
@@ -143,165 +186,359 @@ bool WriteOutputFile(const std::string& file_name,
   return true;
 }
 
-lob::Builder BuildHelper(const std::string& infile,
-                         const std::string& outfile) {
+enum class BuildState : uint8_t {
+  kBallisticCoefficientPsi,
+  kBCAtmosphere,
+  kBCDragFunction,
+  kDiameterInch,
+  kMeplatDiameterInch,
+  kBaseDiameterInch,
+  kLengthInch,
+  kNoseLengthInch,
+  kTailLengthInch,
+  kOgiveRtR,
+  kMachVsDragTable,
+  kMassGrains,
+  kInitialVelocityFps,
+  kOpticHeightInches,
+  kTwistInchesPerTurn,
+  kZeroAngleMOA,
+  kZeroDistanceYds,
+  kZeroImpactHeightInches,
+  kAltitudeOfFiringSiteFt,
+  kAirPressureInHg,
+  kAltitudeOfBarometerFt,
+  kTemperatureDegF,
+  kAltitudeOfThermometerFt,
+  kRelativeHumidityPercent,
+  kWindHeading,
+  kWindSpeedMph,
+  kAzimuthDeg,
+  kLatitudeDeg,
+  kRangeAngleDeg
+};
+
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+lob::Builder BuildHelper(std::ifstream* pinfile, std::vector<float>* pinputs) {
   lob::Builder builder;
-  std::string prompt;
-  auto* pprompt = &prompt;
-  std::vector<float> inputs;
-  auto* pinputs = &inputs;
+  BuildState state = BuildState::kBallisticCoefficientPsi;
+  std::string prompt = "Enter Ballistic Coefficient in PSI";
+  while (true) {
+    switch (state) {
+      case BuildState::kBallisticCoefficientPsi:
+        GetInput(prompt, pinputs, pinfile);
+        builder.BallisticCoefficientPsi(pinputs->back());
+        state = std::isnan(pinputs->back())
+                    ? BuildState::kBallisticCoefficientPsi
+                    : BuildState::kBCAtmosphere;
+        break;
+      case BuildState::kBCAtmosphere:
+        prompt =
+            "Enter 1 for Army Standard Metro or 2 for ICAO reference "
+            "atmosphere";
+        GetInput(prompt, pinputs, pinfile);
+        builder.BCAtmosphere(ConvertAR(pinputs->back()));
+        state = BuildState::kBCDragFunction;
+        break;
+      case BuildState::kBCDragFunction:
+        prompt = "Enter 1, 2, 5, 6, 7, or 8 for associated drag function";
+        GetInput(prompt, pinputs, pinfile);
+        builder.BCDragFunction(ConvertDF(pinputs->back()));
+        state = BuildState::kDiameterInch;
+        break;
+      case BuildState::kDiameterInch:
+        prompt = "Enter projectile diameter in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.DiameterInch(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kMassGrains
+                                            : BuildState::kLengthInch;
+        break;
+      case BuildState::kMeplatDiameterInch:
+        prompt = "Enter projectile meplat diameter in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.MeplatDiameterInch(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kTwistInchesPerTurn
+                                            : BuildState::kBaseDiameterInch;
+        break;
+      case BuildState::kBaseDiameterInch:
+        prompt = "Enter projectile base diameter in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.BaseDiameterInch(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kTwistInchesPerTurn
+                                            : BuildState::kTailLengthInch;
+        break;
+      case BuildState::kLengthInch:
+        prompt = "Enter projectile length in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.LengthInch(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kMassGrains
+                                            : BuildState::kNoseLengthInch;
+        break;
+      case BuildState::kNoseLengthInch:
+        prompt = "Enter projectile ogive (nose) length in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.NoseLengthInch(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kTwistInchesPerTurn
+                                            : BuildState::kMeplatDiameterInch;
+        break;
+      case BuildState::kTailLengthInch:
+        prompt = "Enter projectile boat tail length in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.TailLengthInch(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kTwistInchesPerTurn
+                                            : BuildState::kOgiveRtR;
+        break;
+      case BuildState::kOgiveRtR:
+        prompt = "Enter ogive Rt/R ratio";
+        GetInput(prompt, pinputs, pinfile);
+        builder.OgiveRtR(pinputs->back());
+        state = BuildState::kTwistInchesPerTurn;
+        break;
+      case BuildState::kMachVsDragTable:
+        break;
+      case BuildState::kMassGrains:
+        prompt = "Enter projectile mass in grains";
+        GetInput(prompt, pinputs, pinfile);
+        builder.MassGrains(pinputs->back());
+        state = BuildState::kInitialVelocityFps;
+        break;
+      case BuildState::kInitialVelocityFps:
+        prompt = "Enter initial velocity of projectile in FPS";
+        GetInput(prompt, pinputs, pinfile);
+        builder.InitialVelocityFps(
+            static_cast<uint16_t>(std::round(pinputs->back())));
+        state = std::isnan(pinputs->back()) ? BuildState::kInitialVelocityFps
+                                            : BuildState::kOpticHeightInches;
+        break;
+      case BuildState::kOpticHeightInches:
+        prompt = "Enter the rifle's optic height above bore in inches";
+        GetInput(prompt, pinputs, pinfile);
+        builder.OpticHeightInches(pinputs->back());
+        state = BuildState::kZeroAngleMOA;
+        break;
+      case BuildState::kTwistInchesPerTurn:
+        prompt = "Enter rifle's barrel twist rate in inches per turn";
+        GetInput(prompt, pinputs, pinfile);
+        builder.TwistInchesPerTurn(pinputs->back());
+        state = BuildState::kMassGrains;
+        break;
+      case BuildState::kZeroAngleMOA:
+        prompt = "Enter angle in MOA between optic's line of sight and bore";
+        GetInput(prompt, pinputs, pinfile);
+        builder.ZeroAngleMOA(pinputs->back());
+        state = std::isnan(pinputs->back())
+                    ? BuildState::kZeroDistanceYds
+                    : BuildState::kAltitudeOfFiringSiteFt;
+        break;
+      case BuildState::kZeroDistanceYds:
+        prompt = "Enter range in yards of the rifle's zero";
+        GetInput(prompt, pinputs, pinfile);
+        builder.ZeroDistanceYds(pinputs->back());
+        state = std::isnan(pinputs->back())
+                    ? BuildState::kZeroAngleMOA
+                    : BuildState::kZeroImpactHeightInches;
+        break;
+      case BuildState::kZeroImpactHeightInches:
+        prompt =
+            "Enter height in inches for zero impact above zero aiming point";
+        GetInput(prompt, pinputs, pinfile);
+        builder.ZeroImpactHeightInches(pinputs->back());
+        state = BuildState::kAltitudeOfFiringSiteFt;
+        break;
+      case BuildState::kAltitudeOfFiringSiteFt:
+        prompt = "Enter altitude in feet of firing site";
+        GetInput(prompt, pinputs, pinfile);
+        builder.AltitudeOfFiringSiteFt(pinputs->back());
+        state = BuildState::kAirPressureInHg;
+        break;
+      case BuildState::kAirPressureInHg:
+        prompt = "Enter air pressure in inches of mercury";
+        GetInput(prompt, pinputs, pinfile);
+        builder.AirPressureInHg(pinputs->back());
+        state = std::isnan(pinputs->back())
+                    ? BuildState::kTemperatureDegF
+                    : BuildState::kAltitudeOfBarometerFt;
+        break;
+      case BuildState::kAltitudeOfBarometerFt:
+        prompt = "Enter altitude in feet of air pressure measurement";
+        GetInput(prompt, pinputs, pinfile);
+        builder.AltitudeOfBarometerFt(pinputs->back());
+        state = BuildState::kTemperatureDegF;
+        break;
+      case BuildState::kTemperatureDegF:
+        prompt = "Enter temperature in degrees F";
+        GetInput(prompt, pinputs, pinfile);
+        builder.TemperatureDegF(pinputs->back());
+        state = std::isnan(pinputs->back())
+                    ? BuildState::kRelativeHumidityPercent
+                    : BuildState::kAltitudeOfThermometerFt;
+        break;
+      case BuildState::kAltitudeOfThermometerFt:
+        prompt = "Enter altitude in feet of temperature measurement";
+        GetInput(prompt, pinputs, pinfile);
+        builder.AltitudeOfThermometerFt(pinputs->back());
+        state = BuildState::kRelativeHumidityPercent;
+        break;
+      case BuildState::kRelativeHumidityPercent:
+        prompt = "Enter relative humidity percent";
+        GetInput(prompt, pinputs, pinfile);
+        builder.RelativeHumidityPercent(pinputs->back());
+        state = BuildState::kWindSpeedMph;
+        break;
+      case BuildState::kWindHeading:
+        prompt = "Enter wind heading as a clock direction 1-12";
+        GetInput(prompt, pinputs, pinfile);
+        builder.WindHeading(ConvertCA(pinputs->back()));
+        state = BuildState::kAzimuthDeg;
+        break;
+      case BuildState::kWindSpeedMph:
+        prompt = "Enter wind speed as Mph";
+        GetInput(prompt, pinputs, pinfile);
+        builder.WindSpeedFps(pinputs->back());
+        if (std::isnan(pinputs->back()) ||
+            pinputs->back() < std::numeric_limits<float>::epsilon()) {
+          state = BuildState::kAzimuthDeg;
+        } else {
+          state = BuildState::kWindHeading;
+        }
+        break;
+      case BuildState::kAzimuthDeg:
+        prompt = "Enter azimuth in degrees";
+        GetInput(prompt, pinputs, pinfile);
+        builder.AzimuthDeg(pinputs->back());
+        state = std::isnan(pinputs->back()) ? BuildState::kRangeAngleDeg
+                                            : BuildState::kLatitudeDeg;
+        break;
+      case BuildState::kLatitudeDeg:
+        prompt = "Enter latitude in degrees";
+        GetInput(prompt, pinputs, pinfile);
+        builder.LatitudeDeg(pinputs->back());
+        state = BuildState::kRangeAngleDeg;
+        break;
+      case BuildState::kRangeAngleDeg:
+        prompt = "Enter the angle of incline (or decline) in degrees";
+        GetInput(prompt, pinputs, pinfile);
+        builder.RangeAngleDeg(pinputs->back());
+        return builder;
+    }
+  }
+}
+
+std::vector<uint32_t> RangeHelper(std::ifstream* pinfile,
+                                  std::vector<float>* pinputs) {
+  std::vector<uint32_t> ranges_ft;
+  const static std::string kPrompt = "Enter a range in yards to solve for";
+  if (!*pinfile) {
+    while (true) {
+      const float kRangeYds = Prompt(kPrompt);
+      if (std::isnan(kRangeYds)) {
+        break;
+      }
+      ranges_ft.push_back(static_cast<uint32_t>(std::round(kRangeYds)) * 3);
+    }
+  } else {
+    const auto kSize = static_cast<size_t>(std::round(Read(pinfile)));
+    ranges_ft.resize(kSize);
+    for (auto& range_ft : ranges_ft) {
+      range_ft = static_cast<uint32_t>(std::round(Read(pinfile)));
+    }
+  }
+
+  if (ranges_ft.empty()) {
+    const std::initializer_list<uint32_t> kRangesFt = {
+        0U,     150U,   300U,   600U,   900U,   1'200U,
+        1'500U, 1'800U, 2'100U, 2'400U, 2'700U, 3'000U};
+    ranges_ft = kRangesFt;
+  } else {
+    std::sort(ranges_ft.begin(), ranges_ft.end());
+    ranges_ft.erase(std::unique(ranges_ft.begin(), ranges_ft.end()),
+                    ranges_ft.end());
+  }
+
+  const auto kSize = static_cast<float>(ranges_ft.size());
+  pinputs->push_back(kSize);
+  for (auto range_ft : ranges_ft) {
+    pinputs->push_back(static_cast<float>(range_ft));
+  }
+  return ranges_ft;
+}
+
+lob::Options OptionsHelper(std::ifstream* pinfile,
+                           std::vector<float>* pinputs) {
+  lob::Options options;
+
+  std::string prompt = "Enter minimum speed threshold in feet per second";
+  GetInput(prompt, pinputs, pinfile);
+  if (!std::isnan(pinputs->back())) {
+    options.min_speed = static_cast<uint16_t>(std::round(pinputs->back()));
+  }
+
+  prompt = "Enter minimum energy threshold in foot-pounds";
+  GetInput(prompt, pinputs, pinfile);
+  if (!std::isnan(pinputs->back())) {
+    options.min_energy = static_cast<uint16_t>(std::round(pinputs->back()));
+  }
+
+  prompt = "Enter maximum time of flight in seconds";
+  GetInput(prompt, pinputs, pinfile);
+  if (!std::isnan(pinputs->back())) {
+    options.max_time = pinputs->back();
+  }
+
+  const uint16_t kStepSize = 100U;
+  options.step_size = kStepSize;
+
+  return options;
+}
+
+struct SolverData {
+  lob::Input input;
+  std::vector<uint32_t> ranges;
+  lob::Options options;
+  std::vector<lob::Output> solutions;
+};
+
+std::unique_ptr<SolverData> Wizard(const std::string& infile,
+                                   const std::string& outfile) {
   std::ifstream file(infile);
   auto* pfile = &file;
+  std::vector<float> inputs;
+  auto* pinputs = &inputs;
+  std::unique_ptr<SolverData> pwizard(new SolverData);
 
-  auto collect_inputs = [pinputs, pfile, pprompt]() {
-    pinputs->push_back(!*pfile ? Prompt(*pprompt) : Read(pfile));
-  };
-
-  prompt = "Enter Ballistic Coefficient in PSI";
-  collect_inputs();
-  builder.BallisticCoefficientPsi(inputs.back());
-
-  prompt = "Enter 1 for Army Standard Metro or 2 for ICAO reference atmosphere";
-  collect_inputs();
-  builder.BCAtmosphere(ConvertAR(inputs.back()));
-
-  prompt = "Enter 1, 2, 5, 6, 7, or 8 for associated drag function";
-  collect_inputs();
-  builder.BCDragFunction(ConvertDF(inputs.back()));
-
-  prompt = "Enter projectile diameter in inches";
-  collect_inputs();
-  builder.DiameterInch(inputs.back());
-
-  prompt = "Enter projectile length in inches";
-  collect_inputs();
-  builder.LengthInch(inputs.back());
-
-  prompt = "Enter projectile mass in grains";
-  collect_inputs();
-  builder.MassGrains(inputs.back());
-
-  prompt = "Enter initial velocity of projectile in FPS";
-  collect_inputs();
-  builder.InitialVelocityFps(static_cast<uint16_t>(std::round(inputs.back())));
-
-  prompt = "Enter the rifle's optic height above bore in inches";
-  collect_inputs();
-  builder.OpticHeightInches(inputs.back());
-
-  prompt = "Enter rifle's barrel twist rate in inches per turn";
-  collect_inputs();
-  builder.TwistInchesPerTurn(inputs.back());
-
-  prompt = "Enter angle in MOA between optic's line of sight and bore";
-  collect_inputs();
-  builder.ZeroAngleMOA(inputs.back());
-
-  prompt = "Enter range in yards of the rifle's zero";
-  collect_inputs();
-  builder.ZeroDistanceYds(inputs.back());
-
-  prompt = "Enter height in inches for zero impact above zero aiming point";
-  collect_inputs();
-  builder.ZeroImpactHeightInches(inputs.back());
-
-  prompt = "Enter altitude of firing site in feet";
-  collect_inputs();
-  builder.AltitudeOfFiringSiteFt(inputs.back());
-
-  prompt = "Enter air pressure in inches of mercury";
-  collect_inputs();
-  builder.AirPressureInHg(inputs.back());
-
-  prompt = "Enter altitude in feet associated with air pressure value";
-  collect_inputs();
-  builder.AltitudeOfBarometerFt(inputs.back());
-
-  prompt = "Enter temperature in degrees F";
-  collect_inputs();
-  builder.TemperatureDegF(inputs.back());
-
-  prompt = "Enter altitude in feet associated with temperature value";
-  collect_inputs();
-  builder.AltitudeOfThermometerFt(inputs.back());
-
-  prompt = "Enter relative humidity percent";
-  collect_inputs();
-  builder.RelativeHumidityPercent(inputs.back());
-
-  prompt = "Enter wind heading as a clock direction 1-12";
-  collect_inputs();
-  builder.WindHeading(ConvertCA(inputs.back()));
-
-  prompt = "Enter wind speed as Mph";
-  collect_inputs();
-  builder.WindSpeedFps(inputs.back());
-
-  prompt = "Enter azimuth in degrees";
-  collect_inputs();
-  builder.AzimuthDeg(inputs.back());
-
-  prompt = "Enter latitude in degrees";
-  collect_inputs();
-  builder.LatitudeDeg(inputs.back());
+  if (!file) {
+    PrintGreeting();
+  }
+  lob::Builder builder = BuildHelper(pfile, pinputs);
+  pwizard->input = builder.Build();
+  pwizard->ranges = RangeHelper(pfile, pinputs);
+  pwizard->solutions.resize(pwizard->ranges.size());
+  pwizard->options = OptionsHelper(pfile, pinputs);
 
   if (!outfile.empty() && !file) {
     WriteOutputFile(outfile, inputs);
   }
-
-  return builder;
+  return pwizard;
 }
 
-// NOLINTNEXTLINE c-style arrays
-void PlotSolution(const lob::Output solutions[], size_t size) {
-  std::vector<uint32_t> x;
-  std::vector<float> y;
-  for (size_t i = 0; i < size; i++) {
-    x.push_back(solutions[i].range);
-    y.push_back(solutions[i].elevation);
-  }
-  constexpr int32_t kWidth = 92;
-  constexpr int32_t kHeight = kWidth / 10;
-  const auto kXminmax = std::minmax_element(x.begin(), x.end());
-  const auto kYminmax = std::minmax_element(y.begin(), y.end());
-  const auto kXmin = *kXminmax.first;
-  const auto kXmax = *kXminmax.second;
-  const auto kYmin = *kYminmax.first;
-  const auto kYmax = *kYminmax.second;
+void PrintExtraInfo(const lob::Input& input) {
+  const uint8_t kExtra = 3U;
+  const std::string kZA("Zero Angle");
+  const auto kZAw = static_cast<int>(kZA.length() + kExtra);
+  const std::string kSF("Stability Factor");
+  const auto kSFw = static_cast<int>(kSF.length() + kExtra);
+  const std::string kSS("Speed of Sound");
+  const auto kSSw = static_cast<int>(kSS.length() + kExtra);
 
-  std::vector<std::vector<char>> plot(kHeight, std::vector<char>(kWidth, ' '));
-
-  for (size_t i = 0; i < x.size(); i++) {
-    const unsigned int kXpos =
-        (x.at(i) - kXmin) * (kWidth - 1) / (kXmax - kXmin);
-    int y_pos =
-        static_cast<int>((y.at(i) - kYmin) * (kHeight - 1) / (kYmax - kYmin));
-    y_pos = kHeight - 1 - y_pos;  // Invert y-axis
-
-    if (kXpos < kWidth && y_pos >= 0 && y_pos < kHeight) {
-      plot.at(static_cast<size_t>(y_pos)).at(static_cast<size_t>(kXpos)) = '*';
-    }
-  }
-
-  const std::string kTitle = "Range vs Drop\n";
-  std::cout << std::string((kWidth - kTitle.length()) / 2, ' ') << kTitle;
-  for (const auto& row : plot) {
-    for (const char kC : row) {
-      std::cout << kC;
-    }
-    std::cout << '\n';
-  }
-
-  std::cout << kXmin;
-  std::cout << std::string(
-      kWidth - 2 - std::to_string(static_cast<uint16_t>(kXmin)).length() -
-          std::to_string(static_cast<uint16_t>(kXmax)).length(),
-      ' ');
-  std::cout << kXmax << '\n';
+  std::cout << std::left << std::setw(kZAw) << kZA << std::setw(kSFw) << kSF
+            << std::setw(kSSw) << kSS << "\n";
+  std::cout << std::left << std::setw(kZAw) << std::fixed
+            << std::setprecision(2) << input.zero_angle << std::setw(kSFw)
+            << input.stability_factor << std::setw(kSSw) << input.speed_of_sound
+            << "\n\n";
 }
 
-// NOLINTNEXTLINE c-style array
-void PrintSolutionTable(const lob::Output solutions[], size_t size) {
+void PrintSolutionTable(const lob::Output* psolutions, size_t size) {
   // Column widths for better formatting
   const int kWidth = 12;
 
@@ -309,24 +546,30 @@ void PrintSolutionTable(const lob::Output solutions[], size_t size) {
   std::cout << std::left << std::setw(kWidth) << "Yards" << std::setw(kWidth)
             << "FPS" << std::setw(kWidth) << "FtLbs" << std::setw(kWidth)
             << "Elev Inch" << std::setw(kWidth) << "Elev MOA"
-            << std::setw(kWidth) << "Wind Inch" << std::setw(kWidth)
-            << "Wind MOA" << std::setw(kWidth) << "Seconds"
+            << std::setw(kWidth) << "Elev MIL" << std::setw(kWidth)
+            << "Wind Inch" << std::setw(kWidth) << "Wind MOA"
+            << std::setw(kWidth) << "Wind MIL" << std::setw(kWidth) << "Seconds"
             << "\n";
 
   // Print table content
   for (size_t i = 0; i < size; ++i) {
-    std::cout << std::left << std::setw(kWidth) << solutions[i].range
-              << std::setw(kWidth) << solutions[i].velocity << std::setw(kWidth)
-              << solutions[i].energy << std::setw(kWidth) << std::fixed
-              << std::setprecision(2) << solutions[i].elevation
+    std::cout << std::left << std::setw(kWidth) << psolutions[i].range / 3
+              << std::setw(kWidth) << psolutions[i].velocity
+              << std::setw(kWidth) << psolutions[i].energy << std::setw(kWidth)
+              << std::fixed << std::setprecision(2) << psolutions[i].elevation
               << std::setw(kWidth)
-              << lob::InchToMoa(solutions[i].elevation, solutions[i].range)
-              << std::setw(kWidth) << solutions[i].deflection
+              << lob::InchToMoa(psolutions[i].elevation, psolutions[i].range)
               << std::setw(kWidth)
-              << lob::InchToMoa(solutions[i].deflection, solutions[i].range)
+              << lob::InchToMil(psolutions[i].elevation, psolutions[i].range)
+              << std::setw(kWidth) << psolutions[i].deflection
+              << std::setw(kWidth)
+              << lob::InchToMoa(psolutions[i].deflection, psolutions[i].range)
+              << std::setw(kWidth)
+              << lob::InchToMil(psolutions[i].deflection, psolutions[i].range)
               << std::setw(kWidth) << std::setprecision(3)
-              << solutions[i].time_of_flight << "\n";
+              << psolutions[i].time_of_flight << "\n";
   }
+  std::cout << "\n";
 }
 }  // namespace
 }  // namespace example
@@ -362,18 +605,27 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  lob::Builder builder = example::BuildHelper(input_file, output_file);
-  const auto kInput = builder.Build();
+  auto psolver_data = example::Wizard(input_file, output_file);
 
-  constexpr size_t kSolutionSize = 12;
-  constexpr std::array<uint32_t, kSolutionSize> kRanges = {
-      0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
-  std::array<lob::Output, kSolutionSize> solutions = {};
-  const auto kSize = lob::Solve(kInput, &kRanges, &solutions);
+  while (std::isnan(psolver_data->input.table_coefficient)) {
+    psolver_data.reset();
+    input_file.clear();  // prevent bad file loop
+    std::cout << "\nOOPS! INVALID DATA, let's start over.\n";
+    psolver_data = example::Wizard(input_file, output_file);
+  }
 
-  example::PlotSolution(solutions.data(), kSize);
-  std::cout << '\n';
-  example::PrintSolutionTable(solutions.data(), kSize);
+  example::PrintExtraInfo(psolver_data->input);
+
+  const auto kSize =
+      lob::Solve(psolver_data->input, psolver_data->ranges.data(),
+                 psolver_data->solutions.data(), psolver_data->ranges.size(),
+                 psolver_data->options);
+
+  example::PrintSolutionTable(psolver_data->solutions.data(), kSize);
+  example::PrintGH();
+  std::cout << "Thanks for using lobber! Goodbye.";
+
+  psolver_data.reset();
   return 0;
 }
 

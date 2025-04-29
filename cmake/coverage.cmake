@@ -4,11 +4,13 @@
 # customization issues
 set(
     COVERAGE_TRACE_COMMAND
-    lcov -c -q
+    lcov -c -q --ignore-errors unused
     -o "${PROJECT_BINARY_DIR}/coverage.info"
     -d "${PROJECT_BINARY_DIR}"
     --include "${PROJECT_SOURCE_DIR}/include/lob/*"
     --include "${PROJECT_SOURCE_DIR}/source/*"
+    --exclude "${PROJECT_SOURCE_DIR}/example/*.cpp"
+    --exclude "${PROJECT_SOURCE_DIR}/test/source/*.cpp"
     CACHE STRING
     "; separated command to generate a trace for the 'coverage' target"
 )

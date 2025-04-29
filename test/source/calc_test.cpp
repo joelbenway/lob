@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <limits>
 #include <vector>
 
 #include "constants.hpp"
@@ -272,6 +273,10 @@ TEST(CalcTests, CalculateLitzGyroscopicSpinDrift) {
       lob::CalculateLitzGyroscopicSpinDrift(kStabilityFactor, kTimeOfFlight2);
   EXPECT_NEAR(kExpectedInches1, kActualInches1.Value(), kError);
   EXPECT_NEAR(kExpectedInches2, kActualInches2.Value(), kError);
+  const double kNaN = std::numeric_limits<double>::quiet_NaN();
+  const lob::InchT kActualInches3 =
+      lob::CalculateLitzGyroscopicSpinDrift(kNaN, kTimeOfFlight1);
+  EXPECT_DOUBLE_EQ(kActualInches3.Value(), 0.0);
 }
 
 TEST(CalcTests, CalculateLitzAerodynamicJump) {
@@ -294,6 +299,17 @@ TEST(CalcTests, CalculateProjectileReferenceArea) {
 TEST(CalcTests, CalculateKineticEnergy) {
   EXPECT_NEAR(CalculateKineticEnergy(lob::FpsT(3000), lob::GrainT(180)).Value(),
               3596.5, 0.1);
+  const double kNaN = std::numeric_limits<double>::quiet_NaN();
+  EXPECT_DOUBLE_EQ(
+      CalculateKineticEnergy(lob::FpsT(kNaN), lob::GrainT(kNaN)).Value(), 0.0);
+}
+
+TEST(CalcTests, CalculateVelocityFromKineticEnergy) {
+  const auto kVelocity = lob::FpsT(3'000);
+  const auto kMass = lob::GrainT(180.0);
+  const auto kEnergy = CalculateKineticEnergy(kVelocity, kMass);
+  const auto kResult = lob::CalculateVelocityFromKineticEnergy(kEnergy, kMass);
+  EXPECT_DOUBLE_EQ(kResult.Value(), kVelocity.Value());
 }
 
 TEST(CalcTests, CalculateSectionalDensity) {

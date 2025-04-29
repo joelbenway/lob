@@ -164,6 +164,9 @@ double CalculateMillerTwistRuleCorrectionFactor(LbsPerCuFtT air_density) {
 
 // Page 97 of Applied Ballistics for Long-Range Shooting 3e - Litz
 InchT CalculateLitzGyroscopicSpinDrift(double stability, SecT time) {
+  if (std::isnan(stability) || time.IsNaN()) {
+    return InchT(0);
+  }
   const double kAVal = 1.25 * (stability >= 0 ? 1.0 : -1.0);
   const double kBVal = 1.2;
   const double kExponent = 1.83;
@@ -190,7 +193,17 @@ SqInT CalculateProjectileReferenceArea(InchT bullet_diameter) {
 }
 
 FtLbsT CalculateKineticEnergy(FpsT velocity, SlugT mass) {
+  if (velocity.IsNaN() || mass.IsNaN()) {
+    return FtLbsT(0);
+  }
   return FtLbsT(mass.Value() * std::pow(velocity.Value(), 2) / 2);
+}
+
+FpsT CalculateVelocityFromKineticEnergy(FtLbsT energy, SlugT mass) {
+  if (!(mass.Value() > 0)) {
+    return FpsT(0);
+  }
+  return FpsT(std::sqrt(2 * energy.Value() / mass.Value()));
 }
 
 // Page 90 of Modern Exterior Ballistics - McCoy

@@ -25,21 +25,6 @@ namespace lob {
 
 const char* Version() { return kProjectVersion; }
 
-namespace {
-
-template <typename T>
-constexpr uint16_t ToU16(T x) {
-  return static_cast<uint16_t>(std::round(x));
-}
-
-template <typename T>
-constexpr uint32_t ToU32(T x) {
-  return static_cast<uint32_t>(std::round(x));
-}
-
-constexpr float kHundredYardsInFeet = FeetT(YardT(100)).Float();
-}  // namespace
-
 class Impl {
   friend class Builder;
 
@@ -193,7 +178,7 @@ Builder& Builder::DiameterInch(float value) {
 }
 
 Builder& Builder::InitialVelocityFps(uint16_t value) {
-  pimpl_->build.velocity = ToU16(value);
+  pimpl_->build.velocity = FpsT(value).U16();
   return *this;
 }
 
@@ -211,8 +196,8 @@ Builder& Builder::MachVsDragTable(const float* pmachs, const float* pdrags,
                                   size_t size) {
   for (size_t i = 0; i < kTableSize; i++) {
     const auto kMach = static_cast<double>(kMachs.at(i)) / kTableScale;
-    const auto kDrag =
-        ToU16(LobLerp(pmachs, pdrags, size, kMach) * kTableScale);
+    const auto kDrag = static_cast<uint16_t>(
+        std::round(LobLerp(pmachs, pdrags, size, kMach) * kTableScale));
     pimpl_->build.drags.at(i) = kDrag;
   }
   pimpl_->pdrag_lut = &pimpl_->build.drags;
@@ -367,14 +352,13 @@ void SolveStep(SpvT* ps, SecT* pt, const Input& input, uint16_t step_size = 0) {
   *pt += dt;
 }
 
-void ValidateBuild(const Impl& impl) {
-  assert(!std::isnan(impl.ballistic_coefficient_psi));
-  assert(!std::isnan(impl.build.velocity));
-  assert(!std::isnan(impl.diameter_in));
-  assert(!std::isnan(impl.build.mass));
-  assert(!std::isnan(impl.zero_distance_ft) ||
-         !std::isnan(impl.build.zero_angle));
-  static_cast<void>(impl);  // argument is unused in Release build
+bool ValidateBuild(const Impl& impl) {
+  const bool kBCisOk = !std::isnan(impl.ballistic_coefficient_psi);
+  const bool kVelocityIsOk = impl.build.velocity > 0;
+  const bool kZeroIsOk =
+      !std::isnan(impl.zero_distance_ft) || !std::isnan(impl.build.zero_angle);
+
+  return (kBCisOk && kVelocityIsOk && kZeroIsOk);
 }
 
 void BuildEnvironment(Impl* pimpl) {
@@ -487,13 +471,12 @@ void BuildWind(Impl* pimpl) {
 }
 
 void BuildTwistEffects(Impl* pimpl) {
-  assert(!std::isnan(pimpl->diameter_in));
-  assert(!std::isnan(pimpl->build.velocity));
+  assert(pimpl->build.velocity > 0);
   assert(!std::isnan(pimpl->ballistic_coefficient_psi));
   assert(!std::isnan(pimpl->build.speed_of_sound));
   assert(!std::isnan(pimpl->build.wind.z));
 
-  if (!std::isnan(pimpl->length_in) &&
+  if (!std::isnan(pimpl->diameter_in) && !std::isnan(pimpl->length_in) &&
       !std::isnan(pimpl->twist_inches_per_turn) &&
       !std::isnan(pimpl->build.mass)) {
     const double kFtp = CalculateMillerTwistRuleCorrectionFactor(
@@ -571,6 +554,8 @@ void BuildZeroAngle(Impl* pimpl) {
   }
 
   assert(!std::isnan(pimpl->zero_distance_ft));
+  assert(pimpl->build.velocity > 0);
+  assert(!std::isnan(pimpl->build.aerodynamic_jump));
 
   if (std::isnan(pimpl->zero_impact_height)) {
     pimpl->zero_impact_height = FeetT(0.0);
@@ -615,72 +600,96 @@ void BuildZeroAngle(Impl* pimpl) {
 }  // namespace
 
 Input Builder::Build() {
-  // This order matters
-  ValidateBuild(*pimpl_);
-  BuildEnvironment(pimpl_);
-  BuildTable(pimpl_);
-  BuildWind(pimpl_);
-  if (std::isnan(pimpl_->build.optic_height)) {
-    constexpr FeetT kDefaultOpticHeight = InchT(1.5);
-    pimpl_->build.optic_height = kDefaultOpticHeight.Float();
+  if (ValidateBuild(*pimpl_)) {
+    // This order matters
+    BuildEnvironment(pimpl_);
+    BuildTable(pimpl_);
+    BuildWind(pimpl_);
+    if (std::isnan(pimpl_->build.optic_height)) {
+      constexpr FeetT kDefaultOpticHeight = InchT(1.5);
+      pimpl_->build.optic_height = kDefaultOpticHeight.Float();
+    }
+    BuildTwistEffects(pimpl_);
+    BuildCoriolis(pimpl_);
+    BuildZeroAngle(pimpl_);
   }
-  BuildTwistEffects(pimpl_);
-  BuildCoriolis(pimpl_);
-  BuildZeroAngle(pimpl_);
   return pimpl_->build;
 }
 
+namespace {
+FpsT CalculateMinimumVelocity(FpsT min_speed, FtLbsT min_energy, SlugT mass) {
+  return std::max(CalculateVelocityFromKineticEnergy(min_energy, mass),
+                  min_speed);
+}
+}  // namespace
+
+namespace {
+Output Save(FeetT range, FpsT velocity, InchT elevation, InchT deflection,
+            SecT time_of_flight, GrainT mass) {
+  Output out;
+  const FtLbsT kEnergy = CalculateKineticEnergy(velocity, mass);
+  out.range = range.U32();
+  out.velocity = velocity.U16();
+  out.energy = kEnergy.U32();
+  out.elevation = elevation.Float();
+  out.deflection = deflection.Float();
+  out.time_of_flight = time_of_flight.Float();
+  return out;
+}
+}  // namespace
+
 size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
              size_t size, const Options& options) {
+  if (std::isnan(in.table_coefficient)) {
+    return 0;
+  }
   const auto kAngle =
       RadiansT(MoaT(in.zero_angle + in.aerodynamic_jump)).Value();
   SpvT s(CartesianT<FeetT>(FeetT(0.0)),
          CartesianT<FpsT>(FpsT(in.velocity) * std::cos(kAngle),
                           FpsT(in.velocity) * std::sin(kAngle), FpsT(0.0)));
+  const FpsT kMinimumVelocity = CalculateMinimumVelocity(
+      FpsT(options.min_speed), FtLbsT(options.min_energy), LbsT(in.mass));
   SecT t(0.0);
   size_t index = 0;
 
   while (true) {
     SolveStep(&s, &t, in, options.step_size);
     const FpsT kVelocity = s.V().Magnitude();
-
     if (s.P().X() >= FeetT(pranges[index])) {
-      InchT spin_drift(0);
-      if (!std::isnan(in.stability_factor)) {
-        spin_drift = CalculateLitzGyroscopicSpinDrift(in.stability_factor, t);
-      }
-      pouts[index].range = ToU32(s.P().X().Value());
-      pouts[index].velocity = ToU16(kVelocity.Value());
-      if (!std::isnan(in.mass)) {
-        pouts[index].energy = ToU32(
-            CalculateKineticEnergy(kVelocity, SlugT(LbsT(in.mass))).Value());
-      }
-      pouts[index].elevation =
-          InchT(s.P().Y() - FeetT(in.optic_height)).Float();
-      pouts[index].deflection = InchT(InchT(s.P().Z()) + spin_drift).Float();
-      pouts[index].time_of_flight = t.Float();
+      const InchT kSpinDrift =
+          CalculateLitzGyroscopicSpinDrift(in.stability_factor, t);
+      pouts[index] =
+          Save(s.P().X(), kVelocity, InchT(s.P().Y() - FeetT(in.optic_height)),
+               InchT(s.P().Z()) + kSpinDrift, t, LbsT(in.mass));
       index++;
     }
 
     if (index >= size) {
       break;
     }
-    if (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0F)) {
-      break;
-    }
-    if (FtLbsT(options.min_energy) >
-        CalculateKineticEnergy(kVelocity, LbsT(in.mass))) {
-      break;
-    }
-    if (kVelocity < FpsT(options.min_speed)) {
-      break;
-    }
-    if (s.V().Y() > s.V().X() * 4) {
+
+    const bool kTimeMaxLimit =
+        (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0F));
+    const bool kVelocityLimit = (kVelocity < kMinimumVelocity);
+    const bool kFallLimit = (s.V().Y() > s.V().X() * 3);
+
+    if (kTimeMaxLimit || kVelocityLimit || kFallLimit) {
+      const InchT kSpinDrift =
+          CalculateLitzGyroscopicSpinDrift(in.stability_factor, t);
+      pouts[index] =
+          Save(s.P().X(), kVelocity, InchT(s.P().Y() - FeetT(in.optic_height)),
+               InchT(s.P().Z()) + kSpinDrift, t, LbsT(in.mass));
+      index++;
       break;
     }
   }
   return index;
 }
+
+namespace {
+constexpr float kHundredYardsInFeet = FeetT(YardT(100)).Float();
+}  // namespace
 
 // Angle
 double MoaToMil(double value) { return MilT(MoaT(value)).Value(); }
