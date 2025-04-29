@@ -234,6 +234,16 @@ class StrongT {
     return StrongT(std::max(a.value_, b.value_));
   }
 
+  template <typename TT = T>
+  constexpr auto IsNaN() const ->
+      typename std::enable_if_t<std::is_floating_point<TT>::value, bool> {
+    return std::isnan(value_);
+  }
+  template <typename TT = T>
+  constexpr auto IsNaN() const ->
+      typename std::enable_if_t<!std::is_floating_point<TT>::value, bool> {
+    return false;
+  }
   constexpr StrongT Inverse() const { return StrongT(T(1) / value_); }
   constexpr T Value() const { return value_; }
   constexpr float Float() const { return static_cast<float>(value_); }

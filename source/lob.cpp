@@ -625,20 +625,14 @@ FpsT CalculateMinimumVelocity(FpsT min_speed, FtLbsT min_energy, SlugT mass) {
 
 namespace {
 Output Save(FeetT range, FpsT velocity, InchT elevation, InchT deflection,
-            SecT time_of_flight, GrainT mass, float stability) {
+            SecT time_of_flight, GrainT mass) {
   Output out;
-  const FtLbsT kEnergy = std::isnan(mass)
-                             ? FtLbsT(0.0)
-                             : CalculateKineticEnergy(velocity, SlugT(mass));
-  const InchT kSpinDrift =
-      std::isnan(stability)
-          ? InchT(0.0)
-          : CalculateLitzGyroscopicSpinDrift(stability, time_of_flight);
+  const FtLbsT kEnergy = CalculateKineticEnergy(velocity, mass);
   out.range = range.U32();
   out.velocity = velocity.U16();
   out.energy = kEnergy.U32();
   out.elevation = elevation.Float();
-  out.deflection = (deflection + kSpinDrift).Float();
+  out.deflection = deflection.Float();
   out.time_of_flight = time_of_flight.Float();
   return out;
 }
@@ -655,8 +649,7 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
          CartesianT<FpsT>(FpsT(in.velocity) * std::cos(kAngle),
                           FpsT(in.velocity) * std::sin(kAngle), FpsT(0.0)));
   const FpsT kMinimumVelocity = CalculateMinimumVelocity(
-      FpsT(options.min_speed), FtLbsT(options.min_energy),
-      SlugT(LbsT(in.mass)));
+      FpsT(options.min_speed), FtLbsT(options.min_energy), LbsT(in.mass));
   SecT t(0.0);
   size_t index = 0;
 
@@ -664,9 +657,11 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
     SolveStep(&s, &t, in, options.step_size);
     const FpsT kVelocity = s.V().Magnitude();
     if (s.P().X() >= FeetT(pranges[index])) {
+      const InchT kSpinDrift =
+          CalculateLitzGyroscopicSpinDrift(in.stability_factor, t);
       pouts[index] =
           Save(s.P().X(), kVelocity, InchT(s.P().Y() - FeetT(in.optic_height)),
-               InchT(s.P().Z()), t, LbsT(in.mass), in.stability_factor);
+               InchT(s.P().Z()) + kSpinDrift, t, LbsT(in.mass));
       index++;
     }
 
@@ -680,9 +675,11 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
     const bool kFallLimit = (s.V().Y() > s.V().X() * 3);
 
     if (kTimeMaxLimit || kVelocityLimit || kFallLimit) {
+      const InchT kSpinDrift =
+          CalculateLitzGyroscopicSpinDrift(in.stability_factor, t);
       pouts[index] =
           Save(s.P().X(), kVelocity, InchT(s.P().Y() - FeetT(in.optic_height)),
-               InchT(s.P().Z()), t, LbsT(in.mass), in.stability_factor);
+               InchT(s.P().Z()) + kSpinDrift, t, LbsT(in.mass));
       index++;
       break;
     }

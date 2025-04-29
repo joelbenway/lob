@@ -101,7 +101,7 @@ TEST(TableTests, DeriveMachDragTableG1) {
   for (size_t i = 0; i < lob::kTableSize; i++) {
     const double kMach =
         static_cast<double>(lob::kMachs.at(i)) / lob::kTableScale;
-  const double kDrag = lob::LobQerp(kG1Machs, kG1DragCoefficients, kMach);
+    const double kDrag = lob::LobQerp(kG1Machs, kG1DragCoefficients, kMach);
     drags.push_back(
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
