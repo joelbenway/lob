@@ -64,6 +64,7 @@ jobs:
     - name: Submit to codecov.io
       uses: codecov/codecov-action@v5
       with:
+        disable_search: true
         files: build/coverage/coverage.info
         token: ${{ secrets.CODECOV_TOKEN }}
 
