@@ -41,11 +41,11 @@ struct BuilderTestFixture : public testing::Test {
 TEST_F(BuilderTestFixture, Constructor) { ASSERT_NE(puut, nullptr); }
 
 TEST_F(BuilderTestFixture, CopyConstructor) {
-  const float kTestBC = 0.425F;
-  const float kTestDiameter = 0.308F;
-  const float kTestWeight = 180.0F;
+  const double kTestBC = 0.425;
+  const double kTestDiameter = 0.308;
+  const double kTestWeight = 180.0;
   const uint16_t kTestMuzzleVelocity = 2700U;
-  const float kTestZeroAngle = 3.38F;
+  const double kTestZeroAngle = 3.38;
   puut->BallisticCoefficientPsi(kTestBC)
       .DiameterInch(kTestDiameter)
       .MassGrains(kTestWeight)
@@ -53,17 +53,17 @@ TEST_F(BuilderTestFixture, CopyConstructor) {
       .ZeroAngleMOA(kTestZeroAngle);
   lob::Builder copy = *puut;
   const lob::Input kVal1 = puut->Build();
-  EXPECT_FLOAT_EQ(kVal1.velocity, kTestMuzzleVelocity);
+  EXPECT_DOUBLE_EQ(kVal1.velocity, kTestMuzzleVelocity);
   const lob::Input kVal2 = copy.Build();
-  EXPECT_FLOAT_EQ(kVal2.velocity, kTestMuzzleVelocity);
+  EXPECT_DOUBLE_EQ(kVal2.velocity, kTestMuzzleVelocity);
 }
 
 TEST_F(BuilderTestFixture, MoveConstructor) {
-  const float kTestBC = 0.425F;
-  const float kTestDiameter = 0.308F;
-  const float kTestWeight = 180.0F;
+  const double kTestBC = 0.425;
+  const double kTestDiameter = 0.308;
+  const double kTestWeight = 180.0;
   const uint16_t kTestMuzzleVelocity = 2700U;
-  const float kTestZeroAngle = 3.38F;
+  const double kTestZeroAngle = 3.38;
   puut->BallisticCoefficientPsi(kTestBC)
       .DiameterInch(kTestDiameter)
       .MassGrains(kTestWeight)
@@ -76,11 +76,11 @@ TEST_F(BuilderTestFixture, MoveConstructor) {
 
 // Test for copy assignment operator
 TEST_F(BuilderTestFixture, CopyAssignmentOperator) {
-  const float kTestBC = 0.425F;
-  const float kTestDiameter = 0.308F;
-  const float kTestWeight = 180.0F;
+  const double kTestBC = 0.425;
+  const double kTestDiameter = 0.308;
+  const double kTestWeight = 180.0;
   const uint16_t kTestMuzzleVelocity = 2700U;
-  const float kTestZeroAngle = 3.38F;
+  const double kTestZeroAngle = 3.38;
   puut->BallisticCoefficientPsi(kTestBC)
       .DiameterInch(kTestDiameter)
       .MassGrains(kTestWeight)
@@ -89,18 +89,18 @@ TEST_F(BuilderTestFixture, CopyAssignmentOperator) {
   lob::Builder copy;
   copy = *puut;
   const lob::Input kVal1 = puut->Build();
-  EXPECT_FLOAT_EQ(kVal1.velocity, kTestMuzzleVelocity);
+  EXPECT_DOUBLE_EQ(kVal1.velocity, kTestMuzzleVelocity);
   const lob::Input kVal2 = copy.Build();
-  EXPECT_FLOAT_EQ(kVal2.velocity, kTestMuzzleVelocity);
+  EXPECT_DOUBLE_EQ(kVal2.velocity, kTestMuzzleVelocity);
 }
 
 // Test for move assignment operator
 TEST_F(BuilderTestFixture, MoveAssignmentOperator) {
-  const float kTestBC = 0.425F;
-  const float kTestDiameter = 0.308F;
-  const float kTestWeight = 180.0F;
+  const double kTestBC = 0.425;
+  const double kTestDiameter = 0.308;
+  const double kTestWeight = 180.0;
   const uint16_t kTestMuzzleVelocity = 2700U;
-  const float kTestZeroAngle = 3.38F;
+  const double kTestZeroAngle = 3.38;
   puut->BallisticCoefficientPsi(kTestBC)
       .DiameterInch(kTestDiameter)
       .MassGrains(kTestWeight)
@@ -113,10 +113,10 @@ TEST_F(BuilderTestFixture, MoveAssignmentOperator) {
 }
 
 TEST_F(BuilderTestFixture, BuildMinimalInput) {
-  const float kTestBC = 0.425F;
+  const double kTestBC = 0.425;
   const uint16_t kTestMuzzleVelocity = 2700U;
-  const float kTestZeroAngle = 3.84F;
-  const float kZeroDistance = 100.0F;
+  const double kTestZeroAngle = 3.84;
+  const double kZeroDistance = 100.0;
   const lob::Input kResult = puut->BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .ZeroDistanceYds(kZeroDistance)
@@ -125,13 +125,12 @@ TEST_F(BuilderTestFixture, BuildMinimalInput) {
   EXPECT_FALSE(std::isnan(kResult.speed_of_sound));
   EXPECT_EQ(kResult.velocity, kTestMuzzleVelocity);
   EXPECT_NEAR(kResult.zero_angle, kTestZeroAngle, 0.01);
-  EXPECT_FLOAT_EQ(kResult.gravity.y,
-                  -1.0F * static_cast<float>(lob::kStandardGravityFtPerSecSq));
+  EXPECT_DOUBLE_EQ(kResult.gravity.y, -1.0 * lob::kStandardGravityFtPerSecSq);
 }
 
 TEST_F(BuilderTestFixture, BuildInvalidVelocityInput) {
-  const float kTestBC = 0.425F;
-  const float kTestZeroAngle = 3.84F;
+  const double kTestBC = 0.425;
+  const double kTestZeroAngle = 3.84;
   const lob::Input kResult = puut->BallisticCoefficientPsi(kTestBC)
                                  .ZeroAngleMOA(kTestZeroAngle)
                                  .Build();
@@ -140,7 +139,7 @@ TEST_F(BuilderTestFixture, BuildInvalidVelocityInput) {
 
 TEST_F(BuilderTestFixture, BuildInvalidBCInput) {
   const uint16_t kTestMuzzleVelocity = 2700U;
-  const float kTestZeroAngle = 3.84F;
+  const double kTestZeroAngle = 3.84;
   const lob::Input kResult = puut->InitialVelocityFps(kTestMuzzleVelocity)
                                  .ZeroAngleMOA(kTestZeroAngle)
                                  .Build();
@@ -148,7 +147,7 @@ TEST_F(BuilderTestFixture, BuildInvalidBCInput) {
 }
 
 TEST_F(BuilderTestFixture, BuildInvalidZeroInput) {
-  const float kTestBC = 0.425F;
+  const double kTestBC = 0.425;
   const uint16_t kTestMuzzleVelocity = 2700U;
   const lob::Input kResult = puut->BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
@@ -157,9 +156,9 @@ TEST_F(BuilderTestFixture, BuildInvalidZeroInput) {
 }
 
 TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
-  const float kTestBC = 1.0F;
+  const double kTestBC = 1.0;
   const uint16_t kTestMuzzleVelocity = 2500U;
-  const float kTestZeroAngle = 5.59F;
+  const double kTestZeroAngle = 5.59;
   std::array<float, lob::kTableSize> machs = {};
   std::array<float, lob::kTableSize> drags = {};
 
@@ -186,9 +185,9 @@ TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
 }
 
 TEST_F(BuilderTestFixture, BuildG2UsingCustomTable) {
-  const float kTestBC = 1.0F;
+  const double kTestBC = 1.0;
   const uint16_t kTestMuzzleVelocity = 2500U;
-  const float kTestZeroAngle = 5.0F;
+  const double kTestZeroAngle = 5.0;
   std::array<float, lob::kTableSize> machs = {};
   std::array<float, lob::kTableSize> drags = {};
 
@@ -215,9 +214,9 @@ TEST_F(BuilderTestFixture, BuildG2UsingCustomTable) {
 }
 
 TEST_F(BuilderTestFixture, BuildG5UsingCustomTable) {
-  const float kTestBC = 1.0F;
+  const double kTestBC = 1.0;
   const uint16_t kTestMuzzleVelocity = 2500U;
-  const float kTestZeroAngle = 5.0F;
+  const double kTestZeroAngle = 5.0;
   std::array<float, lob::kTableSize> machs = {};
   std::array<float, lob::kTableSize> drags = {};
 
@@ -244,9 +243,9 @@ TEST_F(BuilderTestFixture, BuildG5UsingCustomTable) {
 }
 
 TEST_F(BuilderTestFixture, BuildG6UsingCustomTable) {
-  const float kTestBC = 1.0F;
+  const double kTestBC = 1.0;
   const uint16_t kTestMuzzleVelocity = 2500U;
-  const float kTestZeroAngle = 5.0F;
+  const double kTestZeroAngle = 5.0;
   std::array<float, lob::kTableSize> machs = {};
   std::array<float, lob::kTableSize> drags = {};
 
@@ -273,9 +272,9 @@ TEST_F(BuilderTestFixture, BuildG6UsingCustomTable) {
 }
 
 TEST_F(BuilderTestFixture, BuildG7UsingCustomTable) {
-  const float kTestBC = 1.0F;
+  const double kTestBC = 1.0;
   const uint16_t kTestMuzzleVelocity = 2500U;
-  const float kTestZeroAngle = 5.0F;
+  const double kTestZeroAngle = 5.0;
   std::array<float, lob::kTableSize> machs = {};
   std::array<float, lob::kTableSize> drags = {};
 
@@ -302,9 +301,9 @@ TEST_F(BuilderTestFixture, BuildG7UsingCustomTable) {
 }
 
 TEST_F(BuilderTestFixture, BuildG8UsingCustomTable) {
-  const float kTestBC = 1.0F;
+  const double kTestBC = 1.0;
   const uint16_t kTestMuzzleVelocity = 2500U;
-  const float kTestZeroAngle = 5.0F;
+  const double kTestZeroAngle = 5.0;
   std::array<float, lob::kTableSize> machs = {};
   std::array<float, lob::kTableSize> drags = {};
 
@@ -331,12 +330,12 @@ TEST_F(BuilderTestFixture, BuildG8UsingCustomTable) {
 }
 
 TEST_F(BuilderTestFixture, JackOConnorZero) {
-  const float kSierraGameKingBC = 0.436F;
+  const double kSierraGameKingBC = 0.436;
   const uint16_t kM70MuzzleVelocity = 3100U;
-  const float kZeroYardage = 100.0F;
-  const float kZeroHeight = 3.0F;
-  const float kExpectedZeroAngle = 6.11F;
-  const float kError = 0.01F;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const double kExpectedZeroAngle = 6.11;
+  const double kError = 0.01;
   const lob::Input kJack =
       puut->BallisticCoefficientPsi(kSierraGameKingBC)
           .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)

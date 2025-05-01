@@ -86,7 +86,7 @@ template <typename T>
 double LobLerp(const T* x_lut, const T* y_lut, const size_t size,
                const double x_in) {
   if (x_in < static_cast<double>(x_lut[0])) {
-    return y_lut[0];
+    return static_cast<double>(y_lut[0]);
   }
 
   size_t index = size - 1;
@@ -96,13 +96,13 @@ double LobLerp(const T* x_lut, const T* y_lut, const size_t size,
   }
 
   if (index == size - 1) {
-    return y_lut[size - 1];
+    return static_cast<double>(y_lut[size - 1]);
   }
 
-  const double kX0 = x_lut[index];
-  const double kX1 = x_lut[index + 1];
-  const double kY0 = y_lut[index];
-  const double kY1 = y_lut[index + 1];
+  const auto kX0 = static_cast<double>(x_lut[index]);
+  const auto kX1 = static_cast<double>(x_lut[index + 1]);
+  const auto kY0 = static_cast<double>(y_lut[index]);
+  const auto kY1 = static_cast<double>(y_lut[index + 1]);
 
   return ((kY1 - kY0) / (kX1 - kX0) * (x_in - kX0)) + kY0;
 }
@@ -121,7 +121,7 @@ double LobQerp(const T* x_lut, const T* y_lut, const size_t size,
   }
 
   if (x_in < static_cast<double>(x_lut[0])) {
-    return y_lut[0];
+    return static_cast<double>(y_lut[0]);
   }
 
   size_t index = size - 1;
@@ -131,15 +131,21 @@ double LobQerp(const T* x_lut, const T* y_lut, const size_t size,
   }
 
   if (index == size - 1) {
-    return y_lut[size - 1];
+    return static_cast<double>(y_lut[size - 1]);
   }
 
-  const double kX0 = index == 0 ? x_lut[index] : x_lut[index - 1];
-  const double kX1 = index == 0 ? x_lut[index + 1] : x_lut[index];
-  const double kX2 = index == 0 ? x_lut[index + 2] : x_lut[index + 1];
-  const double kY0 = index == 0 ? y_lut[index] : y_lut[index - 1];
-  const double kY1 = index == 0 ? y_lut[index + 1] : y_lut[index];
-  const double kY2 = index == 0 ? y_lut[index + 2] : y_lut[index + 1];
+  const auto kX0 =
+      static_cast<double>(index == 0 ? x_lut[index] : x_lut[index - 1]);
+  const auto kX1 =
+      static_cast<double>(index == 0 ? x_lut[index + 1] : x_lut[index]);
+  const auto kX2 =
+      static_cast<double>(index == 0 ? x_lut[index + 2] : x_lut[index + 1]);
+  const auto kY0 =
+      static_cast<double>(index == 0 ? y_lut[index] : y_lut[index - 1]);
+  const auto kY1 =
+      static_cast<double>(index == 0 ? y_lut[index + 1] : y_lut[index]);
+  const auto kY2 =
+      static_cast<double>(index == 0 ? y_lut[index + 2] : y_lut[index + 1]);
   const double kLerp = x_in >= kX1
                            ? ((kY2 - kY1) / (kX2 - kX1) * (x_in - kX1)) + kY1
                            : ((kY1 - kY0) / (kX1 - kX0) * (x_in - kX0)) + kY0;
