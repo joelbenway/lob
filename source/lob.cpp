@@ -29,32 +29,32 @@ class Impl {
   friend class Builder;
 
  public:
-  LbsPerCuFtT air_density_lbs_per_cu_ft{NaN<double>()};
-  FeetT altitude_ft{NaN<double>()};
-  FeetT altitude_of_barometer_ft{NaN<double>()};
-  FeetT altitude_of_thermometer_ft{NaN<double>()};
+  LbsPerCuFtT air_density_lbs_per_cu_ft{NaN()};
+  FeetT altitude_ft{NaN()};
+  FeetT altitude_of_barometer_ft{NaN()};
+  FeetT altitude_of_thermometer_ft{NaN()};
   AtmosphereReferenceT atmosphere_reference{
       AtmosphereReferenceT::kArmyStandardMetro};
-  RadiansT azimuth_rad{NaN<double>()};
-  PmsiT ballistic_coefficient_psi{NaN<double>()};
-  InchT base_diameter_in{NaN<double>()};
-  InHgT air_pressure_in_hg{NaN<double>()};
-  InchT diameter_in{NaN<double>()};
-  RadiansT latitude_rad{NaN<double>()};
-  InchT length_in{NaN<double>()};
-  InchT meplat_diameter_in{NaN<double>()};
-  InchT nose_length_in{NaN<double>()};
-  double ogive_rtr{NaN<double>()};
+  RadiansT azimuth_rad{NaN()};
+  PmsiT ballistic_coefficient_psi{NaN()};
+  InchT base_diameter_in{NaN()};
+  InHgT air_pressure_in_hg{NaN()};
+  InchT diameter_in{NaN()};
+  RadiansT latitude_rad{NaN()};
+  InchT length_in{NaN()};
+  InchT meplat_diameter_in{NaN()};
+  InchT nose_length_in{NaN()};
+  double ogive_rtr{NaN()};
   const std::array<uint16_t, kTableSize>* pdrag_lut{&kG1Drags};
-  RadiansT range_angle_rad{NaN<double>()};
-  double relative_humidity_percent{NaN<double>()};
-  InchT tail_length_in{NaN<double>()};
-  DegFT temperature_deg_f{NaN<double>()};
-  InchPerTwistT twist_inches_per_turn{NaN<double>()};
-  RadiansT wind_heading_rad{NaN<double>()};
-  FpsT wind_speed_fps{NaN<double>()};
-  FeetT zero_distance_ft{NaN<double>()};
-  FeetT zero_impact_height{NaN<double>()};
+  RadiansT range_angle_rad{NaN()};
+  double relative_humidity_percent{NaN()};
+  InchT tail_length_in{NaN()};
+  DegFT temperature_deg_f{NaN()};
+  InchPerTwistT twist_inches_per_turn{NaN()};
+  RadiansT wind_heading_rad{NaN()};
+  FpsT wind_speed_fps{NaN()};
+  FeetT zero_distance_ft{NaN()};
+  FeetT zero_impact_height{NaN()};
 
   Input build{};
 };
@@ -99,37 +99,37 @@ Builder& Builder::operator=(Builder&& rhs) noexcept {
   return *this;
 }
 
-Builder& Builder::AltitudeOfFiringSiteFt(float value) {
+Builder& Builder::AltitudeOfFiringSiteFt(double value) {
   pimpl_->altitude_ft = FeetT(value);
   return *this;
 }
 
-Builder& Builder::AltitudeOfBarometerFt(float value) {
+Builder& Builder::AltitudeOfBarometerFt(double value) {
   pimpl_->altitude_of_barometer_ft = FeetT(value);
   return *this;
 }
 
-Builder& Builder::AltitudeOfThermometerFt(float value) {
+Builder& Builder::AltitudeOfThermometerFt(double value) {
   pimpl_->altitude_of_thermometer_ft = FeetT(value);
   return *this;
 }
 
-Builder& Builder::AzimuthDeg(float value) {
+Builder& Builder::AzimuthDeg(double value) {
   pimpl_->azimuth_rad = DegreesT(value);
   return *this;
 }
 
-Builder& Builder::BallisticCoefficientPsi(float value) {
+Builder& Builder::BallisticCoefficientPsi(double value) {
   pimpl_->ballistic_coefficient_psi = PmsiT(value);
   return *this;
 }
 
-Builder& Builder::AirPressureInHg(float value) {
+Builder& Builder::AirPressureInHg(double value) {
   pimpl_->air_pressure_in_hg = InHgT(value);
   return *this;
 }
 
-Builder& Builder::BaseDiameterInch(float value) {
+Builder& Builder::BaseDiameterInch(double value) {
   pimpl_->base_diameter_in = InchT(value);
   return *this;
 }
@@ -172,7 +172,7 @@ Builder& Builder::BCDragFunction(DragFunctionT type) {
   return *this;
 }
 
-Builder& Builder::DiameterInch(float value) {
+Builder& Builder::DiameterInch(double value) {
   pimpl_->diameter_in = InchT(value);
   return *this;
 }
@@ -182,12 +182,12 @@ Builder& Builder::InitialVelocityFps(uint16_t value) {
   return *this;
 }
 
-Builder& Builder::LatitudeDeg(float value) {
+Builder& Builder::LatitudeDeg(double value) {
   pimpl_->latitude_rad = DegreesT(value);
   return *this;
 }
 
-Builder& Builder::LengthInch(float value) {
+Builder& Builder::LengthInch(double value) {
   pimpl_->length_in = InchT(value);
   return *this;
 }
@@ -205,52 +205,52 @@ Builder& Builder::MachVsDragTable(const float* pmachs, const float* pdrags,
   return *this;
 }
 
-Builder& Builder::MassGrains(float value) {
-  pimpl_->build.mass = LbsT(GrainT(value)).Float();
+Builder& Builder::MassGrains(double value) {
+  pimpl_->build.mass = LbsT(GrainT(value)).Value();
   return *this;
 }
 
-Builder& Builder::MeplatDiameterInch(float value) {
+Builder& Builder::MeplatDiameterInch(double value) {
   pimpl_->meplat_diameter_in = InchT(value);
   return *this;
 }
 
-Builder& Builder::NoseLengthInch(float value) {
+Builder& Builder::NoseLengthInch(double value) {
   pimpl_->nose_length_in = InchT(value);
   return *this;
 }
 
-Builder& Builder::OgiveRtR(float value) {
-  pimpl_->ogive_rtr = static_cast<double>(value);
+Builder& Builder::OgiveRtR(double value) {
+  pimpl_->ogive_rtr = value;
   return *this;
 }
 
-Builder& Builder::OpticHeightInches(float value) {
-  pimpl_->build.optic_height = FeetT(InchT(value)).Float();
+Builder& Builder::OpticHeightInches(double value) {
+  pimpl_->build.optic_height = FeetT(InchT(value)).Value();
   return *this;
 }
 
-Builder& Builder::RelativeHumidityPercent(float value) {
+Builder& Builder::RelativeHumidityPercent(double value) {
   pimpl_->relative_humidity_percent = value;
   return *this;
 }
 
-Builder& Builder::RangeAngleDeg(float value) {
+Builder& Builder::RangeAngleDeg(double value) {
   pimpl_->range_angle_rad = RadiansT(DegreesT(value));
   return *this;
 }
 
-Builder& Builder::TailLengthInch(float value) {
+Builder& Builder::TailLengthInch(double value) {
   pimpl_->tail_length_in = InchT(value);
   return *this;
 }
 
-Builder& Builder::TemperatureDegF(float value) {
+Builder& Builder::TemperatureDegF(double value) {
   pimpl_->temperature_deg_f = DegFT(value);
   return *this;
 }
 
-Builder& Builder::TwistInchesPerTurn(float value) {
+Builder& Builder::TwistInchesPerTurn(double value) {
   pimpl_->twist_inches_per_turn = InchPerTwistT(value);
   return *this;
 }
@@ -262,7 +262,7 @@ Builder& Builder::WindHeading(ClockAngleT value) {
   return *this;
 }
 
-Builder& Builder::WindHeadingDeg(float value) {
+Builder& Builder::WindHeadingDeg(double value) {
   constexpr DegreesT kFullTurn(kDegreesPerTurn);
   constexpr DegreesT kQuarterTurn(kFullTurn / 4);
 
@@ -290,27 +290,27 @@ Builder& Builder::WindHeadingDeg(float value) {
   return *this;
 }
 
-Builder& Builder::WindSpeedFps(float value) {
+Builder& Builder::WindSpeedFps(double value) {
   pimpl_->wind_speed_fps = FpsT(value);
   return *this;
 }
 
-Builder& Builder::WindSpeedMph(float value) {
+Builder& Builder::WindSpeedMph(double value) {
   pimpl_->wind_speed_fps = MphT(value);
   return *this;
 }
 
-Builder& Builder::ZeroAngleMOA(float value) {
-  pimpl_->build.zero_angle = MoaT(value).Float();
+Builder& Builder::ZeroAngleMOA(double value) {
+  pimpl_->build.zero_angle = MoaT(value).Value();
   return *this;
 }
 
-Builder& Builder::ZeroDistanceYds(float value) {
+Builder& Builder::ZeroDistanceYds(double value) {
   pimpl_->zero_distance_ft = YardT(value);
   return *this;
 }
 
-Builder& Builder::ZeroImpactHeightInches(float value) {
+Builder& Builder::ZeroImpactHeightInches(double value) {
   pimpl_->zero_impact_height = InchT(value);
   return *this;
 }
@@ -373,12 +373,10 @@ void BuildEnvironment(Impl* pimpl) {
     pimpl->range_angle_rad = RadiansT(DegreesT(0));
   }
 
-  pimpl->build.gravity.x =
-      static_cast<float>(kStandardGravityFtPerSecSq * -1 *
-                         std::sin(pimpl->range_angle_rad.Value()));
-  pimpl->build.gravity.y =
-      static_cast<float>(kStandardGravityFtPerSecSq * -1 *
-                         std::cos(pimpl->range_angle_rad.Value()));
+  pimpl->build.gravity.x = kStandardGravityFtPerSecSq * -1 *
+                           std::sin(pimpl->range_angle_rad.Value());
+  pimpl->build.gravity.y = kStandardGravityFtPerSecSq * -1 *
+                           std::cos(pimpl->range_angle_rad.Value());
 
   if (!std::isnan(pimpl->altitude_ft)) {
     altitude_of_firing_site = pimpl->altitude_ft;
@@ -430,7 +428,7 @@ void BuildEnvironment(Impl* pimpl) {
            CalculateSpeedOfSoundHumidityCorrection(
                pimpl->relative_humidity_percent,
                kWaterVaporSaturationPressureInHg))
-          .Float();
+          .Value();
 }
 
 void BuildTable(Impl* pimpl) {
@@ -450,7 +448,7 @@ void BuildTable(Impl* pimpl) {
   // scale for air density and bc
   const double kCdCoefficient = CalculateCdCoefficient(
       pimpl->air_density_lbs_per_cu_ft, pimpl->ballistic_coefficient_psi);
-  pimpl->build.table_coefficient = static_cast<float>(kCdCoefficient);
+  pimpl->build.table_coefficient = kCdCoefficient;
 }
 
 void BuildWind(Impl* pimpl) {
@@ -464,10 +462,10 @@ void BuildWind(Impl* pimpl) {
 
   pimpl->build.wind.x =
       FpsT(pimpl->wind_speed_fps * std::sin(pimpl->wind_heading_rad.Value()))
-          .Float();
+          .Value();
   pimpl->build.wind.z =
       FpsT(pimpl->wind_speed_fps * std::cos(pimpl->wind_heading_rad.Value()))
-          .Float();
+          .Value();
 }
 
 void BuildTwistEffects(Impl* pimpl) {
@@ -481,14 +479,14 @@ void BuildTwistEffects(Impl* pimpl) {
       !std::isnan(pimpl->build.mass)) {
     const double kFtp = CalculateMillerTwistRuleCorrectionFactor(
         pimpl->air_density_lbs_per_cu_ft);
-    pimpl->build.stability_factor = static_cast<float>(
+    pimpl->build.stability_factor =
         kFtp * CalculateMillerTwistRuleStabilityFactor(
                    pimpl->diameter_in, GrainT(LbsT(pimpl->build.mass)),
                    pimpl->length_in, pimpl->twist_inches_per_turn,
-                   FpsT(pimpl->build.velocity)));
+                   FpsT(pimpl->build.velocity));
 
-    if (AreEqual(pimpl->build.wind.z, 0.0F)) {
-      pimpl->build.aerodynamic_jump = MoaT(0).Float();
+    if (AreEqual(pimpl->build.wind.z, 0.0)) {
+      pimpl->build.aerodynamic_jump = MoaT(0).Value();
       return;
     }
 
@@ -509,7 +507,7 @@ void BuildTwistEffects(Impl* pimpl) {
               MphT(FpsT(pimpl->build.wind.z)), pimpl->air_density_lbs_per_cu_ft,
               FpsT(pimpl->build.speed_of_sound),
               pimpl->ballistic_coefficient_psi, kCDref)
-              .Float();
+              .Value();
       return;
     }
 
@@ -517,12 +515,12 @@ void BuildTwistEffects(Impl* pimpl) {
         CalculateLitzAerodynamicJump(pimpl->build.stability_factor,
                                      pimpl->diameter_in, pimpl->length_in,
                                      MphT(FpsT(pimpl->build.wind.z)))
-            .Float();
+            .Value();
     return;
   }
 
   if (std::isnan(pimpl->build.aerodynamic_jump)) {
-    pimpl->build.aerodynamic_jump = MoaT(0).Float();
+    pimpl->build.aerodynamic_jump = MoaT(0).Value();
     return;
   }
 }
@@ -535,12 +533,11 @@ void BuildCoriolis(Impl* pimpl) {
     const double kSinL = std::sin(pimpl->latitude_rad).Value();
     const double kCosA = std::cos(pimpl->azimuth_rad).Value();
 
-    pimpl->build.corilolis.cos_l_sin_a = static_cast<float>(
-        2 * kAngularVelocityOfEarthRadPerSec * kCosL * kSinA);
-    pimpl->build.corilolis.sin_l =
-        static_cast<float>(2 * kAngularVelocityOfEarthRadPerSec * kSinL);
-    pimpl->build.corilolis.cos_l_cos_a = static_cast<float>(
-        2 * kAngularVelocityOfEarthRadPerSec * kCosL * kCosA);
+    pimpl->build.corilolis.cos_l_sin_a =
+        2 * kAngularVelocityOfEarthRadPerSec * kCosL * kSinA;
+    pimpl->build.corilolis.sin_l = 2 * kAngularVelocityOfEarthRadPerSec * kSinL;
+    pimpl->build.corilolis.cos_l_cos_a =
+        2 * kAngularVelocityOfEarthRadPerSec * kCosL * kCosA;
   } else {
     pimpl->build.corilolis.cos_l_sin_a = 0;
     pimpl->build.corilolis.sin_l = 0;
@@ -595,7 +592,7 @@ void BuildZeroAngle(Impl* pimpl) {
       low_angle = kZeroAngle;
     }
   }
-  pimpl->build.zero_angle = MoaT((low_angle + high_angle) / 2).Float();
+  pimpl->build.zero_angle = MoaT((low_angle + high_angle) / 2).Value();
 }
 }  // namespace
 
@@ -607,7 +604,7 @@ Input Builder::Build() {
     BuildWind(pimpl_);
     if (std::isnan(pimpl_->build.optic_height)) {
       constexpr FeetT kDefaultOpticHeight = InchT(1.5);
-      pimpl_->build.optic_height = kDefaultOpticHeight.Float();
+      pimpl_->build.optic_height = kDefaultOpticHeight.Value();
     }
     BuildTwistEffects(pimpl_);
     BuildCoriolis(pimpl_);
@@ -631,9 +628,9 @@ Output Save(FeetT range, FpsT velocity, InchT elevation, InchT deflection,
   out.range = range.U32();
   out.velocity = velocity.U16();
   out.energy = kEnergy.U32();
-  out.elevation = elevation.Float();
-  out.deflection = deflection.Float();
-  out.time_of_flight = time_of_flight.Float();
+  out.elevation = elevation.Value();
+  out.deflection = deflection.Value();
+  out.time_of_flight = time_of_flight.Value();
   return out;
 }
 }  // namespace
@@ -670,7 +667,7 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
     }
 
     const bool kTimeMaxLimit =
-        (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0F));
+        (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0));
     const bool kVelocityLimit = (kVelocity < kMinimumVelocity);
     const bool kFallLimit = (s.V().Y() > s.V().X() * 3);
 
@@ -688,7 +685,7 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
 }
 
 namespace {
-constexpr float kHundredYardsInFeet = FeetT(YardT(100)).Float();
+constexpr double kHundredYardsInFeet = FeetT(YardT(100)).Value();
 }  // namespace
 
 // Angle
@@ -696,16 +693,14 @@ double MoaToMil(double value) { return MilT(MoaT(value)).Value(); }
 double MoaToDeg(double value) { return DegreesT(MoaT(value)).Value(); }
 double MoaToIphy(double value) { return IphyT(MoaT(value)).Value(); }
 double MoaToInch(double value, double range_ft) {
-  return IphyT(MoaT(value)).Value() * range_ft /
-         static_cast<double>(kHundredYardsInFeet);
+  return IphyT(MoaT(value)).Value() * range_ft / kHundredYardsInFeet;
 }
 
 double MilToMoa(double value) { return MoaT(MilT(value)).Value(); }
 double MilToDeg(double value) { return DegreesT(MilT(value)).Value(); }
 double MilToIphy(double value) { return IphyT(MilT(value)).Value(); }
 double MilToInch(double value, double range_ft) {
-  return IphyT(MilT(value)).Value() * range_ft /
-         static_cast<double>(kHundredYardsInFeet);
+  return IphyT(MilT(value)).Value() * range_ft / kHundredYardsInFeet;
 }
 
 double DegToMoa(double value) { return MoaT(DegreesT(value)).Value(); }
@@ -715,27 +710,21 @@ double InchToMoa(double value, double range_ft) {
   if (AreEqual(range_ft, 0.0)) {
     return 0;
   }
-  return MoaT(IphyT(value /
-                    (range_ft / static_cast<double>(kHundredYardsInFeet))))
-      .Value();
+  return MoaT(IphyT(value / (range_ft / kHundredYardsInFeet))).Value();
 }
 
 double InchToMil(double value, double range_ft) {
   if (AreEqual(range_ft, 0.0)) {
     return 0;
   }
-  return MilT(IphyT(value /
-                    (range_ft / static_cast<double>(kHundredYardsInFeet))))
-      .Value();
+  return MilT(IphyT(value / (range_ft / kHundredYardsInFeet))).Value();
 }
 
 double InchToDeg(double value, double range_ft) {
   if (AreEqual(range_ft, 0.0)) {
     return 0;
   }
-  return DegreesT(IphyT(value /
-                        (range_ft / static_cast<double>(kHundredYardsInFeet))))
-      .Value();
+  return DegreesT(IphyT(value / (range_ft / kHundredYardsInFeet))).Value();
 }
 
 // Energy

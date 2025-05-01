@@ -26,13 +26,13 @@ struct LobCoriolisTestFixture : public testing::Test {
     puut = std::make_unique<lob::Builder>();
     ASSERT_NE(puut, nullptr);
 
-    const float kTestBC = 0.33F;
+    const double kTestBC = 0.33;
     const lob::DragFunctionT kDragFunction = lob::DragFunctionT::kG7;
-    const float kTestDiameter = 0.510F;
-    const float kTestWeight = 661.0F;
+    const double kTestDiameter = 0.510;
+    const double kTestWeight = 661.0;
     const uint16_t kTestMuzzleVelocity = 2800;
-    const float kTestZeroAngle = 5.06F;
-    const float kTestOpticHeight = 3.0F;
+    const double kTestZeroAngle = 5.06;
+    const double kTestOpticHeight = 3.0;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -50,19 +50,19 @@ struct LobCoriolisTestFixture : public testing::Test {
 TEST_F(LobCoriolisTestFixture, ZeroAngleSearch) {
   ASSERT_NE(puut, nullptr);
   auto input1 = puut->Build();
-  const float kZeroRange = 100.0F;
-  auto input2 = puut->ZeroAngleMOA(std::numeric_limits<float>::quiet_NaN())
+  const double kZeroRange = 100.0;
+  auto input2 = puut->ZeroAngleMOA(std::numeric_limits<double>::quiet_NaN())
                     .ZeroDistanceYds(kZeroRange)
                     .Build();
-  const float kError = 0.01F;
+  const double kError = 0.01;
   EXPECT_NEAR(input1.zero_angle, input2.zero_angle, kError);
 }
 
 TEST_F(LobCoriolisTestFixture, GetSpeedOfSoundFps) {
   ASSERT_NE(puut, nullptr);
   const auto kInput = puut->Build();
-  const float kExpectedFps = 1116.45F;
-  const float kError = 0.001F;
+  const double kExpectedFps = 1116.45;
+  const double kError = 0.001;
   EXPECT_NEAR(kInput.speed_of_sound, kExpectedFps, kError);
 }
 
@@ -80,22 +80,22 @@ TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2800, 11496, -3.00F, 0.00F, 0.000F},
-      {150, 2729, 10919, -0.91F, 0.00F, 0.054F},
-      {300, 2659, 10366, 0.01F, 0.00F, 0.110F},
-      {600, 2522, 9323, -1.91F, 0.00F, 0.226F},
-      {900, 2388, 8363, -9.30F, 0.00F, 0.348F},
-      {1200, 2259, 7483, -22.80F, 0.00F, 0.477F},
-      {1500, 2134, 6679, -43.10F, 0.00F, 0.614F},
-      {1800, 2013, 5944, -71.04F, 0.00F, 0.758F},
-      {2100, 1896, 5273, -107.58F, 0.00F, 0.912F},
-      {2400, 1783, 4660, -153.77F, 0.00F, 1.075F},
-      {2700, 1672, 4099, -210.94F, 0.00F, 1.249F},
-      {3000, 1564, 3589, -280.55F, 0.00F, 1.434F},
-      {4500, 1090, 1741, -891.15F, 0.00F, 2.589F},
-      {6000, 940, 1295, -2208.54F, 0.00F, 4.090F},
-      {7500, 842, 1039, -4520.81F, 0.00F, 5.793F},
-      {9000, 761, 848, -8096.45F, 0.00F, 7.707F}};
+      {0, 2800, 11496, -3.00, 0.00, 0.000},
+      {150, 2729, 10919, -0.91, 0.00, 0.054},
+      {300, 2659, 10366, 0.01, 0.00, 0.110},
+      {600, 2522, 9323, -1.91, 0.00, 0.226},
+      {900, 2388, 8363, -9.30, 0.00, 0.348},
+      {1200, 2259, 7483, -22.80, 0.00, 0.477},
+      {1500, 2134, 6679, -43.10, 0.00, 0.614},
+      {1800, 2013, 5944, -71.04, 0.00, 0.758},
+      {2100, 1896, 5273, -107.58, 0.00, 0.912},
+      {2400, 1783, 4660, -153.77, 0.00, 1.075},
+      {2700, 1672, 4099, -210.94, 0.00, 1.249},
+      {3000, 1564, 3589, -280.55, 0.00, 1.434},
+      {4500, 1090, 1741, -891.15, 0.00, 2.589},
+      {6000, 940, 1295, -2208.54, 0.00, 4.090},
+      {7500, 842, 1039, -4520.81, 0.00, 5.793},
+      {9000, 761, 848, -8096.45, 0.00, 7.707}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
@@ -125,8 +125,8 @@ TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kLattitude = 45.0F;
-  constexpr float kAzimuth = 0.0F;  // North
+  constexpr double kLattitude = 45.0;
+  constexpr double kAzimuth = 0.0;  // North
   constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
@@ -136,12 +136,12 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
-  const std::array<float, kSolutionLength> kExpectedElevationDifference = {
-      0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
-      0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F};
-  const std::array<float, kSolutionLength> kExpectedDeflectionDifference = {
-      0.0F,  0.01F, 0.02F, 0.08F, 0.19F, 0.34F,  0.54F,  0.8F,
-      1.11F, 1.48F, 1.92F, 2.42F, 6.14F, 12.49F, 22.12F, 35.65F};
+  const std::array<double, kSolutionLength> kExpectedElevationDifference = {
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
+      0.0,  0.01, 0.02, 0.08, 0.19, 0.34,  0.54,  0.8,
+      1.11, 1.48, 1.92, 2.42, 6.14, 12.49, 22.12, 35.65};
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
@@ -162,8 +162,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kLattitude = 45.0F;
-  constexpr float kAzimuth = 90.0F;  // East
+  constexpr double kLattitude = 45.0;
+  constexpr double kAzimuth = 90.0;  // East
   constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
@@ -173,12 +173,12 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
-  const std::array<float, kSolutionLength> kExpectedElevationDifference = {
-      0.0F,  0.0F,  0.02F, 0.08F, 0.19F, 0.35F,  0.55F,  0.8F,
-      1.11F, 1.48F, 1.91F, 2.41F, 6.08F, 12.25F, 21.54F, 34.29F};
-  const std::array<float, kSolutionLength> kExpectedDeflectionDifference = {
-      0.0F,  0.01F, 0.02F, 0.08F, 0.19F, 0.34F,  0.54F,  0.8F,
-      1.11F, 1.48F, 1.91F, 2.41F, 6.07F, 12.24F, 21.38F, 33.88F};
+  const std::array<double, kSolutionLength> kExpectedElevationDifference = {
+      0.0,  0.0,  0.02, 0.08, 0.19, 0.35,  0.55,  0.8,
+      1.11, 1.48, 1.91, 2.41, 6.08, 12.25, 21.54, 34.29};
+  const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
+      0.0,  0.01, 0.02, 0.08, 0.19, 0.34,  0.54,  0.8,
+      1.11, 1.48, 1.91, 2.41, 6.07, 12.24, 21.38, 33.88};
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
@@ -200,8 +200,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
 TEST_F(LobCoriolisTestFixture,
        NorthernHemisphereDeflectionEastNegativeAzimuth) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kLattitude = 45.0F;
-  constexpr float kAzimuth = -270.0F;  // East
+  constexpr double kLattitude = 45.0;
+  constexpr double kAzimuth = -270.0;  // East
   constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
@@ -211,12 +211,12 @@ TEST_F(LobCoriolisTestFixture,
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
-  const std::array<float, kSolutionLength> kExpectedElevationDifference = {
-      0.0F,  0.0F,  0.02F, 0.08F, 0.19F, 0.35F,  0.55F,  0.8F,
-      1.11F, 1.48F, 1.91F, 2.41F, 6.08F, 12.25F, 21.54F, 34.29F};
-  const std::array<float, kSolutionLength> kExpectedDeflectionDifference = {
-      0.0F,  0.01F, 0.02F, 0.08F, 0.19F, 0.34F,  0.54F,  0.8F,
-      1.11F, 1.48F, 1.91F, 2.41F, 6.07F, 12.24F, 21.38F, 33.88F};
+  const std::array<double, kSolutionLength> kExpectedElevationDifference = {
+      0.0,  0.0,  0.02, 0.08, 0.19, 0.35,  0.55,  0.8,
+      1.11, 1.48, 1.91, 2.41, 6.08, 12.25, 21.54, 34.29};
+  const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
+      0.0,  0.01, 0.02, 0.08, 0.19, 0.34,  0.54,  0.8,
+      1.11, 1.48, 1.91, 2.41, 6.07, 12.24, 21.38, 33.88};
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
@@ -237,8 +237,8 @@ TEST_F(LobCoriolisTestFixture,
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionSouth) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kLattitude = 45.0F;
-  constexpr float kAzimuth = 180.0F;  // South
+  constexpr double kLattitude = 45.0;
+  constexpr double kAzimuth = 180.0;  // South
   constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
@@ -248,12 +248,12 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionSouth) {
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
-  const std::array<float, kSolutionLength> kExpectedElevationDifference = {
-      0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
-      0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F};
-  const std::array<float, kSolutionLength> kExpectedDeflectionDifference = {
-      0.0F,  0.01F, 0.02F, 0.08F, 0.19F, 0.34F,  0.54F,  0.8F,
-      1.11F, 1.47F, 1.9F,  2.39F, 6.01F, 11.99F, 20.64F, 32.1F};
+  const std::array<double, kSolutionLength> kExpectedElevationDifference = {
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
+      0.0,  0.01, 0.02, 0.08, 0.19, 0.34,  0.54,  0.8,
+      1.11, 1.47, 1.9,  2.39, 6.01, 11.99, 20.64, 32.1};
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
@@ -275,8 +275,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionSouth) {
 TEST_F(LobCoriolisTestFixture,
        NorthernHemisphereDeflectionSouthNegativeAzimuth) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kLattitude = 45.0F;
-  constexpr float kAzimuth = -180.0F;  // South
+  constexpr double kLattitude = 45.0;
+  constexpr double kAzimuth = -180.0;  // South
   constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
@@ -286,12 +286,12 @@ TEST_F(LobCoriolisTestFixture,
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
-  const std::array<float, kSolutionLength> kExpectedElevationDifference = {
-      0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
-      0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F};
-  const std::array<float, kSolutionLength> kExpectedDeflectionDifference = {
-      0.0F,  0.01F, 0.02F, 0.08F, 0.19F, 0.34F,  0.54F,  0.8F,
-      1.11F, 1.47F, 1.9F,  2.39F, 6.01F, 11.99F, 20.64F, 32.1F};
+  const std::array<double, kSolutionLength> kExpectedElevationDifference = {
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
+      0.0,  0.01, 0.02, 0.08, 0.19, 0.34,  0.54,  0.8,
+      1.11, 1.47, 1.9,  2.39, 6.01, 11.99, 20.64, 32.1};
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
@@ -312,8 +312,8 @@ TEST_F(LobCoriolisTestFixture,
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereCoriolisDeflectionWest) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kLattitude = 45.0F;
-  constexpr float kAzimuth = 270.0F;  // West
+  constexpr double kLattitude = 45.0;
+  constexpr double kAzimuth = 270.0;  // West
   constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
@@ -323,12 +323,12 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereCoriolisDeflectionWest) {
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
-  const std::array<float, kSolutionLength> kExpectedElevationDifference = {
-      -0.0F,  -0.01F, -0.03F, -0.09F, -0.19F, -0.34F, -0.54F,  -0.8F,
-      -1.11F, -1.48F, -1.90F, -2.4F,  -6.07F, -12.3F, -21.45F, -34.4F};
-  const std::array<float, kSolutionLength> kExpectedDeflectionDifference = {
-      0.0F,  0.01F, 0.02F, 0.08F, 0.19F, 0.34F,  0.54F,  0.8F,
-      1.11F, 1.48F, 1.91F, 2.41F, 6.07F, 12.24F, 21.38F, 33.88F};
+  const std::array<double, kSolutionLength> kExpectedElevationDifference = {
+      -0.0,  -0.01, -0.03, -0.09, -0.19, -0.34, -0.54,  -0.8,
+      -1.11, -1.48, -1.90, -2.4,  -6.07, -12.3, -21.45, -34.4};
+  const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
+      0.0,  0.01, 0.02, 0.08, 0.19, 0.34,  0.54,  0.8,
+      1.11, 1.48, 1.91, 2.41, 6.07, 12.24, 21.38, 33.88};
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
@@ -350,8 +350,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereCoriolisDeflectionWest) {
 TEST_F(LobCoriolisTestFixture,
        NorthernHemisphereCoriolisDeflectionWestNegativeAzimuth) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kLattitude = 45.0F;
-  constexpr float kAzimuth = -90.0F;  // West
+  constexpr double kLattitude = 45.0;
+  constexpr double kAzimuth = -90.0;  // West
   constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
@@ -361,12 +361,12 @@ TEST_F(LobCoriolisTestFixture,
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
-  const std::array<float, kSolutionLength> kExpectedElevationDifference = {
-      -0.0F,  -0.01F, -0.03F, -0.09F, -0.19F, -0.34F, -0.54F,  -0.8F,
-      -1.11F, -1.48F, -1.90F, -2.4F,  -6.07F, -12.3F, -21.45F, -34.4F};
-  const std::array<float, kSolutionLength> kExpectedDeflectionDifference = {
-      0.0F,  0.01F, 0.02F, 0.08F, 0.19F, 0.34F,  0.54F,  0.8F,
-      1.11F, 1.48F, 1.91F, 2.41F, 6.07F, 12.24F, 21.38F, 33.88F};
+  const std::array<double, kSolutionLength> kExpectedElevationDifference = {
+      -0.0,  -0.01, -0.03, -0.09, -0.19, -0.34, -0.54,  -0.8,
+      -1.11, -1.48, -1.90, -2.4,  -6.07, -12.3, -21.45, -34.4};
+  const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
+      0.0,  0.01, 0.02, 0.08, 0.19, 0.34,  0.54,  0.8,
+      1.11, 1.48, 1.91, 2.41, 6.07, 12.24, 21.38, 33.88};
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
@@ -387,8 +387,8 @@ TEST_F(LobCoriolisTestFixture,
 
 TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionNorth) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kLattitude = -45.0;
-  constexpr float kAzimuth = 0.0F;  // North
+  constexpr double kLattitude = -45.0;
+  constexpr double kAzimuth = 0.0;  // North
   constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
@@ -398,12 +398,12 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionNorth) {
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
-  const std::array<float, kSolutionLength> kExpectedElevationDifference = {
-      0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
-      0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F};
-  const std::array<float, kSolutionLength> kExpectedDeflectionDifference = {
-      0.0F,   -0.01F, -0.02F, -0.08F, -0.19F, -0.34F,  -0.54F,  -0.8F,
-      -1.11F, -1.47F, -1.9F,  -2.39F, -6.01F, -11.99F, -20.64F, -32.1F};
+  const std::array<double, kSolutionLength> kExpectedElevationDifference = {
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
+      0.0,   -0.01, -0.02, -0.08, -0.19, -0.34,  -0.54,  -0.8,
+      -1.11, -1.47, -1.9,  -2.39, -6.01, -11.99, -20.64, -32.1};
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
@@ -424,8 +424,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionNorth) {
 
 TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kLattitude = -45.0;
-  constexpr float kAzimuth = 90.0F;  // East
+  constexpr double kLattitude = -45.0;
+  constexpr double kAzimuth = 90.0;  // East
   constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
@@ -435,12 +435,12 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
-  const std::array<float, kSolutionLength> kExpectedElevationDifference = {
-      0.0F,  0.0F,  0.02F, 0.08F, 0.19F, 0.35F,  0.55F,  0.8F,
-      1.11F, 1.48F, 1.91F, 2.41F, 6.08F, 12.25F, 21.54F, 34.29F};
-  const std::array<float, kSolutionLength> kExpectedDeflectionDifference = {
-      0.0F,   -0.01F, -0.02F, -0.08F, -0.19F, -0.34F,  -0.54F,  -0.8F,
-      -1.11F, -1.48F, -1.91F, -2.41F, -6.07F, -12.24F, -21.38F, -33.88F};
+  const std::array<double, kSolutionLength> kExpectedElevationDifference = {
+      0.0,  0.0,  0.02, 0.08, 0.19, 0.35,  0.55,  0.8,
+      1.11, 1.48, 1.91, 2.41, 6.08, 12.25, 21.54, 34.29};
+  const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
+      0.0,   -0.01, -0.02, -0.08, -0.19, -0.34,  -0.54,  -0.8,
+      -1.11, -1.48, -1.91, -2.41, -6.07, -12.24, -21.38, -33.88};
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
@@ -461,8 +461,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
 
 TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionSouth) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kLattitude = -45.0;
-  constexpr float kAzimuth = 180.0F;  // South
+  constexpr double kLattitude = -45.0;
+  constexpr double kAzimuth = 180.0;  // South
   constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
@@ -472,12 +472,12 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionSouth) {
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
-  const std::array<float, kSolutionLength> kExpectedElevationDifference = {
-      0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
-      0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F};
-  const std::array<float, kSolutionLength> kExpectedDeflectionDifference = {
-      0.0F,   -0.01F, -0.02F, -0.08F, -0.19F, -0.34F,  -0.54F,  -0.8F,
-      -1.11F, -1.48F, -1.92F, -2.42F, -6.14F, -12.49F, -22.12F, -35.65F};
+  const std::array<double, kSolutionLength> kExpectedElevationDifference = {
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
+      0.0,   -0.01, -0.02, -0.08, -0.19, -0.34,  -0.54,  -0.8,
+      -1.11, -1.48, -1.92, -2.42, -6.14, -12.49, -22.12, -35.65};
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
@@ -498,8 +498,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionSouth) {
 
 TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionWest) {
   ASSERT_NE(puut, nullptr);
-  constexpr float kLattitude = -45.0;
-  constexpr float kAzimuth = 270.0F;  // West
+  constexpr double kLattitude = -45.0;
+  constexpr double kAzimuth = 270.0;  // West
   constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
@@ -509,12 +509,12 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionWest) {
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
-  const std::array<float, kSolutionLength> kExpectedElevationDifference = {
-      0.0F,   -0.01F, -0.03F, -0.09F, -0.19F, -0.34F, -0.54F,  -0.8F,
-      -1.11F, -1.48F, -1.90F, -2.4F,  -6.07F, -12.3F, -21.45F, -34.4F};
-  const std::array<float, kSolutionLength> kExpectedDeflectionDifference = {
-      0.0F,   -0.01F, -0.02F, -0.08F, -0.19F, -0.34F,  -0.54F,  -0.8F,
-      -1.11F, -1.48F, -1.91F, -2.41F, -6.07F, -12.24F, -21.38F, -33.88F};
+  const std::array<double, kSolutionLength> kExpectedElevationDifference = {
+      0.0,   -0.01, -0.03, -0.09, -0.19, -0.34, -0.54,  -0.8,
+      -1.11, -1.48, -1.90, -2.4,  -6.07, -12.3, -21.45, -34.4};
+  const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
+      0.0,   -0.01, -0.02, -0.08, -0.19, -0.34,  -0.54,  -0.8,
+      -1.11, -1.48, -1.91, -2.41, -6.07, -12.24, -21.38, -33.88};
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};

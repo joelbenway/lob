@@ -52,16 +52,16 @@ void PrintGreeting() {
          "ballistics library. Follow the prompts to enter data.\n\n";
 }
 
-float Prompt(const std::string& prompt) {
+double Prompt(const std::string& prompt) {
   bool is_valid = false;
-  float input = 0;
+  double input = 0;
   std::string str;
 
   while (!is_valid) {
     std::cout << prompt << '\n' << '>';
     std::getline(std::cin, str);
     if (str.empty()) {
-      input = std::numeric_limits<float>::quiet_NaN();
+      input = std::numeric_limits<double>::quiet_NaN();
       is_valid = true;
     } else {
       std::istringstream iss(str);
@@ -76,10 +76,10 @@ float Prompt(const std::string& prompt) {
   return input;
 }
 
-float Read(std::ifstream* pfile) {
+double Read(std::ifstream* pfile) {
   std::string line;
   std::getline(*pfile, line);
-  float input = std::numeric_limits<float>::quiet_NaN();
+  double input = std::numeric_limits<double>::quiet_NaN();
 
   if (!line.empty() && line != "nan") {
     std::istringstream iss(line);
@@ -88,7 +88,7 @@ float Read(std::ifstream* pfile) {
   return input;
 }
 
-void GetInput(const std::string& prompt, std::vector<float>* inputs,
+void GetInput(const std::string& prompt, std::vector<double>* inputs,
               std::ifstream* pfile) {
   if (!*pfile) {
     inputs->push_back(Prompt(prompt));
@@ -97,7 +97,7 @@ void GetInput(const std::string& prompt, std::vector<float>* inputs,
   }
 }
 
-lob::DragFunctionT ConvertDF(float input) {
+lob::DragFunctionT ConvertDF(double input) {
   switch (static_cast<int>(std::round(input))) {
     case 2:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
              // readability-magic-numbers)
@@ -121,13 +121,13 @@ lob::DragFunctionT ConvertDF(float input) {
   }
 }
 
-lob::AtmosphereReferenceT ConvertAR(float input) {
+lob::AtmosphereReferenceT ConvertAR(double input) {
   return 2 == static_cast<int>(std::round(input))
              ? lob::AtmosphereReferenceT::kIcao
              : lob::AtmosphereReferenceT::kArmyStandardMetro;
 }
 
-lob::ClockAngleT ConvertCA(float input) {
+lob::ClockAngleT ConvertCA(double input) {
   switch (static_cast<int>(std::round(input))) {
     case 1:  // NOLINT(cppcoreguidelines-avoid-magic-numbers,
              // readability-magic-numbers)
@@ -170,7 +170,7 @@ lob::ClockAngleT ConvertCA(float input) {
 }
 
 bool WriteOutputFile(const std::string& file_name,
-                     const std::vector<float>& inputs) {
+                     const std::vector<double>& inputs) {
   std::ofstream output_file(file_name);
 
   if (!output_file.is_open()) {
@@ -219,7 +219,7 @@ enum class BuildState : uint8_t {
 };
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-lob::Builder BuildHelper(std::ifstream* pinfile, std::vector<float>* pinputs) {
+lob::Builder BuildHelper(std::ifstream* pinfile, std::vector<double>* pinputs) {
   lob::Builder builder;
   BuildState state = BuildState::kBallisticCoefficientPsi;
   std::string prompt = "Enter Ballistic Coefficient in PSI";
@@ -396,7 +396,7 @@ lob::Builder BuildHelper(std::ifstream* pinfile, std::vector<float>* pinputs) {
         GetInput(prompt, pinputs, pinfile);
         builder.WindSpeedFps(pinputs->back());
         if (std::isnan(pinputs->back()) ||
-            pinputs->back() < std::numeric_limits<float>::epsilon()) {
+            pinputs->back() < std::numeric_limits<double>::epsilon()) {
           state = BuildState::kAzimuthDeg;
         } else {
           state = BuildState::kWindHeading;
@@ -425,12 +425,12 @@ lob::Builder BuildHelper(std::ifstream* pinfile, std::vector<float>* pinputs) {
 }
 
 std::vector<uint32_t> RangeHelper(std::ifstream* pinfile,
-                                  std::vector<float>* pinputs) {
+                                  std::vector<double>* pinputs) {
   std::vector<uint32_t> ranges_ft;
   const static std::string kPrompt = "Enter a range in yards to solve for";
   if (!*pinfile) {
     while (true) {
-      const float kRangeYds = Prompt(kPrompt);
+      const double kRangeYds = Prompt(kPrompt);
       if (std::isnan(kRangeYds)) {
         break;
       }
@@ -455,16 +455,16 @@ std::vector<uint32_t> RangeHelper(std::ifstream* pinfile,
                     ranges_ft.end());
   }
 
-  const auto kSize = static_cast<float>(ranges_ft.size());
+  const auto kSize = static_cast<double>(ranges_ft.size());
   pinputs->push_back(kSize);
   for (auto range_ft : ranges_ft) {
-    pinputs->push_back(static_cast<float>(range_ft));
+    pinputs->push_back(static_cast<double>(range_ft));
   }
   return ranges_ft;
 }
 
 lob::Options OptionsHelper(std::ifstream* pinfile,
-                           std::vector<float>* pinputs) {
+                           std::vector<double>* pinputs) {
   lob::Options options;
 
   std::string prompt = "Enter minimum speed threshold in feet per second";
@@ -502,7 +502,7 @@ std::unique_ptr<SolverData> Wizard(const std::string& infile,
                                    const std::string& outfile) {
   std::ifstream file(infile);
   auto* pfile = &file;
-  std::vector<float> inputs;
+  std::vector<double> inputs;
   auto* pinputs = &inputs;
   std::unique_ptr<SolverData> pwizard(new SolverData);
 

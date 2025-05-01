@@ -33,15 +33,15 @@ TEST(LobAPITest, SolverSkipsPoorlyFormedInput) {
 }
 
 TEST(LobAPITest, OptionsMaximumTimeOfFlight) {
-  const float kTestBC = 0.436F;
+  const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
-  const float kTestZeroAngle = 6.11F;
+  const double kTestZeroAngle = 6.11;
   const lob::Input kResult = lob::Builder()
                                  .BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .ZeroAngleMOA(kTestZeroAngle)
                                  .Build();
-  const float kMaxTime = 1.5F;
+  const double kMaxTime = 1.5;
   const uint32_t kRange = 5'000U;
   lob::Output out;
   const lob::Options kOptions{0, 0, kMaxTime, 100U};
@@ -51,9 +51,9 @@ TEST(LobAPITest, OptionsMaximumTimeOfFlight) {
 }
 
 TEST(LobAPITest, OptionsMinimumVelocity) {
-  const float kTestBC = 0.436F;
+  const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
-  const float kTestZeroAngle = 6.11F;
+  const double kTestZeroAngle = 6.11;
   const lob::Input kResult = lob::Builder()
                                  .BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
@@ -69,10 +69,10 @@ TEST(LobAPITest, OptionsMinimumVelocity) {
 }
 
 TEST(LobAPITest, OptionsMinimumEnergy) {
-  const float kTestBC = 0.436F;
+  const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
-  const float kGrains = 130.0F;
-  const float kTestZeroAngle = 6.11F;
+  const double kGrains = 130.0;
+  const double kTestZeroAngle = 6.11;
   const lob::Input kResult = lob::Builder()
                                  .BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
@@ -151,6 +151,12 @@ TEST(LobAPITest, DegToMil) {
 TEST(LobAPITest, InchToMoa) {
   const auto kA = lob::IphyT(5);
   const auto kB = lob::MoaT(lob::InchToMoa(kA.Value(), 300));
+  EXPECT_DOUBLE_EQ(kA.Value(), lob::IphyT(kB).Value());
+}
+
+TEST(LobAPITest, InchToMil) {
+  const auto kA = lob::IphyT(5);
+  const auto kB = lob::MilT(lob::InchToMil(kA.Value(), 300));
   EXPECT_DOUBLE_EQ(kA.Value(), lob::IphyT(kB).Value());
 }
 
