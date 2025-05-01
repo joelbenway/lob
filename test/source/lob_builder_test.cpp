@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "constants.hpp"
+#include "eng_units.hpp"
 #include "lob/lob.hpp"
 #include "tables.hpp"
 
@@ -344,6 +345,57 @@ TEST_F(BuilderTestFixture, JackOConnorZero) {
           .ZeroImpactHeightInches(kZeroHeight)
           .Build();
   EXPECT_NEAR(kJack.zero_angle, kExpectedZeroAngle, kError);
+}
+
+TEST_F(BuilderTestFixture, RangeAngleDeg) {
+  const double kBc = 0.400;
+  const uint16_t kVelocity = 3000U;
+  const double kZeroAngle = 5.0;
+  const double kRangeAngle = -5.0;
+  const double kError = 1E-6;
+  const lob::Input kResult =
+      puut->BallisticCoefficientPsi(kBc)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kVelocity)
+          .ZeroAngleMOA(kZeroAngle)
+          .RangeAngleDeg(kRangeAngle)
+          .Build();
+  const double kGravityFpsps = -32.1740;
+  const double kExpectedGravityX =
+      kGravityFpsps *
+      std::sin(lob::RadiansT(lob::DegreesT(kRangeAngle)).Value());
+  const double kExpectedGravityY =
+      kGravityFpsps *
+      std::cos(lob::RadiansT(lob::DegreesT(kRangeAngle)).Value());
+  EXPECT_NEAR(kResult.gravity.x, kExpectedGravityX, kError);
+  EXPECT_NEAR(kResult.gravity.y, kExpectedGravityY, kError);
+}
+
+TEST_F(BuilderTestFixture, WindSpeedsAreEquivalent) {
+  const double kBc = 0.400;
+  const uint16_t kVelocity = 3000U;
+  const double kZeroAngle = 5.0;
+  const double kRangeAngle = -5.0;
+  const double kError = 1E-6;
+  const lob::Input kResult1 =
+      puut->BallisticCoefficientPsi(kBc)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kVelocity)
+          .ZeroAngleMOA(kZeroAngle)
+          .WindHeadingDeg(45)
+          .WindSpeedMph(10)
+          .Build();
+
+  const lob::Input kResult2 =
+      puut->BallisticCoefficientPsi(kBc)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kVelocity)
+          .ZeroAngleMOA(kZeroAngle)
+          .WindHeadingDeg(45)
+          .WindSpeedFps(14.6666667)
+          .Build();
+  EXPECT_NEAR(kResult1.wind.x, kResult2.wind.x, kError);
+  EXPECT_NEAR(kResult1.wind.z, kResult2.wind.z, kError);
 }
 
 }  // namespace tests
