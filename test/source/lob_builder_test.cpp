@@ -375,7 +375,6 @@ TEST_F(BuilderTestFixture, WindSpeedsAreEquivalent) {
   const double kBc = 0.400;
   const uint16_t kVelocity = 3000U;
   const double kZeroAngle = 5.0;
-  const double kRangeAngle = -5.0;
   const double kError = 1E-6;
   const lob::Input kResult1 =
       puut->BallisticCoefficientPsi(kBc)

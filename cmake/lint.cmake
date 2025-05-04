@@ -8,12 +8,14 @@ endmacro()
 
 default(FORMAT_COMMAND clang-format)
 default(
-    PATTERNS
-    source/*.cpp source/*.hpp
-    include/*.hpp
-    test/*.cpp test/*.hpp
-    example/*.cpp example/*.hpp
-)
+  PATTERNS
+  source/*.cpp
+  source/*.hpp
+  include/*.hpp
+  test/*.cpp
+  test/*.hpp
+  example/*.cpp
+  example/*.hpp)
 default(FIX NO)
 
 set(flag --output-replacements-xml)
@@ -30,11 +32,9 @@ string(LENGTH "${CMAKE_SOURCE_DIR}/" path_prefix_length)
 
 foreach(file IN LISTS files)
   execute_process(
-      COMMAND "${FORMAT_COMMAND}" --style=file "${flag}" "${file}"
-      WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-      RESULT_VARIABLE result
-      ${args}
-  )
+    COMMAND "${FORMAT_COMMAND}" --style=file "${flag}" "${file}"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    RESULT_VARIABLE result ${args})
   if(NOT result EQUAL "0")
     message(FATAL_ERROR "'${file}': formatter returned with ${result}")
   endif()

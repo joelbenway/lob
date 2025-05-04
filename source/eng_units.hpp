@@ -18,12 +18,6 @@ template <typename E, E U, typename T>
 class StrongT {
  public:
   constexpr explicit StrongT(T value) : value_(value) {}
-  template <typename V, std::enable_if_t<std::is_arithmetic<V>::value &&
-                                             !std::is_same<V, T>::value &&
-                                             !(std::is_unsigned<T>::value &&
-                                               !std::is_unsigned<V>::value),
-                                         bool> = true>
-  constexpr explicit StrongT(V value) : value_(static_cast<T>(value)) {}
   template <E OtherUnit>
   constexpr explicit StrongT(const StrongT<E, OtherUnit, T>& other,
                              T conversion_factor)

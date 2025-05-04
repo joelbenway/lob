@@ -5,9 +5,11 @@
 #include "tables.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
+#include <iterator>
 #include <limits>
 
 #include "constants.hpp"
@@ -85,26 +87,31 @@ double FindAngleToPointOnCircle(Point p, Circle c) {
 template <typename T>
 double LobLerp(const T* x_lut, const T* y_lut, const size_t size,
                const double x_in) {
-  if (x_in < static_cast<double>(x_lut[0])) {
-    return static_cast<double>(y_lut[0]);
-  }
+  assert(!(x_in < 0.0) && "input is not negative");
+  assert(x_lut != nullptr && y_lut != nullptr && "Input arrays cannot be null");
 
-  size_t index = size - 1;
-
-  while (index > 0 && x_in < static_cast<double>(x_lut[index])) {
-    index--;
-  }
-
-  if (index == size - 1) {
+  if (x_in >= static_cast<double>(x_lut[size - 1])) {
     return static_cast<double>(y_lut[size - 1]);
   }
 
-  const auto kX0 = static_cast<double>(x_lut[index]);
-  const auto kX1 = static_cast<double>(x_lut[index + 1]);
-  const auto kY0 = static_cast<double>(y_lut[index]);
-  const auto kY1 = static_cast<double>(y_lut[index + 1]);
+  const T* pupper = std::upper_bound(
+      x_lut, x_lut + size, x_in, [](double val, const T& element) {
+        return val < static_cast<double>(element);
+      });
 
-  return ((kY1 - kY0) / (kX1 - kX0) * (x_in - kX0)) + kY0;
+  const auto kDiff = std::distance(x_lut, pupper);
+  const auto kIndex = static_cast<size_t>(kDiff - 1);
+  assert(kIndex < size - 1 && "kIndex out of bounds");
+
+  const auto kX0 = static_cast<double>(x_lut[kIndex]);
+  const auto kX1 = static_cast<double>(x_lut[kIndex + 1]);
+  const auto kY0 = static_cast<double>(y_lut[kIndex]);
+  const auto kY1 = static_cast<double>(y_lut[kIndex + 1]);
+
+  const auto kDx = kX1 - kX0;
+  assert(kDx > 0.0 && "x values must be increasing");
+  const double kT = (x_in - kX0) / kDx;
+  return kY0 + (kT * (kY1 - kY0));
 }
 
 template double LobLerp<uint16_t>(const uint16_t* x_lut, const uint16_t* y_lut,

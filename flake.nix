@@ -33,6 +33,7 @@
               # Development Tools
               clang-tools
               cmake
+              cmake-format
               codespell
               cppcheck
               doxygen

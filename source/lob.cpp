@@ -263,8 +263,8 @@ Builder& Builder::WindHeading(ClockAngleT value) {
 }
 
 Builder& Builder::WindHeadingDeg(double value) {
-  constexpr DegreesT kFullTurn(kDegreesPerTurn);
-  constexpr DegreesT kQuarterTurn(kFullTurn / 4);
+  const DegreesT kFullTurn(kDegreesPerTurn);
+  const DegreesT kQuarterTurn(kFullTurn / 4);
 
   DegreesT angle(value);
 
