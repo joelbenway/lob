@@ -15,10 +15,9 @@ if(FIX)
 endif()
 
 execute_process(
-    COMMAND "${SPELL_COMMAND}" ${flag}
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    RESULT_VARIABLE result
-)
+  COMMAND "${SPELL_COMMAND}" ${flag}
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  RESULT_VARIABLE result)
 
 if(result EQUAL "65")
   message(FATAL_ERROR "Run again with FIX=YES to fix these errors.")

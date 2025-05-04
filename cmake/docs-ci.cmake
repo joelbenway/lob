@@ -39,10 +39,15 @@ macro(list_pop_front list out)
 endmacro()
 
 function(docs_project name)
-  cmake_parse_arguments(PARSE_ARGV 1 "" "" "VERSION;DESCRIPTION;HOMEPAGE_URL" LANGUAGES)
-  set(PROJECT_NAME "${name}" PARENT_SCOPE)
+  cmake_parse_arguments(PARSE_ARGV 1 "" "" "VERSION;DESCRIPTION;HOMEPAGE_URL"
+                        LANGUAGES)
+  set(PROJECT_NAME
+      "${name}"
+      PARENT_SCOPE)
   if(DEFINED _VERSION)
-    set(PROJECT_VERSION "${_VERSION}" PARENT_SCOPE)
+    set(PROJECT_VERSION
+        "${_VERSION}"
+        PARENT_SCOPE)
     string(REGEX MATCH "^.*" is_version "${_VERSION}")
     if(is_version)
       set(versions "${_VERSION}")
@@ -51,17 +56,24 @@ function(docs_project name)
       while(NOT versions STREQUAL "" AND NOT suffixes STREQUAL "")
         list_pop_front(versions version)
         list_pop_front(suffixes suffix)
-        set("PROJECT_VERSION_${suffix}" "${version}" PARENT_SCOPE)
+        set("PROJECT_VERSION_${suffix}"
+            "${version}"
+            PARENT_SCOPE)
       endwhile()
     else()
-      message(WARNING "Project version '${_VERSION}' does not match expected format.")
+      message(
+        WARNING "Project version '${_VERSION}' does not match expected format.")
     endif()
   endif()
   if(DEFINED _DESCRIPTION)
-    set(PROJECT_DESCRIPTION "${_DESCRIPTION}" PARENT_SCOPE)
+    set(PROJECT_DESCRIPTION
+        "${_DESCRIPTION}"
+        PARENT_SCOPE)
   endif()
   if(DEFINED _HOMEPAGE_URL)
-    set(PROJECT_HOMEPAGE_URL "${_HOMEPAGE_URL}" PARENT_SCOPE)
+    set(PROJECT_HOMEPAGE_URL
+        "${_HOMEPAGE_URL}"
+        PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -80,10 +92,9 @@ configure_file("${src}/docs/Doxyfile.in" "${doxyfile}" @ONLY)
 file(REMOVE_RECURSE "${out}/html")
 
 execute_process(
-    COMMAND ${DOXYGEN_EXECUTABLE} "${doxyfile}"
-    WORKING_DIRECTORY "${bin}/docs"
-    RESULT_VARIABLE result
-)
+  COMMAND ${DOXYGEN_EXECUTABLE} "${doxyfile}"
+  WORKING_DIRECTORY "${bin}/docs"
+  RESULT_VARIABLE result)
 if(NOT result EQUAL "0")
   message(FATAL_ERROR "Doxygen returned with ${result}")
 endif()
