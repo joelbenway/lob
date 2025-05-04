@@ -9,7 +9,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstring>
-#include <iterator>
 #include <limits>
 
 #include "constants.hpp"
@@ -94,20 +93,24 @@ double LobLerp(const T* x_lut, const T* y_lut, const size_t size,
     return static_cast<double>(y_lut[size - 1]);
   }
 
-  const T* pupper = std::upper_bound(
-      x_lut, x_lut + size, x_in, [](double val, const T& element) {
-        return val < static_cast<double>(element);
-      });
+  size_t low = 0;
+  size_t high = size - 1;
+  size_t index = 0;
 
-  const auto kDiff = std::distance(x_lut, pupper);
-  const auto kIndex = static_cast<size_t>(kDiff - 1);
-  assert(kIndex < size - 1 && "kIndex out of bounds");
+  while (low <= high) {
+    const size_t kMid = low + ((high - low) / 2);
+    if (static_cast<double>(x_lut[kMid]) <= x_in) {
+      index = kMid;
+      low = kMid + 1;
+    } else {
+      high = kMid - 1;
+    }
+  }
 
-  const auto kX0 = static_cast<double>(x_lut[kIndex]);
-  const auto kX1 = static_cast<double>(x_lut[kIndex + 1]);
-  const auto kY0 = static_cast<double>(y_lut[kIndex]);
-  const auto kY1 = static_cast<double>(y_lut[kIndex + 1]);
-
+  const auto kX0 = static_cast<double>(x_lut[index]);
+  const auto kX1 = static_cast<double>(x_lut[index + 1]);
+  const auto kY0 = static_cast<double>(y_lut[index]);
+  const auto kY1 = static_cast<double>(y_lut[index + 1]);
   const auto kDx = kX1 - kX0;
   assert(kDx > 0.0 && "x values must be increasing");
   const double kT = (x_in - kX0) / kDx;

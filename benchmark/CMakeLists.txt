@@ -51,7 +51,7 @@ set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
     ${DEV_ERRORS_RECOVER_STATE}
     CACHE INTERNAL "Restore original setting" FORCE)
 unset(DEV_WARNINGS_RECOVER_STATE)
-unset(DEV_ERRORSRECOVER_STATE)
+unset(DEV_ERRORS_RECOVER_STATE)
 
 silence(benchmark)
 silence(benchmark_main)

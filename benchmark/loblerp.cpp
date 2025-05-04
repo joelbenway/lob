@@ -1,6 +1,7 @@
 // This file is a part of lob, an exterior ballistics calculation library
 // Copyright (c) 2025  Joel Benway
 // Please see end of file for extended copyright information
+
 #include <benchmark/benchmark.h>
 
 #include <algorithm>
@@ -172,7 +173,8 @@ namespace {
 template <typename T>
 double BestLobLerp(const T* x_lut, const T* y_lut, const size_t size,
                    const double x_in) {
-  return UpperboundLobLerp(x_lut, y_lut, size, x_in);
+  // This is the current benchmark leader.
+  return BinaryLobLerp(x_lut, y_lut, size, x_in);
 }
 }  // namespace
 
@@ -183,117 +185,117 @@ const double kDecrement = 1E-4 * lob::kTableScale;
 const auto kResultsSize = static_cast<size_t>(
     std::ceil((kInitMachSpeed - kFinalMachSpeed) / kDecrement));
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
-std::vector<double> results;
+std::vector<double> results(kResultsSize);  // NOLINT(cert-err58-cpp)
 }  // namespace
 
 namespace {
 void NaiveBM(benchmark::State& state) {
-  results.resize(kResultsSize);
-  results.clear();
+  size_t index = 0;
   for (auto _ : state) {
     double velocity = kInitMachSpeed;
     while (velocity > kFinalMachSpeed) {
       const double kResult = NaiveLobLerp(
           lob::kMachs.data(), lob::kG1Drags.data(), lob::kTableSize, velocity);
-      results.push_back(kResult);
+      results.at(index++) = kResult;
       velocity -= kDecrement;
     }
+    index = 0;
   }
 }
 }  // namespace
 
 namespace {
 void BranchlessBM(benchmark::State& state) {
-  results.resize(kResultsSize);
-  results.clear();
+  size_t index = 0;
   for (auto _ : state) {
     double velocity = kInitMachSpeed;
     while (velocity > kFinalMachSpeed) {
       const double kResult = BranchlessLobLerp(
           lob::kMachs.data(), lob::kG1Drags.data(), lob::kTableSize, velocity);
-      results.push_back(kResult);
+      results.at(index++) = kResult;
       velocity -= kDecrement;
     }
+    index = 0;
   }
 }
 }  // namespace
 
 namespace {
 void CachedBM(benchmark::State& state) {
-  results.resize(kResultsSize);
-  results.clear();
+  size_t index = 0;
   for (auto _ : state) {
     double velocity = kInitMachSpeed;
     while (velocity > kFinalMachSpeed) {
       const double kResult = CachedLobLerp(
           lob::kMachs.data(), lob::kG1Drags.data(), lob::kTableSize, velocity);
-      results.push_back(kResult);
+      results.at(index++) = kResult;
       velocity -= kDecrement;
     }
+    index = 0;
   }
 }
 }  // namespace
 
 namespace {
 void BinaryBM(benchmark::State& state) {
-  results.resize(kResultsSize);
-  results.clear();
+  size_t index = 0;
   for (auto _ : state) {
     double velocity = kInitMachSpeed;
     while (velocity > kFinalMachSpeed) {
       const double kResult = BinaryLobLerp(
           lob::kMachs.data(), lob::kG1Drags.data(), lob::kTableSize, velocity);
-      results.push_back(kResult);
+      results.at(index++) = kResult;
       velocity -= kDecrement;
     }
+    index = 0;
   }
 }
 }  // namespace
 
 namespace {
 void UpperboundBM(benchmark::State& state) {
-  results.resize(kResultsSize);
-  results.clear();
+  size_t index = 0;
   for (auto _ : state) {
     double velocity = kInitMachSpeed;
     while (velocity > kFinalMachSpeed) {
       const double kResult = UpperboundLobLerp(
           lob::kMachs.data(), lob::kG1Drags.data(), lob::kTableSize, velocity);
-      results.push_back(kResult);
+      results.at(index++) = kResult;
       velocity -= kDecrement;
     }
+    index = 0;
   }
 }
 }  // namespace
 
 namespace {
 void ScanBM(benchmark::State& state) {
-  results.resize(kResultsSize);
-  results.clear();
+  size_t index = 0;
   for (auto _ : state) {
     double velocity = kInitMachSpeed;
     while (velocity > kFinalMachSpeed) {
       const double kResult = ScanLobLerp(
           lob::kMachs.data(), lob::kG1Drags.data(), lob::kTableSize, velocity);
-      results.push_back(kResult);
+      results.at(index++) = kResult;
       velocity -= kDecrement;
     }
+    index = 0;
   }
 }
 }  // namespace
 
 namespace {
 void BestBM(benchmark::State& state) {
-  results.resize(kResultsSize);
-  results.clear();
+  size_t index = 0;
   for (auto _ : state) {
     double velocity = kInitMachSpeed;
     while (velocity > kFinalMachSpeed) {
       const double kResult = BestLobLerp(
           lob::kMachs.data(), lob::kG1Drags.data(), lob::kTableSize, velocity);
-      results.push_back(kResult);
+      results.at(index++) = kResult;
       velocity -= kDecrement;
     }
+    index = 0;
   }
 }
 }  // namespace
