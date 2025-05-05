@@ -4,17 +4,10 @@
 
 #include <gtest/gtest.h>
 
-namespace tests {
-namespace {
-
-// NOLINTNEXTLINE(readability-identifier-naming)
-int main() {
-  testing::InitGoogleTest();
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
-
-}  // namespace
-}  // namespace tests
 
 // This file is part of lob.
 //

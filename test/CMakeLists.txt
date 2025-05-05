@@ -57,6 +57,7 @@ unset(DEV_WARNINGS_RECOVER_STATE)
 unset(DEV_ERRORS_RECOVER_STATE)
 
 # ---- Tests ----
+# cmake-format: off
 set(LOB_TEST_SOURCES
     source/lob_test.cpp
     source/lob_api_test.cpp
@@ -67,8 +68,13 @@ set(LOB_TEST_SOURCES
     source/lob_wind_test.cpp)
 
 set(HELPER_TEST_SOURCES
-    source/calc_test.cpp source/cartesian_test.cpp source/eng_units_test.cpp
-    source/helpers_test.cpp source/ode_test.cpp source/tables_test.cpp)
+    source/calc_test.cpp
+    source/cartesian_test.cpp
+    source/eng_units_test.cpp
+    source/helpers_test.cpp
+    source/ode_test.cpp
+    source/tables_test.cpp)
+# cmake-format: on
 
 if(BUILD_SHARED_LIBS)
   add_executable(lob_test ${LOB_TEST_SOURCES})
@@ -95,6 +101,7 @@ gtest_discover_tests(lob_test)
 # ---- End-of-file commands ----
 
 add_folders(Test)
+
 # This file is part of lob.
 #
 # lob is free software: you can redistribute it and/or modify it under the

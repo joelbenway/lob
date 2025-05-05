@@ -6,7 +6,7 @@ If you plan to contribute, please read the [CONTRIBUTING](CONTRIBUTING.md) guide
 
 ## TL;DR The Nix way
 
-A declarative development environment for this project is available via the [Nix][1] package manager on both linux and mac systems through the included [flake](flake.nix). With Nix installed and flakes enabled invoke ```nix develop``` in the root project directory. Nix will fetch all the same development tools used to author this project and can even generate a `CMakeUserPresets.json` for your system. Included is a build system comprised from [CMake][2], [Ninja][3], and [Mold][4]. Other utilities include [clangd, clang-format, clang-tidy][5], [codespell][6], [cppcheck][7], [doxygen][8], and [lcov][9].
+A declarative development environment for this project is available via the [Nix][1] package manager on both linux and mac systems through the included [flake](flake.nix). With Nix installed and flakes enabled invoke ```nix develop .#dev``` in the root project directory. Nix will fetch all the same development tools used to author this project and can even generate a `CMakeUserPresets.json` for your system. Included is a build system comprised from [CMake][2], [Ninja][3], and [Mold][4]. Other utilities include [clangd, clang-format, clang-tidy][5], [codespell][6], [cppcheck][7], [doxygen][8], and [lcov][9].
 
 ## Developer mode
 
