@@ -1,5 +1,4 @@
-# Copyright (c) 2025  Joel Benway
-# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2025  Joel Benway SPDX-License-Identifier: GPL-3.0-or-later
 # Please see end of file for extended copyright information
 
 cmake_minimum_required(VERSION 3.14)
@@ -42,7 +41,9 @@ set(SHARED_LIBS_RECOVER_STATE ${BUILD_SHARED_LIBS})
 set(BUILD_SHARED_LIBS
     OFF
     CACHE BOOL "Force static GoogleBenchmark" FORCE)
+
 FetchContent_MakeAvailable(googlebenchmark)
+
 set(BUILD_SHARED_LIBS
     ${SHARED_LIBS_RECOVER_STATE}
     CACHE BOOL "Restore original setting" FORCE)
@@ -67,6 +68,26 @@ function(add_benchmark NAME)
   target_include_directories(
     "${NAME}" PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include
                      ${CMAKE_CURRENT_SOURCE_DIR}/../source)
+
+  # Retrieve benchmark's interface include directories These are the include
+  # directories needed to compile against benchmark
+  get_target_property(BENCHMARK_INCLUDE_DIRS benchmark::benchmark
+                      INTERFACE_INCLUDE_DIRECTORIES)
+  get_target_property(BENCHMARK_MAIN_INCLUDE_DIRS benchmark::benchmark_main
+                      INTERFACE_INCLUDE_DIRECTORIES)
+
+  # Add benchmark's include directories to THIS target as SYSTEM includes. This
+  # tells the compiler to suppress warnings from headers in these directories
+  # when compiling the source files of target "${NAME}".
+  if(BENCHMARK_INCLUDE_DIRS)
+    target_include_directories("${NAME}" SYSTEM
+                               PUBLIC ${BENCHMARK_INCLUDE_DIRS})
+  endif()
+  if(BENCHMARK_MAIN_INCLUDE_DIRS)
+    target_include_directories("${NAME}" SYSTEM
+                               PUBLIC ${BENCHMARK_MAIN_INCLUDE_DIRS})
+  endif()
+
   target_compile_features("${NAME}" PRIVATE cxx_std_14)
   target_link_libraries("${NAME}" PRIVATE lob::lob benchmark::benchmark
                                           benchmark::benchmark_main)
@@ -84,8 +105,8 @@ add_folders(Benchmark)
 
 # This file is part of lob.
 #
-# lob is free software: you can redistribute it and/or modify it under the
-# terms of the GNU General Public License as published by the Free Software
+# lob is free software: you can redistribute it and/or modify it under the terms
+# of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
 #
@@ -94,4 +115,4 @@ add_folders(Benchmark)
 # A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along with
-# lob. If not, see <https:#www.gnu.org/licenses/>.
+# lob. If not, see <https://www.gnu.org/licenses/>.
