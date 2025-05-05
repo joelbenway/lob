@@ -1,5 +1,5 @@
-// This file is a part of lob, an exterior ballistics calculation library
 // Copyright (c) 2025  Joel Benway
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Please see end of file for extended copyright information
 
 #include <gtest/gtest.h>
@@ -554,27 +554,27 @@ namespace testdata {
 // Litz calculations are fine.
 
 const Shot kBarnesLRXBT{0.308, 1.621, 200.0, 0.780, 0.210,  0.268,  0.0,
-                        0.80,  0.549, 2900U, 10.0,  -0.324, -0.598F};
+                        0.80,  0.549, 2900U, 10.0,  -0.324, -0.598};
 const Shot kCuttingEdgeHPBT{0.308, 1.458, 180.0, 0.602, 0.240,  0.249,  0.060,
-                            0.70,  0.478, 3000U, 10.0,  -0.368, -0.539F};
+                            0.70,  0.478, 3000U, 10.0,  -0.368, -0.539};
 const Shot kLehighMatchSolid{0.408, 2.085, 400.0, 1.155, 0.320,  0.326,  0.0,
-                             0.78,  0.759, 2700U, 11.0,  -0.370, -0.389F};
+                             0.78,  0.759, 2700U, 11.0,  -0.370, -0.389};
 /*const Shot kSMK168{0.308, 1.215, 168.0, 0.690, 0.1401, 0.242, 0.065,
-                   0.900, 0.426, 2800U,  12.0,   -0.400,  -0.424F};*/
+                   0.900, 0.426, 2800U,  12.0,   -0.400,  -0.424};*/
 const Shot kGSCustomSP{0.338, 1.771, 232.0, 1.036, 0.346,  0.238,  0.020,
-                       0.60,  0.604, 3100U, 9.0,   -0.370, -0.338F};
+                       0.60,  0.604, 3100U, 9.0,   -0.370, -0.338};
 const Shot kSMK220{0.308, 1.489, 220.0, 0.672, 0.230,  0.234,  0.070,
-                   0.95,  0.607, 2700U, 10.0,  -0.384, -0.386F};
+                   0.95,  0.607, 2700U, 10.0,  -0.384, -0.386};
 const Shot kNoslerBT{0.277, 1.293, 140.0, 0.688, 0.080,  0.243,  0.00,
-                     1.00,  0.440, 3100U, 9.0,   -0.390, -0.663F};
+                     1.00,  0.440, 3100U, 9.0,   -0.390, -0.663};
 const Shot kSMK80{0.224, 1.066, 80.0,  0.629, 0.135,  0.183,  0.060,
-                  0.98,  0.425, 3100U, 7.0,   -0.407, -0.689F};
+                  0.98,  0.425, 3100U, 7.0,   -0.407, -0.689};
 const Shot kBergerBTFB{0.308, 1.250, 155.5, 0.825, 0.160,  0.264,  0.062,
-                       0.96,  0.464, 2800U, 10.0,  -0.437, -0.729F};
+                       0.96,  0.464, 2800U, 10.0,  -0.437, -0.729};
 const Shot kBergerVLD{0.224, 0.976, 70.0,  0.471, 0.150,  0.177,  0.052,
-                      0.53,  0.371, 3000U, 7.0,   -0.440, -0.678F};
+                      0.53,  0.371, 3000U, 7.0,   -0.440, -0.678};
 const Shot kHornadyBTHP{0.338, 1.724, 285.0, 0.871, 0.260,  0.265,  0.075,
-                        0.82,  0.696, 2800U, 9.0,   -0.425, -0.634F};
+                        0.82,  0.696, 2800U, 9.0,   -0.425, -0.634};
 }  // namespace testdata
 
 INSTANTIATE_TEST_SUITE_P(
@@ -592,15 +592,16 @@ INSTANTIATE_TEST_SUITE_P(
         testdata::kHornadyBTHP));  // Hornady .338 caliber 285 gr BTHP Match
 }  // namespace tests
 
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// This file is part of lob.
+//
+// lob is free software: you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the Free Software
+// Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// lob is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with
+// lob. If not, see <https://www.gnu.org/licenses/>.

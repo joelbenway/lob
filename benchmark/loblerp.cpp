@@ -1,5 +1,5 @@
-// This file is a part of lob, an exterior ballistics calculation library
 // Copyright (c) 2025  Joel Benway
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Please see end of file for extended copyright information
 
 #include <benchmark/benchmark.h>
@@ -103,6 +103,39 @@ double BinaryLobLerp(const T* x_lut, const T* y_lut, const size_t size,
       low = kMid + 1;
     } else {
       high = kMid - 1;
+    }
+  }
+
+  const auto kX0 = static_cast<double>(x_lut[index]);
+  const auto kX1 = static_cast<double>(x_lut[index + 1]);
+  const auto kY0 = static_cast<double>(y_lut[index]);
+  const auto kY1 = static_cast<double>(y_lut[index + 1]);
+  const auto kDx = kX1 - kX0;
+  const double kT = (x_in - kX0) / kDx;
+  return kY0 + (kT * (kY1 - kY0));
+}
+}  // namespace
+
+namespace {
+template <typename T>
+double NewBinaryLobLerp(const T* x_lut, const T* y_lut, const size_t size,
+                const double x_in) {
+  if (x_in >= static_cast<double>(x_lut[size - 1])) {
+    return static_cast<double>(y_lut[size - 1]);
+  }
+
+  size_t low = 0;
+  size_t mid = 0;
+  size_t high = size - 1;
+  size_t index = 0;
+
+  while (low <= high) {
+    mid = low + ((high - low) / 2);
+    if (static_cast<double>(x_lut[mid]) <= x_in) {
+      index = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
     }
   }
 
@@ -253,6 +286,22 @@ void BinaryBM(benchmark::State& state) {
 }  // namespace
 
 namespace {
+void NewBinaryBM(benchmark::State& state) {
+  size_t index = 0;
+  for (auto _ : state) {
+    double velocity = kInitMachSpeed;
+    while (velocity > kFinalMachSpeed) {
+      const double kResult = NewBinaryLobLerp(
+          lob::kMachs.data(), lob::kG1Drags.data(), lob::kTableSize, velocity);
+      results.at(index++) = kResult;
+      velocity -= kDecrement;
+    }
+    index = 0;
+  }
+}
+}  // namespace
+
+namespace {
 void UpperboundBM(benchmark::State& state) {
   size_t index = 0;
   for (auto _ : state) {
@@ -306,6 +355,7 @@ BENCHMARK(NaiveBM);
 BENCHMARK(BranchlessBM);
 BENCHMARK(CachedBM);
 BENCHMARK(BinaryBM);
+BENCHMARK(NewBinaryBM);
 BENCHMARK(UpperboundBM);
 BENCHMARK(ScanBM);
 BENCHMARK(BestBM);
@@ -316,15 +366,16 @@ BENCHMARK(BestBM);
 BENCHMARK_MAIN();
 // NOLINTEND
 
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// This file is part of lob.
+//
+// lob is free software: you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the Free Software
+// Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// lob is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with
+// lob. If not, see <https://www.gnu.org/licenses/>.
