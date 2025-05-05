@@ -7,8 +7,9 @@
   inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1.*.tar.gz";
 
   outputs = {
-    self,
+    # self,
     nixpkgs,
+    ...
   }: let
     supportedSystems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
     forEachSupportedSystem = f:
@@ -30,23 +31,14 @@
         {
           packages = with pkgs;
             [
-              # Development Tools
+              # Build/CI Tools
               clang-tools
               cmake
-              cmake-format
               codespell
               cppcheck
               doxygen
               lcov
-              mold-wrapped
-              ninja
-              valgrind
-            ]
-            ++ (
-              if system == "aarch64-darwin"
-              then []
-              else [gdb]
-            );
+            ];
           shellHook = let
             projectName = "lob";
             white = "\\[\\033[38;5;015m\\]";
@@ -61,7 +53,24 @@
     in {
       default = baseShell;
 
-      dev = baseShell.overrideAttrs (oldAttrs: {
+      dev = baseShell.overrideAttrs (oldAttrs: let
+        extraDevPackages = with pkgs;
+          [
+            # Extra Development Tools
+            bloaty
+            cmake-format
+            mold-wrapped
+            ninja
+            valgrind
+          ]
+          ++ (
+            if system == "aarch64-darwin"
+            then []
+            else [gdb]
+          );
+      in {
+        # stdenv = pkgs.clangStdenv;
+        buildInputs = oldAttrs.buildInputs ++ extraDevPackages;
         shellHook = let
           inherit (pkgs) stdenv;
           filename = "CMakeUserPresets.json";
@@ -148,4 +157,3 @@
 #
 # You should have received a copy of the GNU General Public License along with
 # lob. If not, see <https://www.gnu.org/licenses/>.
-
