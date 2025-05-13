@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <utility>
 
+#include "boatright.hpp"
 #include "calc.hpp"
 #include "cartesian.hpp"
 #include "constants.hpp"
@@ -316,40 +317,47 @@ Builder& Builder::ZeroImpactHeightInches(double value) {
 }
 
 namespace {
-void SolveStep(SpvT* ps, SecT* pt, const Input& input, uint16_t step_size = 0) {
-  auto ds_dt = [input](double t, const SpvT& s) -> SpvT {
+
+void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, SecT step) {
+  const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
+                               FpsT(input.wind.z));
+
+  // For best accuracy all calculations which depend on the velocity state would
+  // occur inside the lambda as the numerical method updates the velocity (and
+  // thus the coefficient of drag) several times. However, LobLerp is an
+  // expensive calculation and the difference between doing it once or several
+  // times per step is negligible.
+  const MachT kMach(ps->V().Magnitude(), FpsT(input.speed_of_sound).Inverse());
+  const double kCd = LobLerp(kMachs, input.drags, kMach) *
+                     static_cast<double>(input.table_coefficient);
+
+  auto ds_dt = [&](SecT t, const TrajectoryStateT& s) -> TrajectoryStateT {
     static_cast<void>(t);  // t is unused
-    const CartesianT<FeetT> kPosition(FeetT(s.V().X().Value()),
-                                      FeetT(s.V().Y().Value()),
-                                      FeetT(s.V().Z().Value()));
-    const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
-                                 FpsT(input.wind.z));
-    const MachT kMach(s.V().Magnitude(), FpsT(input.speed_of_sound).Inverse());
-    const double kCd = LobLerp(kMachs, input.drags, kMach) *
-                       static_cast<double>(input.table_coefficient);
+    const CartesianT<FeetT> kDpDt(FeetT(s.V().X().Value()),
+                                  FeetT(s.V().Y().Value()),
+                                  FeetT(s.V().Z().Value()));
     const FpsT kScalarVelocity = (s.V() - kWind).Magnitude();
-    CartesianT<FpsT> velocity =
-        (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
-    velocity.X(velocity.X() - s.V().Y() * input.corilolis.cos_l_sin_a -
-               s.V().Z() * input.corilolis.sin_l);
-    velocity.Y(velocity.Y() + s.V().X() * input.corilolis.cos_l_sin_a +
-               s.V().Z() * input.corilolis.cos_l_cos_a);
-    velocity.Z(velocity.Z() + s.V().X() * input.corilolis.sin_l -
-               s.V().Y() * input.corilolis.cos_l_cos_a);
-    velocity.X(velocity.X() + input.gravity.x);
-    velocity.Y(velocity.Y() + input.gravity.y);
-    return SpvT{kPosition, velocity};
+    CartesianT<FpsT> dv_dt = (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
+    dv_dt.X(dv_dt.X() - s.V().Y() * input.corilolis.cos_l_sin_a -
+            s.V().Z() * input.corilolis.sin_l);
+    dv_dt.Y(dv_dt.Y() + s.V().X() * input.corilolis.cos_l_sin_a +
+            s.V().Z() * input.corilolis.cos_l_cos_a);
+    dv_dt.Z(dv_dt.Z() + s.V().X() * input.corilolis.sin_l -
+            s.V().Y() * input.corilolis.cos_l_cos_a);
+    dv_dt.X(dv_dt.X() + input.gravity.x);
+    dv_dt.Y(dv_dt.Y() + input.gravity.y);
+    return TrajectoryStateT{kDpDt, dv_dt};
   };  // ds_dt
 
-  SecT dt(0);
-  if (step_size == 0) {
-    dt = SecT(1 / ps->V().Magnitude().Value() / 2);
-  } else {
-    dt = SecT(UsecT(step_size));
-  }
+  *ps = HeunStep(SecT(0), *ps, step, ds_dt);
+  *pt += step;
+}
 
-  *ps = HeunStep(0.0, *ps, dt.Value(), ds_dt);
-  *pt += dt;
+void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input,
+               FeetT step = FeetT(1)) {
+  assert(step.Value() > 0 && "step is not a valid number");
+  const auto kDt = SecT(ps->V().X().Inverse().Value() * step.Value());
+  SolveStep(ps, pt, input, kDt);
 }
 
 bool ValidateBuild(const Impl& impl) {
@@ -567,17 +575,18 @@ void BuildZeroAngle(Impl* pimpl) {
   while (high_angle - low_angle > kZeroAngleError) {
     const RadiansT kZeroAngle = (low_angle + high_angle) / 2;
 
-    SpvT s(CartesianT<FeetT>(FeetT(0.0)),
-           CartesianT<FpsT>(
-               FpsT(pimpl->build.velocity) *
-                   std::cos(kZeroAngle +
-                            RadiansT(MoaT(pimpl->build.aerodynamic_jump)))
-                       .Value(),
-               FpsT(pimpl->build.velocity) *
-                   std::sin(kZeroAngle +
-                            RadiansT(MoaT(pimpl->build.aerodynamic_jump)))
-                       .Value(),
-               FpsT(0.0)));
+    TrajectoryStateT s(
+        CartesianT<FeetT>(FeetT(0.0)),
+        CartesianT<FpsT>(
+            FpsT(pimpl->build.velocity) *
+                std::cos(kZeroAngle +
+                         RadiansT(MoaT(pimpl->build.aerodynamic_jump)))
+                    .Value(),
+            FpsT(pimpl->build.velocity) *
+                std::sin(kZeroAngle +
+                         RadiansT(MoaT(pimpl->build.aerodynamic_jump)))
+                    .Value(),
+            FpsT(0.0)));
 
     SecT t(0.0);
 
@@ -642,16 +651,16 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
   }
   const auto kAngle =
       RadiansT(MoaT(in.zero_angle + in.aerodynamic_jump)).Value();
-  SpvT s(CartesianT<FeetT>(FeetT(0.0)),
-         CartesianT<FpsT>(FpsT(in.velocity) * std::cos(kAngle),
-                          FpsT(in.velocity) * std::sin(kAngle), FpsT(0.0)));
+  TrajectoryStateT s(
+      CartesianT<FeetT>(FeetT(0.0)),
+      CartesianT<FpsT>(FpsT(in.velocity) * std::cos(kAngle),
+                       FpsT(in.velocity) * std::sin(kAngle), FpsT(0.0)));
   const FpsT kMinimumVelocity = CalculateMinimumVelocity(
       FpsT(options.min_speed), FtLbsT(options.min_energy), LbsT(in.mass));
-  SecT t(0.0);
   size_t index = 0;
-
+  SecT t(0);
   while (true) {
-    SolveStep(&s, &t, in, options.step_size);
+    SolveStep(&s, &t, in, SecT(UsecT(options.step_size)));
     const FpsT kVelocity = s.V().Magnitude();
     if (s.P().X() >= FeetT(pranges[index])) {
       const InchT kSpinDrift =

@@ -68,6 +68,7 @@ set(LOB_TEST_SOURCES
     source/lob_wind_test.cpp)
 
 set(HELPER_TEST_SOURCES
+    source/boatright_test.cpp
     source/calc_test.cpp
     source/cartesian_test.cpp
     source/eng_units_test.cpp
