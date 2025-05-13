@@ -1,5 +1,4 @@
-# Copyright (c) 2025  Joel Benway
-# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2025  Joel Benway SPDX-License-Identifier: GPL-3.0-or-later
 # Please see end of file for extended copyright information
 
 cmake_minimum_required(VERSION 3.14)
@@ -22,8 +21,13 @@ include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 
 # ---- Declare library ----
-
-add_library(lob_lob source/lob.cpp source/calc.cpp source/tables.cpp)
+# cmake-format: off
+add_library(lob_lob
+  source/lob.cpp
+  source/boatright.cpp
+  source/calc.cpp
+  source/tables.cpp)
+# cmake-format: on
 add_library(lob::lob ALIAS lob_lob)
 
 include(GenerateExportHeader)
@@ -98,8 +102,8 @@ include(cmake/dev-mode.cmake)
 
 # This file is part of lob.
 #
-# lob is free software: you can redistribute it and/or modify it under the
-# terms of the GNU General Public License as published by the Free Software
+# lob is free software: you can redistribute it and/or modify it under the terms
+# of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
 #

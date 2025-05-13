@@ -98,27 +98,27 @@ TEST(OdeTests, RungeKuttaStep) {
   }
 }
 
-TEST(OdeTests, SpvTConstrutor) {
+TEST(OdeTests, TrajectoryStateTConstrutor) {
   const auto kP =
       lob::CartesianT<lob::FeetT>(lob::FeetT(3), lob::FeetT(4), lob::FeetT(0));
   const auto kV =
       lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
-  std::unique_ptr<lob::SpvT> pa = nullptr;
-  std::unique_ptr<lob::SpvT> pb = nullptr;
-  pa = std::make_unique<lob::SpvT>();
-  pb = std::make_unique<lob::SpvT>(kP, kV);
+  std::unique_ptr<lob::TrajectoryStateT> pa = nullptr;
+  std::unique_ptr<lob::TrajectoryStateT> pb = nullptr;
+  pa = std::make_unique<lob::TrajectoryStateT>();
+  pb = std::make_unique<lob::TrajectoryStateT>(kP, kV);
   ASSERT_NE(pa.get(), nullptr);
   ASSERT_NE(pb.get(), nullptr);
   pa.reset();
   pb.reset();
 }
 
-TEST(OdeTests, SpvTCopyAssignment) {
+TEST(OdeTests, TrajectoryStateTCopyAssignment) {
   const auto kP =
       lob::CartesianT<lob::FeetT>(lob::FeetT(3), lob::FeetT(4), lob::FeetT(0));
   const auto kV =
       lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
-  lob::SpvT a = lob::SpvT(kP, kV);
+  lob::TrajectoryStateT a = lob::TrajectoryStateT(kP, kV);
   EXPECT_DOUBLE_EQ(a.P().Magnitude().Value(), 5.0);
   a = a;
   EXPECT_DOUBLE_EQ(a.P().Magnitude().Value(), 5.0);
@@ -129,10 +129,10 @@ TEST(OdeTests, Addition) {
       lob::CartesianT<lob::FeetT>(lob::FeetT(3), lob::FeetT(4), lob::FeetT(0));
   const auto kV =
       lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
-  lob::SpvT a = lob::SpvT(kP, kV);
-  lob::SpvT b;
-  b = b + 1;
-  EXPECT_DOUBLE_EQ(b.P().X().Value(), 1);
+  lob::TrajectoryStateT a = lob::TrajectoryStateT(kP, kV);
+  lob::TrajectoryStateT b;
+  b = b + lob::SecT(1);
+  EXPECT_DOUBLE_EQ(b.P().X().Value(), 1.0);
   a = a + b;
   EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() + b.P().X().Value());
 }
@@ -142,9 +142,9 @@ TEST(OdeTests, Multiplication) {
       lob::CartesianT<lob::FeetT>(lob::FeetT(3), lob::FeetT(4), lob::FeetT(0));
   const auto kV =
       lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
-  lob::SpvT a = lob::SpvT(kP, kV);
-  const lob::SpvT kB = lob::SpvT(kP, kV);
-  a = kB * 2;
+  lob::TrajectoryStateT a = lob::TrajectoryStateT(kP, kV);
+  const lob::TrajectoryStateT kB = lob::TrajectoryStateT(kP, kV);
+  a = a * lob::SecT(2);
   EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() * 2);
   a = a * kB;
   EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() * kP.X().Value() * 2);
@@ -157,8 +157,8 @@ TEST(OdeTests, Input) {
                                               lob::FeetT(0));
   const auto kV =
       lob::CartesianT<lob::FpsT>(lob::FpsT(kA), lob::FpsT(kB), lob::FpsT(0));
-  lob::SpvT a = lob::SpvT(kP, kV);
-  lob::SpvT b = lob::SpvT(kP, kV);
+  lob::TrajectoryStateT a = lob::TrajectoryStateT(kP, kV);
+  lob::TrajectoryStateT b = lob::TrajectoryStateT(kP, kV);
   a.P(lob::FeetT(kB));
   a.V(lob::FpsT(kA));
   b.P(kB);
