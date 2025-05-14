@@ -74,12 +74,10 @@ constexpr T NaN() {
  * provided `Builder` class.
  */
 struct LOB_EXPORT Input {
-  static constexpr uint8_t kTableSize{
-      85};  /// @brief The size of the drag table.
+  static constexpr uint8_t kTableSize{85};   /// @brief The size of drag table.
   std::array<uint16_t, kTableSize> drags{};  /// @brief The drag table.
-  double table_coefficient{
-      NaN()};  /// @brief A coefficient used to scale the drag table.
-  double speed_of_sound{NaN()};  /// @brief The local speed of sound in Fps.
+  double table_coefficient{NaN()};  /// @brief Used to scale the drag table.
+  double speed_of_sound{NaN()};     /// @brief The local speed of sound in Fps.
   uint16_t velocity{0};        /// @brief Initial velocity of projectile in Fps.
   double mass{NaN()};          /// @brief Mass of the projectile in pounds.
   double optic_height{NaN()};  /// @brief Height of the optic above the bore.
@@ -96,10 +94,10 @@ struct LOB_EXPORT Input {
     double sin_l{NaN()};        /// @brief 2Ωsin(latitude)
     double cos_l_cos_a{NaN()};  /// @brief 2Ωcos(latitude)cos(azimuth)
   } corilolis;
-  double zero_angle{
-      NaN()};  /// @brief Angle between the sight and initial trajectory.
-  double aerodynamic_jump{NaN()};  /// @brief Aerodynamic jump effect in Moa.
+  double zero_angle{NaN()};  /// @brief Angle between sight and trajectory.
   double stability_factor{NaN()};  /// @brief Miller stability factor.
+  double aerodynamic_jump{NaN()};  /// @brief Aerodynamic jump effect in Moa.
+  double spindrift_factor{NaN()};  /// @brief Spin drift factor.
 };  // struct Input
 
 class Impl;
@@ -357,7 +355,7 @@ class LOB_EXPORT Builder {
   Input Build();
 
  private:
-  static constexpr size_t kBufferSize{496};
+  static constexpr size_t kBufferSize{504};
   union AlignmentT {
     double foo;
     size_t bar;

@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Please see end of file for extended copyright information
 
-#include "lob/lob.hpp"
-
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -18,13 +16,12 @@
 #include "constants.hpp"
 #include "eng_units.hpp"
 #include "helpers.hpp"
+#include "lob/lob.hpp"
 #include "ode.hpp"
+#include "solve_step.hpp"
 #include "tables.hpp"
-#include "version.hpp"
 
 namespace lob {
-
-const char* Version() { return kProjectVersion; }
 
 class Impl {
   friend class Builder;
@@ -317,49 +314,6 @@ Builder& Builder::ZeroImpactHeightInches(double value) {
 }
 
 namespace {
-
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, SecT step) {
-  const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
-                               FpsT(input.wind.z));
-
-  // For best accuracy all calculations which depend on the velocity state would
-  // occur inside the lambda as the numerical method updates the velocity (and
-  // thus the coefficient of drag) several times. However, LobLerp is an
-  // expensive calculation and the difference between doing it once or several
-  // times per step is negligible.
-  const MachT kMach(ps->V().Magnitude(), FpsT(input.speed_of_sound).Inverse());
-  const double kCd = LobLerp(kMachs, input.drags, kMach) *
-                     static_cast<double>(input.table_coefficient);
-
-  auto ds_dt = [&](SecT t, const TrajectoryStateT& s) -> TrajectoryStateT {
-    static_cast<void>(t);  // t is unused
-    const CartesianT<FeetT> kDpDt(FeetT(s.V().X().Value()),
-                                  FeetT(s.V().Y().Value()),
-                                  FeetT(s.V().Z().Value()));
-    const FpsT kScalarVelocity = (s.V() - kWind).Magnitude();
-    CartesianT<FpsT> dv_dt = (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
-    dv_dt.X(dv_dt.X() - s.V().Y() * input.corilolis.cos_l_sin_a -
-            s.V().Z() * input.corilolis.sin_l);
-    dv_dt.Y(dv_dt.Y() + s.V().X() * input.corilolis.cos_l_sin_a +
-            s.V().Z() * input.corilolis.cos_l_cos_a);
-    dv_dt.Z(dv_dt.Z() + s.V().X() * input.corilolis.sin_l -
-            s.V().Y() * input.corilolis.cos_l_cos_a);
-    dv_dt.X(dv_dt.X() + input.gravity.x);
-    dv_dt.Y(dv_dt.Y() + input.gravity.y);
-    return TrajectoryStateT{kDpDt, dv_dt};
-  };  // ds_dt
-
-  *ps = HeunStep(SecT(0), *ps, step, ds_dt);
-  *pt += step;
-}
-
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input,
-               FeetT step = FeetT(1)) {
-  assert(step.Value() > 0 && "step is not a valid number");
-  const auto kDt = SecT(ps->V().X().Inverse().Value() * step.Value());
-  SolveStep(ps, pt, input, kDt);
-}
-
 bool ValidateBuild(const Impl& impl) {
   const bool kBCisOk = !std::isnan(impl.ballistic_coefficient_psi);
   const bool kVelocityIsOk = impl.build.velocity > 0;
@@ -476,11 +430,9 @@ void BuildWind(Impl* pimpl) {
           .Value();
 }
 
-void BuildTwistEffects(Impl* pimpl) {
+void BuildStability(Impl* pimpl) {
   assert(pimpl->build.velocity > 0);
-  assert(!std::isnan(pimpl->ballistic_coefficient_psi));
-  assert(!std::isnan(pimpl->build.speed_of_sound));
-  assert(!std::isnan(pimpl->build.wind.z));
+  assert(!std::isnan(pimpl->air_density_lbs_per_cu_ft));
 
   if (!std::isnan(pimpl->diameter_in) && !std::isnan(pimpl->length_in) &&
       !std::isnan(pimpl->twist_inches_per_turn) &&
@@ -492,12 +444,24 @@ void BuildTwistEffects(Impl* pimpl) {
                    pimpl->diameter_in, GrainT(LbsT(pimpl->build.mass)),
                    pimpl->length_in, pimpl->twist_inches_per_turn,
                    FpsT(pimpl->build.velocity));
+  }
+}
 
-    if (AreEqual(pimpl->build.wind.z, 0.0)) {
-      pimpl->build.aerodynamic_jump = MoaT(0).Value();
-      return;
-    }
+void BuildAerodynamicJump(Impl* pimpl) {
+  assert(pimpl->build.velocity > 0);
+  assert(!std::isnan(pimpl->ballistic_coefficient_psi));
+  assert(!std::isnan(pimpl->build.speed_of_sound));
+  assert(!std::isnan(pimpl->build.wind.z));
 
+  if (AreEqual(pimpl->build.wind.z, 0.0)) {
+    pimpl->build.aerodynamic_jump = MoaT(0).Value();
+    return;
+  }
+
+  if (!std::isnan(pimpl->diameter_in) && !std::isnan(pimpl->length_in) &&
+      !std::isnan(pimpl->twist_inches_per_turn) &&
+      !std::isnan(pimpl->build.mass) &&
+      !std::isnan(pimpl->build.stability_factor)) {
     if (!std::isnan(pimpl->nose_length_in) &&
         !std::isnan(pimpl->meplat_diameter_in) &&
         !std::isnan(pimpl->tail_length_in) &&
@@ -603,6 +567,7 @@ void BuildZeroAngle(Impl* pimpl) {
   }
   pimpl->build.zero_angle = MoaT((low_angle + high_angle) / 2).Value();
 }
+
 }  // namespace
 
 Input Builder::Build() {
@@ -615,172 +580,14 @@ Input Builder::Build() {
       constexpr FeetT kDefaultOpticHeight = InchT(1.5);
       pimpl_->build.optic_height = kDefaultOpticHeight.Value();
     }
-    BuildTwistEffects(pimpl_);
+    BuildStability(pimpl_);
+    BuildAerodynamicJump(pimpl_);
     BuildCoriolis(pimpl_);
     BuildZeroAngle(pimpl_);
   }
   return pimpl_->build;
 }
 
-namespace {
-FpsT CalculateMinimumVelocity(FpsT min_speed, FtLbsT min_energy, SlugT mass) {
-  return std::max(CalculateVelocityFromKineticEnergy(min_energy, mass),
-                  min_speed);
-}
-}  // namespace
-
-namespace {
-Output Save(FeetT range, FpsT velocity, InchT elevation, InchT deflection,
-            SecT time_of_flight, GrainT mass) {
-  Output out;
-  const FtLbsT kEnergy = CalculateKineticEnergy(velocity, mass);
-  out.range = range.U32();
-  out.velocity = velocity.U16();
-  out.energy = kEnergy.U32();
-  out.elevation = elevation.Value();
-  out.deflection = deflection.Value();
-  out.time_of_flight = time_of_flight.Value();
-  return out;
-}
-}  // namespace
-
-size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
-             size_t size, const Options& options) {
-  if (std::isnan(in.table_coefficient)) {
-    return 0;
-  }
-  const auto kAngle =
-      RadiansT(MoaT(in.zero_angle + in.aerodynamic_jump)).Value();
-  TrajectoryStateT s(
-      CartesianT<FeetT>(FeetT(0.0)),
-      CartesianT<FpsT>(FpsT(in.velocity) * std::cos(kAngle),
-                       FpsT(in.velocity) * std::sin(kAngle), FpsT(0.0)));
-  const FpsT kMinimumVelocity = CalculateMinimumVelocity(
-      FpsT(options.min_speed), FtLbsT(options.min_energy), LbsT(in.mass));
-  size_t index = 0;
-  SecT t(0);
-  while (true) {
-    SolveStep(&s, &t, in, SecT(UsecT(options.step_size)));
-    const FpsT kVelocity = s.V().Magnitude();
-    if (s.P().X() >= FeetT(pranges[index])) {
-      const InchT kSpinDrift =
-          CalculateLitzGyroscopicSpinDrift(in.stability_factor, t);
-      pouts[index] =
-          Save(s.P().X(), kVelocity, InchT(s.P().Y() - FeetT(in.optic_height)),
-               InchT(s.P().Z()) + kSpinDrift, t, LbsT(in.mass));
-      index++;
-    }
-
-    if (index >= size) {
-      break;
-    }
-
-    const bool kTimeMaxLimit =
-        (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0));
-    const bool kVelocityLimit = (kVelocity < kMinimumVelocity);
-    const bool kFallLimit = (s.V().Y() > s.V().X() * 3);
-
-    if (kTimeMaxLimit || kVelocityLimit || kFallLimit) {
-      const InchT kSpinDrift =
-          CalculateLitzGyroscopicSpinDrift(in.stability_factor, t);
-      pouts[index] =
-          Save(s.P().X(), kVelocity, InchT(s.P().Y() - FeetT(in.optic_height)),
-               InchT(s.P().Z()) + kSpinDrift, t, LbsT(in.mass));
-      index++;
-      break;
-    }
-  }
-  return index;
-}
-
-namespace {
-constexpr double kHundredYardsInFeet = FeetT(YardT(100)).Value();
-}  // namespace
-
-// Angle
-double MoaToMil(double value) { return MilT(MoaT(value)).Value(); }
-double MoaToDeg(double value) { return DegreesT(MoaT(value)).Value(); }
-double MoaToIphy(double value) { return IphyT(MoaT(value)).Value(); }
-double MoaToInch(double value, double range_ft) {
-  return IphyT(MoaT(value)).Value() * range_ft / kHundredYardsInFeet;
-}
-
-double MilToMoa(double value) { return MoaT(MilT(value)).Value(); }
-double MilToDeg(double value) { return DegreesT(MilT(value)).Value(); }
-double MilToIphy(double value) { return IphyT(MilT(value)).Value(); }
-double MilToInch(double value, double range_ft) {
-  return IphyT(MilT(value)).Value() * range_ft / kHundredYardsInFeet;
-}
-
-double DegToMoa(double value) { return MoaT(DegreesT(value)).Value(); }
-double DegToMil(double value) { return MilT(DegreesT(value)).Value(); }
-
-double InchToMoa(double value, double range_ft) {
-  if (AreEqual(range_ft, 0.0)) {
-    return 0;
-  }
-  return MoaT(IphyT(value / (range_ft / kHundredYardsInFeet))).Value();
-}
-
-double InchToMil(double value, double range_ft) {
-  if (AreEqual(range_ft, 0.0)) {
-    return 0;
-  }
-  return MilT(IphyT(value / (range_ft / kHundredYardsInFeet))).Value();
-}
-
-double InchToDeg(double value, double range_ft) {
-  if (AreEqual(range_ft, 0.0)) {
-    return 0;
-  }
-  return DegreesT(IphyT(value / (range_ft / kHundredYardsInFeet))).Value();
-}
-
-// Energy
-double JToFtLbs(double value) { return FtLbsT(JouleT(value)).Value(); }
-double FtLbsToJ(double value) { return JouleT(FtLbsT(value)).Value(); }
-
-// Length
-double MtoYd(double value) { return YardT(MeterT(value)).Value(); }
-double YdToFt(double value) { return FeetT(YardT(value)).Value(); }
-double MToFt(double value) { return FeetT(MeterT(value)).Value(); }
-double FtToIn(double value) { return InchT(FeetT(value)).Value(); }
-double MmToIn(double value) { return InchT(MmT(value)).Value(); }
-double CmToIn(double value) { return InchT(CmT(value)).Value(); }
-double YdToM(double value) { return MeterT(YardT(value)).Value(); }
-double FtToM(double value) { return MeterT(FeetT(value)).Value(); }
-double FtToYd(double value) { return YardT(FeetT(value)).Value(); }
-double InToMm(double value) { return MmT(InchT(value)).Value(); }
-double InToCm(double value) { return CmT(InchT(value)).Value(); }
-double InToFt(double value) { return FeetT(InchT(value)).Value(); }
-
-// Pressure
-double PaToInHg(double value) { return InHgT(PaT(value)).Value(); }
-double MbarToInHg(double value) { return InHgT(MbarT(value)).Value(); }
-double PsiToInHg(double value) { return InHgT(PsiT(value)).Value(); }
-
-// Mass
-double LbsToGrain(double value) { return GrainT(LbsT(value)).Value(); }
-double GToGrain(double value) { return GrainT(LbsT(GramT(value))).Value(); }
-double KgToGrain(double value) { return GrainT(LbsT(KgT(value))).Value(); }
-
-// Sectional Density / Ballistic Coefficient
-double KgSqMToPmsi(double value) { return PmsiT(KgsmT(value)).Value(); }
-
-// Speed
-double FpsToMps(double value) { return MpsT(FpsT(value)).Value(); }
-double MpsToFps(double value) { return FpsT(MpsT(value)).Value(); }
-double KphToMph(double value) { return MphT(FpsT(KphT(value))).Value(); }
-double KnToMph(double value) { return MphT(FpsT(KnT(value))).Value(); }
-
-// Time
-double MsToS(double value) { return SecT(MsecT(value)).Value(); }
-double UsToS(double value) { return SecT(UsecT(value)).Value(); }
-double SToMs(double value) { return MsecT(SecT(value)).Value(); }
-double SToUs(double value) { return UsecT(SecT(value)).Value(); }
-
-// Temperature
-double DegCToDegF(double value) { return DegFT(DegCT(value)).Value(); }
 }  // namespace lob
 
 // This file is part of lob.
