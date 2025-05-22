@@ -20,15 +20,15 @@ class StrongT {
   constexpr explicit StrongT(T value) : value_(value) {}
   template <E OtherUnit>
   constexpr explicit StrongT(const StrongT<E, OtherUnit, T>& other,
-                             T conversion_factor)
-      : value_(other.Value() * conversion_factor) {
+                             const StrongT<E, OtherUnit, T>& conversion_factor)
+      : value_(other.Value() * conversion_factor.Value()) {
     static_assert(std::is_same<E, decltype(OtherUnit)>::value,
                   "Units must share the same enum type");
     static_assert(U != OtherUnit, "Units must be of different types");
   }
   template <E OtherUnit>
   constexpr explicit StrongT(const StrongT<E, OtherUnit, T>& other,
-                             const StrongT<E, OtherUnit, T>& conversion_factor)
+                             const StrongT& conversion_factor)
       : value_(other.Value() * conversion_factor.Value()) {
     static_assert(std::is_same<E, decltype(OtherUnit)>::value,
                   "Units must share the same enum type");

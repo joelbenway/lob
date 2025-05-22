@@ -10,33 +10,51 @@ namespace lob {
 namespace boatright {
 PsiT CalculateDynamicPressure(LbsPerCuFtT air_density, FpsT velocity);
 
-CaliberT CalculateRadiusOfTangentOgive(CaliberT nose_length,
+CaliberT CalculateRadiusOfTangentOgive(CaliberT ogive_length,
                                        CaliberT meplat_diameter);
 
-CaliberT CalculateFullNoseLength(CaliberT nose_length, CaliberT meplat_diameter,
-                                 double ogive_rtr);
+CaliberT CalculateFullNoseLength(CaliberT ogive_length,
+                                 CaliberT meplat_diameter,
+                                 CaliberT radius_of_tangent, double ogive_rtr);
 
-double CalculateRelativeDensity(InchT diameter, InchT length,
-                                InchT meplat_diameter, InchT nose_length,
-                                InchT base_diameter, InchT base_length,
-                                GrainT mass);
+double CalculateOgiveVolume(InchT diameter, InchT ogive_length,
+                            InchT full_ogive_length, InchT ogive_radius);
 
-double CalculateRelativeDensity(InchT diameter, InchT length,
-                                InchT meplat_diameter, InchT nose_length,
-                                InchT base_diameter, InchT base_length,
-                                double ogive_rtr, GrainT mass);
+double CalculateFrustrumVolume(InchT d1, InchT d2, InchT length);
 
-double CalculateCoefficientOfLift(CaliberT nose_length,
-                                  CaliberT meplat_diameter, double ogive_rtr,
-                                  MachT velocity);
+double CalculateCylinderVolume(InchT diameter, InchT length);
+
+double CalculateAverageDensity(InchT diameter, InchT length, InchT ogive_length,
+                               InchT ogive_full_length, InchT ogive_radius,
+                               InchT base_diameter, InchT tail_length,
+                               GrainT mass);
+
+double CalculateAverageDensity(InchT diameter, CaliberT length,
+                               CaliberT ogive_length,
+                               CaliberT ogive_full_length,
+                               CaliberT ogive_radius, CaliberT base_diameter,
+                               CaliberT tail_length, GrainT mass);
+
+double CalculateFastAverageDensity(InchT diameter, InchT length,
+                                   InchT meplat_diameter, InchT ogive_length,
+                                   InchT base_diameter, InchT tail_length,
+                                   GrainT mass);
+
+double CalculateFastAverageDensity(InchT diameter, CaliberT length,
+                                   CaliberT meplat_diameter,
+                                   CaliberT ogive_length,
+                                   CaliberT base_diameter, CaliberT tail_length,
+                                   GrainT mass);
+
+double CalculateCoefficientOfLift(CaliberT full_ogive_length, MachT velocity);
 
 double CalculateInertialRatio(InchT caliber, CaliberT length,
-                              CaliberT nose_length, CaliberT full_nose_length,
-                              GrainT mass, double relative_density);
+                              CaliberT ogive_length, CaliberT full_ogive_length,
+                              GrainT mass, double average_density);
 
 HzT CalculateSpinRate(FpsT velocity, InchPerTwistT twist);
 
-double CalculateAspectRatio(CaliberT length, CaliberT full_nose_length,
+double CalculateAspectRatio(CaliberT length, CaliberT full_ogive_length,
                             CaliberT tail_length, CaliberT base_diameter);
 
 double CalculateYawDragCoefficient(MachT speed, double coefficient_of_lift,
@@ -69,7 +87,7 @@ double CalculateMagnitudeOfMomentum(GrainT mass, FpsT velocity);
 
 MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
                                 InchT base_diameter, InchT length,
-                                InchT nose_length, InchT tail_length,
+                                InchT ogive_length, InchT tail_length,
                                 double ogive_rtr, GrainT mass, FpsT velocity,
                                 double stability, InchPerTwistT twist,
                                 FpsT zwind, LbsPerCuFtT air_density,
@@ -87,8 +105,8 @@ RadiansT CalculateYawOfRepose(FpsT initial_velocity, InchPerTwistT twist,
 double CalculatePotentialDragForce(InchT diameter, LbsPerCuFtT air_density,
                                    FpsT target_velocity);
 
-double CalculateCoefficentOfLiftAtT(double cl0, FpsT initial_velocity,
-                                    SecT supersonic_time);
+double CalculateCoefficientOfLiftAtT(double cl0, FpsT initial_velocity,
+                                     SecT supersonic_time);
 
 double CalculateSpinDriftScaleFactor(double potential_drag_force,
                                      RadiansT yaw_of_repose,
@@ -100,7 +118,7 @@ InchT CalculateSpinDrift(double scale_factor, InchT drop);
 
 double CalculateBRSpinDriftFactor(InchT diameter, InchT meplat_diameter,
                                   InchT base_diameter, InchT length,
-                                  InchT nose_length, InchT tail_length,
+                                  InchT ogive_length, InchT tail_length,
                                   double ogive_rtr, GrainT mass, FpsT velocity,
                                   double stability, InchPerTwistT twist,
                                   LbsPerCuFtT air_density,

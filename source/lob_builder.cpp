@@ -517,6 +517,40 @@ void BuildCoriolis(Impl* pimpl) {
   }
 }
 
+void BuildSpinDrift(Impl* pimpl) {
+  if (pimpl == nullptr || std::isnan(pimpl->diameter_in) ||
+      std::isnan(pimpl->meplat_diameter_in) ||
+      std::isnan(pimpl->base_diameter_in) || std::isnan(pimpl->length_in) ||
+      std::isnan(pimpl->nose_length_in) || std::isnan(pimpl->tail_length_in) ||
+      std::isnan(pimpl->ogive_rtr) || std::isnan(pimpl->build.mass) ||
+      pimpl->build.velocity <= 0 || std::isnan(pimpl->build.stability_factor) ||
+      std::isnan(pimpl->twist_inches_per_turn) ||
+      std::isnan(pimpl->air_density_lbs_per_cu_ft)) {
+    return;
+  }
+
+  TrajectoryStateT s(
+      CartesianT<FeetT>(FeetT(0.0)),
+      CartesianT<FpsT>(FpsT(pimpl->build.velocity * std::cos(0)),
+                       FpsT(pimpl->build.velocity * std::sin(0)), FpsT(0.0)));
+
+  SecT t(0.0);
+
+  static const FpsT kTransonicBarrier(
+      MachT(1.2).Value() * FpsT(pimpl->build.speed_of_sound).Value());
+
+  while (s.V().X() > kTransonicBarrier) {
+    SolveStep(&s, &t, pimpl->build);
+  }
+
+  pimpl->build.spindrift_factor = CalculateBRSpinDriftFactor(
+      pimpl->diameter_in, pimpl->meplat_diameter_in, pimpl->base_diameter_in,
+      pimpl->length_in, pimpl->nose_length_in, pimpl->tail_length_in,
+      pimpl->ogive_rtr, GrainT(LbsT(pimpl->build.mass)),
+      FpsT(pimpl->build.velocity), pimpl->build.stability_factor,
+      pimpl->twist_inches_per_turn, pimpl->air_density_lbs_per_cu_ft, t);
+}
+
 void BuildZeroAngle(Impl* pimpl) {
   if (!std::isnan(pimpl->build.zero_angle)) {
     return;
@@ -583,6 +617,7 @@ Input Builder::Build() {
     BuildStability(pimpl_);
     BuildAerodynamicJump(pimpl_);
     BuildCoriolis(pimpl_);
+    BuildSpinDrift(pimpl_);
     BuildZeroAngle(pimpl_);
   }
   return pimpl_->build;

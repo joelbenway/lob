@@ -29,18 +29,20 @@ TEST(EngUnitsTests, Constructor) {
 TEST(EngUnitsTests, ConstructorConversion) {
   using lob::CaliberT;
   using lob::InchT;
-  std::unique_ptr<CaliberT> ptest = nullptr;
+  std::unique_ptr<CaliberT> pcal = nullptr;
+  std::unique_ptr<InchT> pinch = nullptr;
   const InchT kA(3.0);
-  const InchT kB(1.0 / 0.308);
-  const double kExpected = kA.Value() * kB.Value();
-  ptest = std::make_unique<CaliberT>(kA, kB.Value());
-  ASSERT_NE(ptest, nullptr);
-  EXPECT_DOUBLE_EQ(ptest->Value(), kExpected);
-  ptest.reset();
-  ptest = std::make_unique<CaliberT>(kA, kB);
-  ASSERT_NE(ptest, nullptr);
-  EXPECT_DOUBLE_EQ(ptest->Value(), kExpected);
-  ptest.reset();
+  const InchT kB(0.308);
+  const double kExpected = kA.Value() * kB.Inverse().Value();
+  pcal = std::make_unique<CaliberT>(kA, kB.Inverse());
+  ASSERT_NE(pcal, nullptr);
+  EXPECT_DOUBLE_EQ(pcal->Value(), kExpected);
+  pcal.reset();
+  const CaliberT kC(kExpected);
+  pinch = std::make_unique<InchT>(kC, kB);
+  ASSERT_NE(pinch, nullptr);
+  EXPECT_DOUBLE_EQ(pinch->Value(), kA.Value());
+  pinch.reset();
 }
 
 TEST(EngUnitsTests, CopyConstructor) {

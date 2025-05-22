@@ -15,50 +15,8 @@
 #include "lob/lob.hpp"
 #include "ode.hpp"
 #include "solve_step.hpp"
-#include "tables.hpp"
 
 namespace lob {
-
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, SecT step) {
-  const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
-                               FpsT(input.wind.z));
-
-  // For best accuracy all calculations which depend on the velocity state would
-  // occur inside the lambda as the numerical method updates the velocity (and
-  // thus the coefficient of drag) several times. However, LobLerp is an
-  // expensive calculation and the difference between doing it once or several
-  // times per step is negligible.
-  const MachT kMach(ps->V().Magnitude(), FpsT(input.speed_of_sound).Inverse());
-  const double kCd = LobLerp(kMachs, input.drags, kMach) *
-                     static_cast<double>(input.table_coefficient);
-
-  auto ds_dt = [&](SecT t, const TrajectoryStateT& s) -> TrajectoryStateT {
-    static_cast<void>(t);  // t is unused
-    const CartesianT<FeetT> kDpDt(FeetT(s.V().X().Value()),
-                                  FeetT(s.V().Y().Value()),
-                                  FeetT(s.V().Z().Value()));
-    const FpsT kScalarVelocity = (s.V() - kWind).Magnitude();
-    CartesianT<FpsT> dv_dt = (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
-    dv_dt.X(dv_dt.X() - s.V().Y() * input.corilolis.cos_l_sin_a -
-            s.V().Z() * input.corilolis.sin_l);
-    dv_dt.Y(dv_dt.Y() + s.V().X() * input.corilolis.cos_l_sin_a +
-            s.V().Z() * input.corilolis.cos_l_cos_a);
-    dv_dt.Z(dv_dt.Z() + s.V().X() * input.corilolis.sin_l -
-            s.V().Y() * input.corilolis.cos_l_cos_a);
-    dv_dt.X(dv_dt.X() + input.gravity.x);
-    dv_dt.Y(dv_dt.Y() + input.gravity.y);
-    return TrajectoryStateT{kDpDt, dv_dt};
-  };  // ds_dt
-
-  *ps = HeunStep(SecT(0), *ps, step, ds_dt);
-  *pt += step;
-}
-
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, FeetT step) {
-  assert(step.Value() > 0 && "step is not a valid number");
-  const auto kDt = SecT(ps->V().X().Inverse().Value() * step.Value());
-  SolveStep(ps, pt, input, kDt);
-}
 
 namespace {
 
@@ -67,8 +25,8 @@ FpsT CalculateMinimumVelocity(FpsT min_speed, FtLbsT min_energy, SlugT mass) {
                   min_speed);
 }
 
-Output Save(FeetT range, FpsT velocity, InchT elevation, InchT deflection,
-            SecT time_of_flight, GrainT mass) {
+Output SaveOutput(FeetT range, FpsT velocity, InchT elevation, InchT deflection,
+                  SecT time_of_flight, GrainT mass) {
   Output out;
   const FtLbsT kEnergy = CalculateKineticEnergy(velocity, mass);
   out.range = range.U32();
@@ -78,6 +36,26 @@ Output Save(FeetT range, FpsT velocity, InchT elevation, InchT deflection,
   out.deflection = deflection.Value();
   out.time_of_flight = time_of_flight.Value();
   return out;
+}
+
+void ApplyGyroscopicSpinDrift(const Input& in, Output* pouts, size_t size) {
+  // If we can apply Boatright-Ruiz spin drift, prefer it
+  if (in.spindrift_factor > 0) {
+    for (size_t i = 0; i < size; i++) {
+      pouts[i].deflection +=
+          in.spindrift_factor * std::fabs(pouts[i].elevation);
+    }
+    return;
+  }
+  // If we can apply Litz spin drift, use that
+  if (std::fabs(in.stability_factor) > 0) {
+    for (size_t i = 0; i < size; i++) {
+      pouts[i].deflection +=
+          CalculateLitzGyroscopicSpinDrift(in.stability_factor,
+                                           SecT(pouts[i].time_of_flight))
+              .Value();
+    }
+  }
 }
 }  // namespace
 
@@ -100,11 +78,9 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
     SolveStep(&s, &t, in, SecT(UsecT(options.step_size)));
     const FpsT kVelocity = s.V().Magnitude();
     if (s.P().X() >= FeetT(pranges[index])) {
-      const InchT kSpinDrift =
-          CalculateLitzGyroscopicSpinDrift(in.stability_factor, t);
-      pouts[index] =
-          Save(s.P().X(), kVelocity, InchT(s.P().Y() - FeetT(in.optic_height)),
-               InchT(s.P().Z()) + kSpinDrift, t, LbsT(in.mass));
+      pouts[index] = SaveOutput(s.P().X(), kVelocity,
+                                InchT(s.P().Y() - FeetT(in.optic_height)),
+                                InchT(s.P().Z()), t, LbsT(in.mass));
       index++;
     }
 
@@ -118,15 +94,14 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
     const bool kFallLimit = (s.V().Y() > s.V().X() * 3);
 
     if (kTimeMaxLimit || kVelocityLimit || kFallLimit) {
-      const InchT kSpinDrift =
-          CalculateLitzGyroscopicSpinDrift(in.stability_factor, t);
-      pouts[index] =
-          Save(s.P().X(), kVelocity, InchT(s.P().Y() - FeetT(in.optic_height)),
-               InchT(s.P().Z()) + kSpinDrift, t, LbsT(in.mass));
+      pouts[index] = SaveOutput(s.P().X(), kVelocity,
+                                InchT(s.P().Y() - FeetT(in.optic_height)),
+                                InchT(s.P().Z()), t, LbsT(in.mass));
       index++;
       break;
     }
   }
+  ApplyGyroscopicSpinDrift(in, pouts, index);
   return index;
 }
 

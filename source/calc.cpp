@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdint>
 
 #include "constants.hpp"
 #include "eng_units.hpp"
@@ -119,9 +118,9 @@ double CalculateSpeedOfSoundHumidityCorrection(double humidity_pct,
 // Page 90 of Modern Exterior Ballistics - McCoy
 double CalculateCdCoefficient(LbsPerCuFtT air_density, PmsiT bc) {
   const double kSqInPerSqFt = (InchT(FeetT(1)) * InchT(FeetT(1))).Value();
-  const uint8_t kClangTidyPleaserEight = 8;
-  return air_density.Value() * kPi /
-         (bc.Value() * kSqInPerSqFt * kClangTidyPleaserEight);
+  const double kCoeff =
+      air_density.Value() * kPi / (bc.Value() * kSqInPerSqFt * 8);
+  return kCoeff;
 }
 
 // Precision Shooting, March, 43-48 (2005)
