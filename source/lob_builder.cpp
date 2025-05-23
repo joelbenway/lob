@@ -540,6 +540,7 @@ void BuildSpinDrift(Impl* pimpl) {
       MachT(1.2).Value() * FpsT(pimpl->build.speed_of_sound).Value());
 
   while (s.V().X() > kTransonicBarrier) {
+    assert(t.Value() < 100.0 && "This is taking too long");
     SolveStep(&s, &t, pimpl->build);
   }
 

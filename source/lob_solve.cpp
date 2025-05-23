@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 
 #include "calc.hpp"
 #include "cartesian.hpp"
@@ -95,7 +96,7 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
 
     SolveStep(&s, &t, in, SecT(UsecT(options.step_size)));
 
-    if (s.P().X() >= FeetT(pranges[index])) {
+    if (s.P().X() >= FeetT(pranges[index]) && kS.P().X() < s.P().X()) {
       const double kAlpha =
           ((FeetT(pranges[index]) - kS.P().X()) / (s.P().X() - kS.P().X()))
               .Value();
@@ -107,13 +108,13 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
       break;
     }
 
-    if (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0)) {
+    if (t >= SecT(options.max_time) && kT < SecT(options.max_time)) {
       const double kAlpha = ((SecT(options.max_time) - kT) / (t - kT)).Value();
       pouts[index] = LerpOutput(s, t, kS, kT, kAlpha, in);
       index++;
       break;
     }
-    if (s.V().Magnitude() < kMinimumVelocity) {
+    if (s.V().Magnitude() <= kMinimumVelocity && kS.V().Magnitude() > kMinimumVelocity) {
       const double kAlpha = ((kMinimumVelocity - kS.V().Magnitude()) /
                              (s.V().Magnitude() - kS.V().Magnitude()))
                                 .Value();
