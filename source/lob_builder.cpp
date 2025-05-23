@@ -380,7 +380,7 @@ void BuildEnvironment(Impl* pimpl) {
 
   pimpl->air_density_lbs_per_cu_ft = LbsPerCuFtT(
       kIsaSeaLevelAirDensityLbsPerCuFt *
-      CalcualteAirDensityRatio(pressure_at_firing_site,
+      CalculateAirDensityRatio(pressure_at_firing_site,
                                temperature_at_firing_site) *
       CalculateAirDensityRatioHumidityCorrection(
           pimpl->relative_humidity_percent, kWaterVaporSaturationPressureInHg));

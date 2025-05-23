@@ -29,7 +29,7 @@ template <typename T, typename Y, typename F>
 constexpr Y RungeKuttaStep(const T& t_i, const Y& y_i, T dt, const F& f) {
   const T kHalfStep = dt / 2;
   const T kQuanta = dt / 6;
-  const T kDouble(2);
+  const T kDouble = static_cast<T>(2);
   const Y k1 = f(t_i, y_i);
   const Y k2 = f(t_i + kHalfStep, y_i + (k1 * kHalfStep));
   const Y k3 = f(t_i + kHalfStep, y_i + (k2 * kHalfStep));

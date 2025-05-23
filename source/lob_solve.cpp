@@ -39,6 +39,7 @@ Output SaveOutput(FeetT range, FpsT velocity, InchT elevation, InchT deflection,
 }
 
 void ApplyGyroscopicSpinDrift(const Input& in, Output* pouts, size_t size) {
+  assert(pouts != nullptr);
   // If we can apply Boatright-Ruiz spin drift, prefer it
   if (in.spindrift_factor > 0) {
     for (size_t i = 0; i < size; i++) {
@@ -61,7 +62,11 @@ void ApplyGyroscopicSpinDrift(const Input& in, Output* pouts, size_t size) {
 
 size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
              size_t size, const Options& options) {
-  if (std::isnan(in.table_coefficient)) {
+  assert(pranges != nullptr);
+  assert(pouts != nullptr);
+  assert(size > 0);
+  if (std::isnan(in.table_coefficient) || pranges == nullptr ||
+      pouts == nullptr || size == 0) {
     return 0;
   }
   const auto kAngle =
@@ -91,7 +96,8 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
     const bool kTimeMaxLimit =
         (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0));
     const bool kVelocityLimit = (kVelocity < kMinimumVelocity);
-    const bool kFallLimit = (s.V().Y() > s.V().X() * 3);
+    const bool kFallLimit =
+        (std::abs(s.V().Y().Value()) > std::abs(s.V().X().Value() * 3));
 
     if (kTimeMaxLimit || kVelocityLimit || kFallLimit) {
       pouts[index] = SaveOutput(s.P().X(), kVelocity,

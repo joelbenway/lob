@@ -92,7 +92,7 @@ InHgT CalculateWaterVaporSaturationPressure(DegFT temperature) {
 }
 
 // Page 167 of Modern Exterior Ballistics - McCoy
-double CalcualteAirDensityRatio(InHgT pressure, DegFT temperature) {
+double CalculateAirDensityRatio(InHgT pressure, DegFT temperature) {
   return pressure.Value() / kIsaSeaLevelPressureInHg *
          (DegRT(DegFT(kIsaSeaLevelDegF)) / DegRT(temperature)).Value();
 }

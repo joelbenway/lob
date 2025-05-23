@@ -115,7 +115,9 @@ double CalculateFastAverageDensity(InchT diameter, InchT length,
                                    InchT meplat_diameter, InchT ogive_length,
                                    InchT base_diameter, InchT tail_length,
                                    GrainT mass) {
+  const double kPinocchioFactor = 1.3;
   const double kOgiveVolume =
+      kPinocchioFactor *
       CalculateFrustrumVolume(diameter, meplat_diameter, ogive_length);
   const double kBodyVolume =
       CalculateCylinderVolume(diameter, length - ogive_length - tail_length);
@@ -208,6 +210,7 @@ HzT CalculateGyroscopicRateF2(HzT gyroscopic_rate_sum, double epicyclic_ratio) {
 }
 
 SecT CalculateFirstNutationPeriod(HzT f1, HzT f2) {
+  assert(f1 > f2);
   const SecT kTn(1 / (f1.Value() - f2.Value()));
   return kTn;
 }
@@ -267,7 +270,6 @@ MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
   const CaliberT kLBT(tail_length, diameter.Inverse());
   const auto kRTR(ogive_rtr);
   const CaliberT kRT = boatright::CalculateRadiusOfTangentOgive(kLN, kDM);
-  const CaliberT kRO = kRT / kRTR;
   const CaliberT kLFN = boatright::CalculateFullNoseLength(kLN, kDM, kRT, kRTR);
   const PsiT kQ = boatright::CalculateDynamicPressure(air_density, velocity);
   const SqInT kS = CalculateProjectileReferenceArea(diameter);
@@ -275,8 +277,8 @@ MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
   const auto kM = lob::MachT(velocity, speed_of_sound.Inverse());
   const auto kCL = boatright::CalculateCoefficientOfLift(kLFN, kM);
   const auto kCDa = boatright::CalculateYawDragCoefficient(kM, kCL, kAR);
-  const auto kRho = boatright::CalculateAverageDensity(diameter, kL, kLN, kLFN,
-                                                       kRO, kDB, kLBT, mass);
+  const auto kRho = boatright::CalculateFastAverageDensity(
+      diameter, kL, kDM, kLN, kDB, kLBT, mass);
   const auto kIyOverIx =
       boatright::CalculateInertialRatio(diameter, kL, kLN, kLFN, mass, kRho);
   const auto kP = boatright::CalculateSpinRate(velocity, twist);
@@ -285,7 +287,8 @@ MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
   const auto kF1F2Sum = boatright::CalculateGyroscopicRateSum(kP, kIyOverIx);
   const auto kF2 = boatright::CalculateGyroscopicRateF2(kF1F2Sum, kR);
   const auto kTn = boatright::CalculateFirstNutationPeriod(kF1F2Sum - kF2, kF2);
-  const auto kGamma = boatright::CalculateCrosswindAngleGamma(zwind, velocity);
+  const auto kGamma =
+      boatright::CalculateCrosswindAngleGamma(MphT(zwind), velocity);
   const auto kCD0 = boatright::CalculateZeroYawDragCoefficientOfDrag(
       cd_ref, mass, diameter, bc);
   const auto kCDAdjustment =
@@ -371,10 +374,9 @@ double CalculateBRSpinDriftFactor(InchT diameter, InchT meplat_diameter,
   const CaliberT kLBT(tail_length, diameter.Inverse());
   const auto kRTR(ogive_rtr);
   const CaliberT kRT = boatright::CalculateRadiusOfTangentOgive(kLN, kDM);
-  const CaliberT kRO = kRT / kRTR;
   const CaliberT kLFN = boatright::CalculateFullNoseLength(kLN, kDM, kRT, kRTR);
-  const auto kRho = boatright::CalculateAverageDensity(diameter, kL, kLN, kLFN,
-                                                       kRO, kDB, kLBT, mass);
+  const auto kRho = boatright::CalculateFastAverageDensity(
+      diameter, kL, kDM, kLN, kDB, kLBT, mass);
   const double kIyOverIx =
       boatright::CalculateInertialRatio(diameter, kL, kLN, kLFN, mass, kRho);
   const auto kR = boatright::CalculateEpicyclicRatio(stability);

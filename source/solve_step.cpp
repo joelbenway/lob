@@ -9,6 +9,7 @@
 
 #include "cartesian.hpp"
 #include "eng_units.hpp"
+#include "helpers.hpp"
 #include "lob/lob.hpp"
 #include "ode.hpp"
 #include "tables.hpp"
@@ -16,6 +17,9 @@
 namespace lob {
 
 void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, SecT step) {
+  assert(ps != nullptr);
+  assert(pt != nullptr);
+  assert(step.Value() > 0 && "step is not a valid number");
   const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
                                FpsT(input.wind.z));
 
@@ -51,8 +55,12 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, SecT step) {
 }
 
 void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, FeetT step) {
+  assert(ps != nullptr);
+  assert(pt != nullptr);
   assert(step.Value() > 0 && "step is not a valid number");
-  const auto kDt = SecT(ps->V().X().Inverse().Value() * step.Value());
+  const SecT kDt = AreEqual(ps->V().X().Value(), 0.0)
+                       ? SecT(UsecT(100))
+                       : SecT(ps->V().X().Inverse().Value() * step.Value());
   SolveStep(ps, pt, input, kDt);
 }
 

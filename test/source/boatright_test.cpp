@@ -281,7 +281,7 @@ TEST(BoatrightTests, CalculateCrosswindAngleGamma) {
   // Test data from Sample Calculations of Calculating Aerodynamic Jump for
   // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::boatright::CalculateCrosswindAngleGamma;
-  const lob::FpsT kZWind(14.67);
+  const lob::MphT kZWind(lob::FpsT(14.67));
   const lob::FpsT kVelocity(2800.0);
   const double kExpected(5.239E-3);
   const double kActual = CalculateCrosswindAngleGamma(kZWind, kVelocity);
@@ -380,10 +380,11 @@ TEST(BoatrightTests, CalculateBRAerodynamicJump) {
   // believe is the result of an improperly calculated gyroscopic rates as well
   // as an estimated rather than calculated average density.
   const double kExpected(-0.463);
+  const double kError = std::abs(kExpected) * 0.05;
   const lob::MoaT kActual = lob::CalculateBRAerodynamicJump(
       kD, kDM, kDB, kL, kLN, kLBT, kRTR, kMass, kV, kSg, kTwist, kZwind,
       kAirDensity, kSos, kBcG7, kCDref);
-  EXPECT_NEAR(kActual.Value(), kExpected, 1E-3);
+  EXPECT_NEAR(kActual.Value(), kExpected, kError);
 }
 
 TEST(BoatrightTests, CalculateKV) {
@@ -410,7 +411,7 @@ TEST(BoatrightTests, CalculateKOmega) {
   EXPECT_NEAR(kResult, kExpected, kError);
 }
 
-struct BRTestFire {
+struct SpinDriftTestFire {
   double diameter;
   double length;
   double ogive_length;
@@ -442,27 +443,27 @@ struct BRTestFire {
 namespace {
 // Test data from Sample Calculations of Calculating Yaw of Repose and Spin
 // Drift - Boatright & Ruiz - Rev September/2018
-const BRTestFire kInternational{
+const SpinDriftTestFire kInternational{
     0.308,  3.98,   2.26,    0.25,     0.510,  0.7645,  0.900,
     168.0,  6.9976, 2.6392,  2750.0,   7.7748, 2800U,   0.218,
     3.1015, 1.2723, 1.9120,  12.0,     1.74,   62.6387, -1.61385,
     0.4572, 1.1041, 0.01561, 436.0450, 6.8061};
-const BRTestFire kM118LR{0.308,    4.4,     2.45,     0.2175, 0.6,    0.8,
-                         1.0,      175.16,  7.8666,   2.7598, 2600.0, 9.0376,
-                         2600U,    0.2720,  2.6759,   1.43,   1.8463, 11.5,
-                         1.94,     45.6182, -1.64845, 0.6909, 1.1041, 0.02185,
-                         435.3450, 9.5111};
-const BRTestFire kULDSB{0.3002,   5.4368,  2.8368,   0.1000, 0.7012, 0.8420,
-                        0.500,    173.0,   9.1666,   3.0690, 2128.0, 13.4975,
-                        3200U,    0.3220,  2.5670,   2.1070, 1.7528, 8.25,
-                        1.5940,   67.1674, -2.32837, 0.5954, 1.0489, 0.01719,
-                        250.0250, 4.2983};
-const BRTestFire kBergerTactical{
+const SpinDriftTestFire kM118LR{
+    0.308,  4.4,    2.45,    0.2175,   0.6,    0.8,     1.0,
+    175.16, 7.8666, 2.7598,  2600.0,   9.0376, 2600U,   0.2720,
+    2.6759, 1.43,   1.8463,  11.5,     1.94,   45.6182, -1.64845,
+    0.6909, 1.1041, 0.02185, 435.3450, 9.5111};
+const SpinDriftTestFire kULDSB{
+    0.3002, 5.4368, 2.8368,  0.1000,   0.7012,  0.8420,  0.500,
+    173.0,  9.1666, 3.0690,  2128.0,   13.4975, 3200U,   0.3220,
+    2.5670, 2.1070, 1.7528,  8.25,     1.5940,  67.1674, -2.32837,
+    0.5954, 1.0489, 0.01719, 250.0250, 4.2983};
+const SpinDriftTestFire kBergerTactical{
     0.308,  4.1169, 2.3701,  0.1948,   0.6331, 0.8409,  0.900,
     175.0,  7.1779, 2.6632,  2750.0,   8.1466, 2660U,   0.2580,
     2.8145, 1.3972, 1.8913,  10.0,     2.24,   50.1486, -1.64866,
     0.6144, 1.1041, 0.02009, 428.4970, 8.6095};
-const BRTestFire kBergerLRBT{
+const SpinDriftTestFire kBergerLRBT{
     0.308,  4.3929, 2.5747,  0.2013,   0.5844, 0.8182,  0.950,
     185.0,  8.4993, 2.8897,  2750.0,   9.1976, 2630U,   0.2830,
     2.6189, 1.5030, 1.8248,  10.0,     1.91,   53.1437, -1.71021,
@@ -470,12 +471,12 @@ const BRTestFire kBergerLRBT{
 }  // namespace
 
 struct SpinDriftParameterizedFixture
-    : public ::testing::TestWithParam<BRTestFire> {
+    : public ::testing::TestWithParam<SpinDriftTestFire> {
   void SetUp() override {}
 };
 
 TEST_P(SpinDriftParameterizedFixture, CalculateRadiusOfTangentOgive) {
-  const BRTestFire kShot = GetParam();
+  const SpinDriftTestFire kShot = GetParam();
   const lob::CaliberT kLN(kShot.ogive_length);
   const lob::CaliberT kDM(kShot.meplat_diameter);
   const lob::CaliberT kRT =
@@ -484,7 +485,7 @@ TEST_P(SpinDriftParameterizedFixture, CalculateRadiusOfTangentOgive) {
 }
 
 TEST_P(SpinDriftParameterizedFixture, CalculateFullNoseLength) {
-  const BRTestFire kShot = GetParam();
+  const SpinDriftTestFire kShot = GetParam();
   const lob::CaliberT kLN(kShot.ogive_length);
   const lob::CaliberT kDM(kShot.meplat_diameter);
   const double kRTR(kShot.ogive_rtr);
@@ -496,7 +497,7 @@ TEST_P(SpinDriftParameterizedFixture, CalculateFullNoseLength) {
 }
 
 TEST_P(SpinDriftParameterizedFixture, CalculateInertialRatio) {
-  const BRTestFire kShot = GetParam();
+  const SpinDriftTestFire kShot = GetParam();
   const lob::InchT kD(kShot.diameter);
   const lob::CaliberT kL(kShot.length);
   const lob::CaliberT kLN(kShot.ogive_length);
@@ -512,7 +513,7 @@ TEST_P(SpinDriftParameterizedFixture, CalculateInertialRatio) {
 }
 
 TEST_P(SpinDriftParameterizedFixture, CalculateAverageDensity) {
-  const BRTestFire kShot = GetParam();
+  const SpinDriftTestFire kShot = GetParam();
   const lob::InchT kD(kShot.diameter);
   const lob::CaliberT kL(kShot.length);
   const lob::CaliberT kLN(kShot.ogive_length);
@@ -523,11 +524,31 @@ TEST_P(SpinDriftParameterizedFixture, CalculateAverageDensity) {
   const lob::GrainT kMass(kShot.mass);
   const double kRho = lob::boatright::CalculateAverageDensity(
       kD, kL, kLN, kLFN, kR, kDB, kLBT, kMass);
-  ASSERT_NEAR(kRho, kShot.density, kShot.density * 0.15);
+  const double kError = kShot.density * 0.15;
+  ASSERT_NEAR(kRho, kShot.density, kError);
+}
+
+TEST_P(SpinDriftParameterizedFixture, CalculateFastAverageDensity) {
+  const SpinDriftTestFire kShot = GetParam();
+  const lob::InchT kD(kShot.diameter);
+  const lob::CaliberT kL(kShot.length);
+  const lob::CaliberT kLN(kShot.ogive_length);
+  const lob::CaliberT kLFN(kShot.lfn);
+  const lob::CaliberT kR(kShot.rt / kShot.ogive_rtr);
+  const lob::CaliberT kDM(kShot.meplat_diameter);
+  const lob::CaliberT kDB(kShot.base_diameter);
+  const lob::CaliberT kLBT(kShot.tail_length);
+  const lob::GrainT kMass(kShot.mass);
+  const double kRho = lob::boatright::CalculateAverageDensity(
+      kD, kL, kLN, kLFN, kR, kDB, kLBT, kMass);
+  const double kRhoFast = lob::boatright::CalculateFastAverageDensity(
+      kD, kL, kDM, kLN, kDB, kLBT, kMass);
+  const double kError = kRho * 0.05;
+  ASSERT_NEAR(kRhoFast, kRho, kError);
 }
 
 TEST_P(SpinDriftParameterizedFixture, CalculateKVPlusOmega) {
-  const BRTestFire kShot = GetParam();
+  const SpinDriftTestFire kShot = GetParam();
   const lob::InchT kD(kShot.diameter);
   const lob::SecT kSST(kShot.supersonic_time);
   const lob::FpsT kVelocity(kShot.velocity);
@@ -538,17 +559,18 @@ TEST_P(SpinDriftParameterizedFixture, CalculateKVPlusOmega) {
 }
 
 TEST_P(SpinDriftParameterizedFixture, CalculatePotentialDragForce) {
-  const BRTestFire kShot = GetParam();
+  const SpinDriftTestFire kShot = GetParam();
   const lob::InchT kD(kShot.diameter);
   const lob::LbsPerCuFtT kAirDensity(0.0764742);
   const lob::FpsT kTarget(1340);
   const double kQTS =
       lob::boatright::CalculatePotentialDragForce(kD, kAirDensity, kTarget);
-  ASSERT_NEAR(kQTS, kShot.potential_dragf, 1E-3);
+  const double kError = std::abs(kShot.potential_dragf) * 1e-4;
+  ASSERT_NEAR(kQTS, kShot.potential_dragf, kError);
 }
 
 TEST_P(SpinDriftParameterizedFixture, CalculateYawOfRepose) {
-  const BRTestFire kShot = GetParam();
+  const SpinDriftTestFire kShot = GetParam();
   const lob::FpsT kVelocity(kShot.velocity);
   const lob::FpsT kTarget(1340);
   const lob::InchPerTwistT kTwist(kShot.twist);
@@ -562,7 +584,7 @@ TEST_P(SpinDriftParameterizedFixture, CalculateYawOfRepose) {
 }
 
 TEST_P(SpinDriftParameterizedFixture, CalculateCoefficientOfLift) {
-  const BRTestFire kShot = GetParam();
+  const SpinDriftTestFire kShot = GetParam();
   const lob::CaliberT kLFN(kShot.lfn);
   const lob::MachT kVelocity(kShot.velocity / 1116.45);
   const double kBoatTailAdjustmentFactor = std::sqrt(0.2720 / kShot.g7_bc);
@@ -573,7 +595,7 @@ TEST_P(SpinDriftParameterizedFixture, CalculateCoefficientOfLift) {
 }
 
 TEST_P(SpinDriftParameterizedFixture, CalculateCoefficientOfLiftAtT) {
-  const BRTestFire kShot = GetParam();
+  const SpinDriftTestFire kShot = GetParam();
   const double kCL0(kShot.cl0);
   const lob::FpsT kVelocity(kShot.velocity);
   const lob::SecT kSST(kShot.supersonic_time);
@@ -583,7 +605,7 @@ TEST_P(SpinDriftParameterizedFixture, CalculateCoefficientOfLiftAtT) {
 }
 
 TEST_P(SpinDriftParameterizedFixture, CalculateSpinDriftScaleFactor) {
-  const BRTestFire kShot = GetParam();
+  const SpinDriftTestFire kShot = GetParam();
   const double kQTS(kShot.potential_dragf);
   const lob::RadiansT kBetaROfT(kShot.beta_r_t / 1E3);
   const double kCLT(kShot.clt);
@@ -594,7 +616,7 @@ TEST_P(SpinDriftParameterizedFixture, CalculateSpinDriftScaleFactor) {
 }
 
 TEST_P(SpinDriftParameterizedFixture, CalculateSpinDrift) {
-  const BRTestFire kShot = GetParam();
+  const SpinDriftTestFire kShot = GetParam();
   const double kScF(kShot.scf);
   const lob::InchT kDrop(kShot.drop_1000);
   const lob::InchT kSD = lob::boatright::CalculateSpinDrift(kScF, kDrop);

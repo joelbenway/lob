@@ -88,6 +88,25 @@ TEST(LobAPITest, OptionsMinimumEnergy) {
   EXPECT_EQ(out.energy, kMinimumEnergy);
 }
 
+TEST(LobAPITest, RunUntilFallStop) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kGrains = 130.0;
+  const double kTestZeroAngle = 6.11;
+  const lob::Input kResult = lob::Builder()
+                                 .BallisticCoefficientPsi(kTestBC)
+                                 .InitialVelocityFps(kTestMuzzleVelocity)
+                                 .MassGrains(kGrains)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .Build();
+  const uint32_t kRange = 50'000U;
+  lob::Output out;
+  const lob::Options kOptions{0, 0, lob::NaN(), 10'000U};
+  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U, kOptions);
+  EXPECT_EQ(kSize, 1);
+  EXPECT_LT(out.range, kRange);
+}
+
 TEST(LobAPITest, MoaToMil) {
   const auto kA = lob::MoaT(5);
   const auto kB = lob::MilT(lob::MoaToMil(kA.Value()));
@@ -152,12 +171,15 @@ TEST(LobAPITest, InchToMoa) {
   const auto kA = lob::IphyT(5);
   const auto kB = lob::MoaT(lob::InchToMoa(kA.Value(), 300));
   EXPECT_DOUBLE_EQ(kA.Value(), lob::IphyT(kB).Value());
+  ;
+  EXPECT_DOUBLE_EQ(lob::InchToMoa(kA.Value(), 0.0), 0.0);
 }
 
 TEST(LobAPITest, InchToMil) {
   const auto kA = lob::IphyT(5);
   const auto kB = lob::MilT(lob::InchToMil(kA.Value(), 300));
   EXPECT_DOUBLE_EQ(kA.Value(), lob::IphyT(kB).Value());
+  EXPECT_DOUBLE_EQ(lob::InchToMil(kA.Value(), 0.0), 0.0);
 }
 
 TEST(LobAPITest, InchToDeg) {

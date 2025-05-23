@@ -145,7 +145,7 @@ TEST(CalcTests, CalculateWaterVaporSaturationPressure) {
   }
 }
 
-TEST(CalcTests, CalcualteAirDensityRatio) {
+TEST(CalcTests, CalculateAirDensityRatio) {
   // Test data from page 168 of Modern Exterior Ballistics - McCoy
   const std::vector<double> kPressuresInHg = {
       29.92, 29.38, 28.86, 28.33, 27.82, 26.82, 25.84, 24.90, 23.98,
@@ -160,7 +160,7 @@ TEST(CalcTests, CalcualteAirDensityRatio) {
   for (uint32_t i = 0; i < kPressuresInHg.size(); i++) {
     EXPECT_NEAR(
         kExpectedResults.at(i),
-        lob::CalcualteAirDensityRatio(lob::InHgT(kPressuresInHg.at(i)),
+        lob::CalculateAirDensityRatio(lob::InHgT(kPressuresInHg.at(i)),
                                       lob::DegFT(kTemperaturesDegF.at(i))),
         kError);
   }

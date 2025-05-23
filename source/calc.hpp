@@ -23,7 +23,7 @@ FpsT CalculateSpeedOfSoundInAir(DegFT temperature);
 
 InHgT CalculateWaterVaporSaturationPressure(DegFT temperature);
 
-double CalcualteAirDensityRatio(InHgT pressure, DegFT temperature);
+double CalculateAirDensityRatio(InHgT pressure, DegFT temperature);
 
 double CalculateAirDensityRatioHumidityCorrection(
     double humidity_pct, InHgT water_vapor_sat_pressure);

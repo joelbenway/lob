@@ -7,10 +7,10 @@ This is lob, a project that aims to create a useful and free exterior ballistics
 ## Design
 
 #### Goals
-Lob was intended to be easy to work with, accurate, and fast in that order. Ballistics solutions require many inputs to model all the factors affecting the trajectory of a projectile. Making the most of imperfect or incomplete data is a central goal of lob. Maybe the best environmental data available is from the wrong altitude, lob should adjust it for you. Maybe you know X and Y but not Z. Lob should make an informed estimate on Z or substitute a less demanding formula that doesn't require it. Give lob whatever you do know and it will do its best to fill in the gaps with frog DNA! :sauropod:
+Lob was intended to be easy to work with, accurate, and fast in that order. Ballistics solutions require many inputs to model all the factors affecting the trajectory of a projectile. Making the most of imperfect or incomplete data is a central goal of lob. Maybe the best environmental data available is from a weather station at the wrong altitude, lob should adjust it for you. Maybe you know X and Y but not Z. Lob should make an informed estimate on Z or substitute a less demanding formula that doesn't require it. Give lob whatever you do know and it will do its best to fill in the gaps with frog DNA! :sauropod:
 
 #### Mathematics
-Under the hood lob solves ordinary differental equations (ODEs) which model the projectile motion of a point mass. It does this using a numerical method--a common approach among commercial solvers. What is less common is implementing these methods in industrial strength C++, comprehensive unit tests, and releasing it all as open source software. :mechanical_arm:
+Under the hood lob solves ordinary differental equations (ODEs) which model the projectile motion of a point mass. It does this using numerical methods. This is probably the most common way that the workhorse ballistics solvers of today work. Slightly less common are implementations in industrial strength C++ with comprehensive unit tests and an open source license. :mechanical_arm:
 
 #### Software and API design
 In most cases Lob uses descriptive data structures and simple free functions that act on them. However at the heart of lob is the Builder class which is used to build the final Input consumed by the solver functions. There are so many optional inputs that go into a ballistic solution that the builder pattern is a pleasant abstraction. The Builder class uses a pimpl pattern, which if I'm being honest, is primarily to keep the library header readable. If you just wish to use lob, [the header](include/lob/lob.hpp) should have everything you need. Despite this pimpl pattern, lob does not dynamically allocate memory or throw exceptions and is suitable for use in embedded systems that can handle floating point math.
@@ -59,6 +59,8 @@ This project was an excuse for me to follow my curiosity and explore some techno
 [A Simple Accurate Formula for Calculating Saturation Vapor Pressure of Water and Ice by Jianhua Huang](https://journals.ametsoc.org/view/journals/apme/57/6/jamc-d-17-0334.1.xml) This is an academic article published in the Journal of Applied Meteorology and Climatology showcasing a nice formula. This was found while trying to avoid implementing a look up table to do the same thing.
 
 [Calculating Aerodynamic Jump for Firing Point Conditions by James Boatright & Gustavo Ruiz](https://www.researchgate.net/publication/327427851_Updated_Calculation_of_Crosswind_Aerodynamic_Jump_for_Firing_Point_Conditions-A_novel_and_practical_approach_for_computing_the_wind-induced_jump_perturbations) This paper offers a sophisticated method for calculating aerodynamic jump that promises greater accuracy but requires more inputs and calculation.
+
+[Calculating Yaw of Repose and Spin Drift for Firing Point Conditions – Boatright & Ruiz](https://www.researchgate.net/publication/327582502_Calculating_Yaw_of_Repose_and_Spin_Drift) Another paper from Boatright & Ruiz with a similar model for calculating spin drift.
 
 # Building and Installing
 
