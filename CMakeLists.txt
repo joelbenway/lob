@@ -8,7 +8,7 @@ include(cmake/prelude.cmake)
 
 project(
   lob
-  VERSION 0.4.0
+  VERSION 0.5.0
   DESCRIPTION "an exterior balistics calculation library"
   HOMEPAGE_URL "https://github.com/joelbenway/lob"
   LANGUAGES CXX)
@@ -22,8 +22,16 @@ include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 
 # ---- Declare library ----
-
-add_library(lob_lob source/lob.cpp source/calc.cpp source/tables.cpp)
+# cmake-format: off
+add_library(lob_lob
+  source/lob_builder.cpp
+  source/lob_convert.cpp
+  source/lob_solve.cpp
+  source/boatright.cpp
+  source/calc.cpp
+  source/solve_step.cpp
+  source/tables.cpp)
+# cmake-format: on
 add_library(lob::lob ALIAS lob_lob)
 
 include(GenerateExportHeader)
@@ -98,8 +106,8 @@ include(cmake/dev-mode.cmake)
 
 # This file is part of lob.
 #
-# lob is free software: you can redistribute it and/or modify it under the
-# terms of the GNU General Public License as published by the Free Software
+# lob is free software: you can redistribute it and/or modify it under the terms
+# of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
 #

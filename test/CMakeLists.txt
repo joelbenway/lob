@@ -61,13 +61,15 @@ unset(DEV_ERRORS_RECOVER_STATE)
 set(LOB_TEST_SOURCES
     source/lob_test.cpp
     source/lob_api_test.cpp
+    source/lob_cwaj_test.cpp
     source/lob_builder_test.cpp
     source/lob_coriolis_test.cpp
     source/lob_env_test.cpp
-    source/lob_spin_test.cpp
+    source/lob_spin_drift_test.cpp
     source/lob_wind_test.cpp)
 
 set(HELPER_TEST_SOURCES
+    source/boatright_test.cpp
     source/calc_test.cpp
     source/cartesian_test.cpp
     source/eng_units_test.cpp

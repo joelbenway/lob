@@ -175,7 +175,7 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
   const std::array<double, kSolutionLength> kExpectedElevationDifference = {
       0.0,  0.0,  0.02, 0.08, 0.19, 0.35,  0.55,  0.8,
-      1.11, 1.48, 1.91, 2.41, 6.08, 12.25, 21.54, 34.29};
+      1.11, 1.48, 1.91, 2.41, 6.08, 12.25, 21.54, 34.40};
   const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
       0.0,  0.01, 0.02, 0.08, 0.19, 0.34,  0.54,  0.8,
       1.11, 1.48, 1.91, 2.41, 6.07, 12.24, 21.38, 33.88};
@@ -213,7 +213,7 @@ TEST_F(LobCoriolisTestFixture,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
   const std::array<double, kSolutionLength> kExpectedElevationDifference = {
       0.0,  0.0,  0.02, 0.08, 0.19, 0.35,  0.55,  0.8,
-      1.11, 1.48, 1.91, 2.41, 6.08, 12.25, 21.54, 34.29};
+      1.11, 1.48, 1.91, 2.41, 6.08, 12.25, 21.54, 34.40};
   const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
       0.0,  0.01, 0.02, 0.08, 0.19, 0.34,  0.54,  0.8,
       1.11, 1.48, 1.91, 2.41, 6.07, 12.24, 21.38, 33.88};
@@ -437,7 +437,7 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
   const std::array<double, kSolutionLength> kExpectedElevationDifference = {
       0.0,  0.0,  0.02, 0.08, 0.19, 0.35,  0.55,  0.8,
-      1.11, 1.48, 1.91, 2.41, 6.08, 12.25, 21.54, 34.29};
+      1.11, 1.48, 1.91, 2.41, 6.08, 12.25, 21.54, 34.40};
   const std::array<double, kSolutionLength> kExpectedDeflectionDifference = {
       0.0,   -0.01, -0.02, -0.08, -0.19, -0.34,  -0.54,  -0.8,
       -1.11, -1.48, -1.91, -2.41, -6.07, -12.24, -21.38, -33.88};

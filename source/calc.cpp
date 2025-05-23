@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdint>
 
 #include "constants.hpp"
 #include "eng_units.hpp"
@@ -93,7 +92,7 @@ InHgT CalculateWaterVaporSaturationPressure(DegFT temperature) {
 }
 
 // Page 167 of Modern Exterior Ballistics - McCoy
-double CalcualteAirDensityRatio(InHgT pressure, DegFT temperature) {
+double CalculateAirDensityRatio(InHgT pressure, DegFT temperature) {
   return pressure.Value() / kIsaSeaLevelPressureInHg *
          (DegRT(DegFT(kIsaSeaLevelDegF)) / DegRT(temperature)).Value();
 }
@@ -119,9 +118,9 @@ double CalculateSpeedOfSoundHumidityCorrection(double humidity_pct,
 // Page 90 of Modern Exterior Ballistics - McCoy
 double CalculateCdCoefficient(LbsPerCuFtT air_density, PmsiT bc) {
   const double kSqInPerSqFt = (InchT(FeetT(1)) * InchT(FeetT(1))).Value();
-  const uint8_t kClangTidyPleaserEight = 8;
-  return air_density.Value() * kPi /
-         (bc.Value() * kSqInPerSqFt * kClangTidyPleaserEight);
+  const double kCoeff =
+      air_density.Value() * kPi / (bc.Value() * kSqInPerSqFt * 8);
+  return kCoeff;
 }
 
 // Precision Shooting, March, 43-48 (2005)
@@ -209,215 +208,6 @@ FpsT CalculateVelocityFromKineticEnergy(FtLbsT energy, SlugT mass) {
 // Page 90 of Modern Exterior Ballistics - McCoy
 PmsiT CalculateSectionalDensity(InchT bullet_diameter, LbsT bullet_mass) {
   return PmsiT(bullet_mass.Value() / std::pow(bullet_diameter.Value(), 2));
-}
-
-namespace cwaj {
-PsiT CalculateDynamicPressure(LbsPerCuFtT air_density, FpsT velocity) {
-  const double kRho = air_density.Value() * SlugT(LbsT(1)).Value();
-  const double kQ = kRho / 2 * velocity.Value() * velocity.Value();
-  const double kSqInPerSqFt = (InchT(FeetT(1)) * InchT(FeetT(1))).Value();
-  return PsiT(kQ / kSqInPerSqFt);
-}
-
-CaliberT CalculateRadiusOfTangentOgive(CaliberT nose_length,
-                                       CaliberT meplat_diameter) {
-  const auto kLN = nose_length;
-  const auto kDM = meplat_diameter;
-  return (kLN * kLN + std::pow((1 - kDM.Value()) / 2, 2)) / (1 - kDM.Value());
-}
-
-CaliberT CalculateFullNoseLength(CaliberT nose_length, CaliberT meplat_diameter,
-                                 double ogive_rtr) {
-  const auto kRT = CalculateRadiusOfTangentOgive(nose_length, meplat_diameter);
-  const auto kLFT = std::sqrt(kRT - 0.25);
-  const auto kLFC = nose_length / (1 - meplat_diameter.Value());
-  return (kLFT * ogive_rtr) + (kLFC * (1 - ogive_rtr));
-}
-
-double CalculateRelativeDensity(InchT diameter, InchT length,
-                                InchT meplat_diameter, InchT nose_length,
-                                InchT base_diameter, InchT base_length,
-                                GrainT mass) {
-  auto frustum_volume = [](double r1, double r2, double height) {
-    return height * kPi / 3 * ((r1 * r1) + (r1 * r2) + (r2 * r2));
-  };
-  // Modeling the nose as a frustum ensures volume is underestimated. This
-  // factor makes it a little larger for an improved estimate.
-  const double kPinocchioFactor = 1.1;
-  const double kNoseVolume =
-      kPinocchioFactor * frustum_volume(diameter.Value() / 2,
-                                        meplat_diameter.Value() / 2,
-                                        nose_length.Value());
-  const double kBodyVolume =
-      (std::pow(diameter / 2, 2) * kPi * (length - nose_length - base_length))
-          .Value();
-  const double kBaseVolume = frustum_volume(
-      diameter.Value() / 2, base_diameter.Value() / 2, base_length.Value());
-
-  return mass.Value() / (kNoseVolume + kBodyVolume + kBaseVolume);
-}
-
-double CalculateCoefficientOfLift(CaliberT nose_length,
-                                  CaliberT meplat_diameter, double ogive_rtr,
-                                  MachT velocity) {
-  const auto kLFN =
-      CalculateFullNoseLength(nose_length, meplat_diameter, ogive_rtr);
-  const double kB = std::sqrt((velocity * velocity) - 1).Value();
-  const double kNum1 = 1.974;
-  const double kNum2 = 0.921;
-  return kNum1 + (kNum2 * kB / kLFN.Value());
-}
-
-double CalculateInertialRatio(InchT caliber, CaliberT length,
-                              CaliberT nose_length, CaliberT full_nose_length,
-                              GrainT mass, double relative_density) {
-  const auto kLL = length - nose_length + full_nose_length;
-  const auto kH = full_nose_length.Value() / kLL.Value();
-  const GrainT kWtCalc =
-      GrainT(kPi / 4 * relative_density * std::pow(caliber.Value(), 3) *
-             kLL.Value() * (1 - 2 * kH / 3));
-  const double kF1 = 15 - (12 * kH) +
-                     ((kLL * kLL).Value() *
-                      (60 - (160 * kH) + (180 * std::pow(kH, 2)) -
-                       (96 * std::pow(kH, 3)) + (19 * std::pow(kH, 4))) /
-                      (3 - (2 * kH)));
-  const double kIyIxRatio =
-      std::pow(mass / kWtCalc, 0.894).Value() * kF1 / (30 * (1 - (4 * kH / 5)));
-  return kIyIxRatio;
-}
-
-HzT CalculateSpinRate(FpsT velocity, InchPerTwistT twist) {
-  const double kInchesPerFoot = InchT(FeetT(1)).Value();
-  return HzT(kInchesPerFoot * velocity.Value() / std::abs(twist.Value()));
-}
-
-double CalculateAspectRatio(CaliberT length, CaliberT full_nose_length,
-                            CaliberT boat_tail_length, CaliberT base_diameter) {
-  const double kAR =
-      length.Value() - ((2.0 / 3.0) * (full_nose_length.Value() +
-                                       (boat_tail_length.Value() *
-                                        (1.0 - base_diameter.Value()))));
-  return kAR;
-}
-
-double CalculateYawDragCoefficient(MachT speed, double coefficient_of_lift,
-                                   double aspect_ratio) {
-  const double kCLSquared = coefficient_of_lift * coefficient_of_lift;
-  const double kCDa =
-      1.33 * (1.41 - 0.18 * speed.Value()) *
-      (9.825 - 3.95 * speed.Value() +
-       (0.1458 * speed.Value() - 0.1594) * kCLSquared * aspect_ratio);
-  return kCDa;
-}
-
-double CalculateEpicyclicRatio(double stability) {
-  const double kSg = std::abs(stability);
-  const double kR = (2 * (kSg + std::sqrt(kSg * (kSg - 1)))) - 1;
-  return kR;
-}
-
-uint16_t CalculateNutationCyclesNeeded(double epicyclic_ratio) {
-  const auto kN =
-      static_cast<uint16_t>(std::floor((epicyclic_ratio - 1) / 4) + 1);
-  return kN;
-}
-
-HzT CalculateGyroscopicRateSum(HzT spin_rate, double inertial_ratio) {
-  return spin_rate / inertial_ratio;
-}
-
-HzT CalculateGyroscopicRateF2(HzT gyroscopic_rate_sum, double epicyclic_ratio) {
-  return gyroscopic_rate_sum / (epicyclic_ratio + 1);
-}
-
-SecT CalculateFirstNutationPeriod(HzT f1, HzT f2) {
-  const SecT kTn(1 / (f1.Value() - f2.Value()));
-  return kTn;
-}
-
-double CalculateCrosswindAngleGamma(MphT zwind, FpsT velocity) {
-  const double kGamma = FpsT(zwind).Value() / velocity.Value();
-  return kGamma;
-}
-
-double CalculateZeroYawDragCoefficientOfDrag(double cd_ref, GrainT mass,
-                                             InchT diameter, PmsiT bc) {
-  const double kCD0 = cd_ref * (LbsT(mass).Value() /
-                                (diameter * diameter).Value() / bc.Value());
-  return kCD0;
-}
-
-double CalculateYawDragAdjustment(double gamma, double r, double cda) {
-  const double kEpicyclicSwerveMagnitude = gamma * r / (r - 1);
-  const double kAdjustment = std::pow(kEpicyclicSwerveMagnitude, 2) * cda;
-  return kAdjustment;
-}
-
-double CalculateVerticalPitch(double gamma, double r, double n) {
-  const double kPitch = gamma * (((r * r) - 1) / (n * 2 * kPi * r)) *
-                        (1 - std::cos(n * 2 * kPi / (r - 1)));
-  return kPitch;
-}
-
-double CalculateVerticalImpulse(InchPerTwistT twist, uint16_t n, SecT tn,
-                                PsiT q, SqInT s, double cl, double cd,
-                                double pitch) {
-  const double kSign = twist.Value() < 0 ? -1.0 : 1.0;
-  const double kJv = kSign * (n * tn.Value()) * (q.Value() * s.Value()) *
-                     (cl + cd) * std::sin(pitch);
-  return kJv;
-}
-
-double CalculateMagnitudeOfMomentum(GrainT mass, FpsT velocity) {
-  const double kMOM =
-      LbsT(mass).Value() / kStandardGravityFtPerSecSq * velocity.Value();
-  return kMOM;
-}
-
-}  // namespace cwaj
-
-MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
-                                InchT base_diameter, InchT length,
-                                InchT nose_length, InchT boat_tail_length,
-                                double ogive_rtr, GrainT mass, FpsT velocity,
-                                double stability, InchPerTwistT twist,
-                                FpsT zwind, LbsPerCuFtT air_density,
-                                FpsT speed_of_sound, PmsiT bc, double cd_ref) {
-  const CaliberT kDM(meplat_diameter, diameter.Inverse());
-  const CaliberT kDB(base_diameter, diameter.Inverse());
-  const CaliberT kL(length, diameter.Inverse());
-  const CaliberT kLN(nose_length, diameter.Inverse());
-  const CaliberT kLBT(boat_tail_length, diameter.Inverse());
-  const auto kRTR(ogive_rtr);
-  const CaliberT kLFN = cwaj::CalculateFullNoseLength(kLN, kDM, kRTR);
-  const PsiT kQ = cwaj::CalculateDynamicPressure(air_density, velocity);
-  const SqInT kS = CalculateProjectileReferenceArea(diameter);
-  const auto kAR = cwaj::CalculateAspectRatio(kL, kLFN, kLBT, kDB);
-  const auto kM = lob::MachT(velocity, speed_of_sound.Inverse());
-  const auto kCL = cwaj::CalculateCoefficientOfLift(kLN, kDM, kRTR, kM);
-  const auto kCDa = cwaj::CalculateYawDragCoefficient(kM, kCL, kAR);
-  const auto kRD = cwaj::CalculateRelativeDensity(
-      diameter, length, meplat_diameter, nose_length, base_diameter,
-      boat_tail_length, mass);
-  const auto kIyPerIx =
-      cwaj::CalculateInertialRatio(diameter, kL, kLN, kLFN, mass, kRD);
-  const auto kP = cwaj::CalculateSpinRate(velocity, twist);
-  const auto kR = cwaj::CalculateEpicyclicRatio(stability);
-  const auto kN = cwaj::CalculateNutationCyclesNeeded(kR);
-  const auto kF1F2Sum = cwaj::CalculateGyroscopicRateSum(kP, kIyPerIx);
-  const auto kF2 = cwaj::CalculateGyroscopicRateF2(kF1F2Sum, kR);
-  const auto kTn = cwaj::CalculateFirstNutationPeriod(kF1F2Sum - kF2, kF2);
-  const auto kGamma = cwaj::CalculateCrosswindAngleGamma(zwind, velocity);
-  const auto kCD0 =
-      cwaj::CalculateZeroYawDragCoefficientOfDrag(cd_ref, mass, diameter, bc);
-  const auto kCDAdjustment = cwaj::CalculateYawDragAdjustment(kGamma, kR, kCDa);
-  const auto kCD = kCD0 + kCDAdjustment;
-  const auto kPitch = cwaj::CalculateVerticalPitch(kGamma, kR, kN);
-  const auto kJv =
-      cwaj::CalculateVerticalImpulse(twist, kN, kTn, kQ, kS, kCL, kCD, kPitch);
-  const auto kMOM = cwaj::CalculateMagnitudeOfMomentum(mass, velocity);
-  const auto kJump = -1 * kJv / kMOM;
-  return MoaT(RadiansT(kJump));
 }
 
 }  // namespace lob

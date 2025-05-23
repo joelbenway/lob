@@ -29,30 +29,31 @@ template <typename T, typename Y, typename F>
 constexpr Y RungeKuttaStep(const T& t_i, const Y& y_i, T dt, const F& f) {
   const T kHalfStep = dt / 2;
   const T kQuanta = dt / 6;
+  const T kDouble = static_cast<T>(2);
   const Y k1 = f(t_i, y_i);
   const Y k2 = f(t_i + kHalfStep, y_i + (k1 * kHalfStep));
   const Y k3 = f(t_i + kHalfStep, y_i + (k2 * kHalfStep));
   const Y k4 = f(t_i + dt, y_i + (k3 * dt));
-  return y_i + ((k1 + k2 * 2 + k3 * 2 + k4) * kQuanta);
+  return y_i + ((k1 + k2 * kDouble + k3 * kDouble + k4) * kQuanta);
 }
 
-// Numerical method friendly container for velocity and posiiton
-class SpvT {
+// Numerical method friendly container for velocity and position
+class TrajectoryStateT {
  public:
-  constexpr SpvT() = default;
-  constexpr SpvT(CartesianT<FeetT> p, CartesianT<FpsT> v)
+  constexpr TrajectoryStateT() = default;
+  constexpr TrajectoryStateT(CartesianT<FeetT> p, CartesianT<FpsT> v)
       : position_(std::move(p)), velocity_(std::move(v)) {}
-  constexpr SpvT(const SpvT& other) = default;
-  constexpr SpvT(SpvT&& other) noexcept = default;
-  constexpr SpvT& operator=(const SpvT& rhs) {
+  constexpr TrajectoryStateT(const TrajectoryStateT& other) = default;
+  constexpr TrajectoryStateT(TrajectoryStateT&& other) noexcept = default;
+  constexpr TrajectoryStateT& operator=(const TrajectoryStateT& rhs) {
     if (this != &rhs) {
       position_ = rhs.position_;
       velocity_ = rhs.velocity_;
     }
     return *this;
   }
-  ~SpvT() = default;
-  constexpr SpvT& operator=(SpvT&& rhs) noexcept {
+  ~TrajectoryStateT() = default;
+  constexpr TrajectoryStateT& operator=(TrajectoryStateT&& rhs) noexcept {
     if (this != &rhs) {
       position_ = rhs.position_;
       velocity_ = rhs.velocity_;
@@ -62,17 +63,17 @@ class SpvT {
     return *this;
   }
 
-  constexpr SpvT operator+(const SpvT& rhs) const {
-    return SpvT{position_ + rhs.position_, velocity_ + rhs.velocity_};
+  constexpr TrajectoryStateT operator+(const TrajectoryStateT& rhs) const {
+    return TrajectoryStateT{position_ + rhs.position_,
+                            velocity_ + rhs.velocity_};
   }
-  constexpr SpvT operator+(const double& rhs) const {
-    return SpvT{position_ + FeetT(rhs), velocity_ + FpsT(rhs)};
+  constexpr TrajectoryStateT operator+(const SecT& rhs) const {
+    return TrajectoryStateT{position_ + FeetT(rhs.Value()),
+                            velocity_ + FpsT(rhs.Value())};
   }
-  constexpr SpvT operator*(const SpvT& rhs) const {
-    return SpvT{position_ * rhs.position_, velocity_ * rhs.velocity_};
-  }
-  constexpr SpvT operator*(const double& rhs) const {
-    return SpvT{position_ * FeetT(rhs), velocity_ * FpsT(rhs)};
+  constexpr TrajectoryStateT operator*(const SecT& rhs) const {
+    return TrajectoryStateT{position_ * FeetT(rhs.Value()),
+                            velocity_ * FpsT(rhs.Value())};
   }
 
   constexpr CartesianT<FeetT> P() const { return position_; }
