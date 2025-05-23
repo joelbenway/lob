@@ -114,7 +114,8 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
       index++;
       break;
     }
-    if (s.V().Magnitude() <= kMinimumVelocity && kS.V().Magnitude() > kMinimumVelocity) {
+    if (s.V().Magnitude() <= kMinimumVelocity &&
+        kS.V().Magnitude() > kMinimumVelocity) {
       const double kAlpha = ((kMinimumVelocity - kS.V().Magnitude()) /
                              (s.V().Magnitude() - kS.V().Magnitude()))
                                 .Value();
