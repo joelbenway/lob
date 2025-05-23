@@ -146,8 +146,6 @@ TEST(OdeTests, Multiplication) {
   const lob::TrajectoryStateT kB = lob::TrajectoryStateT(kP, kV);
   a = a * lob::SecT(2);
   EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() * 2);
-  a = a * kB;
-  EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() * kP.X().Value() * 2);
 }
 
 TEST(OdeTests, Input) {

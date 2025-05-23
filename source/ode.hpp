@@ -71,10 +71,6 @@ class TrajectoryStateT {
     return TrajectoryStateT{position_ + FeetT(rhs.Value()),
                             velocity_ + FpsT(rhs.Value())};
   }
-  constexpr TrajectoryStateT operator*(const TrajectoryStateT& rhs) const {
-    return TrajectoryStateT{position_ * rhs.position_,
-                            velocity_ * rhs.velocity_};
-  }
   constexpr TrajectoryStateT operator*(const SecT& rhs) const {
     return TrajectoryStateT{position_ * FeetT(rhs.Value()),
                             velocity_ * FpsT(rhs.Value())};

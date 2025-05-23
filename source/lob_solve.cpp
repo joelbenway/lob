@@ -25,16 +25,25 @@ FpsT CalculateMinimumVelocity(FpsT min_speed, FtLbsT min_energy, SlugT mass) {
                   min_speed);
 }
 
-Output SaveOutput(FeetT range, FpsT velocity, InchT elevation, InchT deflection,
-                  SecT time_of_flight, GrainT mass) {
+Output LerpOutput(const TrajectoryStateT& s_now, const SecT t_now,
+                  const TrajectoryStateT& s_prev, const SecT t_prev,
+                  double alpha, const Input& input) {
+  const CartesianT<FeetT> kP =
+      s_prev.P() + (s_now.P() - s_prev.P()) * FeetT(alpha);
+  const CartesianT<FpsT> kV =
+      (s_prev.V() + (s_now.V() - s_prev.V()) * FpsT(alpha));
+  const SecT kTimeOfFlight = t_prev + (t_now - t_prev) * SecT(alpha);
+  const FpsT kVelocity = kV.Magnitude();
+  const FtLbsT kEnergy =
+      CalculateKineticEnergy(kVelocity, SlugT(LbsT(input.mass)));
+
   Output out;
-  const FtLbsT kEnergy = CalculateKineticEnergy(velocity, mass);
-  out.range = range.U32();
-  out.velocity = velocity.U16();
+  out.range = kP.X().U32();
+  out.velocity = kVelocity.U16();
   out.energy = kEnergy.U32();
-  out.elevation = elevation.Value();
-  out.deflection = deflection.Value();
-  out.time_of_flight = time_of_flight.Value();
+  out.elevation = InchT(kP.Y() - FeetT(input.optic_height)).Value();
+  out.deflection = InchT(kP.Z()).Value();
+  out.time_of_flight = kTimeOfFlight.Value();
   return out;
 }
 
@@ -69,23 +78,28 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
       pouts == nullptr || size == 0) {
     return 0;
   }
+  const FpsT kMinimumVelocity = CalculateMinimumVelocity(
+      FpsT(options.min_speed), FtLbsT(options.min_energy), LbsT(in.mass));
   const auto kAngle =
       RadiansT(MoaT(in.zero_angle + in.aerodynamic_jump)).Value();
   TrajectoryStateT s(
       CartesianT<FeetT>(FeetT(0.0)),
       CartesianT<FpsT>(FpsT(in.velocity) * std::cos(kAngle),
                        FpsT(in.velocity) * std::sin(kAngle), FpsT(0.0)));
-  const FpsT kMinimumVelocity = CalculateMinimumVelocity(
-      FpsT(options.min_speed), FtLbsT(options.min_energy), LbsT(in.mass));
-  size_t index = 0;
   SecT t(0);
+  size_t index = 0;
+
   while (true) {
+    const TrajectoryStateT kS = s;
+    const SecT kT = t;
+
     SolveStep(&s, &t, in, SecT(UsecT(options.step_size)));
-    const FpsT kVelocity = s.V().Magnitude();
+
     if (s.P().X() >= FeetT(pranges[index])) {
-      pouts[index] = SaveOutput(s.P().X(), kVelocity,
-                                InchT(s.P().Y() - FeetT(in.optic_height)),
-                                InchT(s.P().Z()), t, LbsT(in.mass));
+      const double kAlpha =
+          ((FeetT(pranges[index]) - kS.P().X()) / (s.P().X() - kS.P().X()))
+              .Value();
+      pouts[index] = LerpOutput(s, t, kS, kT, kAlpha, in);
       index++;
     }
 
@@ -93,16 +107,22 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
       break;
     }
 
-    const bool kTimeMaxLimit =
-        (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0));
-    const bool kVelocityLimit = (kVelocity < kMinimumVelocity);
-    const bool kFallLimit =
-        (std::abs(s.V().Y().Value()) > std::abs(s.V().X().Value() * 3));
-
-    if (kTimeMaxLimit || kVelocityLimit || kFallLimit) {
-      pouts[index] = SaveOutput(s.P().X(), kVelocity,
-                                InchT(s.P().Y() - FeetT(in.optic_height)),
-                                InchT(s.P().Z()), t, LbsT(in.mass));
+    if (t > SecT(options.max_time) && !AreEqual(options.max_time, 0.0)) {
+      const double kAlpha = ((SecT(options.max_time) - kT) / (t - kT)).Value();
+      pouts[index] = LerpOutput(s, t, kS, kT, kAlpha, in);
+      index++;
+      break;
+    }
+    if (s.V().Magnitude() < kMinimumVelocity) {
+      const double kAlpha = ((kMinimumVelocity - kS.V().Magnitude()) /
+                             (s.V().Magnitude() - kS.V().Magnitude()))
+                                .Value();
+      pouts[index] = LerpOutput(s, t, kS, kT, kAlpha, in);
+      index++;
+      break;
+    }
+    if (std::abs(s.V().Y().Value()) > s.V().X().Value() * 3) {
+      pouts[index] = LerpOutput(s, t, kS, kT, 1, in);
       index++;
       break;
     }
