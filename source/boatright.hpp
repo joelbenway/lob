@@ -123,7 +123,6 @@ double CalculateBRSpinDriftFactor(InchT diameter, InchT meplat_diameter,
                                   double stability, InchPerTwistT twist,
                                   LbsPerCuFtT air_density,
                                   SecT supersonic_time);
-
 }  // namespace lob
 
 // This file is part of lob.
