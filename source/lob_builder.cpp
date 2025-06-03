@@ -16,6 +16,7 @@
 #include "constants.hpp"
 #include "eng_units.hpp"
 #include "helpers.hpp"
+#include "litz.hpp"
 #include "lob/lob.hpp"
 #include "ode.hpp"
 #include "solve_step.hpp"
@@ -470,7 +471,7 @@ void BuildAerodynamicJump(Impl* pimpl) {
                         FpsT(pimpl->build.speed_of_sound).Inverse());
       const double kCDref = LobLerp(kMachs, *pimpl->pdrag_lut, kMach);
       pimpl->build.aerodynamic_jump =
-          CalculateBRAerodynamicJump(
+          CalculateAerodynamicJump(
               pimpl->diameter_in, pimpl->meplat_diameter_in,
               pimpl->base_diameter_in, pimpl->length_in, pimpl->nose_length_in,
               pimpl->tail_length_in, pimpl->ogive_rtr,
@@ -484,9 +485,9 @@ void BuildAerodynamicJump(Impl* pimpl) {
     }
 
     pimpl->build.aerodynamic_jump =
-        CalculateLitzAerodynamicJump(pimpl->build.stability_factor,
-                                     pimpl->diameter_in, pimpl->length_in,
-                                     MphT(FpsT(pimpl->build.wind.z)))
+        litz::CalculateAerodynamicJump(pimpl->build.stability_factor,
+                                       pimpl->diameter_in, pimpl->length_in,
+                                       MphT(FpsT(pimpl->build.wind.z)))
             .Value();
     return;
   }
@@ -544,7 +545,7 @@ void BuildSpinDrift(Impl* pimpl) {
     SolveStep(&s, &t, pimpl->build);
   }
 
-  pimpl->build.spindrift_factor = CalculateBRSpinDriftFactor(
+  pimpl->build.spindrift_factor = CalculateSpinDriftFactor(
       pimpl->diameter_in, pimpl->meplat_diameter_in, pimpl->base_diameter_in,
       pimpl->length_in, pimpl->nose_length_in, pimpl->tail_length_in,
       pimpl->ogive_rtr, GrainT(LbsT(pimpl->build.mass)),

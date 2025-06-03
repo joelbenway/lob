@@ -11,6 +11,7 @@
 #include "calc.hpp"
 #include "cartesian.hpp"
 #include "eng_units.hpp"
+#include "litz.hpp"
 #include "lob/lob.hpp"
 #include "ode.hpp"
 #include "solve_step.hpp"
@@ -60,8 +61,8 @@ void ApplyGyroscopicSpinDrift(const Input& in, Output* pouts, size_t size) {
   if (std::fabs(in.stability_factor) > 0) {
     for (size_t i = 0; i < size; i++) {
       pouts[i].deflection +=
-          CalculateLitzGyroscopicSpinDrift(in.stability_factor,
-                                           SecT(pouts[i].time_of_flight))
+          litz::CalculateGyroscopicSpinDrift(in.stability_factor,
+                                             SecT(pouts[i].time_of_flight))
               .Value();
     }
   }

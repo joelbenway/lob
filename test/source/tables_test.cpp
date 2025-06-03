@@ -101,7 +101,8 @@ TEST(TableTests, DeriveMachDragTableG1) {
   for (size_t i = 0; i < lob::kTableSize; i++) {
     const double kMach =
         static_cast<double>(lob::kMachs.at(i)) / lob::kTableScale;
-    const double kDrag = lob::LobQerp(kG1Machs, kG1DragCoefficients, kMach);
+    const double kDrag =
+        lob::tables::LobQerp(kG1Machs, kG1DragCoefficients, kMach);
     drags.push_back(
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
@@ -164,7 +165,8 @@ TEST(TableTests, DeriveMachDragTableG2) {
   for (size_t i = 0; i < lob::kTableSize; i++) {
     const double kMach =
         static_cast<double>(lob::kMachs.at(i)) / lob::kTableScale;
-    const double kDrag = lob::LobQerp(kG2Machs, kG2DragCoefficients, kMach);
+    const double kDrag =
+        lob::tables::LobQerp(kG2Machs, kG2DragCoefficients, kMach);
     drags.push_back(
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
@@ -214,7 +216,8 @@ TEST(TableTests, DeriveMachDragTableG5) {
   for (size_t i = 0; i < lob::kTableSize; i++) {
     const double kMach =
         static_cast<double>(lob::kMachs.at(i)) / lob::kTableScale;
-    const double kDrag = lob::LobQerp(kG5Machs, kG5DragCoefficients, kMach);
+    const double kDrag =
+        lob::tables::LobQerp(kG5Machs, kG5DragCoefficients, kMach);
     drags.push_back(
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
@@ -264,7 +267,8 @@ TEST(TableTests, DeriveMachDragTableG6) {
   for (size_t i = 0; i < lob::kTableSize; i++) {
     const double kMach =
         static_cast<double>(lob::kMachs.at(i)) / lob::kTableScale;
-    const double kDrag = lob::LobQerp(kG6Machs, kG6DragCoefficients, kMach);
+    const double kDrag =
+        lob::tables::LobQerp(kG6Machs, kG6DragCoefficients, kMach);
     drags.push_back(
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
@@ -316,7 +320,8 @@ TEST(TableTests, DeriveMachDragTableG7) {
   for (size_t i = 0; i < lob::kTableSize; i++) {
     const double kMach =
         static_cast<double>(lob::kMachs.at(i)) / lob::kTableScale;
-    const double kDrag = lob::LobQerp(kG7Machs, kG7DragCoefficients, kMach);
+    const double kDrag =
+        lob::tables::LobQerp(kG7Machs, kG7DragCoefficients, kMach);
     drags.push_back(
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }
@@ -377,7 +382,8 @@ TEST(TableTests, DeriveMachDragTableG8) {
   for (size_t i = 0; i < lob::kTableSize; i++) {
     const double kMach =
         static_cast<double>(lob::kMachs.at(i)) / lob::kTableScale;
-    const double kDrag = lob::LobQerp(kG8Machs, kG8DragCoefficients, kMach);
+    const double kDrag =
+        lob::tables::LobQerp(kG8Machs, kG8DragCoefficients, kMach);
     drags.push_back(
         static_cast<uint16_t>(std::round(kDrag * lob::kTableScale)));
   }

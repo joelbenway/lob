@@ -259,37 +259,6 @@ TEST(CalcTests, CalculateMillerTwistRuleCorrectionFactor) {
   EXPECT_NEAR(result, kExpectedCorrectionFactor, kError);
 }
 
-TEST(CalcTests, CalculateLitzGyroscopicSpinDrift) {
-  const double kStabilityFactor = 1.83;
-  const lob::SecT kTimeOfFlight1(0.7);
-  const lob::SecT kTimeOfFlight2(1.75);
-  const double kExpectedInches1 = 1.97;
-  const double kExpectedInches2 = 10.54;
-  const double kError = 0.1;
-  const lob::InchT kActualInches1 =
-      lob::CalculateLitzGyroscopicSpinDrift(kStabilityFactor, kTimeOfFlight1);
-  const lob::InchT kActualInches2 =
-      lob::CalculateLitzGyroscopicSpinDrift(kStabilityFactor, kTimeOfFlight2);
-  EXPECT_NEAR(kExpectedInches1, kActualInches1.Value(), kError);
-  EXPECT_NEAR(kExpectedInches2, kActualInches2.Value(), kError);
-  const double kNaN = std::numeric_limits<double>::quiet_NaN();
-  const lob::InchT kActualInches3 =
-      lob::CalculateLitzGyroscopicSpinDrift(kNaN, kTimeOfFlight1);
-  EXPECT_DOUBLE_EQ(kActualInches3.Value(), 0.0);
-}
-
-TEST(CalcTests, CalculateLitzAerodynamicJump) {
-  const double kError = 0.001;
-  const double kSg = 1.74;
-  const auto kCal = lob::InchT(0.308);
-  const auto kLength = lob::InchT(3.945) * kCal;
-  const lob::MphT kCrosswind(10.0);
-  const lob::MoaT kExpectedResults(-0.400);
-  const lob::MoaT kActualResult =
-      lob::CalculateLitzAerodynamicJump(kSg, kCal, kLength, kCrosswind);
-  EXPECT_NEAR(kActualResult.Value(), kExpectedResults.Value(), kError);
-}
-
 TEST(CalcTests, CalculateProjectileReferenceArea) {
   EXPECT_NEAR(CalculateProjectileReferenceArea(lob::InchT(0.308)).Value(),
               0.074506, 1E-3);
