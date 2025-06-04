@@ -284,8 +284,6 @@ constexpr double CalculateMagnitudeOfMomentum(GrainT mass, FpsT velocity) {
   return kMOM;
 }
 
-}  // namespace boatright
-
 constexpr MoaT CalculateAerodynamicJump(
     InchT diameter, InchT meplat_diameter, InchT base_diameter, InchT length,
     InchT ogive_length, InchT tail_length, double ogive_rtr, GrainT mass,
@@ -330,7 +328,6 @@ constexpr MoaT CalculateAerodynamicJump(
   return MoaT(RadiansT(kJump));
 }
 
-namespace boatright {
 constexpr double CalculateKV(FpsT initial_velocity, FpsT target_velocity) {
   return std::log(target_velocity.Value() / initial_velocity.Value());
 }
@@ -390,8 +387,6 @@ constexpr InchT CalculateSpinDrift(double scale_factor, InchT drop) {
   return drop * scale_factor;
 }
 
-}  // namespace boatright
-
 constexpr double CalculateSpinDriftFactor(
     InchT diameter, InchT meplat_diameter, InchT base_diameter, InchT length,
     InchT ogive_length, InchT tail_length, double ogive_rtr, GrainT mass,
@@ -433,6 +428,7 @@ constexpr double CalculateSpinDriftFactor(
                                                   mass);
 }
 
+}  // namespace boatright
 }  // namespace lob
 
 // This file is part of lob.
