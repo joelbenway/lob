@@ -42,6 +42,7 @@ class Impl {
   RadiansT latitude_rad{NaN()};
   InchT length_in{NaN()};
   InchT meplat_diameter_in{NaN()};
+  FtLbsT minimum_energy_ft_lbs{NaN()};
   InchT nose_length_in{NaN()};
   double ogive_rtr{NaN()};
   const std::array<uint16_t, kTableSize>* pdrag_lut{&kG1Drags};
@@ -193,6 +194,11 @@ Builder& Builder::LengthInch(double value) {
 
 Builder& Builder::MachVsDragTable(const float* pmachs, const float* pdrags,
                                   size_t size) {
+  assert(pmachs != nullptr);
+  assert(pdrags != nullptr);
+  if (pmachs == nullptr || pdrags == nullptr) {
+    return *this;
+  }
   for (size_t i = 0; i < kTableSize; i++) {
     const auto kMach = static_cast<double>(kMachs.at(i)) / kTableScale;
     const auto kDrag = static_cast<uint16_t>(
@@ -209,8 +215,23 @@ Builder& Builder::MassGrains(double value) {
   return *this;
 }
 
+Builder& Builder::MaximumTime(double value) {
+  pimpl_->build.max_time = value;
+  return *this;
+}
+
 Builder& Builder::MeplatDiameterInch(double value) {
   pimpl_->meplat_diameter_in = InchT(value);
+  return *this;
+}
+
+Builder& Builder::MinimumEnergy(uint16_t value) {
+  pimpl_->minimum_energy_ft_lbs = FtLbsT(value);
+  return *this;
+}
+
+Builder& Builder::MinimumSpeed(uint16_t value) {
+  pimpl_->build.minimum_speed = value;
   return *this;
 }
 
@@ -236,6 +257,11 @@ Builder& Builder::RelativeHumidityPercent(double value) {
 
 Builder& Builder::RangeAngleDeg(double value) {
   pimpl_->range_angle_rad = RadiansT(DegreesT(value));
+  return *this;
+}
+
+Builder& Builder::StepSize(uint16_t value) {
+  pimpl_->build.step_size = value;
   return *this;
 }
 
@@ -325,6 +351,7 @@ bool ValidateBuild(const Impl& impl) {
 }
 
 void BuildEnvironment(Impl* pimpl) {
+  assert(pimpl != nullptr);
   FeetT altitude_of_firing_site = FeetT(0);
   FeetT altitude_of_barometer = FeetT(0);
   FeetT altitude_of_thermometer = FeetT(0);
@@ -395,6 +422,7 @@ void BuildEnvironment(Impl* pimpl) {
 }
 
 void BuildTable(Impl* pimpl) {
+  assert(pimpl != nullptr);
   assert(!std::isnan(pimpl->ballistic_coefficient_psi));
   assert(!std::isnan(pimpl->air_density_lbs_per_cu_ft));
 
@@ -415,6 +443,7 @@ void BuildTable(Impl* pimpl) {
 }
 
 void BuildWind(Impl* pimpl) {
+  assert(pimpl != nullptr);
   if (std::isnan(pimpl->wind_heading_rad)) {
     pimpl->wind_heading_rad = DegreesT(0);
   }
@@ -432,6 +461,7 @@ void BuildWind(Impl* pimpl) {
 }
 
 void BuildStability(Impl* pimpl) {
+  assert(pimpl != nullptr);
   assert(pimpl->build.velocity > 0);
   assert(!std::isnan(pimpl->air_density_lbs_per_cu_ft));
 
@@ -576,6 +606,7 @@ void BuildLitzAerodynamicJump(Impl* pimpl) {
 }
 
 void BuildCoriolis(Impl* pimpl) {
+  assert(pimpl != nullptr);
   if (!std::isnan(pimpl->azimuth_rad) && !std::isnan(pimpl->latitude_rad)) {
     // Coriolis Effect Page 178 of Modern Exterior Ballistics - McCoy
     const double kCosL = std::cos(pimpl->latitude_rad).Value();
@@ -596,6 +627,7 @@ void BuildCoriolis(Impl* pimpl) {
 }
 
 void BuildZeroAngle(Impl* pimpl) {
+  assert(pimpl != nullptr);
   if (!std::isnan(pimpl->build.zero_angle)) {
     return;
   }
@@ -646,6 +678,14 @@ void BuildZeroAngle(Impl* pimpl) {
   pimpl->build.zero_angle = MoaT((low_angle + high_angle) / 2).Value();
 }
 
+void BuildOptions(Impl* pimpl) {
+  assert(pimpl != nullptr);
+  const FpsT kMinSpeed = CalculateVelocityFromKineticEnergy(
+      pimpl->minimum_energy_ft_lbs, SlugT(LbsT(pimpl->build.mass)));
+  pimpl->build.minimum_speed =
+      std::max(pimpl->build.minimum_speed, kMinSpeed.U16());
+}
+
 }  // namespace
 
 Input Builder::Build() {
@@ -659,10 +699,11 @@ Input Builder::Build() {
       pimpl_->build.optic_height = kDefaultOpticHeight.Value();
     }
     BuildStability(pimpl_);
-    BuildCoriolis(pimpl_);
     BuildBoatright(pimpl_);
     BuildLitzAerodynamicJump(pimpl_);
+    BuildCoriolis(pimpl_);
     BuildZeroAngle(pimpl_);
+    BuildOptions(pimpl_);
   }
   return pimpl_->build;
 }

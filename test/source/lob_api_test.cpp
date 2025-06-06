@@ -27,63 +27,66 @@ TEST(LobAPITest, SolverSkipsPoorlyFormedInput) {
   const lob::Input kA;
   const uint32_t kB = 100U;
   lob::Output out;
-  const lob::Options kC;
-  const auto kSize = lob::Solve(kA, &kB, &out, 1U, kC);
+  const auto kSize = lob::Solve(kA, &kB, &out, 1U);
   EXPECT_EQ(kSize, 0);
 }
 
-TEST(LobAPITest, OptionsMaximumTimeOfFlight) {
+TEST(LobAPITest, MaximumTimeOfFlight) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
   const double kTestZeroAngle = 6.11;
+  const double kMaxTime = 1.5;
   const lob::Input kResult = lob::Builder()
                                  .BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .ZeroAngleMOA(kTestZeroAngle)
+                                 .MaximumTime(kMaxTime)
+                                 .StepSize(100U)
                                  .Build();
-  const double kMaxTime = 1.5;
+
   const uint32_t kRange = 5'000U;
   lob::Output out;
-  const lob::Options kOptions{0, 0, kMaxTime, 100U};
-  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U, kOptions);
+  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
   EXPECT_EQ(kSize, 1);
   EXPECT_NEAR(out.time_of_flight, kMaxTime, 1E-3);
 }
 
-TEST(LobAPITest, OptionsMinimumVelocity) {
+TEST(LobAPITest, MinimumVelocity) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
   const double kTestZeroAngle = 6.11;
+  const uint16_t kMinimumVelocity = 2'000U;
   const lob::Input kResult = lob::Builder()
                                  .BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .ZeroAngleMOA(kTestZeroAngle)
+                                 .MinimumSpeed(kMinimumVelocity)
+                                 .StepSize(100U)
                                  .Build();
-  const uint16_t kMinimumVelocity = 2'000U;
   const uint32_t kRange = 5'000U;
   lob::Output out;
-  const lob::Options kOptions{kMinimumVelocity, 0, lob::NaN(), 100U};
-  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U, kOptions);
+  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
   EXPECT_EQ(kSize, 1);
   EXPECT_EQ(out.velocity, kMinimumVelocity);
 }
 
-TEST(LobAPITest, OptionsMinimumEnergy) {
+TEST(LobAPITest, MinimumEnergy) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
   const double kGrains = 130.0;
   const double kTestZeroAngle = 6.11;
+  const uint16_t kMinimumEnergy = 1'000U;
   const lob::Input kResult = lob::Builder()
                                  .BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .MassGrains(kGrains)
                                  .ZeroAngleMOA(kTestZeroAngle)
+                                 .MinimumEnergy(kMinimumEnergy)
+                                 .StepSize(100U)
                                  .Build();
-  const uint16_t kMinimumEnergy = 1'000U;
   const uint32_t kRange = 5'000U;
   lob::Output out;
-  const lob::Options kOptions{0, kMinimumEnergy, lob::NaN(), 100U};
-  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U, kOptions);
+  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
   EXPECT_EQ(kSize, 1);
   EXPECT_EQ(out.energy, kMinimumEnergy);
 }
@@ -98,11 +101,11 @@ TEST(LobAPITest, RunUntilFallStop) {
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .MassGrains(kGrains)
                                  .ZeroAngleMOA(kTestZeroAngle)
+                                 .StepSize(10'000U)
                                  .Build();
   const uint32_t kRange = 50'000U;
   lob::Output out;
-  const lob::Options kOptions{0, 0, lob::NaN(), 10'000U};
-  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U, kOptions);
+  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
   EXPECT_EQ(kSize, 1);
   EXPECT_LT(out.range, kRange);
 }

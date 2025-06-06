@@ -19,7 +19,7 @@
 namespace tests {
 
 TEST(TableTests, DeriveMachDragTableMachs) {
-  // Data is directly from JBM Ballistics
+  // Data is from Robert McCoy/BRL via JBM Ballistics
   // https://jbmballistics.com/ballistics/downloads/text/mcg1.txt
   // https://jbmballistics.com/ballistics/downloads/text/mcg7.txt
   const size_t kG1MachsSize = 79U;
@@ -72,7 +72,7 @@ TEST(TableTests, DeriveMachDragTableMachs) {
 }
 
 TEST(TableTests, DeriveMachDragTableG1) {
-  // Data is directly from JBM Ballistics
+  // Data is from Robert McCoy/BRL via JBM Ballistics
   // https://jbmballistics.com/ballistics/downloads/text/mcg1.txt
   const size_t kG1MachsSize = 79U;
   const std::array<float, kG1MachsSize> kG1Machs = {
@@ -134,7 +134,7 @@ TEST(TableTests, DeriveMachDragTableG1) {
 }
 
 TEST(TableTests, DeriveMachDragTableG2) {
-  // Data is directly from JBM Ballistics
+  // Data is from Robert McCoy/BRL via JBM Ballistics
   // https://jbmballistics.com/ballistics/downloads/text/mcg2.txt
   const size_t kG2MachsSize = 85U;
   const std::array<float, kG2MachsSize> kG2Machs = {
@@ -187,7 +187,7 @@ TEST(TableTests, DeriveMachDragTableG2) {
 }
 
 TEST(TableTests, DeriveMachDragTableG5) {
-  // Data is directly from JBM Ballistics
+  // Data is from Robert McCoy/BRL via JBM Ballistics
   // https://jbmballistics.com/ballistics/downloads/text/mcg5.txt
   const size_t kG5MachsSize = 76U;
   const std::array<float, kG5MachsSize> kG5Machs = {
@@ -238,7 +238,7 @@ TEST(TableTests, DeriveMachDragTableG5) {
 }
 
 TEST(TableTests, DeriveMachDragTableG6) {
-  // Data is directly from JBM Ballistics
+  // Data is from Robert McCoy/BRL via JBM Ballistics
   // https://jbmballistics.com/ballistics/downloads/text/mcg6.txt
   const size_t kG6MachsSize = 79U;
   const std::array<float, kG6MachsSize> kG6Machs = {
@@ -289,7 +289,7 @@ TEST(TableTests, DeriveMachDragTableG6) {
 }
 
 TEST(TableTests, DeriveMachDragTableG7) {
-  // Data is directly from JBM Ballistics
+  // Data is from Robert McCoy/BRL via JBM Ballistics
   // https://jbmballistics.com/ballistics/downloads/text/mcg7.txt
   const size_t kG7MachsSize = 84U;
   const std::array<float, kG7MachsSize> kG7Machs = {
@@ -353,7 +353,7 @@ TEST(TableTests, DeriveMachDragTableG7) {
 }
 
 TEST(TableTests, DeriveMachDragTableG8) {
-  // Data is directly from JBM Ballistics
+  // Data is from Robert McCoy/BRL via JBM Ballistics
   // https://jbmballistics.com/ballistics/downloads/text/mcg8.txt
   const size_t kG8MachsSize = 78U;
   const std::array<float, kG8MachsSize> kG8Machs = {

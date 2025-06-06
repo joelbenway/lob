@@ -381,7 +381,7 @@ TEST(BoatrightTests, CalculateAerodynamicJump) {
   // as an estimated rather than calculated average density.
   const double kExpected(-0.463);
   const double kError = std::abs(kExpected) * 0.05;
-  const lob::MoaT kActual = lob::CalculateAerodynamicJump(
+  const lob::MoaT kActual = lob::boatright::CalculateAerodynamicJump(
       kD, kDM, kDB, kL, kLN, kLBT, kRTR, kMass, kV, kSg, kTwist, kZwind,
       kAirDensity, kSos, kBcG7, kCDref);
   EXPECT_NEAR(kActual.Value(), kExpected, kError);
