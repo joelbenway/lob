@@ -47,15 +47,15 @@ SqInT CalculateOgiveCrossSectionalArea(InchT x, InchT rho, double alpha) {
 
 double CalculateOgiveSimpsonIntegral(InchT a, InchT b, uint16_t n, InchT rho,
                                      double alpha) {
-  const uint16_t kEvenN = (n % 2 == 0) ? n : n + 1;
+  const uint16_t kEvenN = (n % 2U == 0) ? n : n + 1U;
   const InchT kH = (b - a) / kEvenN;
 
   SqInT sum = CalculateOgiveCrossSectionalArea(a, rho, alpha) +
               CalculateOgiveCrossSectionalArea(b, rho, alpha);
 
-  for (uint16_t i = 1; i < kEvenN; ++i) {
+  for (uint16_t i = 1U; i < kEvenN; ++i) {
     const auto kX = a + kH * i;
-    const auto kMultiple = (i % 2 == 0) ? 2 : 4;
+    const auto kMultiple = (i % 2U == 0) ? 2U : 4U;
     sum += CalculateOgiveCrossSectionalArea(kX, rho, alpha) * kMultiple;
   }
 

@@ -31,13 +31,13 @@ This repo includes a tiny example CLI program, lobber, which demonstrates the li
 
 ## Design
 
-#### Goals
+### Goals
 Lob was intended to be easy to work with, accurate, and fast in that order. Ballistics solutions require many inputs to model all the factors affecting the trajectory of a projectile. Making the most of imperfect or incomplete data is a central goal of lob. Maybe the best environmental data available is from a weather station at the wrong altitude, lob should adjust it for you. Maybe you know X and Y but not Z. Lob should make an informed estimate on Z or substitute a less demanding formula that doesn't require it. Give lob whatever you do know and it will do its best to fill in the gaps with frog DNA! :sauropod:
 
-#### Software and APIs
+### Software and APIs
 Lob uses a straight forward API featuring data structures and free functions that act on them. However at the heart of lob is the Builder class which is used to build the Input data consumed by the solver functions. There are so many optional inputs that go into a ballistic solution that the builder pattern makes a pleasant abstraction. The Builder class uses a pimpl pattern which is primarily to keep the library header readable. If you just wish to use lob in your project, [the header](include/lob/lob.hpp) has everything you need and little else. Despite the pimpl pattern, lob does not dynamically allocate memory or throw exceptions and is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating point math.
 
-#### How to use lob
+### How to use lob
 ```C++
 #include <array>  // for array (c-style arrays are also supported)
 #include <cstddef>  // for size_t
@@ -88,7 +88,7 @@ const lob::Input kSolverInput =
 ```
 Now we're cooking! :cook:
 
-#### Under the hood
+### Under the hood
 Lob solves ordinary differental equations (ODEs) which model the projectile motion of a point mass using numerical methods. This is the standard for most of the workhorse solvers of today. What is not the norm is an implementation in C++ with comprehensive unit tests and an open source license. :mechanical_arm:
 
 ## About the Author
