@@ -41,6 +41,7 @@ SqInT CalculateOgiveCrossSectionalArea(InchT x, InchT rho, double alpha) {
   const auto kA = rho * rho;
   const auto kB = (rho * std::cos(alpha)) - x;
   const auto kC = rho * std::sin(alpha);
+  assert(kA > (kB * kB) && "Domain error");
   const auto kY = std::sqrt(kA - (kB * kB)) - kC;
   return SqInT(kPi * kY.Value() * kY.Value());
 }

@@ -4,11 +4,11 @@
 
 # lob
 
-This is lob, a useful and free exterior ballistics calculation library written in industrial strength C++. :comet:
+This is lob, a useful and free exterior ballistics calculation library written in industrial-strength C++. :comet:
 
 ## Features
 
-If you wanted to make yourself a ballistics solver application on par with the best commercial offerings, lob covers all of the math. :mage_man:
+If you wanted to make yourself a ballistics solver application on par with the best commercial offerings, lob's got the math covered. :mage_man:
 
 The following can be accounted for in lob's solutions:
  * Aerodynamic drag
@@ -32,10 +32,10 @@ This repo includes a tiny example CLI program, lobber, which demonstrates the li
 ## Design
 
 ### Goals
-Lob was intended to be easy to work with, accurate, and fast in that order. Ballistics solutions require many inputs to model all the factors affecting the trajectory of a projectile. Making the most of imperfect or incomplete data is a central goal of lob. Maybe the best environmental data available is from a weather station at the wrong altitude, lob should adjust it for you. Maybe you know X and Y but not Z. Lob should make an informed estimate on Z or substitute a less demanding formula that doesn't require it. Give lob whatever you do know and it will do its best to fill in the gaps with frog DNA! :sauropod:
+Lob was intended to be easy to work with, accurate, and fast in that order. Ballistics solutions require many inputs to model all the factors affecting the trajectory of a projectile. Making the most of imperfect or incomplete data is a central goal of lob. Maybe the best environmental data available is from a weather station at the wrong altitude; lob should adjust it for you. Maybe you know X and Y but not Z. Lob should make an informed estimate on Z or substitute a less demanding formula that doesn't require it. Give lob whatever you do know and it will do its best to fill in the gaps with frog DNA! :sauropod:
 
 ### Software and APIs
-Lob uses a straight forward API featuring data structures and free functions that act on them. However at the heart of lob is the Builder class which is used to build the Input data consumed by the solver functions. There are so many optional inputs that go into a ballistic solution that the builder pattern makes a pleasant abstraction. The Builder class uses a pimpl pattern which is primarily to keep the library header readable. If you just wish to use lob in your project, [the header](include/lob/lob.hpp) has everything you need and little else. Despite the pimpl pattern, lob does not dynamically allocate memory or throw exceptions and is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating point math.
+Lob uses a straightforward API featuring data structures and free functions that act on them. However, at the heart of lob is the Builder class which is used to build the Input data consumed by the solver functions. There are so many optional inputs that go into a ballistic solution that the builder pattern makes a pleasant abstraction. The Builder class uses a pimpl pattern which is primarily to keep the library header readable. If you just wish to use lob in your project, [the header](include/lob/lob.hpp) has everything you need and little else. Despite the pimpl pattern, lob does not dynamically allocate memory or throw exceptions and is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating point math.
 
 ### How to use lob
 ```C++
@@ -48,8 +48,8 @@ Lob uses a straight forward API featuring data structures and free functions tha
 // Prepare an input using the Builder class
 const lob::Input kSolverInput = lob::Builder()
                                 .BallisticCoefficientPsi(0.425)
-                                .InitialVelocityFps(2'700)
-                                .ZeroDistanceYds(100)
+                                .InitialVelocityFps(2700)
+                                .ZeroDistanceYds(100.0)
                                 .Build();
 const size_t kNumToSolve = 7;  // Solve for multiple ranges
 const std::array<uint32_t, kNumToSolve> kRanges = {0, 300, 600, 900, 1200, 1500, 1800};
@@ -59,10 +59,10 @@ std::array<lob::Output, kNumToSolve> solver_outputs = {};
 const size_t kNumSolved = lob::Solve(kSolverInput, kRanges, solver_outputs);
 // Do something with outputs
 for (size_t i = 0; i < kNumSolved; i++) {
-  std::cout << "Drop at " << solver_outputs.at(i).range << " feet is " << solver_outputs.at(i).elevation << "inches. \n";
+  std::cout << "Drop at " << solver_outputs.at(i).range << " feet is " << solver_outputs.at(i).elevation << " inches.\n";
 }
 ```
-Those few parameters are enough for lob to make a well-formed, if minimal, ballistic solution. By feeding more data we can get something more practical from the solver.
+Those few parameters are enough for lob to make a well-formed, if minimal, ballistic solution. By feeding more data, we can get something more practical from the solver.
 ```C++
 const lob::Input kSolverInput = 
   lob::Builder()
@@ -89,7 +89,7 @@ const lob::Input kSolverInput =
 Now we're cooking! :cook:
 
 ### Under the hood
-Lob solves ordinary differental equations (ODEs) which model the projectile motion of a point mass using numerical methods. This is the standard for most of the workhorse solvers of today. What is not the norm is an implementation in C++ with comprehensive unit tests and an open source license. :mechanical_arm:
+Lob solves ordinary differential equations (ODEs) which model the projectile motion of a point mass using numerical methods. This is the standard for most of the workhorse solvers of today. What is not the norm is an implementation in C++ with comprehensive unit tests and an open-source license. :mechanical_arm:
 
 ## About the Author
 
