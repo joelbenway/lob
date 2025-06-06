@@ -4,10 +4,9 @@
 
 #include "calc.hpp"
 
-#include <algorithm>
+#include <cassert>
 #include <cmath>
 
-#include "constants.hpp"
 #include "eng_units.hpp"
 
 namespace lob {
@@ -18,7 +17,7 @@ DegFT CalculateTemperatureAtAltitude(FeetT altitude, DegFT temperature) {
   return std::max(kTemperature, DegFT(kIsaMinimumTempDegF));
 }
 
-// Page 166 of Modern Exterior Ballistics - McCoy
+/*// Page 166 of Modern Exterior Ballistics - McCoy
 DegFT CalculateTemperatureAtAltitudeMcCoy(FeetT altitude,
                                           DegFT sea_level_temperature) {
   const double kK = 6.858E-6 + (2.776E-11 * altitude.Value());
@@ -27,7 +26,7 @@ DegFT CalculateTemperatureAtAltitudeMcCoy(FeetT altitude,
   // negative sign. This is remedied here.
   return (sea_level_temperature + kA) * std::exp(-1.0 * kK * altitude.Value()) -
          kA;
-}
+}*/
 
 // https://wikipedia.org/wiki/Barometric_formula
 InHgT BarometricFormula(FeetT altitude, InHgT pressure, DegFT temperature) {
@@ -161,31 +160,6 @@ double CalculateMillerTwistRuleCorrectionFactor(LbsPerCuFtT air_density) {
   return kIsaSeaLevelAirDensityLbsPerCuFt / air_density.Value();
 }
 
-// Page 97 of Applied Ballistics for Long-Range Shooting 3e - Litz
-InchT CalculateLitzGyroscopicSpinDrift(double stability, SecT time) {
-  if (std::isnan(stability) || time.IsNaN()) {
-    return InchT(0);
-  }
-  const double kAVal = 1.25 * (stability >= 0 ? 1.0 : -1.0);
-  const double kBVal = 1.2;
-  const double kExponent = 1.83;
-
-  return InchT(kAVal * (std::abs(stability) + kBVal) *
-               std::pow(time.Value(), kExponent));
-}
-
-// Page 422 of Applied Ballistics for Long-Range Shooting 3e - Litz
-MoaT CalculateLitzAerodynamicJump(double stability, InchT caliber, InchT length,
-                                  MphT zwind) {
-  const double kSgCoeff = 0.01;
-  const double kLCoeff = 0.0024;
-  const double kIntercept = 0.032;
-  const double kY = (kSgCoeff * std::abs(stability)) -
-                    (kLCoeff * (length / caliber).Value()) + kIntercept;
-  const double kDirection = stability >= 0 ? -1.0 : 1.0;
-  return MoaT(kDirection * kY * zwind.Value());
-}
-
 // Page 33 of Modern Exterior Ballistics - McCoy
 SqInT CalculateProjectileReferenceArea(InchT bullet_diameter) {
   return SqInT(std::pow(bullet_diameter, 2).Value() * kPi / 4);
@@ -207,6 +181,7 @@ FpsT CalculateVelocityFromKineticEnergy(FtLbsT energy, SlugT mass) {
 
 // Page 90 of Modern Exterior Ballistics - McCoy
 PmsiT CalculateSectionalDensity(InchT bullet_diameter, LbsT bullet_mass) {
+  assert(bullet_diameter > InchT(0) && "Bullet diameter must be positive");
   return PmsiT(bullet_mass.Value() / std::pow(bullet_diameter.Value(), 2));
 }
 

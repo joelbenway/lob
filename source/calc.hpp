@@ -10,8 +10,8 @@ namespace lob {
 
 DegFT CalculateTemperatureAtAltitude(FeetT altitude, DegFT temperature);
 
-DegFT CalculateTemperatureAtAltitudeMcCoy(FeetT altitude,
-                                          DegFT sea_level_temperature);
+/*DegFT CalculateTemperatureAtAltitudeMcCoy(FeetT altitude,
+                                          DegFT sea_level_temperature);*/
 
 InHgT BarometricFormula(FeetT altitude, InHgT pressure, DegFT temperature);
 
@@ -43,11 +43,6 @@ double CalculateMillerTwistRuleCorrectionFactor(InHgT pressure,
                                                 DegFT temperature);
 
 double CalculateMillerTwistRuleCorrectionFactor(LbsPerCuFtT air_density);
-
-InchT CalculateLitzGyroscopicSpinDrift(double stability, SecT time);
-
-MoaT CalculateLitzAerodynamicJump(double stability, InchT caliber, InchT length,
-                                  MphT zwind);
 
 SqInT CalculateProjectileReferenceArea(InchT bullet_diameter);
 

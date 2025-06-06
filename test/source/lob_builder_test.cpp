@@ -397,6 +397,31 @@ TEST_F(BuilderTestFixture, WindSpeedsAreEquivalent) {
   EXPECT_NEAR(kResult1.wind.z, kResult2.wind.z, kError);
 }
 
+TEST_F(BuilderTestFixture, ReadmeExampleIsValid) {
+  const lob::Input kSolverInput =
+      lob::Builder()
+          .BallisticCoefficientPsi(0.214)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .BCDragFunction(lob::DragFunctionT::kG7)
+          .DiameterInch(0.308)
+          .LengthInch(1.131)
+          .MassGrains(155.0)
+          .InitialVelocityFps(2800)
+          .ZeroAngleMOA(4.62)
+          .OpticHeightInches(2.5)
+          .TwistInchesPerTurn(10.0)
+          .AirPressureInHg(30.3)
+          .TemperatureDegF(63.1)
+          .RelativeHumidityPercent(77.0)
+          .WindHeading(lob::ClockAngleT::kIII)
+          .WindSpeedMph(5.0)
+          .LatitudeDeg(43.04)  // hello from Milwaukee!
+          .AzimuthDeg(180.0)
+          .StepSize(100)
+          .Build();
+  EXPECT_FALSE(std::isnan(kSolverInput.table_coefficient));
+}
+
 }  // namespace tests
 
 // This file is part of lob.

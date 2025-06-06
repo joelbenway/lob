@@ -356,7 +356,7 @@ TEST(BoatrightTests, CalculateMagnitudeOfMomentum) {
   EXPECT_NEAR(kActual, kExpected, 1E-4);
 }
 
-TEST(BoatrightTests, CalculateBRAerodynamicJump) {
+TEST(BoatrightTests, CalculateAerodynamicJump) {
   // Test data from Sample Calculations of Calculating Aerodynamic Jump for
   // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   const lob::InchT kD(0.308);
@@ -381,7 +381,7 @@ TEST(BoatrightTests, CalculateBRAerodynamicJump) {
   // as an estimated rather than calculated average density.
   const double kExpected(-0.463);
   const double kError = std::abs(kExpected) * 0.05;
-  const lob::MoaT kActual = lob::CalculateBRAerodynamicJump(
+  const lob::MoaT kActual = lob::boatright::CalculateAerodynamicJump(
       kD, kDM, kDB, kL, kLN, kLBT, kRTR, kMass, kV, kSg, kTwist, kZwind,
       kAirDensity, kSos, kBcG7, kCDref);
   EXPECT_NEAR(kActual.Value(), kExpected, kError);
@@ -587,10 +587,12 @@ TEST_P(SpinDriftParameterizedFixture, CalculateCoefficientOfLift) {
   const SpinDriftTestFire kShot = GetParam();
   const lob::CaliberT kLFN(kShot.lfn);
   const lob::MachT kVelocity(kShot.velocity / 1116.45);
-  const double kBoatTailAdjustmentFactor = std::sqrt(0.2720 / kShot.g7_bc);
+  const double kBoattailAdjustmentFactor =
+      lob::boatright::CalculateCLBoattailAdjustmentFactor(
+          lob::PmsiT(kShot.g7_bc));
   const double kCL0 =
       lob::boatright::CalculateCoefficientOfLift(kLFN, kVelocity) *
-      kBoatTailAdjustmentFactor;
+      kBoattailAdjustmentFactor;
   ASSERT_NEAR(kCL0, kShot.cl0, 0.1);
 }
 

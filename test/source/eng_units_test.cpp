@@ -62,7 +62,6 @@ TEST(EngUnitsTests, CopyAssignmentOperator) {
   const TestT kA = TestT(100.0);
   const double kB = 0.0;
   TestT b(kB);
-  b = b;
   EXPECT_DOUBLE_EQ(b.Value(), kB);
   b = kA;
   EXPECT_DOUBLE_EQ(kA.Value(), b.Value());
@@ -73,7 +72,6 @@ TEST(EngUnitsTests, MoveAssignmentOperator) {
   TestT a = TestT(kValue);
   const double kB = 0.0;
   TestT b(kB);
-  b = std::move(b);
   EXPECT_DOUBLE_EQ(b.Value(), kB);
   b = std::move(a);
   EXPECT_DOUBLE_EQ(b.Value(), kValue);

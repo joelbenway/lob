@@ -35,6 +35,7 @@ struct LobCWAJTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 3071;
     const double kTestZeroAngle = 6.53;
     const double kTestOpticHeight = 2.0;
+    const uint16_t kStep = 100U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -44,7 +45,8 @@ struct LobCWAJTestFixture : public testing::Test {
         .LengthInch(kBulletLength)
         .InitialVelocityFps(kTestMuzzleVelocity)
         .OpticHeightInches(kTestOpticHeight)
-        .ZeroAngleMOA(kTestZeroAngle);
+        .ZeroAngleMOA(kTestZeroAngle)
+        .StepSize(kStep);
   }
 
   void TearDown() override { puut.reset(); }
@@ -72,7 +74,6 @@ TEST_F(LobCWAJTestFixture, GetSpeedOfSoundFps) {
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCWAJTestFixture, SolveWithoutSpin) {
   ASSERT_NE(puut, nullptr);
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -100,8 +101,7 @@ TEST_F(LobCWAJTestFixture, SolveWithoutSpin) {
       {6000, 952, 503, -1865.85, 0.00, 3.851}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -132,7 +132,6 @@ TEST_F(LobCWAJTestFixture, LitzRightHandSpinLeftwardWind) {
   constexpr double kBarrelTwist = 11.0;
   constexpr double kWind = 15.0;
   constexpr lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIX;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -165,8 +164,7 @@ TEST_F(LobCWAJTestFixture, LitzRightHandSpinLeftwardWind) {
       {6000, 952, 503, -1852.03, -450.26, 3.851}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -197,7 +195,6 @@ TEST_F(LobCWAJTestFixture, LitzLeftHandSpinLeftwardWind) {
   constexpr double kBarrelTwist = -11.0;
   constexpr double kWind = 15.0;
   constexpr lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIX;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -230,8 +227,7 @@ TEST_F(LobCWAJTestFixture, LitzLeftHandSpinLeftwardWind) {
       {6000, 952, 503, -1879.67, -551.74, 3.851}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -262,7 +258,6 @@ TEST_F(LobCWAJTestFixture, LitzRightHandSpinRightwardWind) {
   constexpr double kBarrelTwist = 11.0;
   constexpr double kWind = 15.0;
   constexpr lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIII;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -295,8 +290,7 @@ TEST_F(LobCWAJTestFixture, LitzRightHandSpinRightwardWind) {
       {6000, 952, 503, -1879.67, 551.74, 3.851}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -327,7 +321,6 @@ TEST_F(LobCWAJTestFixture, LitzLeftHandSpinRightwardWind) {
   constexpr double kBarrelTwist = -11.0;
   constexpr double kWind = 15.0;
   constexpr lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIII;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -360,8 +353,7 @@ TEST_F(LobCWAJTestFixture, LitzLeftHandSpinRightwardWind) {
       {6000, 952, 503, -1852.03, 450.26, 3.851}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,

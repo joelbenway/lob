@@ -215,7 +215,10 @@ enum class BuildState : uint8_t {
   kWindSpeedMph,
   kAzimuthDeg,
   kLatitudeDeg,
-  kRangeAngleDeg
+  kRangeAngleDeg,
+  kMinimumSpeed,
+  kMinimumEnergy,
+  kMaximumTime
 };
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -419,6 +422,33 @@ lob::Builder BuildHelper(std::ifstream* pinfile, std::vector<double>* pinputs) {
         prompt = "Enter the angle of incline (or decline) in degrees";
         GetInput(prompt, pinputs, pinfile);
         builder.RangeAngleDeg(pinputs->back());
+        state = BuildState::kMinimumSpeed;
+        break;
+      case BuildState::kMinimumSpeed:
+        prompt =
+            "Enter the minimum speed in fps at which the solver should stop";
+        GetInput(prompt, pinputs, pinfile);
+        builder.MinimumSpeed(
+            static_cast<uint16_t>(std::round(pinputs->back())));
+        state = BuildState::kMinimumEnergy;
+        break;
+      case BuildState::kMinimumEnergy:
+        prompt =
+            "Enter the minimum energy in ft-lbs at which the solver should "
+            "stop";
+        GetInput(prompt, pinputs, pinfile);
+        builder.MinimumEnergy(
+            static_cast<uint16_t>(std::round(pinputs->back())));
+        state = BuildState::kMaximumTime;
+        break;
+      case BuildState::kMaximumTime:
+        prompt =
+            "Enter the maximum time of flight in seconds at which the solver "
+            "should stop";
+        GetInput(prompt, pinputs, pinfile);
+        builder.MaximumTime(pinputs->back());
+        const uint16_t kStep = 100U;
+        builder.StepSize(kStep);
         return builder;
     }
   }
@@ -463,38 +493,9 @@ std::vector<uint32_t> RangeHelper(std::ifstream* pinfile,
   return ranges_ft;
 }
 
-lob::Options OptionsHelper(std::ifstream* pinfile,
-                           std::vector<double>* pinputs) {
-  lob::Options options;
-
-  std::string prompt = "Enter minimum speed threshold in feet per second";
-  GetInput(prompt, pinputs, pinfile);
-  if (!std::isnan(pinputs->back())) {
-    options.min_speed = static_cast<uint16_t>(std::round(pinputs->back()));
-  }
-
-  prompt = "Enter minimum energy threshold in foot-pounds";
-  GetInput(prompt, pinputs, pinfile);
-  if (!std::isnan(pinputs->back())) {
-    options.min_energy = static_cast<uint16_t>(std::round(pinputs->back()));
-  }
-
-  prompt = "Enter maximum time of flight in seconds";
-  GetInput(prompt, pinputs, pinfile);
-  if (!std::isnan(pinputs->back())) {
-    options.max_time = pinputs->back();
-  }
-
-  const uint16_t kStepSize = 100U;
-  options.step_size = kStepSize;
-
-  return options;
-}
-
 struct SolverData {
   lob::Input input;
   std::vector<uint32_t> ranges;
-  lob::Options options;
   std::vector<lob::Output> solutions;
 };
 
@@ -513,7 +514,6 @@ std::unique_ptr<SolverData> Wizard(const std::string& infile,
   pwizard->input = builder.Build();
   pwizard->ranges = RangeHelper(pfile, pinputs);
   pwizard->solutions.resize(pwizard->ranges.size());
-  pwizard->options = OptionsHelper(pfile, pinputs);
 
   if (!outfile.empty() && !file) {
     WriteOutputFile(outfile, inputs);
@@ -618,8 +618,7 @@ int main(int argc, char* argv[]) {
 
   const auto kSize =
       lob::Solve(psolver_data->input, psolver_data->ranges.data(),
-                 psolver_data->solutions.data(), psolver_data->ranges.size(),
-                 psolver_data->options);
+                 psolver_data->solutions.data(), psolver_data->ranges.size());
 
   example::PrintSolutionTable(psolver_data->solutions.data(), kSize);
   example::PrintGH();

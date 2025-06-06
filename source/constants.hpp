@@ -16,7 +16,6 @@ constexpr double kIsaSeaLevelPressureInHg = 29.92;
 constexpr double kIsaSeaLevelAirDensityLbsPerCuFt = 0.0764742;
 constexpr double kIsaSeaLevelSpeedOfSoundFps = 1116.45;
 constexpr double kIsaLapseDegFPerFt = 0.00356616;
-constexpr double kIsaLapseDegKPerFt = 0.0065;
 constexpr double kIsaTropopauseAltitudeFt = 36'090.0;
 constexpr double kIsaMinimumTempDegF = -69.7;
 constexpr double kArmyToIcaoBcConversionFactor = 0.982;

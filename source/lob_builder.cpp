@@ -16,6 +16,7 @@
 #include "constants.hpp"
 #include "eng_units.hpp"
 #include "helpers.hpp"
+#include "litz.hpp"
 #include "lob/lob.hpp"
 #include "ode.hpp"
 #include "solve_step.hpp"
@@ -41,6 +42,7 @@ class Impl {
   RadiansT latitude_rad{NaN()};
   InchT length_in{NaN()};
   InchT meplat_diameter_in{NaN()};
+  FtLbsT minimum_energy_ft_lbs{NaN()};
   InchT nose_length_in{NaN()};
   double ogive_rtr{NaN()};
   const std::array<uint16_t, kTableSize>* pdrag_lut{&kG1Drags};
@@ -192,6 +194,11 @@ Builder& Builder::LengthInch(double value) {
 
 Builder& Builder::MachVsDragTable(const float* pmachs, const float* pdrags,
                                   size_t size) {
+  assert(pmachs != nullptr);
+  assert(pdrags != nullptr);
+  if (pmachs == nullptr || pdrags == nullptr) {
+    return *this;
+  }
   for (size_t i = 0; i < kTableSize; i++) {
     const auto kMach = static_cast<double>(kMachs.at(i)) / kTableScale;
     const auto kDrag = static_cast<uint16_t>(
@@ -208,8 +215,23 @@ Builder& Builder::MassGrains(double value) {
   return *this;
 }
 
+Builder& Builder::MaximumTime(double value) {
+  pimpl_->build.max_time = value;
+  return *this;
+}
+
 Builder& Builder::MeplatDiameterInch(double value) {
   pimpl_->meplat_diameter_in = InchT(value);
+  return *this;
+}
+
+Builder& Builder::MinimumEnergy(uint16_t value) {
+  pimpl_->minimum_energy_ft_lbs = FtLbsT(value);
+  return *this;
+}
+
+Builder& Builder::MinimumSpeed(uint16_t value) {
+  pimpl_->build.minimum_speed = value;
   return *this;
 }
 
@@ -235,6 +257,11 @@ Builder& Builder::RelativeHumidityPercent(double value) {
 
 Builder& Builder::RangeAngleDeg(double value) {
   pimpl_->range_angle_rad = RadiansT(DegreesT(value));
+  return *this;
+}
+
+Builder& Builder::StepSize(uint16_t value) {
+  pimpl_->build.step_size = value;
   return *this;
 }
 
@@ -324,6 +351,7 @@ bool ValidateBuild(const Impl& impl) {
 }
 
 void BuildEnvironment(Impl* pimpl) {
+  assert(pimpl != nullptr);
   FeetT altitude_of_firing_site = FeetT(0);
   FeetT altitude_of_barometer = FeetT(0);
   FeetT altitude_of_thermometer = FeetT(0);
@@ -394,6 +422,7 @@ void BuildEnvironment(Impl* pimpl) {
 }
 
 void BuildTable(Impl* pimpl) {
+  assert(pimpl != nullptr);
   assert(!std::isnan(pimpl->ballistic_coefficient_psi));
   assert(!std::isnan(pimpl->air_density_lbs_per_cu_ft));
 
@@ -414,6 +443,7 @@ void BuildTable(Impl* pimpl) {
 }
 
 void BuildWind(Impl* pimpl) {
+  assert(pimpl != nullptr);
   if (std::isnan(pimpl->wind_heading_rad)) {
     pimpl->wind_heading_rad = DegreesT(0);
   }
@@ -431,6 +461,7 @@ void BuildWind(Impl* pimpl) {
 }
 
 void BuildStability(Impl* pimpl) {
+  assert(pimpl != nullptr);
   assert(pimpl->build.velocity > 0);
   assert(!std::isnan(pimpl->air_density_lbs_per_cu_ft));
 
@@ -447,48 +478,125 @@ void BuildStability(Impl* pimpl) {
   }
 }
 
-void BuildAerodynamicJump(Impl* pimpl) {
-  assert(pimpl->build.velocity > 0);
-  assert(!std::isnan(pimpl->ballistic_coefficient_psi));
-  assert(!std::isnan(pimpl->build.speed_of_sound));
+void BuildBoatright(Impl* pimpl) {
+  assert(pimpl != nullptr);
+  assert(pimpl->pdrag_lut != nullptr);
+
+  const InchT kD(pimpl->diameter_in);
+  const CaliberT kDM(pimpl->meplat_diameter_in, kD.Inverse());
+  const CaliberT kDB(pimpl->base_diameter_in, kD.Inverse());
+  const CaliberT kL(pimpl->length_in, kD.Inverse());
+  const CaliberT kLN(pimpl->nose_length_in, kD.Inverse());
+  const CaliberT kLBT(pimpl->tail_length_in, kD.Inverse());
+  const auto kRTR(pimpl->ogive_rtr);
+  const FpsT kVelocity(pimpl->build.velocity);
+  const FpsT kSos(pimpl->build.speed_of_sound);
+  const GrainT kMass = LbsT(pimpl->build.mass);
+  const InchPerTwistT kTwist(pimpl->twist_inches_per_turn);
+  const LbsPerCuFtT kAirDensity(pimpl->air_density_lbs_per_cu_ft);
+  const double kSg(pimpl->build.stability_factor);
+  const PmsiT kBc(pimpl->ballistic_coefficient_psi);
+  const FpsT kZWind(pimpl->build.wind.z);
+
+  if (kD.IsNaN() || kDM.IsNaN() || kDB.IsNaN() || kDB.IsNaN() || kL.IsNaN() ||
+      kLN.IsNaN() || kLBT.IsNaN() || std::isnan(kRTR) ||
+      !(kVelocity > FpsT(0)) || kSos.IsNaN() || kMass.IsNaN() ||
+      kTwist.IsNaN() || kAirDensity.IsNaN() || std::isnan(kSg) || kBc.IsNaN() ||
+      kZWind.IsNaN()) {
+    return;
+  }
+
+  const CaliberT kRT = boatright::CalculateRadiusOfTangentOgive(kLN, kDM);
+  const CaliberT kLFN = boatright::CalculateFullNoseLength(kLN, kDM, kRT, kRTR);
+  const PsiT kQ = boatright::CalculateDynamicPressure(kAirDensity, kVelocity);
+  const SqInT kS = CalculateProjectileReferenceArea(kD);
+  const auto kAR = boatright::CalculateAspectRatio(kL, kLFN, kLBT, kDB);
+  const auto kM = lob::MachT(kVelocity, kSos.Inverse());
+  const auto kCL = boatright::CalculateCoefficientOfLift(kLFN, kM);
+  const auto kCDa = boatright::CalculateYawDragCoefficient(kM, kCL, kAR);
+  const auto kRho = boatright::CalculateFastAverageDensity(kD, kL, kDM, kLN,
+                                                           kDB, kLBT, kMass);
+  const auto kIyOverIx =
+      boatright::CalculateInertialRatio(kD, kL, kLN, kLFN, kMass, kRho);
+  const auto kP = boatright::CalculateSpinRate(kVelocity, kTwist);
+  const auto kR = boatright::CalculateEpicyclicRatio(kSg);
+  const auto kN = boatright::CalculateNutationCyclesNeeded(kR);
+  const auto kF1F2Sum = boatright::CalculateGyroscopicRateSum(kP, kIyOverIx);
+  const auto kF2 = boatright::CalculateGyroscopicRateF2(kF1F2Sum, kR);
+  const auto kTn = boatright::CalculateFirstNutationPeriod(kF1F2Sum - kF2, kF2);
+  const auto kGamma =
+      boatright::CalculateCrosswindAngleGamma(kZWind, kVelocity);
+  const double kCdRef = LobLerp(kMachs, *pimpl->pdrag_lut, kM);
+  const auto kCD0 =
+      boatright::CalculateZeroYawDragCoefficientOfDrag(kCdRef, kMass, kD, kBc);
+  const auto kCDAdjustment =
+      boatright::CalculateYawDragAdjustment(kGamma, kR, kCDa);
+  const auto kCD = kCD0 + kCDAdjustment;
+  const auto kPitch = boatright::CalculateVerticalPitch(kGamma, kR, kN);
+  const auto kJv = boatright::CalculateVerticalImpulse(kTwist, kN, kTn, kQ, kS,
+                                                       kCL, kCD, kPitch);
+  const auto kMOM = boatright::CalculateMagnitudeOfMomentum(kMass, kVelocity);
+  const MoaT kJump = RadiansT(-1 * kJv / kMOM);
+  pimpl->build.aerodynamic_jump = kJump.Value();
+
+  TrajectoryStateT s(
+      CartesianT<FeetT>(FeetT(0.0)),
+      CartesianT<FpsT>(FpsT(kVelocity * std::cos(0)),
+                       FpsT(kVelocity * std::sin(0)), FpsT(0.0)));
+
+  SecT t(0.0);
+
+  static const FpsT kTransonicBarrier(MachT(1.2), kSos);
+
+  while (s.V().X() > kTransonicBarrier) {
+    assert(t < SecT(60) && "This is taking too long");
+    SolveStep(&s, &t, pimpl->build);
+  }
+
+  const auto kV = boatright::CalculateKV(kVelocity, kTransonicBarrier);
+  const auto kOmega = boatright::CalculateKOmega(kD, t);
+  const double kQTS = boatright::CalculatePotentialDragForce(kD, kAirDensity,
+                                                             kTransonicBarrier);
+  const auto kBetaROfT = boatright::CalculateYawOfRepose(
+      kVelocity, kTwist, kIyOverIx, kR, kOmega, kV);
+
+  PmsiT bc_g7(0);
+  if (pimpl->pdrag_lut == &kG7Drags) {
+    bc_g7 = kBc;
+  } else {
+    const double kFormFactor =
+        litz::CalculateG7FormFactorPrediction(kD, kLN, kRTR, kDM, kLBT, kDB);
+    bc_g7 = litz::CalculateBallisticCoefficient(kMass, kD, kFormFactor);
+  }
+  const double kClBoattailAdjustment =
+      boatright::CalculateCLBoattailAdjustmentFactor(bc_g7);
+  const double kClOf0 = kClBoattailAdjustment * kCL;
+  const auto kClOfT =
+      boatright::CalculateCoefficientOfLiftAtT(kClOf0, kVelocity, t);
+  pimpl->build.spindrift_factor =
+      boatright::CalculateSpinDriftScaleFactor(kQTS, kBetaROfT, kClOfT, kMass);
+}
+
+void BuildLitzAerodynamicJump(Impl* pimpl) {
+  assert(pimpl != nullptr);
   assert(!std::isnan(pimpl->build.wind.z));
+
+  if (!std::isnan(pimpl->build.aerodynamic_jump)) {
+    return;
+  }
 
   if (AreEqual(pimpl->build.wind.z, 0.0)) {
     pimpl->build.aerodynamic_jump = MoaT(0).Value();
     return;
   }
 
-  if (!std::isnan(pimpl->diameter_in) && !std::isnan(pimpl->length_in) &&
-      !std::isnan(pimpl->twist_inches_per_turn) &&
-      !std::isnan(pimpl->build.mass) &&
-      !std::isnan(pimpl->build.stability_factor)) {
-    if (!std::isnan(pimpl->nose_length_in) &&
-        !std::isnan(pimpl->meplat_diameter_in) &&
-        !std::isnan(pimpl->tail_length_in) &&
-        !std::isnan(pimpl->base_diameter_in) && !std::isnan(pimpl->ogive_rtr)) {
-      const MachT kMach(FpsT(pimpl->build.velocity),
-                        FpsT(pimpl->build.speed_of_sound).Inverse());
-      const double kCDref = LobLerp(kMachs, *pimpl->pdrag_lut, kMach);
-      pimpl->build.aerodynamic_jump =
-          CalculateBRAerodynamicJump(
-              pimpl->diameter_in, pimpl->meplat_diameter_in,
-              pimpl->base_diameter_in, pimpl->length_in, pimpl->nose_length_in,
-              pimpl->tail_length_in, pimpl->ogive_rtr,
-              GrainT(LbsT(pimpl->build.mass)), FpsT(pimpl->build.velocity),
-              pimpl->build.stability_factor, pimpl->twist_inches_per_turn,
-              MphT(FpsT(pimpl->build.wind.z)), pimpl->air_density_lbs_per_cu_ft,
-              FpsT(pimpl->build.speed_of_sound),
-              pimpl->ballistic_coefficient_psi, kCDref)
-              .Value();
-      return;
-    }
-
+  if (!std::isnan(pimpl->build.stability_factor) &&
+      !std::isnan(pimpl->diameter_in) && !std::isnan(pimpl->length_in)) {
     pimpl->build.aerodynamic_jump =
-        CalculateLitzAerodynamicJump(pimpl->build.stability_factor,
-                                     pimpl->diameter_in, pimpl->length_in,
-                                     MphT(FpsT(pimpl->build.wind.z)))
+        litz::CalculateAerodynamicJump(pimpl->build.stability_factor,
+                                       pimpl->diameter_in, pimpl->length_in,
+                                       MphT(FpsT(pimpl->build.wind.z)))
             .Value();
-    return;
   }
 
   if (std::isnan(pimpl->build.aerodynamic_jump)) {
@@ -498,6 +606,7 @@ void BuildAerodynamicJump(Impl* pimpl) {
 }
 
 void BuildCoriolis(Impl* pimpl) {
+  assert(pimpl != nullptr);
   if (!std::isnan(pimpl->azimuth_rad) && !std::isnan(pimpl->latitude_rad)) {
     // Coriolis Effect Page 178 of Modern Exterior Ballistics - McCoy
     const double kCosL = std::cos(pimpl->latitude_rad).Value();
@@ -517,42 +626,8 @@ void BuildCoriolis(Impl* pimpl) {
   }
 }
 
-void BuildSpinDrift(Impl* pimpl) {
-  if (pimpl == nullptr || std::isnan(pimpl->diameter_in) ||
-      std::isnan(pimpl->meplat_diameter_in) ||
-      std::isnan(pimpl->base_diameter_in) || std::isnan(pimpl->length_in) ||
-      std::isnan(pimpl->nose_length_in) || std::isnan(pimpl->tail_length_in) ||
-      std::isnan(pimpl->ogive_rtr) || std::isnan(pimpl->build.mass) ||
-      pimpl->build.velocity <= 0 || std::isnan(pimpl->build.stability_factor) ||
-      std::isnan(pimpl->twist_inches_per_turn) ||
-      std::isnan(pimpl->air_density_lbs_per_cu_ft)) {
-    return;
-  }
-
-  TrajectoryStateT s(
-      CartesianT<FeetT>(FeetT(0.0)),
-      CartesianT<FpsT>(FpsT(pimpl->build.velocity * std::cos(0)),
-                       FpsT(pimpl->build.velocity * std::sin(0)), FpsT(0.0)));
-
-  SecT t(0.0);
-
-  static const FpsT kTransonicBarrier(
-      MachT(1.2).Value() * FpsT(pimpl->build.speed_of_sound).Value());
-
-  while (s.V().X() > kTransonicBarrier) {
-    assert(t.Value() < 100.0 && "This is taking too long");
-    SolveStep(&s, &t, pimpl->build);
-  }
-
-  pimpl->build.spindrift_factor = CalculateBRSpinDriftFactor(
-      pimpl->diameter_in, pimpl->meplat_diameter_in, pimpl->base_diameter_in,
-      pimpl->length_in, pimpl->nose_length_in, pimpl->tail_length_in,
-      pimpl->ogive_rtr, GrainT(LbsT(pimpl->build.mass)),
-      FpsT(pimpl->build.velocity), pimpl->build.stability_factor,
-      pimpl->twist_inches_per_turn, pimpl->air_density_lbs_per_cu_ft, t);
-}
-
 void BuildZeroAngle(Impl* pimpl) {
+  assert(pimpl != nullptr);
   if (!std::isnan(pimpl->build.zero_angle)) {
     return;
   }
@@ -590,6 +665,7 @@ void BuildZeroAngle(Impl* pimpl) {
     SecT t(0.0);
 
     while (s.P().X() < pimpl->zero_distance_ft) {
+      assert(t < SecT(60) && "This is taking too long");
       SolveStep(&s, &t, pimpl->build);
     }
 
@@ -601,6 +677,14 @@ void BuildZeroAngle(Impl* pimpl) {
     }
   }
   pimpl->build.zero_angle = MoaT((low_angle + high_angle) / 2).Value();
+}
+
+void BuildOptions(Impl* pimpl) {
+  assert(pimpl != nullptr);
+  const FpsT kMinSpeed = CalculateVelocityFromKineticEnergy(
+      pimpl->minimum_energy_ft_lbs, SlugT(LbsT(pimpl->build.mass)));
+  pimpl->build.minimum_speed =
+      std::max(pimpl->build.minimum_speed, kMinSpeed.U16());
 }
 
 }  // namespace
@@ -616,10 +700,11 @@ Input Builder::Build() {
       pimpl_->build.optic_height = kDefaultOpticHeight.Value();
     }
     BuildStability(pimpl_);
-    BuildAerodynamicJump(pimpl_);
+    BuildBoatright(pimpl_);
+    BuildLitzAerodynamicJump(pimpl_);
     BuildCoriolis(pimpl_);
-    BuildSpinDrift(pimpl_);
     BuildZeroAngle(pimpl_);
+    BuildOptions(pimpl_);
   }
   return pimpl_->build;
 }

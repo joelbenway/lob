@@ -120,8 +120,6 @@ TEST(OdeTests, TrajectoryStateTCopyAssignment) {
       lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
   lob::TrajectoryStateT a = lob::TrajectoryStateT(kP, kV);
   EXPECT_DOUBLE_EQ(a.P().Magnitude().Value(), 5.0);
-  a = a;
-  EXPECT_DOUBLE_EQ(a.P().Magnitude().Value(), 5.0);
 }
 
 TEST(OdeTests, Addition) {
@@ -143,7 +141,6 @@ TEST(OdeTests, Multiplication) {
   const auto kV =
       lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
   lob::TrajectoryStateT a = lob::TrajectoryStateT(kP, kV);
-  const lob::TrajectoryStateT kB = lob::TrajectoryStateT(kP, kV);
   a = a * lob::SecT(2);
   EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() * 2);
 }

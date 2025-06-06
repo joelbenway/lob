@@ -34,6 +34,7 @@ struct LobEnvTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 2800;
     const double kTestZeroAngle = 3.66;
     const double kTestOpticHeight = 1.5;
+    const uint16_t kStep = 100U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -42,7 +43,8 @@ struct LobEnvTestFixture : public testing::Test {
         .MassGrains(kTestWeight)
         .InitialVelocityFps(kTestMuzzleVelocity)
         .ZeroAngleMOA(kTestZeroAngle)
-        .OpticHeightInches(kTestOpticHeight);
+        .OpticHeightInches(kTestOpticHeight)
+        .StepSize(kStep);
   }
 
   void TearDown() override { puut.reset(); }
@@ -70,7 +72,6 @@ TEST_F(LobEnvTestFixture, GetSpeedOfSoundFps) {
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
   ASSERT_NE(puut, nullptr);
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -93,8 +94,7 @@ TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
       {3000, 1149, 454, -374.36, 0.00, 1.674}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(puut->Build(), &kRanges, &solutions, kOptions);
+  lob::Solve(puut->Build(), kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -122,7 +122,6 @@ TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
   const auto kInput = puut->AltitudeOfFiringSiteFt(kAltitude)
                           .TemperatureDegF(lob::kIsaSeaLevelDegF)
                           .Build();
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -145,8 +144,7 @@ TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
       {3000, 1353, 629, -329.05, 0.00, 1.542}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -173,7 +171,6 @@ TEST_F(LobEnvTestFixture, SolveWithTempAndAirPressure) {
   const int32_t kAirPressure = 25;
   const auto kInput =
       puut->TemperatureDegF(kTemperature).AirPressureInHg(kAirPressure).Build();
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -196,8 +193,7 @@ TEST_F(LobEnvTestFixture, SolveWithTempAndAirPressure) {
       {3000, 1437, 710, -313.59, 0.00, 1.496}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -228,7 +224,6 @@ TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
                           .AltitudeOfBarometerFt(0)
                           .TemperatureDegF(kTemperature)
                           .Build();
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -251,8 +246,7 @@ TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
       {3000, 1376, 651, -324.63, 0.00, 1.529}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -282,7 +276,6 @@ TEST_F(LobEnvTestFixture, SolveWithPressureTempHumidity) {
                           .TemperatureDegF(kTemperature)
                           .RelativeHumidityPercent(kRelativeHumidity)
                           .Build();
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -305,8 +298,7 @@ TEST_F(LobEnvTestFixture, SolveWithPressureTempHumidity) {
       {3000, 1227, 517, -355.17, 0.00, 1.619}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  const auto kSize = lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  const auto kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
@@ -341,7 +333,6 @@ TEST_F(LobEnvTestFixture, SolveWithWeatherStationData) {
                           .TemperatureDegF(kTemperature)
                           .AltitudeOfThermometerFt(kAltitudeOfThermometer)
                           .Build();
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -364,8 +355,7 @@ TEST_F(LobEnvTestFixture, SolveWithWeatherStationData) {
       {3000, 1376, 651, -324.63, 0.00, 1.529}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,

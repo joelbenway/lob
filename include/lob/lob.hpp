@@ -98,6 +98,9 @@ struct LOB_EXPORT Input {
   double stability_factor{NaN()};  /// @brief Miller stability factor.
   double aerodynamic_jump{NaN()};  /// @brief Aerodynamic jump effect in Moa.
   double spindrift_factor{NaN()};  /// @brief Spin drift factor.
+  uint16_t minimum_speed{0};       /// @brief Minimum speed for solver.
+  double max_time{NaN()};          /// @brief Max time of flight for solver.
+  uint16_t step_size{0};           /// @brief Step size for solver.
 };  // struct Input
 
 class Impl;
@@ -349,13 +352,43 @@ class LOB_EXPORT Builder {
    */
   Builder& RangeAngleDeg(double value);
   /**
+   * @brief Sets the minimum speed threshold for the solver.
+   * @param value The minimum speed in feet per second (fps) at which the solver
+   * will stop calculations.
+   * @return A reference to the Builder object.
+   */
+  Builder& MinimumSpeed(uint16_t value);
+
+  /**
+   * @brief Sets the minimum energy threshold for the solver.
+   * @param value The minimum energy in foot-pounds (ft·lbf) at which the solver
+   * will stop calculations.
+   * @return A reference to the Builder object.
+   */
+  Builder& MinimumEnergy(uint16_t value);
+
+  /**
+   * @brief Sets the maximum time of flight for the solver.
+   * @param value The maximum time in seconds after which the solver will stop
+   * calculations.
+   * @return A reference to the Builder object.
+   */
+  Builder& MaximumTime(double value);
+
+  /**
+   * @brief Sets the step size for the numerical solver.
+   * @param value The time step size in microseconds (µs) used by the solver.
+   * @return A reference to the Builder object.
+   */
+  Builder& StepSize(uint16_t value);
+  /**
    * @brief Builds the `Input` object with the configured parameters.
    * @return The constructed `Input` object.
    */
   Input Build();
 
  private:
-  static constexpr size_t kBufferSize{504};
+  static constexpr size_t kBufferSize{536};
   union AlignmentT {
     double foo;
     size_t bar;
@@ -363,16 +396,6 @@ class LOB_EXPORT Builder {
   alignas(AlignmentT) std::array<uint8_t, kBufferSize> buffer_{};
   Impl* pimpl_{nullptr};
 };  // class Builder
-
-/**
- * @brief Structure holding optional parameters for the `Solve` function.
- */
-struct LOB_EXPORT Options {
-  uint16_t min_speed{0};  /// @brief Minimum speed threshold in feet per second.
-  uint16_t min_energy{0};  /// @brief Minimum energy threshold in foot-pounds.
-  double max_time{NaN()};  /// @brief Maximum time of flight in seconds.
-  uint16_t step_size{0};   /// @brief Solver's step size in microseconds.
-};  // struct Options
 
 /**
  * @brief Structure holding the output results of the ballistic calculation.
@@ -392,25 +415,23 @@ struct LOB_EXPORT Output {
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
  * @param pouts Pointer to an array wherec the output results will be stored.
  * @param size The number of ranges to solve for.
- * @param options Optional parameters for the solver.
  * @return The number of successful solutions.
  */
 LOB_EXPORT size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
-                        size_t size, const Options& options);
+                        size_t size);
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
  * @tparam N The number of ranges to solve for.
  * @param in Input parameters for the calculation.
- * @param pranges Pointer to an array of ranges (in feet) to solve for.
- * @param pouts Pointer to an array wherec the output results will be stored.
- * @param options Optional parameters for the solver.
+ * @param pranges Reference to an array of ranges (in feet) to solve for.
+ * @param pouts Reference to an array where the output results will be stored.
  * @return The number of successful solutions.
  */
 template <size_t N>
-size_t Solve(const Input& in, const std::array<uint32_t, N>* pranges,
-             std::array<Output, N>* pouts, const Options& options = Options{}) {
-  return Solve(in, pranges->data(), pouts->data(), N, options);
+size_t Solve(const Input& in, const std::array<uint32_t, N>& pranges,
+             std::array<Output, N>& pouts) {
+  return Solve(in, pranges.data(), pouts.data(), N);
 }
 
 /**

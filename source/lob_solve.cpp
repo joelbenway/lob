@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Please see end of file for extended copyright information
 
-#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -11,6 +10,7 @@
 #include "calc.hpp"
 #include "cartesian.hpp"
 #include "eng_units.hpp"
+#include "litz.hpp"
 #include "lob/lob.hpp"
 #include "ode.hpp"
 #include "solve_step.hpp"
@@ -18,11 +18,6 @@
 namespace lob {
 
 namespace {
-
-FpsT CalculateMinimumVelocity(FpsT min_speed, FtLbsT min_energy, SlugT mass) {
-  return std::max(CalculateVelocityFromKineticEnergy(min_energy, mass),
-                  min_speed);
-}
 
 Output LerpOutput(const TrajectoryStateT& s_now, const SecT t_now,
                   const TrajectoryStateT& s_prev, const SecT t_prev,
@@ -60,8 +55,8 @@ void ApplyGyroscopicSpinDrift(const Input& in, Output* pouts, size_t size) {
   if (std::fabs(in.stability_factor) > 0) {
     for (size_t i = 0; i < size; i++) {
       pouts[i].deflection +=
-          CalculateLitzGyroscopicSpinDrift(in.stability_factor,
-                                           SecT(pouts[i].time_of_flight))
+          litz::CalculateGyroscopicSpinDrift(in.stability_factor,
+                                             SecT(pouts[i].time_of_flight))
               .Value();
     }
   }
@@ -69,7 +64,7 @@ void ApplyGyroscopicSpinDrift(const Input& in, Output* pouts, size_t size) {
 }  // namespace
 
 size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
-             size_t size, const Options& options) {
+             size_t size) {
   assert(pranges != nullptr);
   assert(pouts != nullptr);
   assert(size > 0);
@@ -77,8 +72,7 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
       pouts == nullptr || size == 0) {
     return 0;
   }
-  const FpsT kMinimumVelocity = CalculateMinimumVelocity(
-      FpsT(options.min_speed), FtLbsT(options.min_energy), LbsT(in.mass));
+  const FpsT kMinimumSpeed(in.minimum_speed);
   const auto kAngle =
       RadiansT(MoaT(in.zero_angle + in.aerodynamic_jump)).Value();
   TrajectoryStateT s(
@@ -92,7 +86,11 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
     const TrajectoryStateT kS = s;
     const SecT kT = t;
 
-    SolveStep(&s, &t, in, SecT(UsecT(options.step_size)));
+    if (in.step_size > 0) {
+      SolveStep(&s, &t, in, SecT(UsecT(in.step_size)));
+    } else {
+      SolveStep(&s, &t, in, FeetT(1));
+    }
 
     if (s.P().X() >= FeetT(pranges[index]) && kS.P().X() < s.P().X()) {
       const double kAlpha =
@@ -106,15 +104,15 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
       break;
     }
 
-    if (t >= SecT(options.max_time) && kT < SecT(options.max_time)) {
-      const double kAlpha = ((SecT(options.max_time) - kT) / (t - kT)).Value();
+    if (t >= SecT(in.max_time) && kT < SecT(in.max_time)) {
+      const double kAlpha = ((SecT(in.max_time) - kT) / (t - kT)).Value();
       pouts[index] = LerpOutput(s, t, kS, kT, kAlpha, in);
       index++;
       break;
     }
-    if (s.V().Magnitude() <= kMinimumVelocity &&
-        kS.V().Magnitude() > kMinimumVelocity) {
-      const double kAlpha = ((kMinimumVelocity - kS.V().Magnitude()) /
+    if (s.V().Magnitude() <= kMinimumSpeed &&
+        kS.V().Magnitude() > kMinimumSpeed) {
+      const double kAlpha = ((kMinimumSpeed - kS.V().Magnitude()) /
                              (s.V().Magnitude() - kS.V().Magnitude()))
                                 .Value();
       pouts[index] = LerpOutput(s, t, kS, kT, kAlpha, in);

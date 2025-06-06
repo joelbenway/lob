@@ -33,6 +33,7 @@ struct LobWindTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 2720;
     const double kTestZeroAngle = 4.78;
     const double kTestOpticHeight = 2.5;
+    const uint16_t kStep = 100U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -41,7 +42,8 @@ struct LobWindTestFixture : public testing::Test {
         .MassGrains(kTestWeight)
         .InitialVelocityFps(kTestMuzzleVelocity)
         .ZeroAngleMOA(kTestZeroAngle)
-        .OpticHeightInches(kTestOpticHeight);
+        .OpticHeightInches(kTestOpticHeight)
+        .StepSize(kStep);
   }
 
   void TearDown() override { puut.reset(); }
@@ -69,7 +71,6 @@ TEST_F(LobWindTestFixture, GetSpeedOfSoundFps) {
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithoutWind) {
   ASSERT_NE(puut, nullptr);
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -94,8 +95,7 @@ TEST_F(LobWindTestFixture, SolveWithoutWind) {
       {3000, 1021, 178, -475.40, 0.00, 1.913}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -125,7 +125,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIII;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -151,8 +150,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIII) {
       {3000, 1021, 178, -475.40, 142.55, 1.913}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -182,7 +180,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIV;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -208,8 +205,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
       {3000, 1015, 176, -479.64, 124.35, 1.921}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -239,7 +235,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindV) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kV;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -265,8 +260,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindV) {
       {3000, 1011, 175, -482.80, 72.18, 1.927}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -296,7 +290,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kVI;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -322,8 +315,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
       {3000, 1009, 174, -483.97, -0.00, 1.929}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -353,7 +345,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kVII;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -379,8 +370,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
       {3000, 1011, 175, -482.80, -72.18, 1.927}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -410,7 +400,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kVIII;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -436,8 +425,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
       {3000, 1015, 176, -479.64, -124.35, 1.921}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -467,7 +455,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIX;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -493,8 +480,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
       {3000, 1021, 178, -475.40, -142.55, 1.913}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -524,7 +510,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindX) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kX;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -550,8 +535,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindX) {
       {3000, 1026, 180, -471.25, -122.56, 1.905}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -581,7 +565,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kXI;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -607,8 +590,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
       {3000, 1031, 181, -468.21, -70.38, 1.899}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -638,7 +620,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kXII;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -664,8 +645,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
       {3000, 1032, 182, -467.08, 0.00, 1.897}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -695,7 +675,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kI;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -721,8 +700,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindI) {
       {3000, 1031, 181, -468.21, 70.38, 1.899}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -752,7 +730,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kII;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -778,8 +755,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindII) {
       {3000, 1026, 180, -471.25, 122.56, 1.905}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -809,7 +785,6 @@ TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 20;
   const double kWindHeading = 150;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -835,8 +810,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
       {3000, 1001, 171, -490.37, 146.17, 1.941}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -866,7 +840,6 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeMagnitude) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = -20;
   const double kWindHeading = 330;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -892,8 +865,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeMagnitude) {
       {3000, 1001, 171, -490.37, 146.17, 1.941}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -923,7 +895,6 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeAngle) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 20;
   const double kWindHeading = -210;
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 1;
   constexpr uint16_t kEnergyError = 5;
   constexpr double kMoaError = 0.1;
@@ -949,8 +920,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeAngle) {
       {3000, 1001, 171, -490.37, 146.17, 1.941}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,

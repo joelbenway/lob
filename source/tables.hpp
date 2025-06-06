@@ -5,15 +5,18 @@
 #pragma once
 
 #include <array>
+#include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 
 #include "eng_units.hpp"
 
 namespace lob {
 
-static constexpr size_t kTableSize = 85;
-static constexpr uint16_t kTableScale = 10'000;
+constexpr static size_t kTableSize = 85;
+constexpr static uint16_t kTableScale = 10'000;
 
 constexpr std::array<uint16_t, kTableSize> kMachs = {
     0U,     500U,   1000U,  1500U,  2000U,  2500U,  3000U,  3500U,  4000U,
@@ -88,49 +91,52 @@ constexpr std::array<uint16_t, kTableSize> kG8Drags = {
     2019U, 1983U, 1950U, 1890U, 1837U, 1791U, 1750U, 1713U};
 
 template <typename T>
-double LobLerp(const T* x_lut, const T* y_lut, size_t size, double x_in);
+constexpr double LobLerp(const T* x_lut, const T* y_lut, const size_t size,
+                         const double x_in) {
+  assert(!(x_in < 0.0) && "input is not negative");
+  assert(x_lut != nullptr && y_lut != nullptr && "Input arrays cannot be null");
+
+  if (x_in >= static_cast<double>(x_lut[size - 1])) {
+    return static_cast<double>(y_lut[size - 1]);
+  }
+
+  size_t low = 0;
+  size_t high = size - 1;
+  size_t index = 0;
+
+  while (low <= high) {
+    const size_t kMid = low + ((high - low) / 2);
+    if (static_cast<double>(x_lut[kMid]) <= x_in) {
+      index = kMid;
+      low = kMid + 1;
+    } else {
+      high = kMid - 1;
+    }
+  }
+
+  const auto kX0 = static_cast<double>(x_lut[index]);
+  const auto kX1 = static_cast<double>(x_lut[index + 1]);
+  const auto kY0 = static_cast<double>(y_lut[index]);
+  const auto kY1 = static_cast<double>(y_lut[index + 1]);
+  const auto kDx = kX1 - kX0;
+  assert(kDx > 0.0 && "x values must be increasing");
+  const double kT = (x_in - kX0) / kDx;
+  return kY0 + (kT * (kY1 - kY0));
+}
 
 template <typename T, size_t N>
-double LobLerp(const std::array<T, N>& x_lut, const std::array<T, N>& y_lut,
-               const double x_in) {
+constexpr double LobLerp(const std::array<T, N>& x_lut,
+                         const std::array<T, N>& y_lut, const double x_in) {
   return LobLerp(x_lut.data(), y_lut.data(), N, x_in);
 }
 
 template <size_t N>
-double LobLerp(const std::array<uint16_t, N>& x_lut,
-               const std::array<uint16_t, N>& y_lut, MachT x_in) {
+constexpr double LobLerp(const std::array<uint16_t, N>& x_lut,
+                         const std::array<uint16_t, N>& y_lut, MachT x_in) {
   const double kX = x_in.Value() * kTableScale;
   return LobLerp(x_lut.data(), y_lut.data(), N, kX) / kTableScale;
 }
 
-template <typename T>
-double LobQerp(const T* x_lut, const T* y_lut, size_t size, double x_in);
-
-template <typename T, size_t N>
-double LobQerp(const std::array<T, N>& x_lut, const std::array<T, N>& y_lut,
-               const double x_in) {
-  return LobQerp(x_lut.data(), y_lut.data(), N, x_in);
-}
-
-namespace help {
-
-struct Point {
-  double x{0};
-  double y{0};
-};
-
-struct Circle {
-  Point center;
-  double radius{0};
-};
-
-double CalculatePerpendicularSlope(double slope);
-
-Circle FitCircle(const Point& p1, const Point& p2, const Point& p3);
-
-double FindAngleToPointOnCircle(Point p, Circle c);
-
-}  // namespace help
 }  // namespace lob
 
 // This file is part of lob.

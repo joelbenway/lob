@@ -8,7 +8,7 @@ include(cmake/prelude.cmake)
 
 project(
   lob
-  VERSION 0.5.0
+  VERSION 0.6.0
   DESCRIPTION "an exterior balistics calculation library"
   HOMEPAGE_URL "https://github.com/joelbenway/lob"
   LANGUAGES CXX)
@@ -27,10 +27,10 @@ add_library(lob_lob
   source/lob_builder.cpp
   source/lob_convert.cpp
   source/lob_solve.cpp
+  source/solve_step.cpp
   source/boatright.cpp
   source/calc.cpp
-  source/solve_step.cpp
-  source/tables.cpp)
+  source/litz.cpp)
 # cmake-format: on
 add_library(lob::lob ALIAS lob_lob)
 

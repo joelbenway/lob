@@ -4,10 +4,15 @@
 
 #pragma once
 
+#include <cassert>
+#include <cmath>
+#include <cstdint>
+
 #include "eng_units.hpp"
 
 namespace lob {
 namespace boatright {
+
 PsiT CalculateDynamicPressure(LbsPerCuFtT air_density, FpsT velocity);
 
 CaliberT CalculateRadiusOfTangentOgive(CaliberT ogive_length,
@@ -16,6 +21,11 @@ CaliberT CalculateRadiusOfTangentOgive(CaliberT ogive_length,
 CaliberT CalculateFullNoseLength(CaliberT ogive_length,
                                  CaliberT meplat_diameter,
                                  CaliberT radius_of_tangent, double ogive_rtr);
+
+SqInT CalculateOgiveCrossSectionalArea(InchT x, InchT rho, double alpha);
+
+double CalculateOgiveSimpsonIntegral(InchT a, InchT b, uint16_t n, InchT rho,
+                                     double alpha);
 
 double CalculateOgiveVolume(InchT diameter, InchT ogive_length,
                             InchT full_ogive_length, InchT ogive_radius);
@@ -47,6 +57,8 @@ double CalculateFastAverageDensity(InchT diameter, CaliberT length,
                                    GrainT mass);
 
 double CalculateCoefficientOfLift(CaliberT full_ogive_length, MachT velocity);
+
+double CalculateCLBoattailAdjustmentFactor(PmsiT g7);
 
 double CalculateInertialRatio(InchT caliber, CaliberT length,
                               CaliberT ogive_length, CaliberT full_ogive_length,
@@ -82,18 +94,17 @@ double CalculateVerticalPitch(double gamma, double r, double n);
 double CalculateVerticalImpulse(InchPerTwistT twist, uint16_t n, SecT tn,
                                 PsiT q, SqInT s, double cl, double cd,
                                 double pitch);
+
 double CalculateMagnitudeOfMomentum(GrainT mass, FpsT velocity);
-}  // namespace boatright
 
-MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
-                                InchT base_diameter, InchT length,
-                                InchT ogive_length, InchT tail_length,
-                                double ogive_rtr, GrainT mass, FpsT velocity,
-                                double stability, InchPerTwistT twist,
-                                FpsT zwind, LbsPerCuFtT air_density,
-                                FpsT speed_of_sound, PmsiT bc, double cd_ref);
+MoaT CalculateAerodynamicJump(InchT diameter, InchT meplat_diameter,
+                              InchT base_diameter, InchT length,
+                              InchT ogive_length, InchT tail_length,
+                              double ogive_rtr, GrainT mass, FpsT velocity,
+                              double stability, InchPerTwistT twist, FpsT zwind,
+                              LbsPerCuFtT air_density, FpsT speed_of_sound,
+                              PmsiT bc, double cd_ref);
 
-namespace boatright {
 double CalculateKV(FpsT initial_velocity, FpsT target_velocity);
 
 double CalculateKOmega(InchT diameter, SecT supersonic_time);
@@ -115,14 +126,6 @@ double CalculateSpinDriftScaleFactor(double potential_drag_force,
 InchT CalculateSpinDrift(double scale_factor, InchT drop);
 
 }  // namespace boatright
-
-double CalculateBRSpinDriftFactor(InchT diameter, InchT meplat_diameter,
-                                  InchT base_diameter, InchT length,
-                                  InchT ogive_length, InchT tail_length,
-                                  double ogive_rtr, GrainT mass, FpsT velocity,
-                                  double stability, InchPerTwistT twist,
-                                  LbsPerCuFtT air_density,
-                                  SecT supersonic_time);
 }  // namespace lob
 
 // This file is part of lob.

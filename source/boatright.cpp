@@ -12,10 +12,8 @@
 #include "constants.hpp"
 #include "eng_units.hpp"
 #include "helpers.hpp"
-#include "ode.hpp"
 
 namespace lob {
-
 namespace boatright {
 PsiT CalculateDynamicPressure(LbsPerCuFtT air_density, FpsT velocity) {
   const double kRho = air_density.Value() * SlugT(LbsT(1)).Value();
@@ -39,34 +37,46 @@ CaliberT CalculateFullNoseLength(CaliberT ogive_length,
   return (kLFT * ogive_rtr) + (kLFC * (1 - ogive_rtr));
 }
 
+SqInT CalculateOgiveCrossSectionalArea(InchT x, InchT rho, double alpha) {
+  const auto kA = rho * rho;
+  const auto kB = (rho * std::cos(alpha)) - x;
+  const auto kC = rho * std::sin(alpha);
+  assert(kA > (kB * kB) && "Domain error");
+  const auto kY = std::sqrt(kA - (kB * kB)) - kC;
+  return SqInT(kPi * kY.Value() * kY.Value());
+}
+
+double CalculateOgiveSimpsonIntegral(InchT a, InchT b, uint16_t n, InchT rho,
+                                     double alpha) {
+  const uint16_t kEvenN = (n % 2U == 0) ? n : n + 1U;
+  const InchT kH = (b - a) / kEvenN;
+
+  SqInT sum = CalculateOgiveCrossSectionalArea(a, rho, alpha) +
+              CalculateOgiveCrossSectionalArea(b, rho, alpha);
+
+  for (uint16_t i = 1U; i < kEvenN; ++i) {
+    const auto kX = a + kH * i;
+    const auto kMultiple = (i % 2U == 0) ? 2U : 4U;
+    sum += CalculateOgiveCrossSectionalArea(kX, rho, alpha) * kMultiple;
+  }
+
+  return (kH.Value() / 3) * sum.Value();
+}
+
 double CalculateOgiveVolume(InchT diameter, InchT ogive_length,
                             InchT full_ogive_length, InchT ogive_radius) {
-  const InchT kR = diameter / 2;
+  const InchT kR = diameter / 2.0;
   const InchT kLo = full_ogive_length;
   const InchT kRho = ogive_radius;
 
-  const RadiansT kAlpha(
-      std::acos(std::sqrt(kR * kR + kLo * kLo) / (kRho * 2)).Value() -
-      std::atan(kR / kLo).Value());
+  const double kAlpha =
+      std::acos(std::sqrt(kR * kR + kLo * kLo).Value() / (kRho * 2.0).Value()) -
+      std::atan(kR / kLo).Value();
 
-  auto dv_dx = [&](double x, double v) {
-    static_cast<void>(v);
-    const double kY =
-        std::sqrt((kRho * kRho) -
-                  std::pow(kRho * std::cos(kAlpha.Value()) - x, 2))
-            .Value() -
-        (kRho * std::sin(kAlpha.Value())).Value();
-    return kPi * kY * kY;
-  };
-  double x(full_ogive_length.Value() - ogive_length.Value());
-  double volume(0);
-  const double kDx(0.01);
-  while (x < full_ogive_length.Value()) {
-    volume = EulerStep(x, volume, kDx, dv_dx);
-    x += kDx;
-  }
-
-  return volume;
+  const InchT kA = full_ogive_length - ogive_length;
+  const InchT kB = full_ogive_length;
+  const uint16_t kN = 100;
+  return CalculateOgiveSimpsonIntegral(kA, kB, kN, kRho, kAlpha);
 }
 
 double CalculateFrustrumVolume(InchT d1, InchT d2, InchT length) {
@@ -145,6 +155,11 @@ double CalculateCoefficientOfLift(CaliberT full_ogive_length, MachT velocity) {
   const double kNum1 = 1.974;
   const double kNum2 = 0.921;
   return kNum1 + (kNum2 * (kB / full_ogive_length.Value()));
+}
+
+double CalculateCLBoattailAdjustmentFactor(PmsiT g7) {
+  const double kBoattailAdjustmentFactor = std::sqrt(0.2720 / g7.Value());
+  return kBoattailAdjustmentFactor;
 }
 
 double CalculateInertialRatio(InchT caliber, CaliberT length,
@@ -254,15 +269,13 @@ double CalculateMagnitudeOfMomentum(GrainT mass, FpsT velocity) {
   return kMOM;
 }
 
-}  // namespace boatright
-
-MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
-                                InchT base_diameter, InchT length,
-                                InchT ogive_length, InchT tail_length,
-                                double ogive_rtr, GrainT mass, FpsT velocity,
-                                double stability, InchPerTwistT twist,
-                                FpsT zwind, LbsPerCuFtT air_density,
-                                FpsT speed_of_sound, PmsiT bc, double cd_ref) {
+MoaT CalculateAerodynamicJump(InchT diameter, InchT meplat_diameter,
+                              InchT base_diameter, InchT length,
+                              InchT ogive_length, InchT tail_length,
+                              double ogive_rtr, GrainT mass, FpsT velocity,
+                              double stability, InchPerTwistT twist, FpsT zwind,
+                              LbsPerCuFtT air_density, FpsT speed_of_sound,
+                              PmsiT bc, double cd_ref) {
   const CaliberT kDM(meplat_diameter, diameter.Inverse());
   const CaliberT kDB(base_diameter, diameter.Inverse());
   const CaliberT kL(length, diameter.Inverse());
@@ -302,7 +315,6 @@ MoaT CalculateBRAerodynamicJump(InchT diameter, InchT meplat_diameter,
   return MoaT(RadiansT(kJump));
 }
 
-namespace boatright {
 double CalculateKV(FpsT initial_velocity, FpsT target_velocity) {
   return std::log(target_velocity.Value() / initial_velocity.Value());
 }
@@ -358,42 +370,6 @@ InchT CalculateSpinDrift(double scale_factor, InchT drop) {
 }
 
 }  // namespace boatright
-
-double CalculateBRSpinDriftFactor(InchT diameter, InchT meplat_diameter,
-                                  InchT base_diameter, InchT length,
-                                  InchT ogive_length, InchT tail_length,
-                                  double ogive_rtr, GrainT mass, FpsT velocity,
-                                  double stability, InchPerTwistT twist,
-                                  LbsPerCuFtT air_density,
-                                  SecT supersonic_time) {
-  const FpsT kTargetVelocity(1340.0);
-  const CaliberT kDM(meplat_diameter, diameter.Inverse());
-  const CaliberT kDB(base_diameter, diameter.Inverse());
-  const CaliberT kL(length, diameter.Inverse());
-  const CaliberT kLN(ogive_length, diameter.Inverse());
-  const CaliberT kLBT(tail_length, diameter.Inverse());
-  const auto kRTR(ogive_rtr);
-  const CaliberT kRT = boatright::CalculateRadiusOfTangentOgive(kLN, kDM);
-  const CaliberT kLFN = boatright::CalculateFullNoseLength(kLN, kDM, kRT, kRTR);
-  const auto kRho = boatright::CalculateFastAverageDensity(
-      diameter, kL, kDM, kLN, kDB, kLBT, mass);
-  const double kIyOverIx =
-      boatright::CalculateInertialRatio(diameter, kL, kLN, kLFN, mass, kRho);
-  const auto kR = boatright::CalculateEpicyclicRatio(stability);
-  const auto kV = boatright::CalculateKV(velocity, kTargetVelocity);
-  const auto kOmega = boatright::CalculateKOmega(diameter, supersonic_time);
-  const double kQTS = boatright::CalculatePotentialDragForce(
-      diameter, air_density, kTargetVelocity);
-  const auto kBetaROfT = boatright::CalculateYawOfRepose(
-      velocity, twist, kIyOverIx, kR, kOmega, kV);
-  const double kClOf0 = boatright::CalculateCoefficientOfLift(
-      kLFN, lob::MachT(velocity, FpsT(1116.45).Inverse()));
-  const auto kClOfT = boatright::CalculateCoefficientOfLiftAtT(kClOf0, velocity,
-                                                               supersonic_time);
-  return boatright::CalculateSpinDriftScaleFactor(kQTS, kBetaROfT, kClOfT,
-                                                  mass);
-}
-
 }  // namespace lob
 
 // This file is part of lob.

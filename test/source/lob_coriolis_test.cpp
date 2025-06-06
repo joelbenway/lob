@@ -33,6 +33,7 @@ struct LobCoriolisTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 2800;
     const double kTestZeroAngle = 5.06;
     const double kTestOpticHeight = 3.0;
+    const uint16_t kStep = 100U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -41,7 +42,8 @@ struct LobCoriolisTestFixture : public testing::Test {
         .MassGrains(kTestWeight)
         .InitialVelocityFps(kTestMuzzleVelocity)
         .ZeroAngleMOA(kTestZeroAngle)
-        .OpticHeightInches(kTestOpticHeight);
+        .OpticHeightInches(kTestOpticHeight)
+        .StepSize(kStep);
   }
 
   void TearDown() override { puut.reset(); }
@@ -69,7 +71,6 @@ TEST_F(LobCoriolisTestFixture, GetSpeedOfSoundFps) {
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
   ASSERT_NE(puut, nullptr);
-  constexpr uint16_t kTestStepSize = 100;
   constexpr uint16_t kVelocityError = 2;
   constexpr double kMoaError = 0.5;
   // constexpr double kInchError = 0.1;
@@ -98,8 +99,7 @@ TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
       {9000, 761, 848, -8096.45, 0.00, 7.707}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput, &kRanges, &solutions, kOptions);
+  lob::Solve(kInput, kRanges, solutions);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -127,7 +127,6 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {
   ASSERT_NE(puut, nullptr);
   constexpr double kLattitude = 45.0;
   constexpr double kAzimuth = 0.0;  // North
-  constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
@@ -145,9 +144,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
-  lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
+  lob::Solve(kInput1, kRanges, solutions1);
+  lob::Solve(kInput2, kRanges, solutions2);
   for (size_t i = 0; i < kSolutionLength; i++) {
     const auto kElevationDifference =
         solutions2.at(i).elevation - solutions1.at(i).elevation;
@@ -164,7 +162,6 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
   ASSERT_NE(puut, nullptr);
   constexpr double kLattitude = 45.0;
   constexpr double kAzimuth = 90.0;  // East
-  constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
@@ -182,9 +179,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
-  lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
+  lob::Solve(kInput1, kRanges, solutions1);
+  lob::Solve(kInput2, kRanges, solutions2);
   for (size_t i = 0; i < kSolutionLength; i++) {
     const auto kElevationDifference =
         solutions2.at(i).elevation - solutions1.at(i).elevation;
@@ -202,7 +198,6 @@ TEST_F(LobCoriolisTestFixture,
   ASSERT_NE(puut, nullptr);
   constexpr double kLattitude = 45.0;
   constexpr double kAzimuth = -270.0;  // East
-  constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
@@ -220,9 +215,8 @@ TEST_F(LobCoriolisTestFixture,
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
-  lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
+  lob::Solve(kInput1, kRanges, solutions1);
+  lob::Solve(kInput2, kRanges, solutions2);
   for (size_t i = 0; i < kSolutionLength; i++) {
     const auto kElevationDifference =
         solutions2.at(i).elevation - solutions1.at(i).elevation;
@@ -239,7 +233,6 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionSouth) {
   ASSERT_NE(puut, nullptr);
   constexpr double kLattitude = 45.0;
   constexpr double kAzimuth = 180.0;  // South
-  constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
@@ -257,9 +250,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionSouth) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
-  lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
+  lob::Solve(kInput1, kRanges, solutions1);
+  lob::Solve(kInput2, kRanges, solutions2);
   for (size_t i = 0; i < kSolutionLength; i++) {
     const auto kElevationDifference =
         solutions2.at(i).elevation - solutions1.at(i).elevation;
@@ -277,7 +269,6 @@ TEST_F(LobCoriolisTestFixture,
   ASSERT_NE(puut, nullptr);
   constexpr double kLattitude = 45.0;
   constexpr double kAzimuth = -180.0;  // South
-  constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
@@ -295,9 +286,8 @@ TEST_F(LobCoriolisTestFixture,
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
-  lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
+  lob::Solve(kInput1, kRanges, solutions1);
+  lob::Solve(kInput2, kRanges, solutions2);
   for (size_t i = 0; i < kSolutionLength; i++) {
     const auto kElevationDifference =
         solutions2.at(i).elevation - solutions1.at(i).elevation;
@@ -314,7 +304,6 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereCoriolisDeflectionWest) {
   ASSERT_NE(puut, nullptr);
   constexpr double kLattitude = 45.0;
   constexpr double kAzimuth = 270.0;  // West
-  constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
@@ -332,9 +321,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereCoriolisDeflectionWest) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
-  lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
+  lob::Solve(kInput1, kRanges, solutions1);
+  lob::Solve(kInput2, kRanges, solutions2);
   for (size_t i = 0; i < kSolutionLength; i++) {
     const auto kElevationDifference =
         solutions2.at(i).elevation - solutions1.at(i).elevation;
@@ -352,7 +340,6 @@ TEST_F(LobCoriolisTestFixture,
   ASSERT_NE(puut, nullptr);
   constexpr double kLattitude = 45.0;
   constexpr double kAzimuth = -90.0;  // West
-  constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
@@ -370,9 +357,8 @@ TEST_F(LobCoriolisTestFixture,
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
-  lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
+  lob::Solve(kInput1, kRanges, solutions1);
+  lob::Solve(kInput2, kRanges, solutions2);
   for (size_t i = 0; i < kSolutionLength; i++) {
     const auto kElevationDifference =
         solutions2.at(i).elevation - solutions1.at(i).elevation;
@@ -389,7 +375,6 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionNorth) {
   ASSERT_NE(puut, nullptr);
   constexpr double kLattitude = -45.0;
   constexpr double kAzimuth = 0.0;  // North
-  constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
@@ -407,9 +392,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionNorth) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
-  lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
+  lob::Solve(kInput1, kRanges, solutions1);
+  lob::Solve(kInput2, kRanges, solutions2);
   for (size_t i = 0; i < kSolutionLength; i++) {
     const auto kElevationDifference =
         solutions2.at(i).elevation - solutions1.at(i).elevation;
@@ -426,7 +410,6 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
   ASSERT_NE(puut, nullptr);
   constexpr double kLattitude = -45.0;
   constexpr double kAzimuth = 90.0;  // East
-  constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
@@ -444,9 +427,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
-  lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
+  lob::Solve(kInput1, kRanges, solutions1);
+  lob::Solve(kInput2, kRanges, solutions2);
   for (size_t i = 0; i < kSolutionLength; i++) {
     const auto kElevationDifference =
         solutions2.at(i).elevation - solutions1.at(i).elevation;
@@ -463,7 +445,6 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionSouth) {
   ASSERT_NE(puut, nullptr);
   constexpr double kLattitude = -45.0;
   constexpr double kAzimuth = 180.0;  // South
-  constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
@@ -481,9 +462,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionSouth) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
-  lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
+  lob::Solve(kInput1, kRanges, solutions1);
+  lob::Solve(kInput2, kRanges, solutions2);
   for (size_t i = 0; i < kSolutionLength; i++) {
     const auto kElevationDifference =
         solutions2.at(i).elevation - solutions1.at(i).elevation;
@@ -500,7 +480,6 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionWest) {
   ASSERT_NE(puut, nullptr);
   constexpr double kLattitude = -45.0;
   constexpr double kAzimuth = 270.0;  // West
-  constexpr uint16_t kTestStepSize = 100;
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
@@ -518,9 +497,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionWest) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  const lob::Options kOptions = {0, 0, lob::NaN(), kTestStepSize};
-  lob::Solve(kInput1, &kRanges, &solutions1, kOptions);
-  lob::Solve(kInput2, &kRanges, &solutions2, kOptions);
+  lob::Solve(kInput1, kRanges, solutions1);
+  lob::Solve(kInput2, kRanges, solutions2);
   for (size_t i = 0; i < kSolutionLength; i++) {
     const auto kElevationDifference =
         solutions2.at(i).elevation - solutions1.at(i).elevation;
