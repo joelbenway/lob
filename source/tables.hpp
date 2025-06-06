@@ -4,23 +4,19 @@
 
 #pragma once
 
-#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <limits>
 
-#include "constants.hpp"
 #include "eng_units.hpp"
-#include "helpers.hpp"
 
 namespace lob {
 
-static constexpr size_t kTableSize = 85;
-static constexpr uint16_t kTableScale = 10'000;
+constexpr static size_t kTableSize = 85;
+constexpr static uint16_t kTableScale = 10'000;
 
 constexpr std::array<uint16_t, kTableSize> kMachs = {
     0U,     500U,   1000U,  1500U,  2000U,  2500U,  3000U,  3500U,  4000U,
@@ -141,159 +137,6 @@ constexpr double LobLerp(const std::array<uint16_t, N>& x_lut,
   return LobLerp(x_lut.data(), y_lut.data(), N, kX) / kTableScale;
 }
 
-namespace tables {
-
-constexpr double CalculatePerpendicularSlope(double slope) {
-  if (AreEqual(slope, 0.0)) {
-    return std::numeric_limits<double>::infinity();
-  }
-  if (AreEqual(slope, std::numeric_limits<double>::infinity())) {
-    return 0.0;
-  }
-  return -1.0 / slope;
-}
-
-struct Point {
-  double x{0};
-  double y{0};
-};
-
-struct Circle {
-  Point center;
-  double radius{0};
-};
-
-constexpr Circle FitCircle(const Point& p1, const Point& p2, const Point& p3) {
-  // Calculate the center of the circle using the perpendicular bisectors
-  // method.
-  const double kEpsilon = 1e-6;
-
-  const double kCollinearity =
-      ((p2.y - p1.y) * (p3.x - p2.x)) - ((p3.y - p2.y) * (p2.x - p1.x));
-  if (std::abs(kCollinearity) < kEpsilon) {
-    return {{0, 0}, 0};
-  }
-
-  const double kMid1x = (p1.x + p2.x) / 2;
-  const double kMid1y = (p1.y + p2.y) / 2;
-  const double kMid2x = (p2.x + p3.x) / 2;
-  const double kMid2y = (p2.y + p3.y) / 2;
-  const double kSlope1 = AreEqual((p2.x - p1.x), 0.0)
-                             ? std::numeric_limits<double>::infinity()
-                             : (p2.y - p1.y) / (p2.x - p1.x);
-  const double kSlope2 = AreEqual((p3.x - p2.x), 0.0)
-                             ? std::numeric_limits<double>::infinity()
-                             : (p3.y - p2.y) / (p3.x - p2.x);
-  const double kPerpendicular1 = CalculatePerpendicularSlope(kSlope1);
-  const double kPerpendicular2 = CalculatePerpendicularSlope(kSlope2);
-  Point center;
-  if (AreEqual(kPerpendicular1, std::numeric_limits<double>::infinity())) {
-    center.x = kMid1x;
-    center.y = kPerpendicular2 * (center.x - kMid2x) + kMid2y;
-  } else if (AreEqual(kPerpendicular2,
-                      std::numeric_limits<double>::infinity())) {
-    center.x = kMid2x;
-    center.y = kPerpendicular1 * (center.x - kMid1x) + kMid1y;
-  } else {
-    center.x = (kMid2y - kMid1y + kPerpendicular1 * kMid1x -
-                kPerpendicular2 * kMid2x) /
-               (kPerpendicular1 - kPerpendicular2);
-    center.y = kPerpendicular1 * (center.x - kMid1x) + kMid1y;
-  }
-
-  const double kRadius =
-      std::sqrt(std::pow(p1.x - center.x, 2) + std::pow(p1.y - center.y, 2));
-
-  return {center, kRadius};
-}
-
-constexpr double FindAngleToPointOnCircle(Point p, Circle c) {
-  const double kAngle = std::atan2(p.y - c.center.y, p.x - c.center.x);
-  if (kAngle > 2 * kPi) {
-    return kAngle - (2 * kPi);
-  }
-  if (kAngle < 0) {
-    return kAngle + (2 * kPi);
-  }
-  return kAngle;
-}
-
-template <typename T>
-constexpr double LobQerp(const T* x_lut, const T* y_lut, const size_t size,
-                         const double x_in) {
-  if (size < 3) {
-    return LobLerp(x_lut, y_lut, size, x_in);
-  }
-
-  if (x_in < static_cast<double>(x_lut[0])) {
-    return static_cast<double>(y_lut[0]);
-  }
-
-  size_t index = size - 1;
-
-  while (index > 0 && x_in < static_cast<double>(x_lut[index])) {
-    index--;
-  }
-
-  if (index == size - 1) {
-    return static_cast<double>(y_lut[size - 1]);
-  }
-
-  const auto kX0 =
-      static_cast<double>(index == 0 ? x_lut[index] : x_lut[index - 1]);
-  const auto kX1 =
-      static_cast<double>(index == 0 ? x_lut[index + 1] : x_lut[index]);
-  const auto kX2 =
-      static_cast<double>(index == 0 ? x_lut[index + 2] : x_lut[index + 1]);
-  const auto kY0 =
-      static_cast<double>(index == 0 ? y_lut[index] : y_lut[index - 1]);
-  const auto kY1 =
-      static_cast<double>(index == 0 ? y_lut[index + 1] : y_lut[index]);
-  const auto kY2 =
-      static_cast<double>(index == 0 ? y_lut[index + 2] : y_lut[index + 1]);
-  const double kLerp = x_in >= kX1
-                           ? ((kY2 - kY1) / (kX2 - kX1) * (x_in - kX1)) + kY1
-                           : ((kY1 - kY0) / (kX1 - kX0) * (x_in - kX0)) + kY0;
-
-  const tables::Circle kC =
-      tables::FitCircle({kX0, kY0}, {kX1, kY1}, {kX2, kY2});
-
-  const double kMinimumRadius = 0.0001;
-
-  if (kC.radius < kMinimumRadius) {
-    return kLerp;
-  }
-
-  const double kDiscriminant =
-      std::pow(kC.radius, 2) - std::pow(x_in - kC.center.x, 2);
-
-  const double kResult1 = kC.center.y + std::sqrt(kDiscriminant);
-  const double kResult2 = kC.center.y - std::sqrt(kDiscriminant);
-
-  const double kAnglePoint0 = FindAngleToPointOnCircle({kX0, kY0}, kC);
-  const double kAnglePoint2 = FindAngleToPointOnCircle({kX2, kY2}, kC);
-  const double kAngleResult1 = FindAngleToPointOnCircle({x_in, kResult1}, kC);
-  const double kAngleResult2 = FindAngleToPointOnCircle({x_in, kResult2}, kC);
-
-  if (kAngleResult1 >= std::min(kAnglePoint0, kAnglePoint2) &&
-      kAngleResult1 <= std::max(kAnglePoint0, kAnglePoint2)) {
-    return kResult1;
-  }
-
-  if (kAngleResult2 >= std::min(kAnglePoint0, kAnglePoint2) &&
-      kAngleResult2 <= std::max(kAnglePoint0, kAnglePoint2)) {
-    return kResult2;
-  }
-  return kLerp;
-}
-
-template <typename T, size_t N>
-constexpr double LobQerp(const std::array<T, N>& x_lut,
-                         const std::array<T, N>& y_lut, const double x_in) {
-  return LobQerp(x_lut.data(), y_lut.data(), N, x_in);
-}
-
-}  // namespace tables
 }  // namespace lob
 
 // This file is part of lob.

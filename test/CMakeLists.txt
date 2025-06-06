@@ -75,8 +75,7 @@ set(HELPER_TEST_SOURCES
     source/eng_units_test.cpp
     source/helpers_test.cpp
     source/litz_test.cpp
-    source/ode_test.cpp
-    source/tables_test.cpp)
+    source/ode_test.cpp)
 # cmake-format: on
 
 if(BUILD_SHARED_LIBS)

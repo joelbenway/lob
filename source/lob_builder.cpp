@@ -549,7 +549,7 @@ void BuildBoatright(Impl* pimpl) {
   static const FpsT kTransonicBarrier(MachT(1.2), kSos);
 
   while (s.V().X() > kTransonicBarrier) {
-    assert(t.Value() < 100.0 && "This is taking too long");
+    assert(t < SecT(60) && "This is taking too long");
     SolveStep(&s, &t, pimpl->build);
   }
 
@@ -665,6 +665,7 @@ void BuildZeroAngle(Impl* pimpl) {
     SecT t(0.0);
 
     while (s.P().X() < pimpl->zero_distance_ft) {
+      assert(t < SecT(60) && "This is taking too long");
       SolveStep(&s, &t, pimpl->build);
     }
 

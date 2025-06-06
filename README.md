@@ -59,7 +59,7 @@ std::array<lob::Output, kNumToSolve> solver_outputs = {};
 const size_t kNumSolved = lob::Solve(kSolverInput, kRanges, solver_outputs);
 // Do something with outputs
 for (size_t i = 0; i < kNumSolved; i++) {
-  std::cout << "Drop at " solver_outputs.at(i).range << " feet is " << solver_outputs.at(i).elevation << "inches. \n";
+  std::cout << "Drop at " << solver_outputs.at(i).range << " feet is " << solver_outputs.at(i).elevation << "inches. \n";
 }
 ```
 Those few parameters are enough for lob to make a well-formed, if minimal, ballistic solution. By feeding more data we can get something more practical from the solver.

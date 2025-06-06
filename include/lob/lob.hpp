@@ -425,7 +425,7 @@ LOB_EXPORT size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
  * @tparam N The number of ranges to solve for.
  * @param in Input parameters for the calculation.
  * @param pranges Reference to an array of ranges (in feet) to solve for.
- * @param pouts Reverence to an array where the output results will be stored.
+ * @param pouts Reference to an array where the output results will be stored.
  * @return The number of successful solutions.
  */
 template <size_t N>
