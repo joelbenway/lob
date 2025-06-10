@@ -35,7 +35,7 @@ TEST(CalcTests, CalculateTemperatureAtAltitude) {
   }
 }
 
-/*TEST(CalcTests, CalculateTemperatureAtAltitudeMcCoy) {
+TEST(CalcTests, CalculateTemperatureAtAltitudeMcCoy) {
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
   const std::vector<uint16_t> kAltitudesFt = {
       0,    500,  1000, 1500,  2000,  3000,  4000,  5000,  6000,
@@ -55,7 +55,7 @@ TEST(CalcTests, CalculateTemperatureAtAltitude) {
             .Value(),
         kError);
   }
-}*/
+}
 
 TEST(CalcTests, BarometricFormula) {
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
@@ -100,11 +100,12 @@ TEST(CalcTests, CalculateAirDensityAtAltitude) {
       .739 * kP0, .629 * kP0, .533 * kP0, .449 * kP0, .375 * kP0, .310 * kP0};
   const double kError = 0.1;
   for (uint32_t i = 0; i < kAltitudesFt.size(); i++) {
-    EXPECT_NEAR(
-        kExpectedResultsLbsPerCuFt.at(i),
-        lob::CalculateAirDensityAtAltitude(lob::FeetT(kAltitudesFt.at(i)))
-            .Value(),
-        kError);
+    EXPECT_NEAR(kExpectedResultsLbsPerCuFt.at(i),
+                lob::CalculateAirDensityAtAltitude(
+                    lob::FeetT(kAltitudesFt.at(i)),
+                    lob::LbsPerCuFtT(lob::kIsaSeaLevelAirDensityLbsPerCuFt))
+                    .Value(),
+                kError);
   }
 }
 
