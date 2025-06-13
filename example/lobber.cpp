@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Please see end of file for extended copyright information
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -11,7 +10,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <memory>
+#include <nlohmann/json.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -19,11 +18,21 @@
 #include "lob/lob.hpp"
 #include "version.hpp"
 
+namespace colors {
+constexpr const char* kReset = "\033[0m";
+constexpr const char* kRed = "\033[31m";
+constexpr const char* kGreen = "\033[32m";
+constexpr const char* kYellow = "\033[33m";
+constexpr const char* kBlue = "\033[34m";
+}  // namespace colors
+
 namespace example {
 namespace {
+
 void PrintGH() {
-  std::cout << "Report bugs or give feedback here: "
-               "https://github.com/joelbenway/lob\n";
+  std::cout << "Report bugs or give feedback here: ";
+  std::cout << colors::kBlue << "https://github.com/joelbenway/lob\n"
+            << colors::kReset;
 }
 
 void PrintVersion() {
@@ -37,12 +46,14 @@ void PrintHelp() {
             << "Options:\n"
             << "  --h, --help     Show this help message\n"
             << "  --v, --version  Show version information\n"
-            << "  --if=FILE       Input file containing data to use instead of "
-               "user prompts\n"
-            << "  --of=FILE       Output file where data is saved for future "
-               "use as an input file\n"
+            << "  --json          Output results to stdout in json format\n"
+            << "  --if=FILE       Input json file containing data to use "
+               "instead of user prompts\n"
+            << "  --of=FILE       Output json file where data is saved for "
+               "future use as an input file\n"
             << "Example:\n"
-            << "  lobber --of=my_rifle_load.txt\n\n";
+            << colors::kYellow << "  lobber --of=my_rifle_load.json\n\n"
+            << colors::kReset;
   PrintGH();
 }
 
@@ -50,51 +61,6 @@ void PrintGreeting() {
   std::cout
       << "Welcome to lobber, a minimal example program included with the lob "
          "ballistics library. Follow the prompts to enter data.\n\n";
-}
-
-double Prompt(const std::string& prompt) {
-  bool is_valid = false;
-  double input = 0;
-  std::string str;
-
-  while (!is_valid) {
-    std::cout << prompt << '\n' << '>';
-    std::getline(std::cin, str);
-    if (str.empty()) {
-      input = std::numeric_limits<double>::quiet_NaN();
-      is_valid = true;
-    } else {
-      std::istringstream iss(str);
-      if ((iss >> input) || (iss >> std::ws).eof()) {
-        is_valid = true;
-      } else {
-        std::cerr << "Invalid input. Enter a number or omit to skip.\n";
-      }
-    }
-  }
-
-  return input;
-}
-
-double Read(std::ifstream* pfile) {
-  std::string line;
-  std::getline(*pfile, line);
-  double input = std::numeric_limits<double>::quiet_NaN();
-
-  if (!line.empty() && line != "nan") {
-    std::istringstream iss(line);
-    iss >> input;
-  }
-  return input;
-}
-
-void GetInput(const std::string& prompt, std::vector<double>* inputs,
-              std::ifstream* pfile) {
-  if (!*pfile) {
-    inputs->push_back(Prompt(prompt));
-  } else {
-    inputs->push_back(Read(pfile));
-  }
 }
 
 lob::DragFunctionT ConvertDF(double input) {
@@ -169,24 +135,7 @@ lob::ClockAngleT ConvertCA(double input) {
   }
 }
 
-bool WriteOutputFile(const std::string& file_name,
-                     const std::vector<double>& inputs) {
-  std::ofstream output_file(file_name);
-
-  if (!output_file.is_open()) {
-    std::cerr << "Error opening output file: " << file_name << '\n';
-    return false;
-  }
-
-  for (const auto kValue : inputs) {
-    output_file << kValue << '\n';
-  }
-
-  output_file.close();
-  return true;
-}
-
-enum class BuildState : uint8_t {
+enum class StateType : uint8_t {
   kBallisticCoefficientPsi,
   kBCAtmosphere,
   kBCDragFunction,
@@ -197,7 +146,7 @@ enum class BuildState : uint8_t {
   kNoseLengthInch,
   kTailLengthInch,
   kOgiveRtR,
-  kMachVsDragTable,
+  kMachVsDragTable,  // unused
   kMassGrains,
   kInitialVelocityFps,
   kOpticHeightInches,
@@ -218,307 +167,338 @@ enum class BuildState : uint8_t {
   kRangeAngleDeg,
   kMinimumSpeed,
   kMinimumEnergy,
-  kMaximumTime
+  kMaximumTime,
+  kRanges
 };
+
+const std::map<StateType, std::string>& GetStateKeys() {
+  static const std::map<StateType, std::string> kStateKeys{
+      {StateType::kBallisticCoefficientPsi, "BallisticCoefficientPsi"},
+      {StateType::kBCAtmosphere, "BCAtmosphere"},
+      {StateType::kBCDragFunction, "BCDragFunction"},
+      {StateType::kDiameterInch, "DiameterInch"},
+      {StateType::kMeplatDiameterInch, "MeplatDiameterInch"},
+      {StateType::kBaseDiameterInch, "BaseDiameterInch"},
+      {StateType::kLengthInch, "LengthInch"},
+      {StateType::kNoseLengthInch, "NoseLengthInch"},
+      {StateType::kTailLengthInch, "TailLengthInch"},
+      {StateType::kOgiveRtR, "OgiveRtR"},
+      {StateType::kMassGrains, "MassGrains"},
+      {StateType::kInitialVelocityFps, "InitialVelocityFps"},
+      {StateType::kOpticHeightInches, "OpticHeightInches"},
+      {StateType::kTwistInchesPerTurn, "TwistInchesPerTurn"},
+      {StateType::kZeroAngleMOA, "ZeroAngleMOA"},
+      {StateType::kZeroDistanceYds, "ZeroDistanceYds"},
+      {StateType::kZeroImpactHeightInches, "ZeroImpactHeightInches"},
+      {StateType::kAltitudeOfFiringSiteFt, "AltitudeOfFiringSiteFt"},
+      {StateType::kAirPressureInHg, "AirPressureInHg"},
+      {StateType::kAltitudeOfBarometerFt, "AltitudeOfBarometerFt"},
+      {StateType::kTemperatureDegF, "TemperatureDegF"},
+      {StateType::kAltitudeOfThermometerFt, "AltitudeOfThermometerFt"},
+      {StateType::kRelativeHumidityPercent, "RelativeHumidityPercent"},
+      {StateType::kWindHeading, "WindHeading"},
+      {StateType::kWindSpeedMph, "WindSpeedMph"},
+      {StateType::kAzimuthDeg, "AzimuthDeg"},
+      {StateType::kLatitudeDeg, "LatitudeDeg"},
+      {StateType::kRangeAngleDeg, "RangeAngleDeg"},
+      {StateType::kMinimumSpeed, "MinimumSpeed"},
+      {StateType::kMinimumEnergy, "MinimumEnergy"},
+      {StateType::kMaximumTime, "MaximumTime"},
+      {StateType::kRanges, "Ranges"}};
+  return kStateKeys;
+}
+
+const std::map<StateType, std::string>& GetStatePrompts() {
+  static const std::map<StateType, std::string> kStatePrompts{
+      {StateType::kBallisticCoefficientPsi,
+       "Enter ballistic coefficient in PSI"},
+      {StateType::kBCAtmosphere,
+       "Enter 1 for Army Standard Metro or 2 for ICAO reference atmosphere"},
+      {StateType::kBCDragFunction,
+       "Enter 1, 2, 5, 6, 7, or 8 for associated drag function"},
+      {StateType::kDiameterInch, "Enter bullet diameter in inches"},
+      {StateType::kMeplatDiameterInch, "Enter meplat diameter in inches"},
+      {StateType::kBaseDiameterInch, "Enter base diameter in inches"},
+      {StateType::kLengthInch, "Enter bullet length in inches"},
+      {StateType::kNoseLengthInch, "Enter nose length in inches"},
+      {StateType::kTailLengthInch, "Enter tail length in inches"},
+      {StateType::kOgiveRtR, "Enter ogive radius to length ratio (Rt/R)"},
+      {StateType::kMassGrains, "Enter bullet weight in grains"},
+      {StateType::kInitialVelocityFps, "Enter muzzle velocity in fps"},
+      {StateType::kOpticHeightInches, "Enter optic height in inches"},
+      {StateType::kTwistInchesPerTurn, "Enter twist rate in inches per turn"},
+      {StateType::kZeroAngleMOA, "Enter zero angle in MOA"},
+      {StateType::kZeroDistanceYds, "Enter zero range in yards"},
+      {StateType::kZeroImpactHeightInches,
+       "Enter zero impact height in inches"},
+      {StateType::kAltitudeOfFiringSiteFt,
+       "Enter altitude of firing site in feet"},
+      {StateType::kAirPressureInHg, "Enter air pressure in inches of mercury"},
+      {StateType::kAltitudeOfBarometerFt,
+       "Enter altitude of barometer in feet"},
+      {StateType::kTemperatureDegF, "Enter temperature in degrees Fahrenheit"},
+      {StateType::kAltitudeOfThermometerFt,
+       "Enter altitude of thermometer in feet"},
+      {StateType::kRelativeHumidityPercent,
+       "Enter relative humidity in percent"},
+      {StateType::kWindHeading,
+       "Enter wind heading as a clock angle (1 though 12)"},
+      {StateType::kWindSpeedMph, "Enter wind speed in miles per hour"},
+      {StateType::kAzimuthDeg, "Enter azimuth in degrees"},
+      {StateType::kLatitudeDeg, "Enter latitude in degrees"},
+      {StateType::kRangeAngleDeg, "Enter range angle in degrees"},
+      {StateType::kMinimumSpeed, "Enter minimum speed in feet per second"},
+      {StateType::kMinimumEnergy, "Enter minimum energy in foot pounds"},
+      {StateType::kMaximumTime, "Enter maximum time in seconds"},
+      {StateType::kRanges, "Enter a range in yards to solve for"}};
+  return kStatePrompts;
+}
+
+bool Prompt(StateType state, nlohmann::json* pjson) {
+  bool is_valid = false;
+  bool user_input = false;
+  double input = 0;
+  const std::string kKey = GetStateKeys().at(state);
+  std::string str;
+
+  while (!is_valid) {
+    std::cout << GetStatePrompts().at(state) << '\n' << '>';
+    std::getline(std::cin, str);
+    if (str.empty()) {
+      input = std::numeric_limits<double>::quiet_NaN();
+      is_valid = true;
+    } else {
+      std::istringstream iss(str);
+      if ((iss >> input) || (iss >> std::ws).eof()) {
+        is_valid = true;
+        user_input = true;
+      } else {
+        std::cerr << colors::kRed
+                  << "Invalid input. Enter a number or omit to skip."
+                  << colors::kReset << "\n";
+      }
+    }
+  }
+  if (!std::isnan(input)) {
+    (*pjson)[kKey] = input;
+  }
+  return user_input;
+}
+
+bool PromptList(StateType state, nlohmann::json* pjson) {
+  bool user_input = false;
+  nlohmann::json list;
+  double input = 0;
+  const std::string kKey = GetStateKeys().at(state);
+  std::string str;
+
+  while (!std::isnan(input)) {
+    bool is_valid = false;
+    while (!is_valid) {
+      std::cout << GetStatePrompts().at(state) << '\n' << '>';
+      std::getline(std::cin, str);
+      if (str.empty()) {
+        input = std::numeric_limits<double>::quiet_NaN();
+        is_valid = true;
+      } else {
+        std::istringstream iss(str);
+        if ((iss >> input) || (iss >> std::ws).eof()) {
+          list.push_back(input);
+          is_valid = true;
+          user_input = true;
+        } else {
+          std::cerr << colors::kRed
+                    << "Invalid input. Enter a number or omit to skip."
+                    << colors::kReset << "\n";
+        }
+      }
+    }
+  }
+  (*pjson)[kKey] = list;
+  return user_input;
+}
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-lob::Builder BuildHelper(std::ifstream* pinfile, std::vector<double>* pinputs) {
-  lob::Builder builder;
-  BuildState state = BuildState::kBallisticCoefficientPsi;
-  std::string prompt = "Enter Ballistic Coefficient in PSI";
+void PromptWizard(nlohmann::json* pjson) {
+  StateType state = StateType::kBallisticCoefficientPsi;
   while (true) {
+    const bool kRealInput = Prompt(state, pjson);
     switch (state) {
-      case BuildState::kBallisticCoefficientPsi:
-        GetInput(prompt, pinputs, pinfile);
-        builder.BallisticCoefficientPsi(pinputs->back());
-        state = std::isnan(pinputs->back())
-                    ? BuildState::kBallisticCoefficientPsi
-                    : BuildState::kBCAtmosphere;
+      case StateType::kBallisticCoefficientPsi:
+        state = kRealInput ? StateType::kBCAtmosphere
+                           : StateType::kBallisticCoefficientPsi;
         break;
-      case BuildState::kBCAtmosphere:
-        prompt =
-            "Enter 1 for Army Standard Metro or 2 for ICAO reference "
-            "atmosphere";
-        GetInput(prompt, pinputs, pinfile);
-        builder.BCAtmosphere(ConvertAR(pinputs->back()));
-        state = BuildState::kBCDragFunction;
+      case StateType::kBCAtmosphere:
+        state = StateType::kBCDragFunction;
         break;
-      case BuildState::kBCDragFunction:
-        prompt = "Enter 1, 2, 5, 6, 7, or 8 for associated drag function";
-        GetInput(prompt, pinputs, pinfile);
-        builder.BCDragFunction(ConvertDF(pinputs->back()));
-        state = BuildState::kDiameterInch;
+      case StateType::kBCDragFunction:
+        state = StateType::kDiameterInch;
         break;
-      case BuildState::kDiameterInch:
-        prompt = "Enter projectile diameter in inches";
-        GetInput(prompt, pinputs, pinfile);
-        builder.DiameterInch(pinputs->back());
-        state = std::isnan(pinputs->back()) ? BuildState::kMassGrains
-                                            : BuildState::kLengthInch;
+      case StateType::kDiameterInch:
+        state = kRealInput ? StateType::kLengthInch : StateType::kMassGrains;
         break;
-      case BuildState::kMeplatDiameterInch:
-        prompt = "Enter projectile meplat diameter in inches";
-        GetInput(prompt, pinputs, pinfile);
-        builder.MeplatDiameterInch(pinputs->back());
-        state = std::isnan(pinputs->back()) ? BuildState::kTwistInchesPerTurn
-                                            : BuildState::kBaseDiameterInch;
+      case StateType::kMeplatDiameterInch:
+        state = kRealInput ? StateType::kBaseDiameterInch
+                           : StateType::kTwistInchesPerTurn;
         break;
-      case BuildState::kBaseDiameterInch:
-        prompt = "Enter projectile base diameter in inches";
-        GetInput(prompt, pinputs, pinfile);
-        builder.BaseDiameterInch(pinputs->back());
-        state = std::isnan(pinputs->back()) ? BuildState::kTwistInchesPerTurn
-                                            : BuildState::kTailLengthInch;
+      case StateType::kBaseDiameterInch:
+        state = kRealInput ? StateType::kTwistInchesPerTurn
+                           : StateType::kTailLengthInch;
         break;
-      case BuildState::kLengthInch:
-        prompt = "Enter projectile length in inches";
-        GetInput(prompt, pinputs, pinfile);
-        builder.LengthInch(pinputs->back());
-        state = std::isnan(pinputs->back()) ? BuildState::kMassGrains
-                                            : BuildState::kNoseLengthInch;
+      case StateType::kLengthInch:
+        state =
+            kRealInput ? StateType::kNoseLengthInch : StateType::kMassGrains;
         break;
-      case BuildState::kNoseLengthInch:
-        prompt = "Enter projectile ogive (nose) length in inches";
-        GetInput(prompt, pinputs, pinfile);
-        builder.NoseLengthInch(pinputs->back());
-        state = std::isnan(pinputs->back()) ? BuildState::kTwistInchesPerTurn
-                                            : BuildState::kMeplatDiameterInch;
+      case StateType::kNoseLengthInch:
+        state = kRealInput ? StateType::kMeplatDiameterInch
+                           : StateType::kTwistInchesPerTurn;
         break;
-      case BuildState::kTailLengthInch:
-        prompt = "Enter projectile boat tail length in inches";
-        GetInput(prompt, pinputs, pinfile);
-        builder.TailLengthInch(pinputs->back());
-        state = std::isnan(pinputs->back()) ? BuildState::kTwistInchesPerTurn
-                                            : BuildState::kOgiveRtR;
+      case StateType::kTailLengthInch:
+        state =
+            kRealInput ? StateType::kOgiveRtR : StateType::kTwistInchesPerTurn;
         break;
-      case BuildState::kOgiveRtR:
-        prompt = "Enter ogive Rt/R ratio";
-        GetInput(prompt, pinputs, pinfile);
-        builder.OgiveRtR(pinputs->back());
-        state = BuildState::kTwistInchesPerTurn;
+      case StateType::kOgiveRtR:
+        state = StateType::kTwistInchesPerTurn;
         break;
-      case BuildState::kMachVsDragTable:
+      case StateType::kMachVsDragTable:
         break;
-      case BuildState::kMassGrains:
-        prompt = "Enter projectile mass in grains";
-        GetInput(prompt, pinputs, pinfile);
-        builder.MassGrains(pinputs->back());
-        state = BuildState::kInitialVelocityFps;
+      case StateType::kMassGrains:
+        state = StateType::kInitialVelocityFps;
         break;
-      case BuildState::kInitialVelocityFps:
-        prompt = "Enter initial velocity of projectile in FPS";
-        GetInput(prompt, pinputs, pinfile);
-        builder.InitialVelocityFps(
-            static_cast<uint16_t>(std::round(pinputs->back())));
-        state = std::isnan(pinputs->back()) ? BuildState::kInitialVelocityFps
-                                            : BuildState::kOpticHeightInches;
+      case StateType::kInitialVelocityFps:
+        state = kRealInput ? StateType::kOpticHeightInches
+                           : StateType::kInitialVelocityFps;
         break;
-      case BuildState::kOpticHeightInches:
-        prompt = "Enter the rifle's optic height above bore in inches";
-        GetInput(prompt, pinputs, pinfile);
-        builder.OpticHeightInches(pinputs->back());
-        state = BuildState::kZeroAngleMOA;
+      case StateType::kOpticHeightInches:
+        state = StateType::kZeroAngleMOA;
         break;
-      case BuildState::kTwistInchesPerTurn:
-        prompt = "Enter rifle's barrel twist rate in inches per turn";
-        GetInput(prompt, pinputs, pinfile);
-        builder.TwistInchesPerTurn(pinputs->back());
-        state = BuildState::kMassGrains;
+      case StateType::kTwistInchesPerTurn:
+        state = StateType::kMassGrains;
         break;
-      case BuildState::kZeroAngleMOA:
-        prompt = "Enter angle in MOA between optic's line of sight and bore";
-        GetInput(prompt, pinputs, pinfile);
-        builder.ZeroAngleMOA(pinputs->back());
-        state = std::isnan(pinputs->back())
-                    ? BuildState::kZeroDistanceYds
-                    : BuildState::kAltitudeOfFiringSiteFt;
+      case StateType::kZeroAngleMOA:
+        state = kRealInput ? StateType::kAltitudeOfFiringSiteFt
+                           : StateType::kZeroDistanceYds;
         break;
-      case BuildState::kZeroDistanceYds:
-        prompt = "Enter range in yards of the rifle's zero";
-        GetInput(prompt, pinputs, pinfile);
-        builder.ZeroDistanceYds(pinputs->back());
-        state = std::isnan(pinputs->back())
-                    ? BuildState::kZeroAngleMOA
-                    : BuildState::kZeroImpactHeightInches;
+      case StateType::kZeroDistanceYds:
+        state = kRealInput ? StateType::kZeroImpactHeightInches
+                           : StateType::kZeroAngleMOA;
         break;
-      case BuildState::kZeroImpactHeightInches:
-        prompt =
-            "Enter height in inches for zero impact above zero aiming point";
-        GetInput(prompt, pinputs, pinfile);
-        builder.ZeroImpactHeightInches(pinputs->back());
-        state = BuildState::kAltitudeOfFiringSiteFt;
+      case StateType::kZeroImpactHeightInches:
+        state = StateType::kAltitudeOfFiringSiteFt;
         break;
-      case BuildState::kAltitudeOfFiringSiteFt:
-        prompt = "Enter altitude in feet of firing site";
-        GetInput(prompt, pinputs, pinfile);
-        builder.AltitudeOfFiringSiteFt(pinputs->back());
-        state = BuildState::kAirPressureInHg;
+      case StateType::kAltitudeOfFiringSiteFt:
+        state = StateType::kAirPressureInHg;
         break;
-      case BuildState::kAirPressureInHg:
-        prompt = "Enter air pressure in inches of mercury";
-        GetInput(prompt, pinputs, pinfile);
-        builder.AirPressureInHg(pinputs->back());
-        state = std::isnan(pinputs->back())
-                    ? BuildState::kTemperatureDegF
-                    : BuildState::kAltitudeOfBarometerFt;
+      case StateType::kAirPressureInHg:
+        state = kRealInput ? StateType::kAltitudeOfBarometerFt
+                           : StateType::kTemperatureDegF;
         break;
-      case BuildState::kAltitudeOfBarometerFt:
-        prompt = "Enter altitude in feet of air pressure measurement";
-        GetInput(prompt, pinputs, pinfile);
-        builder.AltitudeOfBarometerFt(pinputs->back());
-        state = BuildState::kTemperatureDegF;
+      case StateType::kAltitudeOfBarometerFt:
+        state = StateType::kTemperatureDegF;
         break;
-      case BuildState::kTemperatureDegF:
-        prompt = "Enter temperature in degrees F";
-        GetInput(prompt, pinputs, pinfile);
-        builder.TemperatureDegF(pinputs->back());
-        state = std::isnan(pinputs->back())
-                    ? BuildState::kRelativeHumidityPercent
-                    : BuildState::kAltitudeOfThermometerFt;
+      case StateType::kTemperatureDegF:
+        state = kRealInput ? StateType::kAltitudeOfThermometerFt
+                           : StateType::kRelativeHumidityPercent;
         break;
-      case BuildState::kAltitudeOfThermometerFt:
-        prompt = "Enter altitude in feet of temperature measurement";
-        GetInput(prompt, pinputs, pinfile);
-        builder.AltitudeOfThermometerFt(pinputs->back());
-        state = BuildState::kRelativeHumidityPercent;
+      case StateType::kAltitudeOfThermometerFt:
+        state = StateType::kRelativeHumidityPercent;
         break;
-      case BuildState::kRelativeHumidityPercent:
-        prompt = "Enter relative humidity percent";
-        GetInput(prompt, pinputs, pinfile);
-        builder.RelativeHumidityPercent(pinputs->back());
-        state = BuildState::kWindSpeedMph;
+      case StateType::kRelativeHumidityPercent:
+        state = StateType::kWindSpeedMph;
         break;
-      case BuildState::kWindHeading:
-        prompt = "Enter wind heading as a clock direction 1-12";
-        GetInput(prompt, pinputs, pinfile);
-        builder.WindHeading(ConvertCA(pinputs->back()));
-        state = BuildState::kAzimuthDeg;
+      case StateType::kWindHeading:
+        state = StateType::kAzimuthDeg;
         break;
-      case BuildState::kWindSpeedMph:
-        prompt = "Enter wind speed as Mph";
-        GetInput(prompt, pinputs, pinfile);
-        builder.WindSpeedFps(pinputs->back());
-        if (std::isnan(pinputs->back()) ||
-            pinputs->back() < std::numeric_limits<double>::epsilon()) {
-          state = BuildState::kAzimuthDeg;
+      case StateType::kWindSpeedMph:
+        if (!kRealInput || (*pjson)[GetStateKeys().at(state)] == 0) {
+          state = StateType::kAzimuthDeg;
         } else {
-          state = BuildState::kWindHeading;
+          state = StateType::kWindHeading;
         }
         break;
-      case BuildState::kAzimuthDeg:
-        prompt = "Enter azimuth in degrees";
-        GetInput(prompt, pinputs, pinfile);
-        builder.AzimuthDeg(pinputs->back());
-        state = std::isnan(pinputs->back()) ? BuildState::kRangeAngleDeg
-                                            : BuildState::kLatitudeDeg;
+      case StateType::kAzimuthDeg:
+        state =
+            kRealInput ? StateType::kLatitudeDeg : StateType::kRangeAngleDeg;
         break;
-      case BuildState::kLatitudeDeg:
-        prompt = "Enter latitude in degrees";
-        GetInput(prompt, pinputs, pinfile);
-        builder.LatitudeDeg(pinputs->back());
-        state = BuildState::kRangeAngleDeg;
+      case StateType::kLatitudeDeg:
+        state = StateType::kRangeAngleDeg;
         break;
-      case BuildState::kRangeAngleDeg:
-        prompt = "Enter the angle of incline (or decline) in degrees";
-        GetInput(prompt, pinputs, pinfile);
-        builder.RangeAngleDeg(pinputs->back());
-        state = BuildState::kMinimumSpeed;
+      case StateType::kRangeAngleDeg:
+        state = StateType::kMinimumSpeed;
         break;
-      case BuildState::kMinimumSpeed:
-        prompt =
-            "Enter the minimum speed in fps at which the solver should stop";
-        GetInput(prompt, pinputs, pinfile);
-        builder.MinimumSpeed(
-            static_cast<uint16_t>(std::round(pinputs->back())));
-        state = BuildState::kMinimumEnergy;
+      case StateType::kMinimumSpeed:
+        state = StateType::kMinimumEnergy;
         break;
-      case BuildState::kMinimumEnergy:
-        prompt =
-            "Enter the minimum energy in ft-lbs at which the solver should "
-            "stop";
-        GetInput(prompt, pinputs, pinfile);
-        builder.MinimumEnergy(
-            static_cast<uint16_t>(std::round(pinputs->back())));
-        state = BuildState::kMaximumTime;
+      case StateType::kMinimumEnergy:
+        state = StateType::kMaximumTime;
         break;
-      case BuildState::kMaximumTime:
-        prompt =
-            "Enter the maximum time of flight in seconds at which the solver "
-            "should stop";
-        GetInput(prompt, pinputs, pinfile);
-        builder.MaximumTime(pinputs->back());
-        const uint16_t kStep = 100U;
-        builder.StepSize(kStep);
-        return builder;
+      case StateType::kMaximumTime:
+      case StateType::kRanges:
+        state = StateType::kRanges;
+        if (!PromptList(state, pjson)) {
+          const nlohmann::json kList{0,   50,  100, 200, 300, 400,
+                                     500, 600, 700, 800, 900, 1000};
+          (*pjson)[GetStateKeys().at(state)] = kList;
+        }
+        return;
     }
   }
 }
 
-std::vector<uint32_t> RangeHelper(std::ifstream* pinfile,
-                                  std::vector<double>* pinputs) {
-  std::vector<uint32_t> ranges_ft;
-  const static std::string kPrompt = "Enter a range in yards to solve for";
-  if (!*pinfile) {
-    while (true) {
-      const double kRangeYds = Prompt(kPrompt);
-      if (std::isnan(kRangeYds)) {
-        break;
-      }
-      ranges_ft.push_back(static_cast<uint32_t>(std::round(kRangeYds)) * 3);
-    }
-  } else {
-    const auto kSize = static_cast<size_t>(std::round(Read(pinfile)));
-    ranges_ft.resize(kSize);
-    for (auto& range_ft : ranges_ft) {
-      range_ft = static_cast<uint32_t>(std::round(Read(pinfile)));
-    }
+double JsonToDouble(const nlohmann::json& json, StateType state) {
+  const auto& key = GetStateKeys().at(state);
+  if (json[key] == "nan") {
+    return std::numeric_limits<double>::quiet_NaN();
   }
-
-  if (ranges_ft.empty()) {
-    const std::initializer_list<uint32_t> kRangesFt = {
-        0U,     150U,   300U,   600U,   900U,   1'200U,
-        1'500U, 1'800U, 2'100U, 2'400U, 2'700U, 3'000U};
-    ranges_ft = kRangesFt;
-  } else {
-    std::sort(ranges_ft.begin(), ranges_ft.end());
-    ranges_ft.erase(std::unique(ranges_ft.begin(), ranges_ft.end()),
-                    ranges_ft.end());
-  }
-
-  const auto kSize = static_cast<double>(ranges_ft.size());
-  pinputs->push_back(kSize);
-  for (auto range_ft : ranges_ft) {
-    pinputs->push_back(static_cast<double>(range_ft));
-  }
-  return ranges_ft;
+  return json[key];
 }
 
-struct SolverData {
-  lob::Input input;
-  std::vector<uint32_t> ranges;
-  std::vector<lob::Output> solutions;
-};
-
-std::unique_ptr<SolverData> Wizard(const std::string& infile,
-                                   const std::string& outfile) {
-  std::ifstream file(infile);
-  auto* pfile = &file;
-  std::vector<double> inputs;
-  auto* pinputs = &inputs;
-  std::unique_ptr<SolverData> pwizard(new SolverData);
-
-  if (!file) {
-    PrintGreeting();
+uint16_t JsonToU16(const nlohmann::json& json, StateType state) {
+  const auto& key = GetStateKeys().at(state);
+  if (json[key] == "nan") {
+    return 0;
   }
-  lob::Builder builder = BuildHelper(pfile, pinputs);
-  pwizard->input = builder.Build();
-  pwizard->ranges = RangeHelper(pfile, pinputs);
-  pwizard->solutions.resize(pwizard->ranges.size());
+  return json[key];
+}
 
-  if (!outfile.empty() && !file) {
-    WriteOutputFile(outfile, inputs);
+lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& json,
+                                           StateType state) {
+  const auto& key = GetStateKeys().at(state);
+  if (json[key] == "nan") {
+    return lob::AtmosphereReferenceT::kArmyStandardMetro;
   }
-  return pwizard;
+  return ConvertAR(json[key]);
+}
+
+lob::DragFunctionT JsonToDragFunction(const nlohmann::json& json,
+                                      StateType state) {
+  const auto& key = GetStateKeys().at(state);
+  if (json[key] == "nan") {
+    return lob::DragFunctionT::kG1;
+  }
+  return ConvertDF(json[key]);
+}
+
+lob::ClockAngleT JsonToClock(const nlohmann::json& json, StateType state) {
+  const auto& key = GetStateKeys().at(state);
+  if (json[key] == "nan") {
+    return lob::ClockAngleT::kXII;
+  }
+  return ConvertCA(json[key]);
+}
+
+void WriteOutputFile(const std::string& output_file,
+                     const nlohmann::json& json) {
+  if (output_file.empty()) {
+    return;
+  }
+  std::ofstream file(output_file);
+  if (!file.is_open()) {
+    std::cerr << colors::kRed << "File can't open!" << colors::kReset << "\n";
+    return;
+  }
+  file << json.dump(4);
+  file.close();
 }
 
 void PrintExtraInfo(const lob::Input& input) {
@@ -530,8 +510,9 @@ void PrintExtraInfo(const lob::Input& input) {
   const std::string kSS("Speed of Sound");
   const auto kSSw = static_cast<int>(kSS.length() + kExtra);
 
-  std::cout << std::left << std::setw(kZAw) << kZA << std::setw(kSFw) << kSF
-            << std::setw(kSSw) << kSS << "\n";
+  std::cout << colors::kYellow << std::left << std::setw(kZAw) << kZA
+            << std::setw(kSFw) << kSF << std::setw(kSSw) << kSS
+            << colors::kReset << "\n";
   std::cout << std::left << std::setw(kZAw) << std::fixed
             << std::setprecision(2) << input.zero_angle << std::setw(kSFw)
             << input.stability_factor << std::setw(kSSw) << input.speed_of_sound
@@ -543,13 +524,13 @@ void PrintSolutionTable(const lob::Output* psolutions, size_t size) {
   const int kWidth = 12;
 
   // Print table header
-  std::cout << std::left << std::setw(kWidth) << "Yards" << std::setw(kWidth)
-            << "FPS" << std::setw(kWidth) << "FtLbs" << std::setw(kWidth)
-            << "Elev Inch" << std::setw(kWidth) << "Elev MOA"
-            << std::setw(kWidth) << "Elev MIL" << std::setw(kWidth)
-            << "Wind Inch" << std::setw(kWidth) << "Wind MOA"
-            << std::setw(kWidth) << "Wind MIL" << std::setw(kWidth) << "Seconds"
-            << "\n";
+  std::cout << std::left << std::setw(kWidth) << colors::kGreen << "Yards"
+            << std::setw(kWidth) << "FPS" << std::setw(kWidth) << "FtLbs"
+            << std::setw(kWidth) << "Elev Inch" << std::setw(kWidth)
+            << "Elev MOA" << std::setw(kWidth) << "Elev MIL"
+            << std::setw(kWidth) << "Wind Inch" << std::setw(kWidth)
+            << "Wind MOA" << std::setw(kWidth) << "Wind MIL"
+            << std::setw(kWidth) << "Seconds" << colors::kReset << "\n";
 
   // Print table content
   for (size_t i = 0; i < size; ++i) {
@@ -571,9 +552,21 @@ void PrintSolutionTable(const lob::Output* psolutions, size_t size) {
   }
   std::cout << "\n";
 }
+
 }  // namespace
 }  // namespace example
 
+namespace lob {
+// NOLINTNEXTLINE(readability-identifier-naming, misc-use-internal-linkage)
+void to_json(nlohmann::json& j, const lob::Output& o) {
+  j = nlohmann::json{
+      {"range", o.range},           {"velocity", o.velocity},
+      {"energy", o.energy},         {"elevation", o.elevation},
+      {"deflection", o.deflection}, {"time_of_flight", o.time_of_flight}};
+}
+}  // namespace lob
+
+//NOLINTNEXTLINE(readability-function-cognitive-complexity)
 int main(int argc, char* argv[]) {
   const std::string kHelp = "--help";
   const std::string kH = "--h";
@@ -581,9 +574,11 @@ int main(int argc, char* argv[]) {
   const std::string kV = "--v";
   const std::string kIf = "--if=";
   const std::string kOf = "--of=";
+  const std::string kJson = "--json";
 
-  std::string input_file;
   std::string output_file;
+  nlohmann::json json;
+  bool output_in_json = false;
 
   for (int i = 1; i < argc; i++) {
     const std::string kArg = argv[i];
@@ -596,35 +591,119 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     if (kArg.substr(0, kIf.length()) == kIf) {
-      input_file = kArg.substr(kIf.length());
+      const std::string kInputFile = kArg.substr(kIf.length());
+      std::ifstream file(kInputFile);
+      if (!file.is_open()) {
+        std::cerr << colors::kRed << "Error: Could not open the JSON file!"
+                  << colors::kReset << "\n";
+        return 1;
+      }
+      try {
+        file >> json;
+      } catch (const nlohmann::json::parse_error& e) {
+        std::cerr << colors::kRed << "Error parsing JSON: " << colors::kReset
+                  << e.what() << "\n";
+        return 1;
+      }
       continue;
     }
-    if (kArg.substr(0, kIf.length()) == kOf) {
+    if (kArg.substr(0, kOf.length()) == kOf) {
       output_file = kArg.substr(kOf.length());
       continue;
     }
+    if (kArg.substr(0, kJson.length()) == kJson) {
+      output_in_json = true;
+      continue;
+    }
   }
 
-  auto psolver_data = example::Wizard(input_file, output_file);
-
-  while (std::isnan(psolver_data->input.table_coefficient)) {
-    psolver_data.reset();
-    input_file.clear();  // prevent bad file loop
-    std::cout << "\nOOPS! INVALID DATA, let's start over.\n";
-    psolver_data = example::Wizard(input_file, output_file);
+  if (json.empty()) {
+    try {
+      std::cin >> json;
+    } catch (const nlohmann::json::parse_error& e) {
+      std::cerr << colors::kRed
+                << "Error parsing JSON from stdin: " << colors::kReset
+                << e.what() << "\n";
+      return 1;
+    }
   }
 
-  example::PrintExtraInfo(psolver_data->input);
+  if (json.empty()) {
+    for (const auto& pair : example::GetStateKeys()) {
+      json[pair.second] = "nan";
+    }
+    example::PrintGreeting();
+    example::PromptWizard(&json);
+  }
 
-  const auto kSize =
-      lob::Solve(psolver_data->input, psolver_data->ranges.data(),
-                 psolver_data->solutions.data(), psolver_data->ranges.size());
+  using example::StateType;
+  const lob::Input kSolverInput =
+      lob::Builder()
+          .BallisticCoefficientPsi(
+              JsonToDouble(json, StateType::kBallisticCoefficientPsi))
+          .BCAtmosphere(JsonToAtmosphere(json, StateType::kBCAtmosphere))
+          .BCDragFunction(JsonToDragFunction(json, StateType::kBCDragFunction))
+          .DiameterInch(JsonToDouble(json, StateType::kDiameterInch))
+          .MeplatDiameterInch(
+              JsonToDouble(json, StateType::kMeplatDiameterInch))
+          .BaseDiameterInch(JsonToDouble(json, StateType::kBaseDiameterInch))
+          .LengthInch(JsonToDouble(json, StateType::kLengthInch))
+          .NoseLengthInch(JsonToDouble(json, StateType::kNoseLengthInch))
+          .TailLengthInch(JsonToDouble(json, StateType::kTailLengthInch))
+          .OgiveRtR(JsonToDouble(json, StateType::kOgiveRtR))
+          .MassGrains(JsonToDouble(json, StateType::kMassGrains))
+          .InitialVelocityFps(JsonToU16(json, StateType::kInitialVelocityFps))
+          .OpticHeightInches(JsonToDouble(json, StateType::kOpticHeightInches))
+          .TwistInchesPerTurn(
+              JsonToDouble(json, StateType::kTwistInchesPerTurn))
+          .ZeroAngleMOA(JsonToDouble(json, StateType::kZeroAngleMOA))
+          .ZeroDistanceYds(JsonToDouble(json, StateType::kZeroDistanceYds))
+          .ZeroImpactHeightInches(
+              JsonToDouble(json, StateType::kZeroImpactHeightInches))
+          .AltitudeOfFiringSiteFt(
+              JsonToDouble(json, StateType::kAltitudeOfFiringSiteFt))
+          .AirPressureInHg(JsonToDouble(json, StateType::kAirPressureInHg))
+          .AltitudeOfBarometerFt(
+              JsonToDouble(json, StateType::kAltitudeOfBarometerFt))
+          .TemperatureDegF(JsonToDouble(json, StateType::kTemperatureDegF))
+          .AltitudeOfThermometerFt(
+              JsonToDouble(json, StateType::kAltitudeOfThermometerFt))
+          .RelativeHumidityPercent(
+              JsonToDouble(json, StateType::kRelativeHumidityPercent))
+          .WindHeading(JsonToClock(json, StateType::kWindHeading))
+          .WindSpeedMph(JsonToDouble(json, StateType::kWindSpeedMph))
+          .AzimuthDeg(JsonToDouble(json, StateType::kAzimuthDeg))
+          .LatitudeDeg(JsonToDouble(json, StateType::kLatitudeDeg))
+          .RangeAngleDeg(JsonToDouble(json, StateType::kRangeAngleDeg))
+          .MinimumSpeed(JsonToU16(json, StateType::kMinimumSpeed))
+          .MinimumEnergy(JsonToU16(json, StateType::kMinimumEnergy))
+          .MaximumTime(JsonToDouble(json, StateType::kMaximumTime))
+          .StepSize(100)
+          .Build();
 
-  example::PrintSolutionTable(psolver_data->solutions.data(), kSize);
+  std::vector<uint32_t> ranges =
+      json[example::GetStateKeys().at(StateType::kRanges)]
+          .get<std::vector<uint32_t>>();
+  for (auto& range : ranges) {
+    range *= 3;
+  }
+  std::vector<lob::Output> solutions;
+  solutions.resize(ranges.size());
+
+  const size_t kSize =
+      lob::Solve(kSolverInput, ranges.data(), solutions.data(), ranges.size());
+
+  example::WriteOutputFile(output_file, json);
+
+  if (output_in_json) {
+    nlohmann::json jsolutions = solutions;
+    std::cout << jsolutions.dump(4) << "\n";
+    return 0;
+  }
+
+  example::PrintExtraInfo(kSolverInput);
+  example::PrintSolutionTable(solutions.data(), kSize);
   example::PrintGH();
-  std::cout << "Thanks for using lobber! Goodbye.";
-
-  psolver_data.reset();
   return 0;
 }
 
