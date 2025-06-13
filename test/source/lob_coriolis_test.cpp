@@ -99,7 +99,8 @@ TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
       {9000, 761, 848, -8096.45, 0.00, 7.707}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,

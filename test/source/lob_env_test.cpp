@@ -144,7 +144,8 @@ TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
       {3000, 1353, 629, -329.05, 0.00, 1.542}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -193,7 +194,8 @@ TEST_F(LobEnvTestFixture, SolveWithTempAndAirPressure) {
       {3000, 1437, 710, -313.59, 0.00, 1.496}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -246,7 +248,8 @@ TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
       {3000, 1376, 651, -324.63, 0.00, 1.529}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -355,7 +358,8 @@ TEST_F(LobEnvTestFixture, SolveWithWeatherStationData) {
       {3000, 1376, 651, -324.63, 0.00, 1.529}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,

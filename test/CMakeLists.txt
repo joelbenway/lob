@@ -21,10 +21,10 @@ set(DEV_WARNINGS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_WARNINGS}")
 set(DEV_ERRORS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_ERRORS}")
 set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
     ON
-    CACHE INTERNAL "Suppress thirdparty CMake warnings" FORCE)
+    CACHE INTERNAL "Suppress third-party CMake warnings" FORCE)
 set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
     ON
-    CACHE INTERNAL "Suppress thirdparty CMake errors" FORCE)
+    CACHE INTERNAL "Suppress third-party CMake errors" FORCE)
 
 include(FetchContent)
 FetchContent_Declare(

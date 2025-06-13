@@ -566,7 +566,7 @@ void to_json(nlohmann::json& j, const lob::Output& o) {
 }
 }  // namespace lob
 
-//NOLINTNEXTLINE(readability-function-cognitive-complexity)
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 int main(int argc, char* argv[]) {
   const std::string kHelp = "--help";
   const std::string kH = "--h";

@@ -14,14 +14,14 @@ namespace litz {
 
 // Page 417 of Applied Ballistics for Long-Range Shooting 3e - Litz
 inline PmsiT CalculateBallisticCoefficient(LbsT mass, InchT diameter,
-                                    double form_factor) {
+                                           double form_factor) {
   return PmsiT(mass.Value() /
                (diameter.Value() * diameter.Value() * form_factor));
 }
 
 // Page 422 of Applied Ballistics for Long-Range Shooting 3e - Litz
-inline MoaT CalculateAerodynamicJump(double stability, InchT caliber, InchT length,
-                              MphT zwind) {
+inline MoaT CalculateAerodynamicJump(double stability, InchT caliber,
+                                     InchT length, MphT zwind) {
   const double kSgCoeff = 0.01;
   const double kLCoeff = 0.0024;
   const double kIntercept = 0.032;
@@ -45,11 +45,9 @@ inline InchT CalculateGyroscopicSpinDrift(double stability, SecT time) {
 }
 
 // Page 427 of Applied Ballistics for Long-Range Shooting 3d - Litz
-inline double CalculateG7FormFactorPrediction(InchT diameter, CaliberT nose_length,
-                                       double ogive_rtr,
-                                       CaliberT meplat_diameter,
-                                       CaliberT tail_length,
-                                       DegreesT boattail_angle) {
+inline double CalculateG7FormFactorPrediction(
+    InchT diameter, CaliberT nose_length, double ogive_rtr,
+    CaliberT meplat_diameter, CaliberT tail_length, DegreesT boattail_angle) {
   const double kA = 1.470;
   const double kB = -0.346 * diameter.Value();
   const double kC = -0.162 * nose_length.Value();
@@ -64,11 +62,9 @@ inline double CalculateG7FormFactorPrediction(InchT diameter, CaliberT nose_leng
   return kA + kB + kC + kD + kE + kF + kG + kH + kI + kJ + kK;
 }
 
-inline double CalculateG7FormFactorPrediction(InchT diameter, CaliberT nose_length,
-                                       double ogive_rtr,
-                                       CaliberT meplat_diameter,
-                                       CaliberT tail_length,
-                                       CaliberT base_diameter) {
+inline double CalculateG7FormFactorPrediction(
+    InchT diameter, CaliberT nose_length, double ogive_rtr,
+    CaliberT meplat_diameter, CaliberT tail_length, CaliberT base_diameter) {
   const RadiansT kBA(
       std::atan((1 - base_diameter.Value()) / (tail_length.Value() * 2)));
   return CalculateG7FormFactorPrediction(diameter, nose_length, ogive_rtr,

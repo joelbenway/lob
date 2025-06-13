@@ -23,21 +23,23 @@ inline PsiT CalculateDynamicPressure(LbsPerCuFtT air_density, FpsT velocity) {
 }
 
 inline CaliberT CalculateRadiusOfTangentOgive(CaliberT ogive_length,
-                                       CaliberT meplat_diameter) {
+                                              CaliberT meplat_diameter) {
   const auto kLN = ogive_length;
   const auto kDM = meplat_diameter;
   return (kLN * kLN + std::pow((1 - kDM.Value()) / 2, 2)) / (1 - kDM.Value());
 }
 
 inline CaliberT CalculateFullNoseLength(CaliberT ogive_length,
-                                 CaliberT meplat_diameter,
-                                 CaliberT radius_of_tangent, double ogive_rtr) {
+                                        CaliberT meplat_diameter,
+                                        CaliberT radius_of_tangent,
+                                        double ogive_rtr) {
   const auto kLFT = std::sqrt(radius_of_tangent - 0.25);
   const auto kLFC = ogive_length / (1 - meplat_diameter.Value());
   return (kLFT * ogive_rtr) + (kLFC * (1 - ogive_rtr));
 }
 
-inline SqInT CalculateOgiveCrossSectionalArea(InchT x, InchT rho, double alpha) {
+inline SqInT CalculateOgiveCrossSectionalArea(InchT x, InchT rho,
+                                              double alpha) {
   const auto kA = rho * rho;
   const auto kB = (rho * std::cos(alpha)) - x;
   const auto kC = rho * std::sin(alpha);
@@ -46,8 +48,8 @@ inline SqInT CalculateOgiveCrossSectionalArea(InchT x, InchT rho, double alpha) 
   return SqInT(kPi * kY.Value() * kY.Value());
 }
 
-inline double CalculateOgiveSimpsonIntegral(InchT a, InchT b, uint16_t n, InchT rho,
-                                     double alpha) {
+inline double CalculateOgiveSimpsonIntegral(InchT a, InchT b, uint16_t n,
+                                            InchT rho, double alpha) {
   const uint16_t kEvenN = (n % 2U == 0) ? n : n + 1U;
   const InchT kH = (b - a) / kEvenN;
 
@@ -64,7 +66,8 @@ inline double CalculateOgiveSimpsonIntegral(InchT a, InchT b, uint16_t n, InchT 
 }
 
 inline double CalculateOgiveVolume(InchT diameter, InchT ogive_length,
-                            InchT full_ogive_length, InchT ogive_radius) {
+                                   InchT full_ogive_length,
+                                   InchT ogive_radius) {
   const InchT kR = diameter / 2.0;
   const InchT kLo = full_ogive_length;
   const InchT kRho = ogive_radius;
@@ -90,10 +93,11 @@ inline double CalculateCylinderVolume(InchT diameter, InchT length) {
   return (std::pow(diameter / 2, 2) * kPi * length).Value();
 }
 
-inline double CalculateAverageDensity(InchT diameter, InchT length, InchT ogive_length,
-                               InchT ogive_full_length, InchT ogive_radius,
-                               InchT base_diameter, InchT tail_length,
-                               GrainT mass) {
+inline double CalculateAverageDensity(InchT diameter, InchT length,
+                                      InchT ogive_length,
+                                      InchT ogive_full_length,
+                                      InchT ogive_radius, InchT base_diameter,
+                                      InchT tail_length, GrainT mass) {
   const double kOgiveVolume = CalculateOgiveVolume(
       diameter, ogive_length, ogive_full_length, ogive_radius);
 
@@ -108,10 +112,11 @@ inline double CalculateAverageDensity(InchT diameter, InchT length, InchT ogive_
 }
 
 inline double CalculateAverageDensity(InchT diameter, CaliberT length,
-                               CaliberT ogive_length,
-                               CaliberT ogive_full_length,
-                               CaliberT ogive_radius, CaliberT base_diameter,
-                               CaliberT tail_length, GrainT mass) {
+                                      CaliberT ogive_length,
+                                      CaliberT ogive_full_length,
+                                      CaliberT ogive_radius,
+                                      CaliberT base_diameter,
+                                      CaliberT tail_length, GrainT mass) {
   const InchT kL(length, diameter);
   const InchT kLN(ogive_length, diameter);
   const InchT kLFN(ogive_full_length, diameter);
@@ -122,9 +127,10 @@ inline double CalculateAverageDensity(InchT diameter, CaliberT length,
 }
 
 inline double CalculateFastAverageDensity(InchT diameter, InchT length,
-                                   InchT meplat_diameter, InchT ogive_length,
-                                   InchT base_diameter, InchT tail_length,
-                                   GrainT mass) {
+                                          InchT meplat_diameter,
+                                          InchT ogive_length,
+                                          InchT base_diameter,
+                                          InchT tail_length, GrainT mass) {
   const double kPinocchioFactor = 1.3;
   const double kOgiveVolume =
       kPinocchioFactor *
@@ -138,10 +144,10 @@ inline double CalculateFastAverageDensity(InchT diameter, InchT length,
 }
 
 inline double CalculateFastAverageDensity(InchT diameter, CaliberT length,
-                                   CaliberT meplat_diameter,
-                                   CaliberT ogive_length,
-                                   CaliberT base_diameter, CaliberT tail_length,
-                                   GrainT mass) {
+                                          CaliberT meplat_diameter,
+                                          CaliberT ogive_length,
+                                          CaliberT base_diameter,
+                                          CaliberT tail_length, GrainT mass) {
   const InchT kL(length, diameter);
   const InchT kDM(meplat_diameter, diameter);
   const InchT kLN(ogive_length, diameter);
@@ -150,7 +156,8 @@ inline double CalculateFastAverageDensity(InchT diameter, CaliberT length,
   return CalculateFastAverageDensity(diameter, kL, kDM, kLN, kDB, kLBT, mass);
 }
 
-inline double CalculateCoefficientOfLift(CaliberT full_ogive_length, MachT velocity) {
+inline double CalculateCoefficientOfLift(CaliberT full_ogive_length,
+                                         MachT velocity) {
   const double kB = std::sqrt((velocity * velocity) - 1).Value();
   const double kNum1 = 1.974;
   const double kNum2 = 0.921;
@@ -163,8 +170,9 @@ inline double CalculateCLBoattailAdjustmentFactor(PmsiT g7) {
 }
 
 inline double CalculateInertialRatio(InchT caliber, CaliberT length,
-                              CaliberT ogive_length, CaliberT full_ogive_length,
-                              GrainT mass, double average_density) {
+                                     CaliberT ogive_length,
+                                     CaliberT full_ogive_length, GrainT mass,
+                                     double average_density) {
   const auto kLL = length - ogive_length + full_ogive_length;
   const auto kH = full_ogive_length.Value() / kLL.Value();
   const GrainT kWtCalc =
@@ -186,7 +194,8 @@ inline HzT CalculateSpinRate(FpsT velocity, InchPerTwistT twist) {
 }
 
 inline double CalculateAspectRatio(CaliberT length, CaliberT full_ogive_length,
-                            CaliberT tail_length, CaliberT base_diameter) {
+                                   CaliberT tail_length,
+                                   CaliberT base_diameter) {
   const double kAR =
       length.Value() -
       ((2.0 / 3.0) * (full_ogive_length.Value() +
@@ -194,8 +203,9 @@ inline double CalculateAspectRatio(CaliberT length, CaliberT full_ogive_length,
   return kAR;
 }
 
-inline double CalculateYawDragCoefficient(MachT speed, double coefficient_of_lift,
-                                   double aspect_ratio) {
+inline double CalculateYawDragCoefficient(MachT speed,
+                                          double coefficient_of_lift,
+                                          double aspect_ratio) {
   const double kCLSquared = coefficient_of_lift * coefficient_of_lift;
   const double kCDa =
       1.33 * (1.41 - 0.18 * speed.Value()) *
@@ -220,7 +230,8 @@ inline HzT CalculateGyroscopicRateSum(HzT spin_rate, double inertial_ratio) {
   return spin_rate / inertial_ratio;
 }
 
-inline HzT CalculateGyroscopicRateF2(HzT gyroscopic_rate_sum, double epicyclic_ratio) {
+inline HzT CalculateGyroscopicRateF2(HzT gyroscopic_rate_sum,
+                                     double epicyclic_ratio) {
   return gyroscopic_rate_sum / (epicyclic_ratio + 1);
 }
 
@@ -236,7 +247,7 @@ inline double CalculateCrosswindAngleGamma(MphT zwind, FpsT velocity) {
 }
 
 inline double CalculateZeroYawDragCoefficientOfDrag(double cd_ref, GrainT mass,
-                                             InchT diameter, PmsiT bc) {
+                                                    InchT diameter, PmsiT bc) {
   const double kCD0 = cd_ref * (LbsT(mass).Value() /
                                 (diameter * diameter).Value() / bc.Value());
   return kCD0;
@@ -255,8 +266,8 @@ inline double CalculateVerticalPitch(double gamma, double r, double n) {
 }
 
 inline double CalculateVerticalImpulse(InchPerTwistT twist, uint16_t n, SecT tn,
-                                PsiT q, SqInT s, double cl, double cd,
-                                double pitch) {
+                                       PsiT q, SqInT s, double cl, double cd,
+                                       double pitch) {
   const double kSign = twist.Value() < 0 ? -1.0 : 1.0;
   const double kJv = kSign * (n * tn.Value()) * (q.Value() * s.Value()) *
                      (cl + cd) * std::sin(pitch);
@@ -269,13 +280,11 @@ inline double CalculateMagnitudeOfMomentum(GrainT mass, FpsT velocity) {
   return kMOM;
 }
 
-inline MoaT CalculateAerodynamicJump(InchT diameter, InchT meplat_diameter,
-                              InchT base_diameter, InchT length,
-                              InchT ogive_length, InchT tail_length,
-                              double ogive_rtr, GrainT mass, FpsT velocity,
-                              double stability, InchPerTwistT twist, FpsT zwind,
-                              LbsPerCuFtT air_density, FpsT speed_of_sound,
-                              PmsiT bc, double cd_ref) {
+inline MoaT CalculateAerodynamicJump(
+    InchT diameter, InchT meplat_diameter, InchT base_diameter, InchT length,
+    InchT ogive_length, InchT tail_length, double ogive_rtr, GrainT mass,
+    FpsT velocity, double stability, InchPerTwistT twist, FpsT zwind,
+    LbsPerCuFtT air_density, FpsT speed_of_sound, PmsiT bc, double cd_ref) {
   const CaliberT kDM(meplat_diameter, diameter.Inverse());
   const CaliberT kDB(base_diameter, diameter.Inverse());
   const CaliberT kL(length, diameter.Inverse());
@@ -326,8 +335,9 @@ inline double CalculateKOmega(InchT diameter, SecT supersonic_time) {
 }
 
 inline RadiansT CalculateYawOfRepose(FpsT initial_velocity, InchPerTwistT twist,
-                              double inertial_ratio, double epicyclic_ratio,
-                              double komega, double kv) {
+                                     double inertial_ratio,
+                                     double epicyclic_ratio, double komega,
+                                     double kv) {
   const double kSum = komega + kv;
   const double kFeetPerTurn = twist.Value() / 12.0;
 
@@ -340,8 +350,9 @@ inline RadiansT CalculateYawOfRepose(FpsT initial_velocity, InchPerTwistT twist,
   return RadiansT(kNumerator / kDenominator);
 }
 
-inline double CalculatePotentialDragForce(InchT diameter, LbsPerCuFtT air_density,
-                                   FpsT target_velocity) {
+inline double CalculatePotentialDragForce(InchT diameter,
+                                          LbsPerCuFtT air_density,
+                                          FpsT target_velocity) {
   const auto kS = SqFtT(CalculateProjectileReferenceArea(diameter));
   const double kQTS = kS.Value() *
                       ((air_density.Value() / kStandardGravityFtPerSecSq) / 2) *
@@ -350,7 +361,7 @@ inline double CalculatePotentialDragForce(InchT diameter, LbsPerCuFtT air_densit
 }
 
 inline double CalculateCoefficientOfLiftAtT(double cl0, FpsT initial_velocity,
-                                     SecT supersonic_time) {
+                                            SecT supersonic_time) {
   const double kA = std::pow(initial_velocity / FpsT(2600), 2.0).Value();
   const double kB = 1.430 / supersonic_time.Value();
   const double kExponent = -0.3711 * kA * kB;
@@ -358,8 +369,9 @@ inline double CalculateCoefficientOfLiftAtT(double cl0, FpsT initial_velocity,
 }
 
 inline double CalculateSpinDriftScaleFactor(double potential_drag_force,
-                                     RadiansT yaw_of_repose,
-                                     double coefficent_of_lift, GrainT mass) {
+                                            RadiansT yaw_of_repose,
+                                            double coefficent_of_lift,
+                                            GrainT mass) {
   const double kNumerator = 0.388132 * potential_drag_force *
                             yaw_of_repose.Value() * coefficent_of_lift;
   return kNumerator / LbsT(mass).Value();
