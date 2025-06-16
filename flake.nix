@@ -39,11 +39,11 @@
             -D BUILD_BENCHMARKS=OFF
         '';
         buildPhase = ''
-          cmake --build build
+          cmake --build build --parallel $NIX_BUILD_CORES
         '';
         doCheck = true;
         checkPhase = ''
-          ctest --test-dir build --output-on-failure
+          ctest --test-dir build -j $NIX_BUILD_CORES --output-on-failure
         '';
         installPhase = ''
           cmake --install build --prefix $out
@@ -129,7 +129,7 @@
                   "inherits": ["dev-mode", "ci-${os}"],
                   "generator": "Ninja",
                   "environment": {
-                    "CXX_FLAGS_DEV_LINUX": "-Og -g3 -gsplit-dwarf"
+                    "CXX_FLAGS_DEV_LINUX": "-Og -g3"
                   },
                   "cacheVariables": {
                     "CMAKE_BUILD_TYPE": "Debug",
