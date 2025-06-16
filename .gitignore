@@ -13,3 +13,4 @@ compile_commands.json
 .direnv
 env.bat
 env.ps1
+result

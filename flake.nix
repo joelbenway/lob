@@ -4,10 +4,12 @@
 {
   description = "A Nix-flake-based C++ Development Environment";
 
-  inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1.*.tar.gz";
+  inputs = {
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1.*.tar.gz";
+  };
 
   outputs = {
-    # self,
+    self,
     nixpkgs,
     ...
   }: let
@@ -21,6 +23,33 @@
           };
         });
   in {
+    packages = forEachSupportedSystem ({pkgs}: {
+      default = pkgs.stdenv.mkDerivation {
+        name = "lob";
+        src = self;
+        nativeBuildInputs = with pkgs; [
+          cmake
+          gtest
+        ];
+        configurePhase = ''
+          cmake -S . -B build \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D lob_DEVELOP_MODE=ON \
+            -D BUILD_EXAMPLES=OFF \
+            -D BUILD_BENCHMARKS=OFF
+        '';
+        buildPhase = ''
+          cmake --build build
+        '';
+        doCheck = true;
+        checkPhase = ''
+          ctest --test-dir build --output-on-failure
+        '';
+        installPhase = ''
+          cmake --install build --prefix $out
+        '';
+      };
+    });
     devShells = forEachSupportedSystem ({pkgs}: let
       baseShell =
         pkgs.mkShell.override {
@@ -29,16 +58,17 @@
           stdenv = pkgs.gccStdenv;
         }
         {
-          packages = with pkgs;
-            [
-              # Build/CI Tools
-              clang-tools
-              cmake
-              codespell
-              cppcheck
-              doxygen
-              lcov
-            ];
+          packages = with pkgs; [
+            # Build/CI Tools
+            clang-tools
+            cmake
+            codespell
+            cppcheck
+            doxygen
+            lcov
+            gtest
+            nlohmann_json
+          ];
           shellHook = let
             projectName = "lob";
             white = "\\[\\033[38;5;015m\\]";
@@ -98,10 +128,13 @@
                   "binaryDir": "/build/dev",
                   "inherits": ["dev-mode", "ci-${os}"],
                   "generator": "Ninja",
+                  "environment": {
+                    "CXX_FLAGS_DEV_LINUX": "-Og -g3 -gsplit-dwarf"
+                  },
                   "cacheVariables": {
                     "CMAKE_BUILD_TYPE": "Debug",
                     "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                    "CMAKE_CXX_FLAGS": "-Og -g3",
+                    "CMAKE_CXX_FLAGS": "$env{CXX_FLAGS_DEV_LINUX} $env{LOB_CXX_FLAGS_COMMON}",
                     "CMAKE_LINKER_TYPE": "MOLD"
                   }
                 }
@@ -157,3 +190,4 @@
 #
 # You should have received a copy of the GNU General Public License along with
 # lob. If not, see <https://www.gnu.org/licenses/>.
+
