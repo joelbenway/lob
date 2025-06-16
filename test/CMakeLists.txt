@@ -1,5 +1,4 @@
-# Copyright (c) 2025  Joel Benway
-# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2025  Joel Benway SPDX-License-Identifier: GPL-3.0-or-later
 # Please see end of file for extended copyright information
 cmake_minimum_required(VERSION 3.14)
 
@@ -7,7 +6,6 @@ project(lobTests LANGUAGES CXX)
 
 include(../cmake/project-is-top-level.cmake)
 include(../cmake/folders.cmake)
-include(../cmake/silence.cmake)
 
 # ---- Dependencies ----
 
@@ -17,44 +15,58 @@ if(PROJECT_IS_TOP_LEVEL)
   enable_testing()
 endif()
 
-set(DEV_WARNINGS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_WARNINGS}")
-set(DEV_ERRORS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_ERRORS}")
-set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
-    ON
-    CACHE INTERNAL "Suppress GoogleTest CMake Warnings" FORCE)
-set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
-    ON
-    CACHE INTERNAL "Suppress GoogleTest CMake Errors" FORCE)
+find_package(GTest CONFIG)
 
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG v1.14.0)
+if(NOT GTest_FOUND)
+  message(STATUS "GTest not found, FetchContent instead...")
+  set(DEV_WARNINGS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_WARNINGS}")
+  set(DEV_ERRORS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_ERRORS}")
+  set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
+      ON
+      CACHE INTERNAL "Suppress third-party CMake warnings" FORCE)
+  set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
+      ON
+      CACHE INTERNAL "Suppress third-party CMake errors" FORCE)
 
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt
-    ON
-    CACHE BOOL "" FORCE)
+  include(FetchContent)
+  FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.14.0)
 
-set(SHARED_LIBS_RECOVER_STATE ${BUILD_SHARED_LIBS})
-set(BUILD_SHARED_LIBS
-    OFF
-    CACHE BOOL "Force static GoogleTest" FORCE)
-FetchContent_MakeAvailable(googletest)
-set(BUILD_SHARED_LIBS
-    ${SHARED_LIBS_RECOVER_STATE}
-    CACHE BOOL "Restore original setting" FORCE)
-unset(SHARED_LIBS_RECOVER_STATE)
+  # For Windows: Prevent overriding the parent project's compiler/linker
+  # settings
+  set(gtest_force_shared_crt
+      ON
+      CACHE BOOL "" FORCE)
 
-set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
-    ${DEV_WARNINGS_RECOVER_STATE}
-    CACHE INTERNAL "Restore original setting" FORCE)
-set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
-    ${DEV_ERRORS_RECOVER_STATE}
-    CACHE INTERNAL "Restore original setting" FORCE)
-unset(DEV_WARNINGS_RECOVER_STATE)
-unset(DEV_ERRORS_RECOVER_STATE)
+  set(SHARED_LIBS_RECOVER_STATE ${BUILD_SHARED_LIBS})
+  set(BUILD_SHARED_LIBS
+      OFF
+      CACHE BOOL "Force static GoogleTest" FORCE)
+  FetchContent_MakeAvailable(googletest)
+  set(BUILD_SHARED_LIBS
+      ${SHARED_LIBS_RECOVER_STATE}
+      CACHE BOOL "Restore original setting" FORCE)
+  unset(SHARED_LIBS_RECOVER_STATE)
+
+  set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
+      ${DEV_WARNINGS_RECOVER_STATE}
+      CACHE INTERNAL "Restore original setting" FORCE)
+  set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
+      ${DEV_ERRORS_RECOVER_STATE}
+      CACHE INTERNAL "Restore original setting" FORCE)
+  unset(DEV_WARNINGS_RECOVER_STATE)
+  unset(DEV_ERRORS_RECOVER_STATE)
+
+  include(../cmake/silence.cmake)
+  silence(gtest)
+  silence(gtest_main)
+  silence(gmock)
+  silence(gmock_main)
+else()
+  message(STATUS "Found GTest: ${GTest_DIR}")
+endif()
 
 # ---- Tests ----
 # cmake-format: off
@@ -89,11 +101,6 @@ target_include_directories(lob_test
 
 target_compile_features(lob_test PRIVATE cxx_std_14)
 
-silence(gtest)
-silence(gtest_main)
-silence(gmock)
-silence(gmock_main)
-
 target_link_libraries(lob_test PRIVATE lob::lob GTest::gtest GTest::gtest_main)
 
 include(GoogleTest)
@@ -106,8 +113,8 @@ add_folders(Test)
 
 # This file is part of lob.
 #
-# lob is free software: you can redistribute it and/or modify it under the
-# terms of the GNU General Public License as published by the Free Software
+# lob is free software: you can redistribute it and/or modify it under the terms
+# of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
 #

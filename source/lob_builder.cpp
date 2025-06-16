@@ -465,8 +465,8 @@ void BuildStability(Impl* pimpl) {
   assert(pimpl->build.velocity > 0);
   assert(!std::isnan(pimpl->air_density_lbs_per_cu_ft));
 
-  if (!std::isnan(pimpl->diameter_in) && !std::isnan(pimpl->length_in) &&
-      !std::isnan(pimpl->twist_inches_per_turn) &&
+  if ((pimpl->diameter_in > InchT(0)) && (pimpl->length_in > InchT(0)) &&
+      !AreEqual(pimpl->twist_inches_per_turn, InchPerTwistT(0)) &&
       !std::isnan(pimpl->build.mass)) {
     const double kFtp = CalculateMillerTwistRuleCorrectionFactor(
         pimpl->air_density_lbs_per_cu_ft);

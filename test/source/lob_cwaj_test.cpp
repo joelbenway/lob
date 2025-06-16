@@ -101,7 +101,8 @@ TEST_F(LobCWAJTestFixture, SolveWithoutSpin) {
       {6000, 952, 503, -1865.85, 0.00, 3.851}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -164,7 +165,8 @@ TEST_F(LobCWAJTestFixture, LitzRightHandSpinLeftwardWind) {
       {6000, 952, 503, -1852.03, -450.26, 3.851}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -227,7 +229,8 @@ TEST_F(LobCWAJTestFixture, LitzLeftHandSpinLeftwardWind) {
       {6000, 952, 503, -1879.67, -551.74, 3.851}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -290,7 +293,8 @@ TEST_F(LobCWAJTestFixture, LitzRightHandSpinRightwardWind) {
       {6000, 952, 503, -1879.67, 551.74, 3.851}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
@@ -353,7 +357,8 @@ TEST_F(LobCWAJTestFixture, LitzLeftHandSpinRightwardWind) {
       {6000, 952, 503, -1852.03, 450.26, 3.851}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
   for (size_t i = 0; i < kSolutionLength; i++) {
     EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,

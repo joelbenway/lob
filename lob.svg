@@ -1,10 +1,11 @@
-<svg width="200" height="36" xmlns="http://www.w3.org/2000/svg">
-  <path d="M 1 35 Q 100 -25 185 25"
+<!--Copyright (c) 2025  Joel Benway-->
+<svg width="200" height="50" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 1 40 Q 100 -38 189 40"
         stroke="#f34b7d"
         stroke-width="2"
         fill="none"
         stroke-dasharray="5,5" />
-  <g transform="translate(188, 27) rotate(30)">
+  <g transform="translate(189, 40) rotate(40)">
     <path d="M 0 -4 L 8 -4 A 4 4 0 0 1 8 4 L 0 4 Z"
           fill="#DA3434"/>
   </g>
