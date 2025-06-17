@@ -34,7 +34,7 @@
         configurePhase = ''
           cmake -S . -B build \
             -D CMAKE_BUILD_TYPE=Release \
-            -D lob_DEVELOP_MODE=ON \
+            -D LOB_DEVELOPER_MODE=ON \
             -D BUILD_EXAMPLES=OFF \
             -D BUILD_BENCHMARKS=OFF
         '';
@@ -99,7 +99,7 @@
             else [gdb]
           );
       in {
-        # stdenv = pkgs.clangStdenv;
+        stdenv = pkgs.clangStdenv;
         buildInputs = oldAttrs.buildInputs ++ extraDevPackages;
         shellHook = let
           inherit (pkgs) stdenv;
@@ -112,8 +112,6 @@
             else "<os>";
         in
           ''
-            cores=$(getconf _NPROCESSORS_ONLN)
-
             json=$(cat <<-EOF
             {
               "version": 2,
@@ -144,7 +142,7 @@
                   "name": "dev",
                   "configurePreset": "dev",
                   "configuration": "Debug",
-                  "jobs": "$cores"
+                  "jobs": $NIX_BUILD_CORES
                 }
               ],
               "testPresets": [
@@ -156,7 +154,7 @@
                     "outputOnFailure": true
                   },
                   "execution": {
-                    "jobs": "$cores",
+                    "jobs": $NIX_BUILD_CORES,
                     "noTestsAction": "error"
                   }
                 }

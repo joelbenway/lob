@@ -319,7 +319,7 @@ Builder& Builder::OpticHeightInches(double value) {
 Builder& Builder::RelativeHumidityPercent(double value) {
   const bool kIsValid = (0.0 < value);
   if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kNoseLength;
+    pimpl_->build.error = ErrorT::kHumidity;
   }
   pimpl_->relative_humidity_percent = value;
   return *this;
@@ -423,7 +423,7 @@ Builder& Builder::ZeroImpactHeightInches(double value) {
   return *this;
 }
 
-Builder& Builder::Reset() {
+Builder& Builder::Reset() noexcept {
   pimpl_->~Impl();
   pimpl_ = new (buffer_.data()) Impl();
   return *this;

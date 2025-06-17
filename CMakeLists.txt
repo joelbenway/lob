@@ -76,7 +76,7 @@ endif()
 # ---- Examples ----
 
 if(PROJECT_IS_TOP_LEVEL)
-  option(BUILD_EXAMPLES "Build examples tree." "${lob_DEVELOPER_MODE}")
+  option(BUILD_EXAMPLES "Build examples tree." "${LOB_DEVELOPER_MODE}")
   if(BUILD_EXAMPLES)
     add_subdirectory(example)
   endif()
@@ -85,7 +85,7 @@ endif()
 # ---- Benchmarks ----
 
 if(PROJECT_IS_TOP_LEVEL)
-  option(BUILD_BENCHMARKS "Build benchmarks tree." "${lob_DEVELOPER_MODE}")
+  option(BUILD_BENCHMARKS "Build benchmarks tree." "${LOB_DEVELOPER_MODE}")
   if(BUILD_BENCHMARKS)
     add_subdirectory(benchmark)
   endif()
@@ -93,7 +93,7 @@ endif()
 
 # ---- Developer mode ----
 
-if(NOT lob_DEVELOPER_MODE)
+if(NOT LOB_DEVELOPER_MODE)
   return()
 elseif(NOT PROJECT_IS_TOP_LEVEL)
   message(AUTHOR_WARNING "Developer mode is intended for developers of lob")

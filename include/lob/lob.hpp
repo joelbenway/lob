@@ -68,6 +68,7 @@ enum class LOB_EXPORT ErrorT : uint8_t {
   kBallisticCoefficient,
   kBaseDiameter,
   kDiameter,
+  kHumidity,
   kInitialVelocity,
   kLatitude,
   kLength,
@@ -435,7 +436,7 @@ class LOB_EXPORT Builder {
    * @brief Resets the builder state by creating a fresh Impl object.
    * @return A reference to the Builder object.
    */
-  Builder& Reset();
+  Builder& Reset() noexcept;
 
   /**
    * @brief Builds the `Input` object with the configured parameters.
