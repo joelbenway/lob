@@ -490,6 +490,22 @@ TEST_F(BuilderTestFixture, DiameterError) {
   EXPECT_TRUE(kJack.error == lob::ErrorT::kDiameter);
 }
 
+TEST_F(BuilderTestFixture, HumidityError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .RelativeHumidityPercent(-1.0)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kHumidity);
+}
+
 TEST_F(BuilderTestFixture, InitialVelocity) {
   const double kSierraGameKingBC = 0.436;
   const double kZeroYardage = 100.0;

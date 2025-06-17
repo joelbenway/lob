@@ -9,7 +9,7 @@
 # project must be provided unconditionally, so consumers can trivially build and
 # package the project
 if(PROJECT_IS_TOP_LEVEL)
-  option(lob_DEVELOPER_MODE "Enable developer mode" OFF)
+  option(LOB_DEVELOPER_MODE "Enable developer mode" OFF)
   option(BUILD_SHARED_LIBS "Build shared libs." OFF)
 endif()
 

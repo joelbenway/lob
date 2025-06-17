@@ -10,7 +10,7 @@ A declarative development environment for this project is available via the [Nix
 
 ## Developer mode
 
-Build system targets that are only useful for developers of this project are hidden if the `lob_DEVELOPER_MODE` option is disabled. Enabling this option makes tests and other developer targets and options available. Not enabling this option means that you are a consumer of this project and thus you have no need for these targets and options.
+Build system targets that are only useful for developers of this project are hidden if the `LOB_DEVELOPER_MODE` option is disabled. Enabling this option makes tests and other developer targets and options available. Not enabling this option means that you are a consumer of this project and thus you have no need for these targets and options.
 
 Developer mode is always set to on in CI workflows.
 
@@ -18,7 +18,7 @@ Developer mode is always set to on in CI workflows.
 
 This project makes use of [presets][1] to simplify the process of configuring the project. As a developer, you are recommended to always have the [latest CMake version][12] installed to make use of the latest Quality-of-Life additions.
 
-You have a few options to pass `lob_DEVELOPER_MODE` to the configure command, but this project prefers to use presets.
+You have a few options to pass `LOB_DEVELOPER_MODE` to the configure command, but this project prefers to use presets.
 
 As a developer, you should create a `CMakeUserPresets.json` file at the root of the project:
 
