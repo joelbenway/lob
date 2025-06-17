@@ -8,7 +8,7 @@ include(cmake/prelude.cmake)
 
 project(
   lob
-  VERSION 0.6.0
+  VERSION 0.6.5
   DESCRIPTION "an exterior balistics calculation library"
   HOMEPAGE_URL "https://github.com/joelbenway/lob"
   LANGUAGES CXX)
