@@ -317,7 +317,7 @@ Builder& Builder::OpticHeightInches(double value) {
 }
 
 Builder& Builder::RelativeHumidityPercent(double value) {
-  const bool kIsValid = (0.0 < value);
+  const bool kIsValid = (0.0 <= value);
   if (!kIsValid) {
     pimpl_->build.error = ErrorT::kHumidity;
   }

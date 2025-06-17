@@ -55,7 +55,6 @@
         pkgs.mkShell.override {
           # Override stdenv in order to change compiler:
           # stdenv = pkgs.clangStdenv;
-          stdenv = pkgs.gccStdenv;
         }
         {
           packages = with pkgs; [
@@ -99,7 +98,6 @@
             else [gdb]
           );
       in {
-        stdenv = pkgs.clangStdenv;
         buildInputs = oldAttrs.buildInputs ++ extraDevPackages;
         shellHook = let
           inherit (pkgs) stdenv;
