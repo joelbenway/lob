@@ -39,27 +39,34 @@ Lob uses a straightforward API featuring data structures and free functions that
 
 ### How to use lob
 ```C++
-#include <array>  // for array (c-style arrays are also supported)
+#include <array>  // for array
 #include <cstddef>  // for size_t
 #include <cstdint>  // for uint32_t
 #include <iostream> // for cout
 #include "lob.hpp"
 
 // Prepare an input using the Builder class
-const lob::Input kSolverInput = lob::Builder()
-                                .BallisticCoefficientPsi(0.425)
-                                .InitialVelocityFps(2700)
-                                .ZeroDistanceYds(100.0)
-                                .Build();
-const size_t kNumToSolve = 7;  // Solve for multiple ranges
-const std::array<uint32_t, kNumToSolve> kRanges = {0, 300, 600, 900, 1200, 1500, 1800};
-// Create a place to output solutions
+const lob::Input kSolverInput = 
+  lob::Builder()
+  .BallisticCoefficientPsi(0.425)
+  .InitialVelocityFps(2700)
+  .ZeroDistanceYds(100.0)
+  .Build();
+// Solve for multiple ranges
+const size_t kNumToSolve = 7;
+const std::array<uint32_t, kNumToSolve> kRanges = 
+  {0, 300, 600, 900, 1200, 1500, 1800};
+// Create an array to hold the outputs
+// (c-style arrays are also supported)
 std::array<lob::Output, kNumToSolve> solver_outputs = {};
 // Solve!
-const size_t kNumSolved = lob::Solve(kSolverInput, kRanges, solver_outputs);
+const size_t kNumSolved = 
+  lob::Solve(kSolverInput, kRanges, solver_outputs);
 // Do something with outputs
 for (size_t i = 0; i < kNumSolved; i++) {
-  std::cout << "Drop at " << solver_outputs.at(i).range << " feet is " << solver_outputs.at(i).elevation << " inches.\n";
+  std::cout << "Drop at " << solver_outputs.at(i).range 
+    << " feet is " << solver_outputs.at(i).elevation
+    << " inches.\n";
 }
 ```
 Those few parameters are enough for lob to make a well-formed, if minimal, ballistic solution. By feeding more data, we can get something more practical from the solver.
