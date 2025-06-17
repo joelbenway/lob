@@ -68,8 +68,8 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
   assert(pranges != nullptr);
   assert(pouts != nullptr);
   assert(size > 0);
-  if (std::isnan(in.table_coefficient) || pranges == nullptr ||
-      pouts == nullptr || size == 0) {
+  if (in.error != ErrorT::kNone || pranges == nullptr || pouts == nullptr ||
+      size == 0) {
     return 0;
   }
   const FpsT kMinimumSpeed(in.minimum_speed);
@@ -86,10 +86,10 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
     const TrajectoryStateT kS = s;
     const SecT kT = t;
 
-    if (in.step_size > 0) {
+    if (in.step_size != 0) {
       SolveStep(&s, &t, in, SecT(UsecT(in.step_size)));
     } else {
-      SolveStep(&s, &t, in, FeetT(1));
+      SolveStep(&s, &t, in);
     }
 
     if (s.P().X() >= FeetT(pranges[index]) && kS.P().X() < s.P().X()) {

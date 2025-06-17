@@ -19,7 +19,7 @@ namespace lob {
 void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, SecT step) {
   assert(ps != nullptr);
   assert(pt != nullptr);
-  assert(step.Value() > 0 && "step is not valid");
+  assert(step.Value() > 0.0 && "step is not valid");
   const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
                                FpsT(input.wind.z));
 
@@ -57,7 +57,7 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, SecT step) {
 void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, FeetT step) {
   assert(ps != nullptr);
   assert(pt != nullptr);
-  assert(step.Value() > 0 && "step is not valid");
+  assert(step.Value() > 0.0 && "step is not valid");
   const SecT kDt = AreEqual(ps->V().X().Value(), 0.0)
                        ? SecT(UsecT(100))
                        : SecT(ps->V().X().Inverse().Value() * step.Value());

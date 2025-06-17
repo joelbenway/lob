@@ -347,6 +347,370 @@ TEST_F(BuilderTestFixture, JackOConnorZero) {
   EXPECT_NEAR(kJack.zero_angle, kExpectedZeroAngle, kError);
 }
 
+TEST_F(BuilderTestFixture, ResetWorks) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .Reset()
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kNotFormed);
+}
+
+TEST_F(BuilderTestFixture, AirPressureError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .AirPressureInHg(-1.0)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kAirPressure);
+}
+
+TEST_F(BuilderTestFixture, FiringSiteAltitudeError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .AltitudeOfFiringSiteFt(lob::kIsaStratosphereAltitudeFt + 1)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kAltitude);
+}
+
+TEST_F(BuilderTestFixture, BarometerAltitudeError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .AltitudeOfBarometerFt(lob::kIsaStratosphereAltitudeFt + 1)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kAltitude);
+}
+
+TEST_F(BuilderTestFixture, ThermometerAltitudeError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .AltitudeOfThermometerFt(lob::kIsaStratosphereAltitudeFt + 1)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kAltitude);
+}
+
+TEST_F(BuilderTestFixture, AzimuthError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .AzimuthDeg(lob::kDegreesPerTurn + 1)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kAzimuth);
+}
+
+TEST_F(BuilderTestFixture, BallisticCoefficientError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(-kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kBallisticCoefficient);
+}
+
+TEST_F(BuilderTestFixture, BaseDiameterError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .BaseDiameterInch(-1.0)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kBaseDiameter);
+}
+
+TEST_F(BuilderTestFixture, DiameterError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .DiameterInch(-1.0)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kDiameter);
+}
+
+TEST_F(BuilderTestFixture, InitialVelocity) {
+  const double kSierraGameKingBC = 0.436;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(0)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kInitialVelocity);
+}
+
+TEST_F(BuilderTestFixture, LatitudeError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .LatitudeDeg(91.0)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kLatitude);
+}
+
+TEST_F(BuilderTestFixture, LengthError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .LengthInch(-1.0)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kLength);
+}
+
+TEST_F(BuilderTestFixture, MachVsDragTableError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .MachVsDragTable(nullptr, nullptr, 0)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kMachDragTable);
+}
+
+TEST_F(BuilderTestFixture, MassError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .MassGrains(-1.0)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kMass);
+}
+
+TEST_F(BuilderTestFixture, MaximumTimeError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .MaximumTime(-1.0)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kMaximumTime);
+}
+
+TEST_F(BuilderTestFixture, MeplatDiameterError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .MeplatDiameterInch(-1.0)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kMeplatDiameter);
+}
+
+TEST_F(BuilderTestFixture, NoseLengthError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .NoseLengthInch(-1)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kNoseLength);
+}
+
+TEST_F(BuilderTestFixture, OgiveRtRError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .OgiveRtR(-1)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kOgiveRtR);
+}
+
+TEST_F(BuilderTestFixture, RangeAngleError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .RangeAngleDeg(90)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kRangeAngle);
+}
+
+TEST_F(BuilderTestFixture, TailLengthError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .TailLengthInch(-1.0)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kTailLength);
+}
+
+TEST_F(BuilderTestFixture, WindHeadingError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .WindHeadingDeg(lob::kDegreesPerTurn + 1)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kWindHeading);
+}
+
+TEST_F(BuilderTestFixture, ZeroAngleError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .ZeroAngleMOA(46.0)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kZeroAngle);
+}
+
+TEST_F(BuilderTestFixture, ZeroDistanceError) {
+  const double kSierraGameKingBC = 0.436;
+  const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kZeroYardage = 100.0;
+  const double kZeroHeight = 3.0;
+  const lob::Input kJack =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(-kZeroYardage)
+          .ZeroImpactHeightInches(kZeroHeight)
+          .Build();
+  EXPECT_TRUE(kJack.error == lob::ErrorT::kZeroDistance);
+}
+
 TEST_F(BuilderTestFixture, RangeAngleDeg) {
   const double kBc = 0.400;
   const uint16_t kVelocity = 3000U;

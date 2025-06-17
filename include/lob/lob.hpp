@@ -24,12 +24,12 @@ LOB_EXPORT const char* Version();
  * @brief Enumerates the supported drag functions.
  */
 enum class LOB_EXPORT DragFunctionT : uint8_t {
-  kG1,  /// @brief G1 drag function
-  kG2,  /// @brief G2 drag function
-  kG5,  /// @brief G5 drag function
-  kG6,  /// @brief G6 drag function
-  kG7,  /// @brief G7 drag function
-  kG8   /// @brief G8 drag function
+  kG1 = 1U,  /// @brief G1 drag function
+  kG2 = 2U,  /// @brief G2 drag function
+  kG5 = 5U,  /// @brief G5 drag function
+  kG6 = 6U,  /// @brief G6 drag function
+  kG7 = 7U,  /// @brief G7 drag function
+  kG8 = 8U   /// @brief G8 drag function
 };
 
 /**
@@ -46,19 +46,44 @@ enum class LOB_EXPORT AtmosphereReferenceT : uint8_t {
  * wind direction.
  */
 enum class LOB_EXPORT ClockAngleT : uint8_t {
-  kIII = 0U,  /// @brief three o'clock
-  kII,        /// @brief two o'clock
-  kI,         /// @brief one o'clock
-  kXII,       /// @brief twelve o'clock
-  kXI,        /// @brief eleven o'clock
-  kX,         /// @brief ten o'clock
-  kIX,        /// @brief nine o'clock
-  kVIII,      /// @brief eight o'clock
-  kVII,       /// @brief seven o'clock
-  kVI,        /// @brief six o'clock
-  kV,         /// @brief five o'clock
-  kIV         /// @brief four o'clock
+  kI = 1U,  /// @brief one o'clock
+  kII,      /// @brief two o'clock
+  kIII,     /// @brief three o'clock
+  kIV,      /// @brief four o'clock
+  kV,       /// @brief five o'clock
+  kVI,      /// @brief six o'clock
+  kVII,     /// @brief seven o'clock
+  kVIII,    /// @brief eight o'clock
+  kIX,      /// @brief nine o'clock
+  kX,       /// @brief ten o'clock
+  kXI,      /// @brief eleven o'clock
+  kXII      /// @brief twelve o'clock
 };  // enum class ClockAngleT
+
+enum class LOB_EXPORT ErrorT : uint8_t {
+  kNone,
+  kAirPressure,
+  kAltitude,
+  kAzimuth,
+  kBallisticCoefficient,
+  kBaseDiameter,
+  kDiameter,
+  kInitialVelocity,
+  kLatitude,
+  kLength,
+  kMachDragTable,
+  kMass,
+  kMaximumTime,
+  kMeplatDiameter,
+  kNoseLength,
+  kOgiveRtR,
+  kRangeAngle,
+  kTailLength,
+  kWindHeading,
+  kZeroAngle,
+  kZeroDistance,
+  kNotFormed
+};  // enum class ErrorT
 
 /// @brief Not-a-Number for floating-point values.
 template <typename T = double>
@@ -95,12 +120,13 @@ struct LOB_EXPORT Input {
     double cos_l_cos_a{NaN()};  /// @brief 2Ωcos(latitude)cos(azimuth)
   } corilolis;
   double zero_angle{NaN()};  /// @brief Angle between sight and trajectory.
-  double stability_factor{NaN()};  /// @brief Miller stability factor.
-  double aerodynamic_jump{NaN()};  /// @brief Aerodynamic jump effect in Moa.
-  double spindrift_factor{NaN()};  /// @brief Spin drift factor.
-  uint16_t minimum_speed{0};       /// @brief Minimum speed for solver.
-  double max_time{NaN()};          /// @brief Max time of flight for solver.
-  uint16_t step_size{0};           /// @brief Step size for solver.
+  double stability_factor{NaN()};    /// @brief Miller stability factor.
+  double aerodynamic_jump{NaN()};    /// @brief Aerodynamic jump effect in Moa.
+  double spindrift_factor{NaN()};    /// @brief Spin drift factor.
+  uint16_t minimum_speed{0};         /// @brief Minimum speed for solver.
+  double max_time{NaN()};            /// @brief Max time of flight for solver.
+  uint16_t step_size{0};             /// @brief Step size for solver.
+  ErrorT error{ErrorT::kNotFormed};  /// @brief Builder error field.
 };  // struct Input
 
 class Impl;
@@ -126,18 +152,21 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& BallisticCoefficientPsi(double value);
+
   /**
    * @brief Sets the atmosphere reference associated with ballistic coefficient.
    * @param type The atmosphere reference type.
    * @return A reference to the Builder object.
    */
   Builder& BCAtmosphere(AtmosphereReferenceT type);
+
   /**
    * @brief Sets the drag function associated with ballistic coefficient.
    * @param type The drag function type.
    * @return A reference to the Builder object.
    */
   Builder& BCDragFunction(DragFunctionT type);
+
   /**
    * @brief Sets the projectile diameter (caliber) in inches.
    * @param value The diameter in inches.
@@ -213,12 +242,14 @@ class LOB_EXPORT Builder {
                            const std::array<float, N>& drags) {
     return MachVsDragTable(machs.data(), drags.data(), N);
   }
+
   /**
    * @brief Sets the projectile mass in grains.
    * @param value The mass in grains.
    * @return A reference to the Builder object.
    */
   Builder& MassGrains(double value);
+
   /**
    * @brief Sets the initial velocity of the projectile in feet per second.
    * @param value The initial velocity in fps.
@@ -231,6 +262,7 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& OpticHeightInches(double value);
+
   /**
    * @brief Sets the twist rate of the barrel in inches per turn.
    * @note Used to calculate adjustments for spin drift and aerodynamic jump.
@@ -238,6 +270,7 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& TwistInchesPerTurn(double value);
+
   /**
    * @brief Sets the angle between the sight and launch angle used to achieve
    * zero.
@@ -247,12 +280,14 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& ZeroAngleMOA(double value);
+
   /**
    * @brief Sets the zero distance in yards.
    * @param value The zero distance in yards.
    * @return A reference to the Builder object.
    */
   Builder& ZeroDistanceYds(double value);
+
   /**
    * @brief Sets the zero impact height in inches.
    * @note This would be used if zeroing three inches high at 100 yards for
@@ -261,18 +296,21 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& ZeroImpactHeightInches(double value);
+
   /**
    * @brief Sets the altitude of the firing site in feet.
    * @param value The altitude in feet.
    * @return A reference to the Builder object.
    */
   Builder& AltitudeOfFiringSiteFt(double value);
+
   /**
    * @brief Sets the air pressure in inches of mercury (inHg).
    * @param value The air pressure in inHg.
    * @return A reference to the Builder object.
    */
   Builder& AirPressureInHg(double value);
+
   /**
    * @brief Sets the altitude of the location where air pressure was taken in
    * feet.
@@ -283,12 +321,14 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& AltitudeOfBarometerFt(double value);
+
   /**
    * @brief Sets the temperature in degrees Fahrenheit.
    * @param value The temperature in degrees F.
    * @return A reference to the Builder object.
    */
   Builder& TemperatureDegF(double value);
+
   /**
    * @brief Sets the altitude of the location where temperature was taken in
    * feet.
@@ -299,12 +339,14 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& AltitudeOfThermometerFt(double value);
+
   /**
    * @brief Sets the relative humidity at the firing site in percent.
    * @param value The relative humidity in percent.
    * @return A reference to the Builder object.
    */
   Builder& RelativeHumidityPercent(double value);
+
   /**
    * @brief Sets the wind heading using a clock angle.
    * @note Twelve O'Clock is pure tailwind, Six O'Clock is a pure headwind.
@@ -312,6 +354,7 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& WindHeading(ClockAngleT value);
+
   /**
    * @brief Sets the wind heading in degrees.
    * @note 0 is pure tailwind, 180 is pure headwind.
@@ -319,18 +362,21 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& WindHeadingDeg(double value);
+
   /**
    * @brief Sets the wind speed in feet per second.
    * @param value The wind speed in fps.
    * @return A reference to the Builder object.
    */
   Builder& WindSpeedFps(double value);
+
   /**
    * @brief Sets the wind speed in miles per hour.
    * @param value The wind speed in mph.
    * @return A reference to the Builder object.
    */
   Builder& WindSpeedMph(double value);
+
   /**
    * @brief Sets the azimuth (bearing) of the target in degrees.
    * @note Used for making coriolis effect corrections.
@@ -338,6 +384,7 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& AzimuthDeg(double value);
+
   /**
    * @brief Sets the latitude of the firing location in degrees.
    * @note Used for making coriolis effect corrections.
@@ -345,12 +392,14 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& LatitudeDeg(double value);
+
   /**
    * @brief Sets the range angle (inclination) to the target in degrees.
    * @param value The range angle in degrees.
    * @return A reference to the Builder object.
    */
   Builder& RangeAngleDeg(double value);
+
   /**
    * @brief Sets the minimum speed threshold for the solver.
    * @param value The minimum speed in feet per second (fps) at which the solver
@@ -381,6 +430,13 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& StepSize(uint16_t value);
+
+  /**
+   * @brief Resets the builder state by creating a fresh Impl object.
+   * @return A reference to the Builder object.
+   */
+  Builder& Reset();
+
   /**
    * @brief Builds the `Input` object with the configured parameters.
    * @return The constructed `Input` object.

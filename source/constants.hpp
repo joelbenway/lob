@@ -17,6 +17,7 @@ constexpr double kIsaSeaLevelAirDensityLbsPerCuFt = 0.0764742;
 constexpr double kIsaSeaLevelSpeedOfSoundFps = 1116.45;
 constexpr double kIsaLapseDegFPerFt = 0.00356616;
 constexpr double kIsaTropopauseAltitudeFt = 36'090.0;
+constexpr double kIsaStratosphereAltitudeFt = 65'617.0;
 constexpr double kIsaMinimumTempDegF = -69.7;
 constexpr double kArmyToIcaoBcConversionFactor = 0.982;
 constexpr double kAngularVelocityOfEarthRadPerSec = 7.292115E-5;

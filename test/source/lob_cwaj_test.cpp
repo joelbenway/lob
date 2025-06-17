@@ -426,6 +426,19 @@ TEST_P(CWAJParameterizedFixture, Boatright) {
                       .InitialVelocityFps(kShot.velocity)
                       .TwistInchesPerTurn(kShot.twist)
                       .Build();
+  if (kA.error != lob::ErrorT::kNone) {
+    std::cout << kShot.diameter << "\n"
+              << kShot.length << "\n"
+              << kShot.mass << "\n"
+              << kShot.nose_length << "\n"
+              << kShot.tail_length << "\n"
+              << kShot.base_diameter << "\n"
+              << kShot.meplat_diameter << "\n"
+              << kShot.ogive_rtr << "\n"
+              << kShot.g1_bc << "\n"
+              << kShot.velocity << "\n"
+              << kShot.twist << "\n";
+  }
   const double kError = std::abs(kShot.boatright) * 0.10;
   EXPECT_NEAR(kA.aerodynamic_jump, kShot.boatright, kError);
 }
