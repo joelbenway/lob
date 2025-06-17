@@ -2,7 +2,7 @@
 
 ## Submitting Bugs
 
-A helpful bug report is the most valueable contribution a project can receive. Thank you! To ensure that your bug report is in fact helpful be sure to do your due diligence by troubleshooting. Check the issues to ensure your bug hasn't already been submitted. When you do submit, be specific about your version, your environment, compiler, etc. Include all the steps required to reproduce the buggy behavior.
+A helpful bug report is the most valuable contribution a project can receive. Thank you! To ensure that your bug report is in fact helpful be sure to do your due diligence by troubleshooting. Check the issues to ensure your bug hasn't already been submitted. When you do submit, be specific about your version, your environment, compiler, etc. Include all the steps required to reproduce the buggy behavior.
 
 ## Submitting Patches
 
