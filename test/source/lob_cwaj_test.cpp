@@ -426,7 +426,7 @@ TEST_P(CWAJParameterizedFixture, Boatright) {
                       .InitialVelocityFps(kShot.velocity)
                       .TwistInchesPerTurn(kShot.twist)
                       .Build();
-                      
+
   const double kError = std::abs(kShot.boatright) * 0.10;
   EXPECT_NEAR(kA.aerodynamic_jump, kShot.boatright, kError);
 }
