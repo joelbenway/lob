@@ -6,15 +6,15 @@ On my honor, I will do my best to do my duty to God and my country and to obey t
 
 ## The Scout Law
 A Scout is:
-* Trustworthy,
-* Loyal,
-* Helpful,
-* Friendly,
-* Courteous,
-* Kind,
-* Obedient,
-* Cheerful,
-* Thrifty,
-* Brave,
-* Clean,
-* and Reverent.
+* Trustworthy
+* Loyal
+* Helpful
+* Friendly
+* Courteous
+* Kind
+* Obedient
+* Cheerful
+* Thrifty
+* Brave
+* Clean
+* Reverent

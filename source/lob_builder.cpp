@@ -429,16 +429,18 @@ Builder& Builder::Reset() noexcept {
   return *this;
 }
 
-namespace {
-bool ValidateBuild(const Impl& impl) {
-  const bool kErrorIsInExpectedState = impl.build.error == ErrorT::kNotFormed;
-  const bool kBCisOk = !impl.ballistic_coefficient_psi.IsNaN();
-  const bool kVelocityIsOk = impl.build.velocity > 0;
-  const bool kZeroIsOk =
-      !impl.zero_distance_ft.IsNaN() || !std::isnan(impl.build.zero_angle);
+bool Builder::IsValid() const {
+  const bool kErrorIsInExpectedState =
+      pimpl_->build.error == ErrorT::kNotFormed ||
+      pimpl_->build.error == ErrorT::kNone;
+  const bool kBCisOk = !pimpl_->ballistic_coefficient_psi.IsNaN();
+  const bool kVelocityIsOk = pimpl_->build.velocity > 0;
+  const bool kZeroIsOk = !pimpl_->zero_distance_ft.IsNaN() ||
+                         !std::isnan(pimpl_->build.zero_angle);
   return kErrorIsInExpectedState && kBCisOk && kVelocityIsOk && kZeroIsOk;
 }
 
+namespace {
 void BuildEnvironment(Impl* pimpl) {
   assert(pimpl != nullptr);
   FeetT altitude_of_firing_site = FeetT(0);
@@ -782,7 +784,7 @@ Input Builder::Build() {
   if (pimpl_->build.error == ErrorT::kNone) {
     pimpl_->build.error = ErrorT::kNotFormed;
   }
-  if (ValidateBuild(*pimpl_)) {
+  if (IsValid()) {
     // This order matters
     BuildEnvironment(pimpl_);
     BuildTable(pimpl_);
