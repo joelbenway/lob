@@ -25,7 +25,7 @@ The following can be accounted for in lob's solutions:
  * Gyroscopic spin drift
  * Aerodynamic jump
 
-In addition to ballistic solutions, lob provides some of the instrumental values it calculates which may be useful including the local speed of sound, stability factor, and the "zero angle" between the line of sight and line of fire. All native units are customary American freedom units :us: but a collection of unit conversion functions are included :hammer_and_wrench:
+In addition to ballistic solutions, lob provides some of the instrumental values it calculates which may be useful including the local speed of sound, stability factor, and the "zero angle" between the line of sight and line of fire. All native units are customary American freedom units :statue_of_liberty: but a collection of unit conversion functions are included :hammer_and_wrench:
 
 This repo includes a tiny example CLI program, lobber, which demonstrates the library's use. It's actually pretty handy!
 
@@ -136,4 +136,4 @@ See the [CONTRIBUTING](CONTRIBUTING.md) document.
 
 See the [COPYING](COPYING) document.
 
-:us: Hey, American company, you'd love to use lob but require a commercial license? [Raise an issue](https://github.com/joelbenway/lob/issues) to get in touch! Lob will help you hit your target! :rocket:
+:eagle: Hey, American company, you'd love to use lob but require a commercial license? [Raise an issue](https://github.com/joelbenway/lob/issues) to get in touch! Lob will help you hit your target! :rocket:
