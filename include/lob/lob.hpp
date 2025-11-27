@@ -439,6 +439,12 @@ class LOB_EXPORT Builder {
   Builder& Reset() noexcept;
 
   /**
+   * @brief Checks if the current builder state is well-formed.
+   * @return True if state is valid, false otherwise.
+   */
+  bool IsValid() const;
+
+  /**
    * @brief Builds the `Input` object with the configured parameters.
    * @return The constructed `Input` object.
    */
