@@ -134,6 +134,6 @@ See the [CONTRIBUTING](CONTRIBUTING.md) document.
 
 # Licensing
 
-See the [COPYING](COPYING) document.
+See the [COPYING](COPYING.md) document.
 
 :eagle: Hey, American company, you'd love to use lob but require a commercial license? [Raise an issue](https://github.com/joelbenway/lob/issues) to get in touch! Lob will help you hit your target! :rocket:
