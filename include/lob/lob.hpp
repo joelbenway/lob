@@ -221,7 +221,6 @@ class LOB_EXPORT Builder {
    * @brief Loads a custom Mach vs Drag table for the projectile.
    * @note This is a direct alternative to using a ballistic coefficient and a
    * reference drag function.
-   * @tparam N The number of mach-drag pairs in the table.
    * @param pmachs Pointer to an array of mach values.
    * @param pdrags Pointer to an array of associated drag values.
    * @param size The number of mach-drag pairs in the table.
