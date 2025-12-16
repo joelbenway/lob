@@ -49,6 +49,28 @@
           cmake --install build --prefix $out
         '';
       };
+      lobber = pkgs.stdenv.mkDerivation {
+        name = "lobber";
+        src = self;
+        nativeBuildInputs = with pkgs; [
+          cmake
+          nlohmann_json
+        ];
+        configurePhase = ''
+          cmake -S . -B build \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D LOB_DEVELOPER_MODE=OFF \
+            -D BUILD_EXAMPLES=ON \
+            -D BUILD_BENCHMARKS=OFF
+        '';
+        buildPhase = ''
+          cmake --build build --parallel $NIX_BUILD_CORES
+        '';
+        installPhase = ''
+          mkdir -p $out/bin
+          cp build/example/lobber $out/bin/
+        '';
+      };
     });
     devShells = forEachSupportedSystem ({pkgs}: let
       baseShell =
@@ -101,13 +123,15 @@
         buildInputs = oldAttrs.buildInputs ++ extraDevPackages;
         shellHook = let
           inherit (pkgs) stdenv;
-          filename = "CMakeUserPresets.json";
+          clangdFile = ".clangd";
+          CMakeUserPresetsFile = "CMakeUserPresets.json";
           os =
             if stdenv.isLinux
             then "linux"
             else if stdenv.isDarwin
             then "darwin"
             else "<os>";
+          sourceDir = "\\\${sourceDir}";
         in
           ''
             json=$(cat <<-EOF
@@ -121,7 +145,7 @@
               "configurePresets": [
                 {
                   "name": "dev",
-                  "binaryDir": "/build/dev",
+                  "binaryDir": "${sourceDir}/build/dev",
                   "inherits": ["dev-mode", "ci-${os}"],
                   "generator": "Ninja",
                   "environment": {
@@ -130,7 +154,7 @@
                   "cacheVariables": {
                     "CMAKE_BUILD_TYPE": "Debug",
                     "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                    "CMAKE_CXX_FLAGS": "$env{CXX_FLAGS_DEV_LINUX} $env{LOB_CXX_FLAGS_COMMON}",
+                    "CMAKE_CXX_FLAGS": "\$env{CXX_FLAGS_DEV_LINUX} \$env{LOB_CXX_FLAGS_COMMON}",
                     "CMAKE_LINKER_TYPE": "MOLD"
                   }
                 }
@@ -161,11 +185,24 @@
             EOF
             )
 
-            if [ ! -f ${filename} ]; then
-              echo "$json" > ${filename}
-              echo "${filename} created successfully"
+            clangd=$(cat <<-EOF
+            CompileFlags:
+              CompilationDatabase: build/dev
+            EOF
+            )
+
+            if [ ! -f ${CMakeUserPresetsFile} ]; then
+              echo "$json" > ${CMakeUserPresetsFile}
+              echo "${CMakeUserPresetsFile} created successfully"
             else
-              echo "${filename} already exists"
+              echo "${CMakeUserPresetsFile} already exists"
+            fi
+
+            if [ ! -f ${clangdFile} ]; then
+              echo "$clangd" > ${clangdFile}
+              echo "${clangdFile} created successfully"
+            else
+              echo "${clangdFile} already exists"
             fi
           ''
           + oldAttrs.shellHook;
