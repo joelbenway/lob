@@ -535,8 +535,8 @@ void PrintExtraInfo(const lob::Input& input) {
             << std::setprecision(2) << input.zero_angle << std::setw(kSFw)
             << input.stability_factor << std::setw(kSSw) << input.speed_of_sound
             << std::setw(kEw) << std::hex << std::showbase
-            << static_cast<unsigned int>(input.error) << std::dec << std::noshowbase
-            << "\n\n";
+            << static_cast<unsigned int>(input.error) << std::dec
+            << std::noshowbase << "\n\n";
 }
 
 void PrintSolutionTable(const lob::Output* psolutions, size_t size) {
