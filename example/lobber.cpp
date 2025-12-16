@@ -10,10 +10,17 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 #include "lob/lob.hpp"
 #include "version.hpp"
@@ -42,7 +49,7 @@ void PrintVersion() {
 }
 
 void PrintHelp() {
-  std::cout << "Usage: lobber [options]\n"
+  std::cout << "Usage: lobber [options] stdin\n"
             << "Options:\n"
             << "  --h, --help     Show this help message\n"
             << "  --v, --version  Show version information\n"
@@ -61,6 +68,15 @@ void PrintGreeting() {
   std::cout
       << "Welcome to lobber, a minimal example program included with the lob "
          "ballistics library. Follow the prompts to enter data.\n\n";
+}
+
+// Returns true if the program is being run in an interactive terminal.
+bool IsInteractive() {
+#ifdef _WIN32
+  return _isatty(_fileno(stdin)) != 0;
+#else
+  return isatty(STDIN_FILENO) != 0;
+#endif
 }
 
 lob::DragFunctionT ConvertDF(double input) {
@@ -509,13 +525,17 @@ void PrintExtraInfo(const lob::Input& input) {
   const auto kSFw = static_cast<int>(kSF.length() + kExtra);
   const std::string kSS("Speed of Sound");
   const auto kSSw = static_cast<int>(kSS.length() + kExtra);
+  const std::string kE("Error");
+  const auto kEw = static_cast<int>(kE.length() + kExtra);
 
   std::cout << colors::kYellow << std::left << std::setw(kZAw) << kZA
             << std::setw(kSFw) << kSF << std::setw(kSSw) << kSS
-            << colors::kReset << "\n";
+            << std::setw(kEw) << kE << colors::kReset << "\n";
   std::cout << std::left << std::setw(kZAw) << std::fixed
             << std::setprecision(2) << input.zero_angle << std::setw(kSFw)
             << input.stability_factor << std::setw(kSSw) << input.speed_of_sound
+            << std::setw(kEw) << std::hex << std::showbase
+            << static_cast<unsigned int>(input.error) << std::dec << std::noshowbase
             << "\n\n";
 }
 
@@ -618,22 +638,31 @@ int main(int argc, char* argv[]) {
   }
 
   if (json.empty()) {
-    try {
-      std::cin >> json;
-    } catch (const nlohmann::json::parse_error& e) {
-      std::cerr << colors::kRed
-                << "Error parsing JSON from stdin: " << colors::kReset
-                << e.what() << "\n";
-      return 1;
+    if (example::IsInteractive()) {
+      for (const auto& pair : example::GetStateKeys()) {
+        json[pair.second] = "nan";
+      }
+      example::PrintGreeting();
+      example::PromptWizard(&json);
+    } else {
+      if (std::cin.peek() != std::char_traits<char>::eof()) {
+        try {
+          std::cin >> json;
+        } catch (const nlohmann::json::parse_error& e) {
+          std::cerr << colors::kRed
+                    << "Error parsing JSON from stdin: " << colors::kReset
+                    << e.what() << "\n";
+          return 1;
+        }
+      }
     }
   }
 
   if (json.empty()) {
-    for (const auto& pair : example::GetStateKeys()) {
-      json[pair.second] = "nan";
-    }
-    example::PrintGreeting();
-    example::PromptWizard(&json);
+    std::cerr << colors::kRed << "Error: No input data provided."
+              << colors::kReset << "\n\n";
+    example::PrintHelp();
+    return 1;
   }
 
   using example::StateType;
