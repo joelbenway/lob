@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.14)
 
 project(
   lobExamples
-  VERSION 1.0.2
+  VERSION 1.0.3
   DESCRIPTION "Examples using the lob library"
   HOMEPAGE_URL "https://github.com/joelbenway/lob"
   LANGUAGES CXX)
