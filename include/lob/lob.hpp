@@ -62,27 +62,31 @@ enum class LOB_EXPORT ClockAngleT : uint8_t {
 
 enum class LOB_EXPORT ErrorT : uint8_t {
   kNone,
-  kAirPressure,
-  kAltitude,
-  kAzimuth,
-  kBallisticCoefficient,
-  kBaseDiameter,
-  kDiameter,
-  kHumidity,
-  kInitialVelocity,
-  kLatitude,
-  kLength,
-  kMachDragTable,
-  kMass,
-  kMaximumTime,
-  kMeplatDiameter,
-  kNoseLength,
-  kOgiveRtR,
-  kRangeAngle,
-  kTailLength,
-  kWindHeading,
-  kZeroAngle,
-  kZeroDistance,
+  kAirPressureOOR,
+  kAltitudeOfBarometerOOR,
+  kAltitudeOfFiringSiteOOR,
+  kAltitudeOfThermometerOOR,
+  kAzimuthOOR,
+  kBallisticCoefficientOOR,
+  kBallisticCoefficientRequired,
+  kBaseDiameterOOR,
+  kDiameterOOR,
+  kHumidityOOR,
+  kInitialVelocityRequired,
+  kInternalError,
+  kLatitudeOOR,
+  kLengthOOR,
+  kMassOOR,
+  kMaximumTimeOOR,
+  kMeplatDiameterOOR,
+  kNoseLengthOOR,
+  kOgiveRtROOR,
+  kRangeAngleOOR,
+  kTailLengthOOR,
+  kWindHeadingOOR,
+  kZeroAngleOOR,
+  kZeroDataRequired,
+  kZeroDistanceOOR,
   kNotFormed
 };  // enum class ErrorT
 
@@ -436,12 +440,6 @@ class LOB_EXPORT Builder {
    * @return A reference to the Builder object.
    */
   Builder& Reset() noexcept;
-
-  /**
-   * @brief Checks if the current builder state is well-formed.
-   * @return True if state is valid, false otherwise.
-   */
-  bool IsValid() const;
 
   /**
    * @brief Builds the `Input` object with the configured parameters.

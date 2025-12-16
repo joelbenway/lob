@@ -129,31 +129,31 @@ TEST_F(BuilderTestFixture, BuildMinimalInput) {
   EXPECT_DOUBLE_EQ(kResult.gravity.y, -1.0 * lob::kStandardGravityFtPerSecSq);
 }
 
-TEST_F(BuilderTestFixture, BuildInvalidVelocityInput) {
+TEST_F(BuilderTestFixture, BuildMissingVelocityInput) {
   const double kTestBC = 0.425;
   const double kTestZeroAngle = 3.84;
   const lob::Input kResult = puut->BallisticCoefficientPsi(kTestBC)
                                  .ZeroAngleMOA(kTestZeroAngle)
                                  .Build();
-  EXPECT_TRUE(std::isnan(kResult.table_coefficient));
+  EXPECT_EQ(kResult.error, lob::ErrorT::kInitialVelocityRequired);
 }
 
-TEST_F(BuilderTestFixture, BuildInvalidBCInput) {
+TEST_F(BuilderTestFixture, BuildMissingBCInput) {
   const uint16_t kTestMuzzleVelocity = 2700U;
   const double kTestZeroAngle = 3.84;
   const lob::Input kResult = puut->InitialVelocityFps(kTestMuzzleVelocity)
                                  .ZeroAngleMOA(kTestZeroAngle)
                                  .Build();
-  EXPECT_TRUE(std::isnan(kResult.table_coefficient));
+  EXPECT_EQ(kResult.error, lob::ErrorT::kBallisticCoefficientRequired);
 }
 
-TEST_F(BuilderTestFixture, BuildInvalidZeroInput) {
+TEST_F(BuilderTestFixture, BuildMissingZeroInput) {
   const double kTestBC = 0.425;
   const uint16_t kTestMuzzleVelocity = 2700U;
   const lob::Input kResult = puut->BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .Build();
-  EXPECT_TRUE(std::isnan(kResult.table_coefficient));
+  EXPECT_EQ(kResult.error, lob::ErrorT::kZeroDataRequired);
 }
 
 TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
@@ -358,9 +358,10 @@ TEST_F(BuilderTestFixture, ResetWorks) {
           .InitialVelocityFps(kM70MuzzleVelocity)
           .ZeroDistanceYds(kZeroYardage)
           .ZeroImpactHeightInches(kZeroHeight)
-          .Reset()
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kNotFormed);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kNone);
+  const lob::Input kReset = puut->Reset().Build();
+  EXPECT_TRUE(kReset.error != lob::ErrorT::kNone);
 }
 
 TEST_F(BuilderTestFixture, AirPressureError) {
@@ -376,7 +377,7 @@ TEST_F(BuilderTestFixture, AirPressureError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .AirPressureInHg(-1.0)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kAirPressure);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kAirPressureOOR);
 }
 
 TEST_F(BuilderTestFixture, FiringSiteAltitudeError) {
@@ -392,12 +393,13 @@ TEST_F(BuilderTestFixture, FiringSiteAltitudeError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .AltitudeOfFiringSiteFt(lob::kIsaStratosphereAltitudeFt + 1)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kAltitude);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kAltitudeOfFiringSiteOOR);
 }
 
 TEST_F(BuilderTestFixture, BarometerAltitudeError) {
   const double kSierraGameKingBC = 0.436;
   const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kAltitude = 0.0;
   const double kZeroYardage = 100.0;
   const double kZeroHeight = 3.0;
   const lob::Input kJack =
@@ -406,14 +408,16 @@ TEST_F(BuilderTestFixture, BarometerAltitudeError) {
           .InitialVelocityFps(kM70MuzzleVelocity)
           .ZeroDistanceYds(kZeroYardage)
           .ZeroImpactHeightInches(kZeroHeight)
+          .AltitudeOfFiringSiteFt(kAltitude)
           .AltitudeOfBarometerFt(lob::kIsaStratosphereAltitudeFt + 1)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kAltitude);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kAltitudeOfBarometerOOR);
 }
 
 TEST_F(BuilderTestFixture, ThermometerAltitudeError) {
   const double kSierraGameKingBC = 0.436;
   const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kAltitude = 0.0;
   const double kZeroYardage = 100.0;
   const double kZeroHeight = 3.0;
   const lob::Input kJack =
@@ -422,14 +426,16 @@ TEST_F(BuilderTestFixture, ThermometerAltitudeError) {
           .InitialVelocityFps(kM70MuzzleVelocity)
           .ZeroDistanceYds(kZeroYardage)
           .ZeroImpactHeightInches(kZeroHeight)
+          .AltitudeOfFiringSiteFt(kAltitude)
           .AltitudeOfThermometerFt(lob::kIsaStratosphereAltitudeFt + 1)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kAltitude);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kAltitudeOfThermometerOOR);
 }
 
 TEST_F(BuilderTestFixture, AzimuthError) {
   const double kSierraGameKingBC = 0.436;
   const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kLatitude = 45.0;
   const double kZeroYardage = 100.0;
   const double kZeroHeight = 3.0;
   const lob::Input kJack =
@@ -439,8 +445,9 @@ TEST_F(BuilderTestFixture, AzimuthError) {
           .ZeroDistanceYds(kZeroYardage)
           .ZeroImpactHeightInches(kZeroHeight)
           .AzimuthDeg(lob::kDegreesPerTurn + 1)
+          .LatitudeDeg(kLatitude)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kAzimuth);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kAzimuthOOR);
 }
 
 TEST_F(BuilderTestFixture, BallisticCoefficientError) {
@@ -455,7 +462,7 @@ TEST_F(BuilderTestFixture, BallisticCoefficientError) {
           .ZeroDistanceYds(kZeroYardage)
           .ZeroImpactHeightInches(kZeroHeight)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kBallisticCoefficient);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kBallisticCoefficientOOR);
 }
 
 TEST_F(BuilderTestFixture, BaseDiameterError) {
@@ -471,7 +478,7 @@ TEST_F(BuilderTestFixture, BaseDiameterError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .BaseDiameterInch(-1.0)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kBaseDiameter);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kBaseDiameterOOR);
 }
 
 TEST_F(BuilderTestFixture, DiameterError) {
@@ -487,7 +494,7 @@ TEST_F(BuilderTestFixture, DiameterError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .DiameterInch(-1.0)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kDiameter);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kDiameterOOR);
 }
 
 TEST_F(BuilderTestFixture, HumidityError) {
@@ -503,7 +510,7 @@ TEST_F(BuilderTestFixture, HumidityError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .RelativeHumidityPercent(-1.0)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kHumidity);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kHumidityOOR);
 }
 
 TEST_F(BuilderTestFixture, InitialVelocity) {
@@ -517,12 +524,13 @@ TEST_F(BuilderTestFixture, InitialVelocity) {
           .ZeroDistanceYds(kZeroYardage)
           .ZeroImpactHeightInches(kZeroHeight)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kInitialVelocity);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kInitialVelocityRequired);
 }
 
 TEST_F(BuilderTestFixture, LatitudeError) {
   const double kSierraGameKingBC = 0.436;
   const uint16_t kM70MuzzleVelocity = 3100U;
+  const double kAzimuth = 0;
   const double kZeroYardage = 100.0;
   const double kZeroHeight = 3.0;
   const lob::Input kJack =
@@ -531,9 +539,10 @@ TEST_F(BuilderTestFixture, LatitudeError) {
           .InitialVelocityFps(kM70MuzzleVelocity)
           .ZeroDistanceYds(kZeroYardage)
           .ZeroImpactHeightInches(kZeroHeight)
+          .AzimuthDeg(kAzimuth)
           .LatitudeDeg(91.0)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kLatitude);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kLatitudeOOR);
 }
 
 TEST_F(BuilderTestFixture, LengthError) {
@@ -549,23 +558,21 @@ TEST_F(BuilderTestFixture, LengthError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .LengthInch(-1.0)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kLength);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kLengthOOR);
 }
 
-TEST_F(BuilderTestFixture, MachVsDragTableError) {
-  const double kSierraGameKingBC = 0.436;
+TEST_F(BuilderTestFixture, MachVsDragTableBadParamsIgnored) {
   const uint16_t kM70MuzzleVelocity = 3100U;
   const double kZeroYardage = 100.0;
   const double kZeroHeight = 3.0;
   const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
           .InitialVelocityFps(kM70MuzzleVelocity)
           .ZeroDistanceYds(kZeroYardage)
           .ZeroImpactHeightInches(kZeroHeight)
           .MachVsDragTable(nullptr, nullptr, 0)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kMachDragTable);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kBallisticCoefficientRequired);
 }
 
 TEST_F(BuilderTestFixture, MassError) {
@@ -581,7 +588,7 @@ TEST_F(BuilderTestFixture, MassError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .MassGrains(-1.0)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kMass);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kMassOOR);
 }
 
 TEST_F(BuilderTestFixture, MaximumTimeError) {
@@ -597,7 +604,7 @@ TEST_F(BuilderTestFixture, MaximumTimeError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .MaximumTime(-1.0)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kMaximumTime);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kMaximumTimeOOR);
 }
 
 TEST_F(BuilderTestFixture, MeplatDiameterError) {
@@ -613,7 +620,7 @@ TEST_F(BuilderTestFixture, MeplatDiameterError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .MeplatDiameterInch(-1.0)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kMeplatDiameter);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kMeplatDiameterOOR);
 }
 
 TEST_F(BuilderTestFixture, NoseLengthError) {
@@ -629,7 +636,7 @@ TEST_F(BuilderTestFixture, NoseLengthError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .NoseLengthInch(-1)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kNoseLength);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kNoseLengthOOR);
 }
 
 TEST_F(BuilderTestFixture, OgiveRtRError) {
@@ -645,7 +652,7 @@ TEST_F(BuilderTestFixture, OgiveRtRError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .OgiveRtR(-1)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kOgiveRtR);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kOgiveRtROOR);
 }
 
 TEST_F(BuilderTestFixture, RangeAngleError) {
@@ -661,7 +668,7 @@ TEST_F(BuilderTestFixture, RangeAngleError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .RangeAngleDeg(90)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kRangeAngle);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kRangeAngleOOR);
 }
 
 TEST_F(BuilderTestFixture, TailLengthError) {
@@ -677,12 +684,13 @@ TEST_F(BuilderTestFixture, TailLengthError) {
           .ZeroImpactHeightInches(kZeroHeight)
           .TailLengthInch(-1.0)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kTailLength);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kTailLengthOOR);
 }
 
 TEST_F(BuilderTestFixture, WindHeadingError) {
   const double kSierraGameKingBC = 0.436;
   const uint16_t kM70MuzzleVelocity = 3100U;
+  const uint16_t kWindSpeed = 10;
   const double kZeroYardage = 100.0;
   const double kZeroHeight = 3.0;
   const lob::Input kJack =
@@ -691,9 +699,10 @@ TEST_F(BuilderTestFixture, WindHeadingError) {
           .InitialVelocityFps(kM70MuzzleVelocity)
           .ZeroDistanceYds(kZeroYardage)
           .ZeroImpactHeightInches(kZeroHeight)
-          .WindHeadingDeg(lob::kDegreesPerTurn + 1)
+          .WindHeadingDeg(lob::kDegreesPerTurn * 3)
+          .WindSpeedMph(kWindSpeed)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kWindHeading);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kWindHeadingOOR);
 }
 
 TEST_F(BuilderTestFixture, ZeroAngleError) {
@@ -707,9 +716,9 @@ TEST_F(BuilderTestFixture, ZeroAngleError) {
           .InitialVelocityFps(kM70MuzzleVelocity)
           .ZeroDistanceYds(kZeroYardage)
           .ZeroImpactHeightInches(kZeroHeight)
-          .ZeroAngleMOA(46.0)
+          .ZeroAngleMOA(lob::MoaT(lob::DegreesT(46)).Value())
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kZeroAngle);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kZeroAngleOOR);
 }
 
 TEST_F(BuilderTestFixture, ZeroDistanceError) {
@@ -724,7 +733,7 @@ TEST_F(BuilderTestFixture, ZeroDistanceError) {
           .ZeroDistanceYds(-kZeroYardage)
           .ZeroImpactHeightInches(kZeroHeight)
           .Build();
-  EXPECT_TRUE(kJack.error == lob::ErrorT::kZeroDistance);
+  EXPECT_EQ(kJack.error, lob::ErrorT::kZeroDistanceOOR);
 }
 
 TEST_F(BuilderTestFixture, RangeAngleDeg) {
