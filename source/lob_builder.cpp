@@ -425,6 +425,7 @@ void BuildEnvironment(Impl* pimpl) {
 
   if (pimpl->relative_humidity_percent < 0.0) {
     pimpl->build.error = ErrorT::kHumidityOOR;
+    return;
   }
 
   const auto kWaterVaporSaturationPressureInHg =
