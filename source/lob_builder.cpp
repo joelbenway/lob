@@ -100,67 +100,36 @@ Builder& Builder::operator=(Builder&& rhs) noexcept {
 }
 
 Builder& Builder::AltitudeOfFiringSiteFt(double value) {
-  const bool kIsValid = (-kIsaStratosphereAltitudeFt < value) &&
-                        (value < kIsaStratosphereAltitudeFt);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kAltitude;
-  }
   pimpl_->altitude_ft = FeetT(value);
   return *this;
 }
 
 Builder& Builder::AltitudeOfBarometerFt(double value) {
-  const bool kIsValid = (-kIsaStratosphereAltitudeFt < value) &&
-                        (value < kIsaStratosphereAltitudeFt);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kAltitude;
-  }
   pimpl_->altitude_of_barometer_ft = FeetT(value);
   return *this;
 }
 
 Builder& Builder::AltitudeOfThermometerFt(double value) {
-  const bool kIsValid = (-kIsaStratosphereAltitudeFt < value) &&
-                        (value < kIsaStratosphereAltitudeFt);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kAltitude;
-  }
   pimpl_->altitude_of_thermometer_ft = FeetT(value);
   return *this;
 }
 
 Builder& Builder::AzimuthDeg(double value) {
-  const bool kIsValid = (-kDegreesPerTurn < value) && (value < kDegreesPerTurn);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kAzimuth;
-  }
   pimpl_->azimuth_rad = DegreesT(value);
   return *this;
 }
 
 Builder& Builder::BallisticCoefficientPsi(double value) {
-  const bool kIsValid = (0.0 < value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kBallisticCoefficient;
-  }
   pimpl_->ballistic_coefficient_psi = PmsiT(value);
   return *this;
 }
 
 Builder& Builder::AirPressureInHg(double value) {
-  const bool kIsValid = (0.0 < value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kAirPressure;
-  }
   pimpl_->air_pressure_in_hg = InHgT(value);
   return *this;
 }
 
 Builder& Builder::BaseDiameterInch(double value) {
-  const bool kIsValid = (0.0 <= value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kBaseDiameter;
-  }
   pimpl_->base_diameter_in = InchT(value);
   return *this;
 }
@@ -204,37 +173,21 @@ Builder& Builder::BCDragFunction(DragFunctionT type) {
 }
 
 Builder& Builder::DiameterInch(double value) {
-  const bool kIsValid = (0.0 < value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kDiameter;
-  }
   pimpl_->diameter_in = InchT(value);
   return *this;
 }
 
 Builder& Builder::InitialVelocityFps(uint16_t value) {
-  const bool kIsValid = (0 != value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kInitialVelocity;
-  }
   pimpl_->build.velocity = FpsT(value).U16();
   return *this;
 }
 
 Builder& Builder::LatitudeDeg(double value) {
-  const bool kIsValid = (-90.0 <= value && value <= 90.0);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kLatitude;
-  }
   pimpl_->latitude_rad = DegreesT(value);
   return *this;
 }
 
 Builder& Builder::LengthInch(double value) {
-  const bool kIsValid = (0 < value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kLength;
-  }
   pimpl_->length_in = InchT(value);
   return *this;
 }
@@ -242,7 +195,6 @@ Builder& Builder::LengthInch(double value) {
 Builder& Builder::MachVsDragTable(const float* pmachs, const float* pdrags,
                                   size_t size) {
   if (pmachs == nullptr || pdrags == nullptr || size == 0) {
-    pimpl_->build.error = ErrorT::kMachDragTable;
     return *this;
   }
   for (size_t i = 0; i < kTableSize; i++) {
@@ -257,28 +209,16 @@ Builder& Builder::MachVsDragTable(const float* pmachs, const float* pdrags,
 }
 
 Builder& Builder::MassGrains(double value) {
-  const bool kIsValid = (0.0 < value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kMass;
-  }
   pimpl_->build.mass = LbsT(GrainT(value)).Value();
   return *this;
 }
 
 Builder& Builder::MaximumTime(double value) {
-  const bool kIsValid = (0.0 < value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kMaximumTime;
-  }
   pimpl_->build.max_time = value;
   return *this;
 }
 
 Builder& Builder::MeplatDiameterInch(double value) {
-  const bool kIsValid = (0.0 <= value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kMeplatDiameter;
-  }
   pimpl_->meplat_diameter_in = InchT(value);
   return *this;
 }
@@ -294,19 +234,11 @@ Builder& Builder::MinimumSpeed(uint16_t value) {
 }
 
 Builder& Builder::NoseLengthInch(double value) {
-  const bool kIsValid = (0.0 <= value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kNoseLength;
-  }
   pimpl_->nose_length_in = InchT(value);
   return *this;
 }
 
 Builder& Builder::OgiveRtR(double value) {
-  const bool kIsValid = (0.0 <= value && value <= 1.0);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kOgiveRtR;
-  }
   pimpl_->ogive_rtr = value;
   return *this;
 }
@@ -317,19 +249,11 @@ Builder& Builder::OpticHeightInches(double value) {
 }
 
 Builder& Builder::RelativeHumidityPercent(double value) {
-  const bool kIsValid = (0.0 <= value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kHumidity;
-  }
   pimpl_->relative_humidity_percent = value;
   return *this;
 }
 
 Builder& Builder::RangeAngleDeg(double value) {
-  const bool kIsValid = (-90.0 < value && value < 90.0);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kRangeAngle;
-  }
   pimpl_->range_angle_rad = RadiansT(DegreesT(value));
   return *this;
 }
@@ -340,10 +264,6 @@ Builder& Builder::StepSize(uint16_t value) {
 }
 
 Builder& Builder::TailLengthInch(double value) {
-  const bool kIsValid = (0.0 <= value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kTailLength;
-  }
   pimpl_->tail_length_in = InchT(value);
   return *this;
 }
@@ -374,10 +294,6 @@ Builder& Builder::WindHeadingDeg(double value) {
   const DegreesT kFullTurn(kDegreesPerTurn);
   const DegreesT kQuarterTurn(kFullTurn / 4);
   DegreesT angle(value);
-  const bool kIsValid = (kFullTurn * -1 < angle && angle < kFullTurn);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kWindHeading;
-  }
 
   angle = angle * -1 + kQuarterTurn;
 
@@ -401,19 +317,11 @@ Builder& Builder::WindSpeedMph(double value) {
 }
 
 Builder& Builder::ZeroAngleMOA(double value) {
-  const bool kIsInvalid = (-45.0 > value || value > 45.0);
-  if (kIsInvalid) {
-    pimpl_->build.error = ErrorT::kZeroAngle;
-  }
   pimpl_->build.zero_angle = MoaT(value).Value();
   return *this;
 }
 
 Builder& Builder::ZeroDistanceYds(double value) {
-  const bool kIsValid = (0.0 < value);
-  if (!kIsValid) {
-    pimpl_->build.error = ErrorT::kZeroDistance;
-  }
   pimpl_->zero_distance_ft = YardT(value);
   return *this;
 }
@@ -429,18 +337,8 @@ Builder& Builder::Reset() noexcept {
   return *this;
 }
 
-bool Builder::IsValid() const {
-  const bool kErrorIsInExpectedState =
-      pimpl_->build.error == ErrorT::kNotFormed ||
-      pimpl_->build.error == ErrorT::kNone;
-  const bool kBCisOk = !pimpl_->ballistic_coefficient_psi.IsNaN();
-  const bool kVelocityIsOk = pimpl_->build.velocity > 0;
-  const bool kZeroIsOk = !pimpl_->zero_distance_ft.IsNaN() ||
-                         !std::isnan(pimpl_->build.zero_angle);
-  return kErrorIsInExpectedState && kBCisOk && kVelocityIsOk && kZeroIsOk;
-}
-
 namespace {
+
 void BuildEnvironment(Impl* pimpl) {
   assert(pimpl != nullptr);
   FeetT altitude_of_firing_site = FeetT(0);
@@ -452,6 +350,13 @@ void BuildEnvironment(Impl* pimpl) {
 
   if (std::isnan(pimpl->range_angle_rad)) {
     pimpl->range_angle_rad = RadiansT(DegreesT(0));
+  }
+
+  const bool kRangeAngleValid = pimpl->range_angle_rad > DegreesT(-90.0) &&
+                                pimpl->range_angle_rad < DegreesT(90.0);
+  if (!kRangeAngleValid) {
+    pimpl->build.error = ErrorT::kRangeAngleOOR;
+    return;
   }
 
   pimpl->build.gravity.x = kStandardGravityFtPerSecSq * -1 *
@@ -467,6 +372,26 @@ void BuildEnvironment(Impl* pimpl) {
     altitude_of_thermometer = std::isnan(pimpl->altitude_of_thermometer_ft)
                                   ? pimpl->altitude_ft
                                   : pimpl->altitude_of_thermometer_ft;
+
+    auto is_altitude_valid = [](FeetT altitude) -> bool {
+      return FeetT(-kIsaStratosphereAltitudeFt) < altitude &&
+             altitude < FeetT(kIsaStratosphereAltitudeFt);
+    };
+
+    if (!is_altitude_valid(altitude_of_firing_site)) {
+      pimpl->build.error = ErrorT::kAltitudeOfFiringSiteOOR;
+      return;
+    }
+
+    if (!is_altitude_valid(altitude_of_barometer)) {
+      pimpl->build.error = ErrorT::kAltitudeOfBarometerOOR;
+      return;
+    }
+
+    if (!is_altitude_valid(altitude_of_thermometer)) {
+      pimpl->build.error = ErrorT::kAltitudeOfThermometerOOR;
+      return;
+    }
 
     temperature_at_firing_site = CalculateTemperatureAtAltitude(
         altitude_of_firing_site, DegFT(kIsaSeaLevelDegF));
@@ -485,6 +410,10 @@ void BuildEnvironment(Impl* pimpl) {
   }
 
   if (!std::isnan(pimpl->air_pressure_in_hg)) {
+    if (pimpl->air_pressure_in_hg < InHgT(0.0)) {
+      pimpl->build.error = ErrorT::kAirPressureOOR;
+      return;
+    }
     pressure_at_firing_site =
         BarometricFormula(altitude_of_firing_site - altitude_of_barometer,
                           pimpl->air_pressure_in_hg, temperature_at_barometer);
@@ -492,6 +421,10 @@ void BuildEnvironment(Impl* pimpl) {
 
   if (std::isnan(pimpl->relative_humidity_percent)) {
     pimpl->relative_humidity_percent = kIsaSeaLevelHumidityPercent;
+  }
+
+  if (pimpl->relative_humidity_percent < 0.0) {
+    pimpl->build.error = ErrorT::kHumidityOOR;
   }
 
   const auto kWaterVaporSaturationPressureInHg =
@@ -514,8 +447,17 @@ void BuildEnvironment(Impl* pimpl) {
 
 void BuildTable(Impl* pimpl) {
   assert(pimpl != nullptr);
-  assert(!std::isnan(pimpl->ballistic_coefficient_psi));
   assert(!std::isnan(pimpl->air_density_lbs_per_cu_ft));
+
+  if (pimpl->ballistic_coefficient_psi.IsNaN()) {
+    pimpl->build.error = ErrorT::kBallisticCoefficientRequired;
+    return;
+  }
+
+  if (pimpl->ballistic_coefficient_psi <= PmsiT(0.0)) {
+    pimpl->build.error = ErrorT::kBallisticCoefficientOOR;
+    return;
+  }
 
   if (pimpl->atmosphere_reference == AtmosphereReferenceT::kArmyStandardMetro) {
     pimpl->ballistic_coefficient_psi *= kArmyToIcaoBcConversionFactor;
@@ -535,8 +477,16 @@ void BuildTable(Impl* pimpl) {
 
 void BuildWind(Impl* pimpl) {
   assert(pimpl != nullptr);
+
   if (std::isnan(pimpl->wind_heading_rad)) {
     pimpl->wind_heading_rad = DegreesT(0);
+  }
+
+  const DegreesT kFullTurn(kDegreesPerTurn);
+  if (pimpl->wind_heading_rad > kFullTurn ||
+      pimpl->wind_heading_rad < kFullTurn * -1) {
+    pimpl->build.error = ErrorT::kWindHeadingOOR;
+    return;
   }
 
   if (std::isnan(pimpl->wind_speed_fps)) {
@@ -551,27 +501,81 @@ void BuildWind(Impl* pimpl) {
           .Value();
 }
 
+void BuildOpticHeight(Impl* pimpl) {
+  assert(pimpl != nullptr);
+  if (std::isnan(pimpl->build.optic_height)) {
+    constexpr FeetT kDefaultOpticHeight = InchT(1.5);
+    pimpl->build.optic_height = kDefaultOpticHeight.Value();
+  }
+}
+
 void BuildStability(Impl* pimpl) {
   assert(pimpl != nullptr);
-  assert(pimpl->build.velocity > 0);
   assert(!std::isnan(pimpl->air_density_lbs_per_cu_ft));
 
-  if ((pimpl->diameter_in > InchT(0)) && (pimpl->length_in > InchT(0)) &&
-      !AreEqual(pimpl->twist_inches_per_turn, InchPerTwistT(0)) &&
-      !std::isnan(pimpl->build.mass)) {
-    const double kFtp = CalculateMillerTwistRuleCorrectionFactor(
-        pimpl->air_density_lbs_per_cu_ft);
-    pimpl->build.stability_factor =
-        kFtp * CalculateMillerTwistRuleStabilityFactor(
-                   pimpl->diameter_in, GrainT(LbsT(pimpl->build.mass)),
-                   pimpl->length_in, pimpl->twist_inches_per_turn,
-                   FpsT(pimpl->build.velocity));
+  if (std::isnan(pimpl->build.velocity) || pimpl->build.velocity <= 0) {
+    pimpl->build.error = ErrorT::kInitialVelocityRequired;
+    return;
   }
+
+  if (pimpl->diameter_in <= InchT(0)) {
+    pimpl->build.error = ErrorT::kDiameterOOR;
+    return;
+  }
+
+  if (pimpl->length_in <= InchT(0)) {
+    pimpl->build.error = ErrorT::kLengthOOR;
+    return;
+  }
+
+  if (pimpl->build.mass <= 0) {
+    pimpl->build.error = ErrorT::kMassOOR;
+    return;
+  }
+
+  if (pimpl->diameter_in.IsNaN() || pimpl->length_in.IsNaN() ||
+      std::isnan(pimpl->build.mass) || pimpl->twist_inches_per_turn.IsNaN() ||
+      AreEqual(pimpl->twist_inches_per_turn, InchPerTwistT(0))) {
+    return;
+  }
+
+  const double kFtp = CalculateMillerTwistRuleCorrectionFactor(
+      pimpl->air_density_lbs_per_cu_ft);
+  pimpl->build.stability_factor =
+      kFtp * CalculateMillerTwistRuleStabilityFactor(
+                 pimpl->diameter_in, GrainT(LbsT(pimpl->build.mass)),
+                 pimpl->length_in, pimpl->twist_inches_per_turn,
+                 FpsT(pimpl->build.velocity));
 }
 
 void BuildBoatright(Impl* pimpl) {
   assert(pimpl != nullptr);
   assert(pimpl->pdrag_lut != nullptr);
+
+  if (pimpl->meplat_diameter_in < InchT(0)) {
+    pimpl->build.error = ErrorT::kMeplatDiameterOOR;
+    return;
+  }
+
+  if (pimpl->base_diameter_in <= InchT(0)) {
+    pimpl->build.error = ErrorT::kBaseDiameterOOR;
+    return;
+  }
+
+  if (pimpl->nose_length_in < InchT(0)) {
+    pimpl->build.error = ErrorT::kNoseLengthOOR;
+    return;
+  }
+
+  if (pimpl->tail_length_in < InchT(0)) {
+    pimpl->build.error = ErrorT::kTailLengthOOR;
+    return;
+  }
+
+  if (pimpl->ogive_rtr < 0 || pimpl->ogive_rtr > 1.0) {
+    pimpl->build.error = ErrorT::kOgiveRtROOR;
+    return;
+  }
 
   const InchT kD(pimpl->diameter_in);
   const CaliberT kDM(pimpl->meplat_diameter_in, kD.Inverse());
@@ -698,7 +702,20 @@ void BuildLitzAerodynamicJump(Impl* pimpl) {
 
 void BuildCoriolis(Impl* pimpl) {
   assert(pimpl != nullptr);
+
   if (!std::isnan(pimpl->azimuth_rad) && !std::isnan(pimpl->latitude_rad)) {
+    const DegreesT kAzimuthLimit(kDegreesPerTurn);
+    if (pimpl->azimuth_rad > kAzimuthLimit ||
+        pimpl->azimuth_rad < kAzimuthLimit * -1) {
+      pimpl->build.error = ErrorT::kAzimuthOOR;
+      return;
+    }
+    const DegreesT kLatitudeLimit(90);
+    if (pimpl->latitude_rad > kLatitudeLimit ||
+        pimpl->latitude_rad < kLatitudeLimit * -1) {
+      pimpl->build.error = ErrorT::kLatitudeOOR;
+      return;
+    }
     // Coriolis Effect Page 178 of Modern Exterior Ballistics - McCoy
     const double kCosL = std::cos(pimpl->latitude_rad).Value();
     const double kSinA = std::sin(pimpl->azimuth_rad).Value();
@@ -719,11 +736,26 @@ void BuildCoriolis(Impl* pimpl) {
 
 void BuildZeroAngle(Impl* pimpl) {
   assert(pimpl != nullptr);
+
   if (!std::isnan(pimpl->build.zero_angle)) {
+    const double kZeroAngleLimit = MoaT(DegreesT(45)).Value();
+    if (pimpl->build.zero_angle > kZeroAngleLimit ||
+        pimpl->build.zero_angle < kZeroAngleLimit * -1) {
+      pimpl->build.error = ErrorT::kZeroAngleOOR;
+    }
     return;
   }
 
-  assert(!std::isnan(pimpl->zero_distance_ft));
+  if (pimpl->zero_distance_ft.IsNaN()) {
+    pimpl->build.error = ErrorT::kZeroDataRequired;
+    return;
+  }
+
+  if (pimpl->zero_distance_ft <= FeetT(0)) {
+    pimpl->build.error = ErrorT::kZeroDistanceOOR;
+    return;
+  }
+
   assert(pimpl->build.velocity > 0);
   assert(!std::isnan(pimpl->build.aerodynamic_jump));
 
@@ -772,6 +804,12 @@ void BuildZeroAngle(Impl* pimpl) {
 
 void BuildOptions(Impl* pimpl) {
   assert(pimpl != nullptr);
+
+  if (pimpl->build.max_time <= 0.0) {
+    pimpl->build.error = ErrorT::kMaximumTimeOOR;
+    return;
+  }
+
   const FpsT kMinSpeed = CalculateVelocityFromKineticEnergy(
       pimpl->minimum_energy_ft_lbs, SlugT(LbsT(pimpl->build.mass)));
   pimpl->build.minimum_speed =
@@ -781,24 +819,47 @@ void BuildOptions(Impl* pimpl) {
 }  // namespace
 
 Input Builder::Build() {
-  if (pimpl_->build.error == ErrorT::kNone) {
-    pimpl_->build.error = ErrorT::kNotFormed;
+  pimpl_->build.error = ErrorT::kNotFormed;
+  // This order matters
+  BuildEnvironment(pimpl_);
+  if (pimpl_->build.error != ErrorT::kNotFormed) {
+    return pimpl_->build;
   }
-  if (IsValid()) {
-    // This order matters
-    BuildEnvironment(pimpl_);
-    BuildTable(pimpl_);
-    BuildWind(pimpl_);
-    if (std::isnan(pimpl_->build.optic_height)) {
-      constexpr FeetT kDefaultOpticHeight = InchT(1.5);
-      pimpl_->build.optic_height = kDefaultOpticHeight.Value();
-    }
-    BuildStability(pimpl_);
-    BuildBoatright(pimpl_);
-    BuildLitzAerodynamicJump(pimpl_);
-    BuildCoriolis(pimpl_);
-    BuildZeroAngle(pimpl_);
-    BuildOptions(pimpl_);
+  BuildTable(pimpl_);
+  if (pimpl_->build.error != ErrorT::kNotFormed) {
+    return pimpl_->build;
+  }
+  BuildWind(pimpl_);
+  if (pimpl_->build.error != ErrorT::kNotFormed) {
+    return pimpl_->build;
+  }
+  BuildOpticHeight(pimpl_);
+  if (pimpl_->build.error != ErrorT::kNotFormed) {
+    return pimpl_->build;
+  }
+  BuildStability(pimpl_);
+  if (pimpl_->build.error != ErrorT::kNotFormed) {
+    return pimpl_->build;
+  }
+  BuildBoatright(pimpl_);
+  if (pimpl_->build.error != ErrorT::kNotFormed) {
+    return pimpl_->build;
+  }
+  BuildLitzAerodynamicJump(pimpl_);
+  if (pimpl_->build.error != ErrorT::kNotFormed) {
+    return pimpl_->build;
+  }
+  BuildCoriolis(pimpl_);
+  if (pimpl_->build.error != ErrorT::kNotFormed) {
+    return pimpl_->build;
+  }
+  BuildZeroAngle(pimpl_);
+  if (pimpl_->build.error != ErrorT::kNotFormed) {
+    return pimpl_->build;
+  }
+  BuildOptions(pimpl_);
+
+  if (pimpl_->build.error == ErrorT::kNotFormed) {
     pimpl_->build.error = ErrorT::kNone;
   }
   return pimpl_->build;
