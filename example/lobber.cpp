@@ -49,7 +49,7 @@ void PrintVersion() {
 }
 
 void PrintHelp() {
-  std::cout << "Usage: lobber [options] stdin\n"
+  std::cout << "Usage: lobber [options] [< input.json]\n"
             << "Options:\n"
             << "  --h, --help     Show this help message\n"
             << "  --v, --version  Show version information\n"
@@ -58,6 +58,9 @@ void PrintHelp() {
                "instead of user prompts\n"
             << "  --of=FILE       Output json file where data is saved for "
                "future use as an input file\n"
+            << "\n"
+            << "Note: When run interactively, a wizard prompts for input.\n"
+            << "      When stdin is redirected, JSON data is read from stdin.\n"
             << "Example:\n"
             << colors::kYellow << "  lobber --of=my_rifle_load.json\n\n"
             << colors::kReset;
