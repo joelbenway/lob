@@ -68,6 +68,10 @@
         '';
         installPhase = ''
           mkdir -p $out/bin
+          if [ ! -f build/example/lobber ]; then
+            echo "Error: lobber binary not found at build/example/lobber"
+            exit 1
+          fi
           cp build/example/lobber $out/bin/
         '';
       };
