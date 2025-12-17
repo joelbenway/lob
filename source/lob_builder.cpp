@@ -514,7 +514,7 @@ void BuildStability(Impl* pimpl) {
   assert(pimpl != nullptr);
   assert(!std::isnan(pimpl->air_density_lbs_per_cu_ft));
 
-  if (std::isnan(pimpl->build.velocity) || pimpl->build.velocity <= 0) {
+  if (pimpl->build.velocity == 0) {
     pimpl->build.error = ErrorT::kInitialVelocityRequired;
     return;
   }
@@ -835,9 +835,6 @@ Input Builder::Build() {
     return pimpl_->build;
   }
   BuildOpticHeight(pimpl_);
-  if (pimpl_->build.error != ErrorT::kNotFormed) {
-    return pimpl_->build;
-  }
   BuildStability(pimpl_);
   if (pimpl_->build.error != ErrorT::kNotFormed) {
     return pimpl_->build;
@@ -847,9 +844,6 @@ Input Builder::Build() {
     return pimpl_->build;
   }
   BuildLitzAerodynamicJump(pimpl_);
-  if (pimpl_->build.error != ErrorT::kNotFormed) {
-    return pimpl_->build;
-  }
   BuildCoriolis(pimpl_);
   if (pimpl_->build.error != ErrorT::kNotFormed) {
     return pimpl_->build;
