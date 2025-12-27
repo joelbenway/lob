@@ -75,7 +75,6 @@ TEST_F(BuilderTestFixture, MoveConstructor) {
   EXPECT_EQ(kVal.velocity, kTestMuzzleVelocity);
 }
 
-// Test for copy assignment operator
 TEST_F(BuilderTestFixture, CopyAssignmentOperator) {
   const double kTestBC = 0.425;
   const double kTestDiameter = 0.308;
@@ -95,7 +94,6 @@ TEST_F(BuilderTestFixture, CopyAssignmentOperator) {
   EXPECT_DOUBLE_EQ(kVal2.velocity, kTestMuzzleVelocity);
 }
 
-// Test for move assignment operator
 TEST_F(BuilderTestFixture, MoveAssignmentOperator) {
   const double kTestBC = 0.425;
   const double kTestDiameter = 0.308;
@@ -154,6 +152,21 @@ TEST_F(BuilderTestFixture, BuildMissingZeroInput) {
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .Build();
   EXPECT_EQ(kResult.error, lob::ErrorT::kZeroDataRequired);
+}
+
+TEST_F(BuilderTestFixture, InvalidDragFunctionIsG1) {
+  const double kTestBC = 1.0;
+  const uint16_t kTestMuzzleVelocity = 2500U;
+  const double kTestZeroAngle = 5.59;
+  const auto kInvalidDragFunction = static_cast<lob::DragFunctionT>(0xFF);
+  const lob::Input kResult = puut->BallisticCoefficientPsi(kTestBC)
+                                 .BCDragFunction(kInvalidDragFunction)
+                                 .InitialVelocityFps(kTestMuzzleVelocity)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .Build();
+  for (size_t i = 0; i < lob::kG1Drags.size(); i++) {
+    EXPECT_EQ(kResult.drags.at(i), lob::kG1Drags.at(i));
+  }
 }
 
 TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {

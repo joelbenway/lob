@@ -191,6 +191,12 @@ TEST(LobAPITest, InchToDeg) {
   EXPECT_DOUBLE_EQ(kA.Value(), lob::IphyT(kB).Value());
 }
 
+TEST(LobAPITest, InchToDegZero) {
+  const auto kA = lob::IphyT(5);
+  const auto kB = lob::DegreesT(lob::InchToDeg(kA.Value(), 0.0));
+  EXPECT_DOUBLE_EQ(0.0, lob::IphyT(kB).Value());
+}
+
 TEST(LobAPITest, JToFtLbs) {
   const auto kA = lob::JouleT(100);
   const auto kB = lob::FtLbsT(lob::JToFtLbs(kA.Value()));

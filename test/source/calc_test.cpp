@@ -17,7 +17,7 @@ namespace tests {
 
 TEST(CalcTests, CalculateTemperatureAtAltitude) {
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
-  const std::vector<uint16_t> kAltitudesFt = {
+  const std::vector<uint32_t> kAltitudesFt = {
       0,    500,  1000, 1500,  2000,  3000,  4000,  5000,  6000,
       7000, 8000, 9000, 10000, 15000, 20000, 25000, 30000, 35000};
   const std::vector<double> kExpectedResultsDegF = {
@@ -37,7 +37,7 @@ TEST(CalcTests, CalculateTemperatureAtAltitude) {
 
 TEST(CalcTests, CalculateTemperatureAtAltitudeMcCoy) {
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
-  const std::vector<uint16_t> kAltitudesFt = {
+  const std::vector<uint32_t> kAltitudesFt = {
       0,    500,  1000, 1500,  2000,  3000,  4000,  5000,  6000,
       7000, 8000, 9000, 10000, 15000, 20000, 25000, 30000, 35000};
   const std::vector<double> kExpectedResultsDegF = {
@@ -59,12 +59,33 @@ TEST(CalcTests, CalculateTemperatureAtAltitudeMcCoy) {
 
 TEST(CalcTests, BarometricFormula) {
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
-  const std::vector<uint16_t> kAltitudesFt = {
+  const std::vector<uint32_t> kAltitudesFt = {
       0,    500,  1000, 1500,  2000,  3000,  4000,  5000,  6000,
       7000, 8000, 9000, 10000, 15000, 20000, 25000, 30000, 35000};
   const std::vector<double> kExpectedResultsInHg = {
       29.92, 29.38, 28.86, 28.33, 27.82, 26.82, 25.84, 24.90, 23.98,
       23.09, 22.23, 21.39, 20.58, 16.89, 13.76, 11.12, 8.90,  7.06};
+  const double kError = 0.025;
+  for (uint32_t i = 0; i < kAltitudesFt.size(); i++) {
+    EXPECT_NEAR(
+        kExpectedResultsInHg.at(i),
+        lob::BarometricFormula(lob::FeetT(kAltitudesFt.at(i)),
+                               lob::InHgT(lob::kIsaSeaLevelPressureInHg),
+                               lob::DegFT(lob::kIsaSeaLevelDegF))
+            .Value(),
+        kError);
+  }
+}
+
+TEST(CalcTests, BarometricFormulaStratosphere) {
+  // test data from
+  // https://www.sensorsone.com/altitude-pressure-units-conversion/
+  const std::vector<uint32_t> kAltitudesFt = {35000, 40000, 45000, 50000, 55000,
+                                              60000, 65000, 70000, 75000, 80000,
+                                              85000, 90000, 95000, 100000};
+  const std::vector<double> kExpectedResultsInHg = {
+      7.04, 5.54, 4.36, 3.42, 2.69, 2.12, 1.67,
+      1.31, 1.03, 0.82, 0.64, 0.51, 0.41, 0.32};
   const double kError = 0.025;
   for (uint32_t i = 0; i < kAltitudesFt.size(); i++) {
     EXPECT_NEAR(
@@ -90,7 +111,7 @@ TEST(CalcTests, BarometricFormulaNegative) {
 
 TEST(CalcTests, CalculateAirDensityAtAltitude) {
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
-  const std::vector<uint16_t> kAltitudesFt = {
+  const std::vector<uint32_t> kAltitudesFt = {
       0,    500,  1000, 1500,  2000,  3000,  4000,  5000,  6000,
       7000, 8000, 9000, 10000, 15000, 20000, 25000, 30000, 35000};
   const double kP0 = lob::kIsaSeaLevelAirDensityLbsPerCuFt;

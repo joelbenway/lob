@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 
 #include "calc.hpp"
 #include "cartesian.hpp"
@@ -44,7 +45,7 @@ Output LerpOutput(const TrajectoryStateT& s_now, const SecT t_now,
 void ApplyGyroscopicSpinDrift(const Input& in, Output* pouts, size_t size) {
   assert(pouts != nullptr);
   // If we can apply Boatright-Ruiz spin drift, prefer it
-  if (in.spindrift_factor > 0) {
+  if (!std::isnan(in.spindrift_factor)) {
     for (size_t i = 0; i < size; i++) {
       pouts[i].deflection +=
           in.spindrift_factor * std::fabs(pouts[i].elevation);
@@ -52,7 +53,7 @@ void ApplyGyroscopicSpinDrift(const Input& in, Output* pouts, size_t size) {
     return;
   }
   // If we can apply Litz spin drift, use that
-  if (std::fabs(in.stability_factor) > 0) {
+  if (std::fabs(in.stability_factor) > 0.0) {
     for (size_t i = 0; i < size; i++) {
       pouts[i].deflection +=
           litz::CalculateGyroscopicSpinDrift(in.stability_factor,
