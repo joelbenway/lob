@@ -68,15 +68,8 @@ Builder::~Builder() { pimpl_->~Impl(); }
 Builder::Builder(const Builder& other)
     : pimpl_(new(buffer_.data()) Impl(*other.pimpl_)) {}
 
-Builder::Builder(Builder&& other) noexcept {
-  if (this != &other) {
-    if (pimpl_ != nullptr) {
-      pimpl_->~Impl();
-    }
-    pimpl_ = new (buffer_.data()) Impl();
-    std::swap(pimpl_, other.pimpl_);
-  }
-}
+Builder::Builder(Builder&& other) noexcept
+    : pimpl_(new(buffer_.data()) Impl(std::move(*other.pimpl_))) {}
 
 Builder& Builder::operator=(const Builder& rhs) {
   if (this != &rhs) {
@@ -93,8 +86,7 @@ Builder& Builder::operator=(Builder&& rhs) noexcept {
     if (pimpl_ != nullptr) {
       pimpl_->~Impl();
     }
-    pimpl_ = new (buffer_.data()) Impl();
-    std::swap(pimpl_, rhs.pimpl_);
+    pimpl_ = new (buffer_.data()) Impl(std::move(*rhs.pimpl_));
   }
   return *this;
 }
@@ -141,10 +133,6 @@ Builder& Builder::BCAtmosphere(AtmosphereReferenceT type) {
 
 Builder& Builder::BCDragFunction(DragFunctionT type) {
   switch (type) {
-    case DragFunctionT::kG1: {
-      pimpl_->pdrag_lut = &kG1Drags;
-      break;
-    }
     case DragFunctionT::kG2: {
       pimpl_->pdrag_lut = &kG2Drags;
       break;
@@ -165,7 +153,9 @@ Builder& Builder::BCDragFunction(DragFunctionT type) {
       pimpl_->pdrag_lut = &kG8Drags;
       break;
     }
+    case DragFunctionT::kG1:
     default: {
+      pimpl_->pdrag_lut = &kG1Drags;
       break;
     }
   }
@@ -549,6 +539,40 @@ void BuildStability(Impl* pimpl) {
                  FpsT(pimpl->build.velocity));
 }
 
+void BuildCoriolis(Impl* pimpl) {
+  assert(pimpl != nullptr);
+
+  if (!std::isnan(pimpl->azimuth_rad) && !std::isnan(pimpl->latitude_rad)) {
+    const DegreesT kAzimuthLimit(kDegreesPerTurn);
+    if (pimpl->azimuth_rad > kAzimuthLimit ||
+        pimpl->azimuth_rad < kAzimuthLimit * -1) {
+      pimpl->build.error = ErrorT::kAzimuthOOR;
+      return;
+    }
+    const DegreesT kLatitudeLimit(90);
+    if (pimpl->latitude_rad > kLatitudeLimit ||
+        pimpl->latitude_rad < kLatitudeLimit * -1) {
+      pimpl->build.error = ErrorT::kLatitudeOOR;
+      return;
+    }
+    // Coriolis Effect Page 178 of Modern Exterior Ballistics - McCoy
+    const double kCosL = std::cos(pimpl->latitude_rad).Value();
+    const double kSinA = std::sin(pimpl->azimuth_rad).Value();
+    const double kSinL = std::sin(pimpl->latitude_rad).Value();
+    const double kCosA = std::cos(pimpl->azimuth_rad).Value();
+
+    pimpl->build.corilolis.cos_l_sin_a =
+        2 * kAngularVelocityOfEarthRadPerSec * kCosL * kSinA;
+    pimpl->build.corilolis.sin_l = 2 * kAngularVelocityOfEarthRadPerSec * kSinL;
+    pimpl->build.corilolis.cos_l_cos_a =
+        2 * kAngularVelocityOfEarthRadPerSec * kCosL * kCosA;
+  } else {
+    pimpl->build.corilolis.cos_l_sin_a = 0;
+    pimpl->build.corilolis.sin_l = 0;
+    pimpl->build.corilolis.cos_l_cos_a = 0;
+  }
+}
+
 void BuildBoatright(Impl* pimpl) {
   assert(pimpl != nullptr);
   assert(pimpl->pdrag_lut != nullptr);
@@ -643,7 +667,6 @@ void BuildBoatright(Impl* pimpl) {
   SecT t(0.0);
 
   static const FpsT kTransonicBarrier(MachT(1.2), kSos);
-
   while (s.V().X() > kTransonicBarrier) {
     assert(t < SecT(60) && "This is taking too long");
     SolveStep(&s, &t, pimpl->build);
@@ -698,40 +721,6 @@ void BuildLitzAerodynamicJump(Impl* pimpl) {
   if (std::isnan(pimpl->build.aerodynamic_jump)) {
     pimpl->build.aerodynamic_jump = MoaT(0).Value();
     return;
-  }
-}
-
-void BuildCoriolis(Impl* pimpl) {
-  assert(pimpl != nullptr);
-
-  if (!std::isnan(pimpl->azimuth_rad) && !std::isnan(pimpl->latitude_rad)) {
-    const DegreesT kAzimuthLimit(kDegreesPerTurn);
-    if (pimpl->azimuth_rad > kAzimuthLimit ||
-        pimpl->azimuth_rad < kAzimuthLimit * -1) {
-      pimpl->build.error = ErrorT::kAzimuthOOR;
-      return;
-    }
-    const DegreesT kLatitudeLimit(90);
-    if (pimpl->latitude_rad > kLatitudeLimit ||
-        pimpl->latitude_rad < kLatitudeLimit * -1) {
-      pimpl->build.error = ErrorT::kLatitudeOOR;
-      return;
-    }
-    // Coriolis Effect Page 178 of Modern Exterior Ballistics - McCoy
-    const double kCosL = std::cos(pimpl->latitude_rad).Value();
-    const double kSinA = std::sin(pimpl->azimuth_rad).Value();
-    const double kSinL = std::sin(pimpl->latitude_rad).Value();
-    const double kCosA = std::cos(pimpl->azimuth_rad).Value();
-
-    pimpl->build.corilolis.cos_l_sin_a =
-        2 * kAngularVelocityOfEarthRadPerSec * kCosL * kSinA;
-    pimpl->build.corilolis.sin_l = 2 * kAngularVelocityOfEarthRadPerSec * kSinL;
-    pimpl->build.corilolis.cos_l_cos_a =
-        2 * kAngularVelocityOfEarthRadPerSec * kCosL * kCosA;
-  } else {
-    pimpl->build.corilolis.cos_l_sin_a = 0;
-    pimpl->build.corilolis.sin_l = 0;
-    pimpl->build.corilolis.cos_l_cos_a = 0;
   }
 }
 
@@ -839,15 +828,15 @@ Input Builder::Build() {
   if (pimpl_->build.error != ErrorT::kNotFormed) {
     return pimpl_->build;
   }
+  BuildCoriolis(pimpl_);
+  if (pimpl_->build.error != ErrorT::kNotFormed) {
+    return pimpl_->build;
+  }
   BuildBoatright(pimpl_);
   if (pimpl_->build.error != ErrorT::kNotFormed) {
     return pimpl_->build;
   }
   BuildLitzAerodynamicJump(pimpl_);
-  BuildCoriolis(pimpl_);
-  if (pimpl_->build.error != ErrorT::kNotFormed) {
-    return pimpl_->build;
-  }
   BuildZeroAngle(pimpl_);
   if (pimpl_->build.error != ErrorT::kNotFormed) {
     return pimpl_->build;

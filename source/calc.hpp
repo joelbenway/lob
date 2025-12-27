@@ -32,8 +32,7 @@ inline DegFT CalculateTemperatureAtAltitudeMcCoy(FeetT altitude,
 // https://wikipedia.org/wiki/Barometric_formula
 inline InHgT BarometricFormula(FeetT altitude, InHgT pressure,
                                DegFT temperature) {
-  const double kGasConstant = 1716.49;     // ft-lb / slug^{-1}R^{-1}
-  const double kMolarMassOfAir = 28.9644;  // lb/lb-mol
+  const double kGasConstant = 1716.49;  // ft-lb / slug^{-1}R^{-1}
   const FeetT kHeight = std::min(altitude, FeetT(kIsaTropopauseAltitudeFt));
 
   const double kExponent =
@@ -46,12 +45,9 @@ inline InHgT BarometricFormula(FeetT altitude, InHgT pressure,
 
   if (altitude > FeetT(kIsaTropopauseAltitudeFt)) {
     const double kNumberator = -1.0 * kStandardGravityFtPerSecSq *
-                               kMolarMassOfAir *
                                (altitude - kIsaTropopauseAltitudeFt).Value();
-
     const double kDemoninator =
         kGasConstant * DegRT(DegFT(kIsaMinimumTempDegF)).Value();
-
     output *= std::exp(kNumberator / kDemoninator);
   }
 
