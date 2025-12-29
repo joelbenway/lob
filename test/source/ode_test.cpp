@@ -113,13 +113,38 @@ TEST(OdeTests, TrajectoryStateTConstrutor) {
   pb.reset();
 }
 
-TEST(OdeTests, TrajectoryStateTCopyAssignment) {
+TEST(OdeTests, TrajectoryStateTMoveConstructor) {
   const auto kP =
       lob::CartesianT<lob::FeetT>(lob::FeetT(3), lob::FeetT(4), lob::FeetT(0));
   const auto kV =
       lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
-  const lob::TrajectoryStateT kA = lob::TrajectoryStateT(kP, kV);
-  EXPECT_DOUBLE_EQ(kA.P().Magnitude().Value(), 5.0);
+  lob::TrajectoryStateT a(kP, kV);
+  const lob::TrajectoryStateT kB(std::move(a));
+  EXPECT_DOUBLE_EQ(kB.P().Magnitude().Value(), 5.0);
+  EXPECT_DOUBLE_EQ(kB.V().Magnitude().Value(), 5.0);
+}
+
+TEST(OdeTests, TrajectoryStateTCopyAssignment) {
+  const auto kP1 =
+      lob::CartesianT<lob::FeetT>(lob::FeetT(3), lob::FeetT(4), lob::FeetT(0));
+  const auto kP2 =
+      lob::CartesianT<lob::FeetT>(lob::FeetT(5), lob::FeetT(12), lob::FeetT(0));
+  const auto kV1 =
+      lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
+  const auto kV2 =
+      lob::CartesianT<lob::FpsT>(lob::FpsT(5), lob::FpsT(12), lob::FpsT(0));
+  lob::TrajectoryStateT a(kP1, kV1);
+  const lob::TrajectoryStateT kB(kP2, kV2);
+  EXPECT_DOUBLE_EQ(a.P().Magnitude().Value(), 5.0);
+  EXPECT_DOUBLE_EQ(a.V().Magnitude().Value(), 5.0);
+  EXPECT_DOUBLE_EQ(kB.P().Magnitude().Value(), 13.0);
+  EXPECT_DOUBLE_EQ(kB.V().Magnitude().Value(), 13.0);
+  a = kB;
+  EXPECT_DOUBLE_EQ(a.P().Magnitude().Value(), kB.P().Magnitude().Value());
+  EXPECT_DOUBLE_EQ(a.V().Magnitude().Value(), kB.V().Magnitude().Value());
+  lob::TrajectoryStateT* pa = &a;
+  EXPECT_DOUBLE_EQ(pa->P().Magnitude().Value(), kB.P().Magnitude().Value());
+  EXPECT_DOUBLE_EQ(pa->V().Magnitude().Value(), kB.V().Magnitude().Value());
 }
 
 TEST(OdeTests, Addition) {
