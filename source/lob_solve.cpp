@@ -6,7 +6,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 
 #include "calc.hpp"
 #include "cartesian.hpp"
