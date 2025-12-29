@@ -430,6 +430,7 @@ class LOB_EXPORT Builder {
 
   /**
    * @brief Sets the step size for the numerical solver.
+   * @note If set to zero the solver will use a variable step.
    * @param value The time step size in microseconds (µs) used by the solver.
    * @return A reference to the Builder object.
    */

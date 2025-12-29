@@ -86,11 +86,7 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
     const TrajectoryStateT kS = s;
     const SecT kT = t;
 
-    if (in.step_size != 0) {
-      SolveStep(&s, &t, in, SecT(UsecT(in.step_size)));
-    } else {
-      SolveStep(&s, &t, in);
-    }
+    SolveStep(&s, &t, in);
 
     if (s.P().X() >= FeetT(pranges[index]) && kS.P().X() < s.P().X()) {
       const double kAlpha =
