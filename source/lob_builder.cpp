@@ -385,6 +385,7 @@ void BuildEnvironment(Impl* pimpl) {
 
     temperature_at_firing_site = CalculateTemperatureAtAltitude(
         altitude_of_firing_site, DegFT(kIsaSeaLevelDegF));
+
     pressure_at_firing_site = BarometricFormula(altitude_of_firing_site,
                                                 InHgT(kIsaSeaLevelPressureInHg),
                                                 DegFT(kIsaSeaLevelDegF));
@@ -421,19 +422,24 @@ void BuildEnvironment(Impl* pimpl) {
   const InHgT kWaterVaporSaturationPressureInHg =
       CalculateWaterVaporSaturationPressure(temperature_at_firing_site);
 
-  const LbsPerCuFtT kAirDensity =
-      LbsPerCuFtT(kIsaSeaLevelAirDensityLbsPerCuFt) *
-      CalculateAirDensityRatio(pressure_at_firing_site,
-                               temperature_at_firing_site) *
-      CalculateAirDensityRatioHumidityCorrection(
-          pimpl->relative_humidity_percent, kWaterVaporSaturationPressureInHg);
+  const double kAirDensityRatio = CalculateAirDensityRatio(
+      pressure_at_firing_site, temperature_at_firing_site);
+
+  const double kHumidityCorrection = CalculateAirDensityRatioHumidityCorrection(
+      pimpl->relative_humidity_percent, kWaterVaporSaturationPressureInHg);
+
+  const LbsPerCuFtT kAirDensity(kIsaSeaLevelAirDensityLbsPerCuFt *
+                                kAirDensityRatio * kHumidityCorrection);
 
   pimpl->air_density_lbs_per_cu_ft = kAirDensity;
 
-  const FpsT kSpeedOfSound =
-      CalculateSpeedOfSoundInAir(temperature_at_firing_site) *
+  const double kSpeedOfSoundCorrection =
       CalculateSpeedOfSoundHumidityCorrection(
           pimpl->relative_humidity_percent, kWaterVaporSaturationPressureInHg);
+
+  const FpsT kSpeedOfSound =
+      CalculateSpeedOfSoundInAir(temperature_at_firing_site) *
+      kSpeedOfSoundCorrection;
 
   pimpl->build.speed_of_sound = kSpeedOfSound.Value();
 }
