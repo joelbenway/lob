@@ -385,6 +385,7 @@ void BuildEnvironment(Impl* pimpl) {
 
     temperature_at_firing_site = CalculateTemperatureAtAltitude(
         altitude_of_firing_site, DegFT(kIsaSeaLevelDegF));
+
     pressure_at_firing_site = BarometricFormula(altitude_of_firing_site,
                                                 InHgT(kIsaSeaLevelPressureInHg),
                                                 DegFT(kIsaSeaLevelDegF));
@@ -418,22 +419,29 @@ void BuildEnvironment(Impl* pimpl) {
     return;
   }
 
-  const auto kWaterVaporSaturationPressureInHg =
+  const InHgT kWaterVaporSaturationPressureInHg =
       CalculateWaterVaporSaturationPressure(temperature_at_firing_site);
 
-  pimpl->air_density_lbs_per_cu_ft = LbsPerCuFtT(
-      kIsaSeaLevelAirDensityLbsPerCuFt *
-      CalculateAirDensityRatio(pressure_at_firing_site,
-                               temperature_at_firing_site) *
-      CalculateAirDensityRatioHumidityCorrection(
-          pimpl->relative_humidity_percent, kWaterVaporSaturationPressureInHg));
+  const double kAirDensityRatio = CalculateAirDensityRatio(
+      pressure_at_firing_site, temperature_at_firing_site);
 
-  pimpl->build.speed_of_sound =
-      FpsT(CalculateSpeedOfSoundInAir(temperature_at_firing_site) *
-           CalculateSpeedOfSoundHumidityCorrection(
-               pimpl->relative_humidity_percent,
-               kWaterVaporSaturationPressureInHg))
-          .Value();
+  const double kHumidityCorrection = CalculateAirDensityRatioHumidityCorrection(
+      pimpl->relative_humidity_percent, kWaterVaporSaturationPressureInHg);
+
+  const LbsPerCuFtT kAirDensity(kIsaSeaLevelAirDensityLbsPerCuFt *
+                                kAirDensityRatio * kHumidityCorrection);
+
+  pimpl->air_density_lbs_per_cu_ft = kAirDensity;
+
+  const double kSpeedOfSoundCorrection =
+      CalculateSpeedOfSoundHumidityCorrection(
+          pimpl->relative_humidity_percent, kWaterVaporSaturationPressureInHg);
+
+  const FpsT kSpeedOfSound =
+      CalculateSpeedOfSoundInAir(temperature_at_firing_site) *
+      kSpeedOfSoundCorrection;
+
+  pimpl->build.speed_of_sound = kSpeedOfSound.Value();
 }
 
 void BuildTable(Impl* pimpl) {
@@ -761,26 +769,26 @@ void BuildZeroAngle(Impl* pimpl) {
 
   while (high_angle - low_angle > kZeroAngleError) {
     const RadiansT kZeroAngle = (low_angle + high_angle) / 2;
+    const RadiansT kAngle =
+        kZeroAngle + RadiansT(MoaT(pimpl->build.aerodynamic_jump));
+    const FpsT kVelocity = FpsT(pimpl->build.velocity);
 
     TrajectoryStateT s(
         CartesianT<FeetT>(FeetT(0.0)),
-        CartesianT<FpsT>(
-            FpsT(pimpl->build.velocity) *
-                std::cos(kZeroAngle +
-                         RadiansT(MoaT(pimpl->build.aerodynamic_jump)))
-                    .Value(),
-            FpsT(pimpl->build.velocity) *
-                std::sin(kZeroAngle +
-                         RadiansT(MoaT(pimpl->build.aerodynamic_jump)))
-                    .Value(),
-            FpsT(0.0)));
+        CartesianT<FpsT>(kVelocity * std::cos(kAngle.Value()),
+                         kVelocity * std::sin(kAngle.Value()), FpsT(0.0)));
 
     SecT t(0.0);
+
+    const auto kSavedStepSize = pimpl->build.step_size;
+    pimpl->build.step_size = 0U;  // Use variable step size
 
     while (s.P().X() < pimpl->zero_distance_ft) {
       assert(t < SecT(60) && "This is taking too long");
       SolveStep(&s, &t, pimpl->build);
     }
+
+    pimpl->build.step_size = kSavedStepSize;  // Restore selected step size
 
     if (s.P().Y() - FeetT(pimpl->build.optic_height) >
         pimpl->zero_impact_height) {

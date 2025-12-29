@@ -9,17 +9,20 @@
 
 #include "cartesian.hpp"
 #include "eng_units.hpp"
-#include "helpers.hpp"
 #include "lob/lob.hpp"
 #include "ode.hpp"
 #include "tables.hpp"
 
 namespace lob {
 
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, SecT step) {
+void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input) {
   assert(ps != nullptr);
   assert(pt != nullptr);
-  assert(step.Value() > 0.0 && "step is not valid");
+
+  const SecT kStep = input.step_size == 0 && ps->V().X() > FpsT(0)
+                         ? SecT(ps->V().X().Inverse().Value())
+                         : SecT(UsecT(input.step_size));
+
   const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
                                FpsT(input.wind.z));
 
@@ -50,18 +53,8 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, SecT step) {
     return TrajectoryStateT{kDpDt, dv_dt};
   };  // ds_dt
 
-  *ps = HeunStep(SecT(0), *ps, step, ds_dt);
-  *pt += step;
-}
-
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input, FeetT step) {
-  assert(ps != nullptr);
-  assert(pt != nullptr);
-  assert(step.Value() > 0.0 && "step is not valid");
-  const SecT kDt = AreEqual(ps->V().X().Value(), 0.0)
-                       ? SecT(UsecT(100))
-                       : SecT(ps->V().X().Inverse().Value() * step.Value());
-  SolveStep(ps, pt, input, kDt);
+  *ps = HeunStep(SecT(0), *ps, kStep, ds_dt);
+  *pt += kStep;
 }
 
 }  // namespace lob
