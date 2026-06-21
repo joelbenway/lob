@@ -11,17 +11,16 @@
 #include "cartesian.hpp"
 #include "eng_units.hpp"
 #include "litz.hpp"
-#include "lob/lob.hpp"
+#include "lob/lob.h"
 #include "ode.hpp"
 #include "solve_step.hpp"
 
 namespace lob {
-
 namespace {
 
-Output LerpOutput(const TrajectoryStateT& s_now, const SecT t_now,
-                  const TrajectoryStateT& s_prev, const SecT t_prev,
-                  double alpha, const Input& input) {
+LobOutput LerpOutput(const TrajectoryStateT& s_now, const SecT t_now,
+                     const TrajectoryStateT& s_prev, const SecT t_prev,
+                     double alpha, const LobInput& input) {
   const CartesianT<FeetT> kP =
       s_prev.P() + (s_now.P() - s_prev.P()) * FeetT(alpha);
   const CartesianT<FpsT> kV =
@@ -31,7 +30,7 @@ Output LerpOutput(const TrajectoryStateT& s_now, const SecT t_now,
   const FtLbsT kEnergy =
       CalculateKineticEnergy(kVelocity, SlugT(LbsT(input.mass)));
 
-  Output out;
+  LobOutput out;
   out.range = kP.X().U32();
   out.velocity = kVelocity.U16();
   out.energy = kEnergy.U32();
@@ -41,9 +40,8 @@ Output LerpOutput(const TrajectoryStateT& s_now, const SecT t_now,
   return out;
 }
 
-void ApplyGyroscopicSpinDrift(const Input& in, Output* pouts, size_t size) {
+void ApplyGyroscopicSpinDrift(const LobInput& in, LobOutput* pouts, size_t size) {
   assert(pouts != nullptr);
-  // If we can apply Boatright-Ruiz spin drift, prefer it
   if (!std::isnan(in.spindrift_factor)) {
     for (size_t i = 0; i < size; i++) {
       pouts[i].deflection +=
@@ -51,7 +49,6 @@ void ApplyGyroscopicSpinDrift(const Input& in, Output* pouts, size_t size) {
     }
     return;
   }
-  // If we can apply Litz spin drift, use that
   if (std::fabs(in.stability_factor) > 0.0) {
     for (size_t i = 0; i < size; i++) {
       pouts[i].deflection +=
@@ -61,24 +58,29 @@ void ApplyGyroscopicSpinDrift(const Input& in, Output* pouts, size_t size) {
     }
   }
 }
-}  // namespace
 
-size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
-             size_t size) {
+}  // namespace
+}  // namespace lob
+
+namespace lob {
+extern "C" {
+
+size_t LobSolve(const LobInput* in, const uint32_t* pranges,
+                LobOutput* pouts, size_t size) {
   assert(pranges != nullptr);
   assert(pouts != nullptr);
   assert(size > 0);
-  if (in.error != ErrorT::kNone || pranges == nullptr || pouts == nullptr ||
-      size == 0) {
+  if (in->error != kLobErrorNone || pranges == nullptr || pouts == nullptr ||
+      size == 0 || in->velocity == 0 || in->speed_of_sound <= 0.0) {
     return 0;
   }
-  const FpsT kMinimumSpeed(in.minimum_speed);
+  const FpsT kMinimumSpeed(in->minimum_speed);
   const auto kAngle =
-      RadiansT(MoaT(in.zero_angle + in.aerodynamic_jump)).Value();
+      RadiansT(MoaT(in->zero_angle + in->aerodynamic_jump)).Value();
   TrajectoryStateT s(
       CartesianT<FeetT>(FeetT(0.0)),
-      CartesianT<FpsT>(FpsT(in.velocity) * std::cos(kAngle),
-                       FpsT(in.velocity) * std::sin(kAngle), FpsT(0.0)));
+      CartesianT<FpsT>(FpsT(in->velocity) * std::cos(kAngle),
+                       FpsT(in->velocity) * std::sin(kAngle), FpsT(0.0)));
   SecT t(0);
   size_t index = 0;
 
@@ -86,13 +88,13 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
     const TrajectoryStateT kS = s;
     const SecT kT = t;
 
-    SolveStep(&s, &t, in);
+    SolveStep(&s, &t, *in);
 
     if (s.P().X() >= FeetT(pranges[index]) && kS.P().X() < s.P().X()) {
       const double kAlpha =
           ((FeetT(pranges[index]) - kS.P().X()) / (s.P().X() - kS.P().X()))
               .Value();
-      pouts[index] = LerpOutput(s, t, kS, kT, kAlpha, in);
+      pouts[index] = LerpOutput(s, t, kS, kT, kAlpha, *in);
       index++;
     }
 
@@ -100,9 +102,9 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
       break;
     }
 
-    if (t >= SecT(in.max_time) && kT < SecT(in.max_time)) {
-      const double kAlpha = ((SecT(in.max_time) - kT) / (t - kT)).Value();
-      pouts[index] = LerpOutput(s, t, kS, kT, kAlpha, in);
+    if (t >= SecT(in->max_time) && kT < SecT(in->max_time)) {
+      const double kAlpha = ((SecT(in->max_time) - kT) / (t - kT)).Value();
+      pouts[index] = LerpOutput(s, t, kS, kT, kAlpha, *in);
       index++;
       break;
     }
@@ -111,20 +113,21 @@ size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
       const double kAlpha = ((kMinimumSpeed - kS.V().Magnitude()) /
                              (s.V().Magnitude() - kS.V().Magnitude()))
                                 .Value();
-      pouts[index] = LerpOutput(s, t, kS, kT, kAlpha, in);
+      pouts[index] = LerpOutput(s, t, kS, kT, kAlpha, *in);
       index++;
       break;
     }
     if (std::abs(s.V().Y().Value()) > s.V().X().Value() * 3) {
-      pouts[index] = LerpOutput(s, t, kS, kT, 1, in);
+      pouts[index] = LerpOutput(s, t, kS, kT, 1, *in);
       index++;
       break;
     }
   }
-  ApplyGyroscopicSpinDrift(in, pouts, index);
+  ApplyGyroscopicSpinDrift(*in, pouts, index);
   return index;
 }
 
+}  // extern "C"
 }  // namespace lob
 
 // This file is part of lob.

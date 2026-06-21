@@ -24,6 +24,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
+
   nlohmann::json json;
 
   // Read input from stdin or wizard

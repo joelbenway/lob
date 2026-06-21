@@ -165,7 +165,7 @@ TEST_F(BuilderTestFixture, InvalidDragFunctionIsG1) {
                                  .ZeroAngleMOA(kTestZeroAngle)
                                  .Build();
   for (size_t i = 0; i < lob::kG1Drags.size(); i++) {
-    EXPECT_EQ(kResult.drags.at(i), lob::kG1Drags.at(i));
+    EXPECT_EQ(kResult.drags[i], lob::kG1Drags.at(i));
   }
 }
 
@@ -194,7 +194,7 @@ TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
                                   .Build();
 
   for (size_t i = 0; i < lob::kTableSize; i++) {
-    EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+    EXPECT_EQ(kResult1.drags[i], kResult2.drags[i]);
   }
 }
 
@@ -223,7 +223,7 @@ TEST_F(BuilderTestFixture, BuildG2UsingCustomTable) {
                                   .Build();
 
   for (size_t i = 0; i < lob::kTableSize; i++) {
-    EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+    EXPECT_EQ(kResult1.drags[i], kResult2.drags[i]);
   }
 }
 
@@ -252,7 +252,7 @@ TEST_F(BuilderTestFixture, BuildG5UsingCustomTable) {
                                   .Build();
 
   for (size_t i = 0; i < lob::kTableSize; i++) {
-    EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+    EXPECT_EQ(kResult1.drags[i], kResult2.drags[i]);
   }
 }
 
@@ -281,7 +281,7 @@ TEST_F(BuilderTestFixture, BuildG6UsingCustomTable) {
                                   .Build();
 
   for (size_t i = 0; i < lob::kTableSize; i++) {
-    EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+    EXPECT_EQ(kResult1.drags[i], kResult2.drags[i]);
   }
 }
 
@@ -310,7 +310,7 @@ TEST_F(BuilderTestFixture, BuildG7UsingCustomTable) {
                                   .Build();
 
   for (size_t i = 0; i < lob::kTableSize; i++) {
-    EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+    EXPECT_EQ(kResult1.drags[i], kResult2.drags[i]);
   }
 }
 
@@ -339,7 +339,7 @@ TEST_F(BuilderTestFixture, BuildG8UsingCustomTable) {
                                   .Build();
 
   for (size_t i = 0; i < lob::kTableSize; i++) {
-    EXPECT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+    EXPECT_EQ(kResult1.drags[i], kResult2.drags[i]);
   }
 }
 

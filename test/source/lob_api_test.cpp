@@ -24,7 +24,7 @@ TEST(LobAPITest, Version) {
 }
 
 TEST(LobAPITest, SolverSkipsPoorlyFormedInput) {
-  const lob::Input kA;
+  const lob::Input kA{};
   const uint32_t kB = 100U;
   lob::Output out;
   const auto kSize = lob::Solve(kA, &kB, &out, 1U);
@@ -211,7 +211,7 @@ TEST(LobAPITest, FtLbsToJ) {
 
 TEST(LobAPITest, MtoYd) {
   const auto kA = lob::MeterT(100);
-  const auto kB = lob::YardT(lob::MtoYd(kA.Value()));
+  const auto kB = lob::YardT(lob::MToYd(kA.Value()));
   EXPECT_DOUBLE_EQ(kA.Value(), lob::MeterT(kB).Value());
 }
 
