@@ -58,7 +58,11 @@ constexpr T ConstexprFmod(T a, T b) {
   if (AreEqual(b, 0)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
-  const auto kQuotient = static_cast<int64_t>(a / b);
+  const T kQuot = a / b;
+  if (kQuot >= static_cast<T>(9e18) || kQuot <= static_cast<T>(-9e18)) {
+    return std::fmod(a, b);
+  }
+  const auto kQuotient = static_cast<int64_t>(kQuot);
   return a - (static_cast<T>(kQuotient) * b);
 }
 

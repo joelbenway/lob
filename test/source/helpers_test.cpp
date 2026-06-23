@@ -70,6 +70,13 @@ TEST(HelpersTest, FloatEqualityNearZero) {
   EXPECT_FALSE(lob::AreFloatingPointsEqual(1e-8, 0.0));
 }
 
+TEST(HelpersTest, LargeQuotientFmod) {
+  const double kLargeA = 1.0e20;
+  const double kLargeB = 3.0;
+  const double kExpected = std::fmod(kLargeA, kLargeB);
+  EXPECT_DOUBLE_EQ(lob::Modulo(kLargeA, kLargeB), kExpected);
+}
+
 }  // namespace tests
 
 // This file is part of lob.
