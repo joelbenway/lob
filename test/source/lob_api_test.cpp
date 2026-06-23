@@ -110,6 +110,22 @@ TEST(LobAPITest, RunUntilFallStop) {
   EXPECT_LT(out.range, kRange);
 }
 
+TEST(LobAPITest, ZeroStepSizeAutoTerminate) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  const lob::Input kResult = lob::Builder()
+                                 .BallisticCoefficientPsi(kTestBC)
+                                 .InitialVelocityFps(kTestMuzzleVelocity)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .StepSize(0U)
+                                 .Build();
+  const uint32_t kRange = 50'000U;
+  lob::Output out;
+  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
+  EXPECT_EQ(kSize, 1);
+}
+
 TEST(LobAPITest, MoaToMil) {
   const auto kA = lob::MoaT(5);
   const auto kB = lob::MilT(lob::MoaToMil(kA.Value()));

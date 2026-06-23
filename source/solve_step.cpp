@@ -19,8 +19,10 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, const LobInput& input) {
   assert(ps != nullptr);
   assert(pt != nullptr);
 
-  const SecT kStep = input.step_size == 0 && ps->V().X() > FpsT(0)
-                         ? SecT(ps->V().X().Inverse().Value())
+  const SecT kStep = input.step_size == 0
+                         ? (ps->V().X() > FpsT(0)
+                                ? SecT(ps->V().X().Inverse().Value())
+                                : SecT(UsecT(1000)))
                          : SecT(UsecT(input.step_size));
 
   const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
