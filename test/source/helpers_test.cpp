@@ -8,8 +8,21 @@
 
 #include <cmath>
 #include <limits>
+#include <type_traits>
 
 namespace tests {
+
+TEST(HelpersTest, NaNdouble) {
+  const auto kA = lob::NaN();
+  EXPECT_TRUE((std::is_same<const double, decltype(kA)>::value));
+  EXPECT_TRUE(std::isnan(kA));
+}
+
+TEST(HelpersTest, NaNfloat) {
+  const auto kA = lob::NaN<float>();
+  EXPECT_TRUE((std::is_same<const float, decltype(kA)>::value));
+  EXPECT_TRUE(std::isnan(kA));
+}
 
 TEST(HelpersTest, AreEqual) {
   const int kIntA = 7;
@@ -47,6 +60,14 @@ TEST(HelpersTest, Modulo) {
   EXPECT_FLOAT_EQ(lob::Modulo(kFloatA, kFloatB), kFloatC);
   EXPECT_DOUBLE_EQ(lob::Modulo(kDoubleA, kDoubleB), kDoubleC);
   EXPECT_TRUE(std::isnan(lob::Modulo(kDoubleA, 0.0)));
+}
+
+TEST(HelpersTest, FloatEqualityNearZero) {
+  EXPECT_TRUE(lob::AreFloatingPointsEqual(0.0, 1e-10));
+  EXPECT_TRUE(lob::AreFloatingPointsEqual(1e-10, 0.0));
+  EXPECT_TRUE(lob::AreFloatingPointsEqual(-1e-10, 0.0));
+  EXPECT_FALSE(lob::AreFloatingPointsEqual(0.0, 1e-8));
+  EXPECT_FALSE(lob::AreFloatingPointsEqual(1e-8, 0.0));
 }
 
 }  // namespace tests

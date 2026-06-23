@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Please see end of file for extended copyright information
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <array>
@@ -13,6 +14,7 @@
 
 #include "constants.hpp"
 #include "eng_units.hpp"
+#include "helpers.hpp"
 #include "lob/lob.hpp"
 #include "tables.hpp"
 
@@ -164,9 +166,8 @@ TEST_F(BuilderTestFixture, InvalidDragFunctionIsG1) {
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .ZeroAngleMOA(kTestZeroAngle)
                                  .Build();
-  for (size_t i = 0; i < lob::kG1Drags.size(); i++) {
-    EXPECT_EQ(kResult.drags[i], lob::kG1Drags.at(i));
-  }
+
+  EXPECT_THAT(kResult.drags, testing::ElementsAreArray(lob::kG1Drags));
 }
 
 TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
@@ -193,9 +194,7 @@ TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
                                   .MachVsDragTable(machs, drags)
                                   .Build();
 
-  for (size_t i = 0; i < lob::kTableSize; i++) {
-    EXPECT_EQ(kResult1.drags[i], kResult2.drags[i]);
-  }
+  EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
 }
 
 TEST_F(BuilderTestFixture, BuildG2UsingCustomTable) {
@@ -222,9 +221,7 @@ TEST_F(BuilderTestFixture, BuildG2UsingCustomTable) {
                                   .MachVsDragTable(machs, drags)
                                   .Build();
 
-  for (size_t i = 0; i < lob::kTableSize; i++) {
-    EXPECT_EQ(kResult1.drags[i], kResult2.drags[i]);
-  }
+  EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
 }
 
 TEST_F(BuilderTestFixture, BuildG5UsingCustomTable) {
@@ -251,9 +248,7 @@ TEST_F(BuilderTestFixture, BuildG5UsingCustomTable) {
                                   .MachVsDragTable(machs, drags)
                                   .Build();
 
-  for (size_t i = 0; i < lob::kTableSize; i++) {
-    EXPECT_EQ(kResult1.drags[i], kResult2.drags[i]);
-  }
+  EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
 }
 
 TEST_F(BuilderTestFixture, BuildG6UsingCustomTable) {
@@ -280,9 +275,7 @@ TEST_F(BuilderTestFixture, BuildG6UsingCustomTable) {
                                   .MachVsDragTable(machs, drags)
                                   .Build();
 
-  for (size_t i = 0; i < lob::kTableSize; i++) {
-    EXPECT_EQ(kResult1.drags[i], kResult2.drags[i]);
-  }
+  EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
 }
 
 TEST_F(BuilderTestFixture, BuildG7UsingCustomTable) {
@@ -309,9 +302,7 @@ TEST_F(BuilderTestFixture, BuildG7UsingCustomTable) {
                                   .MachVsDragTable(machs, drags)
                                   .Build();
 
-  for (size_t i = 0; i < lob::kTableSize; i++) {
-    EXPECT_EQ(kResult1.drags[i], kResult2.drags[i]);
-  }
+  EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
 }
 
 TEST_F(BuilderTestFixture, BuildG8UsingCustomTable) {
@@ -338,9 +329,7 @@ TEST_F(BuilderTestFixture, BuildG8UsingCustomTable) {
                                   .MachVsDragTable(machs, drags)
                                   .Build();
 
-  for (size_t i = 0; i < lob::kTableSize; i++) {
-    EXPECT_EQ(kResult1.drags[i], kResult2.drags[i]);
-  }
+  EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
 }
 
 TEST_F(BuilderTestFixture, JackOConnorZero) {

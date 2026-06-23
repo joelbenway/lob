@@ -74,6 +74,11 @@ size_t LobSolve(const LobInput* in, const uint32_t* pranges,
       size == 0 || in->velocity == 0 || in->speed_of_sound <= 0.0) {
     return 0;
   }
+  for (size_t i = 1; i < size; i++) {
+    if (pranges[i] <= pranges[i - 1]) {
+      return 0;
+    }
+  }
   const FpsT kMinimumSpeed(in->minimum_speed);
   const auto kAngle =
       RadiansT(MoaT(in->zero_angle + in->aerodynamic_jump)).Value();
@@ -117,6 +122,7 @@ size_t LobSolve(const LobInput* in, const uint32_t* pranges,
       index++;
       break;
     }
+    // If vertical velocity exceeds 3x horizontal, consider falling straight down.
     if (std::abs(s.V().Y().Value()) > s.V().X().Value() * 3) {
       pouts[index] = LerpOutput(s, t, kS, kT, 1, *in);
       index++;

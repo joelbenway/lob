@@ -15,7 +15,7 @@ Checks: "*,\
   -llvmlibc-*,\
   -misc-non-private-member-variables-in-classes,\
   -modernize-use-trailing-return-type"
-WarningsAsErrors: ''
+WarningsAsErrors: '*'
 CheckOptions:
   - key: 'bugprone-argument-comment.StrictMode'
     value: 'true'

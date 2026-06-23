@@ -9,13 +9,13 @@
 
 #include "cartesian.hpp"
 #include "eng_units.hpp"
-#include "lob/lob.hpp"
+#include "lob/lob.h"
 #include "ode.hpp"
 #include "tables.hpp"
 
 namespace lob {
 
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input) {
+void SolveStep(TrajectoryStateT* ps, SecT* pt, const LobInput& input) {
   assert(ps != nullptr);
   assert(pt != nullptr);
 
@@ -32,7 +32,7 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input) {
   // expensive calculation and the difference between doing it once or several
   // times per step is negligible.
   const MachT kMach(ps->V().Magnitude(), FpsT(input.speed_of_sound).Inverse());
-  const double kCd = LobLerp(kMachs.data(), input.drags, kTableSize,
+  const double kCd = LobLerp(kMachs.data(), &input.drags[0], kTableSize,
                              static_cast<double>(kMach) * kTableScale) /
                      kTableScale *
                      static_cast<double>(input.table_coefficient);

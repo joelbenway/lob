@@ -5,12 +5,12 @@
 #pragma once
 
 #include "eng_units.hpp"
-#include "lob/lob.hpp"
+#include "lob/lob.h"
 #include "ode.hpp"
 
 namespace lob {
 
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input);
+void SolveStep(TrajectoryStateT* ps, SecT* pt, const ::LobInput& input);
 
 }  // namespace lob
 

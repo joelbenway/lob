@@ -7,8 +7,16 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <type_traits>
 
 namespace lob {
+
+template <typename T = double>
+constexpr T NaN() {
+  static_assert(std::is_floating_point<T>::value,
+                "NaN() only supports floating-point types");
+  return std::numeric_limits<T>::quiet_NaN();
+}
 
 template <typename T>
 constexpr bool AreEqual(T a, T b) {
@@ -23,7 +31,12 @@ constexpr bool AreFloatingPointsEqual(T a, T b) {
   if (std::isnan(a) || std::isnan(b)) {
     return std::isnan(a) && std::isnan(b);
   }
-  return (std::fabs(a - b) <= std::numeric_limits<T>::epsilon() *
+  const T kDiff = std::fabs(a - b);
+  const T kAbsTol = static_cast<T>(1e-9);
+  if (kDiff <= kAbsTol) {
+    return true;
+  }
+  return (kDiff <= std::numeric_limits<T>::epsilon() *
                                   std::fmax(std::fabs(a), std::fabs(b)));
 }
 
