@@ -18,11 +18,14 @@ namespace tests {
 struct SolutionTolerances {
   uint16_t velocity = 1;
   int energy = -1;
+  // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
   double moa = 0.1;
   double inch = -1.0;
+  // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
   double time_of_flight = 0.01;
 };
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 template <size_t N>
 void VerifySolutions(const std::array<lob::Output, N>& solutions,
                      const std::vector<lob::Output>& expected,
@@ -78,11 +81,16 @@ void VerifySolutionDifferences(
 }
 
 inline void SetupTestBuilder(lob::Builder& b) {
-  b.BallisticCoefficientPsi(0.425)
-      .DiameterInch(0.308)
-      .MassGrains(180.0)
-      .InitialVelocityFps(2700U)
-      .ZeroAngleMOA(3.38);
+  constexpr double kTestBC = 0.425;
+  constexpr double kTestDiameter = 0.308;
+  constexpr double kTestWeight = 180.0;
+  constexpr uint16_t kTestMuzzleVelocity = 2700U;
+  constexpr double kTestZeroAngle = 3.38;
+  b.BallisticCoefficientPsi(kTestBC)
+      .DiameterInch(kTestDiameter)
+      .MassGrains(kTestWeight)
+      .InitialVelocityFps(kTestMuzzleVelocity)
+      .ZeroAngleMOA(kTestZeroAngle);
 }
 
 }  // namespace tests
