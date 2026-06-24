@@ -24,10 +24,9 @@ struct SolutionTolerances {
 };
 
 template <size_t N>
-void VerifySolutions(
-    const std::array<lob::Output, N>& solutions,
-    const std::vector<lob::Output>& expected,
-    const SolutionTolerances& tolerances = {}) {
+void VerifySolutions(const std::array<lob::Output, N>& solutions,
+                     const std::vector<lob::Output>& expected,
+                     const SolutionTolerances& tolerances = {}) {
   for (size_t i = 0; i < N; i++) {
     EXPECT_EQ(solutions.at(i).range, expected.at(i).range);
     EXPECT_NEAR(solutions.at(i).velocity,
@@ -66,8 +65,7 @@ void VerifySolutionDifferences(
     const std::array<lob::Output, N>& solutions1,
     const std::array<lob::Output, N>& solutions2,
     const std::array<double, N>& expected_elevation_diff,
-    const std::array<double, N>& expected_deflection_diff,
-    double tolerance) {
+    const std::array<double, N>& expected_deflection_diff, double tolerance) {
   for (size_t i = 0; i < N; i++) {
     const auto kElevationDifference =
         solutions2.at(i).elevation - solutions1.at(i).elevation;

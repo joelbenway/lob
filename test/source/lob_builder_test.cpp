@@ -9,16 +9,16 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <functional>
+#include <memory>
 #include <utility>
 
 #include "constants.hpp"
 #include "eng_units.hpp"
 #include "helpers.hpp"
-#include "test_helpers.hpp"
 #include "lob/lob.hpp"
 #include "tables.hpp"
+#include "test_helpers.hpp"
 
 namespace tests {
 
@@ -186,19 +186,18 @@ TEST_P(CustomTableTestFixture, CustomTableMatchesDragFunction) {
 
 INSTANTIATE_TEST_SUITE_P(
     CustomTableTests, CustomTableTestFixture,
-    testing::Values(
-        CustomTableTestParam{"G1", lob::DragFunctionT::kG1,
-                             lob::kG1Drags.data(), 5.59},
-        CustomTableTestParam{"G2", lob::DragFunctionT::kG2,
-                             lob::kG2Drags.data(), 5.0},
-        CustomTableTestParam{"G5", lob::DragFunctionT::kG5,
-                             lob::kG5Drags.data(), 5.0},
-        CustomTableTestParam{"G6", lob::DragFunctionT::kG6,
-                             lob::kG6Drags.data(), 5.0},
-        CustomTableTestParam{"G7", lob::DragFunctionT::kG7,
-                             lob::kG7Drags.data(), 5.0},
-        CustomTableTestParam{"G8", lob::DragFunctionT::kG8,
-                             lob::kG8Drags.data(), 5.0}),
+    testing::Values(CustomTableTestParam{"G1", lob::DragFunctionT::kG1,
+                                         lob::kG1Drags.data(), 5.59},
+                    CustomTableTestParam{"G2", lob::DragFunctionT::kG2,
+                                         lob::kG2Drags.data(), 5.0},
+                    CustomTableTestParam{"G5", lob::DragFunctionT::kG5,
+                                         lob::kG5Drags.data(), 5.0},
+                    CustomTableTestParam{"G6", lob::DragFunctionT::kG6,
+                                         lob::kG6Drags.data(), 5.0},
+                    CustomTableTestParam{"G7", lob::DragFunctionT::kG7,
+                                         lob::kG7Drags.data(), 5.0},
+                    CustomTableTestParam{"G8", lob::DragFunctionT::kG8,
+                                         lob::kG8Drags.data(), 5.0}),
     [](const auto& info) { return info.param.name; });
 
 TEST_F(BuilderTestFixture, JackOConnorZero) {
@@ -264,8 +263,7 @@ INSTANTIATE_TEST_SUITE_P(
                   .InitialVelocityFps(3100U)
                   .ZeroDistanceYds(100.0)
                   .ZeroImpactHeightInches(3.0)
-                  .AltitudeOfFiringSiteFt(
-                      lob::kIsaStratosphereAltitudeFt + 1)
+                  .AltitudeOfFiringSiteFt(lob::kIsaStratosphereAltitudeFt + 1)
                   .Build();
             },
             lob::ErrorT::kAltitudeOfFiringSiteOOR},
@@ -278,8 +276,7 @@ INSTANTIATE_TEST_SUITE_P(
                   .ZeroDistanceYds(100.0)
                   .ZeroImpactHeightInches(3.0)
                   .AltitudeOfFiringSiteFt(0.0)
-                  .AltitudeOfBarometerFt(
-                      lob::kIsaStratosphereAltitudeFt + 1)
+                  .AltitudeOfBarometerFt(lob::kIsaStratosphereAltitudeFt + 1)
                   .Build();
             },
             lob::ErrorT::kAltitudeOfBarometerOOR},
@@ -292,8 +289,7 @@ INSTANTIATE_TEST_SUITE_P(
                   .ZeroDistanceYds(100.0)
                   .ZeroImpactHeightInches(3.0)
                   .AltitudeOfFiringSiteFt(0.0)
-                  .AltitudeOfThermometerFt(
-                      lob::kIsaStratosphereAltitudeFt + 1)
+                  .AltitudeOfThermometerFt(lob::kIsaStratosphereAltitudeFt + 1)
                   .Build();
             },
             lob::ErrorT::kAltitudeOfThermometerOOR},
@@ -498,8 +494,7 @@ INSTANTIATE_TEST_SUITE_P(
                   .InitialVelocityFps(3100U)
                   .ZeroDistanceYds(100.0)
                   .ZeroImpactHeightInches(3.0)
-                  .ZeroAngleMOA(
-                      lob::MoaT(lob::DegreesT(46)).Value())
+                  .ZeroAngleMOA(lob::MoaT(lob::DegreesT(46)).Value())
                   .Build();
             },
             lob::ErrorT::kZeroAngleOOR},

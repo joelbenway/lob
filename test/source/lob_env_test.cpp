@@ -96,9 +96,9 @@ TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   lob::Solve(puut->Build(), kRanges, solutions);
-  VerifySolutions(solutions, kExpected,
-                  {kVelocityError, kEnergyError, kMoaError, -1.0,
-                   kTimeOfFlightError});
+  VerifySolutions(
+      solutions, kExpected,
+      {kVelocityError, kEnergyError, kMoaError, -1.0, kTimeOfFlightError});
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -131,9 +131,9 @@ TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
-  VerifySolutions(solutions, kExpected,
-                  {kVelocityError, kEnergyError, kMoaError, -1.0,
-                   kTimeOfFlightError});
+  VerifySolutions(
+      solutions, kExpected,
+      {kVelocityError, kEnergyError, kMoaError, -1.0, kTimeOfFlightError});
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -166,9 +166,9 @@ TEST_F(LobEnvTestFixture, SolveWithTempAndAirPressure) {
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
-  VerifySolutions(solutions, kExpected,
-                  {kVelocityError, kEnergyError, kMoaError, -1.0,
-                   kTimeOfFlightError});
+  VerifySolutions(
+      solutions, kExpected,
+      {kVelocityError, kEnergyError, kMoaError, -1.0, kTimeOfFlightError});
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -205,9 +205,9 @@ TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
-  VerifySolutions(solutions, kExpected,
-                  {kVelocityError, kEnergyError, kMoaError, -1.0,
-                   kTimeOfFlightError});
+  VerifySolutions(
+      solutions, kExpected,
+      {kVelocityError, kEnergyError, kMoaError, -1.0, kTimeOfFlightError});
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -243,9 +243,9 @@ TEST_F(LobEnvTestFixture, SolveWithPressureTempHumidity) {
   std::array<lob::Output, kSolutionLength> solutions = {};
   const auto kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
-  VerifySolutions(solutions, kExpected,
-                  {kVelocityError, kEnergyError, kMoaError, -1.0,
-                   kTimeOfFlightError});
+  VerifySolutions(
+      solutions, kExpected,
+      {kVelocityError, kEnergyError, kMoaError, -1.0, kTimeOfFlightError});
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -285,9 +285,9 @@ TEST_F(LobEnvTestFixture, SolveWithWeatherStationData) {
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
-  VerifySolutions(solutions, kExpected,
-                  {kVelocityError, kEnergyError, kMoaError, -1.0,
-                   kTimeOfFlightError});
+  VerifySolutions(
+      solutions, kExpected,
+      {kVelocityError, kEnergyError, kMoaError, -1.0, kTimeOfFlightError});
 }
 
 }  // namespace tests
