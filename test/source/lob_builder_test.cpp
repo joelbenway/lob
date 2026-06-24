@@ -10,11 +10,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <functional>
 #include <utility>
 
 #include "constants.hpp"
 #include "eng_units.hpp"
 #include "helpers.hpp"
+#include "test_helpers.hpp"
 #include "lob/lob.hpp"
 #include "tables.hpp"
 
@@ -41,76 +43,61 @@ struct BuilderTestFixture : public testing::Test {
   }
 };
 
+struct BuilderErrorTestParam {
+  const char* name;
+  std::function<lob::Input(lob::Builder&)> build_fn;
+  lob::ErrorT expected_error;
+};
+
+class BuilderErrorTestFixture
+    : public BuilderTestFixture,
+      public testing::WithParamInterface<BuilderErrorTestParam> {};
+
+struct CustomTableTestParam {
+  const char* name;
+  lob::DragFunctionT drag_function;
+  const uint16_t* drag_table;
+  double zero_angle;
+};
+
+class CustomTableTestFixture
+    : public BuilderTestFixture,
+      public testing::WithParamInterface<CustomTableTestParam> {};
+
 TEST_F(BuilderTestFixture, Constructor) { ASSERT_NE(puut, nullptr); }
 
 TEST_F(BuilderTestFixture, CopyConstructor) {
-  const double kTestBC = 0.425;
-  const double kTestDiameter = 0.308;
-  const double kTestWeight = 180.0;
-  const uint16_t kTestMuzzleVelocity = 2700U;
-  const double kTestZeroAngle = 3.38;
-  puut->BallisticCoefficientPsi(kTestBC)
-      .DiameterInch(kTestDiameter)
-      .MassGrains(kTestWeight)
-      .InitialVelocityFps(kTestMuzzleVelocity)
-      .ZeroAngleMOA(kTestZeroAngle);
+  SetupTestBuilder(*puut);
   lob::Builder copy = *puut;
   const lob::Input kVal1 = puut->Build();
-  EXPECT_DOUBLE_EQ(kVal1.velocity, kTestMuzzleVelocity);
+  EXPECT_DOUBLE_EQ(kVal1.velocity, 2700U);
   const lob::Input kVal2 = copy.Build();
-  EXPECT_DOUBLE_EQ(kVal2.velocity, kTestMuzzleVelocity);
+  EXPECT_DOUBLE_EQ(kVal2.velocity, 2700U);
 }
 
 TEST_F(BuilderTestFixture, MoveConstructor) {
-  const double kTestBC = 0.425;
-  const double kTestDiameter = 0.308;
-  const double kTestWeight = 180.0;
-  const uint16_t kTestMuzzleVelocity = 2700U;
-  const double kTestZeroAngle = 3.38;
-  puut->BallisticCoefficientPsi(kTestBC)
-      .DiameterInch(kTestDiameter)
-      .MassGrains(kTestWeight)
-      .InitialVelocityFps(kTestMuzzleVelocity)
-      .ZeroAngleMOA(kTestZeroAngle);
+  SetupTestBuilder(*puut);
   lob::Builder moved = std::move(*puut);
   const lob::Input kVal = moved.Build();
-  EXPECT_EQ(kVal.velocity, kTestMuzzleVelocity);
+  EXPECT_EQ(kVal.velocity, 2700U);
 }
 
 TEST_F(BuilderTestFixture, CopyAssignmentOperator) {
-  const double kTestBC = 0.425;
-  const double kTestDiameter = 0.308;
-  const double kTestWeight = 180.0;
-  const uint16_t kTestMuzzleVelocity = 2700U;
-  const double kTestZeroAngle = 3.38;
-  puut->BallisticCoefficientPsi(kTestBC)
-      .DiameterInch(kTestDiameter)
-      .MassGrains(kTestWeight)
-      .InitialVelocityFps(kTestMuzzleVelocity)
-      .ZeroAngleMOA(kTestZeroAngle);
+  SetupTestBuilder(*puut);
   lob::Builder copy;
   copy = *puut;
   const lob::Input kVal1 = puut->Build();
-  EXPECT_DOUBLE_EQ(kVal1.velocity, kTestMuzzleVelocity);
+  EXPECT_DOUBLE_EQ(kVal1.velocity, 2700U);
   const lob::Input kVal2 = copy.Build();
-  EXPECT_DOUBLE_EQ(kVal2.velocity, kTestMuzzleVelocity);
+  EXPECT_DOUBLE_EQ(kVal2.velocity, 2700U);
 }
 
 TEST_F(BuilderTestFixture, MoveAssignmentOperator) {
-  const double kTestBC = 0.425;
-  const double kTestDiameter = 0.308;
-  const double kTestWeight = 180.0;
-  const uint16_t kTestMuzzleVelocity = 2700U;
-  const double kTestZeroAngle = 3.38;
-  puut->BallisticCoefficientPsi(kTestBC)
-      .DiameterInch(kTestDiameter)
-      .MassGrains(kTestWeight)
-      .InitialVelocityFps(kTestMuzzleVelocity)
-      .ZeroAngleMOA(kTestZeroAngle);
+  SetupTestBuilder(*puut);
   lob::Builder moved;
   moved = std::move(*puut);
   const lob::Input kVal = moved.Build();
-  EXPECT_EQ(kVal.velocity, kTestMuzzleVelocity);
+  EXPECT_EQ(kVal.velocity, 2700U);
 }
 
 TEST_F(BuilderTestFixture, BuildMinimalInput) {
@@ -170,24 +157,24 @@ TEST_F(BuilderTestFixture, InvalidDragFunctionIsG1) {
   EXPECT_THAT(kResult.drags, testing::ElementsAreArray(lob::kG1Drags));
 }
 
-TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
+TEST_P(CustomTableTestFixture, CustomTableMatchesDragFunction) {
+  const auto& param = GetParam();
   const double kTestBC = 1.0;
   const uint16_t kTestMuzzleVelocity = 2500U;
-  const double kTestZeroAngle = 5.59;
   std::array<float, lob::kTableSize> machs = {};
   std::array<float, lob::kTableSize> drags = {};
 
   const lob::Input kResult1 =
       puut->BallisticCoefficientPsi(kTestBC)
-          .BCDragFunction(lob::DragFunctionT::kG1)
+          .BCDragFunction(param.drag_function)
           .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
           .InitialVelocityFps(kTestMuzzleVelocity)
-          .ZeroAngleMOA(kTestZeroAngle)
+          .ZeroAngleMOA(param.zero_angle)
           .Build();
 
   for (size_t i = 0; i < lob::kTableSize; i++) {
     machs.at(i) = static_cast<float>(lob::kMachs.at(i)) / lob::kTableScale;
-    drags.at(i) = static_cast<float>(lob::kG1Drags.at(i)) / lob::kTableScale;
+    drags.at(i) = static_cast<float>(param.drag_table[i]) / lob::kTableScale;
   }
 
   const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
@@ -197,140 +184,22 @@ TEST_F(BuilderTestFixture, BuildG1UsingCustomTable) {
   EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
 }
 
-TEST_F(BuilderTestFixture, BuildG2UsingCustomTable) {
-  const double kTestBC = 1.0;
-  const uint16_t kTestMuzzleVelocity = 2500U;
-  const double kTestZeroAngle = 5.0;
-  std::array<float, lob::kTableSize> machs = {};
-  std::array<float, lob::kTableSize> drags = {};
-
-  const lob::Input kResult1 =
-      puut->BallisticCoefficientPsi(kTestBC)
-          .BCDragFunction(lob::DragFunctionT::kG2)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-          .InitialVelocityFps(kTestMuzzleVelocity)
-          .ZeroAngleMOA(kTestZeroAngle)
-          .Build();
-
-  for (size_t i = 0; i < lob::kTableSize; i++) {
-    machs.at(i) = static_cast<float>(lob::kMachs.at(i)) / lob::kTableScale;
-    drags.at(i) = static_cast<float>(lob::kG2Drags.at(i)) / lob::kTableScale;
-  }
-
-  const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
-                                  .MachVsDragTable(machs, drags)
-                                  .Build();
-
-  EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
-}
-
-TEST_F(BuilderTestFixture, BuildG5UsingCustomTable) {
-  const double kTestBC = 1.0;
-  const uint16_t kTestMuzzleVelocity = 2500U;
-  const double kTestZeroAngle = 5.0;
-  std::array<float, lob::kTableSize> machs = {};
-  std::array<float, lob::kTableSize> drags = {};
-
-  const lob::Input kResult1 =
-      puut->BallisticCoefficientPsi(kTestBC)
-          .BCDragFunction(lob::DragFunctionT::kG5)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-          .InitialVelocityFps(kTestMuzzleVelocity)
-          .ZeroAngleMOA(kTestZeroAngle)
-          .Build();
-
-  for (size_t i = 0; i < lob::kTableSize; i++) {
-    machs.at(i) = static_cast<float>(lob::kMachs.at(i)) / lob::kTableScale;
-    drags.at(i) = static_cast<float>(lob::kG5Drags.at(i)) / lob::kTableScale;
-  }
-
-  const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
-                                  .MachVsDragTable(machs, drags)
-                                  .Build();
-
-  EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
-}
-
-TEST_F(BuilderTestFixture, BuildG6UsingCustomTable) {
-  const double kTestBC = 1.0;
-  const uint16_t kTestMuzzleVelocity = 2500U;
-  const double kTestZeroAngle = 5.0;
-  std::array<float, lob::kTableSize> machs = {};
-  std::array<float, lob::kTableSize> drags = {};
-
-  const lob::Input kResult1 =
-      puut->BallisticCoefficientPsi(kTestBC)
-          .BCDragFunction(lob::DragFunctionT::kG6)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-          .InitialVelocityFps(kTestMuzzleVelocity)
-          .ZeroAngleMOA(kTestZeroAngle)
-          .Build();
-
-  for (size_t i = 0; i < lob::kTableSize; i++) {
-    machs.at(i) = static_cast<float>(lob::kMachs.at(i)) / lob::kTableScale;
-    drags.at(i) = static_cast<float>(lob::kG6Drags.at(i)) / lob::kTableScale;
-  }
-
-  const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
-                                  .MachVsDragTable(machs, drags)
-                                  .Build();
-
-  EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
-}
-
-TEST_F(BuilderTestFixture, BuildG7UsingCustomTable) {
-  const double kTestBC = 1.0;
-  const uint16_t kTestMuzzleVelocity = 2500U;
-  const double kTestZeroAngle = 5.0;
-  std::array<float, lob::kTableSize> machs = {};
-  std::array<float, lob::kTableSize> drags = {};
-
-  const lob::Input kResult1 =
-      puut->BallisticCoefficientPsi(kTestBC)
-          .BCDragFunction(lob::DragFunctionT::kG7)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-          .InitialVelocityFps(kTestMuzzleVelocity)
-          .ZeroAngleMOA(kTestZeroAngle)
-          .Build();
-
-  for (size_t i = 0; i < lob::kTableSize; i++) {
-    machs.at(i) = static_cast<float>(lob::kMachs.at(i)) / lob::kTableScale;
-    drags.at(i) = static_cast<float>(lob::kG7Drags.at(i)) / lob::kTableScale;
-  }
-
-  const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
-                                  .MachVsDragTable(machs, drags)
-                                  .Build();
-
-  EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
-}
-
-TEST_F(BuilderTestFixture, BuildG8UsingCustomTable) {
-  const double kTestBC = 1.0;
-  const uint16_t kTestMuzzleVelocity = 2500U;
-  const double kTestZeroAngle = 5.0;
-  std::array<float, lob::kTableSize> machs = {};
-  std::array<float, lob::kTableSize> drags = {};
-
-  const lob::Input kResult1 =
-      puut->BallisticCoefficientPsi(kTestBC)
-          .BCDragFunction(lob::DragFunctionT::kG8)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-          .InitialVelocityFps(kTestMuzzleVelocity)
-          .ZeroAngleMOA(kTestZeroAngle)
-          .Build();
-
-  for (size_t i = 0; i < lob::kTableSize; i++) {
-    machs.at(i) = static_cast<float>(lob::kMachs.at(i)) / lob::kTableScale;
-    drags.at(i) = static_cast<float>(lob::kG8Drags.at(i)) / lob::kTableScale;
-  }
-
-  const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
-                                  .MachVsDragTable(machs, drags)
-                                  .Build();
-
-  EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
-}
+INSTANTIATE_TEST_SUITE_P(
+    CustomTableTests, CustomTableTestFixture,
+    testing::Values(
+        CustomTableTestParam{"G1", lob::DragFunctionT::kG1,
+                             lob::kG1Drags.data(), 5.59},
+        CustomTableTestParam{"G2", lob::DragFunctionT::kG2,
+                             lob::kG2Drags.data(), 5.0},
+        CustomTableTestParam{"G5", lob::DragFunctionT::kG5,
+                             lob::kG5Drags.data(), 5.0},
+        CustomTableTestParam{"G6", lob::DragFunctionT::kG6,
+                             lob::kG6Drags.data(), 5.0},
+        CustomTableTestParam{"G7", lob::DragFunctionT::kG7,
+                             lob::kG7Drags.data(), 5.0},
+        CustomTableTestParam{"G8", lob::DragFunctionT::kG8,
+                             lob::kG8Drags.data(), 5.0}),
+    [](const auto& info) { return info.param.name; });
 
 TEST_F(BuilderTestFixture, JackOConnorZero) {
   const double kSierraGameKingBC = 0.436;
@@ -366,202 +235,286 @@ TEST_F(BuilderTestFixture, ResetWorks) {
   EXPECT_TRUE(kReset.error != lob::ErrorT::kNone);
 }
 
-TEST_F(BuilderTestFixture, AirPressureError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .AirPressureInHg(-1.0)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kAirPressureOOR);
+TEST_P(BuilderErrorTestFixture, BuilderReturnsCorrectError) {
+  const auto& param = GetParam();
+  const lob::Input kJack = param.build_fn(*puut);
+  EXPECT_EQ(kJack.error, param.expected_error);
 }
 
-TEST_F(BuilderTestFixture, FiringSiteAltitudeError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .AltitudeOfFiringSiteFt(lob::kIsaStratosphereAltitudeFt + 1)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kAltitudeOfFiringSiteOOR);
-}
-
-TEST_F(BuilderTestFixture, BarometerAltitudeError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kAltitude = 0.0;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .AltitudeOfFiringSiteFt(kAltitude)
-          .AltitudeOfBarometerFt(lob::kIsaStratosphereAltitudeFt + 1)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kAltitudeOfBarometerOOR);
-}
-
-TEST_F(BuilderTestFixture, ThermometerAltitudeError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kAltitude = 0.0;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .AltitudeOfFiringSiteFt(kAltitude)
-          .AltitudeOfThermometerFt(lob::kIsaStratosphereAltitudeFt + 1)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kAltitudeOfThermometerOOR);
-}
-
-TEST_F(BuilderTestFixture, AzimuthError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kLatitude = 45.0;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .AzimuthDeg(lob::kDegreesPerTurn + 1)
-          .LatitudeDeg(kLatitude)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kAzimuthOOR);
-}
-
-TEST_F(BuilderTestFixture, BallisticCoefficientError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(-kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kBallisticCoefficientOOR);
-}
-
-TEST_F(BuilderTestFixture, BaseDiameterError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .BaseDiameterInch(-1.0)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kBaseDiameterOOR);
-}
-
-TEST_F(BuilderTestFixture, DiameterError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .DiameterInch(-1.0)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kDiameterOOR);
-}
-
-TEST_F(BuilderTestFixture, HumidityError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .RelativeHumidityPercent(-1.0)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kHumidityOOR);
-}
-
-TEST_F(BuilderTestFixture, InitialVelocity) {
-  const double kSierraGameKingBC = 0.436;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(0)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kInitialVelocityRequired);
-}
-
-TEST_F(BuilderTestFixture, LatitudeError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kAzimuth = 0;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .AzimuthDeg(kAzimuth)
-          .LatitudeDeg(91.0)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kLatitudeOOR);
-}
-
-TEST_F(BuilderTestFixture, LengthError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .LengthInch(-1.0)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kLengthOOR);
-}
+INSTANTIATE_TEST_SUITE_P(
+    BuilderErrorTests, BuilderErrorTestFixture,
+    testing::Values(
+        BuilderErrorTestParam{
+            "AirPressureOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .AirPressureInHg(-1.0)
+                  .Build();
+            },
+            lob::ErrorT::kAirPressureOOR},
+        BuilderErrorTestParam{
+            "FiringSiteAltitudeOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .AltitudeOfFiringSiteFt(
+                      lob::kIsaStratosphereAltitudeFt + 1)
+                  .Build();
+            },
+            lob::ErrorT::kAltitudeOfFiringSiteOOR},
+        BuilderErrorTestParam{
+            "BarometerAltitudeOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .AltitudeOfFiringSiteFt(0.0)
+                  .AltitudeOfBarometerFt(
+                      lob::kIsaStratosphereAltitudeFt + 1)
+                  .Build();
+            },
+            lob::ErrorT::kAltitudeOfBarometerOOR},
+        BuilderErrorTestParam{
+            "ThermometerAltitudeOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .AltitudeOfFiringSiteFt(0.0)
+                  .AltitudeOfThermometerFt(
+                      lob::kIsaStratosphereAltitudeFt + 1)
+                  .Build();
+            },
+            lob::ErrorT::kAltitudeOfThermometerOOR},
+        BuilderErrorTestParam{
+            "AzimuthOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .AzimuthDeg(lob::kDegreesPerTurn + 1)
+                  .LatitudeDeg(45.0)
+                  .Build();
+            },
+            lob::ErrorT::kAzimuthOOR},
+        BuilderErrorTestParam{
+            "BallisticCoefficientOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(-0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .Build();
+            },
+            lob::ErrorT::kBallisticCoefficientOOR},
+        BuilderErrorTestParam{
+            "BaseDiameterOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .BaseDiameterInch(-1.0)
+                  .Build();
+            },
+            lob::ErrorT::kBaseDiameterOOR},
+        BuilderErrorTestParam{
+            "DiameterOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .DiameterInch(-1.0)
+                  .Build();
+            },
+            lob::ErrorT::kDiameterOOR},
+        BuilderErrorTestParam{
+            "HumidityOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .RelativeHumidityPercent(-1.0)
+                  .Build();
+            },
+            lob::ErrorT::kHumidityOOR},
+        BuilderErrorTestParam{
+            "InitialVelocityRequired",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(0)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .Build();
+            },
+            lob::ErrorT::kInitialVelocityRequired},
+        BuilderErrorTestParam{
+            "LatitudeOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .AzimuthDeg(0)
+                  .LatitudeDeg(91.0)
+                  .Build();
+            },
+            lob::ErrorT::kLatitudeOOR},
+        BuilderErrorTestParam{
+            "LengthOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .LengthInch(-1.0)
+                  .Build();
+            },
+            lob::ErrorT::kLengthOOR},
+        BuilderErrorTestParam{
+            "MassOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .MassGrains(-1.0)
+                  .Build();
+            },
+            lob::ErrorT::kMassOOR},
+        BuilderErrorTestParam{
+            "MaximumTimeOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .MaximumTime(-1.0)
+                  .Build();
+            },
+            lob::ErrorT::kMaximumTimeOOR},
+        BuilderErrorTestParam{
+            "MeplatDiameterOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .MeplatDiameterInch(-1.0)
+                  .Build();
+            },
+            lob::ErrorT::kMeplatDiameterOOR},
+        BuilderErrorTestParam{
+            "NoseLengthOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .NoseLengthInch(-1)
+                  .Build();
+            },
+            lob::ErrorT::kNoseLengthOOR},
+        BuilderErrorTestParam{
+            "OgiveRtROOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .OgiveRtR(-1)
+                  .Build();
+            },
+            lob::ErrorT::kOgiveRtROOR},
+        BuilderErrorTestParam{
+            "RangeAngleOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .RangeAngleDeg(90)
+                  .Build();
+            },
+            lob::ErrorT::kRangeAngleOOR},
+        BuilderErrorTestParam{
+            "TailLengthOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .TailLengthInch(-1.0)
+                  .Build();
+            },
+            lob::ErrorT::kTailLengthOOR},
+        BuilderErrorTestParam{
+            "WindHeadingOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .WindHeadingDeg(lob::kDegreesPerTurn * 3)
+                  .WindSpeedMph(10)
+                  .Build();
+            },
+            lob::ErrorT::kWindHeadingOOR},
+        BuilderErrorTestParam{
+            "ZeroAngleOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .ZeroAngleMOA(
+                      lob::MoaT(lob::DegreesT(46)).Value())
+                  .Build();
+            },
+            lob::ErrorT::kZeroAngleOOR},
+        BuilderErrorTestParam{
+            "ZeroDistanceOOR",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(0.436)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(3100U)
+                  .ZeroDistanceYds(-100.0)
+                  .ZeroImpactHeightInches(3.0)
+                  .Build();
+            },
+            lob::ErrorT::kZeroDistanceOOR}),
+    [](const auto& info) { return info.param.name; });
 
 TEST_F(BuilderTestFixture, MachVsDragTableBadParamsIgnored) {
   const uint16_t kM70MuzzleVelocity = 3100U;
@@ -575,167 +528,6 @@ TEST_F(BuilderTestFixture, MachVsDragTableBadParamsIgnored) {
           .MachVsDragTable(nullptr, nullptr, 0)
           .Build();
   EXPECT_EQ(kJack.error, lob::ErrorT::kBallisticCoefficientRequired);
-}
-
-TEST_F(BuilderTestFixture, MassError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .MassGrains(-1.0)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kMassOOR);
-}
-
-TEST_F(BuilderTestFixture, MaximumTimeError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .MaximumTime(-1.0)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kMaximumTimeOOR);
-}
-
-TEST_F(BuilderTestFixture, MeplatDiameterError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .MeplatDiameterInch(-1.0)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kMeplatDiameterOOR);
-}
-
-TEST_F(BuilderTestFixture, NoseLengthError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .NoseLengthInch(-1)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kNoseLengthOOR);
-}
-
-TEST_F(BuilderTestFixture, OgiveRtRError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .OgiveRtR(-1)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kOgiveRtROOR);
-}
-
-TEST_F(BuilderTestFixture, RangeAngleError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .RangeAngleDeg(90)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kRangeAngleOOR);
-}
-
-TEST_F(BuilderTestFixture, TailLengthError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .TailLengthInch(-1.0)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kTailLengthOOR);
-}
-
-TEST_F(BuilderTestFixture, WindHeadingError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const uint16_t kWindSpeed = 10;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .WindHeadingDeg(lob::kDegreesPerTurn * 3)
-          .WindSpeedMph(kWindSpeed)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kWindHeadingOOR);
-}
-
-TEST_F(BuilderTestFixture, ZeroAngleError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .ZeroAngleMOA(lob::MoaT(lob::DegreesT(46)).Value())
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kZeroAngleOOR);
-}
-
-TEST_F(BuilderTestFixture, ZeroDistanceError) {
-  const double kSierraGameKingBC = 0.436;
-  const uint16_t kM70MuzzleVelocity = 3100U;
-  const double kZeroYardage = 100.0;
-  const double kZeroHeight = 3.0;
-  const lob::Input kJack =
-      puut->BallisticCoefficientPsi(kSierraGameKingBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(-kZeroYardage)
-          .ZeroImpactHeightInches(kZeroHeight)
-          .Build();
-  EXPECT_EQ(kJack.error, lob::ErrorT::kZeroDistanceOOR);
 }
 
 TEST_F(BuilderTestFixture, RangeAngleDeg) {
