@@ -79,7 +79,7 @@ void VerifySolutionDifferences(
   }
 }
 
-void SetupTestBuilder(lob::Builder& b) {
+inline void SetupTestBuilder(lob::Builder& b) {
   b.BallisticCoefficientPsi(0.425)
       .DiameterInch(0.308)
       .MassGrains(180.0)
