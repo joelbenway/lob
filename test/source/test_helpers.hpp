@@ -15,18 +15,22 @@
 
 namespace tests {
 
+constexpr uint16_t kDefaultVelocityError = 1;
+constexpr int kDefaultEnergyError = -1;
+constexpr double kDefaultMoaError = 0.1;
+constexpr double kDefaultInchError = -1.0;
+constexpr double kDefaultTimeOfFlightError = 0.01;
+
 struct SolutionTolerances {
-  uint16_t velocity = 1;
-  int energy = -1;
-  // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-  double moa = 0.1;
-  double inch = -1.0;
-  // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers)
-  double time_of_flight = 0.01;
+  uint16_t velocity = kDefaultVelocityError;
+  int energy = kDefaultEnergyError;
+  double moa = kDefaultMoaError;
+  double inch = kDefaultInchError;
+  double time_of_flight = kDefaultTimeOfFlightError;
 };
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 template <size_t N>
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void VerifySolutions(const std::array<lob::Output, N>& solutions,
                      const std::vector<lob::Output>& expected,
                      const SolutionTolerances& tolerances = {}) {
