@@ -45,7 +45,7 @@ inline InHgT BarometricFormula(FeetT altitude, InHgT pressure,
 
   if (altitude > FeetT(kIsaTropopauseAltitudeFt)) {
     const double kNumerator = -1.0 * kStandardGravityFtPerSecSq *
-                               (altitude - kIsaTropopauseAltitudeFt).Value();
+                              (altitude - kIsaTropopauseAltitudeFt).Value();
     const double kDenominator =
         kGasConstant * DegRT(DegFT(kIsaMinimumTempDegF)).Value();
     output *= std::exp(kNumerator / kDenominator);

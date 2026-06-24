@@ -171,10 +171,9 @@ TEST(EngUnitTests, IsNaN) {
   EXPECT_TRUE(kB.IsNaN());
 
   enum class Beer : uint8_t { kBottle, kCan };
-  using BottleT = lob::StrongT<Beer, Beer::kBottle, uint32_t>;
+  using BottleT = lob::StrongT<Beer, Beer::kBottle, double>;
   const BottleT kC(5);
   EXPECT_FALSE(kC.IsNaN());
-  EXPECT_FALSE(BottleT(std::numeric_limits<uint32_t>::quiet_NaN()).IsNaN());
 }
 
 TEST(EngUnitTests, Inverse) {

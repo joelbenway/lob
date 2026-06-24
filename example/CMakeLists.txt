@@ -44,7 +44,7 @@ if(NOT nlohmann_json_FOUND)
   unset(DEV_WARNINGS_RECOVER_STATE)
   unset(DEV_ERRORS_RECOVER_STATE)
 else()
-  message(STATUS STATUS "Found nlohmann/json: ${nlohmann_json_DIR}")
+  message(STATUS "Found nlohmann/json: ${nlohmann_json_DIR}")
 endif()
 
 include(../cmake/project-is-top-level.cmake)

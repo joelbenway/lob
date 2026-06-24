@@ -16,7 +16,7 @@ Developer mode is always set to on in CI workflows.
 
 ### Presets
 
-This project makes use of [presets][1] to simplify the process of configuring the project. As a developer, you are recommended to always have the [latest CMake version][12] installed to make use of the latest Quality-of-Life additions.
+This project makes use of [presets][10] to simplify the process of configuring the project. As a developer, you are recommended to always have the [latest CMake version][11] installed to make use of the latest Quality-of-Life additions.
 
 You have a few options to pass `LOB_DEVELOPER_MODE` to the configure command, but this project prefers to use presets.
 
@@ -87,7 +87,7 @@ ctest --preset=dev
 
 If you are using a compatible editor (e.g. VSCode) or IDE (e.g. CLion, VS), you will also be able to select the above created user presets for automatic integration.
 
-Please note that both the build and test commands accept a `-j` flag to specify the number of jobs to use, which should ideally be specified to the number of threads your CPU has. You may also want to add that to your preset using the `jobs` property, see the [presets documentation][11] for more details.
+Please note that both the build and test commands accept a `-j` flag to specify the number of jobs to use, which should ideally be specified to the number of threads your CPU has. You may also want to add that to your preset using the `jobs` property, see the [presets documentation][10] for more details.
 
 ### Developer mode targets
 

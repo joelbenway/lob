@@ -32,12 +32,12 @@ constexpr bool AreFloatingPointsEqual(T a, T b) {
     return std::isnan(a) && std::isnan(b);
   }
   const T kDiff = std::fabs(a - b);
-  const T kAbsTol = static_cast<T>(1e-9);
+  const T kAbsTol = std::numeric_limits<T>::epsilon() * static_cast<T>(100);
   if (kDiff <= kAbsTol) {
     return true;
   }
   return (kDiff <= std::numeric_limits<T>::epsilon() *
-                                  std::fmax(std::fabs(a), std::fabs(b)));
+                       std::fmax(std::fabs(a), std::fabs(b)));
 }
 
 constexpr bool AreEqual(double a, double b) {

@@ -63,11 +63,11 @@ TEST(HelpersTest, Modulo) {
 }
 
 TEST(HelpersTest, FloatEqualityNearZero) {
-  EXPECT_TRUE(lob::AreFloatingPointsEqual(0.0, 1e-10));
-  EXPECT_TRUE(lob::AreFloatingPointsEqual(1e-10, 0.0));
-  EXPECT_TRUE(lob::AreFloatingPointsEqual(-1e-10, 0.0));
-  EXPECT_FALSE(lob::AreFloatingPointsEqual(0.0, 1e-8));
-  EXPECT_FALSE(lob::AreFloatingPointsEqual(1e-8, 0.0));
+  EXPECT_TRUE(lob::AreFloatingPointsEqual(0.0, 1e-15));
+  EXPECT_TRUE(lob::AreFloatingPointsEqual(1e-15, 0.0));
+  EXPECT_TRUE(lob::AreFloatingPointsEqual(-1e-15, 0.0));
+  EXPECT_FALSE(lob::AreFloatingPointsEqual(0.0, 1e-13));
+  EXPECT_FALSE(lob::AreFloatingPointsEqual(1e-13, 0.0));
 }
 
 TEST(HelpersTest, LargeQuotientFmod) {

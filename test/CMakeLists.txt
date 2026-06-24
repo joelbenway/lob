@@ -11,7 +11,6 @@ include(../cmake/folders.cmake)
 
 if(PROJECT_IS_TOP_LEVEL)
   find_package(lob REQUIRED)
-  target_include_directories()
   enable_testing()
 endif()
 

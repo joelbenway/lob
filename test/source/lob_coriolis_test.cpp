@@ -126,13 +126,13 @@ TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {
   ASSERT_NE(puut, nullptr);
-  constexpr double kLattitude = 45.0;
+  constexpr double kLatitude = 45.0;
   constexpr double kAzimuth = 0.0;  // North
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
   const auto kInput2 =
-      puut->LatitudeDeg(kLattitude).AzimuthDeg(kAzimuth).Build();
+      puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
@@ -161,13 +161,13 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
   ASSERT_NE(puut, nullptr);
-  constexpr double kLattitude = 45.0;
+  constexpr double kLatitude = 45.0;
   constexpr double kAzimuth = 90.0;  // East
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
   const auto kInput2 =
-      puut->LatitudeDeg(kLattitude).AzimuthDeg(kAzimuth).Build();
+      puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
@@ -197,13 +197,13 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
 TEST_F(LobCoriolisTestFixture,
        NorthernHemisphereDeflectionEastNegativeAzimuth) {
   ASSERT_NE(puut, nullptr);
-  constexpr double kLattitude = 45.0;
+  constexpr double kLatitude = 45.0;
   constexpr double kAzimuth = -270.0;  // East
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
   const auto kInput2 =
-      puut->LatitudeDeg(kLattitude).AzimuthDeg(kAzimuth).Build();
+      puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
@@ -232,13 +232,13 @@ TEST_F(LobCoriolisTestFixture,
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionSouth) {
   ASSERT_NE(puut, nullptr);
-  constexpr double kLattitude = 45.0;
+  constexpr double kLatitude = 45.0;
   constexpr double kAzimuth = 180.0;  // South
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
   const auto kInput2 =
-      puut->LatitudeDeg(kLattitude).AzimuthDeg(kAzimuth).Build();
+      puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
@@ -268,13 +268,13 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionSouth) {
 TEST_F(LobCoriolisTestFixture,
        NorthernHemisphereDeflectionSouthNegativeAzimuth) {
   ASSERT_NE(puut, nullptr);
-  constexpr double kLattitude = 45.0;
+  constexpr double kLatitude = 45.0;
   constexpr double kAzimuth = -180.0;  // South
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
   const auto kInput2 =
-      puut->LatitudeDeg(kLattitude).AzimuthDeg(kAzimuth).Build();
+      puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
@@ -303,13 +303,13 @@ TEST_F(LobCoriolisTestFixture,
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereCoriolisDeflectionWest) {
   ASSERT_NE(puut, nullptr);
-  constexpr double kLattitude = 45.0;
+  constexpr double kLatitude = 45.0;
   constexpr double kAzimuth = 270.0;  // West
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
   const auto kInput2 =
-      puut->LatitudeDeg(kLattitude).AzimuthDeg(kAzimuth).Build();
+      puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
@@ -339,13 +339,13 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereCoriolisDeflectionWest) {
 TEST_F(LobCoriolisTestFixture,
        NorthernHemisphereCoriolisDeflectionWestNegativeAzimuth) {
   ASSERT_NE(puut, nullptr);
-  constexpr double kLattitude = 45.0;
+  constexpr double kLatitude = 45.0;
   constexpr double kAzimuth = -90.0;  // West
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
   const auto kInput2 =
-      puut->LatitudeDeg(kLattitude).AzimuthDeg(kAzimuth).Build();
+      puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
@@ -374,13 +374,13 @@ TEST_F(LobCoriolisTestFixture,
 
 TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionNorth) {
   ASSERT_NE(puut, nullptr);
-  constexpr double kLattitude = -45.0;
+  constexpr double kLatitude = -45.0;
   constexpr double kAzimuth = 0.0;  // North
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
   const auto kInput2 =
-      puut->LatitudeDeg(kLattitude).AzimuthDeg(kAzimuth).Build();
+      puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
@@ -409,13 +409,13 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionNorth) {
 
 TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
   ASSERT_NE(puut, nullptr);
-  constexpr double kLattitude = -45.0;
+  constexpr double kLatitude = -45.0;
   constexpr double kAzimuth = 90.0;  // East
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
   const auto kInput2 =
-      puut->LatitudeDeg(kLattitude).AzimuthDeg(kAzimuth).Build();
+      puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
@@ -444,13 +444,13 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
 
 TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionSouth) {
   ASSERT_NE(puut, nullptr);
-  constexpr double kLattitude = -45.0;
+  constexpr double kLatitude = -45.0;
   constexpr double kAzimuth = 180.0;  // South
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
   const auto kInput2 =
-      puut->LatitudeDeg(kLattitude).AzimuthDeg(kAzimuth).Build();
+      puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
@@ -479,13 +479,13 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionSouth) {
 
 TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionWest) {
   ASSERT_NE(puut, nullptr);
-  constexpr double kLattitude = -45.0;
+  constexpr double kLatitude = -45.0;
   constexpr double kAzimuth = 270.0;  // West
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
   const auto kInput1 = puut->Build();
   const auto kInput2 =
-      puut->LatitudeDeg(kLattitude).AzimuthDeg(kAzimuth).Build();
+      puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};

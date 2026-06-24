@@ -19,11 +19,10 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, const LobInput& input) {
   assert(ps != nullptr);
   assert(pt != nullptr);
 
-  const SecT kStep = input.step_size == 0
-                         ? (ps->V().X() > FpsT(0)
-                                ? SecT(ps->V().X().Inverse().Value())
-                                : SecT(UsecT(1000)))
-                         : SecT(UsecT(input.step_size));
+  const SecT kStep =
+      input.step_size == 0 && ps->V().X() > FpsT(0)
+          ? SecT(ps->V().X().Inverse().Value())
+          : std::max(SecT(UsecT(input.step_size)), SecT(UsecT(1)));
 
   const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
                                FpsT(input.wind.z));
@@ -36,8 +35,7 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, const LobInput& input) {
   const MachT kMach(ps->V().Magnitude(), FpsT(input.speed_of_sound).Inverse());
   const double kCd = LobLerp(kMachs.data(), &input.drags[0], kTableSize,
                              static_cast<double>(kMach) * kTableScale) /
-                     kTableScale *
-                     static_cast<double>(input.table_coefficient);
+                     kTableScale * static_cast<double>(input.table_coefficient);
 
   auto ds_dt = [&](SecT t, const TrajectoryStateT& s) -> TrajectoryStateT {
     static_cast<void>(t);  // t is unused

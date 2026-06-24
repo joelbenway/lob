@@ -40,7 +40,8 @@ LobOutput LerpOutput(const TrajectoryStateT& s_now, const SecT t_now,
   return out;
 }
 
-void ApplyGyroscopicSpinDrift(const LobInput& in, LobOutput* pouts, size_t size) {
+void ApplyGyroscopicSpinDrift(const LobInput& in, LobOutput* pouts,
+                              size_t size) {
   assert(pouts != nullptr);
   if (!std::isnan(in.spindrift_factor)) {
     for (size_t i = 0; i < size; i++) {
@@ -65,8 +66,8 @@ void ApplyGyroscopicSpinDrift(const LobInput& in, LobOutput* pouts, size_t size)
 namespace lob {
 extern "C" {
 
-size_t LobSolve(const LobInput* in, const uint32_t* pranges,
-                LobOutput* pouts, size_t size) {
+size_t LobSolve(const LobInput* in, const uint32_t* pranges, LobOutput* pouts,
+                size_t size) {
   assert(pranges != nullptr);
   assert(pouts != nullptr);
   assert(size > 0);
@@ -122,7 +123,8 @@ size_t LobSolve(const LobInput* in, const uint32_t* pranges,
       index++;
       break;
     }
-    // If vertical velocity exceeds 3x horizontal, consider falling straight down.
+    // If vertical velocity exceeds 3x horizontal, consider falling straight
+    // down.
     if (std::abs(s.V().Y().Value()) > s.V().X().Value() * 3) {
       pouts[index] = LerpOutput(s, t, kS, kT, 1, *in);
       index++;
