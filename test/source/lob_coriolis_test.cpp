@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "lob/lob.hpp"
+#include "test_helpers.hpp"
 
 namespace tests {
 
@@ -101,27 +102,8 @@ TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
-  for (size_t i = 0; i < kSolutionLength; i++) {
-    EXPECT_EQ(solutions.at(i).range, kExpected.at(i).range);
-    EXPECT_NEAR(solutions.at(i).velocity, kExpected.at(i).velocity,
-                kVelocityError);
-    const double kSolutionElevationMoa =
-        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
-    const double kExpectedElevationMoa =
-        lob::InchToMoa(kExpected.at(i).elevation, kExpected.at(i).range);
-    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, kMoaError);
-    /*EXPECT_NEAR(solutions.at(i).elevation, kExpected.at(i).elevation,
-                kInchError);*/
-    const double kSolutionDeflectionMoa =
-        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
-    const double kExpectedDeflectionMoa =
-        lob::InchToMoa(kExpected.at(i).deflection, kExpected.at(i).range);
-    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, kMoaError);
-    /*EXPECT_NEAR(solutions.at(i).deflection, kExpected.at(i).deflection,
-                kInchError);*/
-    EXPECT_NEAR(solutions.at(i).time_of_flight, kExpected.at(i).time_of_flight,
-                kTimeOfFlightError);
-  }
+  VerifySolutions(solutions, kExpected,
+                  {kVelocityError, -1, kMoaError, -1.0, kTimeOfFlightError});
 }
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {
@@ -147,16 +129,9 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {
   std::array<lob::Output, kSolutionLength> solutions2 = {};
   lob::Solve(kInput1, kRanges, solutions1);
   lob::Solve(kInput2, kRanges, solutions2);
-  for (size_t i = 0; i < kSolutionLength; i++) {
-    const auto kElevationDifference =
-        solutions2.at(i).elevation - solutions1.at(i).elevation;
-    const auto kDeflectionDifference =
-        solutions2.at(i).deflection - solutions1.at(i).deflection;
-    EXPECT_NEAR(kElevationDifference, kExpectedElevationDifference.at(i),
-                kInchError);
-    EXPECT_NEAR(kDeflectionDifference, kExpectedDeflectionDifference.at(i),
-                kInchError);
-  }
+  VerifySolutionDifferences(solutions1, solutions2,
+                            kExpectedElevationDifference,
+                            kExpectedDeflectionDifference, kInchError);
 }
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
@@ -182,16 +157,9 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
   std::array<lob::Output, kSolutionLength> solutions2 = {};
   lob::Solve(kInput1, kRanges, solutions1);
   lob::Solve(kInput2, kRanges, solutions2);
-  for (size_t i = 0; i < kSolutionLength; i++) {
-    const auto kElevationDifference =
-        solutions2.at(i).elevation - solutions1.at(i).elevation;
-    const auto kDeflectionDifference =
-        solutions2.at(i).deflection - solutions1.at(i).deflection;
-    EXPECT_NEAR(kElevationDifference, kExpectedElevationDifference.at(i),
-                kInchError);
-    EXPECT_NEAR(kDeflectionDifference, kExpectedDeflectionDifference.at(i),
-                kInchError);
-  }
+  VerifySolutionDifferences(solutions1, solutions2,
+                            kExpectedElevationDifference,
+                            kExpectedDeflectionDifference, kInchError);
 }
 
 TEST_F(LobCoriolisTestFixture,
@@ -218,16 +186,9 @@ TEST_F(LobCoriolisTestFixture,
   std::array<lob::Output, kSolutionLength> solutions2 = {};
   lob::Solve(kInput1, kRanges, solutions1);
   lob::Solve(kInput2, kRanges, solutions2);
-  for (size_t i = 0; i < kSolutionLength; i++) {
-    const auto kElevationDifference =
-        solutions2.at(i).elevation - solutions1.at(i).elevation;
-    const auto kDeflectionDifference =
-        solutions2.at(i).deflection - solutions1.at(i).deflection;
-    EXPECT_NEAR(kElevationDifference, kExpectedElevationDifference.at(i),
-                kInchError);
-    EXPECT_NEAR(kDeflectionDifference, kExpectedDeflectionDifference.at(i),
-                kInchError);
-  }
+  VerifySolutionDifferences(solutions1, solutions2,
+                            kExpectedElevationDifference,
+                            kExpectedDeflectionDifference, kInchError);
 }
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionSouth) {
@@ -253,16 +214,9 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionSouth) {
   std::array<lob::Output, kSolutionLength> solutions2 = {};
   lob::Solve(kInput1, kRanges, solutions1);
   lob::Solve(kInput2, kRanges, solutions2);
-  for (size_t i = 0; i < kSolutionLength; i++) {
-    const auto kElevationDifference =
-        solutions2.at(i).elevation - solutions1.at(i).elevation;
-    const auto kDeflectionDifference =
-        solutions2.at(i).deflection - solutions1.at(i).deflection;
-    EXPECT_NEAR(kElevationDifference, kExpectedElevationDifference.at(i),
-                kInchError);
-    EXPECT_NEAR(kDeflectionDifference, kExpectedDeflectionDifference.at(i),
-                kInchError);
-  }
+  VerifySolutionDifferences(solutions1, solutions2,
+                            kExpectedElevationDifference,
+                            kExpectedDeflectionDifference, kInchError);
 }
 
 TEST_F(LobCoriolisTestFixture,
@@ -289,16 +243,9 @@ TEST_F(LobCoriolisTestFixture,
   std::array<lob::Output, kSolutionLength> solutions2 = {};
   lob::Solve(kInput1, kRanges, solutions1);
   lob::Solve(kInput2, kRanges, solutions2);
-  for (size_t i = 0; i < kSolutionLength; i++) {
-    const auto kElevationDifference =
-        solutions2.at(i).elevation - solutions1.at(i).elevation;
-    const auto kDeflectionDifference =
-        solutions2.at(i).deflection - solutions1.at(i).deflection;
-    EXPECT_NEAR(kElevationDifference, kExpectedElevationDifference.at(i),
-                kInchError);
-    EXPECT_NEAR(kDeflectionDifference, kExpectedDeflectionDifference.at(i),
-                kInchError);
-  }
+  VerifySolutionDifferences(solutions1, solutions2,
+                            kExpectedElevationDifference,
+                            kExpectedDeflectionDifference, kInchError);
 }
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereCoriolisDeflectionWest) {
@@ -324,16 +271,9 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereCoriolisDeflectionWest) {
   std::array<lob::Output, kSolutionLength> solutions2 = {};
   lob::Solve(kInput1, kRanges, solutions1);
   lob::Solve(kInput2, kRanges, solutions2);
-  for (size_t i = 0; i < kSolutionLength; i++) {
-    const auto kElevationDifference =
-        solutions2.at(i).elevation - solutions1.at(i).elevation;
-    const auto kDeflectionDifference =
-        solutions2.at(i).deflection - solutions1.at(i).deflection;
-    EXPECT_NEAR(kElevationDifference, kExpectedElevationDifference.at(i),
-                kInchError);
-    EXPECT_NEAR(kDeflectionDifference, kExpectedDeflectionDifference.at(i),
-                kInchError);
-  }
+  VerifySolutionDifferences(solutions1, solutions2,
+                            kExpectedElevationDifference,
+                            kExpectedDeflectionDifference, kInchError);
 }
 
 TEST_F(LobCoriolisTestFixture,
@@ -360,16 +300,9 @@ TEST_F(LobCoriolisTestFixture,
   std::array<lob::Output, kSolutionLength> solutions2 = {};
   lob::Solve(kInput1, kRanges, solutions1);
   lob::Solve(kInput2, kRanges, solutions2);
-  for (size_t i = 0; i < kSolutionLength; i++) {
-    const auto kElevationDifference =
-        solutions2.at(i).elevation - solutions1.at(i).elevation;
-    const auto kDeflectionDifference =
-        solutions2.at(i).deflection - solutions1.at(i).deflection;
-    EXPECT_NEAR(kElevationDifference, kExpectedElevationDifference.at(i),
-                kInchError);
-    EXPECT_NEAR(kDeflectionDifference, kExpectedDeflectionDifference.at(i),
-                kInchError);
-  }
+  VerifySolutionDifferences(solutions1, solutions2,
+                            kExpectedElevationDifference,
+                            kExpectedDeflectionDifference, kInchError);
 }
 
 TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionNorth) {
@@ -395,16 +328,9 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionNorth) {
   std::array<lob::Output, kSolutionLength> solutions2 = {};
   lob::Solve(kInput1, kRanges, solutions1);
   lob::Solve(kInput2, kRanges, solutions2);
-  for (size_t i = 0; i < kSolutionLength; i++) {
-    const auto kElevationDifference =
-        solutions2.at(i).elevation - solutions1.at(i).elevation;
-    const auto kDeflectionDifference =
-        solutions2.at(i).deflection - solutions1.at(i).deflection;
-    EXPECT_NEAR(kElevationDifference, kExpectedElevationDifference.at(i),
-                kInchError);
-    EXPECT_NEAR(kDeflectionDifference, kExpectedDeflectionDifference.at(i),
-                kInchError);
-  }
+  VerifySolutionDifferences(solutions1, solutions2,
+                            kExpectedElevationDifference,
+                            kExpectedDeflectionDifference, kInchError);
 }
 
 TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
@@ -430,16 +356,9 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
   std::array<lob::Output, kSolutionLength> solutions2 = {};
   lob::Solve(kInput1, kRanges, solutions1);
   lob::Solve(kInput2, kRanges, solutions2);
-  for (size_t i = 0; i < kSolutionLength; i++) {
-    const auto kElevationDifference =
-        solutions2.at(i).elevation - solutions1.at(i).elevation;
-    const auto kDeflectionDifference =
-        solutions2.at(i).deflection - solutions1.at(i).deflection;
-    EXPECT_NEAR(kElevationDifference, kExpectedElevationDifference.at(i),
-                kInchError);
-    EXPECT_NEAR(kDeflectionDifference, kExpectedDeflectionDifference.at(i),
-                kInchError);
-  }
+  VerifySolutionDifferences(solutions1, solutions2,
+                            kExpectedElevationDifference,
+                            kExpectedDeflectionDifference, kInchError);
 }
 
 TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionSouth) {
@@ -465,16 +384,9 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionSouth) {
   std::array<lob::Output, kSolutionLength> solutions2 = {};
   lob::Solve(kInput1, kRanges, solutions1);
   lob::Solve(kInput2, kRanges, solutions2);
-  for (size_t i = 0; i < kSolutionLength; i++) {
-    const auto kElevationDifference =
-        solutions2.at(i).elevation - solutions1.at(i).elevation;
-    const auto kDeflectionDifference =
-        solutions2.at(i).deflection - solutions1.at(i).deflection;
-    EXPECT_NEAR(kElevationDifference, kExpectedElevationDifference.at(i),
-                kInchError);
-    EXPECT_NEAR(kDeflectionDifference, kExpectedDeflectionDifference.at(i),
-                kInchError);
-  }
+  VerifySolutionDifferences(solutions1, solutions2,
+                            kExpectedElevationDifference,
+                            kExpectedDeflectionDifference, kInchError);
 }
 
 TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionWest) {
@@ -500,16 +412,9 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionWest) {
   std::array<lob::Output, kSolutionLength> solutions2 = {};
   lob::Solve(kInput1, kRanges, solutions1);
   lob::Solve(kInput2, kRanges, solutions2);
-  for (size_t i = 0; i < kSolutionLength; i++) {
-    const auto kElevationDifference =
-        solutions2.at(i).elevation - solutions1.at(i).elevation;
-    const auto kDeflectionDifference =
-        solutions2.at(i).deflection - solutions1.at(i).deflection;
-    EXPECT_NEAR(kElevationDifference, kExpectedElevationDifference.at(i),
-                kInchError);
-    EXPECT_NEAR(kDeflectionDifference, kExpectedDeflectionDifference.at(i),
-                kInchError);
-  }
+  VerifySolutionDifferences(solutions1, solutions2,
+                            kExpectedElevationDifference,
+                            kExpectedDeflectionDifference, kInchError);
 }
 
 }  // namespace tests
