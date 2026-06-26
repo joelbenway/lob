@@ -41,7 +41,7 @@ uint16_t JsonToU16(const nlohmann::json& j, const std::string& key) {
 }
 
 lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& j,
-                                            const std::string& key) {
+                                           const std::string& key) {
   double v = JsonToDouble(j, key);
   if (std::isnan(v)) {
     return lob::AtmosphereReferenceT::kArmyStandardMetro;
@@ -52,80 +52,99 @@ lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& j,
 }
 
 lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
-                                       const std::string& key) {
+                                      const std::string& key) {
   double v = JsonToDouble(j, key);
   if (std::isnan(v)) {
     return lob::DragFunctionT::kG1;
   }
   switch (static_cast<int>(std::round(v))) {
-    case 2: return lob::DragFunctionT::kG2;   // NOLINT
-    case 5: return lob::DragFunctionT::kG5;   // NOLINT
-    case 6: return lob::DragFunctionT::kG6;   // NOLINT
-    case 7: return lob::DragFunctionT::kG7;   // NOLINT
-    case 8: return lob::DragFunctionT::kG8;   // NOLINT
-    default: return lob::DragFunctionT::kG1;
+    case 2:
+      return lob::DragFunctionT::kG2;  // NOLINT
+    case 5:
+      return lob::DragFunctionT::kG5;  // NOLINT
+    case 6:
+      return lob::DragFunctionT::kG6;  // NOLINT
+    case 7:
+      return lob::DragFunctionT::kG7;  // NOLINT
+    case 8:
+      return lob::DragFunctionT::kG8;  // NOLINT
+    default:
+      return lob::DragFunctionT::kG1;
   }
 }
 
 lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
-                                   const std::string& key) {
+                                  const std::string& key) {
   double v = JsonToDouble(j, key);
   if (std::isnan(v)) {
     return lob::ClockAngleT::kXII;
   }
   switch (static_cast<int>(std::round(v))) {
-    case 1: return lob::ClockAngleT::kI;      // NOLINT
-    case 2: return lob::ClockAngleT::kII;     // NOLINT
-    case 3: return lob::ClockAngleT::kIII;    // NOLINT
-    case 4: return lob::ClockAngleT::kIV;     // NOLINT
-    case 5: return lob::ClockAngleT::kV;      // NOLINT
-    case 6: return lob::ClockAngleT::kVI;     // NOLINT
-    case 7: return lob::ClockAngleT::kVII;    // NOLINT
-    case 8: return lob::ClockAngleT::kVIII;   // NOLINT
-    case 9: return lob::ClockAngleT::kIX;     // NOLINT
-    case 10: return lob::ClockAngleT::kX;     // NOLINT
-    case 11: return lob::ClockAngleT::kXI;    // NOLINT
-    default: return lob::ClockAngleT::kXII;
+    case 1:
+      return lob::ClockAngleT::kI;  // NOLINT
+    case 2:
+      return lob::ClockAngleT::kII;  // NOLINT
+    case 3:
+      return lob::ClockAngleT::kIII;  // NOLINT
+    case 4:
+      return lob::ClockAngleT::kIV;  // NOLINT
+    case 5:
+      return lob::ClockAngleT::kV;  // NOLINT
+    case 6:
+      return lob::ClockAngleT::kVI;  // NOLINT
+    case 7:
+      return lob::ClockAngleT::kVII;  // NOLINT
+    case 8:
+      return lob::ClockAngleT::kVIII;  // NOLINT
+    case 9:
+      return lob::ClockAngleT::kIX;  // NOLINT
+    case 10:
+      return lob::ClockAngleT::kX;  // NOLINT
+    case 11:
+      return lob::ClockAngleT::kXI;  // NOLINT
+    default:
+      return lob::ClockAngleT::kXII;
   }
 }
 
 }  // namespace
 
 BridgeResult SolveFromJson(const nlohmann::json& j) {
-  auto input = lob::Builder()
-    .BallisticCoefficientPsi(JsonToDouble(j, "BallisticCoefficientPsi"))
-    .BCAtmosphere(JsonToAtmosphere(j, "BCAtmosphere"))
-    .BCDragFunction(JsonToDragFunction(j, "BCDragFunction"))
-    .DiameterInch(JsonToDouble(j, "DiameterInch"))
-    .MeplatDiameterInch(JsonToDouble(j, "MeplatDiameterInch"))
-    .BaseDiameterInch(JsonToDouble(j, "BaseDiameterInch"))
-    .LengthInch(JsonToDouble(j, "LengthInch"))
-    .NoseLengthInch(JsonToDouble(j, "NoseLengthInch"))
-    .TailLengthInch(JsonToDouble(j, "TailLengthInch"))
-    .OgiveRtR(JsonToDouble(j, "OgiveRtR"))
-    .MassGrains(JsonToDouble(j, "MassGrains"))
-    .InitialVelocityFps(JsonToU16(j, "InitialVelocityFps"))
-    .OpticHeightInches(JsonToDouble(j, "OpticHeightInches"))
-    .TwistInchesPerTurn(JsonToDouble(j, "TwistInchesPerTurn"))
-    .ZeroAngleMOA(JsonToDouble(j, "ZeroAngleMOA"))
-    .ZeroDistanceYds(JsonToDouble(j, "ZeroDistanceYds"))
-    .ZeroImpactHeightInches(JsonToDouble(j, "ZeroImpactHeightInches"))
-    .AltitudeOfFiringSiteFt(JsonToDouble(j, "AltitudeOfFiringSiteFt"))
-    .AirPressureInHg(JsonToDouble(j, "AirPressureInHg"))
-    .AltitudeOfBarometerFt(JsonToDouble(j, "AltitudeOfBarometerFt"))
-    .TemperatureDegF(JsonToDouble(j, "TemperatureDegF"))
-    .AltitudeOfThermometerFt(JsonToDouble(j, "AltitudeOfThermometerFt"))
-    .RelativeHumidityPercent(JsonToDouble(j, "RelativeHumidityPercent"))
-    .WindHeading(JsonToClockAngle(j, "WindHeading"))
-    .WindSpeedMph(JsonToDouble(j, "WindSpeedMph"))
-    .AzimuthDeg(JsonToDouble(j, "AzimuthDeg"))
-    .LatitudeDeg(JsonToDouble(j, "LatitudeDeg"))
-    .RangeAngleDeg(JsonToDouble(j, "RangeAngleDeg"))
-    .MinimumSpeed(JsonToU16(j, "MinimumSpeed"))
-    .MinimumEnergy(JsonToU16(j, "MinimumEnergy"))
-    .MaximumTime(JsonToDouble(j, "MaximumTime"))
-    .StepSize(kDefaultStepSize)
-    .Build();
+  auto input =
+      lob::Builder()
+          .BallisticCoefficientPsi(JsonToDouble(j, "BallisticCoefficientPsi"))
+          .BCAtmosphere(JsonToAtmosphere(j, "BCAtmosphere"))
+          .BCDragFunction(JsonToDragFunction(j, "BCDragFunction"))
+          .DiameterInch(JsonToDouble(j, "DiameterInch"))
+          .MeplatDiameterInch(JsonToDouble(j, "MeplatDiameterInch"))
+          .BaseDiameterInch(JsonToDouble(j, "BaseDiameterInch"))
+          .LengthInch(JsonToDouble(j, "LengthInch"))
+          .NoseLengthInch(JsonToDouble(j, "NoseLengthInch"))
+          .TailLengthInch(JsonToDouble(j, "TailLengthInch"))
+          .OgiveRtR(JsonToDouble(j, "OgiveRtR"))
+          .MassGrains(JsonToDouble(j, "MassGrains"))
+          .InitialVelocityFps(JsonToU16(j, "InitialVelocityFps"))
+          .OpticHeightInches(JsonToDouble(j, "OpticHeightInches"))
+          .TwistInchesPerTurn(JsonToDouble(j, "TwistInchesPerTurn"))
+          .ZeroAngleMOA(JsonToDouble(j, "ZeroAngleMOA"))
+          .ZeroDistanceYds(JsonToDouble(j, "ZeroDistanceYds"))
+          .ZeroImpactHeightInches(JsonToDouble(j, "ZeroImpactHeightInches"))
+          .AltitudeOfFiringSiteFt(JsonToDouble(j, "AltitudeOfFiringSiteFt"))
+          .AirPressureInHg(JsonToDouble(j, "AirPressureInHg"))
+          .AltitudeOfBarometerFt(JsonToDouble(j, "AltitudeOfBarometerFt"))
+          .TemperatureDegF(JsonToDouble(j, "TemperatureDegF"))
+          .AltitudeOfThermometerFt(JsonToDouble(j, "AltitudeOfThermometerFt"))
+          .RelativeHumidityPercent(JsonToDouble(j, "RelativeHumidityPercent"))
+          .WindHeading(JsonToClockAngle(j, "WindHeading"))
+          .WindSpeedMph(JsonToDouble(j, "WindSpeedMph"))
+          .AzimuthDeg(JsonToDouble(j, "AzimuthDeg"))
+          .LatitudeDeg(JsonToDouble(j, "LatitudeDeg"))
+          .RangeAngleDeg(JsonToDouble(j, "RangeAngleDeg"))
+          .MinimumSpeed(JsonToU16(j, "MinimumSpeed"))
+          .MinimumEnergy(JsonToU16(j, "MinimumEnergy"))
+          .MaximumTime(JsonToDouble(j, "MaximumTime"))
+          .StepSize(kDefaultStepSize)
+          .Build();
 
   std::vector<uint32_t> ranges;
   if (j.contains("Ranges") && j["Ranges"].is_array()) {
@@ -133,17 +152,20 @@ BridgeResult SolveFromJson(const nlohmann::json& j) {
       ranges.push_back(static_cast<uint32_t>(r.get<double>() * kYardsToFeet));
     }
   } else {
-    const std::array<uint32_t, 12> kDefaultRanges = {0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+    const std::array<uint32_t, 12> kDefaultRanges = {
+        0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
     ranges.assign(kDefaultRanges.begin(), kDefaultRanges.end());
   }
 
   std::vector<lob::Output> outputs(ranges.size());
-  size_t count = lob::Solve(input, ranges.data(), outputs.data(), ranges.size());
+  size_t count =
+      lob::Solve(input, ranges.data(), outputs.data(), ranges.size());
 
   return {input, std::move(outputs), count};
 }
 
-void PrintTable(const lob::Input& input, const lob::Output* outputs, size_t count) {
+void PrintTable(const lob::Input& input, const lob::Output* outputs,
+                size_t count) {
   constexpr uint8_t kExtra = 3;
 
   // Extra info
@@ -156,18 +178,15 @@ void PrintTable(const lob::Input& input, const lob::Output* outputs, size_t coun
   const std::string kE("Error");
 
   std::cout << "\033[33m" << std::left << std::setw(extra_width(kZA)) << kZA
-            << std::setw(extra_width(kSF)) << kSF
-            << std::setw(extra_width(kSS)) << kSS
-            << std::setw(extra_width(kE)) << kE << "\033[0m\n";
+            << std::setw(extra_width(kSF)) << kSF << std::setw(extra_width(kSS))
+            << kSS << std::setw(extra_width(kE)) << kE << "\033[0m\n";
   std::cout << std::left << std::setw(extra_width(kZA)) << std::fixed
             << std::setprecision(2) << input.zero_angle
-            << std::setw(extra_width(kSF))
-            << input.stability_factor
-            << std::setw(extra_width(kSS))
-            << input.speed_of_sound
-            << std::setw(extra_width(kE)) << std::hex
-            << std::showbase << static_cast<unsigned int>(input.error)
-            << std::dec << std::noshowbase << "\n\n";
+            << std::setw(extra_width(kSF)) << input.stability_factor
+            << std::setw(extra_width(kSS)) << input.speed_of_sound
+            << std::setw(extra_width(kE)) << std::hex << std::showbase
+            << static_cast<unsigned int>(input.error) << std::dec
+            << std::noshowbase << "\n\n";
 
   // Table header
   const int kWidth = 12;
@@ -180,16 +199,16 @@ void PrintTable(const lob::Input& input, const lob::Output* outputs, size_t coun
             << std::setw(kWidth) << "Seconds" << "\033[0m\n";
 
   for (size_t i = 0; i < count; ++i) {
-    std::cout << std::left << std::setw(kWidth) << outputs[i].range / static_cast<uint32_t>(kYardsToFeet)
-              << std::setw(kWidth) << outputs[i].velocity
-              << std::setw(kWidth) << outputs[i].energy
-              << std::setw(kWidth) << std::fixed << std::setprecision(2)
-              << outputs[i].elevation << std::setw(kWidth)
+    std::cout << std::left << std::setw(kWidth)
+              << outputs[i].range / static_cast<uint32_t>(kYardsToFeet)
+              << std::setw(kWidth) << outputs[i].velocity << std::setw(kWidth)
+              << outputs[i].energy << std::setw(kWidth) << std::fixed
+              << std::setprecision(2) << outputs[i].elevation
+              << std::setw(kWidth)
               << lob::InchToMoa(outputs[i].elevation, outputs[i].range)
               << std::setw(kWidth)
               << lob::InchToMil(outputs[i].elevation, outputs[i].range)
-              << std::setw(kWidth) << outputs[i].deflection
-              << std::setw(kWidth)
+              << std::setw(kWidth) << outputs[i].deflection << std::setw(kWidth)
               << lob::InchToMoa(outputs[i].deflection, outputs[i].range)
               << std::setw(kWidth)
               << lob::InchToMil(outputs[i].deflection, outputs[i].range)
@@ -202,14 +221,12 @@ void PrintTable(const lob::Input& input, const lob::Output* outputs, size_t coun
 nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count) {
   nlohmann::json j = nlohmann::json::array();
   for (size_t i = 0; i < count; ++i) {
-    j.push_back({
-      {"range", outputs[i].range},
-      {"velocity", outputs[i].velocity},
-      {"energy", outputs[i].energy},
-      {"elevation", outputs[i].elevation},
-      {"deflection", outputs[i].deflection},
-      {"time_of_flight", outputs[i].time_of_flight}
-    });
+    j.push_back({{"range", outputs[i].range},
+                 {"velocity", outputs[i].velocity},
+                 {"energy", outputs[i].energy},
+                 {"elevation", outputs[i].elevation},
+                 {"deflection", outputs[i].deflection},
+                 {"time_of_flight", outputs[i].time_of_flight}});
   }
   return j;
 }

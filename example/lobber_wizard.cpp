@@ -102,8 +102,7 @@ const std::map<Step, std::string>& GetKeys() {
 
 const std::map<Step, std::string>& GetPrompts() {
   static const std::map<Step, std::string> kPrompts{
-      {Step::kBallisticCoefficientPsi,
-       "Enter ballistic coefficient in PSI"},
+      {Step::kBallisticCoefficientPsi, "Enter ballistic coefficient in PSI"},
       {Step::kBCAtmosphere,
        "Enter 1 for Army Standard Metro or 2 for ICAO reference atmosphere"},
       {Step::kBCDragFunction,
@@ -128,8 +127,7 @@ const std::map<Step, std::string>& GetPrompts() {
       {Step::kTemperatureDegF, "Enter temperature in degrees Fahrenheit"},
       {Step::kAltitudeOfThermometerFt, "Enter altitude of thermometer in feet"},
       {Step::kRelativeHumidityPercent, "Enter relative humidity in percent"},
-      {Step::kWindHeading,
-       "Enter wind heading as a clock angle (1 though 12)"},
+      {Step::kWindHeading, "Enter wind heading as a clock angle (1 though 12)"},
       {Step::kWindSpeedMph, "Enter wind speed in miles per hour"},
       {Step::kAzimuthDeg, "Enter azimuth in degrees"},
       {Step::kLatitudeDeg, "Enter latitude in degrees"},
@@ -274,8 +272,8 @@ void PromptRanges(Step s, nlohmann::json* j) {
   }
 
   if (list.empty()) {
-    static const nlohmann::json kDefaultRanges =
-        {0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+    static const nlohmann::json kDefaultRanges = {
+        0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
     list = kDefaultRanges;
   }
 
@@ -317,7 +315,8 @@ nlohmann::json RunWizard() {
 
     bool gave = info.always_given || (has_input && !info.always_skip);
 
-    if (current == Step::kWindSpeedMph && has_input && j[GetKeys().at(current)] == 0) {
+    if (current == Step::kWindSpeedMph && has_input &&
+        j[GetKeys().at(current)] == 0) {
       gave = false;
     }
 

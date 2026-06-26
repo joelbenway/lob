@@ -19,7 +19,8 @@ struct BridgeResult {
 };
 
 BridgeResult SolveFromJson(const nlohmann::json& j);
-void PrintTable(const lob::Input& input, const lob::Output* outputs, size_t count);
+void PrintTable(const lob::Input& input, const lob::Output* outputs,
+                size_t count);
 nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count);
 
 }  // namespace example
