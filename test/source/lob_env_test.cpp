@@ -73,10 +73,11 @@ TEST_F(LobEnvTestFixture, GetSpeedOfSoundFps) {
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
   ASSERT_NE(puut, nullptr);
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(lob::NaN());
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 12;
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -96,9 +97,9 @@ TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   lob::Solve(puut->Build(), kRanges, solutions);
-  VerifySolutions(
-      solutions, kExpected,
-      {kVelocityError, kEnergyError, kMoaError, -1.0, kTimeOfFlightError});
+  VerifySolutions(solutions, kExpected,
+                  {kVelocityError, kEnergyError, kMoaError, kInchError,
+                   kTimeOfFlightError});
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -107,10 +108,11 @@ TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
   const auto kInput = puut->AltitudeOfFiringSiteFt(kAltitude)
                           .TemperatureDegF(lob::kIsaSeaLevelDegF)
                           .Build();
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(lob::NaN());
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 12;
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -131,9 +133,9 @@ TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
-  VerifySolutions(
-      solutions, kExpected,
-      {kVelocityError, kEnergyError, kMoaError, -1.0, kTimeOfFlightError});
+  VerifySolutions(solutions, kExpected,
+                  {kVelocityError, kEnergyError, kMoaError, kInchError,
+                   kTimeOfFlightError});
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -142,10 +144,11 @@ TEST_F(LobEnvTestFixture, SolveWithTempAndAirPressure) {
   const int32_t kAirPressure = 25;
   const auto kInput =
       puut->TemperatureDegF(kTemperature).AirPressureInHg(kAirPressure).Build();
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(lob::NaN());
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 12;
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -166,9 +169,9 @@ TEST_F(LobEnvTestFixture, SolveWithTempAndAirPressure) {
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
-  VerifySolutions(
-      solutions, kExpected,
-      {kVelocityError, kEnergyError, kMoaError, -1.0, kTimeOfFlightError});
+  VerifySolutions(solutions, kExpected,
+                  {kVelocityError, kEnergyError, kMoaError, kInchError,
+                   kTimeOfFlightError});
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -181,10 +184,11 @@ TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
                           .AltitudeOfBarometerFt(0)
                           .TemperatureDegF(kTemperature)
                           .Build();
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(lob::NaN());
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 12;
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -205,9 +209,9 @@ TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
-  VerifySolutions(
-      solutions, kExpected,
-      {kVelocityError, kEnergyError, kMoaError, -1.0, kTimeOfFlightError});
+  VerifySolutions(solutions, kExpected,
+                  {kVelocityError, kEnergyError, kMoaError, kInchError,
+                   kTimeOfFlightError});
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -219,10 +223,11 @@ TEST_F(LobEnvTestFixture, SolveWithPressureTempHumidity) {
                           .TemperatureDegF(kTemperature)
                           .RelativeHumidityPercent(kRelativeHumidity)
                           .Build();
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(lob::NaN());
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 12;
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -243,9 +248,9 @@ TEST_F(LobEnvTestFixture, SolveWithPressureTempHumidity) {
   std::array<lob::Output, kSolutionLength> solutions = {};
   const auto kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
-  VerifySolutions(
-      solutions, kExpected,
-      {kVelocityError, kEnergyError, kMoaError, -1.0, kTimeOfFlightError});
+  VerifySolutions(solutions, kExpected,
+                  {kVelocityError, kEnergyError, kMoaError, kInchError,
+                   kTimeOfFlightError});
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -261,10 +266,11 @@ TEST_F(LobEnvTestFixture, SolveWithWeatherStationData) {
                           .TemperatureDegF(kTemperature)
                           .AltitudeOfThermometerFt(kAltitudeOfThermometer)
                           .Build();
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(lob::NaN());
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 12;
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -285,9 +291,9 @@ TEST_F(LobEnvTestFixture, SolveWithWeatherStationData) {
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
-  VerifySolutions(
-      solutions, kExpected,
-      {kVelocityError, kEnergyError, kMoaError, -1.0, kTimeOfFlightError});
+  VerifySolutions(solutions, kExpected,
+                  {kVelocityError, kEnergyError, kMoaError, kInchError,
+                   kTimeOfFlightError});
 }
 
 }  // namespace tests

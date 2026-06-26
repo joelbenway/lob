@@ -72,11 +72,11 @@ TEST_F(LobWindTestFixture, GetSpeedOfSoundFps) {
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithoutWind) {
   ASSERT_NE(puut, nullptr);
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput = puut->Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
@@ -108,11 +108,11 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIII;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
@@ -145,11 +145,11 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIV;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
@@ -182,11 +182,11 @@ TEST_F(LobWindTestFixture, SolveWithClockWindV) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kV;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
@@ -219,11 +219,11 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kVI;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
@@ -256,11 +256,11 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kVII;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
@@ -293,11 +293,11 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kVIII;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
@@ -330,11 +330,11 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIX;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
@@ -367,11 +367,11 @@ TEST_F(LobWindTestFixture, SolveWithClockWindX) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kX;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
@@ -404,11 +404,11 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kXI;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
@@ -441,11 +441,11 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kXII;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
@@ -478,11 +478,11 @@ TEST_F(LobWindTestFixture, SolveWithClockWindI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kI;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
@@ -515,11 +515,11 @@ TEST_F(LobWindTestFixture, SolveWithClockWindII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
   const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kII;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
@@ -552,11 +552,11 @@ TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 20;
   const double kWindHeading = 150;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeadingDeg(kWindHeading).Build();
@@ -589,11 +589,11 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeMagnitude) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = -20;
   const double kWindHeading = 330;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeadingDeg(kWindHeading).Build();
@@ -626,11 +626,11 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeAngle) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 20;
   const double kWindHeading = -210;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
   const auto kInput =
       puut->WindSpeedMph(kWindSpeed).WindHeadingDeg(kWindHeading).Build();

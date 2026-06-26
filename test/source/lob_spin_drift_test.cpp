@@ -82,11 +82,11 @@ TEST_F(LobSpinTestFixture, GetSpeedOfSoundFps) {
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, SolveWithoutSpin) {
   ASSERT_NE(puut, nullptr);
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.5;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(0.5);
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kInput = puut->Build();
   EXPECT_TRUE(std::isnan(kInput.spindrift_factor));
@@ -121,11 +121,11 @@ TEST_F(LobSpinTestFixture, SolveWithoutSpin) {
 TEST_F(LobSpinTestFixture, LitzRightHandSpinDrift) {
   ASSERT_NE(puut, nullptr);
   const double kBarrelTwist = 11.0;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.5;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(0.5);
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist).Build();
   EXPECT_TRUE(std::isnan(kInput.spindrift_factor));
@@ -160,11 +160,11 @@ TEST_F(LobSpinTestFixture, LitzRightHandSpinDrift) {
 TEST_F(LobSpinTestFixture, LitzRightHandSpinDriftFast) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = 9.375;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.5;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(0.5);
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist).Build();
   EXPECT_TRUE(std::isnan(kInput.spindrift_factor));
@@ -199,11 +199,11 @@ TEST_F(LobSpinTestFixture, LitzRightHandSpinDriftFast) {
 TEST_F(LobSpinTestFixture, LitzLeftHandSpinDrift) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = -11.0;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.5;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(0.5);
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist).Build();
   EXPECT_TRUE(std::isnan(kInput.spindrift_factor));
@@ -238,11 +238,11 @@ TEST_F(LobSpinTestFixture, LitzLeftHandSpinDrift) {
 TEST_F(LobSpinTestFixture, LitzLeftHandSpinDriftFast) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = -9.375;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.5;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(0.5);
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist).Build();
   EXPECT_TRUE(std::isnan(kInput.spindrift_factor));
@@ -277,11 +277,11 @@ TEST_F(LobSpinTestFixture, LitzLeftHandSpinDriftFast) {
 TEST_F(LobSpinTestFixture, BoatrightRightHandSpinDrift) {
   ASSERT_NE(puut, nullptr);
   const double kBarrelTwist = 11.0;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.5;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(0.5);
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
                           .NoseLengthInch(kOgiveLength)
@@ -322,11 +322,11 @@ TEST_F(LobSpinTestFixture, BoatrightRightHandSpinDrift) {
 TEST_F(LobSpinTestFixture, BoatrightRightHandSpinDriftFast) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = 9.375;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.5;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(0.5);
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
                           .NoseLengthInch(kOgiveLength)
@@ -367,11 +367,11 @@ TEST_F(LobSpinTestFixture, BoatrightRightHandSpinDriftFast) {
 TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDrift) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = -11.0;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.5;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(0.5);
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
                           .NoseLengthInch(kOgiveLength)
@@ -412,11 +412,11 @@ TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDrift) {
 TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDriftFast) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = -9.375;
-  constexpr uint16_t kVelocityError = 1;
-  constexpr uint16_t kEnergyError = 5;
-  constexpr double kMoaError = 0.1;
-  constexpr double kInchError = 0.5;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(1);
+  constexpr lob::FtLbsT kEnergyError(5);
+  constexpr lob::MoaT kMoaError(0.1);
+  constexpr lob::InchT kInchError(0.5);
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
                           .NoseLengthInch(kOgiveLength)

@@ -72,10 +72,11 @@ TEST_F(LobCoriolisTestFixture, GetSpeedOfSoundFps) {
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
   ASSERT_NE(puut, nullptr);
-  constexpr uint16_t kVelocityError = 2;
-  constexpr double kMoaError = 0.5;
-  // constexpr double kInchError = 0.1;
-  constexpr double kTimeOfFlightError = 0.01;
+  constexpr lob::FpsT kVelocityError(2);
+  constexpr lob::FtLbsT kEnergyError(lob::NaN());
+  constexpr lob::MoaT kMoaError(0.5);
+  constexpr lob::InchT kInchError(lob::NaN());
+  constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 16;
   const auto kInput = puut->Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
@@ -103,7 +104,8 @@ TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
   const size_t kSize = lob::Solve(kInput, kRanges, solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
-                  {kVelocityError, -1, kMoaError, -1.0, kTimeOfFlightError});
+                  {kVelocityError, kEnergyError, kMoaError, kInchError,
+                   kTimeOfFlightError});
 }
 
 TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {

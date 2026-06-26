@@ -4,67 +4,130 @@
 
 #pragma once
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <tuple>
 #include <vector>
 
+#include "eng_units.hpp"
+#include "helpers.hpp"
 #include "lob/lob.hpp"
 
 namespace tests {
 
-constexpr uint16_t kDefaultVelocityError = 1;
-constexpr int kDefaultEnergyError = -1;
-constexpr double kDefaultMoaError = 0.1;
-constexpr double kDefaultInchError = -1.0;
-constexpr double kDefaultTimeOfFlightError = 0.01;
-
 struct SolutionTolerances {
-  uint16_t velocity = kDefaultVelocityError;
-  int energy = kDefaultEnergyError;
-  double moa = kDefaultMoaError;
-  double inch = kDefaultInchError;
-  double time_of_flight = kDefaultTimeOfFlightError;
+  lob::FpsT velocity = lob::FpsT(lob::NaN());
+  lob::FtLbsT energy = lob::FtLbsT(lob::NaN());
+  lob::MoaT moa = lob::MoaT(lob::NaN());
+  lob::InchT inch = lob::InchT(lob::NaN());
+  lob::SecT time_of_flight = lob::SecT(lob::NaN());
+  constexpr SolutionTolerances() = default;
+  constexpr SolutionTolerances(lob::FpsT v, lob::FtLbsT e, lob::MoaT m,
+                               lob::InchT i, lob::SecT t)
+      : velocity(std::move(v)),
+        energy(std::move(e)),
+        moa(std::move(m)),
+        inch(std::move(i)),
+        time_of_flight(std::move(t)) {}
 };
 
+class OutputNearMatcher
+    : public testing::MatcherInterface<
+          std::tuple<const lob::Output&, const lob::Output&>> {
+ public:
+  explicit OutputNearMatcher(SolutionTolerances tolerances)
+      : tolerances_(std::move(tolerances)) {}
+
+  bool MatchAndExplain(std::tuple<const lob::Output&, const lob::Output&> arg,
+                       testing::MatchResultListener* listener) const override {
+    const auto& actual = std::get<0>(arg);
+    const auto& expected = std::get<1>(arg);
+
+    if (actual.range != expected.range) {
+      *listener << "range " << actual.range << " vs " << expected.range;
+      return false;
+    }
+    if (std::abs(static_cast<double>(actual.velocity) -
+                 static_cast<double>(expected.velocity)) >
+        tolerances_.velocity.Value()) {
+      *listener << "velocity " << actual.velocity << " vs "
+                << expected.velocity;
+      return false;
+    }
+    if (!tolerances_.energy.IsNaN() &&
+        std::abs(static_cast<double>(actual.energy) -
+                 static_cast<double>(expected.energy)) >
+            tolerances_.energy.Value()) {
+      *listener << "energy " << actual.energy << " vs " << expected.energy;
+      return false;
+    }
+    const double kActualElevationMoa =
+        lob::InchToMoa(actual.elevation, actual.range);
+    const double kExpectedElevationMoa =
+        lob::InchToMoa(expected.elevation, expected.range);
+    if (std::abs(kActualElevationMoa - kExpectedElevationMoa) >
+        tolerances_.moa.Value()) {
+      *listener << "elevation MOA " << kActualElevationMoa << " vs "
+                << kExpectedElevationMoa;
+      return false;
+    }
+    if (!tolerances_.inch.IsNaN() &&
+        std::abs(actual.elevation - expected.elevation) >
+            tolerances_.inch.Value()) {
+      *listener << "elevation inch " << actual.elevation << " vs "
+                << expected.elevation;
+      return false;
+    }
+    const double kActualDeflectionMoa =
+        lob::InchToMoa(actual.deflection, actual.range);
+    const double kExpectedDeflectionMoa =
+        lob::InchToMoa(expected.deflection, expected.range);
+    if (std::abs(kActualDeflectionMoa - kExpectedDeflectionMoa) >
+        tolerances_.moa.Value()) {
+      *listener << "deflection MOA " << kActualDeflectionMoa << " vs "
+                << kExpectedDeflectionMoa;
+      return false;
+    }
+    if (!tolerances_.inch.IsNaN() &&
+        std::abs(actual.deflection - expected.deflection) >
+            tolerances_.inch.Value()) {
+      *listener << "deflection inch " << actual.deflection << " vs "
+                << expected.deflection;
+      return false;
+    }
+    if (std::abs(actual.time_of_flight - expected.time_of_flight) >
+        tolerances_.time_of_flight.Value()) {
+      *listener << "time_of_flight " << actual.time_of_flight << " vs "
+                << expected.time_of_flight;
+      return false;
+    }
+    return true;
+  }
+
+  void DescribeTo(std::ostream* os) const override {
+    *os << "output is within tolerance";
+  }
+
+ private:
+  SolutionTolerances tolerances_;
+};
+
+inline testing::Matcher<std::tuple<const lob::Output&, const lob::Output&>>
+OutputNear(SolutionTolerances tolerances) {
+  return testing::MakeMatcher(new OutputNearMatcher(tolerances));
+}
+
 template <size_t N>
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void VerifySolutions(const std::array<lob::Output, N>& solutions,
                      const std::vector<lob::Output>& expected,
                      const SolutionTolerances& tolerances = {}) {
-  for (size_t i = 0; i < N; i++) {
-    EXPECT_EQ(solutions.at(i).range, expected.at(i).range);
-    EXPECT_NEAR(solutions.at(i).velocity,
-                static_cast<double>(expected.at(i).velocity),
-                static_cast<double>(tolerances.velocity));
-    if (tolerances.energy >= 0) {
-      EXPECT_NEAR(solutions.at(i).energy,
-                  static_cast<double>(expected.at(i).energy),
-                  static_cast<double>(tolerances.energy));
-    }
-    const double kSolutionElevationMoa =
-        lob::InchToMoa(solutions.at(i).elevation, solutions.at(i).range);
-    const double kExpectedElevationMoa =
-        lob::InchToMoa(expected.at(i).elevation, expected.at(i).range);
-    EXPECT_NEAR(kSolutionElevationMoa, kExpectedElevationMoa, tolerances.moa);
-    if (tolerances.inch >= 0.0) {
-      EXPECT_NEAR(solutions.at(i).elevation, expected.at(i).elevation,
-                  tolerances.inch);
-    }
-    const double kSolutionDeflectionMoa =
-        lob::InchToMoa(solutions.at(i).deflection, solutions.at(i).range);
-    const double kExpectedDeflectionMoa =
-        lob::InchToMoa(expected.at(i).deflection, expected.at(i).range);
-    EXPECT_NEAR(kSolutionDeflectionMoa, kExpectedDeflectionMoa, tolerances.moa);
-    if (tolerances.inch >= 0.0) {
-      EXPECT_NEAR(solutions.at(i).deflection, expected.at(i).deflection,
-                  tolerances.inch);
-    }
-    EXPECT_NEAR(solutions.at(i).time_of_flight, expected.at(i).time_of_flight,
-                tolerances.time_of_flight);
-  }
+  ASSERT_EQ(solutions.size(), expected.size());
+  EXPECT_THAT(solutions, testing::Pointwise(OutputNear(tolerances), expected));
 }
 
 template <size_t N>
