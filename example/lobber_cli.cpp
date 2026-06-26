@@ -1,36 +1,42 @@
+// Copyright (c) 2025  Joel Benway
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Please see end of file for extended copyright information
+
 #include "lobber_cli.hpp"
 #include "version.hpp"
 
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
-#include <string_view>
+#include <string>
 
 #include "lob/lob.hpp"
 
 namespace example {
 namespace {
 
-constexpr std::string_view kHelp = "--help";
-constexpr std::string_view kH = "--h";
-constexpr std::string_view kVersion = "--version";
-constexpr std::string_view kV = "--v";
-constexpr std::string_view kJson = "--json";
-constexpr std::string_view kSaveInput = "--save-input=";
+constexpr const char* kHelp = "--help";
+constexpr const char* kH = "--h";
+constexpr const char* kVersion = "--version";
+constexpr const char* kV = "--v";
+constexpr const char* kJson = "--json";
+constexpr const char* kSaveInput = "--save-input=";
 
 }  // namespace
 
-CliConfig ParseArgs(int argc, char* argv[]) {
+CliConfig ParseArgs(int argc, char* argv[]) {  // NOLINT
   CliConfig config;
   for (int i = 1; i < argc; ++i) {
-    std::string_view arg(argv[i]);
+    std::string arg(argv[i]);
     if (arg == kHelp || arg == kH) {
       config.show_help = true;
     } else if (arg == kVersion || arg == kV) {
       config.show_version = true;
     } else if (arg == kJson) {
       config.json_mode = true;
-    } else if (arg.substr(0, kSaveInput.size()) == kSaveInput) {
-      config.save_input_path = std::string(arg.substr(kSaveInput.size()));
+    } else if (arg.compare(0, std::strlen(kSaveInput), kSaveInput) == 0) {
+      config.has_save_input_path = true;
+      config.save_input_path = arg.substr(std::strlen(kSaveInput));
     }
   }
   return config;
@@ -61,3 +67,17 @@ void PrintVersion() {
 }
 
 }  // namespace example
+
+// This file is part of lob.
+//
+// lob is free software: you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the Free Software
+// Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// lob is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with
+// lob. If not, see <https://www.gnu.org/licenses/>.

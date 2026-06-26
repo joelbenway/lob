@@ -1,18 +1,24 @@
+// Copyright (c) 2025  Joel Benway
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Please see end of file for extended copyright information
+
 #include "lobber_bridge.hpp"
 
-#include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
 #include <limits>
 #include <string>
-#include <vector>
 
 #include "lob/lob.hpp"
 
 namespace example {
 namespace {
+
+constexpr double kYardsToFeet = 3.0;
+constexpr int kDefaultStepSize = 100;
 
 double JsonToDouble(const nlohmann::json& j, const std::string& key) {
   if (!j.contains(key) || j[key].is_null()) {
@@ -52,11 +58,11 @@ lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
     return lob::DragFunctionT::kG1;
   }
   switch (static_cast<int>(std::round(v))) {
-    case 2: return lob::DragFunctionT::kG2;
-    case 5: return lob::DragFunctionT::kG5;
-    case 6: return lob::DragFunctionT::kG6;
-    case 7: return lob::DragFunctionT::kG7;
-    case 8: return lob::DragFunctionT::kG8;
+    case 2: return lob::DragFunctionT::kG2;   // NOLINT
+    case 5: return lob::DragFunctionT::kG5;   // NOLINT
+    case 6: return lob::DragFunctionT::kG6;   // NOLINT
+    case 7: return lob::DragFunctionT::kG7;   // NOLINT
+    case 8: return lob::DragFunctionT::kG8;   // NOLINT
     default: return lob::DragFunctionT::kG1;
   }
 }
@@ -68,17 +74,17 @@ lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
     return lob::ClockAngleT::kXII;
   }
   switch (static_cast<int>(std::round(v))) {
-    case 1: return lob::ClockAngleT::kI;
-    case 2: return lob::ClockAngleT::kII;
-    case 3: return lob::ClockAngleT::kIII;
-    case 4: return lob::ClockAngleT::kIV;
-    case 5: return lob::ClockAngleT::kV;
-    case 6: return lob::ClockAngleT::kVI;
-    case 7: return lob::ClockAngleT::kVII;
-    case 8: return lob::ClockAngleT::kVIII;
-    case 9: return lob::ClockAngleT::kIX;
-    case 10: return lob::ClockAngleT::kX;
-    case 11: return lob::ClockAngleT::kXI;
+    case 1: return lob::ClockAngleT::kI;      // NOLINT
+    case 2: return lob::ClockAngleT::kII;     // NOLINT
+    case 3: return lob::ClockAngleT::kIII;    // NOLINT
+    case 4: return lob::ClockAngleT::kIV;     // NOLINT
+    case 5: return lob::ClockAngleT::kV;      // NOLINT
+    case 6: return lob::ClockAngleT::kVI;     // NOLINT
+    case 7: return lob::ClockAngleT::kVII;    // NOLINT
+    case 8: return lob::ClockAngleT::kVIII;   // NOLINT
+    case 9: return lob::ClockAngleT::kIX;     // NOLINT
+    case 10: return lob::ClockAngleT::kX;     // NOLINT
+    case 11: return lob::ClockAngleT::kXI;    // NOLINT
     default: return lob::ClockAngleT::kXII;
   }
 }
@@ -118,17 +124,17 @@ BridgeResult SolveFromJson(const nlohmann::json& j) {
     .MinimumSpeed(JsonToU16(j, "MinimumSpeed"))
     .MinimumEnergy(JsonToU16(j, "MinimumEnergy"))
     .MaximumTime(JsonToDouble(j, "MaximumTime"))
-    .StepSize(100)
+    .StepSize(kDefaultStepSize)
     .Build();
 
   std::vector<uint32_t> ranges;
   if (j.contains("Ranges") && j["Ranges"].is_array()) {
     for (const auto& r : j["Ranges"]) {
-      ranges.push_back(static_cast<uint32_t>(r.get<double>() * 3.0));
+      ranges.push_back(static_cast<uint32_t>(r.get<double>() * kYardsToFeet));
     }
   } else {
-    static const uint32_t kDefaultRanges[] = {0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
-    ranges.assign(kDefaultRanges, kDefaultRanges + 12);
+    const std::array<uint32_t, 12> kDefaultRanges = {0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+    ranges.assign(kDefaultRanges.begin(), kDefaultRanges.end());
   }
 
   std::vector<lob::Output> outputs(ranges.size());
@@ -138,29 +144,28 @@ BridgeResult SolveFromJson(const nlohmann::json& j) {
 }
 
 void PrintTable(const lob::Input& input, const lob::Output* outputs, size_t count) {
-  const uint8_t kExtra = 3;
-
-  auto print_row = [](const std::string& label, auto value, int width) {
-    std::cout << std::left << std::setw(width) << value;
-  };
+  constexpr uint8_t kExtra = 3;
 
   // Extra info
+  auto extra_width = [](const std::string& s) {
+    return static_cast<int>(s.size() + kExtra);
+  };
   const std::string kZA("Zero Angle");
   const std::string kSF("Stability Factor");
   const std::string kSS("Speed of Sound");
   const std::string kE("Error");
-  int zAw = static_cast<int>(kZA.size() + kExtra);
-  int sFw = static_cast<int>(kSF.size() + kExtra);
-  int sSw = static_cast<int>(kSS.size() + kExtra);
-  int eEw = static_cast<int>(kE.size() + kExtra);
 
-  std::cout << "\033[33m" << std::left << std::setw(zAw) << kZA
-            << std::setw(sFw) << kSF << std::setw(sSw) << kSS
-            << std::setw(eEw) << kE << "\033[0m\n";
-  std::cout << std::left << std::setw(zAw) << std::fixed
-            << std::setprecision(2) << input.zero_angle << std::setw(sFw)
-            << input.stability_factor << std::setw(sSw)
-            << input.speed_of_sound << std::setw(eEw) << std::hex
+  std::cout << "\033[33m" << std::left << std::setw(extra_width(kZA)) << kZA
+            << std::setw(extra_width(kSF)) << kSF
+            << std::setw(extra_width(kSS)) << kSS
+            << std::setw(extra_width(kE)) << kE << "\033[0m\n";
+  std::cout << std::left << std::setw(extra_width(kZA)) << std::fixed
+            << std::setprecision(2) << input.zero_angle
+            << std::setw(extra_width(kSF))
+            << input.stability_factor
+            << std::setw(extra_width(kSS))
+            << input.speed_of_sound
+            << std::setw(extra_width(kE)) << std::hex
             << std::showbase << static_cast<unsigned int>(input.error)
             << std::dec << std::noshowbase << "\n\n";
 
@@ -175,7 +180,7 @@ void PrintTable(const lob::Input& input, const lob::Output* outputs, size_t coun
             << std::setw(kWidth) << "Seconds" << "\033[0m\n";
 
   for (size_t i = 0; i < count; ++i) {
-    std::cout << std::left << std::setw(kWidth) << outputs[i].range / 3
+    std::cout << std::left << std::setw(kWidth) << outputs[i].range / static_cast<uint32_t>(kYardsToFeet)
               << std::setw(kWidth) << outputs[i].velocity
               << std::setw(kWidth) << outputs[i].energy
               << std::setw(kWidth) << std::fixed << std::setprecision(2)
@@ -210,3 +215,17 @@ nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count) {
 }
 
 }  // namespace example
+
+// This file is part of lob.
+//
+// lob is free software: you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the Free Software
+// Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// lob is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with
+// lob. If not, see <https://www.gnu.org/licenses/>.

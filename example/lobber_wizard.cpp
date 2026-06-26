@@ -1,13 +1,15 @@
+// Copyright (c) 2025  Joel Benway
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Please see end of file for extended copyright information
+
 #include "lobber_wizard.hpp"
 
-#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <iostream>
 #include <limits>
 #include <map>
 #include <string>
-#include <vector>
 
 #ifdef _WIN32
 #include <io.h>
@@ -272,7 +274,9 @@ void PromptRanges(Step s, nlohmann::json* j) {
   }
 
   if (list.empty()) {
-    list = {0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+    static const nlohmann::json kDefaultRanges =
+        {0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+    list = kDefaultRanges;
   }
 
   (*j)[GetKeys().at(s)] = list;
@@ -295,8 +299,8 @@ void PrintGreeting() {
 
 nlohmann::json RunWizard() {
   nlohmann::json j;
-  for (const auto& [step, key] : GetKeys()) {
-    j[key] = "nan";
+  for (const auto& kv : GetKeys()) {
+    j[kv.second] = "nan";
   }
 
   PrintGreeting();
@@ -312,11 +316,9 @@ nlohmann::json RunWizard() {
     bool has_input = PromptSingle(current, &j);
 
     bool gave = info.always_given || (has_input && !info.always_skip);
-    bool skipped = info.always_skip || (!has_input && !info.always_given);
 
     if (current == Step::kWindSpeedMph && has_input && j[GetKeys().at(current)] == 0) {
       gave = false;
-      skipped = true;
     }
 
     if (gave) {
@@ -328,3 +330,17 @@ nlohmann::json RunWizard() {
 }
 
 }  // namespace example
+
+// This file is part of lob.
+//
+// lob is free software: you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the Free Software
+// Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// lob is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with
+// lob. If not, see <https://www.gnu.org/licenses/>.

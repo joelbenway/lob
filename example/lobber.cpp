@@ -47,8 +47,8 @@ int main(int argc, char* argv[]) {
   }
 
   // Save input config if requested (before solving)
-  if (config.save_input_path.has_value()) {
-    std::ofstream file(*config.save_input_path);
+  if (config.has_save_input_path) {
+    std::ofstream file(config.save_input_path);
     if (file.is_open()) {
       file << json.dump(4);
       file.close();
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
   auto result = example::SolveFromJson(json);
 
   if (config.json_mode) {
-    auto jout = example::OutputsToJson(result.outputs.data(), result.outputs.size());
+    auto jout = example::OutputsToJson(result.outputs.data(), result.count);
     std::cout << jout.dump(4) << "\n";
   } else {
     example::PrintTable(result.input, result.outputs.data(), result.count);

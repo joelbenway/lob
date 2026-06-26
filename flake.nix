@@ -54,6 +54,7 @@
         src = self;
         nativeBuildInputs = with pkgs; [
           cmake
+          jq
           nlohmann_json
         ];
         configurePhase = ''
@@ -65,6 +66,10 @@
         '';
         buildPhase = ''
           cmake --build build --parallel $NIX_BUILD_CORES
+        '';
+        doCheck = true;
+        checkPhase = ''
+          bash example/tests/run_tests.sh ./build/example/lobber
         '';
         installPhase = ''
           mkdir -p $out/bin
