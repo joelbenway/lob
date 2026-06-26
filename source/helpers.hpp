@@ -59,8 +59,8 @@ constexpr T ConstexprFmod(T a, T b) {
     return std::numeric_limits<T>::quiet_NaN();
   }
   const T kQuot = a / b;
-  if (!std::isnan(kQuot) && (kQuot >= static_cast<T>(9e18) ||
-                             kQuot <= static_cast<T>(-9e18))) {
+  if (!std::isnan(kQuot) &&
+      (kQuot >= static_cast<T>(9e18) || kQuot <= static_cast<T>(-9e18))) {
     return std::fmod(a, b);
   }
   if (std::isnan(kQuot) || std::isinf(kQuot)) {
