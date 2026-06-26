@@ -30,5 +30,13 @@
     "MinimumSpeed": 500,
     "MinimumEnergy": 100,
     "MaximumTime": 5,
-    "Ranges": [0, 100, 200, 300, 500, 800, 1000]
+    "Ranges": [
+        0,
+        100,
+        200,
+        300,
+        500,
+        800,
+        1000
+    ]
 }

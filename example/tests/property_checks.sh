@@ -60,6 +60,12 @@ run_props() {
     exit_code=1
   fi
 
+  local code=$("$LOB_BIN" --json < "$fixture" > "$tmp"; echo $?)
+  if [ "$code" != "0" ]; then
+    echo "FAIL: lobber exited with non-zero code $code for valid input ($fixture)"
+    exit_code=1
+  fi
+
   rm "$tmp"
 }
 

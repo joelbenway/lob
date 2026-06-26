@@ -21,5 +21,27 @@
     "AltitudeOfBarometerFt": 500,
     "TemperatureDegF": 59,
     "AltitudeOfThermometerFt": 500,
-    "RelativeHumidityPercent": 50
+    "RelativeHumidityPercent": 50,
+    "WindHeading": "nan",
+    "WindSpeedMph": "nan",
+    "AzimuthDeg": "nan",
+    "LatitudeDeg": "nan",
+    "RangeAngleDeg": "nan",
+    "MinimumSpeed": "nan",
+    "MinimumEnergy": "nan",
+    "MaximumTime": "nan",
+    "Ranges": [
+        0,
+        50,
+        100,
+        200,
+        300,
+        400,
+        500,
+        600,
+        700,
+        800,
+        900,
+        1000
+    ]
 }
