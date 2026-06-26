@@ -1,0 +1,6 @@
+{
+    "BallisticCoefficientPsi": 0.225,
+    "MassGrains": 168,
+    "InitialVelocityFps": 2650,
+    "ZeroAngleMOA": 1.0
+}

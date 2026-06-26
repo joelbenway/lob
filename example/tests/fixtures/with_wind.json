@@ -1,0 +1,12 @@
+{
+    "BallisticCoefficientPsi": 0.225,
+    "BCAtmosphere": 1,
+    "BCDragFunction": 1,
+    "MassGrains": 168,
+    "InitialVelocityFps": 2650,
+    "ZeroAngleMOA": 1.0,
+    "WindSpeedMph": 10,
+    "WindHeading": 9,
+    "AzimuthDeg": 0,
+    "LatitudeDeg": 45
+}
