@@ -131,7 +131,7 @@ BridgeResult SolveFromJson(const nlohmann::json& j) {
   std::vector<lob::Output> outputs(ranges.size());
   size_t count = lob::Solve(input, ranges.data(), outputs.data(), ranges.size());
 
-  return {std::move(outputs), count};
+  return {input, std::move(outputs), count};
 }
 
 void PrintTable(const lob::Input& input, const lob::Output* outputs, size_t count) {
@@ -195,7 +195,7 @@ nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count) {
   nlohmann::json j = nlohmann::json::array();
   for (size_t i = 0; i < count; ++i) {
     j.push_back({
-      {"range", outputs[i].range / 3},
+      {"range", outputs[i].range},
       {"velocity", outputs[i].velocity},
       {"energy", outputs[i].energy},
       {"elevation", outputs[i].elevation},

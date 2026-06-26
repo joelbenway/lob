@@ -70,7 +70,15 @@ function(add_example NAME)
   add_dependencies(run-examples "run_${NAME}")
 endfunction()
 
-add_example(lobber)
+add_executable(lobber
+  lobber.cpp
+  lobber_cli.cpp
+  lobber_wizard.cpp
+  lobber_bridge.cpp)
+target_include_directories(lobber
+  PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include)
+target_link_libraries(lobber PRIVATE lob::lob nlohmann_json::nlohmann_json)
+target_compile_features(lobber PRIVATE cxx_std_14)
 
 add_folders(Example)
 

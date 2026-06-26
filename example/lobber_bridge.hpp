@@ -10,6 +10,7 @@
 namespace example {
 
 struct BridgeResult {
+  lob::Input input;
   std::vector<lob::Output> outputs;
   size_t count;
 };
