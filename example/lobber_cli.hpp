@@ -20,6 +20,7 @@ CliConfig ParseArgs(int argc, char* argv[]);  // NOLINT
 
 void PrintHelp();
 void PrintVersion();
+void PrintGH();
 
 }  // namespace example
 

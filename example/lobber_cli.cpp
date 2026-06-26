@@ -3,7 +3,6 @@
 // Please see end of file for extended copyright information
 
 #include "lobber_cli.hpp"
-#include "version.hpp"
 
 #include <cstdlib>
 #include <cstring>
@@ -11,6 +10,7 @@
 #include <string>
 
 #include "lob/lob.hpp"
+#include "version.hpp"
 
 namespace example {
 namespace {
@@ -43,27 +43,31 @@ CliConfig ParseArgs(int argc, char* argv[]) {  // NOLINT
 }
 
 void PrintHelp() {
-  std::cout << "Usage: lobber [options] [< input.json]\n"
-            << "Options:\n"
-            << "  --h, --help            Show this help message\n"
-            << "  --v, --version         Show version information\n"
-            << "  --json                 Output results to stdout in json format\n"
-            << "  --save-input=FILE      Save input configuration JSON to FILE\n"
-            << "\n"
-            << "Note: When run interactively, a wizard prompts for input.\n"
-            << "      When stdin is redirected, JSON data is read from stdin.\n"
-            << "Example:\n"
-            << "\033[33m  lobber --save-input=my_rifle_load.json\n\033[0m"
-            << "\n"
-            << "Report bugs or give feedback here: "
+  std::cout
+      << "Usage: lobber [options] [< input.json]\n"
+      << "Options:\n"
+      << "  --h, --help            Show this help message\n"
+      << "  --v, --version         Show version information\n"
+      << "  --json                 Output results to stdout in json format\n"
+      << "  --save-input=FILE      Save input configuration JSON to FILE\n"
+      << "\n"
+      << "Note: When run interactively, a wizard prompts for input.\n"
+      << "      When stdin is redirected, JSON data is read from stdin.\n"
+      << "Example:\n"
+      << "\033[33m  lobber --save-input=my_rifle_load.json\n\033[0m"
+      << "\n";
+  PrintGH();
+}
+
+void PrintGH() {
+  std::cout << "Report bugs or give feedback here: "
             << "\033[34mhttps://github.com/joelbenway/lob\033[0m\n";
 }
 
 void PrintVersion() {
   std::cout << "Lobber version: " << kProjectVersion << "\n"
-            << "Lob version:    " << lob::Version() << "\n\n"
-            << "Report bugs or give feedback here: "
-            << "\033[34mhttps://github.com/joelbenway/lob\033[0m\n";
+            << "Lob version:    " << lob::Version() << "\n\n";
+  PrintGH();
 }
 
 }  // namespace example
