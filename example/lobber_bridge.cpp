@@ -126,6 +126,9 @@ BridgeResult SolveFromJson(const nlohmann::json& j) {
     for (const auto& r : j["Ranges"]) {
       ranges.push_back(static_cast<uint32_t>(r.get<double>() * 3.0));
     }
+  } else {
+    static const uint32_t kDefaultRanges[] = {0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+    ranges.assign(kDefaultRanges, kDefaultRanges + 12);
   }
 
   std::vector<lob::Output> outputs(ranges.size());
