@@ -416,7 +416,6 @@ void BuildBoatright(Impl* pimpl) {
   constexpr SecT kTransonicTimeout(60.0);
   while (s.V().X() > kTransonicBarrier) {
     if (t > kTransonicTimeout) {
-      assert(false && "This is taking too long");
       pimpl->build.error = kLobErrorInternalError;
       return;
     }
@@ -527,8 +526,12 @@ void BuildZeroAngle(Impl* pimpl) {
     const auto kSavedStepSize = pimpl->build.step_size;
     pimpl->build.step_size = 0U;
 
+    constexpr SecT kMaxZeroTime(60);
     while (s.P().X() < pimpl->zero_distance_ft) {
-      assert(t < SecT(60) && "This is taking too long");
+      if (t >= kMaxZeroTime) {
+        pimpl->build.error = kLobErrorInternalError;
+        return;
+      }
       SolveStep(&s, &t, pimpl->build);
     }
 
@@ -691,8 +694,27 @@ LobBuilder* LobBuilderOgiveRtR(LobBuilder* builder, double value) {
 LobBuilder* LobBuilderMachVsDragTable(LobBuilder* builder, const float* pmachs,
                                       const float* pdrags, size_t size) {
   auto* pimpl = Pimpl(builder);
-  if (pmachs == nullptr || pdrags == nullptr || size == 0) {
+  if (pmachs == nullptr || pdrags == nullptr || size < 2) {
     return builder;
+  }
+  const double kFirstMach = pmachs[0];
+  const double kLastMach = pmachs[size - 1];
+  const double kMinSampleMach =
+      static_cast<double>(kMachs.front()) / kTableScale;
+  const double kMaxSampleMach =
+      static_cast<double>(kMachs.back()) / kTableScale;
+  if (kFirstMach > kMinSampleMach || kLastMach < kMaxSampleMach) {
+    return builder;
+  }
+  for (size_t i = 1; i < size; i++) {
+    if (pmachs[i] <= pmachs[i - 1]) {
+      return builder;
+    }
+  }
+  for (size_t i = 0; i < size; i++) {
+    if (pdrags[i] < 0.0f || pdrags[i] > 65535.0f) {
+      return builder;
+    }
   }
   auto* pdrag = &pimpl->build.drags[0];
   for (size_t i = 0; i < LOB_TABLE_SIZE; i++) {

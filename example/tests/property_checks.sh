@@ -52,7 +52,15 @@ run_props() {
   local fixture="$1"
   local tmp
   tmp=$(mktemp)
-  "$LOB_BIN" --json < "$fixture" > "$tmp"
+  local code=0
+  "$LOB_BIN" --json < "$fixture" > "$tmp" || code=$?
+
+  if [ "$code" != "0" ]; then
+    echo "FAIL: lobber exited with non-zero code $code for valid input ($fixture)"
+    exit_code=1
+    rm "$tmp"
+    return
+  fi
 
   check_monotonic_decreasing "velocity" "$tmp" "velocity ($fixture)"
   check_monotonic_decreasing "energy" "$tmp" "energy ($fixture)"
@@ -62,13 +70,6 @@ run_props() {
   nan_count=$(jq '[.[] | select((.velocity | isnan) or (.energy | isnan) or (.elevation | isnan) or (.deflection | isnan) or (.time_of_flight | isnan))] | length' "$tmp")
   if [ "$nan_count" != "0" ]; then
     echo "FAIL: output contains NaN values ($fixture)"
-    exit_code=1
-  fi
-
-  local code
-  code=$("$LOB_BIN" --json < "$fixture" > "$tmp"; echo $?)
-  if [ "$code" != "0" ]; then
-    echo "FAIL: lobber exited with non-zero code $code for valid input ($fixture)"
     exit_code=1
   fi
 

@@ -177,7 +177,8 @@ TEST_P(CustomTableTestFixture, CustomTableMatchesDragFunction) {
     drags.at(i) = static_cast<float>(param.drag_table[i]) / lob::kTableScale;
   }
 
-  const lob::Input kResult2 = puut->BallisticCoefficientPsi(lob::NaN())
+  const lob::Input kResult2 = puut->Reset()
+                                  .BallisticCoefficientPsi(lob::NaN())
                                   .MachVsDragTable(machs, drags)
                                   .Build();
 

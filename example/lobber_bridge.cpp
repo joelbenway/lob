@@ -37,7 +37,11 @@ uint16_t JsonToU16(const nlohmann::json& j, const std::string& key) {
   if (j[key].is_string() && j[key].get<std::string>() == "nan") {
     return 0;
   }
-  return j[key].get<uint16_t>();
+  double v = j[key].get<double>();
+  if (v < 0 || v > 65535.0) {
+    return 0;
+  }
+  return static_cast<uint16_t>(v);
 }
 
 lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& j,
@@ -153,7 +157,18 @@ BridgeResult SolveFromJson(const nlohmann::json& j) {
     }
   } else {
     const std::array<uint32_t, 12> kDefaultRanges = {
-        0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+        0U,
+        static_cast<uint32_t>(50 * kYardsToFeet),
+        static_cast<uint32_t>(100 * kYardsToFeet),
+        static_cast<uint32_t>(200 * kYardsToFeet),
+        static_cast<uint32_t>(300 * kYardsToFeet),
+        static_cast<uint32_t>(400 * kYardsToFeet),
+        static_cast<uint32_t>(500 * kYardsToFeet),
+        static_cast<uint32_t>(600 * kYardsToFeet),
+        static_cast<uint32_t>(700 * kYardsToFeet),
+        static_cast<uint32_t>(800 * kYardsToFeet),
+        static_cast<uint32_t>(900 * kYardsToFeet),
+        static_cast<uint32_t>(1000 * kYardsToFeet)};
     ranges.assign(kDefaultRanges.begin(), kDefaultRanges.end());
   }
 

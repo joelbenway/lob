@@ -227,7 +227,7 @@ bool PromptSingle(Step s, nlohmann::json* j) {
     }
     char* end = nullptr;
     input = std::strtod(line.c_str(), &end);
-    if (end != line.c_str() && *end == '\0') {
+    if (end != line.c_str() && *end == '\0' && std::isfinite(input)) {
       has_input = true;
     } else {
       std::cerr << "\033[31mInvalid input. Enter a number or omit to skip."
@@ -259,7 +259,7 @@ void PromptRanges(Step s, nlohmann::json* j) {
       } else {
         char* end = nullptr;
         double val = std::strtod(line.c_str(), &end);
-        if (end != line.c_str() && *end == '\0') {
+        if (end != line.c_str() && *end == '\0' && std::isfinite(val)) {
           list.push_back(val);
           input = val;
           parsed = true;

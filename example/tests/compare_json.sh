@@ -15,7 +15,7 @@ compare_field() {
   local expected="$3"
   local actual="$4"
   local diff
-  diff=$(jq -n "(($expected - $actual) | length) // 0")
+  diff=$(jq -n "$expected - $actual")
   local abs_diff
   abs_diff=$(jq -n "if $diff < 0 then -$diff else $diff end")
   local within

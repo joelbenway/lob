@@ -127,11 +127,11 @@ class Builder {
   }  ///< @brief Default constructor
   ~Builder() { ::LobBuilderDestroy(&builder_); }  ///< @brief Destructor
 
-  Builder(const Builder& other) : builder_{} {  ///< @brief Copy constructor
+  Builder(const Builder& other) {  ///< @brief Copy constructor
     ::LobBuilderCopy(&builder_, &other.builder_);
   }
 
-  Builder(Builder&& other) noexcept : builder_{} {  ///< @brief Move constructor
+  Builder(Builder&& other) noexcept {  ///< @brief Move constructor
     ::LobBuilderCopy(&builder_, &other.builder_);
     ::LobBuilderReset(&other.builder_);
   }
@@ -139,7 +139,6 @@ class Builder {
   /** @brief Copy assignment operator. */
   Builder& operator=(const Builder& rhs) {
     if (this != &rhs) {
-      ::LobBuilderDestroy(&builder_);
       ::LobBuilderCopy(&builder_, &rhs.builder_);
     }
     return *this;
@@ -148,7 +147,6 @@ class Builder {
   /** @brief Move assignment operator. */
   Builder& operator=(Builder&& rhs) noexcept {
     if (this != &rhs) {
-      ::LobBuilderDestroy(&builder_);
       ::LobBuilderCopy(&builder_, &rhs.builder_);
       ::LobBuilderReset(&rhs.builder_);
     }
@@ -720,6 +718,8 @@ inline double FtLbsToJ(double value) { return ::LobFtLbsToJ(value); }
  * @return Equivalent length in yards.
  */
 inline double MToYd(double value) { return ::LobMToYd(value); }
+/** @brief Deprecated alias for MToYd. */
+inline double MtoYd(double value) { return MToYd(value); }
 /**
  * @brief Converts yards to feet.
  * @param value Length in yards.

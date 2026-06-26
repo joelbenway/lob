@@ -68,11 +68,13 @@ extern "C" {
 
 size_t LobSolve(const LobInput* in, const uint32_t* pranges, LobOutput* pouts,
                 size_t size) {
+  assert(in != nullptr);
   assert(pranges != nullptr);
   assert(pouts != nullptr);
   assert(size > 0);
-  if (in->error != kLobErrorNone || pranges == nullptr || pouts == nullptr ||
-      size == 0 || in->velocity == 0 || in->speed_of_sound <= 0.0) {
+  if (in == nullptr || in->error != kLobErrorNone || pranges == nullptr ||
+      pouts == nullptr || size == 0 || in->velocity == 0 ||
+      in->speed_of_sound <= 0.0) {
     return 0;
   }
   for (size_t i = 1; i < size; i++) {
