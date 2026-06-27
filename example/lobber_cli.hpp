@@ -4,15 +4,25 @@
 
 #pragma once
 
-#include "eng_units.hpp"
-#include "lob/lob.h"
-#include "ode.hpp"
+#include <string>
 
-namespace lob {
+namespace example {
 
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const ::LobInput& input);
+struct CliConfig {
+  bool show_help = false;
+  bool show_version = false;
+  bool json_mode = false;
+  bool has_save_input_path = false;
+  std::string save_input_path;
+};
 
-}  // namespace lob
+CliConfig ParseArgs(int argc, char* argv[]);  // NOLINT
+
+void PrintHelp();
+void PrintVersion();
+void PrintGH();
+
+}  // namespace example
 
 // This file is part of lob.
 //

@@ -4,24 +4,26 @@
 
 #include "solve_step.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 
 #include "cartesian.hpp"
 #include "eng_units.hpp"
-#include "lob/lob.hpp"
+#include "lob/lob.h"
 #include "ode.hpp"
 #include "tables.hpp"
 
 namespace lob {
 
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input) {
+void SolveStep(TrajectoryStateT* ps, SecT* pt, const LobInput& input) {
   assert(ps != nullptr);
   assert(pt != nullptr);
 
-  const SecT kStep = input.step_size == 0 && ps->V().X() > FpsT(0)
-                         ? SecT(ps->V().X().Inverse().Value())
-                         : SecT(UsecT(input.step_size));
+  const SecT kStep =
+      input.step_size == 0 && ps->V().X() > FpsT(0)
+          ? SecT(ps->V().X().Inverse().Value())
+          : std::max(SecT(UsecT(input.step_size)), SecT(UsecT(1)));
 
   const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
                                FpsT(input.wind.z));
@@ -32,8 +34,9 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input) {
   // expensive calculation and the difference between doing it once or several
   // times per step is negligible.
   const MachT kMach(ps->V().Magnitude(), FpsT(input.speed_of_sound).Inverse());
-  const double kCd = LobLerp(kMachs, input.drags, kMach) *
-                     static_cast<double>(input.table_coefficient);
+  const double kCd = LobLerp(kMachs.data(), &input.drags[0], kTableSize,
+                             static_cast<double>(kMach) * kTableScale) /
+                     kTableScale * static_cast<double>(input.table_coefficient);
 
   auto ds_dt = [&](SecT t, const TrajectoryStateT& s) -> TrajectoryStateT {
     static_cast<void>(t);  // t is unused
@@ -42,12 +45,12 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, const Input& input) {
                                   FeetT(s.V().Z().Value()));
     const FpsT kScalarVelocity = (s.V() - kWind).Magnitude();
     CartesianT<FpsT> dv_dt = (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
-    dv_dt.X(dv_dt.X() - s.V().Y() * input.corilolis.cos_l_sin_a -
-            s.V().Z() * input.corilolis.sin_l);
-    dv_dt.Y(dv_dt.Y() + s.V().X() * input.corilolis.cos_l_sin_a +
-            s.V().Z() * input.corilolis.cos_l_cos_a);
-    dv_dt.Z(dv_dt.Z() + s.V().X() * input.corilolis.sin_l -
-            s.V().Y() * input.corilolis.cos_l_cos_a);
+    dv_dt.X(dv_dt.X() - s.V().Y() * input.coriolis.cos_l_sin_a -
+            s.V().Z() * input.coriolis.sin_l);
+    dv_dt.Y(dv_dt.Y() + s.V().X() * input.coriolis.cos_l_sin_a +
+            s.V().Z() * input.coriolis.cos_l_cos_a);
+    dv_dt.Z(dv_dt.Z() + s.V().X() * input.coriolis.sin_l -
+            s.V().Y() * input.coriolis.cos_l_cos_a);
     dv_dt.X(dv_dt.X() + input.gravity.x);
     dv_dt.Y(dv_dt.Y() + input.gravity.y);
     return TrajectoryStateT{kDpDt, dv_dt};

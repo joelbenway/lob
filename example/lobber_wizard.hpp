@@ -4,15 +4,15 @@
 
 #pragma once
 
-#include "eng_units.hpp"
-#include "lob/lob.h"
-#include "ode.hpp"
+#include <nlohmann/json.hpp>
 
-namespace lob {
+namespace example {
 
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const ::LobInput& input);
+nlohmann::json RunWizard();
+void PrintGreeting();
+bool IsInteractive();
 
-}  // namespace lob
+}  // namespace example
 
 // This file is part of lob.
 //

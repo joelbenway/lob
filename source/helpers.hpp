@@ -7,8 +7,16 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <type_traits>
 
 namespace lob {
+
+template <typename T = double>
+constexpr T NaN() {
+  static_assert(std::is_floating_point<T>::value,
+                "NaN() only supports floating-point types");
+  return std::numeric_limits<T>::quiet_NaN();
+}
 
 template <typename T>
 constexpr bool AreEqual(T a, T b) {
@@ -23,8 +31,13 @@ constexpr bool AreFloatingPointsEqual(T a, T b) {
   if (std::isnan(a) || std::isnan(b)) {
     return std::isnan(a) && std::isnan(b);
   }
-  return (std::fabs(a - b) <= std::numeric_limits<T>::epsilon() *
-                                  std::fmax(std::fabs(a), std::fabs(b)));
+  const T kDiff = std::fabs(a - b);
+  const T kAbsTol = std::numeric_limits<T>::epsilon() * static_cast<T>(100);
+  if (kDiff <= kAbsTol) {
+    return true;
+  }
+  return (kDiff <= std::numeric_limits<T>::epsilon() *
+                       std::fmax(std::fabs(a), std::fabs(b)));
 }
 
 constexpr bool AreEqual(double a, double b) {
@@ -45,7 +58,16 @@ constexpr T ConstexprFmod(T a, T b) {
   if (AreEqual(b, 0)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
-  const auto kQuotient = static_cast<int64_t>(a / b);
+  const T kQuot = a / b;
+  constexpr double kFmodThreshold = 9e18;
+  if (!std::isnan(kQuot) && (kQuot >= static_cast<T>(kFmodThreshold) ||
+                             kQuot <= static_cast<T>(-kFmodThreshold))) {
+    return std::fmod(a, b);
+  }
+  if (std::isnan(kQuot) || std::isinf(kQuot)) {
+    return std::fmod(a, b);
+  }
+  const auto kQuotient = static_cast<int64_t>(kQuot);
   return a - (static_cast<T>(kQuotient) * b);
 }
 

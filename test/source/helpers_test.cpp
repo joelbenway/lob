@@ -8,8 +8,21 @@
 
 #include <cmath>
 #include <limits>
+#include <type_traits>
 
 namespace tests {
+
+TEST(HelpersTest, NaNdouble) {
+  const auto kA = lob::NaN();
+  EXPECT_TRUE((std::is_same<const double, decltype(kA)>::value));
+  EXPECT_TRUE(std::isnan(kA));
+}
+
+TEST(HelpersTest, NaNfloat) {
+  const auto kA = lob::NaN<float>();
+  EXPECT_TRUE((std::is_same<const float, decltype(kA)>::value));
+  EXPECT_TRUE(std::isnan(kA));
+}
 
 TEST(HelpersTest, AreEqual) {
   const int kIntA = 7;
@@ -47,6 +60,28 @@ TEST(HelpersTest, Modulo) {
   EXPECT_FLOAT_EQ(lob::Modulo(kFloatA, kFloatB), kFloatC);
   EXPECT_DOUBLE_EQ(lob::Modulo(kDoubleA, kDoubleB), kDoubleC);
   EXPECT_TRUE(std::isnan(lob::Modulo(kDoubleA, 0.0)));
+}
+
+TEST(HelpersTest, FloatEqualityNearZero) {
+  EXPECT_TRUE(lob::AreFloatingPointsEqual(0.0, 1e-15));
+  EXPECT_TRUE(lob::AreFloatingPointsEqual(1e-15, 0.0));
+  EXPECT_TRUE(lob::AreFloatingPointsEqual(-1e-15, 0.0));
+  EXPECT_FALSE(lob::AreFloatingPointsEqual(0.0, 1e-13));
+  EXPECT_FALSE(lob::AreFloatingPointsEqual(1e-13, 0.0));
+}
+
+TEST(HelpersTest, LargeQuotientFmod) {
+  const double kLargeA = 1.0e20;
+  const double kLargeB = 3.0;
+  const double kExpected = std::fmod(kLargeA, kLargeB);
+  EXPECT_DOUBLE_EQ(lob::Modulo(kLargeA, kLargeB), kExpected);
+}
+
+TEST(HelpersTest, InfinityNanQuotientFmod) {
+  const double kInfinity = std::numeric_limits<double>::infinity();
+  const double kNaN = std::numeric_limits<double>::quiet_NaN();
+  EXPECT_TRUE(std::isnan(lob::Modulo(kInfinity, kInfinity)));
+  EXPECT_TRUE(std::isnan(lob::Modulo(kNaN, 1.0)));
 }
 
 }  // namespace tests

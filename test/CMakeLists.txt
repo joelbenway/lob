@@ -11,7 +11,6 @@ include(../cmake/folders.cmake)
 
 if(PROJECT_IS_TOP_LEVEL)
   find_package(lob REQUIRED)
-  target_include_directories()
   enable_testing()
 endif()
 
@@ -101,7 +100,7 @@ target_include_directories(lob_test
 
 target_compile_features(lob_test PRIVATE cxx_std_14)
 
-target_link_libraries(lob_test PRIVATE lob::lob GTest::gtest GTest::gtest_main)
+target_link_libraries(lob_test PRIVATE lob::lob GTest::gmock GTest::gtest GTest::gtest_main)
 
 include(GoogleTest)
 

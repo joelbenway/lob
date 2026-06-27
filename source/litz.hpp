@@ -65,6 +65,11 @@ inline double CalculateG7FormFactorPrediction(
 inline double CalculateG7FormFactorPrediction(
     InchT diameter, CaliberT nose_length, double ogive_rtr,
     CaliberT meplat_diameter, CaliberT tail_length, CaliberT base_diameter) {
+  if (AreEqual(tail_length.Value(), 0.0)) {
+    return CalculateG7FormFactorPrediction(diameter, nose_length, ogive_rtr,
+                                           meplat_diameter, tail_length,
+                                           DegreesT(0.0));
+  }
   const RadiansT kBA(
       std::atan((1 - base_diameter.Value()) / (tail_length.Value() * 2)));
   return CalculateG7FormFactorPrediction(diameter, nose_length, ogive_rtr,

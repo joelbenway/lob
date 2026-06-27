@@ -1,0 +1,98 @@
+[
+    {
+        "deflection": 0.0,
+        "elevation": -1.5,
+        "energy": 2619,
+        "range": 0,
+        "time_of_flight": 0.0,
+        "velocity": 2650
+    },
+    {
+        "deflection": 0.0,
+        "elevation": -1.6286301874737306,
+        "energy": 2235,
+        "range": 150,
+        "time_of_flight": 0.058893735090755066,
+        "velocity": 2448
+    },
+    {
+        "deflection": 0.0,
+        "elevation": -3.210552093233826,
+        "energy": 1897,
+        "range": 300,
+        "time_of_flight": 0.12273443871649002,
+        "velocity": 2255
+    },
+    {
+        "deflection": 0.0,
+        "elevation": -11.832130269717808,
+        "energy": 1340,
+        "range": 600,
+        "time_of_flight": 0.2678580996944258,
+        "velocity": 1896
+    },
+    {
+        "deflection": 0.0,
+        "elevation": -30.245924900950985,
+        "energy": 927,
+        "range": 900,
+        "time_of_flight": 0.44153292243121756,
+        "velocity": 1576
+    },
+    {
+        "deflection": 0.0,
+        "elevation": -62.80842935924157,
+        "energy": 640,
+        "range": 1200,
+        "time_of_flight": 0.6507351237690799,
+        "velocity": 1310
+    },
+    {
+        "deflection": 0.0,
+        "elevation": -115.73837436204086,
+        "energy": 465,
+        "range": 1500,
+        "time_of_flight": 0.8999165562379056,
+        "velocity": 1117
+    },
+    {
+        "deflection": 0.0,
+        "elevation": -196.47617482205976,
+        "energy": 371,
+        "range": 1800,
+        "time_of_flight": 1.1853587441472484,
+        "velocity": 998
+    },
+    {
+        "deflection": 0.0,
+        "elevation": -312.10103311145673,
+        "energy": 314,
+        "range": 2100,
+        "time_of_flight": 1.4996964307621854,
+        "velocity": 917
+    },
+    {
+        "deflection": 0.0,
+        "elevation": -469.0673525795029,
+        "energy": 272,
+        "range": 2400,
+        "time_of_flight": 1.8391273357006215,
+        "velocity": 855
+    },
+    {
+        "deflection": 0.0,
+        "elevation": -673.7359569051657,
+        "energy": 240,
+        "range": 2700,
+        "time_of_flight": 2.2023283511388434,
+        "velocity": 802
+    },
+    {
+        "deflection": 0.0,
+        "elevation": -932.7275667682088,
+        "energy": 213,
+        "range": 3000,
+        "time_of_flight": 2.589117032832863,
+        "velocity": 755
+    }
+]

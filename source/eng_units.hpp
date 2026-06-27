@@ -46,7 +46,6 @@ class StrongT {
   constexpr StrongT& operator=(StrongT&& rhs) noexcept {
     if (this != &rhs) {
       value_ = rhs.value_;
-      rhs.value_ = 0;
     }
     return *this;
   }
@@ -205,17 +204,17 @@ class StrongT {
 
   // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT asin(const StrongT& st) noexcept {
-    return StrongT(std::sin(st.value_));
+    return StrongT(std::asin(st.value_));
   }
 
   // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT acos(const StrongT& st) noexcept {
-    return StrongT(std::cos(st.value_));
+    return StrongT(std::acos(st.value_));
   }
 
   // NOLINTNEXTLINE(readability-identifier-naming)
   friend constexpr StrongT atan(const StrongT& st) noexcept {
-    return StrongT(std::tan(st.value_));
+    return StrongT(std::atan(st.value_));
   }
 
   // NOLINTNEXTLINE(readability-identifier-naming)

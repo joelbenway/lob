@@ -4,15 +4,26 @@
 
 #pragma once
 
-#include "eng_units.hpp"
-#include "lob/lob.h"
-#include "ode.hpp"
+#include <cstddef>
+#include <nlohmann/json.hpp>
+#include <vector>
 
-namespace lob {
+#include "lob/lob.hpp"
 
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const ::LobInput& input);
+namespace example {
 
-}  // namespace lob
+struct BridgeResult {
+  lob::Input input;
+  std::vector<lob::Output> outputs;
+  size_t count;
+};
+
+BridgeResult SolveFromJson(const nlohmann::json& j);
+void PrintTable(const lob::Input& input, const lob::Output* outputs,
+                size_t count);
+nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count);
+
+}  // namespace example
 
 // This file is part of lob.
 //

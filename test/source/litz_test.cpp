@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <limits>
 
 #include "eng_units.hpp"
@@ -72,6 +73,20 @@ TEST(LitzTests, CalculateG7FormFactorPrediction) {
   EXPECT_NEAR(kActual1, kActual2, 1E-3);
   EXPECT_NEAR(kActual1, kExpected, kError);
   EXPECT_NEAR(kActual2, kExpected, kError);
+}
+
+TEST(LitzTests, CalculateG7FormFactorPredictionFlatBase) {
+  const lob::InchT kD(0.308);
+  const lob::CaliberT kLN(lob::InchT(0.700), kD.Inverse());
+  const double kRTR(1.0);
+  const lob::CaliberT kDM(lob::InchT(0.1), kD.Inverse());
+  const lob::CaliberT kLBT(lob::InchT(0.0), kD.Inverse());  // tail length 0!
+  const lob::CaliberT kDB(
+      kD, kD.Inverse());  // base diameter = caliber, i.e. 1 caliber
+  const double kActual =
+      lob::litz::CalculateG7FormFactorPrediction(kD, kLN, kRTR, kDM, kLBT, kDB);
+  EXPECT_TRUE(!std::isnan(kActual));
+  EXPECT_TRUE(!std::isinf(kActual));
 }
 
 }  // namespace tests
