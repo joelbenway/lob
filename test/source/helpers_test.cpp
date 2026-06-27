@@ -78,9 +78,9 @@ TEST(HelpersTest, LargeQuotientFmod) {
 }
 
 TEST(HelpersTest, InfinityNanQuotientFmod) {
-  const double kInf = std::numeric_limits<double>::infinity();
+  const double kInfinity = std::numeric_limits<double>::infinity();
   const double kNaN = std::numeric_limits<double>::quiet_NaN();
-  EXPECT_TRUE(std::isnan(lob::Modulo(kInf, kInf)));
+  EXPECT_TRUE(std::isnan(lob::Modulo(kInfinity, kInfinity)));
   EXPECT_TRUE(std::isnan(lob::Modulo(kNaN, 1.0)));
 }
 
