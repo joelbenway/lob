@@ -12,6 +12,8 @@
 #include <vector>
 
 #include "constants.hpp"
+#include "eng_units.hpp"
+#include "helpers.hpp"
 #include "lob/lob.hpp"
 #include "test_helpers.hpp"
 

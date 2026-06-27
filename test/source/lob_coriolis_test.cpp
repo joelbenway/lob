@@ -7,10 +7,11 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <memory>
 #include <vector>
 
+#include "eng_units.hpp"
+#include "helpers.hpp"
 #include "lob/lob.hpp"
 #include "test_helpers.hpp"
 
@@ -54,9 +55,8 @@ TEST_F(LobCoriolisTestFixture, ZeroAngleSearch) {
   ASSERT_NE(puut, nullptr);
   auto input1 = puut->Build();
   const double kZeroRange = 100.0;
-  auto input2 = puut->ZeroAngleMOA(std::numeric_limits<double>::quiet_NaN())
-                    .ZeroDistanceYds(kZeroRange)
-                    .Build();
+  auto input2 =
+      puut->ZeroAngleMOA(lob::NaN()).ZeroDistanceYds(kZeroRange).Build();
   const double kError = 0.01;
   EXPECT_NEAR(input1.zero_angle, input2.zero_angle, kError);
 }

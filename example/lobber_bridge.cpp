@@ -6,11 +6,16 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "lob/lob.hpp"
 
@@ -37,41 +42,41 @@ uint16_t JsonToU16(const nlohmann::json& j, const std::string& key) {
   if (j[key].is_string() && j[key].get<std::string>() == "nan") {
     return 0;
   }
-  double v = j[key].get<double>();
-  if (v < 0 || v > 65535.0) {
+  const double kV = j[key].get<double>();
+  if (kV < 0 || kV > std::numeric_limits<uint16_t>::max()) {
     return 0;
   }
-  return static_cast<uint16_t>(v);
+  return static_cast<uint16_t>(kV);
 }
 
 lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& j,
                                            const std::string& key) {
-  double v = JsonToDouble(j, key);
-  if (std::isnan(v)) {
+  const double kV = JsonToDouble(j, key);
+  if (std::isnan(kV)) {
     return lob::AtmosphereReferenceT::kArmyStandardMetro;
   }
-  return static_cast<int>(std::round(v)) == 2
+  return static_cast<int>(std::round(kV)) == 2
              ? lob::AtmosphereReferenceT::kIcao
              : lob::AtmosphereReferenceT::kArmyStandardMetro;
 }
 
 lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
                                       const std::string& key) {
-  double v = JsonToDouble(j, key);
-  if (std::isnan(v)) {
+  const double kV = JsonToDouble(j, key);
+  if (std::isnan(kV)) {
     return lob::DragFunctionT::kG1;
   }
-  switch (static_cast<int>(std::round(v))) {
-    case 2:
-      return lob::DragFunctionT::kG2;  // NOLINT
-    case 5:
-      return lob::DragFunctionT::kG5;  // NOLINT
-    case 6:
-      return lob::DragFunctionT::kG6;  // NOLINT
-    case 7:
-      return lob::DragFunctionT::kG7;  // NOLINT
-    case 8:
-      return lob::DragFunctionT::kG8;  // NOLINT
+  switch (static_cast<int>(std::round(kV))) {
+    case 2:  // NOLINT
+      return lob::DragFunctionT::kG2;
+    case 5:  // NOLINT
+      return lob::DragFunctionT::kG5;
+    case 6:  // NOLINT
+      return lob::DragFunctionT::kG6;
+    case 7:  // NOLINT
+      return lob::DragFunctionT::kG7;
+    case 8:  // NOLINT
+      return lob::DragFunctionT::kG8;
     default:
       return lob::DragFunctionT::kG1;
   }
@@ -79,33 +84,33 @@ lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
 
 lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
                                   const std::string& key) {
-  double v = JsonToDouble(j, key);
-  if (std::isnan(v)) {
+  const double kV = JsonToDouble(j, key);
+  if (std::isnan(kV)) {
     return lob::ClockAngleT::kXII;
   }
-  switch (static_cast<int>(std::round(v))) {
-    case 1:
-      return lob::ClockAngleT::kI;  // NOLINT
-    case 2:
-      return lob::ClockAngleT::kII;  // NOLINT
-    case 3:
-      return lob::ClockAngleT::kIII;  // NOLINT
-    case 4:
-      return lob::ClockAngleT::kIV;  // NOLINT
-    case 5:
-      return lob::ClockAngleT::kV;  // NOLINT
-    case 6:
-      return lob::ClockAngleT::kVI;  // NOLINT
-    case 7:
-      return lob::ClockAngleT::kVII;  // NOLINT
-    case 8:
-      return lob::ClockAngleT::kVIII;  // NOLINT
-    case 9:
-      return lob::ClockAngleT::kIX;  // NOLINT
-    case 10:
-      return lob::ClockAngleT::kX;  // NOLINT
-    case 11:
-      return lob::ClockAngleT::kXI;  // NOLINT
+  switch (static_cast<int>(std::round(kV))) {
+    case 1:  // NOLINT
+      return lob::ClockAngleT::kI;
+    case 2:  // NOLINT
+      return lob::ClockAngleT::kII;
+    case 3:  // NOLINT
+      return lob::ClockAngleT::kIII;
+    case 4:  // NOLINT
+      return lob::ClockAngleT::kIV;
+    case 5:  // NOLINT
+      return lob::ClockAngleT::kV;
+    case 6:  // NOLINT
+      return lob::ClockAngleT::kVI;
+    case 7:  // NOLINT
+      return lob::ClockAngleT::kVII;
+    case 8:  // NOLINT
+      return lob::ClockAngleT::kVIII;
+    case 9:  // NOLINT
+      return lob::ClockAngleT::kIX;
+    case 10:  // NOLINT
+      return lob::ClockAngleT::kX;
+    case 11:  // NOLINT
+      return lob::ClockAngleT::kXI;
     default:
       return lob::ClockAngleT::kXII;
   }
@@ -173,10 +178,10 @@ BridgeResult SolveFromJson(const nlohmann::json& j) {
   }
 
   std::vector<lob::Output> outputs(ranges.size());
-  size_t count =
+  const size_t kCount =
       lob::Solve(input, ranges.data(), outputs.data(), ranges.size());
 
-  return {input, std::move(outputs), count};
+  return {input, std::move(outputs), kCount};
 }
 
 void PrintTable(const lob::Input& input, const lob::Output* outputs,

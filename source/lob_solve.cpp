@@ -30,7 +30,7 @@ LobOutput LerpOutput(const TrajectoryStateT& s_now, const SecT t_now,
   const FtLbsT kEnergy =
       CalculateKineticEnergy(kVelocity, SlugT(LbsT(input.mass)));
 
-  LobOutput out;
+  LobOutput out{};
   out.range = kP.X().U32();
   out.velocity = kVelocity.U16();
   out.energy = kEnergy.U32();

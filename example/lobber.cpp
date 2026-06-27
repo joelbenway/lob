@@ -6,12 +6,14 @@
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
+#include <string>
 
 #include "lobber_bridge.hpp"
 #include "lobber_cli.hpp"
 #include "lobber_wizard.hpp"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) try {
   auto config = example::ParseArgs(argc, argv);
 
   if (config.show_help) {
@@ -70,6 +72,9 @@ int main(int argc, char* argv[]) {
   }
 
   return 0;
+} catch (...) {
+  std::cerr << "\033[31mUnexpected error\033[0m\n";
+  return 1;
 }
 
 // This file is part of lob.

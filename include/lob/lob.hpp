@@ -11,9 +11,9 @@
 #include "lob/lob.h"
 
 /** @brief The size of a drag table. */
-constexpr size_t kTableSize = LOB_TABLE_SIZE;
+constexpr size_t kLobTableSize = LOB_TABLE_SIZE;
 /** @brief The size in bytes of the builder buffer. */
-constexpr size_t kBuilderBufferSize = LOB_BUILDER_BUFFER_SIZE;
+constexpr size_t kLobBuilderBufferSize = LOB_BUILDER_BUFFER_SIZE;
 
 namespace lob {
 
@@ -127,11 +127,11 @@ class Builder {
   }  ///< @brief Default constructor
   ~Builder() { ::LobBuilderDestroy(&builder_); }  ///< @brief Destructor
 
-  Builder(const Builder& other) {  ///< @brief Copy constructor
+  Builder(const Builder& other) : builder_{} {  ///< @brief Copy constructor
     ::LobBuilderCopy(&builder_, &other.builder_);
   }
 
-  Builder(Builder&& other) noexcept {  ///< @brief Move constructor
+  Builder(Builder&& other) noexcept : builder_{} {  ///< @brief Move constructor
     ::LobBuilderCopy(&builder_, &other.builder_);
     ::LobBuilderReset(&other.builder_);
   }

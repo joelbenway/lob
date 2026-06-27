@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 
 #include "boatright.hpp"
 #include "calc.hpp"
@@ -66,6 +67,13 @@ Impl* Pimpl(LobBuilder* builder) {
 const Impl* Pimpl(const LobBuilder* builder) {
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
   return reinterpret_cast<const Impl*>(&builder->buffer);
+}
+
+void InitBuilder(Impl* pimpl) {
+  pimpl->build.aerodynamic_jump = NaN();
+  pimpl->build.zero_angle = NaN();
+  pimpl->build.spindrift_factor = NaN();
+  pimpl->build.optic_height = NaN();
 }
 
 void BuildEnvironment(Impl* pimpl) {
@@ -562,20 +570,14 @@ void BuildOptions(Impl* pimpl) {
 }
 
 }  // namespace
-}  // namespace lob
 
-// extern "C" functions inside namespace lob for unqualified access to helpers
-namespace lob {
 extern "C" {
 
 void LobBuilderInit(LobBuilder* builder) {
   static_assert(sizeof(Impl) <= LOB_BUILDER_BUFFER_SIZE,
                 "LOB_BUILDER_BUFFER_SIZE too small");
   auto* pimpl = ::new (&builder->buffer) Impl();
-  pimpl->build.aerodynamic_jump = NaN();
-  pimpl->build.zero_angle = NaN();
-  pimpl->build.spindrift_factor = NaN();
-  pimpl->build.optic_height = NaN();
+  InitBuilder(pimpl);
 }
 
 void LobBuilderDestroy(LobBuilder* builder) {
@@ -595,10 +597,7 @@ LobBuilder* LobBuilderReset(LobBuilder* builder) {
   auto* pimpl = Pimpl(builder);
   pimpl->~Impl();
   pimpl = ::new (&builder->buffer) Impl();
-  pimpl->build.aerodynamic_jump = NaN();
-  pimpl->build.zero_angle = NaN();
-  pimpl->build.spindrift_factor = NaN();
-  pimpl->build.optic_height = NaN();
+  InitBuilder(pimpl);
   return builder;
 }
 
@@ -697,8 +696,8 @@ LobBuilder* LobBuilderMachVsDragTable(LobBuilder* builder, const float* pmachs,
   if (pmachs == nullptr || pdrags == nullptr || size < 2) {
     return builder;
   }
-  const double kFirstMach = pmachs[0];
-  const double kLastMach = pmachs[size - 1];
+  const auto kFirstMach = static_cast<double>(pmachs[0]);
+  const auto kLastMach = static_cast<double>(pmachs[size - 1]);
   const double kMinSampleMach =
       static_cast<double>(kMachs.front()) / kTableScale;
   const double kMaxSampleMach =
@@ -712,7 +711,7 @@ LobBuilder* LobBuilderMachVsDragTable(LobBuilder* builder, const float* pmachs,
     }
   }
   for (size_t i = 0; i < size; i++) {
-    if (pdrags[i] < 0.0f || pdrags[i] > 65535.0f) {
+    if (pdrags[i] < 0.0F || pdrags[i] > std::numeric_limits<float>::max()) {
       return builder;
     }
   }

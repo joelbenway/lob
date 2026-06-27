@@ -12,6 +12,7 @@
 #include <memory>
 #include <vector>
 
+#include "eng_units.hpp"
 #include "lob/lob.hpp"
 #include "test_helpers.hpp"
 

@@ -4,6 +4,7 @@
 
 #include "solve_step.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 

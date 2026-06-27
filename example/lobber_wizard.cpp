@@ -6,9 +6,12 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <map>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <string>
 
 #ifdef _WIN32
@@ -258,10 +261,10 @@ void PromptRanges(Step s, nlohmann::json* j) {
         parsed = true;
       } else {
         char* end = nullptr;
-        double val = std::strtod(line.c_str(), &end);
-        if (end != line.c_str() && *end == '\0' && std::isfinite(val)) {
-          list.push_back(val);
-          input = val;
+        const double kVal = std::strtod(line.c_str(), &end);
+        if (end != line.c_str() && *end == '\0' && std::isfinite(kVal)) {
+          list.push_back(kVal);
+          input = kVal;
           parsed = true;
         } else {
           std::cerr << "\033[31mInvalid input. Enter a number or omit to skip."
@@ -311,11 +314,11 @@ nlohmann::json RunWizard() {
       return j;
     }
 
-    bool has_input = PromptSingle(current, &j);
+    const bool kHasInput = PromptSingle(current, &j);
 
-    bool gave = info.always_given || (has_input && !info.always_skip);
+    bool gave = info.always_given || (kHasInput && !info.always_skip);
 
-    if (current == Step::kWindSpeedMph && has_input &&
+    if (current == Step::kWindSpeedMph && kHasInput &&
         j[GetKeys().at(current)] == 0) {
       gave = false;
     }

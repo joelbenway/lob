@@ -12,6 +12,7 @@
 
 #ifdef __cplusplus
 extern "C" {
+// NOLINTBEGIN
 #endif
 
 /** @brief The number of entries in a drag table. */
@@ -766,6 +767,7 @@ LOB_EXPORT extern double LobSToUs(double value);
 LOB_EXPORT extern double LobDegCToDegF(double value);
 
 #ifdef __cplusplus
+// NOLINTEND
 }
 #endif
 

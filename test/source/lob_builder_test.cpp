@@ -147,6 +147,7 @@ TEST_F(BuilderTestFixture, InvalidDragFunctionIsG1) {
   const double kTestBC = 1.0;
   const uint16_t kTestMuzzleVelocity = 2500U;
   const double kTestZeroAngle = 5.59;
+  // NOLINTNEXTLINE (clang-analyzer-optin.core.EnumCastOutOfRange)
   const auto kInvalidDragFunction = static_cast<lob::DragFunctionT>(0xFF);
   const lob::Input kResult = puut->BallisticCoefficientPsi(kTestBC)
                                  .BCDragFunction(kInvalidDragFunction)

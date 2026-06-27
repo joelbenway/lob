@@ -27,16 +27,16 @@ constexpr const char* kSaveInput = "--save-input=";
 CliConfig ParseArgs(int argc, char* argv[]) {  // NOLINT
   CliConfig config;
   for (int i = 1; i < argc; ++i) {
-    std::string arg(argv[i]);
-    if (arg == kHelp || arg == kH) {
+    const std::string kArg(argv[i]);
+    if (kArg == kHelp || kArg == kH) {
       config.show_help = true;
-    } else if (arg == kVersion || arg == kV) {
+    } else if (kArg == kVersion || kArg == kV) {
       config.show_version = true;
-    } else if (arg == kJson) {
+    } else if (kArg == kJson) {
       config.json_mode = true;
-    } else if (arg.compare(0, std::strlen(kSaveInput), kSaveInput) == 0) {
+    } else if (kArg.compare(0, std::strlen(kSaveInput), kSaveInput) == 0) {
       config.has_save_input_path = true;
-      config.save_input_path = arg.substr(std::strlen(kSaveInput));
+      config.save_input_path = kArg.substr(std::strlen(kSaveInput));
     }
   }
   return config;
