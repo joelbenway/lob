@@ -63,8 +63,8 @@ void ApplyGyroscopicSpinDrift(const LobInput& in, LobOutput* pouts,
 }  // namespace
 }  // namespace lob
 
-namespace lob {
 extern "C" {
+using namespace lob;  // NOLINT(google-build-using-namespace)
 
 size_t LobSolve(const LobInput* in, const uint32_t* pranges, LobOutput* pouts,
                 size_t size) {
@@ -138,7 +138,6 @@ size_t LobSolve(const LobInput* in, const uint32_t* pranges, LobOutput* pouts,
 }
 
 }  // extern "C"
-}  // namespace lob
 
 // This file is part of lob.
 //

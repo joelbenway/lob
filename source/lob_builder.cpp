@@ -570,8 +570,10 @@ void BuildOptions(Impl* pimpl) {
 }
 
 }  // namespace
+}  // namespace lob
 
 extern "C" {
+using namespace lob;  // NOLINT(google-build-using-namespace)
 
 void LobBuilderInit(LobBuilder* builder) {
   static_assert(sizeof(Impl) <= LOB_BUILDER_BUFFER_SIZE,
@@ -934,7 +936,6 @@ LobInput LobBuilderBuild(LobBuilder* builder) {
 }
 
 }  // extern "C"
-}  // namespace lob
 
 // This file is part of lob.
 //

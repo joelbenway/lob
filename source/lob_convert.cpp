@@ -16,8 +16,10 @@ namespace {
 constexpr double kHundredYardsInFeet = FeetT(YardT(100)).Value();
 
 }  // namespace
+}  // namespace lob
 
 extern "C" {
+using namespace lob;  // NOLINT(google-build-using-namespace)
 
 const char* LobVersion(void) { return kProjectVersion; }
 
@@ -98,7 +100,6 @@ double LobSToUs(double value) { return UsecT(SecT(value)).Value(); }
 double LobDegCToDegF(double value) { return DegFT(DegCT(value)).Value(); }
 
 }  // extern "C"
-}  // namespace lob
 
 // This file is part of lob.
 //
