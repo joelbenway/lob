@@ -66,20 +66,7 @@ lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
   if (std::isnan(kV)) {
     return lob::DragFunctionT::kG1;
   }
-  switch (static_cast<int>(std::round(kV))) {
-    case 2:  // NOLINT
-      return lob::DragFunctionT::kG2;
-    case 5:  // NOLINT
-      return lob::DragFunctionT::kG5;
-    case 6:  // NOLINT
-      return lob::DragFunctionT::kG6;
-    case 7:  // NOLINT
-      return lob::DragFunctionT::kG7;
-    case 8:  // NOLINT
-      return lob::DragFunctionT::kG8;
-    default:
-      return lob::DragFunctionT::kG1;
-  }
+  return lob::ToEnum<lob::DragFunctionT>(static_cast<uint8_t>(std::round(kV)));
 }
 
 lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
@@ -88,32 +75,13 @@ lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
   if (std::isnan(kV)) {
     return lob::ClockAngleT::kXII;
   }
-  switch (static_cast<int>(std::round(kV))) {
-    case 1:  // NOLINT
-      return lob::ClockAngleT::kI;
-    case 2:  // NOLINT
-      return lob::ClockAngleT::kII;
-    case 3:  // NOLINT
-      return lob::ClockAngleT::kIII;
-    case 4:  // NOLINT
-      return lob::ClockAngleT::kIV;
-    case 5:  // NOLINT
-      return lob::ClockAngleT::kV;
-    case 6:  // NOLINT
-      return lob::ClockAngleT::kVI;
-    case 7:  // NOLINT
-      return lob::ClockAngleT::kVII;
-    case 8:  // NOLINT
-      return lob::ClockAngleT::kVIII;
-    case 9:  // NOLINT
-      return lob::ClockAngleT::kIX;
-    case 10:  // NOLINT
-      return lob::ClockAngleT::kX;
-    case 11:  // NOLINT
-      return lob::ClockAngleT::kXI;
-    default:
-      return lob::ClockAngleT::kXII;
+  const auto kRounded = static_cast<int>(std::round(kV));
+  const int kMinClock = 1;
+  const int kMaxClock = 12;
+  if (kRounded >= kMinClock && kRounded <= kMaxClock) {
+    return lob::ToEnum<lob::ClockAngleT>(static_cast<uint8_t>(kRounded));
   }
+  return lob::ClockAngleT::kXII;
 }
 
 }  // namespace

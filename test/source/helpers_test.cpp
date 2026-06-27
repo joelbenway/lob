@@ -77,6 +77,13 @@ TEST(HelpersTest, LargeQuotientFmod) {
   EXPECT_DOUBLE_EQ(lob::Modulo(kLargeA, kLargeB), kExpected);
 }
 
+TEST(HelpersTest, InfinityNanQuotientFmod) {
+  const double kInf = std::numeric_limits<double>::infinity();
+  const double kNaN = std::numeric_limits<double>::quiet_NaN();
+  EXPECT_TRUE(std::isnan(lob::Modulo(kInf, kInf)));
+  EXPECT_TRUE(std::isnan(lob::Modulo(kNaN, 1.0)));
+}
+
 }  // namespace tests
 
 // This file is part of lob.

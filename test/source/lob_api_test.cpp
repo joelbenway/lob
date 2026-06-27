@@ -4,9 +4,11 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cstdint>
 
 #include "eng_units.hpp"
+#include "lob/lob.h"
 #include "lob/lob.hpp"
 
 namespace tests {
@@ -126,6 +128,21 @@ TEST(LobAPITest, ZeroStepSizeAutoTerminate) {
   EXPECT_EQ(kSize, 1);
 }
 
+TEST(LobAPITest, NonMonotonicRangesRejected) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  const lob::Input kResult = lob::Builder()
+                                 .BallisticCoefficientPsi(kTestBC)
+                                 .InitialVelocityFps(kTestMuzzleVelocity)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .Build();
+  const std::array<uint32_t, 2> kRanges = {100U, 50U};
+  std::array<lob::Output, 2> out{};
+  const auto kSize = lob::Solve(kResult, kRanges, out);
+  EXPECT_EQ(kSize, 0);
+}
+
 TEST(LobAPITest, MoaToMil) {
   const auto kA = lob::MoaT(5);
   const auto kB = lob::MilT(lob::MoaToMil(kA.Value()));
@@ -225,7 +242,7 @@ TEST(LobAPITest, FtLbsToJ) {
   EXPECT_DOUBLE_EQ(kA.Value(), lob::FtLbsT(kB).Value());
 }
 
-TEST(LobAPITest, MtoYd) {
+TEST(LobAPITest, MToYd) {
   const auto kA = lob::MeterT(100);
   const auto kB = lob::YardT(lob::MToYd(kA.Value()));
   EXPECT_DOUBLE_EQ(kA.Value(), lob::MeterT(kB).Value());
@@ -391,6 +408,74 @@ TEST(LobAPITest, DegCToDegF) {
   const auto kA = lob::DegCT(100);
   const auto kB = lob::DegFT(lob::DegCToDegF(kA.Value()));
   EXPECT_DOUBLE_EQ(kA.Value(), lob::DegCT(kB).Value());
+}
+
+TEST(LobAPITest, ErrorTComparisonWithCEnum) {
+  EXPECT_TRUE(lob::ErrorT::kNone == kLobErrorNone);
+  EXPECT_TRUE(kLobErrorNone == lob::ErrorT::kNone);
+  EXPECT_FALSE(lob::ErrorT::kNone == kLobErrorBallisticCoefficientRequired);
+  EXPECT_FALSE(kLobErrorBallisticCoefficientRequired == lob::ErrorT::kNone);
+  EXPECT_TRUE(lob::ErrorT::kNone != kLobErrorBallisticCoefficientRequired);
+  EXPECT_TRUE(kLobErrorBallisticCoefficientRequired != lob::ErrorT::kNone);
+  EXPECT_FALSE(lob::ErrorT::kNone != kLobErrorNone);
+  EXPECT_FALSE(kLobErrorNone != lob::ErrorT::kNone);
+}
+
+TEST(LobAPITest, ToEnumDragFunction) {
+  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(kLobDragFunctionG1),
+            lob::DragFunctionT::kG1);
+  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(kLobDragFunctionG2),
+            lob::DragFunctionT::kG2);
+  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(kLobDragFunctionG5),
+            lob::DragFunctionT::kG5);
+  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(kLobDragFunctionG6),
+            lob::DragFunctionT::kG6);
+  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(kLobDragFunctionG7),
+            lob::DragFunctionT::kG7);
+  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(kLobDragFunctionG8),
+            lob::DragFunctionT::kG8);
+}
+
+TEST(LobAPITest, ToEnumAtmosphereReference) {
+  EXPECT_EQ(lob::ToEnum<lob::AtmosphereReferenceT>(
+                kLobAtmosphereReferenceArmyStandardMetro),
+            lob::AtmosphereReferenceT::kArmyStandardMetro);
+  EXPECT_EQ(lob::ToEnum<lob::AtmosphereReferenceT>(kLobAtmosphereReferenceIcao),
+            lob::AtmosphereReferenceT::kIcao);
+}
+
+TEST(LobAPITest, ToUnderlyingClockAngle) {
+  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kI), kLobClockAngleI);
+  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kII), kLobClockAngleII);
+  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kIII), kLobClockAngleIII);
+  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kIV), kLobClockAngleIV);
+  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kV), kLobClockAngleV);
+  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kVI), kLobClockAngleVI);
+  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kVII), kLobClockAngleVII);
+  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kVIII), kLobClockAngleVIII);
+  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kIX), kLobClockAngleIX);
+  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kX), kLobClockAngleX);
+  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kXI), kLobClockAngleXI);
+  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kXII), kLobClockAngleXII);
+}
+
+TEST(LobAPITest, ToUnderlyingError) {
+  EXPECT_EQ(lob::ToUnderlying(lob::ErrorT::kHumidityOOR), kLobErrorHumidityOOR);
+}
+
+TEST(LobAPITest, ToEnumToUnderlyingRoundTrip) {
+  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(
+                lob::ToUnderlying(lob::DragFunctionT::kG8)),
+            lob::DragFunctionT::kG8);
+  EXPECT_EQ(
+      lob::ToEnum<lob::ClockAngleT>(lob::ToUnderlying(lob::ClockAngleT::kXII)),
+      lob::ClockAngleT::kXII);
+  EXPECT_EQ(lob::ToEnum<lob::AtmosphereReferenceT>(lob::ToUnderlying(
+                lob::AtmosphereReferenceT::kArmyStandardMetro)),
+            lob::AtmosphereReferenceT::kArmyStandardMetro);
+  EXPECT_EQ(
+      lob::ToEnum<lob::ErrorT>(lob::ToUnderlying(lob::ErrorT::kInternalError)),
+      lob::ErrorT::kInternalError);
 }
 
 }  // namespace tests

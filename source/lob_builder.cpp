@@ -700,9 +700,9 @@ LobBuilder* LobBuilderMachVsDragTable(LobBuilder* builder, const float* pmachs,
   }
   const auto kFirstMach = static_cast<double>(pmachs[0]);
   const auto kLastMach = static_cast<double>(pmachs[size - 1]);
-  const double kMinSampleMach =
+  constexpr double kMinSampleMach =
       static_cast<double>(kMachs.front()) / kTableScale;
-  const double kMaxSampleMach =
+  constexpr double kMaxSampleMach =
       static_cast<double>(kMachs.back()) / kTableScale;
   if (kFirstMach > kMinSampleMach || kLastMach < kMaxSampleMach) {
     return builder;

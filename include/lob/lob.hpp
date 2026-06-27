@@ -7,18 +7,19 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 
 #include "lob/lob.h"
+
+namespace lob {
 
 /** @brief The size of a drag table. */
 constexpr size_t kLobTableSize = LOB_TABLE_SIZE;
 /** @brief The size in bytes of the builder buffer. */
 constexpr size_t kLobBuilderBufferSize = LOB_BUILDER_BUFFER_SIZE;
 
-namespace lob {
-
 /** @brief Enumerates the supported drag functions. */
-enum class DragFunctionT : unsigned char {
+enum class DragFunctionT : LobDragFunctionT {
   kG1 = ::kLobDragFunctionG1,  ///< @brief G1 drag function
   kG2 = ::kLobDragFunctionG2,  ///< @brief G2 drag function
   kG5 = ::kLobDragFunctionG5,  ///< @brief G5 drag function
@@ -28,7 +29,7 @@ enum class DragFunctionT : unsigned char {
 };
 
 /** @brief Enumerates the supported atmosphere reference types. */
-enum class AtmosphereReferenceT : unsigned char {
+enum class AtmosphereReferenceT : LobAtmosphereReferenceT {
   kArmyStandardMetro =
       ::kLobAtmosphereReferenceArmyStandardMetro,  ///< @brief Army Standard
                                                    ///< Metro
@@ -41,7 +42,7 @@ enum class AtmosphereReferenceT : unsigned char {
  * @note Values are named with Roman numerals. This is used for reasoning about
  * wind direction.
  */
-enum class ClockAngleT : unsigned char {
+enum class ClockAngleT : LobClockAngleT {
   kI = ::kLobClockAngleI,        ///< @brief one o'clock
   kII = ::kLobClockAngleII,      ///< @brief two o'clock
   kIII = ::kLobClockAngleIII,    ///< @brief three o'clock
@@ -57,7 +58,7 @@ enum class ClockAngleT : unsigned char {
 };
 
 /** @brief Error codes returned by the builder. */
-enum class ErrorT : unsigned char {
+enum class ErrorT : LobErrorT {
   kNone = ::kLobErrorNone,
   kAirPressureOOR = ::kLobErrorAirPressureOOR,
   kAltitudeOfBarometerOOR = ::kLobErrorAltitudeOfBarometerOOR,
@@ -86,6 +87,29 @@ enum class ErrorT : unsigned char {
   kZeroDistanceOOR = ::kLobErrorZeroDistanceOOR,
   kNotFormed = ::kLobErrorNotFormed
 };
+
+/**
+ * @brief Converts an integer value to an enum class.
+ * @tparam E The enum type to convert to.
+ * @param value The underlying integer value.
+ * @return The enum value corresponding to the integer.
+ */
+template <typename E>
+constexpr E ToEnum(std::underlying_type_t<E> value) noexcept {
+  static_assert(std::is_enum<E>::value, "ToEnum() only supports enum types");
+  return static_cast<E>(value);
+}
+
+/**
+ * @brief Converts an enum class value to its underlying integer type.
+ * @tparam E The enum type to convert from.
+ * @param value The enum value.
+ * @return The underlying integer value.
+ */
+template <typename E>
+constexpr std::underlying_type_t<E> ToUnderlying(E value) noexcept {
+  return static_cast<std::underlying_type_t<E>>(value);
+}
 
 /** @brief Gravity vector. See @c LobGravity for member details. */
 using Gravity = ::LobGravity;
@@ -718,8 +742,7 @@ inline double FtLbsToJ(double value) { return ::LobFtLbsToJ(value); }
  * @return Equivalent length in yards.
  */
 inline double MToYd(double value) { return ::LobMToYd(value); }
-/** @brief Deprecated alias for MToYd. */
-inline double MtoYd(double value) { return MToYd(value); }
+
 /**
  * @brief Converts yards to feet.
  * @param value Length in yards.
