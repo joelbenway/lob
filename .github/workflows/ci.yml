@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: cachix/install-nix-action@b97f05dcb019ddea06450a50ef6203d2fdc19fee
+    - uses: cachix/install-nix-action@v31
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -41,10 +41,10 @@ jobs:
     if: github.repository_owner == 'joelbenway'
 
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: cachix/install-nix-action@b97f05dcb019ddea06450a50ef6203d2fdc19fee
+    - uses: cachix/install-nix-action@v31
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -80,10 +80,10 @@ jobs:
     env: { CXX: clang++-19 }
 
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: cachix/install-nix-action@b97f05dcb019ddea06450a50ef6203d2fdc19fee
+    - uses: cachix/install-nix-action@v31
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -123,13 +123,13 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
 
     - name: Install Nix
       if: matrix.os == 'ubuntu-latest'
-      uses: cachix/install-nix-action@b97f05dcb019ddea06450a50ef6203d2fdc19fee
+      uses: cachix/install-nix-action@v31
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -189,10 +189,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: cachix/install-nix-action@b97f05dcb019ddea06450a50ef6203d2fdc19fee
+    - uses: cachix/install-nix-action@v31
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
