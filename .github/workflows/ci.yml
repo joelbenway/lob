@@ -66,7 +66,7 @@ jobs:
         "cmake --build build/coverage -t coverage"
 
     - name: Submit to codecov.io
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v7
       with:
         disable_search: true
         files: build/coverage/coverage.info
@@ -112,7 +112,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-2022]
+        os: [macos-latest, ubuntu-latest, windows-latest]
 
         type: [shared, static]
 
@@ -150,7 +150,7 @@ jobs:
         "cmake --install build --config Release --prefix prefix"
 
     - name: Setup MultiToolTask
-      if: matrix.os == 'windows-2022'
+      if: matrix.os == 'windows-latest'
       run: |
         Add-Content "$env:GITHUB_ENV" 'UseMultiToolTask=true'
         Add-Content "$env:GITHUB_ENV" 'EnforceProcessCountAcrossBuilds=true'
@@ -162,7 +162,7 @@ jobs:
         -D BUILD_SHARED_LIBS=${{ matrix.shared }} -Wno-error=dev -Wno-dev
 
     - name: Setup PATH
-      if: matrix.os == 'windows-2022' && matrix.type == 'shared'
+      if: matrix.os == 'windows-latest' && matrix.type == 'shared'
       run: Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\Release"
 
     - name: Build on Windows and Mac
@@ -174,7 +174,7 @@ jobs:
       run: cmake --install build --config Release --prefix prefix
 
     - name: Move DLL for Windows Shared
-      if: matrix.os == 'windows-2022' && matrix.type == 'shared'
+      if: matrix.os == 'windows-latest' && matrix.type == 'shared'
       shell: pwsh
       run: Copy-Item -Path "build\Release\lob.dll" 
         -Destination "build\test\Release\lob.dll" -Force

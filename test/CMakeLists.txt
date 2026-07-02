@@ -77,7 +77,8 @@ set(LOB_TEST_SOURCES
     source/lob_coriolis_test.cpp
     source/lob_env_test.cpp
     source/lob_spin_drift_test.cpp
-    source/lob_wind_test.cpp)
+    source/lob_wind_test.cpp
+    source/splines_test.cpp)
 
 set(HELPER_TEST_SOURCES
     source/boatright_test.cpp
