@@ -26,7 +26,7 @@ TEST(LobAPITest, Version) {
 }
 
 TEST(LobAPITest, SolverSkipsPoorlyFormedInput) {
-  const lob::Input kA{};
+  const lob::Context kA{};
   const uint32_t kB = 100U;
   lob::Output out;
   const auto kSize = lob::Solve(kA, &kB, &out, 1U);
@@ -38,7 +38,7 @@ TEST(LobAPITest, MaximumTimeOfFlight) {
   const uint16_t kTestMuzzleVelocity = 3100U;
   const double kTestZeroAngle = 6.11;
   const double kMaxTime = 1.5;
-  const lob::Input kResult = lob::Builder()
+  const lob::Context kResult = lob::Builder()
                                  .BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .ZeroAngleMOA(kTestZeroAngle)
@@ -58,7 +58,7 @@ TEST(LobAPITest, MinimumVelocity) {
   const uint16_t kTestMuzzleVelocity = 3100U;
   const double kTestZeroAngle = 6.11;
   const uint16_t kMinimumVelocity = 2'000U;
-  const lob::Input kResult = lob::Builder()
+  const lob::Context kResult = lob::Builder()
                                  .BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .ZeroAngleMOA(kTestZeroAngle)
@@ -78,7 +78,7 @@ TEST(LobAPITest, MinimumEnergy) {
   const double kGrains = 130.0;
   const double kTestZeroAngle = 6.11;
   const uint16_t kMinimumEnergy = 1'000U;
-  const lob::Input kResult = lob::Builder()
+  const lob::Context kResult = lob::Builder()
                                  .BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .MassGrains(kGrains)
@@ -98,7 +98,7 @@ TEST(LobAPITest, RunUntilFallStop) {
   const uint16_t kTestMuzzleVelocity = 3100U;
   const double kGrains = 130.0;
   const double kTestZeroAngle = 6.11;
-  const lob::Input kResult = lob::Builder()
+  const lob::Context kResult = lob::Builder()
                                  .BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .MassGrains(kGrains)
@@ -116,7 +116,7 @@ TEST(LobAPITest, ZeroStepSizeAutoTerminate) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
   const double kTestZeroAngle = 6.11;
-  const lob::Input kResult = lob::Builder()
+  const lob::Context kResult = lob::Builder()
                                  .BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .ZeroAngleMOA(kTestZeroAngle)
@@ -132,7 +132,7 @@ TEST(LobAPITest, NonMonotonicRangesRejected) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
   const double kTestZeroAngle = 6.11;
-  const lob::Input kResult = lob::Builder()
+  const lob::Context kResult = lob::Builder()
                                  .BallisticCoefficientPsi(kTestBC)
                                  .InitialVelocityFps(kTestMuzzleVelocity)
                                  .ZeroAngleMOA(kTestZeroAngle)
@@ -419,63 +419,6 @@ TEST(LobAPITest, ErrorTComparisonWithCEnum) {
   EXPECT_TRUE(kLobErrorBallisticCoefficientRequired != lob::ErrorT::kNone);
   EXPECT_FALSE(lob::ErrorT::kNone != kLobErrorNone);
   EXPECT_FALSE(kLobErrorNone != lob::ErrorT::kNone);
-}
-
-TEST(LobAPITest, ToEnumDragFunction) {
-  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(kLobDragFunctionG1),
-            lob::DragFunctionT::kG1);
-  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(kLobDragFunctionG2),
-            lob::DragFunctionT::kG2);
-  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(kLobDragFunctionG5),
-            lob::DragFunctionT::kG5);
-  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(kLobDragFunctionG6),
-            lob::DragFunctionT::kG6);
-  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(kLobDragFunctionG7),
-            lob::DragFunctionT::kG7);
-  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(kLobDragFunctionG8),
-            lob::DragFunctionT::kG8);
-}
-
-TEST(LobAPITest, ToEnumAtmosphereReference) {
-  EXPECT_EQ(lob::ToEnum<lob::AtmosphereReferenceT>(
-                kLobAtmosphereReferenceArmyStandardMetro),
-            lob::AtmosphereReferenceT::kArmyStandardMetro);
-  EXPECT_EQ(lob::ToEnum<lob::AtmosphereReferenceT>(kLobAtmosphereReferenceIcao),
-            lob::AtmosphereReferenceT::kIcao);
-}
-
-TEST(LobAPITest, ToUnderlyingClockAngle) {
-  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kI), kLobClockAngleI);
-  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kII), kLobClockAngleII);
-  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kIII), kLobClockAngleIII);
-  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kIV), kLobClockAngleIV);
-  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kV), kLobClockAngleV);
-  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kVI), kLobClockAngleVI);
-  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kVII), kLobClockAngleVII);
-  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kVIII), kLobClockAngleVIII);
-  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kIX), kLobClockAngleIX);
-  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kX), kLobClockAngleX);
-  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kXI), kLobClockAngleXI);
-  EXPECT_EQ(lob::ToUnderlying(lob::ClockAngleT::kXII), kLobClockAngleXII);
-}
-
-TEST(LobAPITest, ToUnderlyingError) {
-  EXPECT_EQ(lob::ToUnderlying(lob::ErrorT::kHumidityOOR), kLobErrorHumidityOOR);
-}
-
-TEST(LobAPITest, ToEnumToUnderlyingRoundTrip) {
-  EXPECT_EQ(lob::ToEnum<lob::DragFunctionT>(
-                lob::ToUnderlying(lob::DragFunctionT::kG8)),
-            lob::DragFunctionT::kG8);
-  EXPECT_EQ(
-      lob::ToEnum<lob::ClockAngleT>(lob::ToUnderlying(lob::ClockAngleT::kXII)),
-      lob::ClockAngleT::kXII);
-  EXPECT_EQ(lob::ToEnum<lob::AtmosphereReferenceT>(lob::ToUnderlying(
-                lob::AtmosphereReferenceT::kArmyStandardMetro)),
-            lob::AtmosphereReferenceT::kArmyStandardMetro);
-  EXPECT_EQ(
-      lob::ToEnum<lob::ErrorT>(lob::ToUnderlying(lob::ErrorT::kInternalError)),
-      lob::ErrorT::kInternalError);
 }
 
 }  // namespace tests

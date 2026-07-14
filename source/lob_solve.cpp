@@ -14,13 +14,14 @@
 #include "lob/lob.h"
 #include "ode.hpp"
 #include "solve_step.hpp"
+#include "splines.hpp"
 
 namespace lob {
 namespace {
 
 LobOutput LerpOutput(const TrajectoryStateT& s_now, const SecT t_now,
                      const TrajectoryStateT& s_prev, const SecT t_prev,
-                     double alpha, const LobInput& input) {
+                     double alpha, const LobContext& input) {
   const CartesianT<FeetT> kP =
       s_prev.P() + (s_now.P() - s_prev.P()) * FeetT(alpha);
   const CartesianT<FpsT> kV =
@@ -40,7 +41,7 @@ LobOutput LerpOutput(const TrajectoryStateT& s_now, const SecT t_now,
   return out;
 }
 
-void ApplyGyroscopicSpinDrift(const LobInput& in, LobOutput* pouts,
+void ApplyGyroscopicSpinDrift(const LobContext& in, LobOutput* pouts,
                               size_t size) {
   assert(pouts != nullptr);
   if (!std::isnan(in.spindrift_factor)) {
@@ -66,7 +67,7 @@ void ApplyGyroscopicSpinDrift(const LobInput& in, LobOutput* pouts,
 extern "C" {
 using namespace lob;  // NOLINT(google-build-using-namespace)
 
-size_t LobSolve(const LobInput* in, const uint32_t* pranges, LobOutput* pouts,
+size_t LobSolve(const LobContext* in, const uint32_t* pranges, LobOutput* pouts,
                 size_t size) {
   assert(in != nullptr);
   assert(pranges != nullptr);
@@ -92,11 +93,17 @@ size_t LobSolve(const LobInput* in, const uint32_t* pranges, LobOutput* pouts,
   SecT t(0);
   size_t index = 0;
 
+  spline::Cursor<float, spline::kKnotCount> cursor(spline::kKnots.data(),
+                                                   &in->drags[0]);
+
   while (true) {
     const TrajectoryStateT kS = s;
     const SecT kT = t;
 
-    SolveStep(&s, &t, *in);
+    const MachT kMach(s.V().Magnitude(), FpsT(in->speed_of_sound).Inverse());
+    const auto kCd =
+        static_cast<double>(cursor.Eval(kMach.Float())) * in->drag_coeff;
+    SolveStep(&s, &t, *in, kCd);
 
     if (s.P().X() >= FeetT(pranges[index]) && kS.P().X() < s.P().X()) {
       const double kAlpha =

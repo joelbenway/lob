@@ -3,12 +3,10 @@
 // Please see end of file for extended copyright information
 
 #include <algorithm>
-#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 
 #include "boatright.hpp"
 #include "calc.hpp"
@@ -20,7 +18,7 @@
 #include "lob/lob.h"
 #include "ode.hpp"
 #include "solve_step.hpp"
-#include "tables.hpp"
+#include "splines.hpp"
 
 namespace lob {
 
@@ -43,7 +41,7 @@ class Impl {
   FtLbsT minimum_energy_ft_lbs{NaN()};
   InchT nose_length_in{NaN()};
   double ogive_rtr{NaN()};
-  const uint16_t* pdrag_lut{kG1Drags.data()};
+  const std::array<float, spline::kCoefsSize>* pdrag_function{nullptr};
   RadiansT range_angle_rad{NaN()};
   double relative_humidity_percent{NaN()};
   InchT tail_length_in{NaN()};
@@ -54,7 +52,7 @@ class Impl {
   FeetT zero_distance_ft{NaN()};
   FeetT zero_impact_height{NaN()};
 
-  LobInput build{};
+  LobContext build{};
 };
 
 namespace {
@@ -70,6 +68,7 @@ const Impl* Pimpl(const LobBuilder* builder) {
 }
 
 void InitBuilder(Impl* pimpl) {
+  pimpl->pdrag_function = nullptr;
   pimpl->build.aerodynamic_jump = NaN();
   pimpl->build.zero_angle = NaN();
   pimpl->build.spindrift_factor = NaN();
@@ -210,14 +209,13 @@ void BuildTable(Impl* pimpl) {
     pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
   }
 
-  static_assert(LOB_TABLE_SIZE == kTableSize, "Table size not identical.");
-  if (pimpl->pdrag_lut != &pimpl->build.drags[0]) {
-    std::copy(pimpl->pdrag_lut, pimpl->pdrag_lut + LOB_TABLE_SIZE,
-              &pimpl->build.drags[0]);
+  if (pimpl->pdrag_function == nullptr) {
+    pimpl->pdrag_function = &spline::kG1Coefs;
   }
-  const double kCdCoefficient = CalculateCdCoefficient(
+  std::copy_n(pimpl->pdrag_function->data(), spline::kCoefsSize,
+              &pimpl->build.drags[0]);
+  pimpl->build.drag_coeff = CalculateCdCoefficient(
       pimpl->air_density_lbs_per_cu_ft, pimpl->ballistic_coefficient_psi);
-  pimpl->build.table_coefficient = kCdCoefficient;
 }
 
 void BuildWind(Impl* pimpl) {
@@ -328,7 +326,6 @@ void BuildCoriolis(Impl* pimpl) {
 
 void BuildBoatright(Impl* pimpl) {
   assert(pimpl != nullptr);
-  assert(pimpl->pdrag_lut != nullptr);
 
   if (pimpl->meplat_diameter_in < InchT(0)) {
     pimpl->build.error = kLobErrorMeplatDiameterOOR;
@@ -384,6 +381,9 @@ void BuildBoatright(Impl* pimpl) {
   const SqInT kS = CalculateProjectileReferenceArea(kD);
   const auto kAR = boatright::CalculateAspectRatio(kL, kLFN, kLBT, kDB);
   const auto kM = lob::MachT(kVelocity, kSos.Inverse());
+  spline::Cursor<float, spline::kKnotCount> drag_curve(
+      spline::kKnots.data(), pimpl->pdrag_function->data());
+  const auto kCdRef = static_cast<double>(drag_curve.Eval(kM.Float()));
   const auto kCL = boatright::CalculateCoefficientOfLift(kLFN, kM);
   const auto kCDa = boatright::CalculateYawDragCoefficient(kM, kCL, kAR);
   const auto kRho = boatright::CalculateFastAverageDensity(kD, kL, kDM, kLN,
@@ -398,9 +398,6 @@ void BuildBoatright(Impl* pimpl) {
   const auto kTn = boatright::CalculateFirstNutationPeriod(kF1F2Sum - kF2, kF2);
   const auto kGamma =
       boatright::CalculateCrosswindAngleGamma(kZWind, kVelocity);
-  const double kCdRef = LobLerp(kMachs.data(), pimpl->pdrag_lut, LOB_TABLE_SIZE,
-                                kM.Value() * kTableScale) /
-                        kTableScale;
   const auto kCD0 =
       boatright::CalculateZeroYawDragCoefficientOfDrag(kCdRef, kMass, kD, kBc);
   const auto kCDAdjustment =
@@ -427,7 +424,11 @@ void BuildBoatright(Impl* pimpl) {
       pimpl->build.error = kLobErrorInternalError;
       return;
     }
-    SolveStep(&s, &t, pimpl->build);
+    const MachT kBuildMach(s.V().Magnitude(), kSos.Inverse());
+    const double kBuildCd =
+        static_cast<double>(drag_curve.Eval(kBuildMach.Float())) *
+        pimpl->build.drag_coeff;
+    SolveStep(&s, &t, pimpl->build, kBuildCd);
   }
 
   const auto kV = boatright::CalculateKV(kVelocity, kTransonicBarrier);
@@ -438,7 +439,7 @@ void BuildBoatright(Impl* pimpl) {
       kVelocity, kTwist, kIyOverIx, kR, kOmega, kV);
 
   PmsiT bc_g7(0);
-  if (pimpl->pdrag_lut == kG7Drags.data()) {
+  if (pimpl->pdrag_function == &spline::kG7Coefs) {
     bc_g7 = kBc;
   } else {
     const double kFormFactor =
@@ -540,7 +541,14 @@ void BuildZeroAngle(Impl* pimpl) {
         pimpl->build.error = kLobErrorInternalError;
         return;
       }
-      SolveStep(&s, &t, pimpl->build);
+      const MachT kZeroMach(s.V().Magnitude(),
+                            FpsT(pimpl->build.speed_of_sound).Inverse());
+      spline::Cursor<float, spline::kKnotCount> zero_drag_curve(
+          spline::kKnots.data(), static_cast<const float*>(pimpl->build.drags));
+      const double kZeroCd =
+          static_cast<double>(zero_drag_curve.Eval(kZeroMach.Float())) *
+          pimpl->build.drag_coeff;
+      SolveStep(&s, &t, pimpl->build, kZeroCd);
     }
 
     pimpl->build.step_size = kSavedStepSize;
@@ -622,28 +630,28 @@ LobBuilder* LobBuilderBCDragFunction(LobBuilder* builder,
   auto* pimpl = Pimpl(builder);
   switch (type) {
     case kLobDragFunctionG2: {
-      pimpl->pdrag_lut = kG2Drags.data();
+      pimpl->pdrag_function = &spline::kG2Coefs;
       break;
     }
     case kLobDragFunctionG5: {
-      pimpl->pdrag_lut = kG5Drags.data();
+      pimpl->pdrag_function = &spline::kG5Coefs;
       break;
     }
     case kLobDragFunctionG6: {
-      pimpl->pdrag_lut = kG6Drags.data();
+      pimpl->pdrag_function = &spline::kG6Coefs;
       break;
     }
     case kLobDragFunctionG7: {
-      pimpl->pdrag_lut = kG7Drags.data();
+      pimpl->pdrag_function = &spline::kG7Coefs;
       break;
     }
     case kLobDragFunctionG8: {
-      pimpl->pdrag_lut = kG8Drags.data();
+      pimpl->pdrag_function = &spline::kG8Coefs;
       break;
     }
     case kLobDragFunctionG1:
     default: {
-      pimpl->pdrag_lut = kG1Drags.data();
+      pimpl->pdrag_function = &spline::kG1Coefs;
       break;
     }
   }
@@ -692,39 +700,36 @@ LobBuilder* LobBuilderOgiveRtR(LobBuilder* builder, double value) {
   return builder;
 }
 
-LobBuilder* LobBuilderMachVsDragTable(LobBuilder* builder, const float* pmachs,
-                                      const float* pdrags, size_t size) {
+LobBuilder* LobBuilderSplineFitTable(LobBuilder* builder, const float* pmachs,
+                                     const float* pdrags, size_t size) {
   auto* pimpl = Pimpl(builder);
   if (pmachs == nullptr || pdrags == nullptr || size < 2) {
+    pimpl->build.error = kLobErrorBadParameter;
     return builder;
   }
-  const auto kFirstMach = static_cast<double>(pmachs[0]);
-  const auto kLastMach = static_cast<double>(pmachs[size - 1]);
-  constexpr double kMinSampleMach =
-      static_cast<double>(kMachs.front()) / kTableScale;
-  constexpr double kMaxSampleMach =
-      static_cast<double>(kMachs.back()) / kTableScale;
-  if (kFirstMach > kMinSampleMach || kLastMach < kMaxSampleMach) {
+  if (pmachs[0] > spline::kKnots.front() ||
+      pmachs[size - 1] < spline::kKnots.back()) {
+    pimpl->build.error = kLobErrorBadParameter;
     return builder;
   }
   for (size_t i = 1; i < size; i++) {
     if (pmachs[i] <= pmachs[i - 1]) {
+      pimpl->build.error = kLobErrorBadParameter;
       return builder;
     }
   }
   for (size_t i = 0; i < size; i++) {
     if (pdrags[i] < 0.0F || pdrags[i] > std::numeric_limits<float>::max()) {
+      pimpl->build.error = kLobErrorBadParameter;
       return builder;
     }
   }
-  auto* pdrag = &pimpl->build.drags[0];
-  for (size_t i = 0; i < LOB_TABLE_SIZE; i++) {
-    const auto kMach = static_cast<double>(kMachs.at(i)) / kTableScale;
-    const auto kDrag = static_cast<uint16_t>(
-        std::round(LobLerp(pmachs, pdrags, size, kMach) * kTableScale));
-    *pdrag++ = kDrag;
-  }
-  pimpl->pdrag_lut = &pimpl->build.drags[0];
+  spline::Build(pmachs, pdrags, size, spline::kKnots.data(), spline::kKnotCount,
+                &pimpl->build.drags[0]);
+  pimpl->pdrag_function =
+      // NOLINTNEXTLINE (cppcoreguidelines-pro-type-reinterpret-cast)
+      reinterpret_cast<const std::array<float, spline::kCoefsSize>*>(
+          &pimpl->build.drags[0]);
   pimpl->ballistic_coefficient_psi = PmsiT(1);
   return builder;
 }
@@ -894,45 +899,59 @@ LobBuilder* LobBuilderStepSize(LobBuilder* builder, uint16_t value) {
   return builder;
 }
 
-LobInput LobBuilderBuild(LobBuilder* builder) {
+void LobBuilderBuild(LobBuilder* builder, LobContext* result) {
   auto* pimpl = Pimpl(builder);
+  assert(result != nullptr);
+  if (result == nullptr) {
+    return;
+  }
+
   pimpl->build.error = kLobErrorNotFormed;
   BuildEnvironment(pimpl);
   if (pimpl->build.error != kLobErrorNotFormed) {
-    return pimpl->build;
+    result->error = pimpl->build.error;
+    return;
   }
   BuildTable(pimpl);
   if (pimpl->build.error != kLobErrorNotFormed) {
-    return pimpl->build;
+    result->error = pimpl->build.error;
+    return;
   }
   BuildWind(pimpl);
   if (pimpl->build.error != kLobErrorNotFormed) {
-    return pimpl->build;
+    result->error = pimpl->build.error;
+    return;
   }
   BuildOpticHeight(pimpl);
   BuildStability(pimpl);
   if (pimpl->build.error != kLobErrorNotFormed) {
-    return pimpl->build;
+    result->error = pimpl->build.error;
+    return;
   }
   BuildCoriolis(pimpl);
   if (pimpl->build.error != kLobErrorNotFormed) {
-    return pimpl->build;
+    result->error = pimpl->build.error;
+    return;
   }
   BuildBoatright(pimpl);
   if (pimpl->build.error != kLobErrorNotFormed) {
-    return pimpl->build;
+    result->error = pimpl->build.error;
+    return;
   }
   BuildLitzAerodynamicJump(pimpl);
   BuildZeroAngle(pimpl);
   if (pimpl->build.error != kLobErrorNotFormed) {
-    return pimpl->build;
+    result->error = pimpl->build.error;
+    return;
   }
   BuildOptions(pimpl);
 
   if (pimpl->build.error == kLobErrorNotFormed) {
+    result->error = pimpl->build.error;
     pimpl->build.error = kLobErrorNone;
   }
-  return pimpl->build;
+
+  *result = pimpl->build;
 }
 
 }  // extern "C"

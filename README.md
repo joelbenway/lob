@@ -43,30 +43,23 @@ To use lob in your project, [the C++ header](include/lob/lob.hpp) has everything
 
 ### How to use lob
 ```C++
-#include <array>  // for array
-#include <cstddef>  // for size_t
-#include <cstdint>  // for uint32_t
-#include <iostream> // for cout
 #include "lob.hpp"
 
-// Prepare an input using the Builder class
-const lob::Input kSolverInput = 
+const lob::Context kSolverCtx = 
   lob::Builder()
   .BallisticCoefficientPsi(0.425)
   .InitialVelocityFps(2700)
   .ZeroDistanceYds(100.0)
   .Build();
-// Solve for multiple ranges
-const size_t kNumToSolve = 7;
-const std::array<uint32_t, kNumToSolve> kRanges = 
-  {0, 300, 600, 900, 1200, 1500, 1800};
-// Create an array to hold the outputs
-// (c-style arrays are also supported)
+
+const std::array<uint32_t, 7U> kRanges = 
+  {0U, 300U, 600U, 900U, 1200U, 1500U, 1800U};
+
 std::array<lob::Output, kNumToSolve> solver_outputs = {};
 // Solve!
 const size_t kNumSolved = 
-  lob::Solve(kSolverInput, kRanges, solver_outputs);
-// Do something with outputs
+  lob::Solve(kSolverCtx, kRanges, solver_outputs);
+
 for (size_t i = 0; i < kNumSolved; i++) {
   std::cout << "Drop at " << solver_outputs.at(i).range 
     << " feet is " << solver_outputs.at(i).elevation
@@ -75,7 +68,7 @@ for (size_t i = 0; i < kNumSolved; i++) {
 ```
 Those few parameters are enough for lob to make a well-formed, if minimal, ballistic solution. By feeding more data, we can get something more practical from the solver.
 ```C++
-const lob::Input kSolverInput = 
+const lob::Context kSolverCtx = 
   lob::Builder()
   .BallisticCoefficientPsi(0.214)
   .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)

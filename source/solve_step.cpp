@@ -12,11 +12,11 @@
 #include "eng_units.hpp"
 #include "lob/lob.h"
 #include "ode.hpp"
-#include "tables.hpp"
 
 namespace lob {
 
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const LobInput& input) {
+void SolveStep(TrajectoryStateT* ps, SecT* pt, const LobContext& input,
+               double cd) {
   assert(ps != nullptr);
   assert(pt != nullptr);
 
@@ -28,15 +28,7 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, const LobInput& input) {
   const CartesianT<FpsT> kWind(FpsT(input.wind.x), FpsT(0.0),
                                FpsT(input.wind.z));
 
-  // For best accuracy all calculations which depend on the velocity state would
-  // occur inside the lambda as the numerical method updates the velocity (and
-  // thus the coefficient of drag) several times. However, LobLerp is an
-  // expensive calculation and the difference between doing it once or several
-  // times per step is negligible.
   const MachT kMach(ps->V().Magnitude(), FpsT(input.speed_of_sound).Inverse());
-  const double kCd = LobLerp(kMachs.data(), &input.drags[0], kTableSize,
-                             static_cast<double>(kMach) * kTableScale) /
-                     kTableScale * static_cast<double>(input.table_coefficient);
 
   auto ds_dt = [&](SecT t, const TrajectoryStateT& s) -> TrajectoryStateT {
     static_cast<void>(t);  // t is unused
@@ -44,7 +36,7 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, const LobInput& input) {
                                   FeetT(s.V().Y().Value()),
                                   FeetT(s.V().Z().Value()));
     const FpsT kScalarVelocity = (s.V() - kWind).Magnitude();
-    CartesianT<FpsT> dv_dt = (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
+    CartesianT<FpsT> dv_dt = (s.V() - kWind) * FpsT(-1 * cd) * kScalarVelocity;
     dv_dt.X(dv_dt.X() - s.V().Y() * input.coriolis.cos_l_sin_a -
             s.V().Z() * input.coriolis.sin_l);
     dv_dt.Y(dv_dt.Y() + s.V().X() * input.coriolis.cos_l_sin_a +

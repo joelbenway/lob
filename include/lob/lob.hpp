@@ -7,16 +7,15 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <type_traits>
 
 #include "lob/lob.h"
 
 namespace lob {
 
-/** @brief The size of a drag table. */
-constexpr size_t kLobTableSize = LOB_TABLE_SIZE;
 /** @brief The size in bytes of the builder buffer. */
 constexpr size_t kLobBuilderBufferSize = LOB_BUILDER_BUFFER_SIZE;
+/** @brief The size of spline coeffs in Context. */
+constexpr size_t kLobCoeffsSize = LOB_SPLINE_SEGMENTS * static_cast<size_t>(4);
 
 /** @brief Enumerates the supported drag functions. */
 enum class DragFunctionT : LobDragFunctionT {
@@ -65,6 +64,7 @@ enum class ErrorT : LobErrorT {
   kAltitudeOfFiringSiteOOR = ::kLobErrorAltitudeOfFiringSiteOOR,
   kAltitudeOfThermometerOOR = ::kLobErrorAltitudeOfThermometerOOR,
   kAzimuthOOR = ::kLobErrorAzimuthOOR,
+  kBadParameter = ::kLobErrorBadParameter,
   kBallisticCoefficientOOR = ::kLobErrorBallisticCoefficientOOR,
   kBallisticCoefficientRequired = ::kLobErrorBallisticCoefficientRequired,
   kBaseDiameterOOR = ::kLobErrorBaseDiameterOOR,
@@ -88,29 +88,6 @@ enum class ErrorT : LobErrorT {
   kNotFormed = ::kLobErrorNotFormed
 };
 
-/**
- * @brief Converts an integer value to an enum class.
- * @tparam E The enum type to convert to.
- * @param value The underlying integer value.
- * @return The enum value corresponding to the integer.
- */
-template <typename E>
-constexpr E ToEnum(std::underlying_type_t<E> value) noexcept {
-  static_assert(std::is_enum<E>::value, "ToEnum() only supports enum types");
-  return static_cast<E>(value);
-}
-
-/**
- * @brief Converts an enum class value to its underlying integer type.
- * @tparam E The enum type to convert from.
- * @param value The enum value.
- * @return The underlying integer value.
- */
-template <typename E>
-constexpr std::underlying_type_t<E> ToUnderlying(E value) noexcept {
-  return static_cast<std::underlying_type_t<E>>(value);
-}
-
 /** @brief Gravity vector. See @c LobGravity for member details. */
 using Gravity = ::LobGravity;
 /** @brief Wind vector. See @c LobWind for member details. */
@@ -118,11 +95,52 @@ using Wind = ::LobWind;
 /** @brief Coriolis effect parameters. See @c LobCoriolis for member details. */
 using Coriolis = ::LobCoriolis;
 /**
- * @brief Structure of input parameters consumed by the solver.
- * @note This is not a user-friendly structure. Generate Input using the
- * provided Builder class. See @c LobInput for member details.
+ * @brief Structure of parameters consumed by the solver.
+ * @note This is not a user-friendly structure. Generate Context using the
+ * provided Builder class. Layout-compatible with @c LobContext.
  */
-using Input = ::LobInput;
+struct Context {
+  double drag_coeff;
+  double speed_of_sound;
+  double mass;
+  double optic_height;
+  Gravity gravity;
+  Wind wind;
+  Coriolis coriolis;
+  double zero_angle;
+  double stability_factor;
+  double aerodynamic_jump;
+  double spindrift_factor;
+  double max_time;
+  std::array<float, kLobCoeffsSize> drags;
+  uint16_t velocity;
+  uint16_t minimum_speed;
+  uint16_t step_size;
+  ErrorT error;
+};
+
+static_assert(sizeof(Context) == sizeof(::LobContext), "Context vs LobContext size mismatch");
+static_assert(alignof(Context) == alignof(::LobContext), "Context vs LobContext alignment mismatch");
+static_assert(offsetof(Context, drag_coeff) == offsetof(::LobContext, drag_coeff), "drag_coeff offset drift");
+static_assert(offsetof(Context, speed_of_sound) == offsetof(::LobContext, speed_of_sound), "speed_of_sound offset drift");
+static_assert(offsetof(Context, mass) == offsetof(::LobContext, mass), "mass offset drift");
+static_assert(offsetof(Context, optic_height) == offsetof(::LobContext, optic_height), "optic_height offset drift");
+static_assert(offsetof(Context, gravity) == offsetof(::LobContext, gravity), "gravity offset drift");
+static_assert(offsetof(Context, wind) == offsetof(::LobContext, wind), "wind offset drift");
+static_assert(offsetof(Context, coriolis) == offsetof(::LobContext, coriolis), "coriolis offset drift");
+static_assert(offsetof(Context, zero_angle) == offsetof(::LobContext, zero_angle), "zero_angle offset drift");
+static_assert(offsetof(Context, stability_factor) == offsetof(::LobContext, stability_factor), "stability_factor offset drift");
+static_assert(offsetof(Context, aerodynamic_jump) == offsetof(::LobContext, aerodynamic_jump), "aerodynamic_jump offset drift");
+static_assert(offsetof(Context, spindrift_factor) == offsetof(::LobContext, spindrift_factor), "spindrift_factor offset drift");
+static_assert(offsetof(Context, max_time) == offsetof(::LobContext, max_time), "max_time offset drift");
+static_assert(offsetof(Context, drags) == offsetof(::LobContext, drags), "drags offset drift");
+static_assert(offsetof(Context, velocity) == offsetof(::LobContext, velocity), "velocity offset drift");
+static_assert(offsetof(Context, minimum_speed) == offsetof(::LobContext, minimum_speed), "minimum_speed offset drift");
+static_assert(offsetof(Context, step_size) == offsetof(::LobContext, step_size), "step_size offset drift");
+static_assert(offsetof(Context, error) == offsetof(::LobContext, error), "error offset drift");
+static_assert(static_cast<::LobErrorT>(ErrorT::kNone) == ::kLobErrorNone, "ErrorT kNone value drift");
+static_assert(static_cast<::LobErrorT>(ErrorT::kNotFormed) == ::kLobErrorNotFormed, "ErrorT kNotFormed value drift");
+
 /** @brief Structure holding output results. See @c LobOutput for member
  * details. */
 using Output = ::LobOutput;
@@ -141,7 +159,7 @@ inline bool operator!=(ErrorT a, ::LobErrorT b) noexcept {
 }
 
 /**
- * @brief Builder class for constructing Input objects with a friendly
+ * @brief Builder class for constructing Context objects with a friendly
  * interface.
  */
 class Builder {
@@ -199,6 +217,16 @@ class Builder {
   }
 
   /**
+   * @brief Sets the atmosphere reference associated with ballistic coefficient.
+   * @param type The atmosphere reference type.
+   * @return A reference to the Builder object.
+   */
+  Builder& BCAtmosphere(LobAtmosphereReferenceT type) {
+    ::LobBuilderBCAtmosphere(&builder_, type);
+    return *this;
+  }
+
+  /**
    * @brief Sets the drag function associated with ballistic coefficient.
    * @param type The drag function type.
    * @return A reference to the Builder object.
@@ -206,6 +234,16 @@ class Builder {
   Builder& BCDragFunction(DragFunctionT type) {
     ::LobBuilderBCDragFunction(&builder_,
                                static_cast<::LobDragFunctionT>(type));
+    return *this;
+  }
+
+  /**
+   * @brief Sets the drag function associated with ballistic coefficient.
+   * @param type The drag function type.
+   * @return A reference to the Builder object.
+   */
+  Builder& BCDragFunction(LobDragFunctionT type) {
+    ::LobBuilderBCDragFunction(&builder_, type);
     return *this;
   }
 
@@ -290,7 +328,7 @@ class Builder {
    */
   Builder& MachVsDragTable(const float* pmachs, const float* pdrags,
                            size_t size) {
-    ::LobBuilderMachVsDragTable(&builder_, pmachs, pdrags, size);
+    ::LobBuilderSplineFitTable(&builder_, pmachs, pdrags, size);
     return *this;
   }
 
@@ -306,7 +344,7 @@ class Builder {
   template <size_t N>
   Builder& MachVsDragTable(const std::array<float, N>& machs,
                            const std::array<float, N>& drags) {
-    ::LobBuilderMachVsDragTable(&builder_, machs.data(), drags.data(), N);
+    ::LobBuilderSplineFitTable(&builder_, machs.data(), drags.data(), N);
     return *this;
   }
 
@@ -466,6 +504,17 @@ class Builder {
   }
 
   /**
+   * @brief Sets the wind heading using a clock angle.
+   * @note Twelve O'Clock is pure tailwind, Six O'Clock is a pure headwind.
+   * @param value The wind heading as a clock angle.
+   * @return A reference to the Builder object.
+   */
+  Builder& WindHeading(LobClockAngleT value) {
+    ::LobBuilderWindHeading(&builder_, value);
+    return *this;
+  }
+
+  /**
    * @brief Sets the wind heading in degrees.
    * @note 0 is pure tailwind, 180 is pure headwind.
    * @param value The wind heading in degrees.
@@ -582,10 +631,15 @@ class Builder {
   }
 
   /**
-   * @brief Builds the Input object with the configured parameters.
-   * @return The constructed Input object.
+   * @brief Builds the Context object with the configured parameters.
+   * @return The constructed Context object.
    */
-  Input Build() { return ::LobBuilderBuild(&builder_); }
+  Context Build() {
+    Context result{};
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    ::LobBuilderBuild(&builder_, reinterpret_cast<::LobContext*>(&result));
+    return result;
+  }
 
  private:
   ::LobBuilder builder_;
@@ -593,29 +647,33 @@ class Builder {
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
- * @param in Input parameters for the calculation.
+ * @param in Context parameters for the calculation.
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
  * @param pouts Pointer to an array where the output results will be stored.
  * @param size The number of ranges to solve for.
  * @return The number of successful solutions.
  */
-inline size_t Solve(const Input& in, const uint32_t* pranges, Output* pouts,
+inline size_t Solve(const Context& in, const uint32_t* pranges, Output* pouts,
                     size_t size) {
-  return ::LobSolve(&in, pranges, pouts, size);
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobSolve(reinterpret_cast<const ::LobContext*>(&in), pranges, pouts,
+                    size);
 }
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
  * @tparam N The number of ranges to solve for.
- * @param in Input parameters for the calculation.
+ * @param in Context parameters for the calculation.
  * @param pranges Reference to an array of ranges (in feet) to solve for.
  * @param pouts Reference to an array where the output results will be stored.
  * @return The number of successful solutions.
  */
 template <size_t N>
-inline size_t Solve(const Input& in, const std::array<uint32_t, N>& pranges,
+inline size_t Solve(const Context& in, const std::array<uint32_t, N>& pranges,
                     std::array<Output, N>& pouts) {
-  return ::LobSolve(&in, pranges.data(), pouts.data(), N);
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobSolve(reinterpret_cast<const ::LobContext*>(&in), pranges.data(),
+                    pouts.data(), N);
 }
 
 /**

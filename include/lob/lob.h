@@ -12,13 +12,12 @@
 
 #ifdef __cplusplus
 extern "C" {
-// NOLINTBEGIN
 #endif
 
-/** @brief The number of entries in a drag table. */
-#define LOB_TABLE_SIZE 85
+/** @brief The number of spline pieces comprising a drag function. */
+#define LOB_SPLINE_SEGMENTS 15
 /** @brief The size in bytes of the builder buffer. */
-#define LOB_BUILDER_BUFFER_SIZE 576
+#define LOB_BUILDER_BUFFER_SIZE 600
 
 /** @brief Drag function type. */
 typedef uint8_t LobDragFunctionT;
@@ -65,6 +64,7 @@ enum {
   kLobErrorAltitudeOfFiringSiteOOR,
   kLobErrorAltitudeOfThermometerOOR,
   kLobErrorAzimuthOOR,
+  kLobErrorBadParameter,
   kLobErrorBallisticCoefficientOOR,
   kLobErrorBallisticCoefficientRequired,
   kLobErrorBaseDiameterOOR,
@@ -108,15 +108,13 @@ typedef struct {
 } LobCoriolis;
 
 /**
- * @brief Structure of input parameters consumed by the solver.
- * @note This is not a user-friendly structure. Generate LobInput using the
+ * @brief Structure of parameters consumed by the solver.
+ * @note This is not a user-friendly structure. Generate LobContext using the
  * provided LobBuilder.
  */
 typedef struct {
-  uint16_t drags[LOB_TABLE_SIZE];  ///< @brief The drag table.
-  double table_coefficient;        ///< @brief Used to scale the drag table.
-  double speed_of_sound;           ///< @brief The local speed of sound in Fps.
-  uint16_t velocity;        ///< @brief Initial velocity of projectile in Fps.
+  double drag_coeff;        ///< @brief Drag coefficient scaling.
+  double speed_of_sound;    ///< @brief The local speed of sound in Fps.
   double mass;              ///< @brief Mass of the projectile in pounds.
   double optic_height;      ///< @brief Height of the optic above the bore.
   LobGravity gravity;       ///< @brief Gravity vector.
@@ -126,11 +124,13 @@ typedef struct {
   double stability_factor;  ///< @brief Miller stability factor.
   double aerodynamic_jump;  ///< @brief Aerodynamic jump effect in Moa.
   double spindrift_factor;  ///< @brief Spin drift factor.
-  uint16_t minimum_speed;   ///< @brief Minimum speed for solver.
   double max_time;          ///< @brief Max time of flight for solver.
-  uint16_t step_size;       ///< @brief Step size for solver.
-  LobErrorT error;          ///< @brief Builder error field.
-} LobInput;
+  float drags[LOB_SPLINE_SEGMENTS * 4];  ///< @brief Required for drag curve.
+  uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
+  uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
+  uint16_t step_size;      ///< @brief Step size for solver.
+  LobErrorT error;         ///< @brief Error status after build.
+} LobContext;
 
 /** @brief Structure holding the output results of a ballistic calculation. */
 typedef struct {
@@ -142,10 +142,9 @@ typedef struct {
   double time_of_flight;  ///< @brief Time of flight in seconds.
 } LobOutput;
 
-/** @brief Opaque builder type for constructing LobInput objects. */
+/** @brief Opaque builder type for constructing LobContext objects. */
 typedef struct {
   union {
-    LobInput align_input;
     double align_double;
     size_t align_size;
     uint8_t buffer[LOB_BUILDER_BUFFER_SIZE];
@@ -264,10 +263,10 @@ LOB_EXPORT extern LobBuilder* LobBuilderOgiveRtR(LobBuilder* builder,
  * @param size The number of mach-drag pairs in the table.
  * @return Pointer to the builder.
  */
-LOB_EXPORT extern LobBuilder* LobBuilderMachVsDragTable(LobBuilder* builder,
-                                                        const float* pmachs,
-                                                        const float* pdrags,
-                                                        size_t size);
+LOB_EXPORT extern LobBuilder* LobBuilderSplineFitTable(LobBuilder* builder,
+                                                       const float* pmachs,
+                                                       const float* pdrags,
+                                                       size_t size);
 
 /**
  * @brief Sets the projectile mass in grains.
@@ -508,11 +507,12 @@ LOB_EXPORT extern LobBuilder* LobBuilderStepSize(LobBuilder* builder,
                                                  uint16_t value);
 
 /**
- * @brief Builds the LobInput object with the configured parameters.
+ * @brief Builds the LobContext object with the configured parameters.
  * @param builder Pointer to the builder.
- * @return The constructed LobInput object.
+ * @param result Pointer to the LobContext to populate. Must not be NULL.
+ * @warning Passing NULL for result is undefined behavior.
  */
-LOB_EXPORT extern LobInput LobBuilderBuild(LobBuilder* builder);
+LOB_EXPORT extern void LobBuilderBuild(LobBuilder* builder, LobContext* result);
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
@@ -522,7 +522,7 @@ LOB_EXPORT extern LobInput LobBuilderBuild(LobBuilder* builder);
  * @param size The number of ranges to solve for.
  * @return The number of successful solutions.
  */
-LOB_EXPORT extern size_t LobSolve(const LobInput* in, const uint32_t* pranges,
+LOB_EXPORT extern size_t LobSolve(const LobContext* in, const uint32_t* pranges,
                                   LobOutput* pouts, size_t size);
 
 /** @brief Converts minutes of angle (MOA) to milliradians (MIL).
@@ -767,7 +767,6 @@ LOB_EXPORT extern double LobSToUs(double value);
 LOB_EXPORT extern double LobDegCToDegF(double value);
 
 #ifdef __cplusplus
-// NOLINTEND
 }
 #endif
 

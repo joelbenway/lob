@@ -13,13 +13,13 @@
 namespace example {
 
 struct BridgeResult {
-  lob::Input input;
+  lob::Context input;
   std::vector<lob::Output> outputs;
   size_t count;
 };
 
 BridgeResult SolveFromJson(const nlohmann::json& j);
-void PrintTable(const lob::Input& input, const lob::Output* outputs,
+void PrintTable(const lob::Context& input, const lob::Output* outputs,
                 size_t count);
 nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count);
 
