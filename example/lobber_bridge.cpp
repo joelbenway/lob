@@ -66,7 +66,7 @@ lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
   if (std::isnan(kV)) {
     return lob::DragFunctionT::kG1;
   }
-  return lob::ToEnum<lob::DragFunctionT>(static_cast<uint8_t>(std::round(kV)));
+  return static_cast<lob::DragFunctionT>(static_cast<uint8_t>(std::round(kV)));
 }
 
 lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
@@ -79,7 +79,7 @@ lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
   const int kMinClock = 1;
   const int kMaxClock = 12;
   if (kRounded >= kMinClock && kRounded <= kMaxClock) {
-    return lob::ToEnum<lob::ClockAngleT>(static_cast<uint8_t>(kRounded));
+    return static_cast<lob::ClockAngleT>(static_cast<uint8_t>(kRounded));
   }
   return lob::ClockAngleT::kXII;
 }
@@ -152,7 +152,7 @@ BridgeResult SolveFromJson(const nlohmann::json& j) {
   return {input, std::move(outputs), kCount};
 }
 
-void PrintTable(const lob::Input& input, const lob::Output* outputs,
+void PrintTable(const lob::Context& input, const lob::Output* outputs,
                 size_t count) {
   constexpr uint8_t kExtra = 3;
 
@@ -163,18 +163,14 @@ void PrintTable(const lob::Input& input, const lob::Output* outputs,
   const std::string kZA("Zero Angle");
   const std::string kSF("Stability Factor");
   const std::string kSS("Speed of Sound");
-  const std::string kE("Error");
 
   std::cout << "\033[33m" << std::left << std::setw(extra_width(kZA)) << kZA
             << std::setw(extra_width(kSF)) << kSF << std::setw(extra_width(kSS))
-            << kSS << std::setw(extra_width(kE)) << kE << "\033[0m\n";
+            << kSS << "\033[0m\n";
   std::cout << std::left << std::setw(extra_width(kZA)) << std::fixed
             << std::setprecision(2) << input.zero_angle
             << std::setw(extra_width(kSF)) << input.stability_factor
-            << std::setw(extra_width(kSS)) << input.speed_of_sound
-            << std::setw(extra_width(kE)) << std::hex << std::showbase
-            << static_cast<unsigned int>(input.error) << std::dec
-            << std::noshowbase << "\n\n";
+            << std::setw(extra_width(kSS)) << input.speed_of_sound << "\n\n";
 
   // Table header
   const int kWidth = 12;

@@ -375,7 +375,8 @@ TEST(BoatrightTests, CalculateAerodynamicJump) {
   const lob::LbsPerCuFtT kAirDensity(0.0764742);
   const lob::FpsT kSos(1116.45);
   const double kCDref =
-      lob::LobLerp(lob::kMachs, lob::kG7Drags, lob::MachT(kV, kSos.Inverse()));
+      lob::dragtable::LobLerp(lob::dragtable::kMachs, lob::dragtable::kG7Drags,
+                              lob::MachT(kV, kSos.Inverse()));
   // Reference paper sample calculation publishes a result of -0.402 which I
   // believe is the result of an improperly calculated gyroscopic rates as well
   // as an estimated rather than calculated average density.

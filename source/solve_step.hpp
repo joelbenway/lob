@@ -10,7 +10,8 @@
 
 namespace lob {
 
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const ::LobInput& input);
+void SolveStep(TrajectoryStateT* ps, SecT* pt, const ::LobContext& input,
+               double cd);
 
 }  // namespace lob
 
