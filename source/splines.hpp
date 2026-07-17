@@ -98,40 +98,6 @@ constexpr ValDer<T> EvalWithDeriv(const T* x, const T* y, size_t n, T v) {
 
 }  // namespace detail
 
-template <typename T>
-class View {
- public:
-  const T* knots;
-  const T* coefs;
-  size_t n;
-
-  constexpr size_t SegmentIndex(T m) const {
-    return detail::FindInterval(knots, n, m);
-  }
-
-  constexpr T Eval(T m) const {
-    Clamp(m);
-    const size_t kI = SegmentIndex(m);
-    return detail::PolyVal(coefs + (4 * kI), m - knots[kI]);
-  }
-
-  constexpr T Deriv(T m) const {
-    Clamp(m);
-    const size_t kI = SegmentIndex(m);
-    return detail::PolyDeriv(coefs + (4 * kI), m - knots[kI]);
-  }
-
- private:
-  constexpr void Clamp(T& m) const {
-    if (m < knots[0]) {
-      m = knots[0];
-    }
-    if (m > knots[n - 1]) {
-      m = knots[n - 1];
-    }
-  }
-};
-
 template <typename T, size_t N>
 class Cursor {
  public:
