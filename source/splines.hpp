@@ -8,7 +8,6 @@
 #include <cstddef>
 #include <utility>
 
-#include "helpers.hpp"
 #include "tables.hpp"
 
 namespace lob {
@@ -22,29 +21,15 @@ constexpr T Secant(const T* x, const T* y, size_t i) {
 }
 
 template <typename T>
-constexpr T EndTangent(T h0, T h1, T d0, T d1) {
-  T m = ((T(2) * h0 + h1) * d0 - h0 * d1) / (h0 + h1);
-  if (m * d0 <= T(0)) {
-    return T(0);
-  }
-  if (d0 * d1 < T(0) && Fabs(m) > T(3) * Fabs(d0)) {
-    return T(3) * d0;
-  }
-  return m;
-}
-
-template <typename T>
 constexpr T Tangent(const T* x, const T* y, size_t n, size_t i) {
   if (n == 2) {
     return Secant(x, y, 0);
   }
   if (i == 0) {
-    return EndTangent(x[1] - x[0], x[2] - x[1], Secant(x, y, 0),
-                      Secant(x, y, 1));
+    return Secant(x, y, 0);
   }
   if (i == n - 1) {
-    return EndTangent(x[n - 1] - x[n - 2], x[n - 2] - x[n - 3],
-                      Secant(x, y, n - 2), Secant(x, y, n - 3));
+    return Secant(x, y, n - 2);
   }
 
   const T kDPrev = Secant(x, y, i - 1);
@@ -211,8 +196,10 @@ constexpr size_t kSegmentCount = kKnotCount - 1;
 constexpr size_t kCoefsSize = kSegmentCount * 4;
 
 constexpr std::array<float, kKnotCount> kKnots = {
-    0.0F,  0.35F, 0.6F, 0.825F, 0.9F, 0.96F, 1.025F, 1.125F,
-    1.25F, 1.55F, 2.0F, 2.5F,   3.0F, 3.5F,  4.0F,   5.0F};
+    0.000000000F, 0.555277646F, 0.597798944F, 0.760380208F,
+    0.885442734F, 0.940470278F, 1.003001571F, 1.018009067F,
+    1.075537801F, 1.213106632F, 1.373186588F, 1.688344240F,
+    2.126063108F, 2.808904648F, 3.926963568F, 5.000000000F};
 
 template <size_t... Is>
 constexpr std::array<float, sizeof...(Is)> ToArray(
