@@ -12,22 +12,23 @@
 #include "splines.hpp"
 #include "tables.hpp"
 
-namespace benchmarks {
-
+namespace benchmark {
+namespace {
 constexpr double kInitMach = 2.5;
 constexpr double kFinalMach = 0.25;
 constexpr double kDecrement = 1E-4;
-const auto kResultsSize = static_cast<size_t>(
-    std::ceil((kInitMach - kFinalMach) / kDecrement));
-std::vector<double> results(kResultsSize);
+const auto kResultsSize =
+    static_cast<size_t>(std::ceil((kInitMach - kFinalMach) / kDecrement));
 
+// NOLINTBEGIN(readability-identifier-naming) — Google Benchmark convention
 // Benchmark 1: LobLerp — binary search + linear interp from tables.hpp
 void BM_LobLerp(benchmark::State& state) {
+  static std::vector<double> results(kResultsSize);
   size_t index = 0;
   for (auto _ : state) {
     double mach = kInitMach;
     while (mach > kFinalMach) {
-      const double kResult = lob::dragtable::LobLerp(
+      const auto kResult = lob::dragtable::LobLerp(
           lob::dragtable::kMachs, lob::dragtable::kG1Drags, mach);
       results.at(index++) = kResult;
       mach -= kDecrement;
@@ -36,33 +37,16 @@ void BM_LobLerp(benchmark::State& state) {
   }
 }
 
-// Benchmark 2: spline::View — no-cache spline evaluation
-void BM_View(benchmark::State& state) {
-  lob::spline::View<float> view{lob::spline::kKnots.data(),
-                                lob::spline::kG1Coefs.data(),
-                                lob::spline::kKnotCount};
-  size_t index = 0;
-  for (auto _ : state) {
-    double mach = kInitMach;
-    while (mach > kFinalMach) {
-      const double kResult =
-          static_cast<double>(view.Eval(static_cast<float>(mach)));
-      results.at(index++) = kResult;
-      mach -= kDecrement;
-    }
-    index = 0;
-  }
-}
-
-// Benchmark 3: spline::Cursor — caching spline evaluation (stateful index)
+// Benchmark 2: spline::Cursor — caching spline evaluation (stateful index)
 void BM_Cursor(benchmark::State& state) {
+  static std::vector<double> results(kResultsSize);
   size_t index = 0;
   for (auto _ : state) {
     lob::spline::Cursor<float, lob::spline::kKnotCount> cursor{
         lob::spline::kKnots.data(), lob::spline::kG1Coefs.data()};
     double mach = kInitMach;
     while (mach > kFinalMach) {
-      const double kResult =
+      const auto kResult =
           static_cast<double>(cursor.Eval(static_cast<float>(mach)));
       results.at(index++) = kResult;
       mach -= kDecrement;
@@ -70,12 +54,13 @@ void BM_Cursor(benchmark::State& state) {
     index = 0;
   }
 }
+}  // namespace
+// NOLINTEND(readability-identifier-naming)
 
 BENCHMARK(BM_LobLerp);
-BENCHMARK(BM_View);
 BENCHMARK(BM_Cursor);
 
-}  // namespace benchmarks
+}  // namespace benchmark
 
 BENCHMARK_MAIN();
 
