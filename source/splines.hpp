@@ -98,11 +98,25 @@ constexpr ValDer<T> EvalWithDeriv(const T* x, const T* y, size_t n, T v) {
 
 }  // namespace detail
 
-template <typename T, size_t N>
+constexpr size_t kKnotCount = 16;
+constexpr size_t kSegmentCount = kKnotCount - 1;
+constexpr size_t kCoefsSize = kSegmentCount * 4;
+
+constexpr std::array<float, kKnotCount> kKnots = {
+    0.000000000F, 0.555277646F, 0.597798944F, 0.760380208F,
+    0.885442734F, 0.940470278F, 1.003001571F, 1.018009067F,
+    1.075537801F, 1.213106632F, 1.373186588F, 1.688344240F,
+    2.126063108F, 2.808904648F, 3.926963568F, 5.000000000F};
+
+template <typename T = float, size_t N = kKnotCount>
 class Cursor {
  public:
   constexpr Cursor(const T* pknots, const T* pcoefs)
       : knots_(pknots), coefs_(pcoefs) {}
+
+  constexpr Cursor(const std::array<T, N>& knots,
+                   const std::array<T, (N - 1) * 4>& coefs)
+      : knots_(knots.data()), coefs_(coefs.data()) {}
 
   constexpr size_t GetSegment() { return idx_; }
 
@@ -142,6 +156,8 @@ class Cursor {
   size_t idx_{0};
 };
 
+using CursorF = Cursor<float, kKnotCount>;
+
 template <typename T>
 constexpr void Segment(const T* machs, const T* drags, size_t size, T knot1,
                        T knot2, T* coefs_out) {
@@ -158,16 +174,6 @@ constexpr size_t Build(const T* machs, const T* drags, size_t size,
   }
   return n_knots - 1;
 }
-
-constexpr size_t kKnotCount = 16;
-constexpr size_t kSegmentCount = kKnotCount - 1;
-constexpr size_t kCoefsSize = kSegmentCount * 4;
-
-constexpr std::array<float, kKnotCount> kKnots = {
-    0.000000000F, 0.555277646F, 0.597798944F, 0.760380208F,
-    0.885442734F, 0.940470278F, 1.003001571F, 1.018009067F,
-    1.075537801F, 1.213106632F, 1.373186588F, 1.688344240F,
-    2.126063108F, 2.808904648F, 3.926963568F, 5.000000000F};
 
 template <size_t... Is>
 constexpr std::array<float, sizeof...(Is)> ToArray(
