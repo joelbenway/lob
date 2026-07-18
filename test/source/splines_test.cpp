@@ -596,8 +596,7 @@ TEST(SplinesBuildTest, BuiltSplineMatchesTableAtKnotMachsExactly) {
       lob::dragtable::kMachs.data(), lob::dragtable::kG1Drags.data(),
       lob::dragtable::kMachs.size(), lob::spline::kKnots.data(),
       lob::spline::kKnots.size(), coefs.data());
-  lob::spline::Cursor<float, lob::spline::kKnotCount> cursor{
-      lob::spline::kKnots.data(), coefs.data()};
+  lob::spline::CursorF cursor(lob::spline::kKnots, coefs);
   for (size_t i = 0; i < lob::spline::kKnots.size(); ++i) {
     const auto kMach = *(lob::spline::kKnots.data() + i);
     const auto* const lo = std::lower_bound(
@@ -646,16 +645,14 @@ TEST(SplinesConstantsTest, AllPrecomputedCoefsAreFinite) {
 }
 
 TEST(SplinesCursorTest, StartsAtIdxZeroAndEvaluatesAtStart) {
-  lob::spline::Cursor<float, lob::spline::kKnotCount> cursor(
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
+  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
   const auto kResult = cursor.Eval(0);
   EXPECT_FLOAT_EQ(kResult, *(lob::dragtable::kG1Drags.data() + 0));
   EXPECT_EQ(cursor.GetSegment(), 0U);
 }
 
 TEST(SplinesCursorTest, MatchesTableAtKnotMachsExactly) {
-  lob::spline::Cursor<float, lob::spline::kKnotCount> cursor(
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
+  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
   for (size_t i = 0; i < lob::spline::kKnots.size(); ++i) {
     const auto kMach = *(lob::spline::kKnots.data() + i);
     const auto* const lo = std::lower_bound(
@@ -670,20 +667,17 @@ TEST(SplinesCursorTest, MatchesTableAtKnotMachsExactly) {
 }
 
 TEST(SplinesCursorTest, ClampsBelowRangeToFirstDrag) {
-  lob::spline::Cursor<float, lob::spline::kKnotCount> cursor(
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
+  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
   EXPECT_FLOAT_EQ(cursor.Eval(-1.0e3F), *(lob::dragtable::kG1Drags.data() + 0));
 }
 
 TEST(SplinesCursorTest, ClampsAboveRangeToLastDrag) {
-  lob::spline::Cursor<float, lob::spline::kKnotCount> cursor(
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
+  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
   EXPECT_FLOAT_EQ(cursor.Eval(1.0e3F), lob::dragtable::kG1Drags.back());
 }
 
 TEST(SplinesCursorTest, ForwardBackwardMotionKeepsIdxInBounds) {
-  lob::spline::Cursor<float, lob::spline::kKnotCount> cursor(
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
+  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
   cursor.Eval(5);  // NOLINT
   EXPECT_TRUE(cursor.GetSegment() < lob::spline::kKnotCount - 1);
   for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
@@ -695,8 +689,7 @@ TEST(SplinesCursorTest, ForwardBackwardMotionKeepsIdxInBounds) {
 }
 
 TEST(SplinesCursorTest, SeeksContinuousUpwardFromStartToEndAndBack) {
-  lob::spline::Cursor<float, lob::spline::kKnotCount> cursor(
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
+  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
   for (size_t i = 0; i < lob::spline::kKnots.size(); ++i) {
     cursor.Eval(*(lob::spline::kKnots.data() + i));
   }
@@ -709,8 +702,7 @@ TEST(SplinesCursorTest, SeeksContinuousUpwardFromStartToEndAndBack) {
 
 TEST(SplinesCursorTest, SeekStaysAtLastSegmentStrictlyBelowLastKnot) {
   using lob::spline::kKnotCount;
-  lob::spline::Cursor<float, kKnotCount> cursor(lob::spline::kKnots.data(),
-                                                lob::spline::kG1Coefs.data());
+  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
   const float kMidLast = 0.5F * (lob::spline::kKnots[kKnotCount - 2] +
                                  lob::spline::kKnots[kKnotCount - 1]);
   cursor.Eval(kMidLast);
@@ -720,8 +712,7 @@ TEST(SplinesCursorTest, SeekStaysAtLastSegmentStrictlyBelowLastKnot) {
 }
 
 TEST(SplinesCursorTest, DerivIsFiniteAcrossTable) {
-  lob::spline::Cursor<float, lob::spline::kKnotCount> cursor(
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
+  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
   for (size_t i = 0; i < lob::dragtable::kTableSize; ++i) {
     EXPECT_TRUE(
         std::isfinite(cursor.Deriv(*(lob::dragtable::kMachs.data() + i))));
@@ -729,8 +720,7 @@ TEST(SplinesCursorTest, DerivIsFiniteAcrossTable) {
 }
 
 TEST(SplinesCursorTest, DerivOfPolyValMatchesPolyDerivAtMidSpan) {
-  lob::spline::Cursor<float, lob::spline::kKnotCount> cursor(
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
+  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
   for (size_t i = 0; i + 1 < lob::spline::kKnotCount; ++i) {
     const auto kLo = *(lob::spline::kKnots.data() + i);
     const auto kHi = *(lob::spline::kKnots.data() + i + 1);
@@ -744,19 +734,16 @@ TEST(SplinesCursorTest, DerivOfPolyValMatchesPolyDerivAtMidSpan) {
 
 TEST(SplinesCursorTest, DerivClampsAtRangeEdges) {
   constexpr auto kTen = 10.0F;
-  lob::spline::Cursor<float, lob::spline::kKnotCount> below(
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
+  lob::spline::CursorF below(lob::spline::kKnots, lob::spline::kG1Coefs);
   EXPECT_FLOAT_EQ(below.Deriv(-1), below.Deriv(lob::spline::kKnots.front()));
 
-  lob::spline::Cursor<float, lob::spline::kKnotCount> above(
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
+  lob::spline::CursorF above(lob::spline::kKnots, lob::spline::kG1Coefs);
   EXPECT_FLOAT_EQ(above.Deriv(kTen), above.Deriv(lob::spline::kKnots.back()));
 }
 
 TEST(SplinesCursorTest, DerivMagnitudesReasonable) {
   constexpr auto kMaxDeriv = 100.0F;
-  lob::spline::Cursor<float, lob::spline::kKnotCount> cursor(
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
+  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
   for (size_t i = 0; i < lob::dragtable::kTableSize; ++i) {
     EXPECT_TRUE(lob::Fabs(cursor.Deriv(*(lob::dragtable::kMachs.data() + i))) <
                 kMaxDeriv);
@@ -764,8 +751,7 @@ TEST(SplinesCursorTest, DerivMagnitudesReasonable) {
 }
 
 TEST(SplinesCursorTest, IdxZeroAfterResetByEvaluatingAtStart) {
-  lob::spline::Cursor<float, lob::spline::kKnotCount> cursor(
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
+  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
   cursor.Eval(lob::spline::kKnots.back());  // NOLINT
   EXPECT_EQ(cursor.GetSegment(), lob::spline::kSegmentCount - 1);
   cursor.Eval(lob::spline::kKnots.front());
@@ -777,8 +763,7 @@ TEST(SplinesCursorTest, AllCoefsRobustAcrossMachs) {
       &lob::spline::kG1Coefs, &lob::spline::kG2Coefs, &lob::spline::kG5Coefs,
       &lob::spline::kG6Coefs, &lob::spline::kG7Coefs, &lob::spline::kG8Coefs};
   for (const auto* coefs : kCoefs) {
-    lob::spline::Cursor<float, lob::spline::kKnotCount> cursor{
-        lob::spline::kKnots.data(), coefs->data()};
+    lob::spline::CursorF cursor{lob::spline::kKnots, *coefs};
     for (size_t i = 0; i < lob::dragtable::kTableSize; ++i) {
       const auto kMach = *(lob::dragtable::kMachs.data() + i);
       const auto kResult = cursor.Eval(kMach);
@@ -1151,10 +1136,8 @@ TEST(SplinesDesmosOutputTest, GeneratesMachDragTableForG1AndG7) {
   constexpr float kStep =
       (kMachMax - kMachMin) / static_cast<float>(kPoints - 1);
 
-  lob::spline::Cursor<float, lob::spline::kKnotCount> g1_cursor{
-      lob::spline::kKnots.data(), lob::spline::kG1Coefs.data()};
-  lob::spline::Cursor<float, lob::spline::kKnotCount> g7_cursor{
-      lob::spline::kKnots.data(), lob::spline::kG7Coefs.data()};
+  lob::spline::CursorF g1_cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
+  lob::spline::CursorF g7_cursor(lob::spline::kKnots, lob::spline::kG7Coefs);
 
   std::cout << "=== G1 Drag Table ===\n";
   std::cout << "Mach,G1_Spline,G1_RuntimePchip,G1_LobLerp\n";
