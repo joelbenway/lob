@@ -114,8 +114,8 @@ class Cursor {
   constexpr Cursor(const T* pknots, const T* pcoefs)
       : knots_(pknots), coefs_(pcoefs) {}
 
-  constexpr Cursor(const std::array<T, N>& knots,
-                   const std::array<T, (N - 1) * 4>& coefs)
+  Cursor(const std::array<T, N>& knots,
+         const std::array<T, (N - 1) * 4>& coefs)
       : knots_(knots.data()), coefs_(coefs.data()) {}
 
   constexpr size_t GetSegment() { return idx_; }
