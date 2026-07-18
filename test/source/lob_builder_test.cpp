@@ -180,13 +180,14 @@ TEST_P(CustomTableTestFixture, CustomTableMatchesDragFunction) {
     drags.at(i) = param.drag_table[i];
   }
 
-  const lob::Context kResult2 = puut->Reset()
-                                    .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-                                    .InitialVelocityFps(kTestMuzzleVelocity)
-                                    .ZeroAngleMOA(param.zero_angle)
-                                    .BallisticCoefficientPsi(lob::NaN())
-                                    .MachVsDragTable(machs, drags)
-                                    .Build();
+  const lob::Context kResult2 =
+      puut->Reset()
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .InitialVelocityFps(kTestMuzzleVelocity)
+          .ZeroAngleMOA(param.zero_angle)
+          .BallisticCoefficientPsi(lob::NaN())
+          .MachVsDragTable(machs, drags)
+          .Build();
 
   ASSERT_EQ(kResult1.error, kLobErrorNone);
   ASSERT_EQ(kResult2.error, kLobErrorNone);
@@ -590,7 +591,7 @@ TEST_F(BuilderTestFixture, MachVsDragTableCoverageTooNarrow) {
           .ZeroImpactHeightInches(kJackOConnorZeroHeight)
           .MachVsDragTable(kMachs, kDrags)
           .Build();
-  EXPECT_EQ(kResult.error, lob::ErrorT::kBallisticCoefficientRequired);
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableTooNarrow);
 }
 
 TEST_F(BuilderTestFixture, MachVsDragTableCoverageNonMonotonic) {
@@ -603,7 +604,20 @@ TEST_F(BuilderTestFixture, MachVsDragTableCoverageNonMonotonic) {
           .ZeroImpactHeightInches(kJackOConnorZeroHeight)
           .MachVsDragTable(kMachs, kDrags)
           .Build();
-  EXPECT_EQ(kResult.error, lob::ErrorT::kBallisticCoefficientRequired);
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableNotMonotonic);
+}
+
+TEST_F(BuilderTestFixture, MachVsDragTableCoverageNegativeMachs) {
+  const std::array<float, 2> kMachs = {-1.0F, 5.0F};
+  const std::array<float, 2> kDrags = {0.5F, 1.0F};
+  const lob::Context kResult =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .MachVsDragTable(kMachs, kDrags)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableNegative);
 }
 
 TEST_F(BuilderTestFixture, MachVsDragTableCoverageNegativeDrag) {
@@ -616,7 +630,7 @@ TEST_F(BuilderTestFixture, MachVsDragTableCoverageNegativeDrag) {
           .ZeroImpactHeightInches(kJackOConnorZeroHeight)
           .MachVsDragTable(kMachs, kDrags)
           .Build();
-  EXPECT_EQ(kResult.error, lob::ErrorT::kBallisticCoefficientRequired);
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableNegative);
 }
 
 TEST_F(BuilderTestFixture, RangeAngleDeg) {

@@ -17,7 +17,7 @@ extern "C" {
 /** @brief The number of spline pieces comprising a drag function. */
 #define LOB_SPLINE_SEGMENTS 15
 /** @brief The size in bytes of the builder buffer. */
-#define LOB_BUILDER_BUFFER_SIZE 600
+#define LOB_BUILDER_BUFFER_SIZE 272
 
 /** @brief Drag function type. */
 typedef uint8_t LobDragFunctionT;
@@ -64,7 +64,6 @@ enum {
   kLobErrorAltitudeOfFiringSiteOOR,
   kLobErrorAltitudeOfThermometerOOR,
   kLobErrorAzimuthOOR,
-  kLobErrorBadParameter,
   kLobErrorBallisticCoefficientOOR,
   kLobErrorBallisticCoefficientRequired,
   kLobErrorBaseDiameterOOR,
@@ -74,6 +73,10 @@ enum {
   kLobErrorInternalError,
   kLobErrorLatitudeOOR,
   kLobErrorLengthOOR,
+  kLobErrorMachDragTableNegative,
+  kLobErrorMachDragTableNotMonotonic,
+  kLobErrorMachDragTableTooNarrow,
+  kLobErrorMachDragTableTooShort,
   kLobErrorMassOOR,
   kLobErrorMaximumTimeOOR,
   kLobErrorMeplatDiameterOOR,
@@ -257,6 +260,9 @@ LOB_EXPORT extern LobBuilder* LobBuilderOgiveRtR(LobBuilder* builder,
  * @brief Loads a custom Mach vs Drag table for the projectile.
  * @note This is a direct alternative to using a ballistic coefficient and a
  * reference drag function.
+ * @warning The caller must keep pmachs and pdrags valid until LobBuilderBuild
+ * is called. The builder copies no data; the pointers are referenced during
+ * Build().
  * @param builder Pointer to the builder.
  * @param pmachs Pointer to an array of mach values.
  * @param pdrags Pointer to an array of associated drag values.

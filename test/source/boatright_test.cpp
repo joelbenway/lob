@@ -11,7 +11,7 @@
 
 #include "constants.hpp"
 #include "eng_units.hpp"
-#include "tables.hpp"
+#include "splines.hpp"
 
 namespace tests {
 
@@ -374,9 +374,11 @@ TEST(BoatrightTests, CalculateAerodynamicJump) {
   const lob::MphT kZwind(10);
   const lob::LbsPerCuFtT kAirDensity(0.0764742);
   const lob::FpsT kSos(1116.45);
-  const double kCDref =
-      lob::dragtable::LobLerp(lob::dragtable::kMachs, lob::dragtable::kG7Drags,
-                              lob::MachT(kV, kSos.Inverse()));
+  lob::spline::Cursor<float, lob::spline::kKnotCount> drag_curve(
+      lob::spline::kKnots.data(), lob::spline::kG7Coefs.data());
+  const double kCDref = static_cast<double>(
+      drag_curve.Eval(lob::MachT(kV, kSos.Inverse()).Float()));
+
   // Reference paper sample calculation publishes a result of -0.402 which I
   // believe is the result of an improperly calculated gyroscopic rates as well
   // as an estimated rather than calculated average density.
