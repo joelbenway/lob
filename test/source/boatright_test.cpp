@@ -374,8 +374,7 @@ TEST(BoatrightTests, CalculateAerodynamicJump) {
   const lob::MphT kZwind(10);
   const lob::LbsPerCuFtT kAirDensity(0.0764742);
   const lob::FpsT kSos(1116.45);
-  lob::spline::Cursor<float, lob::spline::kKnotCount> drag_curve(
-      lob::spline::kKnots.data(), lob::spline::kG7Coefs.data());
+  lob::spline::CursorF drag_curve(lob::spline::kKnots, lob::spline::kG7Coefs);
   const double kCDref = static_cast<double>(
       drag_curve.Eval(lob::MachT(kV, kSos.Inverse()).Float()));
 
