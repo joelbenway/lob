@@ -69,7 +69,6 @@ constexpr T Modulo(T a, T b) {
 
 template <typename T>
 constexpr T Fmod(T x, T y) {
-  
   if (std::isnan(x) || std::isnan(y)) {
     return NaN();
   }

@@ -64,7 +64,6 @@ enum class ErrorT : LobErrorT {
   kAltitudeOfFiringSiteOOR = ::kLobErrorAltitudeOfFiringSiteOOR,
   kAltitudeOfThermometerOOR = ::kLobErrorAltitudeOfThermometerOOR,
   kAzimuthOOR = ::kLobErrorAzimuthOOR,
-  kBadParameter = ::kLobErrorBadParameter,
   kBallisticCoefficientOOR = ::kLobErrorBallisticCoefficientOOR,
   kBallisticCoefficientRequired = ::kLobErrorBallisticCoefficientRequired,
   kBaseDiameterOOR = ::kLobErrorBaseDiameterOOR,
@@ -74,6 +73,10 @@ enum class ErrorT : LobErrorT {
   kInternalError = ::kLobErrorInternalError,
   kLatitudeOOR = ::kLobErrorLatitudeOOR,
   kLengthOOR = ::kLobErrorLengthOOR,
+  kMachDragTableNegative = kLobErrorMachDragTableNegative,
+  kMachDragTableNotMonotonic = kLobErrorMachDragTableNotMonotonic,
+  kMachDragTableTooNarrow = kLobErrorMachDragTableTooNarrow,
+  kMachDragTableTooShort = kLobErrorMachDragTableTooShort,
   kMassOOR = ::kLobErrorMassOOR,
   kMaximumTimeOOR = ::kLobErrorMaximumTimeOOR,
   kMeplatDiameterOOR = ::kLobErrorMeplatDiameterOOR,
@@ -119,27 +122,57 @@ struct Context {
   ErrorT error;
 };
 
-static_assert(sizeof(Context) == sizeof(::LobContext), "Context vs LobContext size mismatch");
-static_assert(alignof(Context) == alignof(::LobContext), "Context vs LobContext alignment mismatch");
-static_assert(offsetof(Context, drag_coeff) == offsetof(::LobContext, drag_coeff), "drag_coeff offset drift");
-static_assert(offsetof(Context, speed_of_sound) == offsetof(::LobContext, speed_of_sound), "speed_of_sound offset drift");
-static_assert(offsetof(Context, mass) == offsetof(::LobContext, mass), "mass offset drift");
-static_assert(offsetof(Context, optic_height) == offsetof(::LobContext, optic_height), "optic_height offset drift");
-static_assert(offsetof(Context, gravity) == offsetof(::LobContext, gravity), "gravity offset drift");
-static_assert(offsetof(Context, wind) == offsetof(::LobContext, wind), "wind offset drift");
-static_assert(offsetof(Context, coriolis) == offsetof(::LobContext, coriolis), "coriolis offset drift");
-static_assert(offsetof(Context, zero_angle) == offsetof(::LobContext, zero_angle), "zero_angle offset drift");
-static_assert(offsetof(Context, stability_factor) == offsetof(::LobContext, stability_factor), "stability_factor offset drift");
-static_assert(offsetof(Context, aerodynamic_jump) == offsetof(::LobContext, aerodynamic_jump), "aerodynamic_jump offset drift");
-static_assert(offsetof(Context, spindrift_factor) == offsetof(::LobContext, spindrift_factor), "spindrift_factor offset drift");
-static_assert(offsetof(Context, max_time) == offsetof(::LobContext, max_time), "max_time offset drift");
-static_assert(offsetof(Context, drags) == offsetof(::LobContext, drags), "drags offset drift");
-static_assert(offsetof(Context, velocity) == offsetof(::LobContext, velocity), "velocity offset drift");
-static_assert(offsetof(Context, minimum_speed) == offsetof(::LobContext, minimum_speed), "minimum_speed offset drift");
-static_assert(offsetof(Context, step_size) == offsetof(::LobContext, step_size), "step_size offset drift");
-static_assert(offsetof(Context, error) == offsetof(::LobContext, error), "error offset drift");
-static_assert(static_cast<::LobErrorT>(ErrorT::kNone) == ::kLobErrorNone, "ErrorT kNone value drift");
-static_assert(static_cast<::LobErrorT>(ErrorT::kNotFormed) == ::kLobErrorNotFormed, "ErrorT kNotFormed value drift");
+static_assert(sizeof(Context) == sizeof(::LobContext),
+              "Context vs LobContext size mismatch");
+static_assert(alignof(Context) == alignof(::LobContext),
+              "Context vs LobContext alignment mismatch");
+static_assert(offsetof(Context, drag_coeff) ==
+                  offsetof(::LobContext, drag_coeff),
+              "drag_coeff offset drift");
+static_assert(offsetof(Context, speed_of_sound) ==
+                  offsetof(::LobContext, speed_of_sound),
+              "speed_of_sound offset drift");
+static_assert(offsetof(Context, mass) == offsetof(::LobContext, mass),
+              "mass offset drift");
+static_assert(offsetof(Context, optic_height) ==
+                  offsetof(::LobContext, optic_height),
+              "optic_height offset drift");
+static_assert(offsetof(Context, gravity) == offsetof(::LobContext, gravity),
+              "gravity offset drift");
+static_assert(offsetof(Context, wind) == offsetof(::LobContext, wind),
+              "wind offset drift");
+static_assert(offsetof(Context, coriolis) == offsetof(::LobContext, coriolis),
+              "coriolis offset drift");
+static_assert(offsetof(Context, zero_angle) ==
+                  offsetof(::LobContext, zero_angle),
+              "zero_angle offset drift");
+static_assert(offsetof(Context, stability_factor) ==
+                  offsetof(::LobContext, stability_factor),
+              "stability_factor offset drift");
+static_assert(offsetof(Context, aerodynamic_jump) ==
+                  offsetof(::LobContext, aerodynamic_jump),
+              "aerodynamic_jump offset drift");
+static_assert(offsetof(Context, spindrift_factor) ==
+                  offsetof(::LobContext, spindrift_factor),
+              "spindrift_factor offset drift");
+static_assert(offsetof(Context, max_time) == offsetof(::LobContext, max_time),
+              "max_time offset drift");
+static_assert(offsetof(Context, drags) == offsetof(::LobContext, drags),
+              "drags offset drift");
+static_assert(offsetof(Context, velocity) == offsetof(::LobContext, velocity),
+              "velocity offset drift");
+static_assert(offsetof(Context, minimum_speed) ==
+                  offsetof(::LobContext, minimum_speed),
+              "minimum_speed offset drift");
+static_assert(offsetof(Context, step_size) == offsetof(::LobContext, step_size),
+              "step_size offset drift");
+static_assert(offsetof(Context, error) == offsetof(::LobContext, error),
+              "error offset drift");
+static_assert(static_cast<::LobErrorT>(ErrorT::kNone) == ::kLobErrorNone,
+              "ErrorT kNone value drift");
+static_assert(static_cast<::LobErrorT>(ErrorT::kNotFormed) ==
+                  ::kLobErrorNotFormed,
+              "ErrorT kNotFormed value drift");
 
 /** @brief Structure holding output results. See @c LobOutput for member
  * details. */

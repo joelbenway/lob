@@ -22,7 +22,7 @@ constexpr auto kEps = 1.0e-5F;
 constexpr auto kEpsLoose = 1.0e-3F;
 
 constexpr std::array<float, 5> kLinearX{0.0F, 1.0F, 2.0F, 3.0F, 4.0F};
-constexpr std::array<float, 5> kLinearY{1.0F, 3.0F, 5.0F, 7.0F, 9.0F};
+constexpr std::array<float, 5> kLineFn{1.0F, 3.0F, 5.0F, 7.0F, 9.0F};
 
 constexpr std::array<float, 4> kQuadX{0.0F, 1.0F, 2.0F, 3.0F};
 constexpr std::array<float, 4> kQuadY{0.0F, 1.0F, 4.0F, 9.0F};
@@ -37,7 +37,7 @@ constexpr auto SecantRef(const float* x, const float* y, size_t i) {
   return (*(y + i + 1) - *(y + i)) / (*(x + i + 1) - *(x + i));
 }
 
-constexpr auto LinearY(float x) { return (2 * x) + 1.0F; }
+constexpr auto LineFn(float x) { return (2 * x) + 1.0F; }
 
 constexpr size_t kTruthSize = 2000;
 constexpr size_t kTargetKnotSize = lob::spline::kKnotCount;
@@ -159,10 +159,10 @@ namespace tests {
 
 TEST(SplinesDetailSecantTest, ReturnsSlopeBetweenAdjacentPoints) {
   EXPECT_FLOAT_EQ(
-      lob::spline::detail::Secant<float>(kLinearX.data(), kLinearY.data(), 0),
+      lob::spline::detail::Secant<float>(kLinearX.data(), kLineFn.data(), 0),
       2);
   EXPECT_FLOAT_EQ(
-      lob::spline::detail::Secant<float>(kLinearX.data(), kLinearY.data(), 3),
+      lob::spline::detail::Secant<float>(kLinearX.data(), kLineFn.data(), 3),
       2);
   EXPECT_FLOAT_EQ(
       lob::spline::detail::Secant<float>(kQuadX.data(), kQuadY.data(), 0), 1);
@@ -188,14 +188,14 @@ TEST(SplinesDetailTangentTest, TwoPointInputReturnsSecantOfFirstSpan) {
 
 TEST(SplinesDetailTangentTest, LeftEndCallsEndTangent) {
   const auto kResult = lob::spline::detail::Tangent<float>(
-      kLinearX.data(), kLinearY.data(), kLinearX.size(), 0);
+      kLinearX.data(), kLineFn.data(), kLinearX.size(), 0);
   EXPECT_GT(kResult, 0);
   EXPECT_NEAR(kResult, 2, kEpsLoose);
 }
 
 TEST(SplinesDetailTangentTest, RightEndCallsEndTangent) {
   const auto kResult = lob::spline::detail::Tangent<float>(
-      kLinearX.data(), kLinearY.data(), kLinearX.size(), kLinearX.size() - 1);
+      kLinearX.data(), kLineFn.data(), kLinearX.size(), kLinearX.size() - 1);
   EXPECT_GT(kResult, 0);
   EXPECT_NEAR(kResult, 2, kEpsLoose);
 }
@@ -204,7 +204,7 @@ TEST(SplinesDetailTangentTest, InteriorReturnsHarmonicMeanForLinear) {
   const auto kN = kLinearX.size();
   for (size_t i = 1; i + 1 < kN; ++i) {
     const auto kResult = lob::spline::detail::Tangent<float>(
-        kLinearX.data(), kLinearY.data(), kN, i);
+        kLinearX.data(), kLineFn.data(), kN, i);
     EXPECT_NEAR(kResult, 2, kEpsLoose) << "i=" << i;
   }
 }
@@ -440,8 +440,8 @@ TEST(SplinesDetailEvalWithDerivTest, ValueMatchesInputAtKnotsForLinear) {
   const auto kN = kLinearX.size();
   for (size_t i = 0; i < kN; ++i) {
     const auto kResult = lob::spline::detail::EvalWithDeriv<float>(
-        kLinearX.data(), kLinearY.data(), kN, *(kLinearX.data() + i));
-    EXPECT_FLOAT_EQ(kResult.y, *(kLinearY.data() + i));
+        kLinearX.data(), kLineFn.data(), kN, *(kLinearX.data() + i));
+    EXPECT_FLOAT_EQ(kResult.y, *(kLineFn.data() + i));
   }
 }
 
@@ -460,8 +460,8 @@ TEST(SplinesDetailEvalWithDerivTest, ApproximatesMidspanWithinTolerance) {
     const float kMid =
         0.5F * (*(kLinearX.data() + i) + *(kLinearX.data() + i + 1));
     const auto kResult = lob::spline::detail::EvalWithDeriv<float>(
-        kLinearX.data(), kLinearY.data(), kN, kMid);
-    EXPECT_NEAR(kResult.y, LinearY(kMid), kEpsLoose);
+        kLinearX.data(), kLineFn.data(), kN, kMid);
+    EXPECT_NEAR(kResult.y, LineFn(kMid), kEpsLoose);
   }
 }
 
@@ -469,7 +469,7 @@ TEST(SplinesDetailEvalWithDerivTest, ReturnsExactLinearDerivForLinearData) {
   const auto kN = kLinearX.size();
   for (size_t i = 1; i + 1 < kN; ++i) {
     const auto kResult = lob::spline::detail::EvalWithDeriv<float>(
-        kLinearX.data(), kLinearY.data(), kN, *(kLinearX.data() + i));
+        kLinearX.data(), kLineFn.data(), kN, *(kLinearX.data() + i));
     EXPECT_NEAR(kResult.dy, 2, kEpsLoose) << "i=" << i;
   }
 }
@@ -480,7 +480,7 @@ TEST(SplinesDetailEvalWithDerivTest, BelowFirstKnotFindsFirstSegment) {
   EXPECT_EQ(
       lob::spline::detail::FindInterval<float>(kLinearX.data(), kN, -kTen), 0U);
   const auto kResult = lob::spline::detail::EvalWithDeriv<float>(
-      kLinearX.data(), kLinearY.data(), kN, -kTen);
+      kLinearX.data(), kLineFn.data(), kN, -kTen);
   EXPECT_TRUE(std::isfinite(kResult.y));
   EXPECT_TRUE(std::isfinite(kResult.dy));
 }
@@ -488,32 +488,32 @@ TEST(SplinesDetailEvalWithDerivTest, BelowFirstKnotFindsFirstSegment) {
 TEST(SplinesDetailEvalWithDerivTest, AboveLastKnotClampsToLastInterval) {
   const auto kN = kLinearX.size();
   const auto kResult = lob::spline::detail::EvalWithDeriv<float>(
-      kLinearX.data(), kLinearY.data(), kN, 1000.0F);
-  EXPECT_GT(kResult.y, *(kLinearY.data() + kN - 2));
+      kLinearX.data(), kLineFn.data(), kN, 1000.0F);
+  EXPECT_GT(kResult.y, *(kLineFn.data() + kN - 2));
 }
 
 TEST(SplinesSegmentTest, ProducesCoefsReproducingDataAtKnots) {
   std::array<float, 4> coefs{};
-  lob::spline::Segment<float>(kLinearX.data(), kLinearY.data(), kLinearX.size(),
+  lob::spline::Segment<float>(kLinearX.data(), kLineFn.data(), kLinearX.size(),
                               0, 1, coefs.data());
   EXPECT_FLOAT_EQ(lob::spline::detail::PolyVal<float>(coefs.data(), 0),
-                  *(kLinearY.data() + 0));
+                  *(kLineFn.data() + 0));
   EXPECT_NEAR(lob::spline::detail::PolyVal<float>(coefs.data(), 1),
-              *(kLinearY.data() + 1), kEpsLoose);
+              *(kLineFn.data() + 1), kEpsLoose);
 }
 
 TEST(SplinesSegmentTest, TangentsAtKnotsMatchEndEndTangents) {
   std::array<float, 4> coefs{};
-  lob::spline::Segment<float>(kLinearX.data(), kLinearY.data(), kLinearX.size(),
+  lob::spline::Segment<float>(kLinearX.data(), kLineFn.data(), kLinearX.size(),
                               0, 1, coefs.data());
   const auto* const cp = coefs.data();
   const auto kM0 = *(cp + 1);
   const auto kM1 =
       *(cp + 1) + ((1 - 0) * ((2 * *(cp + 2)) + (3 * *(cp + 3) * (1 - 0))));
   const auto kExpectedM0 = lob::spline::detail::Tangent<float>(
-      kLinearX.data(), kLinearY.data(), kLinearX.size(), 0);
+      kLinearX.data(), kLineFn.data(), kLinearX.size(), 0);
   const auto kExpectedM1 = lob::spline::detail::Tangent<float>(
-      kLinearX.data(), kLinearY.data(), kLinearX.size(), 1);
+      kLinearX.data(), kLineFn.data(), kLinearX.size(), 1);
   EXPECT_NEAR(kM0, kExpectedM0, kEpsLoose);
   EXPECT_NEAR(kM1, kExpectedM1, kEpsLoose);
 }
@@ -533,9 +533,9 @@ TEST(SplinesBuildTest, ReturnsKnotsMinusOneForMultipleKnots) {
   constexpr auto kN = size_t{5};
   std::array<float, kN> knots{0, 1, 2, 3, 4};
   std::array<float, 4 * (kN - 1)> coefs{};
-  const auto kCount = lob::spline::Build<float>(
-      kLinearX.data(), kLinearY.data(), kLinearX.size(), knots.data(), kN,
-      coefs.data());
+  const auto kCount = lob::spline::Build<float>(kLinearX.data(), kLineFn.data(),
+                                                kLinearX.size(), knots.data(),
+                                                kN, coefs.data());
   EXPECT_EQ(kCount, kN - 1);
 }
 
@@ -543,16 +543,16 @@ TEST(SplinesBuildTest, BuiltCoefsReproduceSourceDataAtKnots) {
   constexpr auto kN = size_t{5};
   std::array<float, kN> knots{0, 1, 2, 3, 4};
   std::array<float, 4 * (kN - 1)> coefs{};
-  lob::spline::Build<float>(kLinearX.data(), kLinearY.data(), kLinearX.size(),
+  lob::spline::Build<float>(kLinearX.data(), kLineFn.data(), kLinearX.size(),
                             knots.data(), kN, coefs.data());
   for (size_t i = 0; i + 1 < kN; ++i) {
     const auto* const seg = coefs.data() + (4 * i);
     const auto kT1 = *(knots.data() + i + 1) - *(knots.data() + i);
     EXPECT_NEAR(lob::spline::detail::PolyVal<float>(seg, 0),
-                LinearY(*(knots.data() + i)), kEpsLoose)
+                LineFn(*(knots.data() + i)), kEpsLoose)
         << "segment i=" << i << " left endpoint";
     EXPECT_NEAR(lob::spline::detail::PolyVal<float>(seg, kT1),
-                LinearY(*(knots.data() + i + 1)), kEpsLoose)
+                LineFn(*(knots.data() + i + 1)), kEpsLoose)
         << "segment i=" << i << " right endpoint";
   }
 }
@@ -650,7 +650,7 @@ TEST(SplinesCursorTest, StartsAtIdxZeroAndEvaluatesAtStart) {
       lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
   const auto kResult = cursor.Eval(0);
   EXPECT_FLOAT_EQ(kResult, *(lob::dragtable::kG1Drags.data() + 0));
-  EXPECT_EQ(cursor.idx, 0U);
+  EXPECT_EQ(cursor.GetSegment(), 0U);
 }
 
 TEST(SplinesCursorTest, MatchesTableAtKnotMachsExactly) {
@@ -685,13 +685,13 @@ TEST(SplinesCursorTest, ForwardBackwardMotionKeepsIdxInBounds) {
   lob::spline::Cursor<float, lob::spline::kKnotCount> cursor(
       lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
   cursor.Eval(5);  // NOLINT
-  EXPECT_TRUE(cursor.idx < lob::spline::kKnotCount - 1);
+  EXPECT_TRUE(cursor.GetSegment() < lob::spline::kKnotCount - 1);
   for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
     cursor.Eval(*(lob::spline::kKnots.data() + i));
-    ASSERT_LE(cursor.idx, lob::spline::kKnotCount - 2);
+    ASSERT_LE(cursor.GetSegment(), lob::spline::kKnotCount - 2);
   }
   cursor.Eval(0);
-  EXPECT_EQ(cursor.idx, 0U);
+  EXPECT_EQ(cursor.GetSegment(), 0U);
 }
 
 TEST(SplinesCursorTest, SeeksContinuousUpwardFromStartToEndAndBack) {
@@ -700,11 +700,11 @@ TEST(SplinesCursorTest, SeeksContinuousUpwardFromStartToEndAndBack) {
   for (size_t i = 0; i < lob::spline::kKnots.size(); ++i) {
     cursor.Eval(*(lob::spline::kKnots.data() + i));
   }
-  EXPECT_EQ(cursor.idx, lob::spline::kKnotCount - 2);
+  EXPECT_EQ(cursor.GetSegment(), lob::spline::kKnotCount - 2);
   for (size_t i = lob::spline::kKnots.size(); i-- > 0;) {
     cursor.Eval(*(lob::spline::kKnots.data() + i));
   }
-  EXPECT_EQ(cursor.idx, 0);
+  EXPECT_EQ(cursor.GetSegment(), 0);
 }
 
 TEST(SplinesCursorTest, SeekStaysAtLastSegmentStrictlyBelowLastKnot) {
@@ -714,9 +714,9 @@ TEST(SplinesCursorTest, SeekStaysAtLastSegmentStrictlyBelowLastKnot) {
   const float kMidLast = 0.5F * (lob::spline::kKnots[kKnotCount - 2] +
                                  lob::spline::kKnots[kKnotCount - 1]);
   cursor.Eval(kMidLast);
-  EXPECT_EQ(cursor.idx, kKnotCount - 2);
+  EXPECT_EQ(cursor.GetSegment(), kKnotCount - 2);
   cursor.Eval(lob::spline::kKnots[kKnotCount - 1]);
-  EXPECT_EQ(cursor.idx, kKnotCount - 2);
+  EXPECT_EQ(cursor.GetSegment(), kKnotCount - 2);
 }
 
 TEST(SplinesCursorTest, DerivIsFiniteAcrossTable) {
@@ -766,9 +766,10 @@ TEST(SplinesCursorTest, DerivMagnitudesReasonable) {
 TEST(SplinesCursorTest, IdxZeroAfterResetByEvaluatingAtStart) {
   lob::spline::Cursor<float, lob::spline::kKnotCount> cursor(
       lob::spline::kKnots.data(), lob::spline::kG1Coefs.data());
-  cursor.Eval(5);  // NOLINT
-  cursor.idx = 0;
-  EXPECT_FLOAT_EQ(cursor.Eval(0), *(lob::dragtable::kG1Drags.data() + 0));
+  cursor.Eval(lob::spline::kKnots.back());  // NOLINT
+  EXPECT_EQ(cursor.GetSegment(), lob::spline::kSegmentCount - 1);
+  cursor.Eval(lob::spline::kKnots.front());
+  EXPECT_EQ(cursor.GetSegment(), 0);
 }
 
 TEST(SplinesCursorTest, AllCoefsRobustAcrossMachs) {
@@ -815,7 +816,7 @@ TEST(SplinesRuntimeContextsTest, DetailFunctionsAreUsableAtRuntime) {
   constexpr auto kExpectedFabs = 3.5F;
   constexpr auto kExpectedIdx = size_t{1};
   const auto kSecant =
-      lob::spline::detail::Secant<float>(kLinearX.data(), kLinearY.data(), 0);
+      lob::spline::detail::Secant<float>(kLinearX.data(), kLineFn.data(), 0);
   EXPECT_FLOAT_EQ(kSecant, 2);
   const auto kFabs = lob::Fabs(-kExpectedFabs);
   EXPECT_FLOAT_EQ(kFabs, kExpectedFabs);
@@ -828,7 +829,7 @@ TEST(SplinesRuntimeContextsTest, DetailFunctionsAreUsableAtRuntime) {
   const auto kDeriv = lob::spline::detail::PolyDeriv<float>(c.data(), 0);
   EXPECT_FLOAT_EQ(kDeriv, 2);
   const auto kTan = lob::spline::detail::Tangent<float>(
-      kLinearX.data(), kLinearY.data(), kLinearX.size(), 0);
+      kLinearX.data(), kLineFn.data(), kLinearX.size(), 0);
   EXPECT_GT(kTan, 0);
 }
 

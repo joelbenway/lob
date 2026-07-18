@@ -126,8 +126,8 @@ TEST(SqrtTest, SqrtOfNegativeIsNaN) {
 }
 
 TEST(SqrtTest, SqrtOfInfinityIsNaN) {
-  constexpr auto kInf = std::numeric_limits<double>::infinity();
-  constexpr auto kVal = lob::Sqrt(kInf);
+  constexpr auto kInfinity = std::numeric_limits<double>::infinity();
+  constexpr auto kVal = lob::Sqrt(kInfinity);
   EXPECT_TRUE(std::isnan(kVal));
 }
 
@@ -158,8 +158,8 @@ TEST(FabsTest, IntegerTypes) {
 }
 
 TEST(FabsTest, Infinity) {
-  constexpr auto kInf = std::numeric_limits<double>::infinity();
-  constexpr auto kVal = lob::Fabs(kInf);
+  constexpr auto kInfinity = std::numeric_limits<double>::infinity();
+  constexpr auto kVal = lob::Fabs(kInfinity);
   EXPECT_TRUE(std::isinf(kVal));
   EXPECT_GT(kVal, 0);
 }

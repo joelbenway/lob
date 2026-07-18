@@ -101,43 +101,45 @@ constexpr ValDer<T> EvalWithDeriv(const T* x, const T* y, size_t n, T v) {
 template <typename T, size_t N>
 class Cursor {
  public:
-  const T* knots;
-  const T* coefs;
-  size_t idx{0};
+  constexpr Cursor(const T* pknots, const T* pcoefs)
+      : knots_(pknots), coefs_(pcoefs) {}
 
-  constexpr Cursor(const T* knots_ptr, const T* coefs_ptr)
-      : knots(knots_ptr), coefs(coefs_ptr) {}
+  constexpr size_t GetSegment() { return idx_; }
 
   constexpr T Eval(T m) {
     Clamp(m);
     Seek(m);
-    return detail::PolyVal(coefs + (4 * idx), m - knots[idx]);
+    return detail::PolyVal(coefs_ + (4 * idx_), m - knots_[idx_]);
   }
 
   constexpr T Deriv(T m) {
     Clamp(m);
     Seek(m);
-    return detail::PolyDeriv(coefs + (4 * idx), m - knots[idx]);
+    return detail::PolyDeriv(coefs_ + (4 * idx_), m - knots_[idx_]);
   }
 
  private:
   constexpr void Clamp(T& m) const {
-    if (m < knots[0]) {
-      m = knots[0];
+    if (m < knots_[0]) {
+      m = knots_[0];
     }
-    if (m > knots[N - 1]) {
-      m = knots[N - 1];
+    if (m > knots_[N - 1]) {
+      m = knots_[N - 1];
     }
   }
 
   constexpr void Seek(T m) {
-    while (idx > 0 && m < knots[idx]) {
-      --idx;
+    while (idx_ > 0 && m < knots_[idx_]) {
+      --idx_;
     }
-    while (idx + 2 < N && m >= knots[idx + 1]) {
-      ++idx;
+    while (idx_ + 2 < N && m >= knots_[idx_ + 1]) {
+      ++idx_;
     }
   }
+
+  const T* knots_;
+  const T* coefs_;
+  size_t idx_{0};
 };
 
 template <typename T>
