@@ -42,8 +42,7 @@ void BM_Cursor(benchmark::State& state) {
   static std::vector<double> results(kResultsSize);
   size_t index = 0;
   for (auto _ : state) {
-    lob::spline::Cursor<float, lob::spline::kKnotCount> cursor{
-        lob::spline::kKnots.data(), lob::spline::kG1Coefs.data()};
+    lob::spline::CursorF cursor{lob::spline::kKnots, lob::spline::kG1Coefs};
     double mach = kInitMach;
     while (mach > kFinalMach) {
       const auto kResult =
