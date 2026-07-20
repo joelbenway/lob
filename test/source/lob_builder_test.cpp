@@ -594,6 +594,19 @@ TEST_F(BuilderTestFixture, MachVsDragTableCoverageTooNarrow) {
   EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableTooNarrow);
 }
 
+TEST_F(BuilderTestFixture, MachVsDragTableCoverageTooShort) {
+  const std::array<float, 1> kMachs = {0.5F};
+  const std::array<float, 1> kDrags = {0.0F};
+  const lob::Context kResult =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .MachVsDragTable(kMachs, kDrags)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableTooShort);
+}
+
 TEST_F(BuilderTestFixture, MachVsDragTableCoverageNonMonotonic) {
   const std::array<float, 3> kMachs = {0.0F, 5.0F, 5.0F};
   const std::array<float, 3> kDrags = {0.0F, 0.5F, 1.0F};
@@ -696,7 +709,7 @@ TEST_F(BuilderTestFixture, ReadmeExampleIsValid) {
           .AzimuthDeg(180.0)
           .StepSize(100)
           .Build();
-  EXPECT_TRUE(kSolverInput.drag_coeff > 0);
+  EXPECT_EQ(kSolverInput.error, lob::ErrorT::kNone);
 }
 
 }  // namespace tests

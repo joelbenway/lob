@@ -44,7 +44,7 @@ class Impl {
   InchT nose_length_in{NaN()};
   double ogive_rtr{NaN()};
   RadiansT range_angle_rad{NaN()};
-  double relative_humidity_percent{NaN()};
+  PercentT relative_humidity_percent{NaN()};
   InchT tail_length_in{NaN()};
   DegFT temperature_deg_f{NaN()};
   InchPerTwistT twist_inches_per_turn{NaN()};
@@ -158,10 +158,10 @@ void BuildEnvironment(Impl* pimpl, LobContext* out) {
   }
 
   if (std::isnan(pimpl->relative_humidity_percent)) {
-    pimpl->relative_humidity_percent = kIsaSeaLevelHumidityPercent;
+    pimpl->relative_humidity_percent = PercentT(kIsaSeaLevelHumidityPercent);
   }
 
-  if (pimpl->relative_humidity_percent < 0.0) {
+  if (pimpl->relative_humidity_percent < PercentT(0.0)) {
     out->error = kLobErrorHumidityOOR;
     return;
   }
@@ -427,9 +427,8 @@ void BuildBoatright(Impl* pimpl, LobContext* out) {
   const SqInT kS = CalculateProjectileReferenceArea(kD);
   const auto kAR = boatright::CalculateAspectRatio(kL, kLFN, kLBT, kDB);
   const auto kM = MachT(kVelocity, kSos.Inverse());
-  spline::Cursor<float, spline::kKnotCount> drag_curve(spline::kKnots.data(),
-                                                       &out->drags[0]);
-  const auto kCdRef = static_cast<double>(drag_curve.Eval(kM.Float()));
+  spline::CurveView drag_curve(spline::kKnots.data(), &out->drags[0]);
+  const auto kCdRef = drag_curve.Eval(kM);
   const auto kCL = boatright::CalculateCoefficientOfLift(kLFN, kM);
   const auto kCDa = boatright::CalculateYawDragCoefficient(kM, kCL, kAR);
   const auto kRho = boatright::CalculateFastAverageDensity(kD, kL, kDM, kLN,
@@ -471,10 +470,8 @@ void BuildBoatright(Impl* pimpl, LobContext* out) {
       return;
     }
     const MachT kBuildMach(s.V().Magnitude(), kSos.Inverse());
-    const double kBuildCd =
-        static_cast<double>(drag_curve.Eval(kBuildMach.Float())) *
-        out->drag_coeff;
-    SolveStep(&s, &t, *out, kBuildCd);
+
+    SolveStep(&s, &t, &drag_curve, *out);
   }
 
   const auto kV = boatright::CalculateKV(kVelocity, kTransonicBarrier);
@@ -587,12 +584,8 @@ void BuildZeroAngle(Impl* pimpl, LobContext* out) {
       }
       const MachT kZeroMach(s.V().Magnitude(),
                             FpsT(out->speed_of_sound).Inverse());
-      spline::Cursor<float, spline::kKnotCount> zero_drag_curve(
-          spline::kKnots.data(), static_cast<const float*>(out->drags));
-      const double kZeroCd =
-          static_cast<double>(zero_drag_curve.Eval(kZeroMach.Float())) *
-          out->drag_coeff;
-      SolveStep(&s, &t, *out, kZeroCd);
+      spline::CurveView zero_drag_curve(spline::kKnots.data(), &out->drags[0]);
+      SolveStep(&s, &t, &zero_drag_curve, *out);
     }
 
     out->step_size = kSavedStepSize;
@@ -807,7 +800,7 @@ LobBuilder* LobBuilderAltitudeOfThermometerFt(LobBuilder* builder,
 LobBuilder* LobBuilderRelativeHumidityPercent(LobBuilder* builder,
                                               double value) {
   auto* pimpl = Pimpl(builder);
-  pimpl->relative_humidity_percent = value;
+  pimpl->relative_humidity_percent = PercentT(value);
   return builder;
 }
 

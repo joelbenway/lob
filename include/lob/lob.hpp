@@ -680,32 +680,32 @@ class Builder {
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
- * @param in Context parameters for the calculation.
+ * @param ctx Context parameters for the calculation.
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
  * @param pouts Pointer to an array where the output results will be stored.
  * @param size The number of ranges to solve for.
  * @return The number of successful solutions.
  */
-inline size_t Solve(const Context& in, const uint32_t* pranges, Output* pouts,
+inline size_t Solve(const Context& ctx, const uint32_t* pranges, Output* pouts,
                     size_t size) {
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-  return ::LobSolve(reinterpret_cast<const ::LobContext*>(&in), pranges, pouts,
+  return ::LobSolve(reinterpret_cast<const ::LobContext*>(&ctx), pranges, pouts,
                     size);
 }
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
  * @tparam N The number of ranges to solve for.
- * @param in Context parameters for the calculation.
+ * @param ctx Context parameters for the calculation.
  * @param pranges Reference to an array of ranges (in feet) to solve for.
  * @param pouts Reference to an array where the output results will be stored.
  * @return The number of successful solutions.
  */
 template <size_t N>
-inline size_t Solve(const Context& in, const std::array<uint32_t, N>& pranges,
+inline size_t Solve(const Context& ctx, const std::array<uint32_t, N>& pranges,
                     std::array<Output, N>& pouts) {
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-  return ::LobSolve(reinterpret_cast<const ::LobContext*>(&in), pranges.data(),
+  return ::LobSolve(reinterpret_cast<const ::LobContext*>(&ctx), pranges.data(),
                     pouts.data(), N);
 }
 

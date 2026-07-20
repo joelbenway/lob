@@ -204,7 +204,7 @@ TEST(CalcTests, CalculateAirDensityRatioHumidityCorrection) {
       EXPECT_NEAR(kExpectedResults.at((i * kRelativeHumidities.size()) + j),
                   kUncorrectedDensities.at(i) *
                       lob::CalculateAirDensityRatioHumidityCorrection(
-                          kRelativeHumidities.at(j),
+                          lob::PercentT(kRelativeHumidities.at(j)),
                           lob::CalculateWaterVaporSaturationPressure(
                               lob::DegFT(kTempsDegF.at(i)))),
                   kError);
@@ -228,7 +228,7 @@ TEST(CalcTests, CalculateSpeedOfSoundHumidityCorrection) {
       EXPECT_NEAR(kExpectedResultsFps.at((i * kRelativeHumidities.size()) + j),
                   kUncorrectedSpeedOfSoundFps.at(i) *
                       lob::CalculateSpeedOfSoundHumidityCorrection(
-                          kRelativeHumidities.at(j),
+                          lob::PercentT(kRelativeHumidities.at(j)),
                           lob::CalculateWaterVaporSaturationPressure(
                               lob::DegFT(kTempsDegF.at(i)))),
                   kError);

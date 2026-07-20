@@ -7,11 +7,12 @@
 #include "eng_units.hpp"
 #include "lob/lob.h"
 #include "ode.hpp"
+#include "splines.hpp"
 
 namespace lob {
 
-void SolveStep(TrajectoryStateT* ps, SecT* pt, const ::LobContext& input,
-               double cd);
+void SolveStep(TrajectoryStateT* ps, SecT* pt, spline::CurveView* pcurve,
+               const ::LobContext& ctx);
 
 }  // namespace lob
 

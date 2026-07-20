@@ -10,9 +10,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <iomanip>
-#include <random>
-#include <sstream>
 
 #include "tables.hpp"
 
@@ -39,15 +36,10 @@ constexpr auto SecantRef(const float* x, const float* y, size_t i) {
 
 constexpr auto LineFn(float x) { return (2 * x) + 1.0F; }
 
-constexpr size_t kTruthSize = 2000;
+constexpr size_t kTruthSize = 5000;
 constexpr size_t kTargetKnotSize = lob::spline::kKnotCount;
-
-// Absolute accuracy budget for the checked-in kKnots, in Cd units. This is
-// what CI actually enforces. After the first run, read the recorded
-// BaselineMaxError property and tighten this to ~1.2x that value so a Pchip
-// regression or corrupted kKnots array fails loudly.
-
 constexpr float kMaxAllowedErr = 5e-3F;
+
 struct TruthTables {
   std::array<float, kTruthSize> machs{};
   std::array<float, kTruthSize> g1{};
@@ -77,24 +69,6 @@ TruthTables BuildTruthTables() {
             .y;
   }
   return t;
-}
-
-// Snap x to the NEAREST truth-grid index. (lower_bound alone always rounds
-// up, biasing every knot slightly right of its true value.)
-
-unsigned int FindNearestGridIndex(const std::array<float, kTruthSize>& grid,
-                                  float x) {
-  const auto* const it = std::lower_bound(grid.begin(), grid.end(), x);
-
-  if (it == grid.end()) {
-    return static_cast<unsigned int>(kTruthSize - 1);
-  }
-
-  auto idx = static_cast<unsigned int>(std::distance(grid.begin(), it));
-  if (idx > 0 && std::abs(grid.at(idx - 1) - x) < std::abs(grid.at(idx) - x)) {
-    --idx;
-  }
-  return idx;
 }
 
 // Max abs error (worst of G1/G7) of a spline over the whole truth grid.
@@ -152,6 +126,12 @@ float BaselineError(const TruthTables& t) {
   }
   return EvalMaxError(t, sample_machs, sample_g1, sample_g7);
 }
+
+struct SampleTables {
+  std::array<float, kTargetKnotSize> machs{};
+  std::array<float, kTargetKnotSize> g1{};
+  std::array<float, kTargetKnotSize> g7{};
+};
 
 }  // namespace
 
@@ -596,7 +576,7 @@ TEST(SplinesBuildTest, BuiltSplineMatchesTableAtKnotMachsExactly) {
       lob::dragtable::kMachs.data(), lob::dragtable::kG1Drags.data(),
       lob::dragtable::kMachs.size(), lob::spline::kKnots.data(),
       lob::spline::kKnots.size(), coefs.data());
-  lob::spline::CursorF cursor(lob::spline::kKnots, coefs);
+  lob::spline::CurveView curve(lob::spline::kKnots, coefs);
   for (size_t i = 0; i < lob::spline::kKnots.size(); ++i) {
     const auto kMach = *(lob::spline::kKnots.data() + i);
     const auto* const lo = std::lower_bound(
@@ -606,7 +586,7 @@ TEST(SplinesBuildTest, BuiltSplineMatchesTableAtKnotMachsExactly) {
     }
     const auto kIdx = static_cast<size_t>(lo - lob::dragtable::kMachs.begin());
     const auto kExpected = *(lob::dragtable::kG1Drags.data() + kIdx);
-    EXPECT_FLOAT_EQ(cursor.Eval(kMach), kExpected)
+    EXPECT_FLOAT_EQ(curve.Eval(kMach), kExpected)
         << "knot mach #" << i << " = " << kMach;
   }
 }
@@ -644,15 +624,15 @@ TEST(SplinesConstantsTest, AllPrecomputedCoefsAreFinite) {
   }
 }
 
-TEST(SplinesCursorTest, StartsAtIdxZeroAndEvaluatesAtStart) {
-  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
-  const auto kResult = cursor.Eval(0);
+TEST(SplinesCurveViewTest, StartsAtIdxZeroAndEvaluatesAtStart) {
+  lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
+  const auto kResult = curve.Eval(0);
   EXPECT_FLOAT_EQ(kResult, *(lob::dragtable::kG1Drags.data() + 0));
-  EXPECT_EQ(cursor.GetSegment(), 0U);
+  EXPECT_EQ(curve.GetSegment(), 0U);
 }
 
-TEST(SplinesCursorTest, MatchesTableAtKnotMachsExactly) {
-  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
+TEST(SplinesCurveViewTest, MatchesTableAtKnotMachsExactly) {
+  lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
   for (size_t i = 0; i < lob::spline::kKnots.size(); ++i) {
     const auto kMach = *(lob::spline::kKnots.data() + i);
     const auto* const lo = std::lower_bound(
@@ -662,65 +642,65 @@ TEST(SplinesCursorTest, MatchesTableAtKnotMachsExactly) {
     }
     const auto kIdx = static_cast<size_t>(lo - lob::dragtable::kMachs.begin());
     const auto kExpected = *(lob::dragtable::kG1Drags.data() + kIdx);
-    EXPECT_FLOAT_EQ(cursor.Eval(kMach), kExpected) << "knot i=" << i;
+    EXPECT_FLOAT_EQ(curve.Eval(kMach), kExpected) << "knot i=" << i;
   }
 }
 
-TEST(SplinesCursorTest, ClampsBelowRangeToFirstDrag) {
-  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
-  EXPECT_FLOAT_EQ(cursor.Eval(-1.0e3F), *(lob::dragtable::kG1Drags.data() + 0));
+TEST(SplinesCurveViewTest, ClampsBelowRangeToFirstDrag) {
+  lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
+  EXPECT_FLOAT_EQ(curve.Eval(-1.0e3F), *(lob::dragtable::kG1Drags.data() + 0));
 }
 
-TEST(SplinesCursorTest, ClampsAboveRangeToLastDrag) {
-  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
-  EXPECT_FLOAT_EQ(cursor.Eval(1.0e3F), lob::dragtable::kG1Drags.back());
+TEST(SplinesCurveViewTest, ClampsAboveRangeToLastDrag) {
+  lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
+  EXPECT_FLOAT_EQ(curve.Eval(1.0e3F), lob::dragtable::kG1Drags.back());
 }
 
-TEST(SplinesCursorTest, ForwardBackwardMotionKeepsIdxInBounds) {
-  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
-  cursor.Eval(5);  // NOLINT
-  EXPECT_TRUE(cursor.GetSegment() < lob::spline::kKnotCount - 1);
+TEST(SplinesCurveViewTest, ForwardBackwardMotionKeepsIdxInBounds) {
+  lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
+  curve.Eval(5);  // NOLINT
+  EXPECT_TRUE(curve.GetSegment() < lob::spline::kKnotCount - 1);
   for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
-    cursor.Eval(*(lob::spline::kKnots.data() + i));
-    ASSERT_LE(cursor.GetSegment(), lob::spline::kKnotCount - 2);
+    curve.Eval(*(lob::spline::kKnots.data() + i));
+    ASSERT_LE(curve.GetSegment(), lob::spline::kKnotCount - 2);
   }
-  cursor.Eval(0);
-  EXPECT_EQ(cursor.GetSegment(), 0U);
+  curve.Eval(0);
+  EXPECT_EQ(curve.GetSegment(), 0U);
 }
 
-TEST(SplinesCursorTest, SeeksContinuousUpwardFromStartToEndAndBack) {
-  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
+TEST(SplinesCurveViewTest, SeeksContinuousUpwardFromStartToEndAndBack) {
+  lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
   for (size_t i = 0; i < lob::spline::kKnots.size(); ++i) {
-    cursor.Eval(*(lob::spline::kKnots.data() + i));
+    curve.Eval(*(lob::spline::kKnots.data() + i));
   }
-  EXPECT_EQ(cursor.GetSegment(), lob::spline::kKnotCount - 2);
+  EXPECT_EQ(curve.GetSegment(), lob::spline::kKnotCount - 2);
   for (size_t i = lob::spline::kKnots.size(); i-- > 0;) {
-    cursor.Eval(*(lob::spline::kKnots.data() + i));
+    curve.Eval(*(lob::spline::kKnots.data() + i));
   }
-  EXPECT_EQ(cursor.GetSegment(), 0);
+  EXPECT_EQ(curve.GetSegment(), 0);
 }
 
-TEST(SplinesCursorTest, SeekStaysAtLastSegmentStrictlyBelowLastKnot) {
+TEST(SplinesCurveViewTest, SeekStaysAtLastSegmentStrictlyBelowLastKnot) {
   using lob::spline::kKnotCount;
-  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
+  lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
   const float kMidLast = 0.5F * (lob::spline::kKnots[kKnotCount - 2] +
                                  lob::spline::kKnots[kKnotCount - 1]);
-  cursor.Eval(kMidLast);
-  EXPECT_EQ(cursor.GetSegment(), kKnotCount - 2);
-  cursor.Eval(lob::spline::kKnots[kKnotCount - 1]);
-  EXPECT_EQ(cursor.GetSegment(), kKnotCount - 2);
+  curve.Eval(kMidLast);
+  EXPECT_EQ(curve.GetSegment(), kKnotCount - 2);
+  curve.Eval(lob::spline::kKnots[kKnotCount - 1]);
+  EXPECT_EQ(curve.GetSegment(), kKnotCount - 2);
 }
 
-TEST(SplinesCursorTest, DerivIsFiniteAcrossTable) {
-  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
+TEST(SplinesCurveViewTest, DerivIsFiniteAcrossTable) {
+  lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
   for (size_t i = 0; i < lob::dragtable::kTableSize; ++i) {
     EXPECT_TRUE(
-        std::isfinite(cursor.Deriv(*(lob::dragtable::kMachs.data() + i))));
+        std::isfinite(curve.Deriv(*(lob::dragtable::kMachs.data() + i))));
   }
 }
 
-TEST(SplinesCursorTest, DerivOfPolyValMatchesPolyDerivAtMidSpan) {
-  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
+TEST(SplinesCurveViewTest, DerivOfPolyValMatchesPolyDerivAtMidSpan) {
+  lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
   for (size_t i = 0; i + 1 < lob::spline::kKnotCount; ++i) {
     const auto kLo = *(lob::spline::kKnots.data() + i);
     const auto kHi = *(lob::spline::kKnots.data() + i + 1);
@@ -728,45 +708,45 @@ TEST(SplinesCursorTest, DerivOfPolyValMatchesPolyDerivAtMidSpan) {
     const auto kT = kMid - kLo;
     const auto* const seg = lob::spline::kG1Coefs.data() + (4 * i);
     const auto kExpected = lob::spline::detail::PolyDeriv<float>(seg, kT);
-    EXPECT_NEAR(cursor.Deriv(kMid), kExpected, kEps) << "span i=" << i;
+    EXPECT_NEAR(curve.Deriv(kMid), kExpected, kEps) << "span i=" << i;
   }
 }
 
-TEST(SplinesCursorTest, DerivClampsAtRangeEdges) {
+TEST(SplinesCurveViewTest, DerivClampsAtRangeEdges) {
   constexpr auto kTen = 10.0F;
-  lob::spline::CursorF below(lob::spline::kKnots, lob::spline::kG1Coefs);
+  lob::spline::CurveView below(lob::spline::kKnots, lob::spline::kG1Coefs);
   EXPECT_FLOAT_EQ(below.Deriv(-1), below.Deriv(lob::spline::kKnots.front()));
 
-  lob::spline::CursorF above(lob::spline::kKnots, lob::spline::kG1Coefs);
+  lob::spline::CurveView above(lob::spline::kKnots, lob::spline::kG1Coefs);
   EXPECT_FLOAT_EQ(above.Deriv(kTen), above.Deriv(lob::spline::kKnots.back()));
 }
 
-TEST(SplinesCursorTest, DerivMagnitudesReasonable) {
+TEST(SplinesCurveViewTest, DerivMagnitudesReasonable) {
   constexpr auto kMaxDeriv = 100.0F;
-  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
+  lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
   for (size_t i = 0; i < lob::dragtable::kTableSize; ++i) {
-    EXPECT_TRUE(lob::Fabs(cursor.Deriv(*(lob::dragtable::kMachs.data() + i))) <
+    EXPECT_TRUE(lob::Fabs(curve.Deriv(*(lob::dragtable::kMachs.data() + i))) <
                 kMaxDeriv);
   }
 }
 
-TEST(SplinesCursorTest, IdxZeroAfterResetByEvaluatingAtStart) {
-  lob::spline::CursorF cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
-  cursor.Eval(lob::spline::kKnots.back());  // NOLINT
-  EXPECT_EQ(cursor.GetSegment(), lob::spline::kSegmentCount - 1);
-  cursor.Eval(lob::spline::kKnots.front());
-  EXPECT_EQ(cursor.GetSegment(), 0);
+TEST(SplinesCurveViewTest, IdxZeroAfterResetByEvaluatingAtStart) {
+  lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
+  curve.Eval(lob::spline::kKnots.back());  // NOLINT
+  EXPECT_EQ(curve.GetSegment(), lob::spline::kSegmentCount - 1);
+  curve.Eval(lob::spline::kKnots.front());
+  EXPECT_EQ(curve.GetSegment(), 0);
 }
 
-TEST(SplinesCursorTest, AllCoefsRobustAcrossMachs) {
+TEST(SplinesCurveViewTest, AllCoefsRobustAcrossMachs) {
   const std::array<const std::array<float, lob::spline::kCoefsSize>*, 6> kCoefs{
       &lob::spline::kG1Coefs, &lob::spline::kG2Coefs, &lob::spline::kG5Coefs,
       &lob::spline::kG6Coefs, &lob::spline::kG7Coefs, &lob::spline::kG8Coefs};
   for (const auto* coefs : kCoefs) {
-    lob::spline::CursorF cursor{lob::spline::kKnots, *coefs};
+    lob::spline::CurveView curve{lob::spline::kKnots, *coefs};
     for (size_t i = 0; i < lob::dragtable::kTableSize; ++i) {
       const auto kMach = *(lob::dragtable::kMachs.data() + i);
-      const auto kResult = cursor.Eval(kMach);
+      const auto kResult = curve.Eval(kMach);
       ASSERT_GT(kResult, 0);
       ASSERT_TRUE(std::isfinite(kResult));
     }
@@ -851,9 +831,6 @@ TEST(SplineOptimization, BaselineAccuracyBudget) {
         << "kKnots not strictly increasing at index " << i;
   }
 
-  // Span check with a small tolerance: knot machs are often printed from
-  // rounded floats, and the evaluator clamps at the table edges anyway.
-
   constexpr float kSpanTolerance = 1e-3F;
   ASSERT_GE(lob::spline::kKnots.front(),
             lob::dragtable::kMachs.front() - kSpanTolerance);
@@ -868,314 +845,8 @@ TEST(SplineOptimization, BaselineAccuracyBudget) {
   EXPECT_LT(kBaselineMaxErr, kMaxAllowedErr)
       << "Checked-in kKnots exceed the accuracy budget. Either the spline "
          "evaluator regressed, kKnots was corrupted, or the budget needs "
-         "revisiting. Run SplineOptimization.DISABLED_OptimizeKnots to "
-         "search for a better knot placement.";
+         "revisiting.";
 }
-
-// ---------------------------------------------------------------------------
-// Tuning tool, not a CI gate. Run manually with:
-//   --gtest_also_run_disabled_tests --gtest_filter='*OptimizeKnots*'
-// Fails (intentionally, to be loud) only when it finds a meaningfully better
-// configuration, and prints the drop-in replacement array.
-// ---------------------------------------------------------------------------
-
-TEST(SplineOptimization, DISABLED_OptimizeKnots) {
-  const TruthTables kTruth = BuildTruthTables();
-
-  // --- Baseline: error of the exact checked-in knots ----------------------
-  const float kBaseLineErrorMax = BaselineError(kTruth);
-
-  // --- Initialize SA state on the truth grid ------------------------------
-  // Snap each knot to the nearest grid point, then repair collisions so the
-  // index sequence stays strictly increasing — two nearby knots can
-  // otherwise land on the same grid point and hand the spline evaluator
-  // duplicate x-values.
-  std::array<unsigned int, kTargetKnotSize> current_idxs{};
-
-  for (size_t i = 0; i < kTargetKnotSize; ++i) {
-    current_idxs.at(i) =
-        FindNearestGridIndex(kTruth.machs, lob::spline::kKnots.at(i));
-  }
-  current_idxs.front() = 0;
-  current_idxs.back() = static_cast<unsigned int>(kTruthSize - 1);
-  for (size_t i = 1; i < kTargetKnotSize; ++i) {  // forward repair
-    current_idxs.at(i) =
-        std::max(current_idxs.at(i), current_idxs.at(i - 1) + 1);
-  }
-
-  for (size_t i = kTargetKnotSize - 1; i-- > 0;) {  // backward repair
-    current_idxs.at(i) =
-        std::min(current_idxs.at(i), current_idxs.at(i + 1) - 1);
-  }
-
-  for (size_t i = 1; i < kTargetKnotSize; ++i) {
-    ASSERT_GT(current_idxs.at(i), current_idxs.at(i - 1))
-        << "Could not place strictly-increasing knots on the truth grid";
-  }
-
-  // Rebuild the sample arrays so they EXACTLY match the given indices.
-  // Every code path that changes current_idxs must keep these in sync;
-  // a desync here silently poisons best_err (measured on one spline,
-  // attributed to another).
-
-  std::array<float, kTargetKnotSize> sample_machs{};
-  std::array<float, kTargetKnotSize> sample_g1{};
-  std::array<float, kTargetKnotSize> sample_g7{};
-
-  auto load_samples = [&kTruth](
-                          const std::array<unsigned int, kTargetKnotSize>& idxs,
-                          std::array<float, kTargetKnotSize>& machs,
-                          std::array<float, kTargetKnotSize>& g1,
-                          std::array<float, kTargetKnotSize>& g7) {
-    for (size_t i = 0; i < kTargetKnotSize; ++i) {
-      machs.at(i) = kTruth.machs.at(idxs.at(i));
-      g1.at(i) = kTruth.g1.at(idxs.at(i));
-      g7.at(i) = kTruth.g7.at(idxs.at(i));
-    }
-  };
-
-  std::array<float, kTruthSize> current_errors{};
-  auto best_idxs = current_idxs;
-  load_samples(current_idxs, sample_machs, sample_g1, sample_g7);
-
-  float best_err =
-      EvalMaxError(kTruth, sample_machs, sample_g1, sample_g7, &current_errors);
-
-  // --- Annealing schedule --------------------------------------------------
-  // T0 scales with the problem: a quarter of the starting error means early
-  // proposals that worsen error "on the order of the error itself" are
-  // often accepted, and by T ~ T0/100 we are effectively hill climbing.
-  // Step size decays on its OWN geometric schedule (decoupled from T) so
-  // the walk can still make long jumps mid-run while acceptance tightens.
-
-  const float kStartingTemp = std::max(0.25F * best_err, 1e-5F);
-  const float kTMin = kStartingTemp * 1e-3F;
-  const float kCoolingRate = 0.9975F;  // ~2760 temperature steps
-  const int kIterationsPerTemp = 20;   // ~55k proposals per restart
-  const int kInitialStep = 100;        // in truth-grid indices, decays to 1
-  const int kNumRestarts = 3;          // reheat from best-so-far each time
-  const float kLogTempRange = std::log(kStartingTemp / kTMin);
-
-  std::uniform_real_distribution<float> prob_dist(0.0F, 1.0F);
-  std::uniform_int_distribution<size_t> knot_dist(1, kTargetKnotSize - 2);
-
-  for (int restart = 0; restart < kNumRestarts; ++restart) {
-    // NOLINTNEXTLINE(cert-msc51-cpp, cert-msc32-c)
-    std::mt19937 rng(static_cast<std::mt19937::result_type>(
-        42 + (1000 * restart)));  // NOLINT
-
-    // Start (or reheat) from the best configuration found so far.
-    // FIX: rebuild sample arrays AND per-point errors together with the
-    // indices — restoring indices alone leaves the spline state stale,
-    // which is exactly the desync that produced unreproducible results.
-
-    current_idxs = best_idxs;
-
-    load_samples(current_idxs, sample_machs, sample_g1, sample_g7);
-    float current_max_err = EvalMaxError(kTruth, sample_machs, sample_g1,
-                                         sample_g7, &current_errors);
-
-    for (float temperature = kStartingTemp; temperature > kTMin;
-         // NOLINTNEXTLINE(cert-flp30-c)
-         temperature *= kCoolingRate) {
-      // Fraction of the schedule elapsed, 0 -> 1, drives step-size decay.
-      const float kFrac = std::log(kStartingTemp / temperature) / kLogTempRange;
-      const int kMaxStep = std::max(
-          1, static_cast<int>(std::lround(
-                 kInitialStep *
-                 std::pow(1.0F / static_cast<float>(kInitialStep), kFrac))));
-
-      std::uniform_int_distribution<int> step_dist(-kMaxStep, kMaxStep);
-      for (int i = 0; i < kIterationsPerTemp; ++i) {
-        const size_t kK = knot_dist(rng);
-        const int kOldIdx = static_cast<int>(current_idxs.at(kK));
-        const int kMinAllowed = static_cast<int>(current_idxs.at(kK - 1)) + 1;
-        const int kMaxAllowed = static_cast<int>(current_idxs.at(kK + 1)) - 1;
-
-        if (kMinAllowed > kMaxAllowed) {
-          continue;
-        }
-
-        int new_idx_signed = kOldIdx + step_dist(rng);
-        new_idx_signed =
-            std::max(kMinAllowed, std::min(new_idx_signed, kMaxAllowed));
-
-        const auto kNewIdx = static_cast<unsigned int>(new_idx_signed);
-        if (kNewIdx == static_cast<unsigned int>(kOldIdx)) {
-          continue;
-        }
-
-        current_idxs.at(kK) = kNewIdx;
-        sample_machs.at(kK) = kTruth.machs.at(kNewIdx);
-        sample_g1.at(kK) = kTruth.g1.at(kNewIdx);
-        sample_g7.at(kK) = kTruth.g7.at(kNewIdx);
-
-        // Guard the invariant that makes windowed evaluation valid: the
-        // sample x-array must stay sorted. An unsorted array here means a
-        // state-sync bug upstream, and the evaluator's output is garbage.
-
-        ASSERT_TRUE(std::is_sorted(sample_machs.begin(), sample_machs.end()))
-            << "sample_machs desynced from current_idxs";
-
-        // Windowed re-evaluation: moving knot k changes secant slopes of
-        // segments k-1..k, hence derivatives at knots k-1..k+1, hence
-        // spline values only on segments k-2..k+1. Truth points outside
-        // [knot k-2, knot k+2] are untouched. (The earlier "errors leak
-        // outside the window" symptom was this same desync bug, not a
-        // flaw in the windowed update.)
-
-        const size_t kLeftKnot = (kK >= 2) ? kK - 2 : 0;
-        const size_t kRightKnot = std::min(kTargetKnotSize - 1, kK + 2);
-        const size_t kStartTruthIdx = current_idxs.at(kLeftKnot);
-        const size_t kEndTruthIdx = current_idxs.at(kRightKnot);
-
-        auto candidate_errors = current_errors;
-
-        for (size_t j = kStartTruthIdx; j <= kEndTruthIdx; ++j) {
-          const float kEvalG1 = lob::spline::detail::EvalWithDeriv(
-                                    sample_machs.data(), sample_g1.data(),
-                                    kTargetKnotSize, kTruth.machs.at(j))
-                                    .y;
-
-          const float kEvalG7 = lob::spline::detail::EvalWithDeriv(
-                                    sample_machs.data(), sample_g7.data(),
-                                    kTargetKnotSize, kTruth.machs.at(j))
-                                    .y;
-
-          candidate_errors.at(j) =
-              std::max(std::abs(kEvalG1 - kTruth.g1.at(j)),
-                       std::abs(kEvalG7 - kTruth.g7.at(j)));
-        }
-
-        const float kCandidateMaxErr =
-            *std::max_element(candidate_errors.begin(), candidate_errors.end());
-
-        const float kDelta = kCandidateMaxErr - current_max_err;
-
-        if (kDelta < 0.0F || std::exp(-kDelta / temperature) > prob_dist(rng)) {
-          current_max_err = kCandidateMaxErr;
-          current_errors = candidate_errors;
-
-          if (current_max_err < best_err) {
-            best_err = current_max_err;
-            best_idxs = current_idxs;
-          }
-
-        } else {
-          current_idxs.at(kK) = static_cast<unsigned int>(kOldIdx);
-          sample_machs.at(kK) = kTruth.machs.at(static_cast<size_t>(kOldIdx));
-          sample_g1.at(kK) = kTruth.g1.at(static_cast<size_t>(kOldIdx));
-          sample_g7.at(kK) = kTruth.g7.at(static_cast<size_t>(kOldIdx));
-        }
-      }
-    }
-  }
-
-  // --- Verify before reporting ---------------------------------------------
-  // Recompute the error of best_idxs from scratch. If this does not match
-  // the running best_err, optimizer state desynced somewhere and the printed
-  // knots would NOT reproduce the reported number after paste-back.
-
-  load_samples(best_idxs, sample_machs, sample_g1, sample_g7);
-
-  const float kVerifiedErr =
-      EvalMaxError(kTruth, sample_machs, sample_g1, sample_g7);
-
-  ASSERT_NEAR(kVerifiedErr, best_err, 1e-6F)
-      << "Optimizer state desync: recorded best_err does not match the "
-         "true error of best_idxs. Do NOT trust this run's output.";
-
-  best_err = kVerifiedErr;  // report the independently verified number
-
-  // --- Report ---------------------------------------------------------------
-  testing::Test::RecordProperty("BaselineMaxError",
-                                std::to_string(kBaseLineErrorMax));
-
-  testing::Test::RecordProperty("OptimizedMaxError", std::to_string(best_err));
-
-  // NOTE: the emitted machs come from the truth grid, and their drag values
-  // are assumed to be spline evaluations of the full drag table at those
-  // machs. If production stores measured values at knots instead, re-derive
-  // the sample values accordingly before committing.
-
-  std::ostringstream oss;
-  oss << "constexpr std::array<float, kKnotCount> kKnots = {\n";
-  constexpr int kPrecision = std::numeric_limits<float>::max_digits10;
-  oss << std::fixed << std::setprecision(kPrecision);
-
-  for (size_t i = 0; i < kTargetKnotSize; ++i) {
-    oss << "    " << kTruth.machs.at(best_idxs.at(i)) << "F"
-        << (i < kTargetKnotSize - 1 ? ",\n" : "\n");
-  }
-
-  oss << "};";
-  constexpr float kMinMeaningfulImprovement = 1e-5F;
-  if (best_err < (kBaseLineErrorMax - kMinMeaningfulImprovement)) {
-    FAIL() << "\n=============================================================="
-              "==========\n"
-           << " SUCCESS: Found a significantly better knot configuration!\n"
-           << "================================================================"
-              "========\n"
-           << " Supplied kKnots Max Error:  " << kBaseLineErrorMax << "\n"
-           << " Optimized kKnots Max Error: " << best_err << " (verified)\n"
-           << " Net Improvement:            " << (kBaseLineErrorMax - best_err)
-           << "\n\n"
-           << " Replace your current kKnots array definition with the "
-              "following:\n\n"
-           << oss.str() << "\n"
-           << "================================================================"
-              "========\n";
-  }
-}
-
-#if 1  // NOLINT
-TEST(SplinesDesmosOutputTest, GeneratesMachDragTableForG1AndG7) {
-  constexpr size_t kPoints = 2000;
-  constexpr float kMachMin = 0.0F;
-  constexpr float kMachMax = 5.0F;
-  constexpr float kStep =
-      (kMachMax - kMachMin) / static_cast<float>(kPoints - 1);
-
-  lob::spline::CursorF g1_cursor(lob::spline::kKnots, lob::spline::kG1Coefs);
-  lob::spline::CursorF g7_cursor(lob::spline::kKnots, lob::spline::kG7Coefs);
-
-  std::cout << "=== G1 Drag Table ===\n";
-  std::cout << "Mach,G1_Spline,G1_RuntimePchip,G1_LobLerp\n";
-  for (size_t i = 0; i < kPoints; ++i) {
-    const float kMach = kMachMin + (static_cast<float>(i) * kStep);
-    const auto kG1Runtime =
-        lob::spline::detail::EvalWithDeriv<float>(
-            lob::dragtable::kMachs.data(), lob::dragtable::kG1Drags.data(),
-            lob::dragtable::kTableSize, kMach)
-            .y;
-    const auto kG1Lerp = lob::dragtable::LobLerp(
-        lob::dragtable::kMachs.data(), lob::dragtable::kG1Drags.data(),
-        lob::dragtable::kTableSize, static_cast<double>(kMach));
-    const float kG1Spline = g1_cursor.Eval(kMach);
-    std::cout << kMach << ',' << kG1Spline << ',' << kG1Runtime << ','
-              << kG1Lerp << '\n';
-  }
-
-  std::cout << "\n=== G7 Drag Table ===\n";
-  std::cout << "Mach,G7_Spline,G7_RuntimePchip,G7_LobLerp\n";
-  for (size_t i = 0; i < kPoints; ++i) {
-    const float kMach = kMachMin + (static_cast<float>(i) * kStep);
-    const auto kG7Runtime =
-        lob::spline::detail::EvalWithDeriv<float>(
-            lob::dragtable::kMachs.data(), lob::dragtable::kG7Drags.data(),
-            lob::dragtable::kTableSize, kMach)
-            .y;
-    const auto kG7Lerp = lob::dragtable::LobLerp(
-        lob::dragtable::kMachs.data(), lob::dragtable::kG7Drags.data(),
-        lob::dragtable::kTableSize, static_cast<double>(kMach));
-    const float kG7Spline = g7_cursor.Eval(kMach);
-    std::cout << kMach << ',' << kG7Spline << ',' << kG7Runtime << ','
-              << kG7Lerp << '\n';
-  }
-  SUCCEED()
-      << "Desmos CSV output complete. Copy each table separately to Desmos.";
-}
-#endif
 
 }  // namespace tests
 

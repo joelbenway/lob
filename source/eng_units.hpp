@@ -713,6 +713,9 @@ constexpr KgT::operator LbsT() const {
   return LbsT(Value() * convert::kLbsPerKg);
 }
 
+enum class Rational : uint8_t { kPercent };
+using PercentT = StrongT<Rational, Rational::kPercent, double>;
+
 enum class SectionalDensity : uint8_t {
   kPoundsMassPerSquareInch,
   kKilogramsPerSquareMeter

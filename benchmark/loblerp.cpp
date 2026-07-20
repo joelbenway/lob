@@ -4,7 +4,6 @@
 
 #include <benchmark/benchmark.h>
 
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <vector>
@@ -20,9 +19,8 @@ constexpr double kDecrement = 1E-4;
 const auto kResultsSize =
     static_cast<size_t>(std::ceil((kInitMach - kFinalMach) / kDecrement));
 
-// NOLINTBEGIN(readability-identifier-naming) — Google Benchmark convention
 // Benchmark 1: LobLerp — binary search + linear interp from tables.hpp
-void BM_LobLerp(benchmark::State& state) {
+void LobLerpBM(benchmark::State& state) {
   static std::vector<double> results(kResultsSize);
   size_t index = 0;
   for (auto _ : state) {
@@ -37,16 +35,16 @@ void BM_LobLerp(benchmark::State& state) {
   }
 }
 
-// Benchmark 2: spline::Cursor — caching spline evaluation (stateful index)
-void BM_Cursor(benchmark::State& state) {
+// Benchmark 2: spline::CurveView — caching spline evaluation (stateful index)
+void CurveViewBM(benchmark::State& state) {
   static std::vector<double> results(kResultsSize);
   size_t index = 0;
   for (auto _ : state) {
-    lob::spline::CursorF cursor{lob::spline::kKnots, lob::spline::kG1Coefs};
+    lob::spline::CurveView curve{lob::spline::kKnots, lob::spline::kG1Coefs};
     double mach = kInitMach;
     while (mach > kFinalMach) {
       const auto kResult =
-          static_cast<double>(cursor.Eval(static_cast<float>(mach)));
+          static_cast<double>(curve.Eval(static_cast<float>(mach)));
       results.at(index++) = kResult;
       mach -= kDecrement;
     }
@@ -54,10 +52,9 @@ void BM_Cursor(benchmark::State& state) {
   }
 }
 }  // namespace
-// NOLINTEND(readability-identifier-naming)
 
-BENCHMARK(BM_LobLerp);
-BENCHMARK(BM_Cursor);
+BENCHMARK(LobLerpBM);
+BENCHMARK(CurveViewBM);
 
 }  // namespace benchmark
 

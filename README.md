@@ -13,7 +13,7 @@ If you wanted to make yourself a ballistics solver application on par with the b
 The following can be accounted for in lob's solutions:
  * Aerodynamic drag
     * Standard drag curves (G1, G7, etc)
-    * Custom drag curves :sparkles:
+    * Custom user-provided drag curves :sparkles:
  * Gravity :earth_americas:
  * Wind :flags:
  * Atmospheric conditions :partly_sunny:
@@ -35,11 +35,11 @@ This repo includes a tiny example CLI program, lobber, which demonstrates the li
 Lob was intended to be easy to work with, accurate, and fast in that order. Ballistics solutions require many inputs to model all the factors affecting the trajectory of a projectile. Making the most of imperfect or incomplete data is a central goal of lob. Maybe the best environmental data available is from a weather station at the wrong altitude; lob should adjust it for you. Maybe you know X and Y but not Z. Lob should make an informed estimate on Z or substitute a less demanding formula that doesn't require it. Give lob whatever you do know and it will do its best to fill in the gaps with frog DNA! :sauropod:
 
 ### Software and APIs
-Lob uses a straightforward API featuring data structures and free functions that act on them. At the heart of lob is the Builder which is used to build the Input data consumed by the solver functions. There are so many optional inputs that go into a ballistic solution that the builder pattern makes a pleasant abstraction.
+Lob uses a straightforward API featuring data structures and free functions that act on them. At the heart of lob is the Builder which is used to build Context data consumed by the Solver function. There are so many optional inputs that go into a ballistic solution that the builder pattern makes a pleasant abstraction.
 
 Lob's architecture follows an [hourglass pattern](https://www.youtube.com/watch?v=PVYdHDm0q6Y): a C++ implementation at the base, a C API ([`lob.h`](include/lob/lob.h)) as the narrow waist providing a stable ABI boundary, and a C++ wrapper ([`lob.hpp`](include/lob/lob.hpp)) on top that restores the ergonomic C++ interface. The C API makes lob accessible from any language with C FFI support while the C++ wrapper preserves the original developer experience with the `lob::Builder` class, `lob::Solve()`, and namespaced conversion functions.
 
-To use lob in your project, [the C++ header](include/lob/lob.hpp) has everything you need and little else. Or use [the C header](include/lob/lob.h) directly. Lob does not dynamically allocate memory or throw exceptions and is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating point math.
+To use lob in your project, [the C++ header](include/lob/lob.hpp) has everything you need! Or use [the C header](include/lob/lob.h) directly if you'd like. Lob does not dynamically allocate memory or throw exceptions and is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating point math.
 
 ### How to use lob
 ```C++
@@ -66,7 +66,7 @@ for (size_t i = 0; i < kNumSolved; i++) {
     << " inches.\n";
 }
 ```
-Those few parameters are enough for lob to make a well-formed, if minimal, ballistic solution. By feeding more data, we can get something more practical from the solver.
+Those few parameters are enough for lob to make a well-formed, if minimal, ballistic solution. By providing more data, we can get something more practical from the solver.
 ```C++
 const lob::Context kSolverCtx = 
   lob::Builder()
@@ -93,7 +93,11 @@ const lob::Context kSolverCtx =
 Now we're cooking! :cook:
 
 ### Under the hood
-Lob solves ordinary differential equations (ODEs) which model the projectile motion of a point mass using numerical methods. This is the standard for most of the workhorse solvers of today. What is not the norm is an implementation in C++ with comprehensive unit tests and an open-source license. :mechanical_arm:
+Lob solves ordinary differential equations (ODEs) which model the projectile motion of a point mass using numerical methods. This is the standard for most of the workhorse solvers of today. But there are a few things that set lob apart! :mechanical_arm:
+ * Comprehensive unit test coverage that validates every calculation against published data
+ * [strong types](/source/eng_units.hpp) making conversions between engineering units foolproof
+ * Pre-computed cubic Hermite spline curves to model drag functions fast and accurately in a tiny binary
+ * An open source license
 
 ## About the Author
 
