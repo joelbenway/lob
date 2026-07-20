@@ -96,20 +96,20 @@ inline double CalculateAirDensityRatio(InHgT pressure, DegFT temperature) {
 
 // Page 167 of Modern Exterior Ballistics - McCoy
 inline double CalculateAirDensityRatioHumidityCorrection(
-    double humidity_pct, InHgT water_vapor_sat_pressure) {
+    PercentT humidity_pct, InHgT water_vapor_sat_pressure) {
   const double kAVal = 0.00378;
 
-  return 1.0 - (kAVal * humidity_pct * water_vapor_sat_pressure.Value() /
-                kIsaSeaLevelPressureInHg);
+  return 1.0 - (kAVal * humidity_pct.Value() *
+                water_vapor_sat_pressure.Value() / kIsaSeaLevelPressureInHg);
 }
 
 // Page 168 of Modern Exterior Ballistics - McCoy
 inline double CalculateSpeedOfSoundHumidityCorrection(
-    double humidity_pct, InHgT water_vapor_sat_pressure) {
+    PercentT humidity_pct, InHgT water_vapor_sat_pressure) {
   const double kAVal = 0.0014;
 
-  return 1.0 + (kAVal * humidity_pct * water_vapor_sat_pressure.Value() /
-                kIsaSeaLevelPressureInHg);
+  return 1.0 + (kAVal * humidity_pct.Value() *
+                water_vapor_sat_pressure.Value() / kIsaSeaLevelPressureInHg);
 }
 
 // Page 90 of Modern Exterior Ballistics - McCoy

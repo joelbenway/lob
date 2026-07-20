@@ -522,13 +522,13 @@ LOB_EXPORT extern void LobBuilderBuild(LobBuilder* builder, LobContext* result);
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
- * @param in Pointer to input parameters for the calculation.
+ * @param ctx Pointer to context parameters for the calculation.
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
  * @param pouts Pointer to an array where the output results will be stored.
  * @param size The number of ranges to solve for.
  * @return The number of successful solutions.
  */
-LOB_EXPORT extern size_t LobSolve(const LobContext* in, const uint32_t* pranges,
+LOB_EXPORT extern size_t LobSolve(const LobContext* ctx, const uint32_t* pranges,
                                   LobOutput* pouts, size_t size);
 
 /** @brief Converts minutes of angle (MOA) to milliradians (MIL).

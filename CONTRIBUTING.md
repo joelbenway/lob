@@ -1,12 +1,12 @@
 # Contributing
 
-## Submitting Bugs
+## Reporting Bugs
 
-A helpful bug report is the most valuable contribution a project can receive. Thank you! To ensure that your bug report is in fact helpful be sure to do your due diligence by troubleshooting. Check the issues to ensure your bug hasn't already been submitted. When you do submit, be specific about your version, your environment, compiler, etc. Include all the steps required to reproduce the buggy behavior.
+A helpful bug report is the most valuable contribution this project can receive. Thank you! To ensure that your bug report is in fact helpful be sure to do your due diligence by troubleshooting. Check the issues to ensure your bug hasn't already been submitted. When you do submit, be specific about your version, your environment, compiler, etc. Include all the steps required to reproduce the buggy behavior.
 
 ## Submitting Patches
 
-Before creating a PR, consider opening an issue to discuss the problem and solution. This will help ensure that your PR is accepted. When you do create a PR, be sure to include a description of the problem and solution. Always include tests if applicable.
+Before creating a PR, consider opening an issue to discuss the problem and solution. Lob is a solo-authored project with a specific technical direction, PRs that don't fit that direction are unlikely to be accepted. But if you do create a PR, be sure to include a description of the problem and solution. Always include tests if applicable.
 
 ### Commit Guidelines
 

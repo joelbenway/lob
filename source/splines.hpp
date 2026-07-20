@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <utility>
 
+#include "eng_units.hpp"
 #include "tables.hpp"
 
 namespace lob {
@@ -114,9 +115,10 @@ class Cursor {
   constexpr Cursor(const T* pknots, const T* pcoefs)
       : knots_(pknots), coefs_(pcoefs) {}
 
-  Cursor(const std::array<T, N>& knots,
-         const std::array<T, (N - 1) * 4>& coefs)
-      : knots_(knots.data()), coefs_(coefs.data()) {}
+  constexpr Cursor(const std::array<T, N>& knots,
+                   const std::array<T, (N - 1) * 4>& coefs)
+      // NOLINTNEXTLINE(readability-container-data-pointer)
+      : knots_(&knots[0]), coefs_(&coefs[0]) {}
 
   constexpr size_t GetSegment() { return idx_; }
 
@@ -124,6 +126,10 @@ class Cursor {
     Clamp(m);
     Seek(m);
     return detail::PolyVal(coefs_ + (4 * idx_), m - knots_[idx_]);
+  }
+
+  constexpr double Eval(MachT m) {
+    return static_cast<double>(Eval(m.Float()));
   }
 
   constexpr T Deriv(T m) {
@@ -156,7 +162,7 @@ class Cursor {
   size_t idx_{0};
 };
 
-using CursorF = Cursor<float, kKnotCount>;
+using CurveView = Cursor<float, kKnotCount>;
 
 template <typename T>
 constexpr void Segment(const T* machs, const T* drags, size_t size, T knot1,

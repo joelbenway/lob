@@ -374,9 +374,8 @@ TEST(BoatrightTests, CalculateAerodynamicJump) {
   const lob::MphT kZwind(10);
   const lob::LbsPerCuFtT kAirDensity(0.0764742);
   const lob::FpsT kSos(1116.45);
-  lob::spline::CursorF drag_curve(lob::spline::kKnots, lob::spline::kG7Coefs);
-  const double kCDref = static_cast<double>(
-      drag_curve.Eval(lob::MachT(kV, kSos.Inverse()).Float()));
+  lob::spline::CurveView drag_curve(lob::spline::kKnots, lob::spline::kG7Coefs);
+  const double kCDref = drag_curve.Eval(lob::MachT(kV, kSos.Inverse()));
 
   // Reference paper sample calculation publishes a result of -0.402 which I
   // believe is the result of an improperly calculated gyroscopic rates as well
