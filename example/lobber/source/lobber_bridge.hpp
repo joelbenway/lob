@@ -5,20 +5,29 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <nlohmann/json.hpp>
+#include <string>
 #include <vector>
 
 #include "lob/lob.hpp"
 
 namespace example {
 
-struct BridgeResult {
-  lob::Context input;
-  std::vector<lob::Output> outputs;
-  size_t count;
-};
+// JSON reader helpers
+double JsonToDouble(const nlohmann::json& j, const std::string& key);
+uint16_t JsonToU16(const nlohmann::json& j, const std::string& key);
+lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& j,
+                                           const std::string& key);
+lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
+                                      const std::string& key);
+lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
+                                  const std::string& key);
 
-BridgeResult SolveFromJson(const nlohmann::json& j);
+// Range parsing (defaults to 0–1000 yd in 100 yd increments if not specified)
+std::vector<uint32_t> ParseRanges(const nlohmann::json& j);
+
+// View helpers
 void PrintTable(const lob::Context& input, const lob::Output* outputs,
                 size_t count);
 nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count);
