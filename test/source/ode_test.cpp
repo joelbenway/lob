@@ -71,6 +71,34 @@ TEST(OdeTests, HeunStep) {
   }
 }
 
+TEST(OdeTests, IterativeHeunStep) {
+  const double kY0 = 1.0;
+  const double kT0 = 0.0;
+  const double kTFinal = 5.0;
+  const double kDT = 0.1;
+
+  // This is ordinary differential equation to solve
+  auto ode = [](double t, double y) { return std::pow(std::sin(t), 2) * y; };
+
+  // The solved ode will provide an expected solution
+  auto y_exact = [](double t_0, double y_0, double t) {
+    auto exponent = ((t - t_0) - (std::sin(t) * std::cos(t) -
+                                  std::sin(t_0) * std::cos(t_0))) /
+                    2;
+    return y_0 * std::exp(exponent);
+  };
+
+  double y = kY0;
+  double t = kT0;
+  const double kError = 0.1;
+  while (t < kTFinal) {
+    y = lob::IterativeHeunStep(t, y, kDT, ode);
+    t += kDT;
+    const double kExpectedSolution = y_exact(kT0, kY0, t);
+    EXPECT_NEAR(y, kExpectedSolution, kError);
+  }
+}
+
 TEST(OdeTests, RungeKuttaStep) {
   const double kY0 = 1.0;
   const double kT0 = 0.0;
@@ -159,6 +187,24 @@ TEST(OdeTests, Addition) {
   EXPECT_DOUBLE_EQ(b.P().X().Value(), 1.0);
   a = a + b;
   EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() + b.P().X().Value());
+}
+
+TEST(OdeTests, Subtraction) {
+  const auto kP1 =
+      lob::CartesianT<lob::FeetT>(lob::FeetT(5), lob::FeetT(5), lob::FeetT(0));
+  const auto kP2 =
+      lob::CartesianT<lob::FeetT>(lob::FeetT(3), lob::FeetT(4), lob::FeetT(0));
+  const auto kV1 =
+      lob::CartesianT<lob::FpsT>(lob::FpsT(5), lob::FpsT(5), lob::FpsT(0));
+  const auto kV2 =
+      lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
+  lob::TrajectoryStateT a(kP1, kV1);
+  const lob::TrajectoryStateT kB(kP2, kV2);
+  a = a - kB;
+  EXPECT_DOUBLE_EQ(a.P().X().Value(), kP1.X().Value() - kP2.X().Value());
+  EXPECT_DOUBLE_EQ(a.P().Y().Value(), kP1.Y().Value() - kP2.Y().Value());
+  EXPECT_DOUBLE_EQ(a.V().X().Value(), kV1.X().Value() - kV2.X().Value());
+  EXPECT_DOUBLE_EQ(a.V().Y().Value(), kV1.Y().Value() - kV2.Y().Value());
 }
 
 TEST(OdeTests, Multiplication) {

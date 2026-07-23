@@ -24,6 +24,19 @@ constexpr Y HeunStep(const T& t_i, const Y& y_i, T dt, const F& f) {
   return y_i + ((k1 + k2) * kQuanta);
 }
 
+// Generic implementation of Heun's method with iteratively applied corrector
+template <typename T, typename Y, typename F, size_t kMaxIter = 3>
+constexpr Y IterativeHeunStep(const T& t_i, const Y& y_i, T dt, const F& f) {
+  const T kQuanta = dt / 2;
+  const Y k1 = f(t_i, y_i);
+  Y y = y_i + (k1 * dt);
+  for (size_t i = 0; i < kMaxIter; ++i) {
+    const Y k2 = f(t_i + dt, y);
+    y = y_i + ((k1 + k2) * kQuanta);
+  }
+  return y;
+}
+
 // Generic implementation of fourth order Runge-Kutta method
 template <typename T, typename Y, typename F>
 constexpr Y RungeKuttaStep(const T& t_i, const Y& y_i, T dt, const F& f) {
@@ -63,6 +76,10 @@ class TrajectoryStateT {
     return *this;
   }
 
+  constexpr TrajectoryStateT operator-(const TrajectoryStateT& rhs) const {
+    return TrajectoryStateT{position_ - rhs.position_,
+                            velocity_ - rhs.velocity_};
+  }
   constexpr TrajectoryStateT operator+(const TrajectoryStateT& rhs) const {
     return TrajectoryStateT{position_ + rhs.position_,
                             velocity_ + rhs.velocity_};

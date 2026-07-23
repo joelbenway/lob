@@ -19,23 +19,21 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, spline::CurveView* pcurve,
                const LobContext& ctx) {
   assert(ps != nullptr);
   assert(pt != nullptr);
-
-  const SecT kStep = ctx.step_size == 0 && ps->V().X() > FpsT(0)
-                         ? SecT(ps->V().X().Inverse().Value())
-                         : std::max(SecT(UsecT(ctx.step_size)), SecT(UsecT(1)));
+  assert(pcurve != nullptr);
+  const FeetT kStepDistance(1.0);
+  const SecT kStep =
+      ctx.step_size == 0 && ps->V().X() > FpsT(0)
+          ? SecT(kStepDistance.Value() * ps->V().X().Inverse().Value())
+          : std::max(SecT(UsecT(ctx.step_size)), SecT(UsecT(1)));
 
   const CartesianT<FpsT> kWind(FpsT(ctx.wind.x), FpsT(0.0), FpsT(ctx.wind.z));
 
-  // For best accuracy all calculations which depend on the velocity state would
-  // occur inside the lambda as the numerical method updates the velocity (and
-  // thus the coefficient of drag) several times. However, Eval is an
-  // expensive calculation and the difference between doing it once or several
-  // times per step is negligible.
-  const MachT kMach(ps->V().Magnitude(), FpsT(ctx.speed_of_sound).Inverse());
-  const double kCd = pcurve->Eval(kMach) * ctx.drag_coeff;
-
   auto ds_dt = [&](SecT t, const TrajectoryStateT& s) -> TrajectoryStateT {
     static_cast<void>(t);  // t is unused
+
+    const MachT kMach(s.V().Magnitude(), FpsT(ctx.speed_of_sound).Inverse());
+    const double kCd = pcurve->Eval(kMach) * ctx.drag_coeff;
+
     const CartesianT<FeetT> kDpDt(FeetT(s.V().X().Value()),
                                   FeetT(s.V().Y().Value()),
                                   FeetT(s.V().Z().Value()));
@@ -52,7 +50,7 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, spline::CurveView* pcurve,
     return TrajectoryStateT{kDpDt, dv_dt};
   };  // ds_dt
 
-  *ps = HeunStep(SecT(0), *ps, kStep, ds_dt);
+  *ps = RungeKuttaStep(SecT(0), *ps, kStep, ds_dt);
   *pt += kStep;
 }
 

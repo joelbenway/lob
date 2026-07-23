@@ -100,6 +100,7 @@ function(add_benchmark NAME)
 endfunction()
 
 add_benchmark(loblerp)
+add_benchmark(ode)
 
 add_folders(Benchmark)
 
