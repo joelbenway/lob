@@ -137,7 +137,7 @@ typedef struct {
 
 /** @brief Structure holding the output results of a ballistic calculation. */
 typedef struct {
-  uint32_t range;         ///< @brief Associated range in yards.
+  uint32_t range;         ///< @brief Associated range in feet.
   uint16_t velocity;      ///< @brief Calculated velocity in feet per second.
   uint32_t energy;        ///< @brief Calculated energy in foot-pounds.
   double elevation;       ///< @brief Calculated elevation change in inches.
