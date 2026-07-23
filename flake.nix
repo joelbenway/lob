@@ -54,7 +54,6 @@
         src = self;
         nativeBuildInputs = with pkgs; [
           cmake
-          jq
           nlohmann_json
         ];
         configurePhase = ''
@@ -69,15 +68,15 @@
         '';
         doCheck = true;
         checkPhase = ''
-          bash example/tests/run_tests.sh ./build/example/lobber
+          ctest --test-dir build --output-on-failure
         '';
         installPhase = ''
           mkdir -p $out/bin
-          if [ ! -f build/example/lobber ]; then
-            echo "Error: lobber binary not found at build/example/lobber"
+          if [ ! -f build/example/lobber/source/lobber ]; then
+            echo "Error: lobber binary not found at build/example/lobber/source/lobber"
             exit 1
           fi
-          cp build/example/lobber $out/bin/
+          cp build/example/lobber/source/lobber $out/bin/
         '';
       };
     });

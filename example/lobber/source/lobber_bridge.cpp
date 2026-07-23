@@ -20,10 +20,12 @@
 #include "lob/lob.hpp"
 
 namespace example {
+
 namespace {
 
 constexpr double kYardsToFeet = 3.0;
-constexpr int kDefaultStepSize = 100;
+
+}  // namespace
 
 double JsonToDouble(const nlohmann::json& j, const std::string& key) {
   if (!j.contains(key) || j[key].is_null()) {
@@ -84,72 +86,28 @@ lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
   return lob::ClockAngleT::kXII;
 }
 
-}  // namespace
-
-BridgeResult SolveFromJson(const nlohmann::json& j) {
-  auto input =
-      lob::Builder()
-          .BallisticCoefficientPsi(JsonToDouble(j, "BallisticCoefficientPsi"))
-          .BCAtmosphere(JsonToAtmosphere(j, "BCAtmosphere"))
-          .BCDragFunction(JsonToDragFunction(j, "BCDragFunction"))
-          .DiameterInch(JsonToDouble(j, "DiameterInch"))
-          .MeplatDiameterInch(JsonToDouble(j, "MeplatDiameterInch"))
-          .BaseDiameterInch(JsonToDouble(j, "BaseDiameterInch"))
-          .LengthInch(JsonToDouble(j, "LengthInch"))
-          .NoseLengthInch(JsonToDouble(j, "NoseLengthInch"))
-          .TailLengthInch(JsonToDouble(j, "TailLengthInch"))
-          .OgiveRtR(JsonToDouble(j, "OgiveRtR"))
-          .MassGrains(JsonToDouble(j, "MassGrains"))
-          .InitialVelocityFps(JsonToU16(j, "InitialVelocityFps"))
-          .OpticHeightInches(JsonToDouble(j, "OpticHeightInches"))
-          .TwistInchesPerTurn(JsonToDouble(j, "TwistInchesPerTurn"))
-          .ZeroAngleMOA(JsonToDouble(j, "ZeroAngleMOA"))
-          .ZeroDistanceYds(JsonToDouble(j, "ZeroDistanceYds"))
-          .ZeroImpactHeightInches(JsonToDouble(j, "ZeroImpactHeightInches"))
-          .AltitudeOfFiringSiteFt(JsonToDouble(j, "AltitudeOfFiringSiteFt"))
-          .AirPressureInHg(JsonToDouble(j, "AirPressureInHg"))
-          .AltitudeOfBarometerFt(JsonToDouble(j, "AltitudeOfBarometerFt"))
-          .TemperatureDegF(JsonToDouble(j, "TemperatureDegF"))
-          .AltitudeOfThermometerFt(JsonToDouble(j, "AltitudeOfThermometerFt"))
-          .RelativeHumidityPercent(JsonToDouble(j, "RelativeHumidityPercent"))
-          .WindHeading(JsonToClockAngle(j, "WindHeading"))
-          .WindSpeedMph(JsonToDouble(j, "WindSpeedMph"))
-          .AzimuthDeg(JsonToDouble(j, "AzimuthDeg"))
-          .LatitudeDeg(JsonToDouble(j, "LatitudeDeg"))
-          .RangeAngleDeg(JsonToDouble(j, "RangeAngleDeg"))
-          .MinimumSpeed(JsonToU16(j, "MinimumSpeed"))
-          .MinimumEnergy(JsonToU16(j, "MinimumEnergy"))
-          .MaximumTime(JsonToDouble(j, "MaximumTime"))
-          .StepSize(kDefaultStepSize)
-          .Build();
-
-  std::vector<uint32_t> ranges;
+std::vector<uint32_t> ParseRanges(const nlohmann::json& j) {
   if (j.contains("Ranges") && j["Ranges"].is_array()) {
+    std::vector<uint32_t> ranges;
     for (const auto& r : j["Ranges"]) {
       ranges.push_back(static_cast<uint32_t>(r.get<double>() * kYardsToFeet));
     }
-  } else {
-    const std::array<uint32_t, 12> kDefaultRanges = {
-        0U,
-        static_cast<uint32_t>(50 * kYardsToFeet),
-        static_cast<uint32_t>(100 * kYardsToFeet),
-        static_cast<uint32_t>(200 * kYardsToFeet),
-        static_cast<uint32_t>(300 * kYardsToFeet),
-        static_cast<uint32_t>(400 * kYardsToFeet),
-        static_cast<uint32_t>(500 * kYardsToFeet),
-        static_cast<uint32_t>(600 * kYardsToFeet),
-        static_cast<uint32_t>(700 * kYardsToFeet),
-        static_cast<uint32_t>(800 * kYardsToFeet),
-        static_cast<uint32_t>(900 * kYardsToFeet),
-        static_cast<uint32_t>(1000 * kYardsToFeet)};
-    ranges.assign(kDefaultRanges.begin(), kDefaultRanges.end());
+    return ranges;
   }
-
-  std::vector<lob::Output> outputs(ranges.size());
-  const size_t kCount =
-      lob::Solve(input, ranges.data(), outputs.data(), ranges.size());
-
-  return {input, std::move(outputs), kCount};
+  const std::array<uint32_t, 12> kDefaultRanges = {
+      0U,
+      static_cast<uint32_t>(50 * kYardsToFeet),
+      static_cast<uint32_t>(100 * kYardsToFeet),
+      static_cast<uint32_t>(200 * kYardsToFeet),
+      static_cast<uint32_t>(300 * kYardsToFeet),
+      static_cast<uint32_t>(400 * kYardsToFeet),
+      static_cast<uint32_t>(500 * kYardsToFeet),
+      static_cast<uint32_t>(600 * kYardsToFeet),
+      static_cast<uint32_t>(700 * kYardsToFeet),
+      static_cast<uint32_t>(800 * kYardsToFeet),
+      static_cast<uint32_t>(900 * kYardsToFeet),
+      static_cast<uint32_t>(1000 * kYardsToFeet)};
+  return {kDefaultRanges.begin(), kDefaultRanges.end()};
 }
 
 void PrintTable(const lob::Context& input, const lob::Output* outputs,
