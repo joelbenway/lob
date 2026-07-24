@@ -101,6 +101,7 @@ endfunction()
 
 add_benchmark(loblerp)
 add_benchmark(ode)
+add_benchmark(zero_angle)
 
 add_folders(Benchmark)
 
