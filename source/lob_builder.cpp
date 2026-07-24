@@ -593,8 +593,9 @@ void BuildZeroAngle(Impl* pimpl, LobContext* out) {
   const FpsT kVelocity = FpsT(out->velocity);
   const double kVSq = kVelocity.Value() * kVelocity.Value();
 
-  const RadiansT kThetaSeed = RadiansT(
-      kStandardGravityFtPerSecSq * pimpl->zero_distance_ft.Value() / kVSq);
+  const double kRawSeed = kStandardGravityFtPerSecSq * pimpl->zero_distance_ft.Value() / kVSq;
+  const double kClampedSeed = std::max(kMinZeroAngle.Value(), std::min(kMaxZeroAngle.Value(), kRawSeed));
+  const RadiansT kThetaSeed = RadiansT(kClampedSeed);
 
   auto fired_angle = [&](RadiansT za) {
     return RadiansT(za.Value() + RadiansT(MoaT(out->aerodynamic_jump)).Value());
