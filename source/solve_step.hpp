@@ -14,6 +14,10 @@ namespace lob {
 void SolveStep(TrajectoryStateT* ps, SecT* pt, spline::CurveView* pcurve,
                const ::LobContext& ctx);
 
+// Distance mode: step is a fixed 1 foot. Advances tof by kStep / vx.
+void SolveStep(TrajectoryStateT* ps, FeetT* px, spline::CurveView* pcurve,
+               const LobContext& ctx);
+
 TrajectoryStateT DSlopeDt(const TrajectoryStateT& s, const LobContext& ctx,
                           spline::CurveView& curve);
 
