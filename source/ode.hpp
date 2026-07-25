@@ -98,6 +98,18 @@ class TrajectoryStateT {
     return TrajectoryStateT{position_ * FeetT(rhs.Value()),
                             velocity_ * FpsT(rhs.Value())};
   }
+  template <typename T>
+  constexpr TrajectoryStateT operator+(const T& rhs) const {
+    return TrajectoryStateT{position_ + FeetT(rhs.Value()),
+                           velocity_ + FpsT(rhs.Value()),
+                           time_of_flight_};
+  }
+  template <typename T>
+  constexpr TrajectoryStateT operator*(const T& rhs) const {
+    return TrajectoryStateT{position_ * FeetT(rhs.Value()),
+                           velocity_ * FpsT(rhs.Value()),
+                           time_of_flight_};
+  }
 
   constexpr CartesianT<FeetT> P() const { return position_; }
   constexpr void P(FeetT input) { position_ = CartesianT<FeetT>(input); }
