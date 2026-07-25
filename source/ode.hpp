@@ -53,23 +53,27 @@ constexpr Y RungeKuttaStep(const T& t_i, const Y& y_i, T dt, const F& f) {
 // Numerical method friendly container for velocity and position
 class TrajectoryStateT {
  public:
-  constexpr TrajectoryStateT() = default;
-  constexpr TrajectoryStateT(CartesianT<FeetT> p, CartesianT<FpsT> v)
-      : position_(std::move(p)), velocity_(std::move(v)) {}
+  constexpr TrajectoryStateT() : position_(), velocity_(), time_of_flight_(SecT(0)) {}
+  constexpr TrajectoryStateT(CartesianT<FeetT> p, CartesianT<FpsT> v,
+                            SecT tof = SecT(0))
+      : position_(std::move(p)), velocity_(std::move(v)),
+        time_of_flight_(std::move(tof)) {}
   constexpr TrajectoryStateT(const TrajectoryStateT& other) = default;
   constexpr TrajectoryStateT(TrajectoryStateT&& other) noexcept = default;
   constexpr TrajectoryStateT& operator=(const TrajectoryStateT& rhs) {
     if (this != &rhs) {
       position_ = rhs.position_;
       velocity_ = rhs.velocity_;
+      time_of_flight_ = rhs.time_of_flight_;
     }
     return *this;
   }
   ~TrajectoryStateT() = default;
   constexpr TrajectoryStateT& operator=(TrajectoryStateT&& rhs) noexcept {
     if (this != &rhs) {
-      position_ = rhs.position_;
-      velocity_ = rhs.velocity_;
+      position_ = std::move(rhs.position_);
+      velocity_ = std::move(rhs.velocity_);
+      time_of_flight_ = std::move(rhs.time_of_flight_);
       rhs.position_ = CartesianT<FeetT>(FeetT(0));
       rhs.velocity_ = CartesianT<FpsT>(FpsT(0));
     }
@@ -78,11 +82,13 @@ class TrajectoryStateT {
 
   constexpr TrajectoryStateT operator-(const TrajectoryStateT& rhs) const {
     return TrajectoryStateT{position_ - rhs.position_,
-                            velocity_ - rhs.velocity_};
+                            velocity_ - rhs.velocity_,
+                            time_of_flight_ - rhs.time_of_flight_};
   }
   constexpr TrajectoryStateT operator+(const TrajectoryStateT& rhs) const {
     return TrajectoryStateT{position_ + rhs.position_,
-                            velocity_ + rhs.velocity_};
+                            velocity_ + rhs.velocity_,
+                            time_of_flight_ + rhs.time_of_flight_};
   }
   constexpr TrajectoryStateT operator+(const SecT& rhs) const {
     return TrajectoryStateT{position_ + FeetT(rhs.Value()),
@@ -101,10 +107,13 @@ class TrajectoryStateT {
   constexpr CartesianT<FpsT> V() const { return velocity_; }
   constexpr void V(FpsT input) { velocity_ = CartesianT<FpsT>(input); }
   constexpr void V(double input) { velocity_ = CartesianT<FpsT>(FpsT(input)); }
+  constexpr SecT TOF() const { return time_of_flight_; }
+  constexpr void TOF(SecT v) { time_of_flight_ = std::move(v); }
 
- private:
+  private:
   CartesianT<FeetT> position_;
   CartesianT<FpsT> velocity_;
+  SecT time_of_flight_;  // ponytail: elapsed flight time, carried in state
 };
 
 }  // namespace lob
