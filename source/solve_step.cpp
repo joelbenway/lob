@@ -56,6 +56,27 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, spline::CurveView* pcurve,
   *pt += kStep;
 }
 
+// Distance mode
+void SolveStep(TrajectoryStateT* ps, FeetT* px, spline::CurveView* pcurve,
+               const LobContext& ctx) {
+  assert(ps != nullptr && px != nullptr && pcurve != nullptr);
+  const FeetT kStep(1.0);
+
+  auto rhs = [&](FeetT /*x*/, const TrajectoryStateT& s) -> TrajectoryStateT {
+    const FpsT vx = s.V().X();
+    assert(vx > FpsT(0));
+    // ds/dx = (ds/dt) / (dx/dt) = DSlopeDt(s) / vx
+    return DSlopeDt(s, ctx, *pcurve) * vx.Inverse();
+  };
+  *ps = RungeKuttaStep(FeetT(0), *ps, kStep, rhs);
+  *px += kStep;
+
+  // tof advances by full-step dt = dx / vx
+  const FpsT vx = ps->V().X();
+  assert(vx > FpsT(0));
+  ps->TOF(ps->TOF() + SecT(kStep.Value() * vx.Inverse().Value()));
+}
+
 }  // namespace lob
 
 // This file is part of lob.
