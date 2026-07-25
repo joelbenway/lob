@@ -460,22 +460,25 @@ void BuildBoatright(Impl* pimpl, LobContext* out) {
       CartesianT<FpsT>(FpsT(kVelocity * std::cos(0)),
                        FpsT(kVelocity * std::sin(0)), FpsT(0.0)));
 
-  SecT t(0.0);
+  const bool kDist = (out->step_size == 0);
+  SecT t(0);
+  FeetT x(0);
 
   static const FpsT kTransonicBarrier(MachT(1.2), kSos);
   constexpr SecT kTransonicTimeout(60.0);
   while (s.V().X() > kTransonicBarrier) {
-    if (t > kTransonicTimeout) {
+    if (s.TOF() > kTransonicTimeout) {
       out->error = kLobErrorInternalError;
       return;
     }
     const MachT kBuildMach(s.V().Magnitude(), kSos.Inverse());
 
-    SolveStep(&s, &t, &drag_curve, *out);
+    if (kDist) SolveStep(&s, &x, &drag_curve, *out);
+    else       SolveStep(&s, &t, &drag_curve, *out);
   }
 
   const auto kV = boatright::CalculateKV(kVelocity, kTransonicBarrier);
-  const auto kOmega = boatright::CalculateKOmega(kD, t);
+  const auto kOmega = boatright::CalculateKOmega(kD, s.TOF());
   const double kQTS = boatright::CalculatePotentialDragForce(
       kD, pimpl->air_density_lbs_per_cu_ft, kTransonicBarrier);
   const auto kBetaROfT = boatright::CalculateYawOfRepose(
@@ -494,7 +497,7 @@ void BuildBoatright(Impl* pimpl, LobContext* out) {
       boatright::CalculateCLBoattailAdjustmentFactor(bc_g7);
   const double kClOf0 = kClBoattailAdjustment * kCL;
   const auto kClOfT =
-      boatright::CalculateCoefficientOfLiftAtT(kClOf0, kVelocity, t);
+      boatright::CalculateCoefficientOfLiftAtT(kClOf0, kVelocity, s.TOF());
   out->spindrift_factor =
       boatright::CalculateSpinDriftScaleFactor(kQTS, kBetaROfT, kClOfT, kMass);
 }
