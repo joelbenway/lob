@@ -15,6 +15,28 @@
 
 namespace lob {
 
+TrajectoryStateT DSlopeDt(const TrajectoryStateT& s, const LobContext& ctx,
+                          spline::CurveView& curve) {
+  const CartesianT<FpsT> kWind(FpsT(ctx.wind.x), FpsT(0.0), FpsT(ctx.wind.z));
+  const MachT kMach(s.V().Magnitude(), FpsT(ctx.speed_of_sound).Inverse());
+  const double kCd = curve.Eval(kMach) * ctx.drag_coeff;
+
+  const CartesianT<FeetT> kDpDt(FeetT(s.V().X().Value()),
+                                FeetT(s.V().Y().Value()),
+                                FeetT(s.V().Z().Value()));
+  const FpsT kScalarVelocity = (s.V() - kWind).Magnitude();
+  CartesianT<FpsT> dv_dt = (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
+  dv_dt.X(dv_dt.X() - s.V().Y() * ctx.coriolis.cos_l_sin_a -
+          s.V().Z() * ctx.coriolis.sin_l);
+  dv_dt.Y(dv_dt.Y() + s.V().X() * ctx.coriolis.cos_l_sin_a +
+          s.V().Z() * ctx.coriolis.cos_l_cos_a);
+  dv_dt.Z(dv_dt.Z() + s.V().X() * ctx.coriolis.sin_l -
+          s.V().Y() * ctx.coriolis.cos_l_cos_a);
+  dv_dt.X(dv_dt.X() + ctx.gravity.x);
+  dv_dt.Y(dv_dt.Y() + ctx.gravity.y);
+  return TrajectoryStateT{kDpDt, dv_dt, s.TOF()};
+}
+
 void SolveStep(TrajectoryStateT* ps, SecT* pt, spline::CurveView* pcurve,
                const LobContext& ctx) {
   assert(ps != nullptr);
@@ -26,31 +48,11 @@ void SolveStep(TrajectoryStateT* ps, SecT* pt, spline::CurveView* pcurve,
           ? SecT(kStepDistance.Value() * ps->V().X().Inverse().Value())
           : std::max(SecT(UsecT(ctx.step_size)), SecT(UsecT(1)));
 
-  const CartesianT<FpsT> kWind(FpsT(ctx.wind.x), FpsT(0.0), FpsT(ctx.wind.z));
+  auto rhs = [&](SecT /*t*/, const TrajectoryStateT& s) -> TrajectoryStateT {
+    return DSlopeDt(s, ctx, *pcurve);
+  };
 
-  auto ds_dt = [&](SecT t, const TrajectoryStateT& s) -> TrajectoryStateT {
-    static_cast<void>(t);  // t is unused
-
-    const MachT kMach(s.V().Magnitude(), FpsT(ctx.speed_of_sound).Inverse());
-    const double kCd = pcurve->Eval(kMach) * ctx.drag_coeff;
-
-    const CartesianT<FeetT> kDpDt(FeetT(s.V().X().Value()),
-                                  FeetT(s.V().Y().Value()),
-                                  FeetT(s.V().Z().Value()));
-    const FpsT kScalarVelocity = (s.V() - kWind).Magnitude();
-    CartesianT<FpsT> dv_dt = (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
-    dv_dt.X(dv_dt.X() - s.V().Y() * ctx.coriolis.cos_l_sin_a -
-            s.V().Z() * ctx.coriolis.sin_l);
-    dv_dt.Y(dv_dt.Y() + s.V().X() * ctx.coriolis.cos_l_sin_a +
-            s.V().Z() * ctx.coriolis.cos_l_cos_a);
-    dv_dt.Z(dv_dt.Z() + s.V().X() * ctx.coriolis.sin_l -
-            s.V().Y() * ctx.coriolis.cos_l_cos_a);
-    dv_dt.X(dv_dt.X() + ctx.gravity.x);
-    dv_dt.Y(dv_dt.Y() + ctx.gravity.y);
-    return TrajectoryStateT{kDpDt, dv_dt};
-  };  // ds_dt
-
-  *ps = RungeKuttaStep(SecT(0), *ps, kStep, ds_dt);
+  *ps = RungeKuttaStep(SecT(0), *ps, kStep, rhs);
   *pt += kStep;
 }
 

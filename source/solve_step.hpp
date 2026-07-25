@@ -14,6 +14,9 @@ namespace lob {
 void SolveStep(TrajectoryStateT* ps, SecT* pt, spline::CurveView* pcurve,
                const ::LobContext& ctx);
 
+TrajectoryStateT DSlopeDt(const TrajectoryStateT& s, const LobContext& ctx,
+                          spline::CurveView& curve);
+
 }  // namespace lob
 
 // This file is part of lob.
