@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
 #include <cstdint>
 
 #include "eng_units.hpp"
@@ -193,6 +194,78 @@ TEST(LobAPITest, NonMonotonicRangesRejected) {
   std::array<lob::Output, 2> out{};
   const auto kSize = lob::Solve(kResult, kRanges, &out);
   EXPECT_EQ(kSize, 0);
+}
+
+// BuildZeroAngle now linearizes ∆θ = -f/d (radians) from the vacuum-projectile
+// seed g·d/v² clamped to ±45°. These three tests probe the new behavior:
+//   - downward zeros are legal (bracket opened to ±45°)
+//   - pathological inputs surface as kLobErrorInternalError rather than hang
+//   - realistic extreme inputs either succeed with finite in-bracket angle or
+//     fail cleanly (never crash, never out-of-bracket finite)
+
+TEST(LobAPITest, ZeroAngleSearchNegativeBracket) {
+  // Target 5 ft below the bore line at 100 yd. At θ=0 the bullet drops ~2"
+  // below the bore, still ending above the -60"-below-bore target → residual
+  // overshoots → search must fire downward, producing negative zero_angle.
+  const lob::Context kCtx = lob::Builder()
+                                 .BallisticCoefficientPsi(0.436)
+                                 .InitialVelocityFps(3100U)
+                                 .ZeroDistanceYds(100.0)
+                                 .ZeroImpactHeightInches(-60.0)
+                                 .OpticHeightInches(3.0)
+                                 .Build();
+  EXPECT_EQ(kCtx.error, kLobErrorNone);
+  EXPECT_FALSE(std::isnan(kCtx.zero_angle));
+  EXPECT_LT(kCtx.zero_angle, 0.0);
+  EXPECT_GT(kCtx.zero_angle, -45.0 * 60.0);
+}
+
+TEST(LobAPITest, ZeroAngleSearchExhaustsIterations) {
+  // Pathological combination: very low muzzle velocity + long range pushes
+  // the vacuum-seed far from the true drop angle and the linear correction
+  // oscillates or stalls inside the 10-iteration cap.
+  const lob::Context kCtx = lob::Builder()
+                                 .BallisticCoefficientPsi(0.1)
+                                 .InitialVelocityFps(600U)  // ~airgun velocity
+                                 .ZeroDistanceYds(2000.0)
+                                 .Build();
+  EXPECT_EQ(kCtx.error, kLobErrorInternalError);
+  EXPECT_TRUE(std::isnan(kCtx.zero_angle));
+}
+
+TEST(LobAPITest, ZeroAngleSearchExtremeInputsDontCrash) {
+  // Sweep: every combination must either succeed with a finite in-bracket
+  // zero_angle, or fail with kLobErrorInternalError. No crash, no out-of-
+  // bracket finite value.
+  const std::array<double, 5> kBcs = {0.1, 0.224, 0.436, 0.7, 1.5};
+  const std::array<uint16_t, 5> kVelocities = {600U, 1800U, 3100U, 4000U, 5000U};
+  const std::array<double, 5> kRanges = {10.0, 100.0, 500.0, 1000.0, 2000.0};
+  for (const double kBc : kBcs) {
+    for (const uint16_t kV : kVelocities) {
+      for (const double kRange : kRanges) {
+        const lob::Context kCtx = lob::Builder()
+                                       .BallisticCoefficientPsi(kBc)
+                                       .InitialVelocityFps(kV)
+                                       .ZeroDistanceYds(kRange)
+                                       .Build();
+        const bool kOk = (kCtx.error == kLobErrorNone);
+        const bool kFailed =
+            (kCtx.error == kLobErrorInternalError ||
+             kCtx.error == kLobErrorInitialVelocityRequired);
+        EXPECT_TRUE(kOk || kFailed)
+            << "BC=" << kBc << " v=" << kV << " d=" << kRange
+            << " error=" << static_cast<int>(kCtx.error);
+        if (kOk) {
+          EXPECT_FALSE(std::isnan(kCtx.zero_angle))
+              << "BC=" << kBc << " v=" << kV << " d=" << kRange;
+          EXPECT_GE(kCtx.zero_angle, -45.0 * 60.0)
+              << "BC=" << kBc << " v=" << kV << " d=" << kRange;
+          EXPECT_LE(kCtx.zero_angle, 45.0 * 60.0)
+              << "BC=" << kBc << " v=" << kV << " d=" << kRange;
+        }
+      }
+    }
+  }
 }
 
 TEST(LobAPITest, MoaToMil) {
