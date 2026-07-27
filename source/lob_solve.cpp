@@ -20,8 +20,8 @@ namespace lob {
 namespace {
 
 LobOutput LerpOutput(const TrajectoryStateT& s_now,
-                     const TrajectoryStateT& s_prev,
-                     double alpha, const LobContext& ctx) {
+                     const TrajectoryStateT& s_prev, double alpha,
+                     const LobContext& ctx) {
   const CartesianT<FeetT> kP =
       s_prev.P() + (s_now.P() - s_prev.P()) * FeetT(alpha);
   const CartesianT<FpsT> kV =
@@ -67,15 +67,16 @@ void ApplyGyroscopicSpinDrift(const LobContext& ctx, LobOutput* pouts,
 extern "C" {
 using namespace lob;  // NOLINT(google-build-using-namespace)
 
-size_t LobSolve(const LobContext* ctx, const uint32_t* pranges,
+size_t LobSolve(const LobContext* pctx, const uint32_t* pranges,
                 LobOutput* pouts, size_t size) {
-  assert(ctx != nullptr);
+  assert(pctx != nullptr);
   assert(pranges != nullptr);
   assert(pouts != nullptr);
   assert(size > 0);
-  if (ctx == nullptr || ctx->error != kLobErrorNone || pranges == nullptr ||
-      pouts == nullptr || size == 0 || ctx->velocity == 0 ||
-      ctx->speed_of_sound <= 0.0) {
+
+  if (pctx == nullptr || pctx->error != kLobErrorNone || pranges == nullptr ||
+      pouts == nullptr || size == 0 || pctx->velocity == 0 ||
+      pctx->speed_of_sound <= 0.0) {
     return 0;
   }
   for (size_t i = 1; i < size; i++) {
@@ -83,31 +84,27 @@ size_t LobSolve(const LobContext* ctx, const uint32_t* pranges,
       return 0;
     }
   }
-  const FpsT kMinimumSpeed(ctx->minimum_speed);
+  const FpsT kMinimumSpeed(pctx->minimum_speed);
   const auto kAngle =
-      RadiansT(MoaT(ctx->zero_angle + ctx->aerodynamic_jump)).Value();
+      RadiansT(MoaT(pctx->zero_angle + pctx->aerodynamic_jump)).Value();
   TrajectoryStateT s(
       CartesianT<FeetT>(FeetT(0.0)),
-      CartesianT<FpsT>(FpsT(ctx->velocity) * std::cos(kAngle),
-                       FpsT(ctx->velocity) * std::sin(kAngle), FpsT(0.0)));
-  const bool kDist = (ctx->step_size == 0);
-  SecT t(0);
-  FeetT x(0);
+      CartesianT<FpsT>(FpsT(pctx->velocity) * std::cos(kAngle),
+                       FpsT(pctx->velocity) * std::sin(kAngle), FpsT(0.0)));
   size_t index = 0;
 
-  spline::CurveView curve(spline::kKnots.data(), &ctx->drags[0]);
+  spline::CurveView curve(spline::kKnots.data(), &pctx->drags[0]);
 
   while (true) {
     const TrajectoryStateT kS = s;
 
-    if (kDist) SolveStep(&s, &x, &curve, *ctx);
-    else       SolveStep(&s, &t, &curve, *ctx);
+    SolveStep(*pctx, &s, &curve);
 
     if (s.P().X() >= FeetT(pranges[index]) && kS.P().X() < s.P().X()) {
       const double kAlpha =
           ((FeetT(pranges[index]) - kS.P().X()) / (s.P().X() - kS.P().X()))
               .Value();
-      pouts[index] = LerpOutput(s, kS, kAlpha, *ctx);
+      pouts[index] = LerpOutput(s, kS, kAlpha, *pctx);
       index++;
     }
 
@@ -115,9 +112,10 @@ size_t LobSolve(const LobContext* ctx, const uint32_t* pranges,
       break;
     }
 
-    if (s.TOF() >= SecT(ctx->max_time) && kS.TOF() < SecT(ctx->max_time)) {
-      const double kAlpha = ((SecT(ctx->max_time) - kS.TOF()) / (s.TOF() - kS.TOF())).Value();
-      pouts[index] = LerpOutput(s, kS, kAlpha, *ctx);
+    if (s.TOF() >= SecT(pctx->max_time) && kS.TOF() < SecT(pctx->max_time)) {
+      const double kAlpha =
+          ((SecT(pctx->max_time) - kS.TOF()) / (s.TOF() - kS.TOF())).Value();
+      pouts[index] = LerpOutput(s, kS, kAlpha, *pctx);
       index++;
       break;
     }
@@ -126,19 +124,19 @@ size_t LobSolve(const LobContext* ctx, const uint32_t* pranges,
       const double kAlpha = ((kMinimumSpeed - kS.V().Magnitude()) /
                              (s.V().Magnitude() - kS.V().Magnitude()))
                                 .Value();
-      pouts[index] = LerpOutput(s, kS, kAlpha, *ctx);
+      pouts[index] = LerpOutput(s, kS, kAlpha, *pctx);
       index++;
       break;
     }
     // If vertical velocity exceeds 3x horizontal, consider falling straight
     // down.
     if (std::abs(s.V().Y().Value()) > s.V().X().Value() * 3) {
-      pouts[index] = LerpOutput(s, kS, 1, *ctx);
+      pouts[index] = LerpOutput(s, kS, 1, *pctx);
       index++;
       break;
     }
   }
-  ApplyGyroscopicSpinDrift(*ctx, pouts, index);
+  ApplyGyroscopicSpinDrift(*pctx, pouts, index);
   return index;
 }
 
