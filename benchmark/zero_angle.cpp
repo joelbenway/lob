@@ -335,7 +335,6 @@ lob::Context BuildPresetContext(double zero_distance_yds) {
       .Build();
 }
 
-// ponytail: inline formula: builder computes optic_height + zero_impact_height
 FeetT TargetHeight(const ::LobContext& ctx, double impact_height_inches) {
   return FeetT(ctx.optic_height + (impact_height_inches / kInchPerFoot));
 }
