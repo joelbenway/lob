@@ -46,7 +46,7 @@ struct LobCWAJTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 3071;
     const double kTestZeroAngle = 6.53;
     const double kTestOpticHeight = 2.0;
-    const uint16_t kStep = 100U;
+    const uint16_t kStep = 0U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -75,13 +75,12 @@ TEST_F(LobCWAJTestFixture, ZeroAngleSearch) {
 
 TEST_F(LobCWAJTestFixture, GetSpeedOfSoundFps) {
   ASSERT_NE(puut, nullptr);
-  const auto kInput = puut->Build();
+  const auto kContext = puut->Build();
   const double kExpectedFps = 1116.45;
   const double kError = 0.001;
-  EXPECT_NEAR(kInput.speed_of_sound, kExpectedFps, kError);
+  EXPECT_NEAR(kContext.speed_of_sound, kExpectedFps, kError);
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCWAJTestFixture, SolveWithoutSpin) {
   ASSERT_NE(puut, nullptr);
   constexpr lob::FpsT kVelocityError(1);
@@ -90,7 +89,7 @@ TEST_F(LobCWAJTestFixture, SolveWithoutSpin) {
   constexpr lob::InchT kInchError(0.5);
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->Build();
+  const auto kContext = puut->Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -111,14 +110,13 @@ TEST_F(LobCWAJTestFixture, SolveWithoutSpin) {
       {6000, 949, 500, -1882.00, 0.00, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCWAJTestFixture, LitzRightHandSpinLeftwardWind) {
   ASSERT_NE(puut, nullptr);
   constexpr double kWind = 15.0;
@@ -130,11 +128,11 @@ TEST_F(LobCWAJTestFixture, LitzRightHandSpinLeftwardWind) {
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr double kAerodynamicJump = 0.650208;
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
                           .WindSpeedMph(kWind)
                           .WindHeading(kWindHeading)
                           .Build();
-  EXPECT_NEAR(kInput.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
+  EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -155,14 +153,13 @@ TEST_F(LobCWAJTestFixture, LitzRightHandSpinLeftwardWind) {
       {6000, 949, 500, -1868.40, -455.01, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCWAJTestFixture, LitzLeftHandSpinLeftwardWind) {
   ASSERT_NE(puut, nullptr);
   const double kLeftTwist = -1.0 * kBarrelTwist;
@@ -175,11 +172,11 @@ TEST_F(LobCWAJTestFixture, LitzLeftHandSpinLeftwardWind) {
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr double kAerodynamicJump = -0.650208;
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kLeftTwist)
+  const auto kContext = puut->TwistInchesPerTurn(kLeftTwist)
                           .WindSpeedMph(kWind)
                           .WindHeading(kWindHeading)
                           .Build();
-  EXPECT_NEAR(kInput.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
+  EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -200,14 +197,13 @@ TEST_F(LobCWAJTestFixture, LitzLeftHandSpinLeftwardWind) {
       {6000, 949, 500, -1895.73, -555.46, 3.868}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCWAJTestFixture, LitzRightHandSpinRightwardWind) {
   ASSERT_NE(puut, nullptr);
   constexpr double kWind = 15.0;
@@ -219,11 +215,11 @@ TEST_F(LobCWAJTestFixture, LitzRightHandSpinRightwardWind) {
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr double kAerodynamicJump = -0.650208;
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
                           .WindSpeedMph(kWind)
                           .WindHeading(kWindHeading)
                           .Build();
-  EXPECT_NEAR(kInput.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
+  EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -244,14 +240,13 @@ TEST_F(LobCWAJTestFixture, LitzRightHandSpinRightwardWind) {
       {6000, 949, 500, -1895.73, 555.46, 3.868}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCWAJTestFixture, LitzLeftHandSpinRightwardWind) {
   ASSERT_NE(puut, nullptr);
   const double kLeftTwist = -1.0 * kBarrelTwist;
@@ -264,11 +259,11 @@ TEST_F(LobCWAJTestFixture, LitzLeftHandSpinRightwardWind) {
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr double kAerodynamicJump = 0.650208;
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kLeftTwist)
+  const auto kContext = puut->TwistInchesPerTurn(kLeftTwist)
                           .WindSpeedMph(kWind)
                           .WindHeading(kWindHeading)
                           .Build();
-  EXPECT_NEAR(kInput.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
+  EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -289,14 +284,13 @@ TEST_F(LobCWAJTestFixture, LitzLeftHandSpinRightwardWind) {
       {6000, 949, 500, -1868.40, 455.01, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCWAJTestFixture, BoatrightRightHandSpinLeftwardWind) {
   ASSERT_NE(puut, nullptr);
   constexpr double kWind = 15.0;
@@ -308,7 +302,7 @@ TEST_F(LobCWAJTestFixture, BoatrightRightHandSpinLeftwardWind) {
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr double kAerodynamicJump = 1.015683;
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
                           .WindSpeedMph(kWind)
                           .WindHeading(kWindHeading)
                           .NoseLengthInch(kOgiveLength)
@@ -317,7 +311,7 @@ TEST_F(LobCWAJTestFixture, BoatrightRightHandSpinLeftwardWind) {
                           .MeplatDiameterInch(kMeplatDiameter)
                           .OgiveRtR(kRtR)
                           .Build();
-  EXPECT_NEAR(kInput.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
+  EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -338,14 +332,13 @@ TEST_F(LobCWAJTestFixture, BoatrightRightHandSpinLeftwardWind) {
       {6000, 949, 500, -1860.74, -466.01, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCWAJTestFixture, BoatrightLeftHandSpinLeftwardWind) {
   ASSERT_NE(puut, nullptr);
   const double kLeftTwist = -1.0 * kBarrelTwist;
@@ -358,7 +351,7 @@ TEST_F(LobCWAJTestFixture, BoatrightLeftHandSpinLeftwardWind) {
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr double kAerodynamicJump = -1.015683;
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kLeftTwist)
+  const auto kContext = puut->TwistInchesPerTurn(kLeftTwist)
                           .WindSpeedMph(kWind)
                           .WindHeading(kWindHeading)
                           .NoseLengthInch(kOgiveLength)
@@ -367,7 +360,7 @@ TEST_F(LobCWAJTestFixture, BoatrightLeftHandSpinLeftwardWind) {
                           .MeplatDiameterInch(kMeplatDiameter)
                           .OgiveRtR(kRtR)
                           .Build();
-  EXPECT_NEAR(kInput.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
+  EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -388,14 +381,13 @@ TEST_F(LobCWAJTestFixture, BoatrightLeftHandSpinLeftwardWind) {
       {6000, 949, 500, -1903.39, -545.46, 3.868}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCWAJTestFixture, BoatrightRightHandSpinRightwardWind) {
   ASSERT_NE(puut, nullptr);
   constexpr double kWind = 15.0;
@@ -407,7 +399,7 @@ TEST_F(LobCWAJTestFixture, BoatrightRightHandSpinRightwardWind) {
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr double kAerodynamicJump = -1.015683;
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
                           .WindSpeedMph(kWind)
                           .WindHeading(kWindHeading)
                           .NoseLengthInch(kOgiveLength)
@@ -416,7 +408,7 @@ TEST_F(LobCWAJTestFixture, BoatrightRightHandSpinRightwardWind) {
                           .MeplatDiameterInch(kMeplatDiameter)
                           .OgiveRtR(kRtR)
                           .Build();
-  EXPECT_NEAR(kInput.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
+  EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -437,14 +429,13 @@ TEST_F(LobCWAJTestFixture, BoatrightRightHandSpinRightwardWind) {
       {6000, 949, 500, -1903.39, 545.68, 3.868}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCWAJTestFixture, BoatrightLeftHandSpinRightwardWind) {
   ASSERT_NE(puut, nullptr);
   const double kLeftTwist = -1.0 * kBarrelTwist;
@@ -457,7 +448,7 @@ TEST_F(LobCWAJTestFixture, BoatrightLeftHandSpinRightwardWind) {
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr double kAerodynamicJump = 1.015683;
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kLeftTwist)
+  const auto kContext = puut->TwistInchesPerTurn(kLeftTwist)
                           .WindSpeedMph(kWind)
                           .WindHeading(kWindHeading)
                           .NoseLengthInch(kOgiveLength)
@@ -466,7 +457,7 @@ TEST_F(LobCWAJTestFixture, BoatrightLeftHandSpinRightwardWind) {
                           .MeplatDiameterInch(kMeplatDiameter)
                           .OgiveRtR(kRtR)
                           .Build();
-  EXPECT_NEAR(kInput.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
+  EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -487,7 +478,7 @@ TEST_F(LobCWAJTestFixture, BoatrightLeftHandSpinRightwardWind) {
       {6000, 949, 500, -1860.74, 466.23, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,

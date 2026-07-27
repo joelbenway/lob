@@ -35,7 +35,7 @@ struct LobCoriolisTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 2800;
     const double kTestZeroAngle = 5.06;
     const double kTestOpticHeight = 3.0;
-    const uint16_t kStep = 100U;
+    const uint16_t kStep = 0U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -63,13 +63,12 @@ TEST_F(LobCoriolisTestFixture, ZeroAngleSearch) {
 
 TEST_F(LobCoriolisTestFixture, GetSpeedOfSoundFps) {
   ASSERT_NE(puut, nullptr);
-  const auto kInput = puut->Build();
+  const auto kContext = puut->Build();
   const double kExpectedFps = 1116.45;
   const double kError = 0.001;
-  EXPECT_NEAR(kInput.speed_of_sound, kExpectedFps, kError);
+  EXPECT_NEAR(kContext.speed_of_sound, kExpectedFps, kError);
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
   ASSERT_NE(puut, nullptr);
   constexpr lob::FpsT kVelocityError(2);
@@ -78,7 +77,7 @@ TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
   constexpr lob::InchT kInchError(lob::NaN());
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 16;
-  const auto kInput = puut->Build();
+  const auto kContext = puut->Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
       2100, 2400, 2700, 3000, 4500, 6000, 7500, 9000};
@@ -101,7 +100,7 @@ TEST_F(LobCoriolisTestFixture, SolveWithoutCoriolisEffect) {
       {9000, 761, 848, -8096.45, 0.00, 7.707}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
@@ -114,8 +113,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {
   constexpr double kAzimuth = 0.0;  // North
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
-  const auto kInput1 = puut->Build();
-  const auto kInput2 =
+  const auto kContext1 = puut->Build();
+  const auto kContext2 =
       puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
@@ -129,8 +128,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionNorth) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  lob::Solve(kInput1, kRanges, solutions1);
-  lob::Solve(kInput2, kRanges, solutions2);
+  lob::Solve(kContext1, kRanges, &solutions1);
+  lob::Solve(kContext2, kRanges, &solutions2);
   VerifySolutionDifferences(solutions1, solutions2,
                             kExpectedElevationDifference,
                             kExpectedDeflectionDifference, kInchError);
@@ -142,8 +141,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
   constexpr double kAzimuth = 90.0;  // East
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
-  const auto kInput1 = puut->Build();
-  const auto kInput2 =
+  const auto kContext1 = puut->Build();
+  const auto kContext2 =
       puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
@@ -157,8 +156,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionEast) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  lob::Solve(kInput1, kRanges, solutions1);
-  lob::Solve(kInput2, kRanges, solutions2);
+  lob::Solve(kContext1, kRanges, &solutions1);
+  lob::Solve(kContext2, kRanges, &solutions2);
   VerifySolutionDifferences(solutions1, solutions2,
                             kExpectedElevationDifference,
                             kExpectedDeflectionDifference, kInchError);
@@ -171,8 +170,8 @@ TEST_F(LobCoriolisTestFixture,
   constexpr double kAzimuth = -270.0;  // East
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
-  const auto kInput1 = puut->Build();
-  const auto kInput2 =
+  const auto kContext1 = puut->Build();
+  const auto kContext2 =
       puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
@@ -186,8 +185,8 @@ TEST_F(LobCoriolisTestFixture,
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  lob::Solve(kInput1, kRanges, solutions1);
-  lob::Solve(kInput2, kRanges, solutions2);
+  lob::Solve(kContext1, kRanges, &solutions1);
+  lob::Solve(kContext2, kRanges, &solutions2);
   VerifySolutionDifferences(solutions1, solutions2,
                             kExpectedElevationDifference,
                             kExpectedDeflectionDifference, kInchError);
@@ -199,8 +198,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionSouth) {
   constexpr double kAzimuth = 180.0;  // South
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
-  const auto kInput1 = puut->Build();
-  const auto kInput2 =
+  const auto kContext1 = puut->Build();
+  const auto kContext2 =
       puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
@@ -214,8 +213,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereDeflectionSouth) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  lob::Solve(kInput1, kRanges, solutions1);
-  lob::Solve(kInput2, kRanges, solutions2);
+  lob::Solve(kContext1, kRanges, &solutions1);
+  lob::Solve(kContext2, kRanges, &solutions2);
   VerifySolutionDifferences(solutions1, solutions2,
                             kExpectedElevationDifference,
                             kExpectedDeflectionDifference, kInchError);
@@ -228,8 +227,8 @@ TEST_F(LobCoriolisTestFixture,
   constexpr double kAzimuth = -180.0;  // South
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
-  const auto kInput1 = puut->Build();
-  const auto kInput2 =
+  const auto kContext1 = puut->Build();
+  const auto kContext2 =
       puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
@@ -243,8 +242,8 @@ TEST_F(LobCoriolisTestFixture,
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  lob::Solve(kInput1, kRanges, solutions1);
-  lob::Solve(kInput2, kRanges, solutions2);
+  lob::Solve(kContext1, kRanges, &solutions1);
+  lob::Solve(kContext2, kRanges, &solutions2);
   VerifySolutionDifferences(solutions1, solutions2,
                             kExpectedElevationDifference,
                             kExpectedDeflectionDifference, kInchError);
@@ -256,8 +255,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereCoriolisDeflectionWest) {
   constexpr double kAzimuth = 270.0;  // West
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
-  const auto kInput1 = puut->Build();
-  const auto kInput2 =
+  const auto kContext1 = puut->Build();
+  const auto kContext2 =
       puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
@@ -271,8 +270,8 @@ TEST_F(LobCoriolisTestFixture, NorthernHemisphereCoriolisDeflectionWest) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  lob::Solve(kInput1, kRanges, solutions1);
-  lob::Solve(kInput2, kRanges, solutions2);
+  lob::Solve(kContext1, kRanges, &solutions1);
+  lob::Solve(kContext2, kRanges, &solutions2);
   VerifySolutionDifferences(solutions1, solutions2,
                             kExpectedElevationDifference,
                             kExpectedDeflectionDifference, kInchError);
@@ -285,8 +284,8 @@ TEST_F(LobCoriolisTestFixture,
   constexpr double kAzimuth = -90.0;  // West
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
-  const auto kInput1 = puut->Build();
-  const auto kInput2 =
+  const auto kContext1 = puut->Build();
+  const auto kContext2 =
       puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
@@ -300,8 +299,8 @@ TEST_F(LobCoriolisTestFixture,
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  lob::Solve(kInput1, kRanges, solutions1);
-  lob::Solve(kInput2, kRanges, solutions2);
+  lob::Solve(kContext1, kRanges, &solutions1);
+  lob::Solve(kContext2, kRanges, &solutions2);
   VerifySolutionDifferences(solutions1, solutions2,
                             kExpectedElevationDifference,
                             kExpectedDeflectionDifference, kInchError);
@@ -313,8 +312,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionNorth) {
   constexpr double kAzimuth = 0.0;  // North
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
-  const auto kInput1 = puut->Build();
-  const auto kInput2 =
+  const auto kContext1 = puut->Build();
+  const auto kContext2 =
       puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
@@ -328,8 +327,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionNorth) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  lob::Solve(kInput1, kRanges, solutions1);
-  lob::Solve(kInput2, kRanges, solutions2);
+  lob::Solve(kContext1, kRanges, &solutions1);
+  lob::Solve(kContext2, kRanges, &solutions2);
   VerifySolutionDifferences(solutions1, solutions2,
                             kExpectedElevationDifference,
                             kExpectedDeflectionDifference, kInchError);
@@ -341,8 +340,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
   constexpr double kAzimuth = 90.0;  // East
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
-  const auto kInput1 = puut->Build();
-  const auto kInput2 =
+  const auto kContext1 = puut->Build();
+  const auto kContext2 =
       puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
@@ -356,8 +355,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereDeflectionEast) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  lob::Solve(kInput1, kRanges, solutions1);
-  lob::Solve(kInput2, kRanges, solutions2);
+  lob::Solve(kContext1, kRanges, &solutions1);
+  lob::Solve(kContext2, kRanges, &solutions2);
   VerifySolutionDifferences(solutions1, solutions2,
                             kExpectedElevationDifference,
                             kExpectedDeflectionDifference, kInchError);
@@ -369,8 +368,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionSouth) {
   constexpr double kAzimuth = 180.0;  // South
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
-  const auto kInput1 = puut->Build();
-  const auto kInput2 =
+  const auto kContext1 = puut->Build();
+  const auto kContext2 =
       puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
@@ -384,8 +383,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionSouth) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  lob::Solve(kInput1, kRanges, solutions1);
-  lob::Solve(kInput2, kRanges, solutions2);
+  lob::Solve(kContext1, kRanges, &solutions1);
+  lob::Solve(kContext2, kRanges, &solutions2);
   VerifySolutionDifferences(solutions1, solutions2,
                             kExpectedElevationDifference,
                             kExpectedDeflectionDifference, kInchError);
@@ -397,8 +396,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionWest) {
   constexpr double kAzimuth = 270.0;  // West
   constexpr double kInchError = 0.1;
   constexpr size_t kSolutionLength = 16;
-  const auto kInput1 = puut->Build();
-  const auto kInput2 =
+  const auto kContext1 = puut->Build();
+  const auto kContext2 =
       puut->LatitudeDeg(kLatitude).AzimuthDeg(kAzimuth).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500, 1800,
@@ -412,8 +411,8 @@ TEST_F(LobCoriolisTestFixture, SouthernHemisphereCoriolisDeflectionWest) {
 
   std::array<lob::Output, kSolutionLength> solutions1 = {};
   std::array<lob::Output, kSolutionLength> solutions2 = {};
-  lob::Solve(kInput1, kRanges, solutions1);
-  lob::Solve(kInput2, kRanges, solutions2);
+  lob::Solve(kContext1, kRanges, &solutions1);
+  lob::Solve(kContext2, kRanges, &solutions2);
   VerifySolutionDifferences(solutions1, solutions2,
                             kExpectedElevationDifference,
                             kExpectedDeflectionDifference, kInchError);

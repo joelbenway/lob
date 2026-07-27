@@ -697,16 +697,29 @@ inline size_t Solve(const Context& ctx, const uint32_t* pranges, Output* pouts,
  * @brief Solves the exterior ballistics problem for a given set of ranges.
  * @tparam N The number of ranges to solve for.
  * @param ctx Context parameters for the calculation.
- * @param pranges Reference to an array of ranges (in feet) to solve for.
- * @param pouts Reference to an array where the output results will be stored.
+ * @param ranges Reference to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
  * @return The number of successful solutions.
  */
 template <size_t N>
-inline size_t Solve(const Context& ctx, const std::array<uint32_t, N>& pranges,
-                    std::array<Output, N>& pouts) {
+inline size_t Solve(const Context& ctx, const std::array<uint32_t, N>& ranges,
+                    std::array<Output, N>* pouts) {
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-  return ::LobSolve(reinterpret_cast<const ::LobContext*>(&ctx), pranges.data(),
-                    pouts.data(), N);
+  return ::LobSolve(reinterpret_cast<const ::LobContext*>(&ctx), ranges.data(),
+                    pouts->data(), N);
+}
+
+/**
+ * @brief Solves the exterior ballistics problem for a single range.
+ * @param ctx Context parameters for the calculation.
+ * @param range Ranges (in feet) to solve for.
+ * @param pout Pointer to an output where results will be stored.
+ * @return The number of successful solutions.
+ */
+inline size_t Solve(const Context& ctx, uint32_t range, Output* pout) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobSolve(reinterpret_cast<const ::LobContext*>(&ctx), &range, pout,
+                    1);
 }
 
 /**
