@@ -72,7 +72,7 @@ constexpr size_t FindInterval(const T* x, size_t n, T v) {
 }
 
 template <typename T>
-struct ValDer {
+struct Result {
   T y;
   T dy;
 };
@@ -88,13 +88,13 @@ constexpr T PolyDeriv(const T* c, T t) {
 }
 
 template <typename T>
-constexpr ValDer<T> EvalWithDeriv(const T* x, const T* y, size_t n, T v) {
+constexpr Result<T> EvalWithDeriv(const T* x, const T* y, size_t n, T v) {
   const size_t kI = FindInterval(x, n, v);
   T c[4] = {};  // NOLINT
   Hermite(x[kI], x[kI + 1], y[kI], y[kI + 1], Tangent(x, y, n, kI),
           Tangent(x, y, n, kI + 1), &c[0]);
   const T kT = v - x[kI];
-  return ValDer<T>{PolyVal(&c[0], kT), PolyDeriv(&c[0], kT)};
+  return Result<T>{PolyVal(&c[0], kT), PolyDeriv(&c[0], kT)};
 }
 
 }  // namespace detail
@@ -167,8 +167,8 @@ using CurveView = Cursor<float, kKnotCount>;
 template <typename T>
 constexpr void Segment(const T* machs, const T* drags, size_t size, T knot1,
                        T knot2, T* coefs_out) {
-  const detail::ValDer<T> kP = detail::EvalWithDeriv(machs, drags, size, knot1);
-  const detail::ValDer<T> kQ = detail::EvalWithDeriv(machs, drags, size, knot2);
+  const detail::Result<T> kP = detail::EvalWithDeriv(machs, drags, size, knot1);
+  const detail::Result<T> kQ = detail::EvalWithDeriv(machs, drags, size, knot2);
   detail::Hermite(knot1, knot2, kP.y, kQ.y, kP.dy, kQ.dy, coefs_out);
 }
 

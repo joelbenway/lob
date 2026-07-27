@@ -4,23 +4,14 @@
 
 #pragma once
 
-#include "eng_units.hpp"
 #include "lob/lob.h"
 #include "ode.hpp"
 #include "splines.hpp"
 
 namespace lob {
+void SolveStep(const LobContext& ctx, TrajectoryStateT* ps, spline::CurveView* pcurve);
 
-void SolveStep(TrajectoryStateT* ps, SecT* pt, spline::CurveView* pcurve,
-               const ::LobContext& ctx);
-
-// Distance mode: step is a fixed 1 foot. Advances tof by kStep / vx.
-void SolveStep(TrajectoryStateT* ps, FeetT* px, spline::CurveView* pcurve,
-               const LobContext& ctx);
-
-TrajectoryStateT DSlopeDt(const TrajectoryStateT& s, const LobContext& ctx,
-                          spline::CurveView& curve);
-
+void SolveTimeStep(const LobContext& ctx, TrajectoryStateT* ps, spline::CurveView* pcurve);
 }  // namespace lob
 
 // This file is part of lob.
