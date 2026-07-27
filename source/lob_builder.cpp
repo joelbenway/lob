@@ -370,7 +370,7 @@ void BuildCoriolis(Impl* pimpl, LobContext* pout) {
 }
 
 void BuildBoatright(Impl* pimpl, LobContext* pout) {
-  assert(pimpl != nullptr && pimpl != nullptr);
+  assert(pimpl != nullptr && pout != nullptr);
 
   if (pimpl->meplat_diameter_in < InchT(0)) {
     pout->error = kLobErrorMeplatDiameterOOR;
@@ -496,7 +496,7 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
 }
 
 void BuildLitzAerodynamicJump(Impl* pimpl, LobContext* pout) {
-  assert(pimpl != nullptr && pimpl != nullptr);
+  assert(pimpl != nullptr && pout != nullptr);
 
   if (!std::isnan(pout->aerodynamic_jump)) {
     return;
@@ -510,9 +510,9 @@ void BuildLitzAerodynamicJump(Impl* pimpl, LobContext* pout) {
   if (!std::isnan(pout->stability_factor) && !std::isnan(pimpl->diameter_in) &&
       !std::isnan(pimpl->length_in)) {
     pout->aerodynamic_jump = litz::CalculateAerodynamicJump(
-                                pout->stability_factor, pimpl->diameter_in,
-                                pimpl->length_in, MphT(FpsT(pout->wind.z)))
-                                .Value();
+                                 pout->stability_factor, pimpl->diameter_in,
+                                 pimpl->length_in, MphT(FpsT(pout->wind.z)))
+                                 .Value();
     return;
   }
 
@@ -523,13 +523,13 @@ void BuildLitzAerodynamicJump(Impl* pimpl, LobContext* pout) {
 }
 
 void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
-  assert(pimpl != nullptr && pimpl != nullptr);
+  assert(pimpl != nullptr && pout != nullptr);
 
   constexpr MoaT kZeroAngleLimit = DegreesT(45);
 
-  if (!std::isnan(pout->zero_angle)) {
-    if (pout->zero_angle > kZeroAngleLimit.Value() ||
-        pout->zero_angle < kZeroAngleLimit.Value() * -1) {
+  if (!std::isnan(pimpl->zero_angle_moa)) {
+    if (pimpl->zero_angle_moa > kZeroAngleLimit ||
+        pimpl->zero_angle_moa < kZeroAngleLimit * -1) {
       pout->error = kLobErrorZeroAngleOOR;
     }
     return;
@@ -545,37 +545,29 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  assert(pout->velocity > 0);
   assert(!std::isnan(pout->aerodynamic_jump));
 
   if (std::isnan(pimpl->zero_impact_height)) {
     pimpl->zero_impact_height = FeetT(0.0);
   }
 
-  // Human zero-by-correction: single-point linear iteration Δθ = -f/d
-  // (radians). Same vacuum-projectile seed as benchmark/zero_angle.cpp
-  // SearchHuman. Cap 10 iters; exhaustion or out-of-bracket surfaces as
-  // kLobErrorInternalError. Bracket widened to ±45° (downward zeros).
   constexpr RadiansT kZeroAngleError = MoaT(0.01);
   constexpr RadiansT kMaxZeroAngle = kZeroAngleLimit;
   constexpr RadiansT kMinZeroAngle = kZeroAngleLimit * -1;
   constexpr size_t kMaxIterations = 10;
 
-  const double kVSq = static_cast<double>(pout->velocity) *
-                      static_cast<double>(pout->velocity);
-  const double kRawSeed =
-      kStandardGravityFtPerSecSq * pimpl->zero_distance_ft.Value() / kVSq;
-  const double kClampedSeed =
-      std::max(kMinZeroAngle.Value(),
-               std::min(kMaxZeroAngle.Value(), kRawSeed));
-  RadiansT theta = RadiansT(kClampedSeed);
+  assert(pimpl->velocity_fps > FpsT(0));
+  const auto kVacuumSeed =
+      RadiansT(kStandardGravityFtPerSecSq * pimpl->zero_distance_ft.Value() /
+               (pimpl->velocity_fps * pimpl->velocity_fps).Value());
+  const auto kClampedVacuumSeed =
+      std::max(kMinZeroAngle, std::min(kMaxZeroAngle, kVacuumSeed));
+  RadiansT theta = kClampedVacuumSeed;
 
-  // Residual eval: impact_y - optic_height - zero_impact_height for theta.
-  // step_size is saved/restored so the user's setting survives the search.
   auto fire_to_target = [&](RadiansT launch_angle) -> FeetT {
     const RadiansT kAngle =
         launch_angle + RadiansT(MoaT(pout->aerodynamic_jump));
-    const FpsT kVelocity = FpsT(pout->velocity);
+    const FpsT kVelocity = pimpl->velocity_fps;
     TrajectoryStateT s(
         CartesianT<FeetT>(FeetT(0.0)),
         CartesianT<FpsT>(kVelocity * std::cos(kAngle.Value()),
@@ -583,12 +575,12 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
     const auto kSavedStepSize = pout->step_size;
     pout->step_size = 0U;
     constexpr SecT kMaxZeroTime(60);
+    spline::CurveView zero_drag_curve(spline::kKnots.data(), &pout->drags[0]);
     while (s.P().X() < pimpl->zero_distance_ft) {
       if (s.TOF() >= kMaxZeroTime) {
         pout->error = kLobErrorInternalError;
         return FeetT(NaN());
       }
-      spline::CurveView zero_drag_curve(spline::kKnots.data(), &pout->drags[0]);
       SolveStep(*pout, &s, &zero_drag_curve);
     }
     pout->step_size = kSavedStepSize;
@@ -627,7 +619,7 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
 }
 
 void BuildOptions(Impl* pimpl, LobContext* pout) {
-  assert(pimpl != nullptr && pimpl != nullptr);
+  assert(pimpl != nullptr && pout != nullptr);
 
   if (pout->max_time < 0.0) {
     pout->error = kLobErrorMaximumTimeOOR;
@@ -805,7 +797,8 @@ LobBuilder* LobBuilderAirPressureInHg(LobBuilder* pbuilder, double value) {
   return pbuilder;
 }
 
-LobBuilder* LobBuilderAltitudeOfBarometerFt(LobBuilder* pbuilder, double value) {
+LobBuilder* LobBuilderAltitudeOfBarometerFt(LobBuilder* pbuilder,
+                                            double value) {
   auto* pimpl = Pimpl(pbuilder);
   pimpl->altitude_of_barometer_ft = FeetT(value);
   return pbuilder;
