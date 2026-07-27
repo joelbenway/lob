@@ -525,10 +525,11 @@ void BuildLitzAerodynamicJump(Impl* pimpl, LobContext* pout) {
 void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pimpl != nullptr);
 
+  constexpr MoaT kZeroAngleLimit = DegreesT(45);
+
   if (!std::isnan(pout->zero_angle)) {
-    const double kZeroAngleLimit = MoaT(DegreesT(45)).Value();
-    if (pout->zero_angle > kZeroAngleLimit ||
-        pout->zero_angle < kZeroAngleLimit * -1) {
+    if (pout->zero_angle > kZeroAngleLimit.Value() ||
+        pout->zero_angle < kZeroAngleLimit.Value() * -1) {
       pout->error = kLobErrorZeroAngleOOR;
     }
     return;
@@ -551,46 +552,78 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
     pimpl->zero_impact_height = FeetT(0.0);
   }
 
+  // Human zero-by-correction: single-point linear iteration Δθ = -f/d
+  // (radians). Same vacuum-projectile seed as benchmark/zero_angle.cpp
+  // SearchHuman. Cap 10 iters; exhaustion or out-of-bracket surfaces as
+  // kLobErrorInternalError. Bracket widened to ±45° (downward zeros).
   constexpr RadiansT kZeroAngleError = MoaT(0.01);
-  constexpr RadiansT kMaxZeroAngle = DegreesT(45);
-  constexpr RadiansT kMinZeroAngle = DegreesT(0.0);
-  RadiansT high_angle = kMaxZeroAngle;
-  RadiansT low_angle = kMinZeroAngle;
+  constexpr RadiansT kMaxZeroAngle = kZeroAngleLimit;
+  constexpr RadiansT kMinZeroAngle = kZeroAngleLimit * -1;
+  constexpr size_t kMaxIterations = 10;
 
-  while (high_angle - low_angle > kZeroAngleError) {
-    const RadiansT kZeroAngle = (low_angle + high_angle) / 2;
-    const RadiansT kAngle = kZeroAngle + RadiansT(MoaT(pout->aerodynamic_jump));
+  const double kVSq = static_cast<double>(pout->velocity) *
+                      static_cast<double>(pout->velocity);
+  const double kRawSeed =
+      kStandardGravityFtPerSecSq * pimpl->zero_distance_ft.Value() / kVSq;
+  const double kClampedSeed =
+      std::max(kMinZeroAngle.Value(),
+               std::min(kMaxZeroAngle.Value(), kRawSeed));
+  RadiansT theta = RadiansT(kClampedSeed);
+
+  // Residual eval: impact_y - optic_height - zero_impact_height for theta.
+  // step_size is saved/restored so the user's setting survives the search.
+  auto fire_to_target = [&](RadiansT launch_angle) -> FeetT {
+    const RadiansT kAngle =
+        launch_angle + RadiansT(MoaT(pout->aerodynamic_jump));
     const FpsT kVelocity = FpsT(pout->velocity);
-
     TrajectoryStateT s(
         CartesianT<FeetT>(FeetT(0.0)),
         CartesianT<FpsT>(kVelocity * std::cos(kAngle.Value()),
                          kVelocity * std::sin(kAngle.Value()), FpsT(0.0)));
-
     const auto kSavedStepSize = pout->step_size;
     pout->step_size = 0U;
-
     constexpr SecT kMaxZeroTime(60);
     while (s.P().X() < pimpl->zero_distance_ft) {
       if (s.TOF() >= kMaxZeroTime) {
         pout->error = kLobErrorInternalError;
-        return;
+        return FeetT(NaN());
       }
-      const MachT kZeroMach(s.V().Magnitude(),
-                            FpsT(pout->speed_of_sound).Inverse());
       spline::CurveView zero_drag_curve(spline::kKnots.data(), &pout->drags[0]);
       SolveStep(*pout, &s, &zero_drag_curve);
     }
-
     pout->step_size = kSavedStepSize;
+    return s.P().Y() - FeetT(pout->optic_height) - pimpl->zero_impact_height;
+  };
 
-    if (s.P().Y() - FeetT(pout->optic_height) > pimpl->zero_impact_height) {
-      high_angle = kZeroAngle;
-    } else {
-      low_angle = kZeroAngle;
+  FeetT f = fire_to_target(theta);
+  if (pout->error != kLobErrorNotFormed) {
+    return;
+  }
+
+  for (size_t iter = 0; iter < kMaxIterations; ++iter) {
+    const RadiansT kDTheta =
+        RadiansT(-(f.Value() / pimpl->zero_distance_ft.Value()));
+    const RadiansT kThetaNext = theta + kDTheta;
+
+    if (kThetaNext < kMinZeroAngle || kThetaNext > kMaxZeroAngle ||
+        std::isnan(kThetaNext.Value())) {
+      pout->error = kLobErrorInternalError;
+      return;
+    }
+
+    if (std::abs((kThetaNext - theta).Value()) <= kZeroAngleError.Value()) {
+      pout->zero_angle = MoaT(kThetaNext).Value();
+      return;
+    }
+
+    theta = kThetaNext;
+    f = fire_to_target(theta);
+    if (pout->error != kLobErrorNotFormed) {
+      return;
     }
   }
-  pout->zero_angle = MoaT((low_angle + high_angle) / 2).Value();
+
+  pout->error = kLobErrorInternalError;
 }
 
 void BuildOptions(Impl* pimpl, LobContext* pout) {
