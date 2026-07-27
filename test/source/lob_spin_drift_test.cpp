@@ -45,7 +45,7 @@ struct LobSpinTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 3071;
     const double kTestZeroAngle = 6.53;
     const double kTestOpticHeight = 2.0;
-    const uint16_t kStep = 100U;
+    const uint16_t kStep = 0U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -74,13 +74,12 @@ TEST_F(LobSpinTestFixture, ZeroAngleSearch) {
 
 TEST_F(LobSpinTestFixture, GetSpeedOfSoundFps) {
   ASSERT_NE(puut, nullptr);
-  const auto kInput = puut->Build();
+  const auto kContext = puut->Build();
   const double kExpectedFps = 1116.45;
   const double kError = 0.001;
-  EXPECT_NEAR(kInput.speed_of_sound, kExpectedFps, kError);
+  EXPECT_NEAR(kContext.speed_of_sound, kExpectedFps, kError);
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, SolveWithoutSpin) {
   ASSERT_NE(puut, nullptr);
   constexpr lob::FpsT kVelocityError(1);
@@ -89,8 +88,8 @@ TEST_F(LobSpinTestFixture, SolveWithoutSpin) {
   constexpr lob::InchT kInchError(0.5);
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->Build();
-  EXPECT_TRUE(std::isnan(kInput.spindrift_factor));
+  const auto kContext = puut->Build();
+  EXPECT_TRUE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -111,14 +110,13 @@ TEST_F(LobSpinTestFixture, SolveWithoutSpin) {
       {6000, 949, 500, -1882.00, 0.00, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, LitzRightHandSpinDrift) {
   ASSERT_NE(puut, nullptr);
   const double kBarrelTwist = 11.0;
@@ -128,8 +126,8 @@ TEST_F(LobSpinTestFixture, LitzRightHandSpinDrift) {
   constexpr lob::InchT kInchError(0.5);
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist).Build();
-  EXPECT_TRUE(std::isnan(kInput.spindrift_factor));
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist).Build();
+  EXPECT_TRUE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -150,14 +148,13 @@ TEST_F(LobSpinTestFixture, LitzRightHandSpinDrift) {
       {6000, 949, 500, -1882.01, 50.22, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, LitzRightHandSpinDriftFast) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = 9.375;
@@ -167,8 +164,8 @@ TEST_F(LobSpinTestFixture, LitzRightHandSpinDriftFast) {
   constexpr lob::InchT kInchError(0.5);
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist).Build();
-  EXPECT_TRUE(std::isnan(kInput.spindrift_factor));
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist).Build();
+  EXPECT_TRUE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -189,14 +186,13 @@ TEST_F(LobSpinTestFixture, LitzRightHandSpinDriftFast) {
       {6000, 949, 500, -1882.01, 62.42, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, LitzLeftHandSpinDrift) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = -11.0;
@@ -206,8 +202,8 @@ TEST_F(LobSpinTestFixture, LitzLeftHandSpinDrift) {
   constexpr lob::InchT kInchError(0.5);
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist).Build();
-  EXPECT_TRUE(std::isnan(kInput.spindrift_factor));
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist).Build();
+  EXPECT_TRUE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -228,14 +224,13 @@ TEST_F(LobSpinTestFixture, LitzLeftHandSpinDrift) {
       {6000, 949, 500, -1882.01, -50.22, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, LitzLeftHandSpinDriftFast) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = -9.375;
@@ -245,8 +240,8 @@ TEST_F(LobSpinTestFixture, LitzLeftHandSpinDriftFast) {
   constexpr lob::InchT kInchError(0.5);
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist).Build();
-  EXPECT_TRUE(std::isnan(kInput.spindrift_factor));
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist).Build();
+  EXPECT_TRUE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -267,14 +262,13 @@ TEST_F(LobSpinTestFixture, LitzLeftHandSpinDriftFast) {
       {6000, 949, 500, -1882.01, -62.42, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, BoatrightRightHandSpinDrift) {
   ASSERT_NE(puut, nullptr);
   const double kBarrelTwist = 11.0;
@@ -284,14 +278,14 @@ TEST_F(LobSpinTestFixture, BoatrightRightHandSpinDrift) {
   constexpr lob::InchT kInchError(0.5);
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
                           .NoseLengthInch(kOgiveLength)
                           .TailLengthInch(kTailLength)
                           .BaseDiameterInch(kBaseDiameter)
                           .MeplatDiameterInch(kMeplatDiameter)
                           .OgiveRtR(kRtR)
                           .Build();
-  EXPECT_FALSE(std::isnan(kInput.spindrift_factor));
+  EXPECT_FALSE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -312,14 +306,13 @@ TEST_F(LobSpinTestFixture, BoatrightRightHandSpinDrift) {
       {6000, 949, 500, -1882.01, 39.72, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, BoatrightRightHandSpinDriftFast) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = 9.375;
@@ -329,14 +322,14 @@ TEST_F(LobSpinTestFixture, BoatrightRightHandSpinDriftFast) {
   constexpr lob::InchT kInchError(0.5);
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
                           .NoseLengthInch(kOgiveLength)
                           .TailLengthInch(kTailLength)
                           .BaseDiameterInch(kBaseDiameter)
                           .MeplatDiameterInch(kMeplatDiameter)
                           .OgiveRtR(kRtR)
                           .Build();
-  EXPECT_FALSE(std::isnan(kInput.spindrift_factor));
+  EXPECT_FALSE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -357,14 +350,13 @@ TEST_F(LobSpinTestFixture, BoatrightRightHandSpinDriftFast) {
       {6000, 949, 500, -1882.01, 48.77, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDrift) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = -11.0;
@@ -374,14 +366,14 @@ TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDrift) {
   constexpr lob::InchT kInchError(0.5);
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
                           .NoseLengthInch(kOgiveLength)
                           .TailLengthInch(kTailLength)
                           .BaseDiameterInch(kBaseDiameter)
                           .MeplatDiameterInch(kMeplatDiameter)
                           .OgiveRtR(kRtR)
                           .Build();
-  EXPECT_FALSE(std::isnan(kInput.spindrift_factor));
+  EXPECT_FALSE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -402,14 +394,13 @@ TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDrift) {
       {6000, 949, 500, -1882.01, -39.72, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDriftFast) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = -9.375;
@@ -419,14 +410,14 @@ TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDriftFast) {
   constexpr lob::InchT kInchError(0.5);
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
-  const auto kInput = puut->TwistInchesPerTurn(kBarrelTwist)
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
                           .NoseLengthInch(kOgiveLength)
                           .TailLengthInch(kTailLength)
                           .BaseDiameterInch(kBaseDiameter)
                           .MeplatDiameterInch(kMeplatDiameter)
                           .OgiveRtR(kRtR)
                           .Build();
-  EXPECT_FALSE(std::isnan(kInput.spindrift_factor));
+  EXPECT_FALSE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
       1800, 2100, 2400, 2700, 3000, 4500, 6000};
@@ -447,7 +438,7 @@ TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDriftFast) {
       {6000, 949, 500, -1882.01, -48.77, 3.867}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,

@@ -128,6 +128,58 @@ TEST(LobAPITest, ZeroStepSizeAutoTerminate) {
   EXPECT_EQ(kSize, 1);
 }
 
+TEST(LobAPITest, DistanceModeMatchesTimeMode) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  const double kError = 1e-3;
+  const lob::Context kTime = lob::Builder()
+                                 .BallisticCoefficientPsi(kTestBC)
+                                 .InitialVelocityFps(kTestMuzzleVelocity)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .StepSize(100U)
+                                 .Build();
+  const lob::Context kDist = lob::Builder()
+                                 .BallisticCoefficientPsi(kTestBC)
+                                 .InitialVelocityFps(kTestMuzzleVelocity)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .StepSize(0U)
+                                 .Build();
+  for (const auto kRange : {500U, 1000U, 2000U, 5000U}) {
+    lob::Output time_out;
+    lob::Output dist_out;
+    EXPECT_EQ(lob::Solve(kTime, kRange, &time_out), 1);
+    EXPECT_EQ(lob::Solve(kDist, kRange, &dist_out), 1);
+    EXPECT_NEAR(time_out.elevation, dist_out.elevation, kError);
+    EXPECT_NEAR(time_out.deflection, dist_out.deflection, kError);
+    EXPECT_NEAR(time_out.velocity, dist_out.velocity, kError);
+    EXPECT_NEAR(time_out.time_of_flight, dist_out.time_of_flight, kError);
+    EXPECT_NEAR(time_out.energy, dist_out.energy, kError);
+  }
+}
+
+TEST(LobAPITest, MaximumTimeOfFlightDistance) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  const double kMaxTime = 1.5;
+  const lob::Context kResult = lob::Builder()
+                                   .BallisticCoefficientPsi(kTestBC)
+                                   .InitialVelocityFps(kTestMuzzleVelocity)
+                                   .ZeroAngleMOA(kTestZeroAngle)
+                                   .MaximumTime(kMaxTime)
+                                   .StepSize(0U)
+                                   .Build();
+
+  const uint32_t kRange = 5'000U;
+  lob::Output out;
+  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
+  EXPECT_EQ(kSize, 1);
+  EXPECT_NEAR(out.time_of_flight, kMaxTime, 1E-3);
+  EXPECT_TRUE(out.time_of_flight > 0.0);
+  EXPECT_TRUE(out.velocity > 0);
+}
+
 TEST(LobAPITest, NonMonotonicRangesRejected) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
@@ -139,7 +191,7 @@ TEST(LobAPITest, NonMonotonicRangesRejected) {
                                    .Build();
   const std::array<uint32_t, 2> kRanges = {100U, 50U};
   std::array<lob::Output, 2> out{};
-  const auto kSize = lob::Solve(kResult, kRanges, out);
+  const auto kSize = lob::Solve(kResult, kRanges, &out);
   EXPECT_EQ(kSize, 0);
 }
 

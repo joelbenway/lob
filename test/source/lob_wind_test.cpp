@@ -35,7 +35,7 @@ struct LobWindTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 2720;
     const double kTestZeroAngle = 4.78;
     const double kTestOpticHeight = 2.5;
-    const uint16_t kStep = 100U;
+    const uint16_t kStep = 0U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -64,13 +64,12 @@ TEST_F(LobWindTestFixture, ZeroAngleSearch) {
 
 TEST_F(LobWindTestFixture, GetSpeedOfSoundFps) {
   ASSERT_NE(puut, nullptr);
-  const auto kInput = puut->Build();
+  const auto kContext = puut->Build();
   const double kExpectedFps = 1116.45;
   const double kError = 0.001;
-  EXPECT_NEAR(kInput.speed_of_sound, kExpectedFps, kError);
+  EXPECT_NEAR(kContext.speed_of_sound, kExpectedFps, kError);
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithoutWind) {
   ASSERT_NE(puut, nullptr);
   constexpr lob::FpsT kVelocityError{1};
@@ -79,7 +78,7 @@ TEST_F(LobWindTestFixture, SolveWithoutWind) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput = puut->Build();
+  const auto kContext = puut->Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
@@ -97,14 +96,13 @@ TEST_F(LobWindTestFixture, SolveWithoutWind) {
       {3000, 1021, 178, -475.40, 0.00, 1.913}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindIII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -115,7 +113,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIII) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -134,14 +132,13 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIII) {
       {3000, 1021, 178, -475.40, 142.55, 1.913}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -152,7 +149,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -171,14 +168,13 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
       {3000, 1015, 176, -479.64, 124.35, 1.921}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindV) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -189,7 +185,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindV) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -208,14 +204,13 @@ TEST_F(LobWindTestFixture, SolveWithClockWindV) {
       {3000, 1011, 175, -482.80, 72.18, 1.927}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -226,7 +221,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -245,14 +240,13 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
       {3000, 1009, 174, -483.97, -0.00, 1.929}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -263,7 +257,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -282,14 +276,13 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
       {3000, 1011, 175, -482.80, -72.18, 1.927}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -300,7 +293,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -319,14 +312,13 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
       {3000, 1015, 176, -479.64, -124.35, 1.921}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -337,7 +329,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -356,14 +348,13 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
       {3000, 1021, 178, -475.40, -142.55, 1.913}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindX) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -374,7 +365,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindX) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -393,14 +384,13 @@ TEST_F(LobWindTestFixture, SolveWithClockWindX) {
       {3000, 1026, 180, -471.25, -122.56, 1.905}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -411,7 +401,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -430,14 +420,13 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
       {3000, 1031, 181, -468.21, -70.38, 1.899}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -448,7 +437,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -467,14 +456,13 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
       {3000, 1032, 182, -467.08, 0.00, 1.897}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindI) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -485,7 +473,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindI) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -504,14 +492,13 @@ TEST_F(LobWindTestFixture, SolveWithClockWindI) {
       {3000, 1031, 181, -468.21, 70.38, 1.899}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithClockWindII) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 10;
@@ -522,7 +509,7 @@ TEST_F(LobWindTestFixture, SolveWithClockWindII) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -541,14 +528,13 @@ TEST_F(LobWindTestFixture, SolveWithClockWindII) {
       {3000, 1026, 180, -471.25, 122.56, 1.905}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 20;
@@ -559,7 +545,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeadingDeg(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -578,14 +564,13 @@ TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
       {3000, 1001, 171, -490.37, 146.17, 1.941}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeMagnitude) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = -20;
@@ -596,7 +581,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeMagnitude) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeadingDeg(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -615,14 +600,13 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeMagnitude) {
       {3000, 1001, 171, -490.37, 146.17, 1.941}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeAngle) {
   ASSERT_NE(puut, nullptr);
   const int32_t kWindSpeed = 20;
@@ -633,7 +617,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeAngle) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kInput =
+  const auto kContext =
       puut->WindSpeedMph(kWindSpeed).WindHeadingDeg(kWindHeading).Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
@@ -652,7 +636,7 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeAngle) {
       {3000, 1001, 171, -490.37, 146.17, 1.941}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kInput, kRanges, solutions);
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
   EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
