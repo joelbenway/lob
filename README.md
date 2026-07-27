@@ -21,7 +21,7 @@ The following can be accounted for in lob's solutions:
    * Relative humidity
  * Coriolis effect :globe_with_meridians:
  * Gyroscopic spin drift
- * Aerodynamic jump
+ * Crosswind aerodynamic jump
 
 In addition to ballistic solutions, lob provides instrumental values it calculates including the local speed of sound, stability factor, and the "zero angle" between the line of sight and line of fire. All native units are customary American freedom units :statue_of_liberty: but a collection of unit conversion functions are included :hammer_and_wrench:
 
@@ -92,10 +92,10 @@ const lob::Context kMoreCtx =
 Now we're cooking! :cook:
 
 ### Accurate
-Under the hood lob solves ordinary differential equations (ODEs) which model the projectile motion of a point mass using numerical methods. To ensure error-free math lob is overbuilt with tender loving paranoia. Internally lob uses a custom [strong type](/source/eng_units.hpp) system for engineering units that eliminate an entire class of potential bugs. Every calculation lob uses is validated against published data by a comprehensive unit test suite. :mechanical_arm:
+Under the hood lob solves ordinary differential equations (ODEs) which model the projectile motion of a point mass using numerical methods. To ensure error-free math lob is overbuilt with tender loving paranoia. Internally lob uses a custom [strong type](/source/eng_units.hpp) system for engineering units that eliminate an entire class of potential bugs. Every calculation lob uses is validated against published data by comprehensive unit tests.:mechanical_arm:
 
 ### Fast!
-Lob is not just high-performance because it's C++, it's routinely profiled and micro-benchmarked. To speed up the solver's most critical performance path lob models drag functions as cubic Hermite spline curves built from mach vs drag tables at compile-time. These spline curves evaluate with just a handful of arithmetic ops for extraordinary speed! :checkered_flag:
+Lob is not just high-performance because it's C++, it's routinely profiled and algorithms are often micro-benchmarked. To speed up the solver's most critical performance path lob uniquely models drag functions as cubic Hermite spline curves built from mach vs drag tables at compile-time. These spline curves evaluate with just a handful of arithmetic ops for extraordinary speed! :checkered_flag:
 
 ## Why did you build this?
 I wrote lob for fun, to learn, [because this is what computers are for](https://en.wikipedia.org/wiki/ENIAC), and to share an example of my work.
@@ -113,7 +113,7 @@ I wrote lob for fun, to learn, [because this is what computers are for](https://
 
 [A Simple Accurate Formula for Calculating Saturation Vapor Pressure of Water and Ice by Jianhua Huang](https://journals.ametsoc.org/view/journals/apme/57/6/jamc-d-17-0334.1.xml) This is an academic article published in the Journal of Applied Meteorology and Climatology showcasing a nice formula. This was found while trying to avoid implementing a look up table to do the same thing.
 
-[Calculating Aerodynamic Jump for Firing Point Conditions by James Boatright & Gustavo Ruiz](https://www.researchgate.net/publication/327427851_Updated_Calculation_of_Crosswind_Aerodynamic_Jump_for_Firing_Point_Conditions-A_novel_and_practical_approach_for_computing_the_wind-induced_jump_perturbations) This paper offers a sophisticated method for calculating aerodynamic jump that promises greater accuracy than the Litz method, but requires more inputs and calculation.
+[Calculating Aerodynamic Jump for Firing Point Conditions by James Boatright & Gustavo Ruiz](https://www.researchgate.net/publication/327427851_Updated_Calculation_of_Crosswind_Aerodynamic_Jump_for_Firing_Point_Conditions-A_novel_and_practical_approach_for_computing_the_wind-induced_jump_perturbations) This paper offers a sophisticated method for calculating aerodynamic jump based on the precession and nutation of the spinning projectile. It promises increased accuracy but requires full bullet geometry.
 
 [Calculating Yaw of Repose and Spin Drift for Firing Point Conditions – Boatright & Ruiz](https://www.researchgate.net/publication/327582502_Calculating_Yaw_of_Repose_and_Spin_Drift) Another paper from Boatright & Ruiz with a similar model for calculating spin drift.
 
