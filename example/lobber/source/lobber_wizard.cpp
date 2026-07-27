@@ -142,7 +142,6 @@ const std::map<Step, std::string>& GetPrompts() {
   return kPrompts;
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 StepInfo GetTransition(Step s) {
   switch (s) {
     case Step::kBallisticCoefficientPsi:
