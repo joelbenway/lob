@@ -78,7 +78,7 @@ const Impl* Pimpl(const LobBuilder* pbuilder) {
 }
 
 void BuildEnvironment(Impl* pimpl, LobContext* pout) {
-  assert(pimpl != nullptr && pimpl != nullptr);
+  assert(pimpl != nullptr && pout != nullptr);
   FeetT altitude_of_firing_site = FeetT(0);
   FeetT altitude_of_barometer = FeetT(0);
   FeetT altitude_of_thermometer = FeetT(0);
@@ -98,9 +98,9 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   }
 
   pout->gravity.x = kStandardGravityFtPerSecSq * -1 *
-                   std::sin(pimpl->range_angle_rad.Value());
+                    std::sin(pimpl->range_angle_rad.Value());
   pout->gravity.y = kStandardGravityFtPerSecSq * -1 *
-                   std::cos(pimpl->range_angle_rad.Value());
+                    std::cos(pimpl->range_angle_rad.Value());
 
   if (!std::isnan(pimpl->altitude_ft)) {
     altitude_of_firing_site = pimpl->altitude_ft;
@@ -192,7 +192,7 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
 }
 
 void BuildTable(Impl* pimpl, LobContext* pout) {
-  assert(pimpl != nullptr && pimpl != nullptr);
+  assert(pimpl != nullptr && pout != nullptr);
   if (pimpl->custom_machs != nullptr) {
     if (pimpl->custom_count < 2) {
       pout->error = kLobErrorMachDragTableTooShort;
@@ -260,11 +260,11 @@ void BuildTable(Impl* pimpl, LobContext* pout) {
     std::copy_n(coefs->data(), spline::kCoefsSize, &pout->drags[0]);
   }
   pout->drag_coeff = CalculateCdCoefficient(pimpl->air_density_lbs_per_cu_ft,
-                                           pimpl->ballistic_coefficient_psi);
+                                            pimpl->ballistic_coefficient_psi);
 }
 
 void BuildWind(Impl* pimpl, LobContext* pout) {
-  assert(pimpl != nullptr && pimpl != nullptr);
+  assert(pimpl != nullptr && pout != nullptr);
 
   if (std::isnan(pimpl->wind_heading_rad)) {
     pimpl->wind_heading_rad = DegreesT(0);
@@ -290,7 +290,7 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
 }
 
 void BuildOpticHeight(Impl* pimpl, LobContext* pout) {
-  assert(pimpl != nullptr && pimpl != nullptr);
+  assert(pimpl != nullptr && pout != nullptr);
   if (!std::isnan(pimpl->optic_height_ft)) {
     pout->optic_height = pimpl->optic_height_ft.Value();
   } else {
@@ -300,7 +300,7 @@ void BuildOpticHeight(Impl* pimpl, LobContext* pout) {
 }
 
 void BuildStability(Impl* pimpl, LobContext* pout) {
-  assert(pimpl != nullptr && pimpl != nullptr);
+  assert(pimpl != nullptr && pout != nullptr);
 
   if (pimpl->velocity_fps.IsNaN() || pimpl->velocity_fps <= FpsT(0)) {
     pout->error = kLobErrorInitialVelocityRequired;
@@ -337,7 +337,7 @@ void BuildStability(Impl* pimpl, LobContext* pout) {
 }
 
 void BuildCoriolis(Impl* pimpl, LobContext* pout) {
-  assert(pimpl != nullptr && pimpl != nullptr);
+  assert(pimpl != nullptr && pout != nullptr);
 
   if (!std::isnan(pimpl->azimuth_rad) && !std::isnan(pimpl->latitude_rad)) {
     const DegreesT kAzimuthLimit(kDegreesPerTurn);
@@ -404,9 +404,9 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const CaliberT kLN(pimpl->nose_length_in, kD.Inverse());
   const CaliberT kLBT(pimpl->tail_length_in, kD.Inverse());
   const auto kRTR(pimpl->ogive_rtr);
-  const FpsT kVelocity(pout->velocity);
+  const FpsT kVelocity(pimpl->velocity_fps);
   const FpsT kSos(pout->speed_of_sound);
-  const GrainT kMass = LbsT(pout->mass);
+  const GrainT kMass = pimpl->mass_lbs;
   const InchPerTwistT kTwist(pimpl->twist_inches_per_turn);
   const double kSg(pout->stability_factor);
   const PmsiT kBc(pimpl->ballistic_coefficient_psi);
