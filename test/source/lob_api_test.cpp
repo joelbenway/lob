@@ -196,17 +196,7 @@ TEST(LobAPITest, NonMonotonicRangesRejected) {
   EXPECT_EQ(kSize, 0);
 }
 
-// BuildZeroAngle now linearizes ∆θ = -f/d (radians) from the vacuum-projectile
-// seed g·d/v² clamped to ±45°. These three tests probe the new behavior:
-//   - downward zeros are legal (bracket opened to ±45°)
-//   - pathological inputs surface as kLobErrorInternalError rather than hang
-//   - realistic extreme inputs either succeed with finite in-bracket angle or
-//     fail cleanly (never crash, never out-of-bracket finite)
-
 TEST(LobAPITest, ZeroAngleSearchNegativeBracket) {
-  // Target 5 ft below the bore line at 100 yd. At θ=0 the bullet drops ~2"
-  // below the bore, still ending above the -60"-below-bore target → residual
-  // overshoots → search must fire downward, producing negative zero_angle.
   const lob::Context kCtx = lob::Builder()
                                  .BallisticCoefficientPsi(0.436)
                                  .InitialVelocityFps(3100U)
@@ -221,12 +211,9 @@ TEST(LobAPITest, ZeroAngleSearchNegativeBracket) {
 }
 
 TEST(LobAPITest, ZeroAngleSearchExhaustsIterations) {
-  // Pathological combination: very low muzzle velocity + long range pushes
-  // the vacuum-seed far from the true drop angle and the linear correction
-  // oscillates or stalls inside the 10-iteration cap.
   const lob::Context kCtx = lob::Builder()
                                  .BallisticCoefficientPsi(0.1)
-                                 .InitialVelocityFps(600U)  // ~airgun velocity
+                                 .InitialVelocityFps(600U)
                                  .ZeroDistanceYds(2000.0)
                                  .Build();
   EXPECT_EQ(kCtx.error, kLobErrorInternalError);
@@ -234,9 +221,6 @@ TEST(LobAPITest, ZeroAngleSearchExhaustsIterations) {
 }
 
 TEST(LobAPITest, ZeroAngleSearchExtremeInputsDontCrash) {
-  // Sweep: every combination must either succeed with a finite in-bracket
-  // zero_angle, or fail with kLobErrorInternalError. No crash, no out-of-
-  // bracket finite value.
   const std::array<double, 5> kBcs = {0.1, 0.224, 0.436, 0.7, 1.5};
   const std::array<uint16_t, 5> kVelocities = {600U, 1800U, 3100U, 4000U, 5000U};
   const std::array<double, 5> kRanges = {10.0, 100.0, 500.0, 1000.0, 2000.0};
