@@ -56,17 +56,16 @@ FeetT FireToRange(::LobContext* ctx, FeetT zero_distance_ft,
       CartesianT<FeetT>(FeetT(0.0)),
       CartesianT<FpsT>(kVel * std::cos(launch_angle.Value()),
                        kVel * std::sin(launch_angle.Value()), FpsT(0.0)));
-  SecT t(0.0);
   const auto kSavedStepSize = ctx->step_size;
   ctx->step_size = 0U;
   constexpr SecT kMaxZeroTime(60);
   while (s.P().X() < zero_distance_ft) {
-    if (t >= kMaxZeroTime) {
+    if (s.TOF() >= kMaxZeroTime) {
       ctx->error = kLobErrorInternalError;
       return FeetT(0);
     }
     CurveView zero_drag_curve(kKnots.data(), static_cast<const float*>(ctx->drags));
-    SolveStep(&s, &t, &zero_drag_curve, *ctx);
+    SolveStep(*ctx, &s, &zero_drag_curve);
   }
   ctx->step_size = kSavedStepSize;
   return s.P().Y();
@@ -137,6 +136,48 @@ double SearchBinary(::LobContext* ctx, FeetT zero_distance_ft,
     }
   }
   return (lo + hi) / 2;
+}
+
+double SearchHuman(::LobContext* ctx, FeetT zero_distance_ft,
+                   FeetT target_height, int* count) {
+  const double kVSq =
+      static_cast<double>(ctx->velocity) * static_cast<double>(ctx->velocity);
+  const double kRawSeed =
+      kStandardGravityFtPerSecSq * zero_distance_ft.Value() / kVSq;
+  const double kClampedSeed =
+      std::max(kMinZeroAngle.Value(),
+               std::min(kMaxZeroAngle.Value(), kRawSeed));
+  const RadiansT kThetaSeed = RadiansT(kClampedSeed);
+  const double kAeroJump = RadiansT(MoaT(ctx->aerodynamic_jump)).Value();
+
+  RadiansT theta_prev = kThetaSeed;
+  FeetT f_prev = FireToTarget(ctx, zero_distance_ft, theta_prev, target_height,
+                              kAeroJump, count);
+  if (HasFatalError(ctx)) {
+    return NaN();
+  }
+
+  constexpr size_t kMaxIterations = 10;
+  for (size_t iter = 0; iter < kMaxIterations; ++iter) {
+    const RadiansT kDTheta =
+        RadiansT(-(f_prev.Value() / zero_distance_ft.Value()));
+    const RadiansT kThetaNext = theta_prev + kDTheta;
+    if (kThetaNext < kMinZeroAngle || kThetaNext > kMaxZeroAngle ||
+        std::isnan(kThetaNext.Value())) {
+      return NaN();
+    }
+    if (std::abs((kThetaNext - theta_prev).Value()) <=
+        kZeroAngleError.Value()) {
+      return MoaT(kThetaNext).Value();
+    }
+    theta_prev = kThetaNext;
+    f_prev = FireToTarget(ctx, zero_distance_ft, theta_prev, target_height,
+                           kAeroJump, count);
+    if (HasFatalError(ctx)) {
+      return NaN();
+    }
+  }
+  return NaN();
 }
 
 void EnsureBracketEval(::LobContext* ctx, FeetT zero_distance_ft,
@@ -396,6 +437,51 @@ void SearchSecant1000(benchmark::State& state) {
   }
 }
 
+void SearchHuman100(benchmark::State& state) {
+  const lob::Context kBase = BuildPresetContext(kZero100);
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  const auto* base_ctx = reinterpret_cast<const ::LobContext*>(&kBase);
+  const FeetT kZeroDist = FeetT(kZero100 * 3.0);
+  const FeetT kTargetH = TargetHeight(*base_ctx, kZeroHeight);
+  for (auto _ : state) {
+    ::LobContext ctx = *base_ctx;
+    int count = 0;
+    double angle = SearchHuman(&ctx, kZeroDist, kTargetH, &count);
+    benchmark::DoNotOptimize(angle);
+    state.counters["trajectories"] += count;
+  }
+}
+
+void SearchHuman500(benchmark::State& state) {
+  const lob::Context kBase = BuildPresetContext(kZero500);
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  const auto* base_ctx = reinterpret_cast<const ::LobContext*>(&kBase);
+  const FeetT kZeroDist = FeetT(kZero500 * 3.0);
+  const FeetT kTargetH = TargetHeight(*base_ctx, kZeroHeight);
+  for (auto _ : state) {
+    ::LobContext ctx = *base_ctx;
+    int count = 0;
+    double angle = SearchHuman(&ctx, kZeroDist, kTargetH, &count);
+    benchmark::DoNotOptimize(angle);
+    state.counters["trajectories"] += count;
+  }
+}
+
+void SearchHuman1000(benchmark::State& state) {
+  const lob::Context kBase = BuildPresetContext(kZero1000);
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  const auto* base_ctx = reinterpret_cast<const ::LobContext*>(&kBase);
+  const FeetT kZeroDist = FeetT(kZero1000 * 3.0);
+  const FeetT kTargetH = TargetHeight(*base_ctx, kZeroHeight);
+  for (auto _ : state) {
+    ::LobContext ctx = *base_ctx;
+    int count = 0;
+    double angle = SearchHuman(&ctx, kZeroDist, kTargetH, &count);
+    benchmark::DoNotOptimize(angle);
+    state.counters["trajectories"] += count;
+  }
+}
+
 void SearchRidders100(benchmark::State& state) {
   const lob::Context kBase = BuildPresetContext(kZero100);
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -450,6 +536,9 @@ BENCHMARK(SearchBinary1000);
 BENCHMARK(SearchSecant100);
 BENCHMARK(SearchSecant500);
 BENCHMARK(SearchSecant1000);
+BENCHMARK(SearchHuman100);
+BENCHMARK(SearchHuman500);
+BENCHMARK(SearchHuman1000);
 BENCHMARK(SearchRidders100);
 BENCHMARK(SearchRidders500);
 BENCHMARK(SearchRidders1000);
