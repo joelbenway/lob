@@ -14,7 +14,6 @@
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "lob/lob.hpp"
@@ -63,12 +62,23 @@ lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& j,
 }
 
 lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
-                                      const std::string& key) {
+                                       const std::string& key) {
   const double kV = JsonToDouble(j, key);
   if (std::isnan(kV)) {
     return lob::DragFunctionT::kG1;
   }
-  return static_cast<lob::DragFunctionT>(static_cast<uint8_t>(std::round(kV)));
+  const int kRounded = static_cast<int>(std::round(kV));
+  switch (kRounded) {
+    case kLobDragFunctionG1:
+    case kLobDragFunctionG2:
+    case kLobDragFunctionG5:
+    case kLobDragFunctionG6:
+    case kLobDragFunctionG7:
+    case kLobDragFunctionG8:
+      return static_cast<lob::DragFunctionT>(static_cast<uint8_t>(kRounded));
+    default:
+      return lob::DragFunctionT::kG1;
+  }
 }
 
 lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
