@@ -131,7 +131,6 @@ typedef struct {
   float drags[LOB_SPLINE_SEGMENTS * 4];  ///< @brief Required for drag curve.
   uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
   uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
-  uint16_t step_size;      ///< @brief Step size for solver.
   LobErrorT error;         ///< @brief Error status after build.
 } LobContext;
 
@@ -501,16 +500,6 @@ LOB_EXPORT extern LobBuilder* LobBuilderMinimumEnergy(LobBuilder* pbuilder,
  */
 LOB_EXPORT extern LobBuilder* LobBuilderMaximumTime(LobBuilder* pbuilder,
                                                     double value);
-
-/**
- * @brief Sets the step size for the numerical solver.
- * @note If set to zero the solver will use a variable step.
- * @param pbuilder Pointer to the builder.
- * @param value The time step size in microseconds used by the solver.
- * @return Pointer to the builder.
- */
-LOB_EXPORT extern LobBuilder* LobBuilderStepSize(LobBuilder* pbuilder,
-                                                 uint16_t value);
 
 /**
  * @brief Builds the LobContext object with the configured parameters.
