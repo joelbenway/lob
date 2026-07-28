@@ -65,7 +65,7 @@ silence(benchmark_main)
 add_custom_target(run-benchmarks)
 
 function(add_benchmark NAME)
-  add_executable("${NAME}" "${NAME}.cpp")
+  add_executable("${NAME}" "${NAME}.cpp" ${ARGN})
   target_include_directories(
     "${NAME}" PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include
                      ${CMAKE_CURRENT_SOURCE_DIR}/../source)
@@ -102,7 +102,7 @@ endfunction()
 
 add_benchmark(loblerp)
 add_benchmark(ode)
-add_benchmark(zero_angle)
+add_benchmark(zero_angle ${CMAKE_CURRENT_SOURCE_DIR}/../source/solve_step.cpp)
 add_benchmark(genops)
 
 add_folders(Benchmark)
