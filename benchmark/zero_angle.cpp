@@ -56,18 +56,14 @@ FeetT FireToRange(::LobContext* ctx, FeetT zero_distance_ft,
       CartesianT<FeetT>(FeetT(0.0)),
       CartesianT<FpsT>(kVel * std::cos(launch_angle.Value()),
                        kVel * std::sin(launch_angle.Value()), FpsT(0.0)));
-  const auto kSavedStepSize = ctx->step_size;
-  ctx->step_size = 0U;
-  constexpr SecT kMaxZeroTime(60);
+  CurveView zero_drag_curve(kKnots.data(), static_cast<const float*>(ctx->drags));
   while (s.P().X() < zero_distance_ft) {
-    if (s.TOF() >= kMaxZeroTime) {
+    if (s.V().X() <= FpsT(0)) {
       ctx->error = kLobErrorInternalError;
       return FeetT(0);
     }
-    CurveView zero_drag_curve(kKnots.data(), static_cast<const float*>(ctx->drags));
-    SolveStep(*ctx, &s, &zero_drag_curve);
+    SolveStep(*ctx, &s, &zero_drag_curve, FeetT(zero_distance_ft));
   }
-  ctx->step_size = kSavedStepSize;
   return s.P().Y();
 }
 
