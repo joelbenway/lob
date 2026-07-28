@@ -63,7 +63,6 @@ int main(int argc, char* argv[]) try {
   }
 
   // Build Context via lob::Builder
-  constexpr int kStepSize = 100;
   auto input =
       lob::Builder()
           .BallisticCoefficientPsi(
@@ -103,7 +102,6 @@ int main(int argc, char* argv[]) try {
           .MinimumSpeed(example::JsonToU16(json, "MinimumSpeed"))
           .MinimumEnergy(example::JsonToU16(json, "MinimumEnergy"))
           .MaximumTime(example::JsonToDouble(json, "MaximumTime"))
-          .StepSize(kStepSize)
           .Build();
 
   // Solve
