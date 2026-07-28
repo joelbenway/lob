@@ -144,7 +144,7 @@ size_t LobSolve(const LobContext* pctx, const uint32_t* pranges,
     // If vertical velocity exceeds 3x horizontal, consider falling straight
     // down.
     if (std::abs(s.V().Y().Value()) > s.V().X().Value() * 3) {
-      pouts[index] = LerpOutput(s, kS, 1, *pctx);
+      pouts[index] = OutputAtState(s, *pctx);
       index++;
       break;
     }
