@@ -59,7 +59,6 @@ class Impl {
 
   FpsT velocity_fps{NaN()};
   FpsT minimum_speed_fps{NaN()};
-  uint16_t step_size_us{0};
   LobAtmosphereReferenceT atmosphere_reference{
       kLobAtmosphereReferenceArmyStandardMetro};
   LobDragFunctionT drag_function{kLobDragFunctionG1};
@@ -572,18 +571,14 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
         CartesianT<FeetT>(FeetT(0.0)),
         CartesianT<FpsT>(kVelocity * std::cos(kAngle.Value()),
                          kVelocity * std::sin(kAngle.Value()), FpsT(0.0)));
-    const auto kSavedStepSize = pout->step_size;
-    pout->step_size = 0U;
-    constexpr SecT kMaxZeroTime(60);
     spline::CurveView zero_drag_curve(spline::kKnots.data(), &pout->drags[0]);
     while (s.P().X() < pimpl->zero_distance_ft) {
-      if (s.TOF() >= kMaxZeroTime) {
+      if (s.V().X() <= FpsT(0)) {
         pout->error = kLobErrorInternalError;
         return FeetT(NaN());
       }
-      SolveStep(*pout, &s, &zero_drag_curve);
+      SolveStep(*pout, &s, &zero_drag_curve, pimpl->zero_distance_ft);
     }
-    pout->step_size = kSavedStepSize;
     return s.P().Y() - FeetT(pout->optic_height) - pimpl->zero_impact_height;
   };
 
@@ -901,12 +896,6 @@ LobBuilder* LobBuilderMaximumTime(LobBuilder* pbuilder, double value) {
   return pbuilder;
 }
 
-LobBuilder* LobBuilderStepSize(LobBuilder* pbuilder, uint16_t value) {
-  auto* pimpl = Pimpl(pbuilder);
-  pimpl->step_size_us = value;
-  return pbuilder;
-}
-
 void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
   assert(pbuilder != nullptr && presult != nullptr);
   if (pbuilder == nullptr || presult == nullptr) {
@@ -920,7 +909,6 @@ void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
   presult->minimum_speed =
       pimpl->minimum_speed_fps.IsNaN() ? 0 : pimpl->minimum_speed_fps.U16();
   presult->max_time = pimpl->max_time_sec;
-  presult->step_size = pimpl->step_size_us;
   presult->zero_angle =
       pimpl->zero_angle_moa.IsNaN() ? NaN() : pimpl->zero_angle_moa.Value();
 

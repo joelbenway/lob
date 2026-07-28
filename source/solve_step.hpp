@@ -9,9 +9,8 @@
 #include "splines.hpp"
 
 namespace lob {
-void SolveStep(const LobContext& ctx, TrajectoryStateT* ps, spline::CurveView* pcurve);
-
-void SolveTimeStep(const LobContext& ctx, TrajectoryStateT* ps, spline::CurveView* pcurve);
+void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
+               spline::CurveView* pcurve, FeetT target_x = FeetT(NaN()));
 }  // namespace lob
 
 // This file is part of lob.

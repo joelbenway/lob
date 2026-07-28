@@ -15,30 +15,13 @@
 
 namespace lob {
 namespace {
-TrajectoryStateT DsDt(const LobContext& ctx, const TrajectoryStateT& s,
-                      spline::CurveView* pcurve) {
-  const CartesianT<FpsT> kWind(FpsT(ctx.wind.x), FpsT(0.0), FpsT(ctx.wind.z));
-  const MachT kMach(s.V().Magnitude(), FpsT(ctx.speed_of_sound).Inverse());
-  const double kCd = pcurve->Eval(kMach) * ctx.drag_coeff;
-
-  const CartesianT<FeetT> kDpDt(FeetT(s.V().X().Value()),
-                                FeetT(s.V().Y().Value()),
-                                FeetT(s.V().Z().Value()));
-  const FpsT kScalarVelocity = (s.V() - kWind).Magnitude();
-  CartesianT<FpsT> dv_dt = (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
-  dv_dt.X(dv_dt.X() - s.V().Y() * ctx.coriolis.cos_l_sin_a -
-          s.V().Z() * ctx.coriolis.sin_l);
-  dv_dt.Y(dv_dt.Y() + s.V().X() * ctx.coriolis.cos_l_sin_a +
-          s.V().Z() * ctx.coriolis.cos_l_cos_a);
-  dv_dt.Z(dv_dt.Z() + s.V().X() * ctx.coriolis.sin_l -
-          s.V().Y() * ctx.coriolis.cos_l_cos_a);
-  dv_dt.X(dv_dt.X() + ctx.gravity.x);
-  dv_dt.Y(dv_dt.Y() + ctx.gravity.y);
-  return TrajectoryStateT{kDpDt, dv_dt, s.TOF()};
-}
-
 TrajectoryStateT DsDx(const LobContext& ctx, const TrajectoryStateT& s,
                       spline::CurveView* pcurve) {
+  const FpsT kVx = s.V().X();
+  if (kVx <= FpsT(0)) {
+    return {CartesianT<FeetT>(FeetT(0)), CartesianT<FpsT>(FpsT(0))};
+  }
+  const double kDtDx = 1.0 / kVx.Value();
   const CartesianT<FpsT> kWind(FpsT(ctx.wind.x), FpsT(0.0), FpsT(ctx.wind.z));
   const MachT kMach(s.V().Magnitude(), FpsT(ctx.speed_of_sound).Inverse());
   const double kCd = pcurve->Eval(kMach) * ctx.drag_coeff;
@@ -56,37 +39,29 @@ TrajectoryStateT DsDx(const LobContext& ctx, const TrajectoryStateT& s,
           s.V().Y() * ctx.coriolis.cos_l_cos_a);
   dv_dt.X(dv_dt.X() + ctx.gravity.x);
   dv_dt.Y(dv_dt.Y() + ctx.gravity.y);
-  return TrajectoryStateT{kDpDt, dv_dt, s.TOF()};
+  return TrajectoryStateT{kDpDt * FeetT(kDtDx), dv_dt * FpsT(kDtDx), s.TOF()};
 }
 }  // namespace
 
 void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
-               spline::CurveView* pcurve) {
+               spline::CurveView* pcurve, FeetT target_x) {
   assert(ps != nullptr && pcurve != nullptr);
 
-  const FeetT kStep(1);
+  const FeetT kStepSize = YardT(1);
+  const FeetT kStep = target_x > ps->P().X()
+                          ? std::min(target_x - ps->P().X(), kStepSize)
+                          : kStepSize;
 
-  auto f = [&](FeetT /*x*/, const TrajectoryStateT& s) -> TrajectoryStateT {
-    const FpsT kVx = s.V().X();
-    assert(kVx > FpsT(0));
-    return DsDx(ctx, s, pcurve) * kVx.Inverse();
+  auto f = [&](FeetT, const TrajectoryStateT& s) {
+    return DsDx(ctx, s, pcurve);
   };
-  *ps = RungeKuttaStep(FeetT(0), *ps, kStep, f);
+  *ps = HeunStep(FeetT(0), *ps, kStep, f);
   const FpsT kVx = ps->V().X();
-  assert(kVx > FpsT(0));
+  if (kVx <= FpsT(0)) {
+    ps->V(FpsT(0));
+    return;
+  }
   ps->TOF(ps->TOF() + SecT(kStep.Value() * kVx.Inverse().Value()));
-}
-
-void SolveTimeStep(const LobContext& ctx, TrajectoryStateT* ps,
-                   spline::CurveView* pcurve) {
-  assert(ps != nullptr && pcurve != nullptr);
-  const SecT kStep(100);
-
-  auto f = [&](SecT /*t*/, const TrajectoryStateT& s) -> TrajectoryStateT {
-    return DsDt(ctx, s, pcurve);
-  };
-  *ps = RungeKuttaStep(SecT(0), *ps, kStep, f);
-  ps->TOF(ps->TOF() + kStep);
 }
 
 }  // namespace lob
