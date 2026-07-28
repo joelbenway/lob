@@ -19,6 +19,20 @@
 namespace lob {
 namespace {
 
+LobOutput OutputAtState(const TrajectoryStateT& s, const LobContext& ctx) {
+  const FpsT kVelocity = s.V().Magnitude();
+  const FtLbsT kEnergy =
+      CalculateKineticEnergy(kVelocity, SlugT(LbsT(ctx.mass)));
+  LobOutput out{};
+  out.range = s.P().X().U32();
+  out.velocity = kVelocity.U16();
+  out.energy = kEnergy.U32();
+  out.elevation = InchT(s.P().Y() - FeetT(ctx.optic_height)).Value();
+  out.deflection = InchT(s.P().Z()).Value();
+  out.time_of_flight = s.TOF().Value();
+  return out;
+}
+
 LobOutput LerpOutput(const TrajectoryStateT& s_now,
                      const TrajectoryStateT& s_prev, double alpha,
                      const LobContext& ctx) {
@@ -98,13 +112,12 @@ size_t LobSolve(const LobContext* pctx, const uint32_t* pranges,
   while (true) {
     const TrajectoryStateT kS = s;
 
-    SolveStep(*pctx, &s, &curve);
+    if (pranges[index] > 0) {
+      SolveStep(*pctx, &s, &curve, FeetT(pranges[index]));
+    }
 
-    if (s.P().X() >= FeetT(pranges[index]) && kS.P().X() < s.P().X()) {
-      const double kAlpha =
-          ((FeetT(pranges[index]) - kS.P().X()) / (s.P().X() - kS.P().X()))
-              .Value();
-      pouts[index] = LerpOutput(s, kS, kAlpha, *pctx);
+    if (s.P().X() >= FeetT(pranges[index])) {
+      pouts[index] = OutputAtState(s, *pctx);
       index++;
     }
 
