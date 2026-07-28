@@ -40,30 +40,42 @@ To use lob in your project, [the C++ header](include/lob/lob.hpp) has everything
 ### How do I use lob?
 Lob uses a straightforward API featuring a few data structures and free functions that act on them. At the heart of lob is the `Builder` class which is used to build `Context` which is then consumed by the `Solver` functions. Why this two stage process? Ballistic solutions take dozens of optional, interacting inputs. The builder pattern allows you to name the ones you know, defaults the rest, and validates the full set before the solver sees it.
 ```C++
+#include <iomanip>
+#include <iostream>
+
 #include "lob.hpp"
 
-const lob::Context kSolverCtx = 
-  lob::Builder()
-  .BallisticCoefficientPsi(0.425)
-  .InitialVelocityFps(2700)
-  .ZeroDistanceYds(100.0)
-  .Build();
+const lob::Context kSolverCtx =
+    lob::Builder()
+        .BallisticCoefficientPsi(0.425)
+        .InitialVelocityFps(2700)
+        .ZeroDistanceYds(100.0)
+        .Build();
 
-const size_t kNumToSolve = 7U;
+constexpr size_t kNumToSolve = 7U;
 
-const std::array<uint32_t, kNumToSolve> kRanges = 
-  {0U, 300U, 600U, 900U, 1200U, 1500U, 1800U};
+const std::array<uint32_t, kNumToSolve> kRanges = {
+    0U, 300U, 600U, 900U, 1200U, 1500U, 1800U};
 
 std::array<lob::Output, kNumToSolve> solver_outputs = {};
-// Solve!
-const size_t kNumSolved = 
-  lob::Solve(kSolverCtx, kRanges, solver_outputs);
+const size_t kNumSolved =
+    lob::Solve(kSolverCtx, kRanges.data(), solver_outputs.data(),
+               kRanges.size());
 
+std::cout << std::fixed << std::setprecision(2);
 for (size_t i = 0; i < kNumSolved; i++) {
-  std::cout << "Drop at " << solver_outputs.at(i).range 
-    << " feet is " << solver_outputs.at(i).elevation
-    << " inches.\n";
+  std::cout << "Drop at " << solver_outputs.at(i).range << " feet is "
+            << solver_outputs.at(i).elevation << " inches.\n";
 }
+```
+```
+Drop at 0 feet is -1.50 inches.
+Drop at 300 feet is 0.00 inches.
+Drop at 600 feet is -4.15 inches.
+Drop at 900 feet is -15.01 inches.
+Drop at 1200 feet is -33.91 inches.
+Drop at 1500 feet is -62.51 inches.
+Drop at 1800 feet is -102.87 inches.
 ```
 It only takes a few parameters for lob to make a well-formed, if minimal, ballistic solution. By providing more data, we can get more context for our solver.
 ```C++
@@ -86,7 +98,6 @@ const lob::Context kMoreCtx =
   .WindSpeedMph(5.0)
   .LatitudeDeg(43.04)  // hello from Milwaukee!
   .AzimuthDeg(180.0)
-  .StepSize(100)
   .Build();
 ```
 Now we're cooking! :cook:
