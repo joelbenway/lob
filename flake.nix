@@ -94,8 +94,9 @@
             codespell
             cppcheck
             doxygen
-            lcov
+            gbenchmark
             gtest
+            lcov
             nlohmann_json
           ];
           shellHook = let
