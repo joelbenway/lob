@@ -62,7 +62,7 @@ lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& j,
 }
 
 lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
-                                       const std::string& key) {
+                                      const std::string& key) {
   const double kV = JsonToDouble(j, key);
   if (std::isnan(kV)) {
     return lob::DragFunctionT::kG1;
