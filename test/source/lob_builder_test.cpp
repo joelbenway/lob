@@ -684,6 +684,30 @@ TEST_F(BuilderTestFixture, WindSpeedsAreEquivalent) {
   EXPECT_NEAR(kResult1.wind.z, kResult2.wind.z, kError);
 }
 
+TEST_F(BuilderTestFixture, ReadmeMinimalExampleProducesExpectedOutput) {
+  const lob::Context kCtx = lob::Builder()
+                                .BallisticCoefficientPsi(0.425)
+                                .InitialVelocityFps(2700)
+                                .ZeroDistanceYds(100.0)
+                                .Build();
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+
+  constexpr size_t kNumRanges = 7;
+  const std::array<uint32_t, kNumRanges> kRanges = {0U,    300U,  600U, 900U,
+                                                    1200U, 1500U, 1800U};
+  std::array<lob::Output, kNumRanges> out = {};
+  const size_t kCount =
+      lob::Solve(kCtx, kRanges.data(), out.data(), kNumRanges);
+  ASSERT_EQ(kCount, kNumRanges);
+
+  const std::array<double, kNumRanges> kExpected = {
+      -1.50, 0.00, -4.15, -15.01, -33.91, -62.51, -102.87};
+  for (size_t i = 0; i < kNumRanges; i++) {
+    EXPECT_NEAR(out.at(i).elevation, kExpected.at(i), 0.005)
+        << "range=" << kRanges.at(i);
+  }
+}
+
 TEST_F(BuilderTestFixture, ReadmeExampleIsValid) {
   const lob::Context kSolverInput =
       lob::Builder()

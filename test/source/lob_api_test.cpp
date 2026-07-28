@@ -43,8 +43,8 @@ TEST(LobAPITest, MaximumTimeOfFlight) {
                                    .BallisticCoefficientPsi(kTestBC)
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .ZeroAngleMOA(kTestZeroAngle)
-                                    .MaximumTime(kMaxTime)
-                                    .Build();
+                                   .MaximumTime(kMaxTime)
+                                   .Build();
 
   const uint32_t kRange = 5'000U;
   lob::Output out;
@@ -64,8 +64,8 @@ TEST(LobAPITest, MinimumVelocity) {
                                    .BallisticCoefficientPsi(kTestBC)
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .ZeroAngleMOA(kTestZeroAngle)
-                                    .MinimumSpeed(kMinimumVelocity)
-                                    .Build();
+                                   .MinimumSpeed(kMinimumVelocity)
+                                   .Build();
   const uint32_t kRange = 5'000U;
   lob::Output out;
   const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
@@ -84,8 +84,8 @@ TEST(LobAPITest, MinimumEnergy) {
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .MassGrains(kGrains)
                                    .ZeroAngleMOA(kTestZeroAngle)
-                                    .MinimumEnergy(kMinimumEnergy)
-                                    .Build();
+                                   .MinimumEnergy(kMinimumEnergy)
+                                   .Build();
   const uint32_t kRange = 5'000U;
   lob::Output out;
   const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
@@ -103,7 +103,7 @@ TEST(LobAPITest, RunUntilFallStop) {
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .MassGrains(kGrains)
                                    .ZeroAngleMOA(kTestZeroAngle)
-                                    .Build();
+                                   .Build();
   const uint32_t kRange = 50'000U;
   lob::Output out;
   const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
@@ -119,7 +119,7 @@ TEST(LobAPITest, FreeFallTermination) {
                                    .BallisticCoefficientPsi(kTestBC)
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .ZeroAngleMOA(kTestZeroAngle)
-                                    .Build();
+                                   .Build();
   const uint32_t kRange = 50'000U;
   lob::Output out;
   const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
