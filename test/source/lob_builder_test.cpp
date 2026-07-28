@@ -10,7 +10,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <limits>
 #include <memory>
 #include <utility>
 
@@ -213,7 +212,6 @@ constexpr double kNoslerAccubondBaseDiameter = 0.245;
 constexpr double kNoslerAccubondMeplatDiameter = 0.0;
 constexpr double kNoslerAccubondOgiveRtR = 0.88;
 constexpr double kTransonicTimeoutBC = 1.0e6;
-constexpr uint16_t kTransonicTimeoutStep = std::numeric_limits<uint16_t>::max();
 }  // namespace
 
 INSTANTIATE_TEST_SUITE_P(
@@ -555,7 +553,6 @@ INSTANTIATE_TEST_SUITE_P(
                   .BaseDiameterInch(kNoslerAccubondBaseDiameter)
                   .MeplatDiameterInch(kNoslerAccubondMeplatDiameter)
                   .OgiveRtR(kNoslerAccubondOgiveRtR)
-                  .StepSize(kTransonicTimeoutStep)
                   .Build();
             },
             lob::ErrorT::kInternalError},
@@ -707,7 +704,6 @@ TEST_F(BuilderTestFixture, ReadmeExampleIsValid) {
           .WindSpeedMph(5.0)
           .LatitudeDeg(43.04)
           .AzimuthDeg(180.0)
-          .StepSize(100)
           .Build();
   EXPECT_EQ(kSolverInput.error, lob::ErrorT::kNone);
 }

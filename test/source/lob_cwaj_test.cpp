@@ -46,7 +46,6 @@ struct LobCWAJTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 3071;
     const double kTestZeroAngle = 6.53;
     const double kTestOpticHeight = 2.0;
-    const uint16_t kStep = 0U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -56,8 +55,7 @@ struct LobCWAJTestFixture : public testing::Test {
         .LengthInch(kBulletLength)
         .InitialVelocityFps(kTestMuzzleVelocity)
         .OpticHeightInches(kTestOpticHeight)
-        .ZeroAngleMOA(kTestZeroAngle)
-        .StepSize(kStep);
+        .ZeroAngleMOA(kTestZeroAngle);
   }
 
   void TearDown() override { puut.reset(); }
@@ -129,9 +127,9 @@ TEST_F(LobCWAJTestFixture, LitzRightHandSpinLeftwardWind) {
   constexpr double kAerodynamicJump = 0.650208;
   constexpr size_t kSolutionLength = 14;
   const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
-                          .WindSpeedMph(kWind)
-                          .WindHeading(kWindHeading)
-                          .Build();
+                            .WindSpeedMph(kWind)
+                            .WindHeading(kWindHeading)
+                            .Build();
   EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
@@ -173,9 +171,9 @@ TEST_F(LobCWAJTestFixture, LitzLeftHandSpinLeftwardWind) {
   constexpr double kAerodynamicJump = -0.650208;
   constexpr size_t kSolutionLength = 14;
   const auto kContext = puut->TwistInchesPerTurn(kLeftTwist)
-                          .WindSpeedMph(kWind)
-                          .WindHeading(kWindHeading)
-                          .Build();
+                            .WindSpeedMph(kWind)
+                            .WindHeading(kWindHeading)
+                            .Build();
   EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
@@ -216,9 +214,9 @@ TEST_F(LobCWAJTestFixture, LitzRightHandSpinRightwardWind) {
   constexpr double kAerodynamicJump = -0.650208;
   constexpr size_t kSolutionLength = 14;
   const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
-                          .WindSpeedMph(kWind)
-                          .WindHeading(kWindHeading)
-                          .Build();
+                            .WindSpeedMph(kWind)
+                            .WindHeading(kWindHeading)
+                            .Build();
   EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
@@ -260,9 +258,9 @@ TEST_F(LobCWAJTestFixture, LitzLeftHandSpinRightwardWind) {
   constexpr double kAerodynamicJump = 0.650208;
   constexpr size_t kSolutionLength = 14;
   const auto kContext = puut->TwistInchesPerTurn(kLeftTwist)
-                          .WindSpeedMph(kWind)
-                          .WindHeading(kWindHeading)
-                          .Build();
+                            .WindSpeedMph(kWind)
+                            .WindHeading(kWindHeading)
+                            .Build();
   EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
@@ -303,14 +301,14 @@ TEST_F(LobCWAJTestFixture, BoatrightRightHandSpinLeftwardWind) {
   constexpr double kAerodynamicJump = 1.015683;
   constexpr size_t kSolutionLength = 14;
   const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
-                          .WindSpeedMph(kWind)
-                          .WindHeading(kWindHeading)
-                          .NoseLengthInch(kOgiveLength)
-                          .TailLengthInch(kTailLength)
-                          .BaseDiameterInch(kBaseDiameter)
-                          .MeplatDiameterInch(kMeplatDiameter)
-                          .OgiveRtR(kRtR)
-                          .Build();
+                            .WindSpeedMph(kWind)
+                            .WindHeading(kWindHeading)
+                            .NoseLengthInch(kOgiveLength)
+                            .TailLengthInch(kTailLength)
+                            .BaseDiameterInch(kBaseDiameter)
+                            .MeplatDiameterInch(kMeplatDiameter)
+                            .OgiveRtR(kRtR)
+                            .Build();
   EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
@@ -352,14 +350,14 @@ TEST_F(LobCWAJTestFixture, BoatrightLeftHandSpinLeftwardWind) {
   constexpr double kAerodynamicJump = -1.015683;
   constexpr size_t kSolutionLength = 14;
   const auto kContext = puut->TwistInchesPerTurn(kLeftTwist)
-                          .WindSpeedMph(kWind)
-                          .WindHeading(kWindHeading)
-                          .NoseLengthInch(kOgiveLength)
-                          .TailLengthInch(kTailLength)
-                          .BaseDiameterInch(kBaseDiameter)
-                          .MeplatDiameterInch(kMeplatDiameter)
-                          .OgiveRtR(kRtR)
-                          .Build();
+                            .WindSpeedMph(kWind)
+                            .WindHeading(kWindHeading)
+                            .NoseLengthInch(kOgiveLength)
+                            .TailLengthInch(kTailLength)
+                            .BaseDiameterInch(kBaseDiameter)
+                            .MeplatDiameterInch(kMeplatDiameter)
+                            .OgiveRtR(kRtR)
+                            .Build();
   EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
@@ -400,14 +398,14 @@ TEST_F(LobCWAJTestFixture, BoatrightRightHandSpinRightwardWind) {
   constexpr double kAerodynamicJump = -1.015683;
   constexpr size_t kSolutionLength = 14;
   const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
-                          .WindSpeedMph(kWind)
-                          .WindHeading(kWindHeading)
-                          .NoseLengthInch(kOgiveLength)
-                          .TailLengthInch(kTailLength)
-                          .BaseDiameterInch(kBaseDiameter)
-                          .MeplatDiameterInch(kMeplatDiameter)
-                          .OgiveRtR(kRtR)
-                          .Build();
+                            .WindSpeedMph(kWind)
+                            .WindHeading(kWindHeading)
+                            .NoseLengthInch(kOgiveLength)
+                            .TailLengthInch(kTailLength)
+                            .BaseDiameterInch(kBaseDiameter)
+                            .MeplatDiameterInch(kMeplatDiameter)
+                            .OgiveRtR(kRtR)
+                            .Build();
   EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
@@ -449,14 +447,14 @@ TEST_F(LobCWAJTestFixture, BoatrightLeftHandSpinRightwardWind) {
   constexpr double kAerodynamicJump = 1.015683;
   constexpr size_t kSolutionLength = 14;
   const auto kContext = puut->TwistInchesPerTurn(kLeftTwist)
-                          .WindSpeedMph(kWind)
-                          .WindHeading(kWindHeading)
-                          .NoseLengthInch(kOgiveLength)
-                          .TailLengthInch(kTailLength)
-                          .BaseDiameterInch(kBaseDiameter)
-                          .MeplatDiameterInch(kMeplatDiameter)
-                          .OgiveRtR(kRtR)
-                          .Build();
+                            .WindSpeedMph(kWind)
+                            .WindHeading(kWindHeading)
+                            .NoseLengthInch(kOgiveLength)
+                            .TailLengthInch(kTailLength)
+                            .BaseDiameterInch(kBaseDiameter)
+                            .MeplatDiameterInch(kMeplatDiameter)
+                            .OgiveRtR(kRtR)
+                            .Build();
   EXPECT_NEAR(kContext.aerodynamic_jump, kAerodynamicJump, kMoaError.Value());
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,

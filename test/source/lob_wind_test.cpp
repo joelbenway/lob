@@ -35,7 +35,6 @@ struct LobWindTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 2720;
     const double kTestZeroAngle = 4.78;
     const double kTestOpticHeight = 2.5;
-    const uint16_t kStep = 0U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -44,8 +43,7 @@ struct LobWindTestFixture : public testing::Test {
         .MassGrains(kTestWeight)
         .InitialVelocityFps(kTestMuzzleVelocity)
         .ZeroAngleMOA(kTestZeroAngle)
-        .OpticHeightInches(kTestOpticHeight)
-        .StepSize(kStep);
+        .OpticHeightInches(kTestOpticHeight);
   }
 
   void TearDown() override { puut.reset(); }

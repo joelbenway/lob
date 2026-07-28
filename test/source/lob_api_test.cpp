@@ -43,15 +43,16 @@ TEST(LobAPITest, MaximumTimeOfFlight) {
                                    .BallisticCoefficientPsi(kTestBC)
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .ZeroAngleMOA(kTestZeroAngle)
-                                   .MaximumTime(kMaxTime)
-                                   .StepSize(100U)
-                                   .Build();
+                                    .MaximumTime(kMaxTime)
+                                    .Build();
 
   const uint32_t kRange = 5'000U;
   lob::Output out;
   const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
   EXPECT_EQ(kSize, 1);
   EXPECT_NEAR(out.time_of_flight, kMaxTime, 1E-3);
+  EXPECT_GT(out.time_of_flight, 0.0);
+  EXPECT_GT(out.velocity, 0);
 }
 
 TEST(LobAPITest, MinimumVelocity) {
@@ -63,9 +64,8 @@ TEST(LobAPITest, MinimumVelocity) {
                                    .BallisticCoefficientPsi(kTestBC)
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .ZeroAngleMOA(kTestZeroAngle)
-                                   .MinimumSpeed(kMinimumVelocity)
-                                   .StepSize(100U)
-                                   .Build();
+                                    .MinimumSpeed(kMinimumVelocity)
+                                    .Build();
   const uint32_t kRange = 5'000U;
   lob::Output out;
   const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
@@ -84,9 +84,8 @@ TEST(LobAPITest, MinimumEnergy) {
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .MassGrains(kGrains)
                                    .ZeroAngleMOA(kTestZeroAngle)
-                                   .MinimumEnergy(kMinimumEnergy)
-                                   .StepSize(100U)
-                                   .Build();
+                                    .MinimumEnergy(kMinimumEnergy)
+                                    .Build();
   const uint32_t kRange = 5'000U;
   lob::Output out;
   const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
@@ -104,8 +103,7 @@ TEST(LobAPITest, RunUntilFallStop) {
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .MassGrains(kGrains)
                                    .ZeroAngleMOA(kTestZeroAngle)
-                                   .StepSize(10'000U)
-                                   .Build();
+                                    .Build();
   const uint32_t kRange = 50'000U;
   lob::Output out;
   const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
@@ -113,7 +111,7 @@ TEST(LobAPITest, RunUntilFallStop) {
   EXPECT_LT(out.range, kRange);
 }
 
-TEST(LobAPITest, ZeroStepSizeAutoTerminate) {
+TEST(LobAPITest, FreeFallTermination) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
   const double kTestZeroAngle = 6.11;
@@ -121,64 +119,11 @@ TEST(LobAPITest, ZeroStepSizeAutoTerminate) {
                                    .BallisticCoefficientPsi(kTestBC)
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .ZeroAngleMOA(kTestZeroAngle)
-                                   .StepSize(0U)
-                                   .Build();
+                                    .Build();
   const uint32_t kRange = 50'000U;
   lob::Output out;
   const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
   EXPECT_EQ(kSize, 1);
-}
-
-TEST(LobAPITest, DistanceModeMatchesTimeMode) {
-  const double kTestBC = 0.436;
-  const uint16_t kTestMuzzleVelocity = 3100U;
-  const double kTestZeroAngle = 6.11;
-  const double kError = 1e-3;
-  const lob::Context kTime = lob::Builder()
-                                 .BallisticCoefficientPsi(kTestBC)
-                                 .InitialVelocityFps(kTestMuzzleVelocity)
-                                 .ZeroAngleMOA(kTestZeroAngle)
-                                 .StepSize(100U)
-                                 .Build();
-  const lob::Context kDist = lob::Builder()
-                                 .BallisticCoefficientPsi(kTestBC)
-                                 .InitialVelocityFps(kTestMuzzleVelocity)
-                                 .ZeroAngleMOA(kTestZeroAngle)
-                                 .StepSize(0U)
-                                 .Build();
-  for (const auto kRange : {500U, 1000U, 2000U, 5000U}) {
-    lob::Output time_out;
-    lob::Output dist_out;
-    EXPECT_EQ(lob::Solve(kTime, kRange, &time_out), 1);
-    EXPECT_EQ(lob::Solve(kDist, kRange, &dist_out), 1);
-    EXPECT_NEAR(time_out.elevation, dist_out.elevation, kError);
-    EXPECT_NEAR(time_out.deflection, dist_out.deflection, kError);
-    EXPECT_NEAR(time_out.velocity, dist_out.velocity, kError);
-    EXPECT_NEAR(time_out.time_of_flight, dist_out.time_of_flight, kError);
-    EXPECT_NEAR(time_out.energy, dist_out.energy, kError);
-  }
-}
-
-TEST(LobAPITest, MaximumTimeOfFlightDistance) {
-  const double kTestBC = 0.436;
-  const uint16_t kTestMuzzleVelocity = 3100U;
-  const double kTestZeroAngle = 6.11;
-  const double kMaxTime = 1.5;
-  const lob::Context kResult = lob::Builder()
-                                   .BallisticCoefficientPsi(kTestBC)
-                                   .InitialVelocityFps(kTestMuzzleVelocity)
-                                   .ZeroAngleMOA(kTestZeroAngle)
-                                   .MaximumTime(kMaxTime)
-                                   .StepSize(0U)
-                                   .Build();
-
-  const uint32_t kRange = 5'000U;
-  lob::Output out;
-  const auto kSize = lob::Solve(kResult, &kRange, &out, 1U);
-  EXPECT_EQ(kSize, 1);
-  EXPECT_NEAR(out.time_of_flight, kMaxTime, 1E-3);
-  EXPECT_TRUE(out.time_of_flight > 0.0);
-  EXPECT_TRUE(out.velocity > 0);
 }
 
 TEST(LobAPITest, NonMonotonicRangesRejected) {
@@ -198,12 +143,12 @@ TEST(LobAPITest, NonMonotonicRangesRejected) {
 
 TEST(LobAPITest, ZeroAngleSearchNegativeBracket) {
   const lob::Context kCtx = lob::Builder()
-                                 .BallisticCoefficientPsi(0.436)
-                                 .InitialVelocityFps(3100U)
-                                 .ZeroDistanceYds(100.0)
-                                 .ZeroImpactHeightInches(-60.0)
-                                 .OpticHeightInches(3.0)
-                                 .Build();
+                                .BallisticCoefficientPsi(0.436)
+                                .InitialVelocityFps(3100U)
+                                .ZeroDistanceYds(100.0)
+                                .ZeroImpactHeightInches(-60.0)
+                                .OpticHeightInches(3.0)
+                                .Build();
   EXPECT_EQ(kCtx.error, kLobErrorNone);
   EXPECT_FALSE(std::isnan(kCtx.zero_angle));
   EXPECT_LT(kCtx.zero_angle, 0.0);
@@ -212,30 +157,30 @@ TEST(LobAPITest, ZeroAngleSearchNegativeBracket) {
 
 TEST(LobAPITest, ZeroAngleSearchExhaustsIterations) {
   const lob::Context kCtx = lob::Builder()
-                                 .BallisticCoefficientPsi(0.1)
-                                 .InitialVelocityFps(600U)
-                                 .ZeroDistanceYds(2000.0)
-                                 .Build();
+                                .BallisticCoefficientPsi(0.1)
+                                .InitialVelocityFps(600U)
+                                .ZeroDistanceYds(2000.0)
+                                .Build();
   EXPECT_EQ(kCtx.error, kLobErrorInternalError);
   EXPECT_TRUE(std::isnan(kCtx.zero_angle));
 }
 
 TEST(LobAPITest, ZeroAngleSearchExtremeInputsDontCrash) {
   const std::array<double, 5> kBcs = {0.1, 0.224, 0.436, 0.7, 1.5};
-  const std::array<uint16_t, 5> kVelocities = {600U, 1800U, 3100U, 4000U, 5000U};
+  const std::array<uint16_t, 5> kVelocities = {600U, 1800U, 3100U, 4000U,
+                                               5000U};
   const std::array<double, 5> kRanges = {10.0, 100.0, 500.0, 1000.0, 2000.0};
   for (const double kBc : kBcs) {
     for (const uint16_t kV : kVelocities) {
       for (const double kRange : kRanges) {
         const lob::Context kCtx = lob::Builder()
-                                       .BallisticCoefficientPsi(kBc)
-                                       .InitialVelocityFps(kV)
-                                       .ZeroDistanceYds(kRange)
-                                       .Build();
+                                      .BallisticCoefficientPsi(kBc)
+                                      .InitialVelocityFps(kV)
+                                      .ZeroDistanceYds(kRange)
+                                      .Build();
         const bool kOk = (kCtx.error == kLobErrorNone);
-        const bool kFailed =
-            (kCtx.error == kLobErrorInternalError ||
-             kCtx.error == kLobErrorInitialVelocityRequired);
+        const bool kFailed = (kCtx.error == kLobErrorInternalError ||
+                              kCtx.error == kLobErrorInitialVelocityRequired);
         EXPECT_TRUE(kOk || kFailed)
             << "BC=" << kBc << " v=" << kV << " d=" << kRange
             << " error=" << static_cast<int>(kCtx.error);
