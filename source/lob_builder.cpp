@@ -228,7 +228,8 @@ void BuildTable(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  if (pimpl->atmosphere_reference == kLobAtmosphereReferenceArmyStandardMetro) {
+  if (pimpl->atmosphere_reference == kLobAtmosphereReferenceArmyStandardMetro &&
+      pimpl->custom_machs == nullptr) {
     pimpl->ballistic_coefficient_psi *= kArmyToIcaoBcConversionFactor;
     pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
   }
