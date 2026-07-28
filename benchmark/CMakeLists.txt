@@ -1,4 +1,5 @@
-# Copyright (c) 2025  Joel Benway SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (c) 2025  Joel Benway
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Please see end of file for extended copyright information
 
 cmake_minimum_required(VERSION 3.14)
