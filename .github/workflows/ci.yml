@@ -204,9 +204,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    if: github.repository_owner == 'joelbenway' &&
-      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
-      github.event_name == 'pull_request'
+    if: >
+      (github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository_owner == 'joelbenway') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
 
     steps:
     - uses: actions/checkout@v5
@@ -227,19 +227,19 @@ jobs:
     - uses: bencherdev/bencher@main
 
     - name: Track Benchmarks
-      env:
-        BENCHER_FLAGS: >-
+      run: |
+        BENCHER_FLAGS=(
           --project ${{ vars.BENCHER_PROJECT }}
-          --token '${{ secrets.BENCHER_API_TOKEN }}'
+          --key '${{ secrets.BENCHER_API_TOKEN }}'
           --testbed ubuntu-latest
           --threshold-test t_test
           --threshold-upper-boundary 0.90
           --adapter cpp_google
           --github-actions '${{ secrets.GITHUB_TOKEN }}'
-      run: |
+        )
         if [[ "${{ github.event_name }}" == "pull_request" ]]; then
           bencher run \
-            $BENCHER_FLAGS \
+            "${BENCHER_FLAGS[@]}" \
             --branch "$GITHUB_HEAD_REF" \
             --start-point "$GITHUB_BASE_REF" \
             --start-point-hash '${{ github.event.pull_request.base.sha }}' \
@@ -248,7 +248,7 @@ jobs:
             "./build/benchmark/genops --benchmark_format=json --benchmark_repetitions=3"
         else
           bencher run \
-            $BENCHER_FLAGS \
+            "${BENCHER_FLAGS[@]}" \
             --branch master \
             --threshold-measure latency \
             --thresholds-reset \
