@@ -37,7 +37,6 @@ struct LobEnvTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 2800;
     const double kTestZeroAngle = 3.66;
     const double kTestOpticHeight = 1.5;
-    const uint16_t kStep = 0U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -46,8 +45,7 @@ struct LobEnvTestFixture : public testing::Test {
         .MassGrains(kTestWeight)
         .InitialVelocityFps(kTestMuzzleVelocity)
         .ZeroAngleMOA(kTestZeroAngle)
-        .OpticHeightInches(kTestOpticHeight)
-        .StepSize(kStep);
+        .OpticHeightInches(kTestOpticHeight);
   }
 
   void TearDown() override { puut.reset(); }
@@ -106,8 +104,8 @@ TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
 TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
   const int32_t kAltitude = 4500;
   const auto kContext = puut->AltitudeOfFiringSiteFt(kAltitude)
-                          .TemperatureDegF(lob::kIsaSeaLevelDegF)
-                          .Build();
+                            .TemperatureDegF(lob::kIsaSeaLevelDegF)
+                            .Build();
   constexpr lob::FpsT kVelocityError(1);
   constexpr lob::FtLbsT kEnergyError(5);
   constexpr lob::MoaT kMoaError(0.1);
@@ -178,10 +176,10 @@ TEST_F(LobEnvTestFixture, SolveWithBarometricPressure) {
   const int32_t kAirPressure = 30;
   const int32_t kTemperature = 59;
   const auto kContext = puut->AltitudeOfFiringSiteFt(kAltitude)
-                          .AirPressureInHg(kAirPressure)
-                          .AltitudeOfBarometerFt(0)
-                          .TemperatureDegF(kTemperature)
-                          .Build();
+                            .AirPressureInHg(kAirPressure)
+                            .AltitudeOfBarometerFt(0)
+                            .TemperatureDegF(kTemperature)
+                            .Build();
   constexpr lob::FpsT kVelocityError(1);
   constexpr lob::FtLbsT kEnergyError(5);
   constexpr lob::MoaT kMoaError(0.1);
@@ -217,9 +215,9 @@ TEST_F(LobEnvTestFixture, SolveWithPressureTempHumidity) {
   const int32_t kTemperature = 75;
   const int32_t kRelativeHumidity = 80;
   const auto kContext = puut->AirPressureInHg(kAirPressure)
-                          .TemperatureDegF(kTemperature)
-                          .RelativeHumidityPercent(kRelativeHumidity)
-                          .Build();
+                            .TemperatureDegF(kTemperature)
+                            .RelativeHumidityPercent(kRelativeHumidity)
+                            .Build();
   constexpr lob::FpsT kVelocityError(1);
   constexpr lob::FtLbsT kEnergyError(5);
   constexpr lob::MoaT kMoaError(0.1);
@@ -257,11 +255,11 @@ TEST_F(LobEnvTestFixture, SolveWithWeatherStationData) {
   const double kTemperature = 65.0;
   const double kAltitudeOfThermometer = 3'598.0;
   const auto kContext = puut->AltitudeOfFiringSiteFt(kAltitudeOfFiringSite)
-                          .AirPressureInHg(kAirPressure)
-                          .AltitudeOfBarometerFt(kAltitudeOfBarometer)
-                          .TemperatureDegF(kTemperature)
-                          .AltitudeOfThermometerFt(kAltitudeOfThermometer)
-                          .Build();
+                            .AirPressureInHg(kAirPressure)
+                            .AltitudeOfBarometerFt(kAltitudeOfBarometer)
+                            .TemperatureDegF(kTemperature)
+                            .AltitudeOfThermometerFt(kAltitudeOfThermometer)
+                            .Build();
   constexpr lob::FpsT kVelocityError(1);
   constexpr lob::FtLbsT kEnergyError(5);
   constexpr lob::MoaT kMoaError(0.1);

@@ -45,7 +45,6 @@ struct LobSpinTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 3071;
     const double kTestZeroAngle = 6.53;
     const double kTestOpticHeight = 2.0;
-    const uint16_t kStep = 0U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -55,8 +54,7 @@ struct LobSpinTestFixture : public testing::Test {
         .LengthInch(kBulletLength)
         .InitialVelocityFps(kTestMuzzleVelocity)
         .OpticHeightInches(kTestOpticHeight)
-        .ZeroAngleMOA(kTestZeroAngle)
-        .StepSize(kStep);
+        .ZeroAngleMOA(kTestZeroAngle);
   }
 
   void TearDown() override { puut.reset(); }
@@ -279,12 +277,12 @@ TEST_F(LobSpinTestFixture, BoatrightRightHandSpinDrift) {
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
-                          .NoseLengthInch(kOgiveLength)
-                          .TailLengthInch(kTailLength)
-                          .BaseDiameterInch(kBaseDiameter)
-                          .MeplatDiameterInch(kMeplatDiameter)
-                          .OgiveRtR(kRtR)
-                          .Build();
+                            .NoseLengthInch(kOgiveLength)
+                            .TailLengthInch(kTailLength)
+                            .BaseDiameterInch(kBaseDiameter)
+                            .MeplatDiameterInch(kMeplatDiameter)
+                            .OgiveRtR(kRtR)
+                            .Build();
   EXPECT_FALSE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
@@ -323,12 +321,12 @@ TEST_F(LobSpinTestFixture, BoatrightRightHandSpinDriftFast) {
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
-                          .NoseLengthInch(kOgiveLength)
-                          .TailLengthInch(kTailLength)
-                          .BaseDiameterInch(kBaseDiameter)
-                          .MeplatDiameterInch(kMeplatDiameter)
-                          .OgiveRtR(kRtR)
-                          .Build();
+                            .NoseLengthInch(kOgiveLength)
+                            .TailLengthInch(kTailLength)
+                            .BaseDiameterInch(kBaseDiameter)
+                            .MeplatDiameterInch(kMeplatDiameter)
+                            .OgiveRtR(kRtR)
+                            .Build();
   EXPECT_FALSE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
@@ -367,12 +365,12 @@ TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDrift) {
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
-                          .NoseLengthInch(kOgiveLength)
-                          .TailLengthInch(kTailLength)
-                          .BaseDiameterInch(kBaseDiameter)
-                          .MeplatDiameterInch(kMeplatDiameter)
-                          .OgiveRtR(kRtR)
-                          .Build();
+                            .NoseLengthInch(kOgiveLength)
+                            .TailLengthInch(kTailLength)
+                            .BaseDiameterInch(kBaseDiameter)
+                            .MeplatDiameterInch(kMeplatDiameter)
+                            .OgiveRtR(kRtR)
+                            .Build();
   EXPECT_FALSE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,
@@ -411,12 +409,12 @@ TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDriftFast) {
   constexpr lob::SecT kTimeOfFlightError(0.01);
   constexpr size_t kSolutionLength = 14;
   const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist)
-                          .NoseLengthInch(kOgiveLength)
-                          .TailLengthInch(kTailLength)
-                          .BaseDiameterInch(kBaseDiameter)
-                          .MeplatDiameterInch(kMeplatDiameter)
-                          .OgiveRtR(kRtR)
-                          .Build();
+                            .NoseLengthInch(kOgiveLength)
+                            .TailLengthInch(kTailLength)
+                            .BaseDiameterInch(kBaseDiameter)
+                            .MeplatDiameterInch(kMeplatDiameter)
+                            .OgiveRtR(kRtR)
+                            .Build();
   EXPECT_FALSE(std::isnan(kContext.spindrift_factor));
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0,    150,  300,  600,  900,  1200, 1500,

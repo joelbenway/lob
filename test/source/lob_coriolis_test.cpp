@@ -35,7 +35,6 @@ struct LobCoriolisTestFixture : public testing::Test {
     const uint16_t kTestMuzzleVelocity = 2800;
     const double kTestZeroAngle = 5.06;
     const double kTestOpticHeight = 3.0;
-    const uint16_t kStep = 0U;
 
     puut->BallisticCoefficientPsi(kTestBC)
         .BCDragFunction(kDragFunction)
@@ -44,8 +43,7 @@ struct LobCoriolisTestFixture : public testing::Test {
         .MassGrains(kTestWeight)
         .InitialVelocityFps(kTestMuzzleVelocity)
         .ZeroAngleMOA(kTestZeroAngle)
-        .OpticHeightInches(kTestOpticHeight)
-        .StepSize(kStep);
+        .OpticHeightInches(kTestOpticHeight);
   }
 
   void TearDown() override { puut.reset(); }
