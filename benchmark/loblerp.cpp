@@ -22,33 +22,25 @@ const auto kResultsSize =
 // Benchmark 1: LobLerp — binary search + linear interp from tables.hpp
 void LobLerpBM(benchmark::State& state) {
   static std::vector<double> results(kResultsSize);
-  size_t index = 0;
   for (auto _ : state) {
-    double mach = kInitMach;
-    while (mach > kFinalMach) {
-      const auto kResult = lob::dragtable::LobLerp(
-          lob::dragtable::kMachs, lob::dragtable::kG1Drags, mach);
-      results.at(index++) = kResult;
-      mach -= kDecrement;
+    for (size_t i = 0; i < kResultsSize; i++) {
+      const double kMach = kInitMach - (static_cast<double>(i) * kDecrement);
+      results[i] = lob::dragtable::LobLerp(
+          lob::dragtable::kMachs, lob::dragtable::kG1Drags, kMach);
     }
-    index = 0;
   }
 }
 
 // Benchmark 2: spline::CurveView — caching spline evaluation (stateful index)
 void CurveViewBM(benchmark::State& state) {
   static std::vector<double> results(kResultsSize);
-  size_t index = 0;
   for (auto _ : state) {
     lob::spline::CurveView curve{lob::spline::kKnots, lob::spline::kG1Coefs};
-    double mach = kInitMach;
-    while (mach > kFinalMach) {
-      const auto kResult =
-          static_cast<double>(curve.Eval(static_cast<float>(mach)));
-      results.at(index++) = kResult;
-      mach -= kDecrement;
+    for (size_t i = 0; i < kResultsSize; i++) {
+      const double kMach = kInitMach - (static_cast<double>(i) * kDecrement);
+      results[i] =
+          static_cast<double>(curve.Eval(static_cast<float>(kMach)));
     }
-    index = 0;
   }
 }
 }  // namespace

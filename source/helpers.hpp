@@ -70,7 +70,7 @@ constexpr T Modulo(T a, T b) {
 template <typename T>
 constexpr T Fmod(T x, T y) {
   if (std::isnan(x) || std::isnan(y)) {
-    return NaN();
+    return NaN<T>();
   }
 
   const T kAbsX = Fabs(x);
@@ -78,13 +78,13 @@ constexpr T Fmod(T x, T y) {
 
   const T kInfinity = std::numeric_limits<T>::infinity();
 
-  if (AreEqual(kAbsY, 0) || AreEqual(kAbsX, kInfinity)) {
+  if (AreEqual(kAbsY, T(0)) || AreEqual(kAbsX, kInfinity)) {
     return std::numeric_limits<T>::quiet_NaN();
   }
   if (AreEqual(kAbsY, kInfinity)) {
     return x;
   }
-  if (AreEqual(x, 0)) {
+  if (AreEqual(x, T(0))) {
     return x;
   }
   T mod = kAbsX;
@@ -107,8 +107,14 @@ constexpr double Modulo(double a, double b) { return Fmod(a, b); }
 constexpr float Modulo(float a, float b) { return Fmod(a, b); }
 
 constexpr double Sqrt(double x) {
-  if (x <= 0.0 || x >= std::numeric_limits<double>::infinity()) {
+  if (x < 0.0 || std::isnan(x)) {
     return NaN();
+  }
+  if (AreEqual(x, 0.0)) {
+    return 0.0;
+  }
+  if (x >= std::numeric_limits<double>::infinity()) {
+    return std::numeric_limits<double>::infinity();
   }
   double curr = x;
   double prev = 0;

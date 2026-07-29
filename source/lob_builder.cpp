@@ -160,7 +160,8 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
     pimpl->relative_humidity_percent = PercentT(kIsaSeaLevelHumidityPercent);
   }
 
-  if (pimpl->relative_humidity_percent < PercentT(0.0)) {
+  if (pimpl->relative_humidity_percent < PercentT(0.0) ||
+      pimpl->relative_humidity_percent > PercentT(100.0)) {
     pout->error = kLobErrorHumidityOOR;
     return;
   }
@@ -203,8 +204,13 @@ void BuildTable(Impl* pimpl, LobContext* pout) {
       return;
     }
     for (size_t i = 0; i < pimpl->custom_count; i++) {
+      if (std::isnan(pimpl->custom_machs[i]) ||
+          std::isnan(pimpl->custom_drags[i])) {
+        pout->error = kLobErrorMachDragTableInvalid;
+        return;
+      }
       if (pimpl->custom_machs[i] < 0.0F || pimpl->custom_drags[i] < 0.0F) {
-        pout->error = kLobErrorMachDragTableNegative;
+        pout->error = kLobErrorMachDragTableInvalid;
         return;
       }
       if (i > 0 && pimpl->custom_machs[i] <= pimpl->custom_machs[i - 1]) {
@@ -459,14 +465,13 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
       CartesianT<FpsT>(FpsT(kVelocity * std::cos(0)),
                        FpsT(kVelocity * std::sin(0)), FpsT(0.0)));
 
-  static const FpsT kTransonicBarrier(MachT(1.2), kSos);
+  const FpsT kTransonicBarrier(MachT(1.2), kSos);
   constexpr SecT kTransonicTimeout(60.0);
   while (s.V().X() > kTransonicBarrier) {
     if (s.TOF() > kTransonicTimeout) {
       pout->error = kLobErrorInternalError;
       return;
     }
-    const MachT kBuildMach(s.V().Magnitude(), kSos.Inverse());
     SolveStep(*pout, &s, &drag_curve);
   }
 

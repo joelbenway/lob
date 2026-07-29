@@ -55,13 +55,14 @@ void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
   auto f = [&](FeetT, const TrajectoryStateT& s) {
     return DsDx(ctx, s, pcurve);
   };
+  const FpsT kOldVx = ps->V().X();
   *ps = HeunStep(FeetT(0), *ps, kStep, f);
   const FpsT kVx = ps->V().X();
   if (kVx <= FpsT(0)) {
     ps->V(FpsT(0));
     return;
   }
-  ps->TOF(ps->TOF() + SecT(kStep.Value() * kVx.Inverse().Value()));
+  ps->TOF(ps->TOF() + SecT((2 * kStep.Value()) / (kOldVx + kVx).Value()));
 }
 
 }  // namespace lob

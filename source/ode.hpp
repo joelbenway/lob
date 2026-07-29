@@ -77,6 +77,7 @@ class TrajectoryStateT {
       time_of_flight_ = std::move(rhs.time_of_flight_);
       rhs.position_ = CartesianT<FeetT>(FeetT(0));
       rhs.velocity_ = CartesianT<FpsT>(FpsT(0));
+      rhs.time_of_flight_ = SecT(0);
     }
     return *this;
   }

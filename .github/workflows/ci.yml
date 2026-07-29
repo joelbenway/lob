@@ -230,7 +230,7 @@ jobs:
       run: |
         BENCHER_FLAGS=(
           --project ${{ vars.BENCHER_PROJECT }}
-          --key '${{ secrets.BENCHER_API_TOKEN }}'
+          --key '${{ secrets.BENCHER_API_KEY }}'
           --testbed ubuntu-latest
           --threshold-test t_test
           --threshold-upper-boundary 0.90
