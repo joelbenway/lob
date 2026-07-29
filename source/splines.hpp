@@ -5,10 +5,12 @@
 #pragma once
 
 #include <array>
+#include <cassert>
 #include <cstddef>
 #include <utility>
 
 #include "eng_units.hpp"
+#include "lob/lob.h"
 #include "tables.hpp"
 
 namespace lob {
@@ -58,6 +60,7 @@ constexpr void Hermite(T x0, T x1, T y0, T y1, T m0, T m1, T* out) {
 
 template <typename T>
 constexpr size_t FindInterval(const T* x, size_t n, T v) {
+  assert(n >= 2);
   size_t lo = 0;
   size_t hi = n - 1;
   while (hi - lo > 1) {
@@ -89,6 +92,7 @@ constexpr T PolyDeriv(const T* c, T t) {
 
 template <typename T>
 constexpr Result<T> EvalWithDeriv(const T* x, const T* y, size_t n, T v) {
+  assert(n >= 2);
   const size_t kI = FindInterval(x, n, v);
   T c[4] = {};  // NOLINT
   Hermite(x[kI], x[kI + 1], y[kI], y[kI + 1], Tangent(x, y, n, kI),
@@ -101,6 +105,8 @@ constexpr Result<T> EvalWithDeriv(const T* x, const T* y, size_t n, T v) {
 
 constexpr size_t kKnotCount = 16;
 constexpr size_t kSegmentCount = kKnotCount - 1;
+static_assert(kSegmentCount == LOB_SPLINE_SEGMENTS,
+              "kSegmentCount must match LOB_SPLINE_SEGMENTS");
 constexpr size_t kCoefsSize = kSegmentCount * 4;
 
 constexpr std::array<float, kKnotCount> kKnots = {
@@ -120,7 +126,10 @@ class Cursor {
       // NOLINTNEXTLINE(readability-container-data-pointer)
       : knots_(&knots[0]), coefs_(&coefs[0]) {}
 
-  constexpr size_t GetSegment() { return idx_; }
+  constexpr Cursor(std::array<T, N>&& knots,
+                   std::array<T, (N - 1) * 4>&& coefs) = delete;
+
+  constexpr size_t GetSegment() const { return idx_; }
 
   constexpr T Eval(T m) {
     Clamp(m);
