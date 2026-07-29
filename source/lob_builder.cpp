@@ -191,7 +191,7 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   pout->speed_of_sound = kSpeedOfSound.Value();
 }
 
-void BuildTable(Impl* pimpl, LobContext* pout) {
+void BuildSpline(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
   if (pimpl->custom_machs != nullptr) {
     if (pimpl->custom_count < 2) {
@@ -222,7 +222,36 @@ void BuildTable(Impl* pimpl, LobContext* pout) {
                   spline::kKnots.data(), spline::kKnotCount, &pout->drags[0]);
 
     pimpl->ballistic_coefficient_psi = PmsiT(1);
+    pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
+    return;
   }
+  const std::array<float, spline::kCoefsSize>* coefs{nullptr};
+  switch (pimpl->drag_function) {
+    case kLobDragFunctionG2:
+      coefs = &spline::kG2Coefs;
+      break;
+    case kLobDragFunctionG5:
+      coefs = &spline::kG5Coefs;
+      break;
+    case kLobDragFunctionG6:
+      coefs = &spline::kG6Coefs;
+      break;
+    case kLobDragFunctionG7:
+      coefs = &spline::kG7Coefs;
+      break;
+    case kLobDragFunctionG8:
+      coefs = &spline::kG8Coefs;
+      break;
+    default:
+      coefs = &spline::kG1Coefs;
+      break;
+  }
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+  std::copy_n(coefs->data(), spline::kCoefsSize, &pout->drags[0]);
+}
+
+void BuildCoefficients(Impl* pimpl, LobContext* pout) {
+  assert(pimpl != nullptr && pout != nullptr);
 
   if (pimpl->ballistic_coefficient_psi.IsNaN()) {
     pout->error = kLobErrorBallisticCoefficientRequired;
@@ -234,37 +263,12 @@ void BuildTable(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  if (pimpl->atmosphere_reference == kLobAtmosphereReferenceArmyStandardMetro &&
-      pimpl->custom_machs == nullptr) {
+  if (pimpl->atmosphere_reference == kLobAtmosphereReferenceArmyStandardMetro) {
     pimpl->ballistic_coefficient_psi *= kArmyToIcaoBcConversionFactor;
     pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
   }
 
-  if (pimpl->custom_machs == nullptr) {
-    const std::array<float, spline::kCoefsSize>* coefs{nullptr};
-    switch (pimpl->drag_function) {
-      case kLobDragFunctionG2:
-        coefs = &spline::kG2Coefs;
-        break;
-      case kLobDragFunctionG5:
-        coefs = &spline::kG5Coefs;
-        break;
-      case kLobDragFunctionG6:
-        coefs = &spline::kG6Coefs;
-        break;
-      case kLobDragFunctionG7:
-        coefs = &spline::kG7Coefs;
-        break;
-      case kLobDragFunctionG8:
-        coefs = &spline::kG8Coefs;
-        break;
-      default:
-        coefs = &spline::kG1Coefs;
-        break;
-    }
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    std::copy_n(coefs->data(), spline::kCoefsSize, &pout->drags[0]);
-  }
+  assert(!pimpl->air_density_lbs_per_cu_ft.IsNaN());
   pout->drag_coeff = CalculateCdCoefficient(pimpl->air_density_lbs_per_cu_ft,
                                             pimpl->ballistic_coefficient_psi);
 }
@@ -521,10 +525,7 @@ void BuildLitzAerodynamicJump(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  if (std::isnan(pout->aerodynamic_jump)) {
-    pout->aerodynamic_jump = MoaT(0).Value();
-    return;
-  }
+  pout->aerodynamic_jump = MoaT(0).Value();
 }
 
 void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
@@ -660,7 +661,7 @@ void LobBuilderCopy(LobBuilder* dst, const LobBuilder* src) {
 LobBuilder* LobBuilderReset(LobBuilder* pbuilder) {
   auto* pimpl = Pimpl(pbuilder);
   pimpl->~Impl();
-  pimpl = ::new (&pbuilder->buffer) Impl();
+  ::new (&pbuilder->buffer) Impl();
   return pbuilder;
 }
 
@@ -927,7 +928,11 @@ void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
   if (presult->error != kLobErrorNotFormed) {
     return;
   }
-  BuildTable(pimpl, presult);
+  BuildSpline(pimpl, presult);
+  if (presult->error != kLobErrorNotFormed) {
+    return;
+  }
+  BuildCoefficients(pimpl, presult);
   if (presult->error != kLobErrorNotFormed) {
     return;
   }
