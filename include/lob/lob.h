@@ -12,6 +12,7 @@
 
 #ifdef __cplusplus
 extern "C" {
+// NOLINTBEGIN
 #endif
 
 /** @brief The number of spline pieces comprising a drag function. */
@@ -73,7 +74,7 @@ enum {
   kLobErrorInternalError,
   kLobErrorLatitudeOOR,
   kLobErrorLengthOOR,
-  kLobErrorMachDragTableNegative,
+  kLobErrorMachDragTableInvalid,
   kLobErrorMachDragTableNotMonotonic,
   kLobErrorMachDragTableTooNarrow,
   kLobErrorMachDragTableTooShort,
@@ -764,6 +765,7 @@ LOB_EXPORT extern double LobSToUs(double value);
 LOB_EXPORT extern double LobDegCToDegF(double value);
 
 #ifdef __cplusplus
+// NOLINTEND
 }
 #endif
 

@@ -115,9 +115,9 @@ TEST(SqrtTest, SqrtTwo) {
   EXPECT_NEAR(kSqrt2, std::sqrt(2.0), 1e-14);
 }
 
-TEST(SqrtTest, SqrtOfZeroIsNaN) {
+TEST(SqrtTest, SqrtOfZero) {
   constexpr auto kVal = lob::Sqrt(0.0);
-  EXPECT_TRUE(std::isnan(kVal));
+  EXPECT_DOUBLE_EQ(kVal, 0.0);
 }
 
 TEST(SqrtTest, SqrtOfNegativeIsNaN) {
@@ -125,10 +125,10 @@ TEST(SqrtTest, SqrtOfNegativeIsNaN) {
   EXPECT_TRUE(std::isnan(kVal));
 }
 
-TEST(SqrtTest, SqrtOfInfinityIsNaN) {
+TEST(SqrtTest, SqrtOfInfinity) {
   constexpr auto kInfinity = std::numeric_limits<double>::infinity();
   constexpr auto kVal = lob::Sqrt(kInfinity);
-  EXPECT_TRUE(std::isnan(kVal));
+  EXPECT_DOUBLE_EQ(kVal, kInfinity);
 }
 
 TEST(SqrtTest, ConstexprSqrt) {

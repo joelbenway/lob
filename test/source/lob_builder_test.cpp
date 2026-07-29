@@ -627,7 +627,7 @@ TEST_F(BuilderTestFixture, MachVsDragTableCoverageNegativeMachs) {
           .ZeroImpactHeightInches(kJackOConnorZeroHeight)
           .MachVsDragTable(kMachs, kDrags)
           .Build();
-  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableNegative);
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableInvalid);
 }
 
 TEST_F(BuilderTestFixture, MachVsDragTableCoverageNegativeDrag) {
@@ -640,7 +640,33 @@ TEST_F(BuilderTestFixture, MachVsDragTableCoverageNegativeDrag) {
           .ZeroImpactHeightInches(kJackOConnorZeroHeight)
           .MachVsDragTable(kMachs, kDrags)
           .Build();
-  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableNegative);
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableInvalid);
+}
+
+TEST_F(BuilderTestFixture, MachVsDragTableCoverageNaNMachs) {
+  const std::array<float, 2> kMachs = {lob::NaN<float>(), 5.0F};
+  const std::array<float, 2> kDrags = {0.5F, 1.0F};
+  const lob::Context kResult =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .MachVsDragTable(kMachs, kDrags)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableInvalid);
+}
+
+TEST_F(BuilderTestFixture, MachVsDragTableCoverageNaNDrag) {
+  const std::array<float, 2> kMachs = {0.0F, 5.0F};
+  const std::array<float, 2> kDrags = {0.5F, lob::NaN<float>()};
+  const lob::Context kResult =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .MachVsDragTable(kMachs, kDrags)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableInvalid);
 }
 
 TEST_F(BuilderTestFixture, RangeAngleDeg) {

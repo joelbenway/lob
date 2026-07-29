@@ -73,7 +73,7 @@ enum class ErrorT : LobErrorT {
   kInternalError = ::kLobErrorInternalError,
   kLatitudeOOR = ::kLobErrorLatitudeOOR,
   kLengthOOR = ::kLobErrorLengthOOR,
-  kMachDragTableNegative = kLobErrorMachDragTableNegative,
+  kMachDragTableInvalid = kLobErrorMachDragTableInvalid,
   kMachDragTableNotMonotonic = kLobErrorMachDragTableNotMonotonic,
   kMachDragTableTooNarrow = kLobErrorMachDragTableTooNarrow,
   kMachDragTableTooShort = kLobErrorMachDragTableTooShort,

@@ -68,7 +68,7 @@ for (size_t i = 0; i < kNumSolved; i++) {
             << solver_outputs.at(i).elevation << " inches.\n";
 }
 ```
-```
+```text
 Drop at 0 feet is -1.50 inches.
 Drop at 300 feet is 0.00 inches.
 Drop at 600 feet is -4.15 inches.

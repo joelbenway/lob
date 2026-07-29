@@ -104,11 +104,22 @@ int main(int argc, char* argv[]) try {
           .MaximumTime(example::JsonToDouble(json, "MaximumTime"))
           .Build();
 
+  if (input.error != kLobErrorNone) {
+    std::cerr << "\033[31mBuilder error: code " << static_cast<int>(input.error)
+              << "\033[0m\n";
+    return 1;
+  }
+
   // Solve
   auto ranges = example::ParseRanges(json);
   std::vector<lob::Output> outputs(ranges.size());
   const size_t kCount =
       lob::Solve(input, ranges.data(), outputs.data(), ranges.size());
+
+  if (kCount == 0) {
+    std::cerr << "\033[31mSolver error: no solutions returned\033[0m\n";
+    return 1;
+  }
 
   if (config.json_mode) {
     auto jout = example::OutputsToJson(outputs.data(), kCount);

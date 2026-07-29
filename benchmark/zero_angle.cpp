@@ -4,7 +4,9 @@
 
 #include <benchmark/benchmark.h>
 
+#include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 
@@ -261,10 +263,10 @@ double SearchRidders(::LobContext* ctx, FeetT zero_distance_ft,
   auto fired_angle = [&](RadiansT za) {
     return RadiansT(za.Value() + kAeroJump);
   };
-  auto f_eval = [&](double theta_deg) {
+  auto f_eval = [&](double theta_rad) {
     ctx->error = kLobErrorNone;
     const FeetT kImpact = FireToRange(ctx, zero_distance_ft,
-                                     fired_angle(RadiansT(theta_deg)), count);
+                                      fired_angle(RadiansT(theta_rad)), count);
     return kImpact.Value() - target_height.Value();
   };
 

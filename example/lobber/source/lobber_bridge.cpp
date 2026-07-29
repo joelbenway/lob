@@ -122,6 +122,8 @@ std::vector<uint32_t> ParseRanges(const nlohmann::json& j) {
 
 void PrintTable(const lob::Context& input, const lob::Output* outputs,
                 size_t count) {
+  // Error states are reported by the lobber.cpp caller before this function
+  // is reached; only valid contexts are printed.
   constexpr uint8_t kExtra = 3;
 
   // Extra info
