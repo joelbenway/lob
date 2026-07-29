@@ -25,7 +25,7 @@ constexpr Y HeunStep(const T& t_i, const Y& y_i, T dt, const F& f) {
 }
 
 // Generic implementation of Heun's method with iteratively applied corrector
-template <typename T, typename Y, typename F, size_t kMaxIter = 3>
+template <size_t kMaxIter = 3, typename T, typename Y, typename F>
 constexpr Y IterativeHeunStep(const T& t_i, const Y& y_i, T dt, const F& f) {
   const T kQuanta = dt / 2;
   const Y k1 = f(t_i, y_i);
@@ -90,15 +90,23 @@ class TrajectoryStateT {
     return TrajectoryStateT{position_ + rhs.position_,
                             velocity_ + rhs.velocity_, time_of_flight_};
   }
-  template <typename T, typename = decltype(std::declval<const T&>().Value())>
+  template <typename T,
+            typename std::enable_if_t<std::is_arithmetic<T>::value ||
+                                          std::is_same<T, FeetT>::value,
+                                      int> = 0>
   constexpr TrajectoryStateT operator+(const T& rhs) const {
-    return TrajectoryStateT{position_ + FeetT(rhs.Value()),
-                            velocity_ + FpsT(rhs.Value())};
+    return TrajectoryStateT{position_ + FeetT(static_cast<double>(rhs)),
+                            velocity_ + FpsT(static_cast<double>(rhs)),
+                            time_of_flight_};
   }
-  template <typename T, typename = decltype(std::declval<const T&>().Value())>
+  template <typename T,
+            typename std::enable_if_t<std::is_arithmetic<T>::value ||
+                                          std::is_same<T, FeetT>::value,
+                                      int> = 0>
   constexpr TrajectoryStateT operator*(const T& rhs) const {
-    return TrajectoryStateT{position_ * FeetT(rhs.Value()),
-                            velocity_ * FpsT(rhs.Value())};
+    return TrajectoryStateT{position_ * FeetT(static_cast<double>(rhs)),
+                            velocity_ * FpsT(static_cast<double>(rhs)),
+                            time_of_flight_};
   }
 
   constexpr CartesianT<FeetT> P() const { return position_; }

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "eng_units.hpp"
+#include "helpers.hpp"
 #include "lob/lob.h"
 #include "ode.hpp"
 #include "splines.hpp"

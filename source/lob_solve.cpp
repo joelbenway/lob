@@ -33,8 +33,8 @@ LobOutput OutputAtState(const TrajectoryStateT& s, const LobContext& ctx) {
   return out;
 }
 
-LobOutput LerpOutput(const TrajectoryStateT& s_now,
-                     const TrajectoryStateT& s_prev, double alpha,
+LobOutput LerpOutput(const TrajectoryStateT& s_prev,
+                     const TrajectoryStateT& s_now, double alpha,
                      const LobContext& ctx) {
   const CartesianT<FeetT> kP =
       s_prev.P() + (s_now.P() - s_prev.P()) * FeetT(alpha);
@@ -128,7 +128,7 @@ size_t LobSolve(const LobContext* pctx, const uint32_t* pranges,
     if (s.TOF() >= SecT(pctx->max_time) && kS.TOF() < SecT(pctx->max_time)) {
       const double kAlpha =
           ((SecT(pctx->max_time) - kS.TOF()) / (s.TOF() - kS.TOF())).Value();
-      pouts[index] = LerpOutput(s, kS, kAlpha, *pctx);
+      pouts[index] = LerpOutput(kS, s, kAlpha, *pctx);
       index++;
       break;
     }
@@ -137,7 +137,7 @@ size_t LobSolve(const LobContext* pctx, const uint32_t* pranges,
       const double kAlpha = ((kMinimumSpeed - kS.V().Magnitude()) /
                              (s.V().Magnitude() - kS.V().Magnitude()))
                                 .Value();
-      pouts[index] = LerpOutput(s, kS, kAlpha, *pctx);
+      pouts[index] = LerpOutput(kS, s, kAlpha, *pctx);
       index++;
       break;
     }
