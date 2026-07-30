@@ -3,6 +3,7 @@
 // Please see end of file for extended copyright information
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
