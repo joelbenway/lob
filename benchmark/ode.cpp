@@ -99,7 +99,7 @@ void IterativeHeunStep3BM(benchmark::State& state) {
     Ball2 y = kInit;
     double t = 0.0;
     for (size_t i = 0; i < kStep; ++i) {
-      y = lob::IterativeHeunStep<double, Ball2, decltype(ode), 3>(t, y, kDt, ode);
+      y = lob::IterativeHeunStep<3>(t, y, kDt, ode);
       t += kDt;
     }
     benchmark::DoNotOptimize(y);
@@ -117,7 +117,7 @@ void IterativeHeunStep2BM(benchmark::State& state) {
     Ball2 y = kInit;
     double t = 0.0;
     for (size_t i = 0; i < kStep; ++i) {
-      y = lob::IterativeHeunStep<double, Ball2, decltype(ode), 2>(t, y, kDt, ode);
+      y = lob::IterativeHeunStep<2>(t, y, kDt, ode);
       t += kDt;
     }
     benchmark::DoNotOptimize(y);
@@ -135,7 +135,7 @@ void IterativeHeunStep1BM(benchmark::State& state) {
     Ball2 y = kInit;
     double t = 0.0;
     for (size_t i = 0; i < kStep; ++i) {
-      y = lob::IterativeHeunStep<double, Ball2, decltype(ode), 1>(t, y, kDt, ode);
+      y = lob::IterativeHeunStep<1>(t, y, kDt, ode);
       t += kDt;
     }
     benchmark::DoNotOptimize(y);
