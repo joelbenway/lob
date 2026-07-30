@@ -20,7 +20,7 @@
 #include "lob/lob.hpp"
 #include "splines.hpp"
 #include "tables.hpp"
-#include "test_helpers.hpp"
+#include "testing.hpp"
 
 namespace tests {
 
