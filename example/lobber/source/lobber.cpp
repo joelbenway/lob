@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) try {
           .MaximumTime(example::JsonToDouble(json, "MaximumTime"))
           .Build();
 
-  if (ctx.error != kLobErrorNone) {
+  if (ctx.error != lob::ErrorT::kNone) {
     std::cerr << "\033[31mBuilder error: code " << static_cast<int>(ctx.error)
               << "\033[0m\n";
     return 1;
