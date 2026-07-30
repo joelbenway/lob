@@ -138,9 +138,9 @@ TEST(SqrtTest, ConstexprSqrt) {
 }
 
 TEST(IsInfTest, PositiveInfinity) {
-  constexpr double kInf = std::numeric_limits<double>::infinity();
-  EXPECT_TRUE(lob::IsInf(kInf));
-  EXPECT_TRUE((lob::IsInf(-kInf)));
+  constexpr double kInfinity = std::numeric_limits<double>::infinity();
+  EXPECT_TRUE(lob::IsInf(kInfinity));
+  EXPECT_TRUE((lob::IsInf(-kInfinity)));
 }
 
 TEST(IsInfTest, FiniteIsNotInf) {
@@ -158,9 +158,9 @@ TEST(IsNanTest, NaN) {
 }
 
 TEST(IsNanTest, InfinityIsNotNaN) {
-  constexpr double kInf = std::numeric_limits<double>::infinity();
-  EXPECT_FALSE(lob::IsNan(kInf));
-  EXPECT_FALSE((lob::IsNan(-kInf)));
+  constexpr double kInfinity = std::numeric_limits<double>::infinity();
+  EXPECT_FALSE(lob::IsNan(kInfinity));
+  EXPECT_FALSE((lob::IsNan(-kInfinity)));
 }
 
 TEST(IsNanTest, FiniteIsNotNaN) {
