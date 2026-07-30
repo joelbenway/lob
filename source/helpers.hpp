@@ -39,12 +39,24 @@ constexpr T Fmax(T a, T b) {
 }
 
 template <typename T>
+constexpr bool IsInf(T x) {
+  return x > std::numeric_limits<T>::max() ||
+         x < -std::numeric_limits<T>::max();
+}
+
+template <typename T>
+constexpr bool IsNan(T x) {
+  return !(x <= std::numeric_limits<T>::max()) &&
+         !(x >= -std::numeric_limits<T>::max());
+}
+
+template <typename T>
 constexpr bool AreFloatingPointsEqual(T a, T b) {
-  if (std::isinf(a) || std::isinf(b)) {
+  if (IsInf(a) || IsInf(b)) {
     return !(a > b) && !(b > a);
   }
-  if (std::isnan(a) || std::isnan(b)) {
-    return std::isnan(a) && std::isnan(b);
+  if (IsNan(a) || IsNan(b)) {
+    return IsNan(a) && IsNan(b);
   }
   const T kDiff = Fabs(a - b);
   const T kAbsTol = std::numeric_limits<T>::epsilon() * static_cast<T>(100);
@@ -69,7 +81,7 @@ constexpr T Modulo(T a, T b) {
 
 template <typename T>
 constexpr T Fmod(T x, T y) {
-  if (std::isnan(x) || std::isnan(y)) {
+  if (IsNan(x) || IsNan(y)) {
     return NaN<T>();
   }
 
@@ -107,7 +119,7 @@ constexpr double Modulo(double a, double b) { return Fmod(a, b); }
 constexpr float Modulo(float a, float b) { return Fmod(a, b); }
 
 constexpr double Sqrt(double x) {
-  if (x < 0.0 || std::isnan(x)) {
+  if (x < 0.0 || IsNan(x)) {
     return NaN();
   }
   if (AreEqual(x, 0.0)) {
