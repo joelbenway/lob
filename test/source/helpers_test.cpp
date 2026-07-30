@@ -63,11 +63,11 @@ TEST(HelpersTest, Modulo) {
 }
 
 TEST(HelpersTest, FloatEqualityNearZero) {
-  constexpr auto kZeroClose = lob::AreFloatingPointsEqual(0.0, 1e-15);
-  constexpr auto kSymClose = lob::AreFloatingPointsEqual(1e-15, 0.0);
-  constexpr auto kNegClose = lob::AreFloatingPointsEqual(-1e-15, 0.0);
-  constexpr auto kZeroFar = lob::AreFloatingPointsEqual(0.0, 1e-13);
-  constexpr auto kSymFar = lob::AreFloatingPointsEqual(1e-13, 0.0);
+  const auto kZeroClose = lob::AreFloatingPointsEqual(0.0, 1e-15);
+  const auto kSymClose = lob::AreFloatingPointsEqual(1e-15, 0.0);
+  const auto kNegClose = lob::AreFloatingPointsEqual(-1e-15, 0.0);
+  const auto kZeroFar = lob::AreFloatingPointsEqual(0.0, 1e-13);
+  const auto kSymFar = lob::AreFloatingPointsEqual(1e-13, 0.0);
   EXPECT_TRUE(kZeroClose);
   EXPECT_TRUE(kSymClose);
   EXPECT_TRUE(kNegClose);
@@ -78,31 +78,31 @@ TEST(HelpersTest, FloatEqualityNearZero) {
 TEST(HelpersTest, LargeQuotientFmod) {
   constexpr double kLargeA = 1.0e20;
   constexpr double kLargeB = 3.0;
-  constexpr auto kActual = lob::Modulo(kLargeA, kLargeB);
-  constexpr double kExpected = lob::Fmod(kLargeA, kLargeB);
+  const auto kActual = lob::Modulo(kLargeA, kLargeB);
+  const double kExpected = lob::Fmod(kLargeA, kLargeB);
   EXPECT_DOUBLE_EQ(kActual, kExpected);
 }
 
 TEST(HelpersTest, SmallQuotientConstexpr) {
-  constexpr auto kActual = lob::Modulo(100.0, 3.0);
+  const auto kActual = lob::Modulo(100.0, 3.0);
   EXPECT_DOUBLE_EQ(kActual, 1.0);
 }
 
 TEST(HelpersTest, InfinityNanQuotientFmod) {
   constexpr auto kInfinity = std::numeric_limits<double>::infinity();
   constexpr auto kNaN = std::numeric_limits<double>::quiet_NaN();
-  constexpr auto kInfMod = lob::Modulo(kInfinity, kInfinity);
-  constexpr auto kNanMod = lob::Modulo(kNaN, 1.0);
+  const auto kInfMod = lob::Modulo(kInfinity, kInfinity);
+  const auto kNanMod = lob::Modulo(kNaN, 1.0);
   EXPECT_TRUE(std::isnan(kInfMod));
   EXPECT_TRUE(std::isnan(kNanMod));
 }
 
 TEST(SqrtTest, PerfectSquares) {
-  constexpr double kSqrt4 = lob::Sqrt(4.0);
-  constexpr double kSqrt9 = lob::Sqrt(9.0);
-  constexpr double kSqrt16 = lob::Sqrt(16.0);
-  constexpr double kSqrt25 = lob::Sqrt(25.0);
-  constexpr double kSqrt100 = lob::Sqrt(100.0);
+  const double kSqrt4 = lob::Sqrt(4.0);
+  const double kSqrt9 = lob::Sqrt(9.0);
+  const double kSqrt16 = lob::Sqrt(16.0);
+  const double kSqrt25 = lob::Sqrt(25.0);
+  const double kSqrt100 = lob::Sqrt(100.0);
   EXPECT_DOUBLE_EQ(kSqrt4, 2.0);
   EXPECT_DOUBLE_EQ(kSqrt9, 3.0);
   EXPECT_DOUBLE_EQ(kSqrt16, 4.0);
@@ -111,28 +111,28 @@ TEST(SqrtTest, PerfectSquares) {
 }
 
 TEST(SqrtTest, SqrtTwo) {
-  constexpr auto kSqrt2 = lob::Sqrt(2.0);
+  const auto kSqrt2 = lob::Sqrt(2.0);
   EXPECT_NEAR(kSqrt2, std::sqrt(2.0), 1e-14);
 }
 
 TEST(SqrtTest, SqrtOfZero) {
-  constexpr auto kVal = lob::Sqrt(0.0);
+  const auto kVal = lob::Sqrt(0.0);
   EXPECT_DOUBLE_EQ(kVal, 0.0);
 }
 
 TEST(SqrtTest, SqrtOfNegativeIsNaN) {
-  constexpr auto kVal = lob::Sqrt(-1.0);
+  const auto kVal = lob::Sqrt(-1.0);
   EXPECT_TRUE(std::isnan(kVal));
 }
 
 TEST(SqrtTest, SqrtOfInfinity) {
   constexpr auto kInfinity = std::numeric_limits<double>::infinity();
-  constexpr auto kVal = lob::Sqrt(kInfinity);
+  const auto kVal = lob::Sqrt(kInfinity);
   EXPECT_DOUBLE_EQ(kVal, kInfinity);
 }
 
 TEST(SqrtTest, ConstexprSqrt) {
-  constexpr auto kVal = lob::Sqrt(2.0);
+  const auto kVal = lob::Sqrt(2.0);
   EXPECT_GT(kVal, 1.4);
   EXPECT_LT(kVal, 1.5);
 }
