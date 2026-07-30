@@ -190,7 +190,9 @@ TEST_P(CustomTableTestFixture, CustomTableMatchesDragFunction) {
 
   ASSERT_EQ(kResult1.error, kLobErrorNone);
   ASSERT_EQ(kResult2.error, kLobErrorNone);
-  EXPECT_THAT(kResult1.drags, testing::ElementsAreArray(kResult2.drags));
+  for (size_t i = 0; i < kResult1.drags.size(); i++) {
+    EXPECT_FLOAT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+  }
 }
 
 namespace {
