@@ -95,7 +95,8 @@ TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
       {3000, 1149, 454, -374.36, 0.00, 1.674}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
-  lob::Solve(puut->Build(), kRanges, &solutions);
+  const size_t kSize = lob::Solve(puut->Build(), kRanges, &solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
   VerifySolutions(solutions, kExpected,
                   {kVelocityError, kEnergyError, kMoaError, kInchError,
                    kTimeOfFlightError});

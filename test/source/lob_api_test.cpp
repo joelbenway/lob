@@ -179,8 +179,7 @@ TEST(LobAPITest, ZeroAngleSearchExtremeInputsDontCrash) {
                                       .ZeroDistanceYds(kRange)
                                       .Build();
         const bool kOk = (kCtx.error == kLobErrorNone);
-        const bool kFailed = (kCtx.error == kLobErrorInternalError ||
-                              kCtx.error == kLobErrorInitialVelocityRequired);
+        const bool kFailed = (kCtx.error == kLobErrorInternalError);
         EXPECT_TRUE(kOk || kFailed)
             << "BC=" << kBc << " v=" << kV << " d=" << kRange
             << " error=" << static_cast<int>(kCtx.error);

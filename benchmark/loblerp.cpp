@@ -34,8 +34,8 @@ void LobLerpBM(benchmark::State& state) {
 // Benchmark 2: spline::CurveView — caching spline evaluation (stateful index)
 void CurveViewBM(benchmark::State& state) {
   static std::vector<double> results(kResultsSize);
+  lob::spline::CurveView curve{lob::spline::kKnots, lob::spline::kG1Coefs};
   for (auto _ : state) {
-    lob::spline::CurveView curve{lob::spline::kKnots, lob::spline::kG1Coefs};
     for (size_t i = 0; i < kResultsSize; i++) {
       const double kMach = kInitMach - (static_cast<double>(i) * kDecrement);
       results[i] =

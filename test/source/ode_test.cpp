@@ -183,7 +183,7 @@ TEST(OdeTests, Addition) {
       lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
   lob::TrajectoryStateT a = lob::TrajectoryStateT(kP, kV);
   lob::TrajectoryStateT b;
-  b = b + lob::SecT(1);
+  b = b + 1;
   EXPECT_DOUBLE_EQ(b.P().X().Value(), 1.0);
   a = a + b;
   EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() + b.P().X().Value());
@@ -213,7 +213,7 @@ TEST(OdeTests, Multiplication) {
   const auto kV =
       lob::CartesianT<lob::FpsT>(lob::FpsT(3), lob::FpsT(4), lob::FpsT(0));
   lob::TrajectoryStateT a = lob::TrajectoryStateT(kP, kV);
-  a = a * lob::SecT(2);
+  a = a * 2;
   EXPECT_DOUBLE_EQ(a.P().X().Value(), kP.X().Value() * 2);
 }
 

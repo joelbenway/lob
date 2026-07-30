@@ -97,19 +97,19 @@ RadiansT SecantStep(RadiansT theta, RadiansT theta_prev, FeetT f,
   return kNext;
 }
 
-void NarrowBracket(RadiansT& lo, RadiansT& hi, RadiansT theta_prev,
+void NarrowBracket(RadiansT* lo, RadiansT* hi, RadiansT theta_prev,
                    FeetT f_prev, FeetT flo, FeetT fhi) {
   if (flo.Value() < fhi.Value()) {
     if (f_prev.Value() < flo.Value()) {
-      lo = theta_prev;
+      *lo = theta_prev;
     } else if (f_prev.Value() > fhi.Value()) {
-      hi = theta_prev;
+      *hi = theta_prev;
     }
   } else {
     if (f_prev.Value() < fhi.Value()) {
-      hi = theta_prev;
+      *hi = theta_prev;
     } else if (f_prev.Value() > flo.Value()) {
-      lo = theta_prev;
+      *lo = theta_prev;
     }
   }
 }
@@ -180,11 +180,11 @@ double SearchHuman(::LobContext* ctx, FeetT zero_distance_ft,
 
 void EnsureBracketEval(::LobContext* ctx, FeetT zero_distance_ft,
                        FeetT target_height, double aero_jump, int* count,
-                       FeetT& f_val, RadiansT angle) {
-  if (!std::isnan(f_val)) {
+                       FeetT* f_val, RadiansT angle) {
+  if (!std::isnan(*f_val)) {
     return;
   }
-  f_val = FireToTarget(ctx, zero_distance_ft, angle, target_height, aero_jump,
+  *f_val = FireToTarget(ctx, zero_distance_ft, angle, target_height, aero_jump,
                        count);
 }
 
@@ -226,12 +226,12 @@ double SearchSecant(::LobContext* ctx, FeetT zero_distance_ft,
 
     if (theta_next < lo || theta_next > hi || std::isnan(theta_next)) {
       EnsureBracketEval(ctx, zero_distance_ft, target_height, kAeroJump,
-                        count, flo, RadiansT(lo.Value()));
+                        count, &flo, RadiansT(lo.Value()));
       if (HasFatalError(ctx)) {
     return NaN();
   }
       EnsureBracketEval(ctx, zero_distance_ft, target_height, kAeroJump,
-                        count, fhi, RadiansT(hi.Value()));
+                        count, &fhi, RadiansT(hi.Value()));
       if (HasFatalError(ctx)) {
     return NaN();
   }
@@ -242,7 +242,7 @@ double SearchSecant(::LobContext* ctx, FeetT zero_distance_ft,
       return MoaT(theta_next).Value();
     }
 
-    NarrowBracket(lo, hi, theta_prev, f_prev, flo, fhi);
+    NarrowBracket(&lo, &hi, theta_prev, f_prev, flo, fhi);
 
     theta_prev = theta;
     f_prev = f;

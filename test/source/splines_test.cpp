@@ -72,13 +72,10 @@ TruthTables BuildTruthTables() {
 }
 
 // Max abs error (worst of G1/G7) of a spline over the whole truth grid.
-// Optionally writes the per-point errors.
-
 float EvalMaxError(const TruthTables& t,
                    const std::array<float, kTargetKnotSize>& sample_machs,
                    const std::array<float, kTargetKnotSize>& sample_g1,
-                   const std::array<float, kTargetKnotSize>& sample_g7,
-                   std::array<float, kTruthSize>* errors_out = nullptr) {
+                   const std::array<float, kTargetKnotSize>& sample_g7) {
   float max_err = 0.0F;
   for (size_t i = 0; i < kTruthSize; ++i) {
     const float kEvalG1 = lob::spline::detail::EvalWithDeriv(
@@ -93,9 +90,6 @@ float EvalMaxError(const TruthTables& t,
 
     const float kErr = std::max(std::abs(kEvalG1 - t.g1.at(i)),
                                 std::abs(kEvalG7 - t.g7.at(i)));
-    if (errors_out != nullptr) {
-      errors_out->at(i) = kErr;
-    }
     max_err = std::max(max_err, kErr);
   }
   return max_err;
@@ -126,12 +120,6 @@ float BaselineError(const TruthTables& t) {
   }
   return EvalMaxError(t, sample_machs, sample_g1, sample_g7);
 }
-
-struct SampleTables {
-  std::array<float, kTargetKnotSize> machs{};
-  std::array<float, kTargetKnotSize> g1{};
-  std::array<float, kTargetKnotSize> g7{};
-};
 
 }  // namespace
 
