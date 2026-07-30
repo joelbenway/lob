@@ -137,6 +137,38 @@ TEST(SqrtTest, ConstexprSqrt) {
   EXPECT_LT(kVal, 1.5);
 }
 
+TEST(IsInfTest, PositiveInfinity) {
+  constexpr double kInf = std::numeric_limits<double>::infinity();
+  EXPECT_TRUE(lob::IsInf(kInf));
+  EXPECT_TRUE((lob::IsInf(-kInf)));
+}
+
+TEST(IsInfTest, FiniteIsNotInf) {
+  EXPECT_FALSE(lob::IsInf(0.0));
+  EXPECT_FALSE(lob::IsInf(-1.0));
+  EXPECT_FALSE(lob::IsInf(3.14));
+}
+
+TEST(IsInfTest, NaNIsNotInf) {
+  EXPECT_FALSE(lob::IsInf(std::numeric_limits<double>::quiet_NaN()));
+}
+
+TEST(IsNanTest, NaN) {
+  EXPECT_TRUE(lob::IsNan(std::numeric_limits<double>::quiet_NaN()));
+}
+
+TEST(IsNanTest, InfinityIsNotNaN) {
+  constexpr double kInf = std::numeric_limits<double>::infinity();
+  EXPECT_FALSE(lob::IsNan(kInf));
+  EXPECT_FALSE((lob::IsNan(-kInf)));
+}
+
+TEST(IsNanTest, FiniteIsNotNaN) {
+  EXPECT_FALSE(lob::IsNan(0.0));
+  EXPECT_FALSE(lob::IsNan(-1.0));
+  EXPECT_FALSE(lob::IsNan(3.14));
+}
+
 TEST(FabsTest, PositiveValue) {
   constexpr auto kVal = lob::Fabs(3.0);
   EXPECT_DOUBLE_EQ(kVal, 3.0);
