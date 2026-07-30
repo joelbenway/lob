@@ -120,7 +120,7 @@ std::vector<uint32_t> ParseRanges(const nlohmann::json& j) {
   return {kDefaultRanges.begin(), kDefaultRanges.end()};
 }
 
-void PrintTable(const lob::Context& input, const lob::Output* outputs,
+void PrintTable(const lob::Context& ctx, const lob::Output* outputs,
                 size_t count) {
   // Error states are reported by the lobber.cpp caller before this function
   // is reached; only valid contexts are printed.
@@ -138,9 +138,9 @@ void PrintTable(const lob::Context& input, const lob::Output* outputs,
             << std::setw(extra_width(kSF)) << kSF << std::setw(extra_width(kSS))
             << kSS << "\033[0m\n";
   std::cout << std::left << std::setw(extra_width(kZA)) << std::fixed
-            << std::setprecision(2) << input.zero_angle
-            << std::setw(extra_width(kSF)) << input.stability_factor
-            << std::setw(extra_width(kSS)) << input.speed_of_sound << "\n\n";
+            << std::setprecision(2) << ctx.zero_angle
+            << std::setw(extra_width(kSF)) << ctx.stability_factor
+            << std::setw(extra_width(kSS)) << ctx.speed_of_sound << "\n\n";
 
   // Table header
   const int kWidth = 12;

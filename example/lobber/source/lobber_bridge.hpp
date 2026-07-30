@@ -28,7 +28,7 @@ lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
 std::vector<uint32_t> ParseRanges(const nlohmann::json& j);
 
 // View helpers
-void PrintTable(const lob::Context& input, const lob::Output* outputs,
+void PrintTable(const lob::Context& ctx, const lob::Output* outputs,
                 size_t count);
 nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count);
 
