@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) try {
 
   nlohmann::json json;
 
-  // Read input from stdin or wizard
+  // Read ctx from stdin or wizard
   if (example::IsInteractive()) {
     json = example::RunWizard();
   } else {
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) try {
   }
 
   if (json.empty()) {
-    std::cerr << "\033[31mError: No input data provided.\033[0m\n\n";
+    std::cerr << "\033[31mError: No ctx data provided.\033[0m\n\n";
     example::PrintHelp();
     return 1;
   }
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) try {
   }
 
   // Build Context via lob::Builder
-  auto input =
+  auto ctx =
       lob::Builder()
           .BallisticCoefficientPsi(
               example::JsonToDouble(json, "BallisticCoefficientPsi"))
@@ -104,8 +104,8 @@ int main(int argc, char* argv[]) try {
           .MaximumTime(example::JsonToDouble(json, "MaximumTime"))
           .Build();
 
-  if (input.error != kLobErrorNone) {
-    std::cerr << "\033[31mBuilder error: code " << static_cast<int>(input.error)
+  if (ctx.error != kLobErrorNone) {
+    std::cerr << "\033[31mBuilder error: code " << static_cast<int>(ctx.error)
               << "\033[0m\n";
     return 1;
   }
@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) try {
   auto ranges = example::ParseRanges(json);
   std::vector<lob::Output> outputs(ranges.size());
   const size_t kCount =
-      lob::Solve(input, ranges.data(), outputs.data(), ranges.size());
+      lob::Solve(ctx, ranges.data(), outputs.data(), ranges.size());
 
   if (kCount == 0) {
     std::cerr << "\033[31mSolver error: no solutions returned\033[0m\n";
@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) try {
     auto jout = example::OutputsToJson(outputs.data(), kCount);
     std::cout << jout.dump(4) << "\n";
   } else {
-    example::PrintTable(input, outputs.data(), kCount);
+    example::PrintTable(ctx, outputs.data(), kCount);
     example::PrintGH();
   }
 

@@ -28,15 +28,17 @@ CliConfig ParseArgs(int argc, char* argv[]) {  // NOLINT
   CliConfig config;
   for (int i = 1; i < argc; ++i) {
     const std::string kArg(argv[i]);
-    if (kArg == kHelp || kArg == kH) {
+    if (kArg == kHelp || kArg == kH || kArg == "-h") {
       config.show_help = true;
-    } else if (kArg == kVersion || kArg == kV) {
+    } else if (kArg == kVersion || kArg == kV || kArg == "-v") {
       config.show_version = true;
     } else if (kArg == kJson) {
       config.json_mode = true;
     } else if (kArg.compare(0, std::strlen(kSaveInput), kSaveInput) == 0) {
       config.has_save_input_path = true;
       config.save_input_path = kArg.substr(std::strlen(kSaveInput));
+    } else if (kArg.size() > 2 && kArg[0] == '-' && kArg[1] == '-') {
+      std::cerr << "\033[33mWarning: Unknown option " << kArg << "\033[0m\n";
     }
   }
   return config;
@@ -46,8 +48,8 @@ void PrintHelp() {
   std::cout
       << "Usage: lobber [options] [< input.json]\n"
       << "Options:\n"
-      << "  --h, --help            Show this help message\n"
-      << "  --v, --version         Show version information\n"
+      << "  -h, --h, --help        Show this help message\n"
+      << "  -v, --v, --version     Show version information\n"
       << "  --json                 Output results to stdout in json format\n"
       << "  --save-input=FILE      Save input configuration JSON to FILE\n"
       << "\n"
