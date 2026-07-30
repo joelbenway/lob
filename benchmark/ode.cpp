@@ -30,10 +30,10 @@ constexpr double kTFinal = 1.0;
 
 auto MakeBallisticOde() {
   return [](double /*t*/, const Ball2& s) -> Ball2 {
-    double v = std::sqrt((s.vx * s.vx) + (s.vy * s.vy));
-    double ax = -(kDrag * v * s.vx);
-    double ay = -(kG + (kDrag * v * s.vy));
-    return {s.vx, s.vy, ax, ay};
+    const double kV = std::sqrt((s.vx * s.vx) + (s.vy * s.vy));
+    const double kAx = -(kDrag * kV * s.vx);
+    const double kAy = -(kG + (kDrag * kV * s.vy));
+    return {s.vx, s.vy, kAx, kAy};
   };
 }
 
@@ -68,8 +68,8 @@ void EulerStepBM(benchmark::State& state) {
     }
     benchmark::DoNotOptimize(y);
     const auto& ref = Ref();
-    double err = std::hypot(y.x - ref.x, y.y - ref.y);
-    state.counters["error_ft"] = err;
+    const double kErr = std::hypot(y.x - ref.x, y.y - ref.y);
+    state.counters["error_ft"] = kErr;
   }
 }
 
@@ -86,8 +86,8 @@ void HeunStepBM(benchmark::State& state) {
     }
     benchmark::DoNotOptimize(y);
     const auto& ref = Ref();
-    double err = std::hypot(y.x - ref.x, y.y - ref.y);
-    state.counters["error_ft"] = err;
+    const double kErr = std::hypot(y.x - ref.x, y.y - ref.y);
+    state.counters["error_ft"] = kErr;
   }
 }
 
@@ -104,8 +104,8 @@ void IterativeHeunStep3BM(benchmark::State& state) {
     }
     benchmark::DoNotOptimize(y);
     const auto& ref = Ref();
-    double err = std::hypot(y.x - ref.x, y.y - ref.y);
-    state.counters["error_ft"] = err;
+    const double kErr = std::hypot(y.x - ref.x, y.y - ref.y);
+    state.counters["error_ft"] = kErr;
   }
 }
 
@@ -122,8 +122,8 @@ void IterativeHeunStep2BM(benchmark::State& state) {
     }
     benchmark::DoNotOptimize(y);
     const auto& ref = Ref();
-    double err = std::hypot(y.x - ref.x, y.y - ref.y);
-    state.counters["error_ft"] = err;
+    const double kErr = std::hypot(y.x - ref.x, y.y - ref.y);
+    state.counters["error_ft"] = kErr;
   }
 }
 
@@ -140,8 +140,8 @@ void IterativeHeunStep1BM(benchmark::State& state) {
     }
     benchmark::DoNotOptimize(y);
     const auto& ref = Ref();
-    double err = std::hypot(y.x - ref.x, y.y - ref.y);
-    state.counters["error_ft"] = err;
+    const double kErr = std::hypot(y.x - ref.x, y.y - ref.y);
+    state.counters["error_ft"] = kErr;
   }
 }
 
@@ -158,8 +158,8 @@ void RungeKuttaStepBM(benchmark::State& state) {
     }
     benchmark::DoNotOptimize(y);
     const auto& ref = Ref();
-    double err = std::hypot(y.x - ref.x, y.y - ref.y);
-    state.counters["error_ft"] = err;
+    const double kErr = std::hypot(y.x - ref.x, y.y - ref.y);
+    state.counters["error_ft"] = kErr;
   }
 }
 

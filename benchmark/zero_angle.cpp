@@ -10,11 +10,12 @@
 #include <cstdint>
 #include <limits>
 
-#include "lob/lob.hpp"
 #include "cartesian.hpp"
 #include "constants.hpp"
 #include "eng_units.hpp"
 #include "helpers.hpp"
+#include "lob/lob.h"
+#include "lob/lob.hpp"
 #include "ode.hpp"
 #include "solve_step.hpp"
 #include "splines.hpp"
@@ -27,6 +28,7 @@ using lob::DegreesT;
 using lob::FeetT;
 using lob::FpsT;
 using lob::InchT;
+using lob::kStandardGravityFtPerSecSq;
 using lob::MoaT;
 using lob::NaN;
 using lob::RadiansT;
@@ -34,7 +36,6 @@ using lob::SecT;
 using lob::SolveStep;
 using lob::TrajectoryStateT;
 using lob::convert::kInchPerFoot;
-using lob::kStandardGravityFtPerSecSq;
 using lob::spline::CurveView;
 using lob::spline::kKnots;
 
@@ -58,7 +59,8 @@ FeetT FireToRange(::LobContext* ctx, FeetT zero_distance_ft,
       CartesianT<FeetT>(FeetT(0.0)),
       CartesianT<FpsT>(kVel * std::cos(launch_angle.Value()),
                        kVel * std::sin(launch_angle.Value()), FpsT(0.0)));
-  CurveView zero_drag_curve(kKnots.data(), static_cast<const float*>(ctx->drags));
+  CurveView zero_drag_curve(kKnots.data(),
+                            static_cast<const float*>(ctx->drags));
   while (s.P().X() < zero_distance_ft) {
     if (s.V().X() <= FpsT(0)) {
       ctx->error = kLobErrorInternalError;
@@ -73,16 +75,15 @@ bool HasFatalError(const ::LobContext* ctx) {
   return ctx->error != kLobErrorNone && ctx->error != kLobErrorNotFormed;
 }
 
-FeetT FireToTarget(::LobContext* ctx, FeetT zero_distance_ft,
-                   RadiansT theta, FeetT target_height,
-                   double aero_jump, int* count) {
+FeetT FireToTarget(::LobContext* ctx, FeetT zero_distance_ft, RadiansT theta,
+                   FeetT target_height, double aero_jump, int* count) {
   ctx->error = kLobErrorNone;
   const RadiansT kLaunch = RadiansT(theta.Value() + aero_jump);
   return FireToRange(ctx, zero_distance_ft, kLaunch, count) - target_height;
 }
 
-RadiansT SecantStep(RadiansT theta, RadiansT theta_prev, FeetT f,
-                    FeetT f_prev, RadiansT lo, RadiansT hi) {
+RadiansT SecantStep(RadiansT theta, RadiansT theta_prev, FeetT f, FeetT f_prev,
+                    RadiansT lo, RadiansT hi) {
   constexpr double kEpsilon = 1e-10;
   const RadiansT kDTheta = theta - theta_prev;
   const FeetT kDF = f - f_prev;
@@ -121,9 +122,8 @@ double SearchBinary(::LobContext* ctx, FeetT zero_distance_ft,
   double hi = kMaxZeroAngle.Value();
   while (hi - lo > kZeroAngleError.Value()) {
     const double kMid = (lo + hi) / 2.0;
-    const FeetT kImpact = FireToTarget(ctx, zero_distance_ft,
-                                       RadiansT(kMid), target_height,
-                                       kAeroJump, count);
+    const FeetT kImpact = FireToTarget(ctx, zero_distance_ft, RadiansT(kMid),
+                                       target_height, kAeroJump, count);
     if (HasFatalError(ctx)) {
       return std::numeric_limits<double>::quiet_NaN();
     }
@@ -142,9 +142,8 @@ double SearchHuman(::LobContext* ctx, FeetT zero_distance_ft,
       static_cast<double>(ctx->velocity) * static_cast<double>(ctx->velocity);
   const double kRawSeed =
       kStandardGravityFtPerSecSq * zero_distance_ft.Value() / kVSq;
-  const double kClampedSeed =
-      std::max(kMinZeroAngle.Value(),
-               std::min(kMaxZeroAngle.Value(), kRawSeed));
+  const double kClampedSeed = std::max(
+      kMinZeroAngle.Value(), std::min(kMaxZeroAngle.Value(), kRawSeed));
   const RadiansT kThetaSeed = RadiansT(kClampedSeed);
   const double kAeroJump = RadiansT(MoaT(ctx->aerodynamic_jump)).Value();
 
@@ -170,7 +169,7 @@ double SearchHuman(::LobContext* ctx, FeetT zero_distance_ft,
     }
     theta_prev = kThetaNext;
     f_prev = FireToTarget(ctx, zero_distance_ft, theta_prev, target_height,
-                           kAeroJump, count);
+                          kAeroJump, count);
     if (HasFatalError(ctx)) {
       return NaN();
     }
@@ -185,7 +184,7 @@ void EnsureBracketEval(::LobContext* ctx, FeetT zero_distance_ft,
     return;
   }
   *f_val = FireToTarget(ctx, zero_distance_ft, angle, target_height, aero_jump,
-                       count);
+                        count);
 }
 
 double SearchSecant(::LobContext* ctx, FeetT zero_distance_ft,
@@ -194,9 +193,8 @@ double SearchSecant(::LobContext* ctx, FeetT zero_distance_ft,
       static_cast<double>(ctx->velocity) * static_cast<double>(ctx->velocity);
   const double kRawSeed =
       kStandardGravityFtPerSecSq * zero_distance_ft.Value() / kVSq;
-  const double kClampedSeed =
-      std::max(kMinZeroAngle.Value(),
-               std::min(kMaxZeroAngle.Value(), kRawSeed));
+  const double kClampedSeed = std::max(
+      kMinZeroAngle.Value(), std::min(kMaxZeroAngle.Value(), kRawSeed));
   const RadiansT kThetaSeed = RadiansT(kClampedSeed);
   const double kAeroJump = RadiansT(MoaT(ctx->aerodynamic_jump)).Value();
 
@@ -206,16 +204,16 @@ double SearchSecant(::LobContext* ctx, FeetT zero_distance_ft,
   FeetT fhi = FeetT(NaN());
 
   RadiansT theta_prev = kThetaSeed;
-  FeetT f_prev = FireToTarget(ctx, zero_distance_ft, theta_prev,
-                              target_height, kAeroJump, count);
+  FeetT f_prev = FireToTarget(ctx, zero_distance_ft, theta_prev, target_height,
+                              kAeroJump, count);
   if (HasFatalError(ctx)) {
     return NaN();
   }
 
   constexpr RadiansT kDeltaSeed = MoaT(0.1);
   RadiansT theta = theta_prev + kDeltaSeed;
-  FeetT f = FireToTarget(ctx, zero_distance_ft, theta, target_height,
-                         kAeroJump, count);
+  FeetT f = FireToTarget(ctx, zero_distance_ft, theta, target_height, kAeroJump,
+                         count);
   if (HasFatalError(ctx)) {
     return NaN();
   }
@@ -225,16 +223,16 @@ double SearchSecant(::LobContext* ctx, FeetT zero_distance_ft,
     RadiansT theta_next = SecantStep(theta, theta_prev, f, f_prev, lo, hi);
 
     if (theta_next < lo || theta_next > hi || std::isnan(theta_next)) {
-      EnsureBracketEval(ctx, zero_distance_ft, target_height, kAeroJump,
-                        count, &flo, RadiansT(lo.Value()));
+      EnsureBracketEval(ctx, zero_distance_ft, target_height, kAeroJump, count,
+                        &flo, RadiansT(lo.Value()));
       if (HasFatalError(ctx)) {
-    return NaN();
-  }
-      EnsureBracketEval(ctx, zero_distance_ft, target_height, kAeroJump,
-                        count, &fhi, RadiansT(hi.Value()));
+        return NaN();
+      }
+      EnsureBracketEval(ctx, zero_distance_ft, target_height, kAeroJump, count,
+                        &fhi, RadiansT(hi.Value()));
       if (HasFatalError(ctx)) {
-    return NaN();
-  }
+        return NaN();
+      }
       theta_next = (lo + hi) / 2;
     }
 
@@ -247,11 +245,11 @@ double SearchSecant(::LobContext* ctx, FeetT zero_distance_ft,
     theta_prev = theta;
     f_prev = f;
     theta = theta_next;
-    f = FireToTarget(ctx, zero_distance_ft, theta, target_height,
-                     kAeroJump, count);
+    f = FireToTarget(ctx, zero_distance_ft, theta, target_height, kAeroJump,
+                     count);
     if (HasFatalError(ctx)) {
-    return NaN();
-  }
+      return NaN();
+    }
   }
 
   return NaN();
