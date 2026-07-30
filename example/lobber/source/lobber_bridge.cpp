@@ -69,12 +69,12 @@ lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
   }
   const int kRounded = static_cast<int>(std::round(kV));
   switch (kRounded) {
-    case kLobDragFunctionG1:
-    case kLobDragFunctionG2:
-    case kLobDragFunctionG5:
-    case kLobDragFunctionG6:
-    case kLobDragFunctionG7:
-    case kLobDragFunctionG8:
+    case static_cast<int>(lob::DragFunctionT::kG1):
+    case static_cast<int>(lob::DragFunctionT::kG2):
+    case static_cast<int>(lob::DragFunctionT::kG5):
+    case static_cast<int>(lob::DragFunctionT::kG6):
+    case static_cast<int>(lob::DragFunctionT::kG7):
+    case static_cast<int>(lob::DragFunctionT::kG8):
       return static_cast<lob::DragFunctionT>(static_cast<uint8_t>(kRounded));
     default:
       return lob::DragFunctionT::kG1;
