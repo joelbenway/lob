@@ -165,6 +165,7 @@ TEST(LobAPITest, ZeroAngleSearchExhaustsIterations) {
   EXPECT_TRUE(std::isnan(kCtx.zero_angle));
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(LobAPITest, ZeroAngleSearchExtremeInputsDontCrash) {
   const std::array<double, 5> kBcs = {0.1, 0.224, 0.436, 0.7, 1.5};
   const std::array<uint16_t, 5> kVelocities = {600U, 1800U, 3100U, 4000U,

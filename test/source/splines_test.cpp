@@ -10,7 +10,10 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <string>
+#include <utility>
 
+#include "helpers.hpp"
 #include "tables.hpp"
 
 namespace {
