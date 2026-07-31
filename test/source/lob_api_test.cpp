@@ -105,12 +105,12 @@ TEST(LobAPITest, StepSize36InchesMatchesDefaultYardStep) {
   ASSERT_EQ(kDefaultN, kRanges.size());
   ASSERT_EQ(kInchesN, kRanges.size());
   for (size_t i = 0; i < kRanges.size(); ++i) {
-    EXPECT_FLOAT_EQ(default_outs[i].velocity, inches_outs[i].velocity);
-    EXPECT_FLOAT_EQ(default_outs[i].energy, inches_outs[i].energy);
-    EXPECT_FLOAT_EQ(default_outs[i].elevation, inches_outs[i].elevation);
-    EXPECT_FLOAT_EQ(default_outs[i].deflection, inches_outs[i].deflection);
-    EXPECT_FLOAT_EQ(default_outs[i].time_of_flight,
-                    inches_outs[i].time_of_flight);
+    EXPECT_EQ(default_outs[i].velocity, inches_outs[i].velocity);
+    EXPECT_EQ(default_outs[i].energy, inches_outs[i].energy);
+    EXPECT_DOUBLE_EQ(default_outs[i].elevation, inches_outs[i].elevation);
+    EXPECT_DOUBLE_EQ(default_outs[i].deflection, inches_outs[i].deflection);
+    EXPECT_DOUBLE_EQ(default_outs[i].time_of_flight,
+                     inches_outs[i].time_of_flight);
   }
 }
 
