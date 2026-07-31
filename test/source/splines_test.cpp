@@ -478,10 +478,10 @@ TEST(SplinesSegmentTest, TangentsAtKnotsMatchEndEndTangents) {
   std::array<float, 4> coefs{};
   lob::spline::Segment<float>(kLinearX.data(), kLineFn.data(), kLinearX.size(),
                               0, 1, coefs.data());
-  const auto* const cp = coefs.data();
-  const auto kM0 = *(cp + 1);
+  const auto* const pcp = coefs.data();
+  const auto kM0 = *(pcp + 1);
   const auto kM1 =
-      *(cp + 1) + ((1 - 0) * ((2 * *(cp + 2)) + (3 * *(cp + 3) * (1 - 0))));
+      *(pcp + 1) + ((1 - 0) * ((2 * *(pcp + 2)) + (3 * *(pcp + 3) * (1 - 0))));
   const auto kExpectedM0 = lob::spline::detail::Tangent<float>(
       kLinearX.data(), kLineFn.data(), kLinearX.size(), 0);
   const auto kExpectedM1 = lob::spline::detail::Tangent<float>(
@@ -518,12 +518,12 @@ TEST(SplinesBuildTest, BuiltCoefsReproduceSourceDataAtKnots) {
   lob::spline::Build<float>(kLinearX.data(), kLineFn.data(), kLinearX.size(),
                             knots.data(), kN, coefs.data());
   for (size_t i = 0; i + 1 < kN; ++i) {
-    const auto* const seg = coefs.data() + (4 * i);
+    const auto* const pseg = coefs.data() + (4 * i);
     const auto kT1 = *(knots.data() + i + 1) - *(knots.data() + i);
-    EXPECT_NEAR(lob::spline::detail::PolyVal<float>(seg, 0),
+    EXPECT_NEAR(lob::spline::detail::PolyVal<float>(pseg, 0),
                 LineFn(*(knots.data() + i)), kEpsLoose)
         << "segment i=" << i << " left endpoint";
-    EXPECT_NEAR(lob::spline::detail::PolyVal<float>(seg, kT1),
+    EXPECT_NEAR(lob::spline::detail::PolyVal<float>(pseg, kT1),
                 LineFn(*(knots.data() + i + 1)), kEpsLoose)
         << "segment i=" << i << " right endpoint";
   }
@@ -537,16 +537,16 @@ TEST(SplinesBuildTest, BuiltCoefsOnRealKnotsReproduceDragAtKnotsInTable) {
       lob::spline::kKnots.size(), coefs.data());
   for (size_t i = 0; i + 1 < lob::spline::kKnots.size(); ++i) {
     const auto kMach = *(lob::spline::kKnots.data() + i);
-    const auto lo = std::lower_bound(lob::dragtable::kMachs.begin(),
-                                     lob::dragtable::kMachs.end(), kMach);
-    if (lo == lob::dragtable::kMachs.end() || !lob::AreEqual(*lo, kMach)) {
+    const auto* const plo = std::lower_bound(
+        lob::dragtable::kMachs.begin(), lob::dragtable::kMachs.end(), kMach);
+    if (plo == lob::dragtable::kMachs.end() || !lob::AreEqual(*plo, kMach)) {
       continue;
     }
     const auto kIdx =
-        static_cast<size_t>(std::distance(lob::dragtable::kMachs.begin(), lo));
+        static_cast<size_t>(std::distance(lob::dragtable::kMachs.begin(), plo));
     const auto kExpected = *(lob::dragtable::kG1Drags.data() + kIdx);
-    const auto* const seg = coefs.data() + (4 * i);
-    EXPECT_NEAR(lob::spline::detail::PolyVal<float>(seg, 0), kExpected,
+    const auto* const pseg = coefs.data() + (4 * i);
+    EXPECT_NEAR(lob::spline::detail::PolyVal<float>(pseg, 0), kExpected,
                 kEpsLoose);
   }
 }
@@ -575,13 +575,13 @@ TEST(SplinesBuildTest, BuiltSplineMatchesTableAtKnotMachsExactly) {
   lob::spline::CurveView curve(lob::spline::kKnots, coefs);
   for (size_t i = 0; i < lob::spline::kKnots.size(); ++i) {
     const auto kMach = *(lob::spline::kKnots.data() + i);
-    const auto lo = std::lower_bound(lob::dragtable::kMachs.begin(),
-                                     lob::dragtable::kMachs.end(), kMach);
-    if (lo == lob::dragtable::kMachs.end() || !lob::AreEqual(*lo, kMach)) {
+    const auto* const plo = std::lower_bound(
+        lob::dragtable::kMachs.begin(), lob::dragtable::kMachs.end(), kMach);
+    if (plo == lob::dragtable::kMachs.end() || !lob::AreEqual(*plo, kMach)) {
       continue;
     }
     const auto kIdx =
-        static_cast<size_t>(std::distance(lob::dragtable::kMachs.begin(), lo));
+        static_cast<size_t>(std::distance(lob::dragtable::kMachs.begin(), plo));
     const auto kExpected = *(lob::dragtable::kG1Drags.data() + kIdx);
     EXPECT_FLOAT_EQ(curve.Eval(kMach), kExpected)
         << "knot mach #" << i << " = " << kMach;
@@ -632,13 +632,13 @@ TEST(SplinesCurveViewTest, MatchesTableAtKnotMachsExactly) {
   lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
   for (size_t i = 0; i < lob::spline::kKnots.size(); ++i) {
     const auto kMach = *(lob::spline::kKnots.data() + i);
-    const auto lo = std::lower_bound(lob::dragtable::kMachs.begin(),
-                                     lob::dragtable::kMachs.end(), kMach);
-    if (lo == lob::dragtable::kMachs.end() || !lob::AreEqual(*lo, kMach)) {
+    const auto* const plo = std::lower_bound(
+        lob::dragtable::kMachs.begin(), lob::dragtable::kMachs.end(), kMach);
+    if (plo == lob::dragtable::kMachs.end() || !lob::AreEqual(*plo, kMach)) {
       continue;
     }
     const auto kIdx =
-        static_cast<size_t>(std::distance(lob::dragtable::kMachs.begin(), lo));
+        static_cast<size_t>(std::distance(lob::dragtable::kMachs.begin(), plo));
     const auto kExpected = *(lob::dragtable::kG1Drags.data() + kIdx);
     EXPECT_FLOAT_EQ(curve.Eval(kMach), kExpected) << "knot i=" << i;
   }
@@ -704,8 +704,8 @@ TEST(SplinesCurveViewTest, DerivOfPolyValMatchesPolyDerivAtMidSpan) {
     const auto kHi = *(lob::spline::kKnots.data() + i + 1);
     const auto kMid = 0.5F * (kLo + kHi);
     const auto kT = kMid - kLo;
-    const auto* const seg = lob::spline::kG1Coefs.data() + (4 * i);
-    const auto kExpected = lob::spline::detail::PolyDeriv<float>(seg, kT);
+    const auto* const pseg = lob::spline::kG1Coefs.data() + (4 * i);
+    const auto kExpected = lob::spline::detail::PolyDeriv<float>(pseg, kT);
     EXPECT_NEAR(curve.Deriv(kMid), kExpected, kEps) << "span i=" << i;
   }
 }
