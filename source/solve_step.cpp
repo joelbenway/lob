@@ -48,7 +48,9 @@ void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
                spline::CurveView* pcurve, FeetT target_x) {
   assert(ps != nullptr && pcurve != nullptr);
 
-  const FeetT kStepSize = YardT(1);
+  const FeetT kStepSize = ctx.step_size == 0
+                              ? FeetT(YardT(1))
+                              : static_cast<FeetT>(InchT(ctx.step_size));
   const FeetT kStep = target_x > ps->P().X()
                           ? std::min(target_x - ps->P().X(), kStepSize)
                           : kStepSize;
