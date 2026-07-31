@@ -164,8 +164,7 @@ static_assert(offsetof(Context, velocity) == offsetof(::LobContext, velocity),
 static_assert(offsetof(Context, minimum_speed) ==
                   offsetof(::LobContext, minimum_speed),
               "minimum_speed offset drift");
-static_assert(offsetof(Context, step_size) ==
-                  offsetof(::LobContext, step_size),
+static_assert(offsetof(Context, step_size) == offsetof(::LobContext, step_size),
               "step_size offset drift");
 static_assert(offsetof(Context, error) == offsetof(::LobContext, error),
               "error offset drift");
