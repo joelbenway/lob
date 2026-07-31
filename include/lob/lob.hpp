@@ -118,6 +118,7 @@ struct Context {
   std::array<float, kLobCoeffsSize> drags;
   uint16_t velocity;
   uint16_t minimum_speed;
+  uint16_t step_size;
   ErrorT error;
 };
 
@@ -163,6 +164,9 @@ static_assert(offsetof(Context, velocity) == offsetof(::LobContext, velocity),
 static_assert(offsetof(Context, minimum_speed) ==
                   offsetof(::LobContext, minimum_speed),
               "minimum_speed offset drift");
+static_assert(offsetof(Context, step_size) ==
+                  offsetof(::LobContext, step_size),
+              "step_size offset drift");
 static_assert(offsetof(Context, error) == offsetof(::LobContext, error),
               "error offset drift");
 static_assert(static_cast<::LobErrorT>(ErrorT::kNone) == ::kLobErrorNone,
@@ -637,6 +641,17 @@ class Builder {
    */
   Builder& MaximumTime(double value) {
     ::LobBuilderMaximumTime(&builder_, value);
+    return *this;
+  }
+
+  /**
+   * @brief Sets the step size for the numerical solver.
+   * @note If set to zero (the default) the solver uses a 1-yard step.
+   * @param value The spatial step size in inches. 0 = default.
+   * @return A reference to the Builder object.
+   */
+  Builder& StepSize(uint16_t value) {
+    ::LobBuilderStepSize(&builder_, value);
     return *this;
   }
 
