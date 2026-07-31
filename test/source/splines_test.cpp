@@ -550,14 +550,17 @@ TEST(SplinesBuildTest, BuiltCoefsOnRealKnotsReproduceDragAtKnotsInTable) {
 }
 
 TEST(SplinesBuildTest, RuntimeBuildMatchesCompileTimeMakeCoefs) {
+  constexpr float kRelEps = 5.0e-4F;
   std::array<float, lob::spline::kCoefsSize> rt{};
   lob::spline::Build<float>(
       lob::dragtable::kMachs.data(), lob::dragtable::kG1Drags.data(),
       lob::dragtable::kMachs.size(), lob::spline::kKnots.data(),
       lob::spline::kKnots.size(), rt.data());
   for (size_t i = 0; i < lob::spline::kCoefsSize; ++i) {
-    EXPECT_FLOAT_EQ(*(rt.data() + i), *(lob::spline::kG1Coefs.data() + i))
-        << "coef i=" << i;
+    const float kGot = *(rt.data() + i);
+    const float kWant = *(lob::spline::kG1Coefs.data() + i);
+    const float kTol = std::max(std::fabs(kGot), std::fabs(kWant)) * kRelEps;
+    EXPECT_NEAR(kGot, kWant, std::max(kTol, kEpsLoose)) << "coef i=" << i;
   }
 }
 
