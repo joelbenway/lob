@@ -98,10 +98,10 @@ TEST(LobAPITest, StepSize36InchesMatchesDefaultYardStep) {
 
   std::array<lob::Output, kRanges.size()> default_outs{};
   std::array<lob::Output, kRanges.size()> inches_outs{};
-  const auto kDefaultN = lob::Solve(kDefault, kRanges.data(), default_outs.data(),
-                                    kRanges.size());
-  const auto kInchesN = lob::Solve(kInches, kRanges.data(), inches_outs.data(),
-                                   kRanges.size());
+  const auto kDefaultN =
+      lob::Solve(kDefault, kRanges.data(), default_outs.data(), kRanges.size());
+  const auto kInchesN =
+      lob::Solve(kInches, kRanges.data(), inches_outs.data(), kRanges.size());
   ASSERT_EQ(kDefaultN, kRanges.size());
   ASSERT_EQ(kInchesN, kRanges.size());
   for (size_t i = 0; i < kRanges.size(); ++i) {
