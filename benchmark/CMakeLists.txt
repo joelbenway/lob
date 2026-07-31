@@ -109,8 +109,6 @@ endfunction()
 
 add_benchmark(loblerp)
 add_benchmark(ode)
-add_benchmark(zero_angle ${CMAKE_CURRENT_SOURCE_DIR}/../source/solve_step.cpp)
-add_benchmark(genops)
 
 add_folders(Benchmark)
 
