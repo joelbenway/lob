@@ -10,6 +10,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <iterator>
 #include <string>
 #include <utility>
 
@@ -536,12 +537,13 @@ TEST(SplinesBuildTest, BuiltCoefsOnRealKnotsReproduceDragAtKnotsInTable) {
       lob::spline::kKnots.size(), coefs.data());
   for (size_t i = 0; i + 1 < lob::spline::kKnots.size(); ++i) {
     const auto kMach = *(lob::spline::kKnots.data() + i);
-    const auto* const lo = std::lower_bound(
-        lob::dragtable::kMachs.begin(), lob::dragtable::kMachs.end(), kMach);
+    const auto lo = std::lower_bound(lob::dragtable::kMachs.begin(),
+                                     lob::dragtable::kMachs.end(), kMach);
     if (lo == lob::dragtable::kMachs.end() || !lob::AreEqual(*lo, kMach)) {
       continue;
     }
-    const auto kIdx = static_cast<size_t>(lo - lob::dragtable::kMachs.begin());
+    const auto kIdx =
+        static_cast<size_t>(std::distance(lob::dragtable::kMachs.begin(), lo));
     const auto kExpected = *(lob::dragtable::kG1Drags.data() + kIdx);
     const auto* const seg = coefs.data() + (4 * i);
     EXPECT_NEAR(lob::spline::detail::PolyVal<float>(seg, 0), kExpected,
@@ -573,12 +575,13 @@ TEST(SplinesBuildTest, BuiltSplineMatchesTableAtKnotMachsExactly) {
   lob::spline::CurveView curve(lob::spline::kKnots, coefs);
   for (size_t i = 0; i < lob::spline::kKnots.size(); ++i) {
     const auto kMach = *(lob::spline::kKnots.data() + i);
-    const auto* const lo = std::lower_bound(
-        lob::dragtable::kMachs.begin(), lob::dragtable::kMachs.end(), kMach);
+    const auto lo = std::lower_bound(lob::dragtable::kMachs.begin(),
+                                     lob::dragtable::kMachs.end(), kMach);
     if (lo == lob::dragtable::kMachs.end() || !lob::AreEqual(*lo, kMach)) {
       continue;
     }
-    const auto kIdx = static_cast<size_t>(lo - lob::dragtable::kMachs.begin());
+    const auto kIdx =
+        static_cast<size_t>(std::distance(lob::dragtable::kMachs.begin(), lo));
     const auto kExpected = *(lob::dragtable::kG1Drags.data() + kIdx);
     EXPECT_FLOAT_EQ(curve.Eval(kMach), kExpected)
         << "knot mach #" << i << " = " << kMach;
@@ -629,12 +632,13 @@ TEST(SplinesCurveViewTest, MatchesTableAtKnotMachsExactly) {
   lob::spline::CurveView curve(lob::spline::kKnots, lob::spline::kG1Coefs);
   for (size_t i = 0; i < lob::spline::kKnots.size(); ++i) {
     const auto kMach = *(lob::spline::kKnots.data() + i);
-    const auto* const lo = std::lower_bound(
-        lob::dragtable::kMachs.begin(), lob::dragtable::kMachs.end(), kMach);
+    const auto lo = std::lower_bound(lob::dragtable::kMachs.begin(),
+                                     lob::dragtable::kMachs.end(), kMach);
     if (lo == lob::dragtable::kMachs.end() || !lob::AreEqual(*lo, kMach)) {
       continue;
     }
-    const auto kIdx = static_cast<size_t>(lo - lob::dragtable::kMachs.begin());
+    const auto kIdx =
+        static_cast<size_t>(std::distance(lob::dragtable::kMachs.begin(), lo));
     const auto kExpected = *(lob::dragtable::kG1Drags.data() + kIdx);
     EXPECT_FLOAT_EQ(curve.Eval(kMach), kExpected) << "knot i=" << i;
   }
