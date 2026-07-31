@@ -132,7 +132,7 @@ typedef struct {
   float drags[LOB_SPLINE_SEGMENTS * 4];  ///< @brief Required for drag curve.
   uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
   uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
-  uint16_t step_size;      ///< @brief Solver step size in inches (0 = default 1 yd).
+  uint16_t step_size;      ///< @brief Solver step size in inches.
   LobErrorT error;         ///< @brief Error status after build.
 } LobContext;
 
