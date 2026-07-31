@@ -60,6 +60,7 @@ class Impl {
 
   FpsT velocity_fps{NaN()};
   FpsT minimum_speed_fps{NaN()};
+  uint16_t step_size_in{0};
   LobAtmosphereReferenceT atmosphere_reference{
       kLobAtmosphereReferenceArmyStandardMetro};
   LobDragFunctionT drag_function{kLobDragFunctionG1};
@@ -904,6 +905,12 @@ LobBuilder* LobBuilderMaximumTime(LobBuilder* pbuilder, double value) {
   return pbuilder;
 }
 
+LobBuilder* LobBuilderStepSize(LobBuilder* pbuilder, uint16_t value) {
+  auto* pimpl = Pimpl(pbuilder);
+  pimpl->step_size_in = value;
+  return pbuilder;
+}
+
 void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
   assert(pbuilder != nullptr && presult != nullptr);
   if (pbuilder == nullptr || presult == nullptr) {
@@ -916,6 +923,7 @@ void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
       pimpl->velocity_fps.IsNaN() ? 0 : pimpl->velocity_fps.U16();
   presult->minimum_speed =
       pimpl->minimum_speed_fps.IsNaN() ? 0 : pimpl->minimum_speed_fps.U16();
+  presult->step_size = pimpl->step_size_in;
   presult->max_time = pimpl->max_time_sec;
   presult->zero_angle =
       pimpl->zero_angle_moa.IsNaN() ? NaN() : pimpl->zero_angle_moa.Value();
