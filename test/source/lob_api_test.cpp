@@ -73,6 +73,47 @@ TEST(LobAPITest, MinimumVelocity) {
   EXPECT_EQ(out.velocity, kMinimumVelocity);
 }
 
+TEST(LobAPITest, StepSize36InchesMatchesDefaultYardStep) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  const std::array<uint32_t, 5> kRanges = {300U, 900U, 1500U, 2400U, 3000U};
+
+  const lob::Context kDefault = lob::Builder()
+                                    .BallisticCoefficientPsi(kTestBC)
+                                    .InitialVelocityFps(kTestMuzzleVelocity)
+                                    .ZeroAngleMOA(kTestZeroAngle)
+                                    .Build();
+  const lob::Context kInches = lob::Builder()
+                                   .BallisticCoefficientPsi(kTestBC)
+                                   .InitialVelocityFps(kTestMuzzleVelocity)
+                                   .ZeroAngleMOA(kTestZeroAngle)
+                                   .StepSize(36U)
+                                   .Build();
+
+  ASSERT_EQ(kDefault.error, kLobErrorNone);
+  ASSERT_EQ(kInches.error, kLobErrorNone);
+  EXPECT_EQ(kInches.step_size, 36U);
+  EXPECT_EQ(kDefault.step_size, 0U);
+
+  std::array<lob::Output, kRanges.size()> default_outs{};
+  std::array<lob::Output, kRanges.size()> inches_outs{};
+  const auto kDefaultN = lob::Solve(kDefault, kRanges.data(), default_outs.data(),
+                                    kRanges.size());
+  const auto kInchesN = lob::Solve(kInches, kRanges.data(), inches_outs.data(),
+                                   kRanges.size());
+  ASSERT_EQ(kDefaultN, kRanges.size());
+  ASSERT_EQ(kInchesN, kRanges.size());
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_FLOAT_EQ(default_outs[i].velocity, inches_outs[i].velocity);
+    EXPECT_FLOAT_EQ(default_outs[i].energy, inches_outs[i].energy);
+    EXPECT_FLOAT_EQ(default_outs[i].elevation, inches_outs[i].elevation);
+    EXPECT_FLOAT_EQ(default_outs[i].deflection, inches_outs[i].deflection);
+    EXPECT_FLOAT_EQ(default_outs[i].time_of_flight,
+                    inches_outs[i].time_of_flight);
+  }
+}
+
 TEST(LobAPITest, MinimumEnergy) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
