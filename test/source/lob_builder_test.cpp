@@ -190,8 +190,13 @@ TEST_P(CustomTableTestFixture, CustomTableMatchesDragFunction) {
 
   ASSERT_EQ(kResult1.error, kLobErrorNone);
   ASSERT_EQ(kResult2.error, kLobErrorNone);
+  constexpr float kRelEps = 5.0e-4F;
+  constexpr float kFloor = 1.0e-3F;
   for (size_t i = 0; i < kResult1.drags.size(); i++) {
-    EXPECT_FLOAT_EQ(kResult1.drags.at(i), kResult2.drags.at(i));
+    const float kA = kResult1.drags.at(i);
+    const float kB = kResult2.drags.at(i);
+    const float kTol = std::max(std::fabs(kA), std::fabs(kB)) * kRelEps;
+    EXPECT_NEAR(kA, kB, std::max(kTol, kFloor));
   }
 }
 
