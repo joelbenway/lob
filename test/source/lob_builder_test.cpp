@@ -17,7 +17,6 @@
 #include "constants.hpp"
 #include "eng_units.hpp"
 #include "helpers.hpp"
-#include "lob/lob.h"
 #include "lob/lob.hpp"
 #include "splines.hpp"
 #include "tables.hpp"
@@ -189,8 +188,8 @@ TEST_P(CustomTableTestFixture, CustomTableMatchesDragFunction) {
           .MachVsDragTable(machs, drags)
           .Build();
 
-  ASSERT_EQ(kResult1.error, kLobErrorNone);
-  ASSERT_EQ(kResult2.error, kLobErrorNone);
+  ASSERT_EQ(kResult1.error, lob::ErrorT::kNone);
+  ASSERT_EQ(kResult2.error, lob::ErrorT::kNone);
   constexpr float kRelEps = 5.0e-4F;
   constexpr float kFloor = 1.0e-3F;
   for (size_t i = 0; i < kResult1.drags.size(); i++) {

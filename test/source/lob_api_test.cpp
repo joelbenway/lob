@@ -519,13 +519,12 @@ TEST(LobAPITest, CEnumBCAtmosphereOverload) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
   const double kTestZeroAngle = 6.11;
-  const lob::Context kResult =
-      lob::Builder()
-          .BallisticCoefficientPsi(kTestBC)
-          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-          .InitialVelocityFps(kTestMuzzleVelocity)
-          .ZeroAngleMOA(kTestZeroAngle)
-          .Build();
+  const lob::Context kResult = lob::Builder()
+                                   .BallisticCoefficientPsi(kTestBC)
+                                   .BCAtmosphere(1)
+                                   .InitialVelocityFps(kTestMuzzleVelocity)
+                                   .ZeroAngleMOA(kTestZeroAngle)
+                                   .Build();
   EXPECT_EQ(kResult.error, lob::ErrorT::kNone);
 }
 
@@ -535,7 +534,7 @@ TEST(LobAPITest, CEnumBCDragFunctionOverload) {
   const double kTestZeroAngle = 6.11;
   const lob::Context kResult = lob::Builder()
                                    .BallisticCoefficientPsi(kTestBC)
-                                   .BCDragFunction(lob::DragFunctionT::kG1)
+                                   .BCDragFunction(1)
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .ZeroAngleMOA(kTestZeroAngle)
                                    .Build();
@@ -548,7 +547,7 @@ TEST(LobAPITest, CEnumWindHeadingOverload) {
   const double kTestZeroAngle = 6.11;
   const lob::Context kResult = lob::Builder()
                                    .BallisticCoefficientPsi(kTestBC)
-                                   .WindHeading(lob::ClockAngleT::kXII)
+                                   .WindHeading(12)
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .ZeroAngleMOA(kTestZeroAngle)
                                    .Build();
