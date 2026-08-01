@@ -35,7 +35,7 @@ Ballistics solutions require many inputs to model all the factors affecting the 
 
 Lob's architecture follows an [hourglass pattern](https://www.youtube.com/watch?v=PVYdHDm0q6Y): a C++ implementation at the base, a C API ([`lob.h`](include/lob/lob.h)) as the narrow waist providing a stable ABI boundary, and a C++ wrapper ([`lob.hpp`](include/lob/lob.hpp)) atop that restores the ergonomic C++ interface. The C interface makes it easy to bring your favorite language along and use lob as the little spoon. :hugs:
 
-To use lob in your project, [the C++ header](include/lob/lob.hpp) has everything you need! Or use [the C header](include/lob/lob.h) directly. Lob does not dynamically allocate memory or throw exceptions. It is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating point math. Lob is CMake FetchContent-friendly with no dependencies of its own. Easy to add, easy to use! :thumbsup:
+To use lob in your project, [the C++ header](include/lob/lob.hpp) has everything you need! Or use [the C header](include/lob/lob.h) directly. Lob does not dynamically allocate memory or throw exceptions. It is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating-point math. Lob is CMake FetchContent-friendly with no dependencies of its own. Easy to add, easy to use! :thumbsup:
 
 ### How do I use lob?
 Lob uses a straightforward API featuring a few data structures and free functions that act on them. At the heart of lob is the `Builder` class which is used to build `Context` which is then consumed by the `Solver` functions. Why this two stage process? Ballistic solutions take dozens of optional, interacting inputs. The builder pattern allows you to name the ones you know, defaults the rest, and validates the full set before the solver sees it.
@@ -77,7 +77,7 @@ Drop at 1200 feet is -33.91 inches
 Drop at 1500 feet is -62.51 inches
 Drop at 1800 feet is -102.87 inches
 ```
-It only takes a few parameters for lob to make a well-formed, if minimal, ballistic solution. By providing more data, our solver can be more precise.
+It only takes a few parameters for lob to make a well-formed, if minimal, ballistic solution. By providing more data, our solver can be more accurate.
 ```C++
 const lob::Context kMoreCtx =
   lob::Builder()
@@ -103,7 +103,7 @@ const lob::Context kMoreCtx =
 Now we're cooking! :cook:
 
 ### Accurate
-Under the hood lob solves ordinary differential equations (ODEs) which model the projectile motion of a point mass using numerical methods. To ensure error-free math lob is overbuilt with tender loving obsession. Internally lob uses a custom [strong type](/source/eng_units.hpp) system for engineering units that eliminate an entire class of potential bugs. Every calculation lob uses is validated against published data by comprehensive unit tests. :mechanical_arm:
+Under the hood lob solves ordinary differential equations (ODEs) which model the projectile motion of a point mass using numerical methods. To reduce the risk of mathematical error lob is overbuilt with tender loving obsession. Internally lob uses a custom [strong type](/source/eng_units.hpp) system for engineering units that eliminate an entire class of potential bugs. Every calculation lob uses is validated against published data by comprehensive unit tests. :mechanical_arm:
 
 ### Fast!
 Lob is not just high-performance because it's C++; it was designed with performance in mind and benchmarked along the way. To speed up the solver's most critical performance path lob uniquely models drag functions as cubic Hermite spline curves built from mach vs drag tables at compile-time. These spline curves evaluate with just a handful of arithmetic ops for extraordinary speed! :checkered_flag:
