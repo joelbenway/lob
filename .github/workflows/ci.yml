@@ -236,3 +236,95 @@ jobs:
     - name: Deploy docs to GitHub Pages
       uses: actions/deploy-pages@v4
       id: deployment
+
+  cachegrind:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout head
+      uses: actions/checkout@v5
+      with:
+        path: head
+        persist-credentials: false
+
+    # Same-runner base/head: a stored baseline drifts with glibc IFUNC picks.
+    - name: Checkout base
+      if: github.event_name == 'pull_request'
+      uses: actions/checkout@v5
+      with:
+        ref: ${{ github.event.pull_request.base.sha }}
+        path: base
+        persist-credentials: false
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and measure head
+      working-directory: head
+      run: nix develop . --command bash -c
+        "cmake --preset=ci-benchmark &&
+         cmake --build build/benchmark -j 2 -t cachegrind-bench"
+
+    - name: Build and measure base
+      if: github.event_name == 'pull_request'
+      continue-on-error: true
+      working-directory: base
+      run: nix develop ../head --command bash -c
+        "cmake --preset=ci-benchmark &&
+         cmake --build build/benchmark -j 2 -t cachegrind-bench"
+
+    - name: Compare
+      if: github.event_name == 'pull_request'
+      run: cmake
+        -D CG_BASE=base/build/benchmark/cachegrind/lob_bench.results.cmake
+        -D CG_HEAD=head/build/benchmark/cachegrind/lob_bench.results.cmake
+        -D CG_MAX_REGRESSION_BP=100
+        -D "CG_THRESHOLD_OVERRIDE_build_zero_search=300"
+        -D CG_SUMMARY="$GITHUB_STEP_SUMMARY"
+        -P head/cmake/cachegrind-compare.cmake
+
+    # Raw .out files for local `cg_annotate --diff` drill-down.
+    - name: Upload raw cachegrind output
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: cachegrind-raw-${{ github.run_id }}
+        path: |
+          head/build/benchmark/cachegrind/*.out
+          head/build/benchmark/cachegrind/*.json
+          head/build/benchmark/cachegrind/*.results.cmake
+          base/build/benchmark/cachegrind/*.out
+          base/build/benchmark/cachegrind/*.results.cmake
+        if-no-files-found: warn
+        retention-days: 14
+
+  track:
+    needs: [cachegrind]
+    if: github.event_name == 'push' && github.repository_owner == 'joelbenway'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v5
+    - name: Install Nix
+      uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and measure
+      run: nix develop . --command bash -c
+        "cmake --preset=ci-benchmark &&
+         cmake --build build/benchmark -j 2 -t cachegrind-bench"
+
+    - uses: benchmark-action/github-action-benchmark@v1
+      with:
+        name: lob instruction counts
+        tool: customSmallerIsBetter
+        output-file-path: build/benchmark/cachegrind/lob_bench.json
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
+        alert-threshold: '102%'
+        comment-on-alert: true
+        fail-on-alert: false

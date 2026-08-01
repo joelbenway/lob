@@ -110,6 +110,10 @@ endfunction()
 add_benchmark(loblerp)
 add_benchmark(ode)
 
+if(UNIX AND NOT APPLE)
+  add_subdirectory(cachegrind)
+endif()
+
 add_folders(Benchmark)
 
 # This file is part of lob.

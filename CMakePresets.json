@@ -156,6 +156,24 @@
       }
     },
     {
+      "name": "benchmark-linux",
+      "binaryDir": "${sourceDir}/build/benchmark",
+      "generator": "Unix Makefiles",
+      "inherits": "ci-std",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS": "-O2 -g -fno-omit-frame-pointer",
+        "BUILD_SHARED_LIBS": "OFF",
+        "BUILD_EXAMPLES": "OFF",
+        "BUILD_TESTING": "OFF"
+      }
+    },
+    {
+      "name": "ci-benchmark",
+      "inherits": ["benchmark-linux", "dev-mode"]
+    },
+    {
       "name": "ci-build",
       "binaryDir": "${sourceDir}/build",
       "hidden": true
