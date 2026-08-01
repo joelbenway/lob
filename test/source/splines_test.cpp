@@ -567,6 +567,15 @@ TEST(SplinesBuildTest, RuntimeBuildMatchesCompileTimeMakeCoefs) {
   }
 }
 
+TEST(SplinesBuildTest, MakeCoefsRuntimeWithCustomDragTable) {
+  constexpr std::array<float, 2> kDrags = {0.5F, 0.3F};
+  const auto kCoefs = lob::spline::MakeCoefs<2>(kDrags);
+  EXPECT_EQ(kCoefs.size(), lob::spline::kCoefsSize);
+  for (const auto kCoef : kCoefs) {
+    EXPECT_TRUE(std::isfinite(kCoef));
+  }
+}
+
 TEST(SplinesBuildTest, BuiltSplineMatchesTableAtKnotMachsExactly) {
   std::array<float, lob::spline::kCoefsSize> coefs{};
   lob::spline::Build<float>(
@@ -779,7 +788,7 @@ TEST(SplinesToArrayTest, RoundTripsDataPointForPoint) {
 }
 
 TEST(SplinesRuntimeContextsTest, DetailFunctionsAreUsableAtRuntime) {
-  constexpr auto kExpectedFabs = 3.5F;
+  const float kExpectedFabs = 3.5F;
   constexpr auto kExpectedIdx = size_t{1};
   const auto kSecant =
       lob::spline::detail::Secant<float>(kLinearX.data(), kLineFn.data(), 0);
