@@ -59,6 +59,11 @@ foreach(_slug ${HEAD_CG_RESULT_SLUGS})
     continue()
   endif()
   cg_milli_to_string(_b "${BASE_CG_IR_PER_OP_MILLI_${_slug}}")
+  if(BASE_CG_IR_PER_OP_MILLI_${_slug} EQUAL 0)
+    message(FATAL_ERROR
+      "base Ir/op for '${_name}' is zero: baseline corrupt (the runner \
+rejects non-positive deltas)")
+  endif()
   math(EXPR _delta_bp
        "((${HEAD_CG_IR_PER_OP_MILLI_${_slug}} - ${BASE_CG_IR_PER_OP_MILLI_${_slug}}) * 10000) / ${BASE_CG_IR_PER_OP_MILLI_${_slug}}")
   set(_threshold ${CG_MAX_REGRESSION_BP})
