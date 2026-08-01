@@ -12,6 +12,7 @@ struct CliConfig {
   bool show_help = false;
   bool show_version = false;
   bool json_mode = false;
+  bool parse_error = false;
   bool has_save_input_path = false;
   std::string save_input_path;
 };

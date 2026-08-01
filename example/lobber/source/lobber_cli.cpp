@@ -37,8 +37,9 @@ CliConfig ParseArgs(int argc, char* argv[]) {  // NOLINT
     } else if (kArg.compare(0, std::strlen(kSaveInput), kSaveInput) == 0) {
       config.has_save_input_path = true;
       config.save_input_path = kArg.substr(std::strlen(kSaveInput));
-    } else if (kArg.size() > 2 && kArg[0] == '-' && kArg[1] == '-') {
+    } else if (kArg.size() > 1 && kArg[0] == '-') {
       std::cerr << "\033[33mWarning: Unknown option " << kArg << "\033[0m\n";
+      config.parse_error = true;
     }
   }
   return config;
