@@ -512,7 +512,15 @@ TEST(LobAPITest, ErrorTComparisonWithCEnum) {
   for (const auto& error : kErrors) {
     EXPECT_TRUE(error.first == error.second)
         << "error=" << static_cast<int>(error.first);
+    EXPECT_TRUE(error.second == error.first)
+        << "error=" << static_cast<int>(error.first);
+    EXPECT_FALSE(error.first != error.second)
+        << "error=" << static_cast<int>(error.first);
+    EXPECT_FALSE(error.second != error.first)
+        << "error=" << static_cast<int>(error.first);
   }
+  EXPECT_TRUE(lob::ErrorT::kNone != ::kLobErrorNotFormed);
+  EXPECT_TRUE(::kLobErrorNotFormed != lob::ErrorT::kNone);
 }
 
 TEST(LobAPITest, CEnumBCAtmosphereOverload) {
