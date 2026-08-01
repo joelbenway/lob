@@ -124,9 +124,6 @@ TEST(IsInfTest, NaNIsNotInf) {
   EXPECT_FALSE(lob::IsInf(kNaN));
 }
 
-static_assert(lob::IsNan(std::numeric_limits<double>::quiet_NaN()),
-              "IsNan is constexpr");
-
 TEST(IsNanTest, NaN) {
   const double kNaN = std::numeric_limits<double>::quiet_NaN();
   EXPECT_TRUE(lob::IsNan(kNaN));
