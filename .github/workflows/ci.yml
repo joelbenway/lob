@@ -289,7 +289,7 @@ jobs:
     # Raw .out files for local `cg_annotate --diff` drill-down.
     - name: Upload raw cachegrind output
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: cachegrind-raw-${{ github.run_id }}
         path: |
