@@ -18,6 +18,10 @@
 int main(int argc, char* argv[]) try {
   auto config = example::ParseArgs(argc, argv);
 
+  if (config.parse_error) {
+    return 1;
+  }
+
   if (config.show_help) {
     example::PrintHelp();
     return 0;
