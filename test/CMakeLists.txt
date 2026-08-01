@@ -73,6 +73,7 @@ endif()
 set(LOB_TEST_SOURCES
     source/lob_test.cpp
     source/lob_api_test.cpp
+    source/c_api_test.cpp
     source/lob_cwaj_test.cpp
     source/lob_builder_test.cpp
     source/lob_coriolis_test.cpp

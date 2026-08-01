@@ -644,6 +644,9 @@ using namespace lob;  // NOLINT(google-build-using-namespace)
 void LobBuilderInit(LobBuilder* pbuilder) {
   static_assert(sizeof(Impl) <= LOB_BUILDER_BUFFER_SIZE,
                 "LOB_BUILDER_BUFFER_SIZE too small");
+  if (pbuilder == nullptr) {
+    return;
+  }
   ::new (&pbuilder->buffer) Impl();
 }
 
@@ -654,6 +657,9 @@ void LobBuilderDestroy(LobBuilder* pbuilder) {
 }
 
 void LobBuilderCopy(LobBuilder* dst, const LobBuilder* src) {
+  if (dst == nullptr || src == nullptr) {
+    return;
+  }
   if (dst != src) {
     Pimpl(dst)->~Impl();
     ::new (&dst->buffer) Impl(*Pimpl(src));
@@ -661,6 +667,9 @@ void LobBuilderCopy(LobBuilder* dst, const LobBuilder* src) {
 }
 
 LobBuilder* LobBuilderReset(LobBuilder* pbuilder) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->~Impl();
   ::new (&pbuilder->buffer) Impl();
@@ -669,6 +678,9 @@ LobBuilder* LobBuilderReset(LobBuilder* pbuilder) {
 
 LobBuilder* LobBuilderBallisticCoefficientPsi(LobBuilder* pbuilder,
                                               double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->ballistic_coefficient_psi = PmsiT(value);
   return pbuilder;
@@ -676,6 +688,9 @@ LobBuilder* LobBuilderBallisticCoefficientPsi(LobBuilder* pbuilder,
 
 LobBuilder* LobBuilderBCAtmosphere(LobBuilder* pbuilder,
                                    LobAtmosphereReferenceT type) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->atmosphere_reference = type;
   return pbuilder;
@@ -683,6 +698,9 @@ LobBuilder* LobBuilderBCAtmosphere(LobBuilder* pbuilder,
 
 LobBuilder* LobBuilderBCDragFunction(LobBuilder* pbuilder,
                                      LobDragFunctionT type) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->drag_function = type;
   pimpl->custom_machs = nullptr;
@@ -692,42 +710,63 @@ LobBuilder* LobBuilderBCDragFunction(LobBuilder* pbuilder,
 }
 
 LobBuilder* LobBuilderDiameterInch(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->diameter_in = InchT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderMeplatDiameterInch(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->meplat_diameter_in = InchT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderBaseDiameterInch(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->base_diameter_in = InchT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderLengthInch(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->length_in = InchT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderNoseLengthInch(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->nose_length_in = InchT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderTailLengthInch(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->tail_length_in = InchT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderOgiveRtR(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->ogive_rtr = value;
   return pbuilder;
@@ -735,10 +774,10 @@ LobBuilder* LobBuilderOgiveRtR(LobBuilder* pbuilder, double value) {
 
 LobBuilder* LobBuilderSplineFitTable(LobBuilder* pbuilder, const float* pmachs,
                                      const float* pdrags, size_t size) {
-  auto* pimpl = Pimpl(pbuilder);
-  if (pmachs == nullptr || pdrags == nullptr) {
+  if (pbuilder == nullptr || pmachs == nullptr || pdrags == nullptr) {
     return pbuilder;
   }
+  auto* pimpl = Pimpl(pbuilder);
   pimpl->custom_machs = pmachs;
   pimpl->custom_drags = pdrags;
   pimpl->custom_count = size;
@@ -746,36 +785,54 @@ LobBuilder* LobBuilderSplineFitTable(LobBuilder* pbuilder, const float* pmachs,
 }
 
 LobBuilder* LobBuilderMassGrains(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->mass_lbs = LbsT(GrainT(value));
   return pbuilder;
 }
 
 LobBuilder* LobBuilderInitialVelocityFps(LobBuilder* pbuilder, uint16_t value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->velocity_fps = FpsT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderOpticHeightInches(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->optic_height_ft = FeetT(InchT(value));
   return pbuilder;
 }
 
 LobBuilder* LobBuilderTwistInchesPerTurn(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->twist_inches_per_turn = InchPerTwistT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderZeroAngleMOA(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->zero_angle_moa = MoaT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderZeroDistanceYds(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->zero_distance_ft = YardT(value);
   return pbuilder;
@@ -783,6 +840,9 @@ LobBuilder* LobBuilderZeroDistanceYds(LobBuilder* pbuilder, double value) {
 
 LobBuilder* LobBuilderZeroImpactHeightInches(LobBuilder* pbuilder,
                                              double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->zero_impact_height = InchT(value);
   return pbuilder;
@@ -790,12 +850,18 @@ LobBuilder* LobBuilderZeroImpactHeightInches(LobBuilder* pbuilder,
 
 LobBuilder* LobBuilderAltitudeOfFiringSiteFt(LobBuilder* pbuilder,
                                              double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->altitude_ft = FeetT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderAirPressureInHg(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->air_pressure_in_hg = InHgT(value);
   return pbuilder;
@@ -803,12 +869,18 @@ LobBuilder* LobBuilderAirPressureInHg(LobBuilder* pbuilder, double value) {
 
 LobBuilder* LobBuilderAltitudeOfBarometerFt(LobBuilder* pbuilder,
                                             double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->altitude_of_barometer_ft = FeetT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderTemperatureDegF(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->temperature_deg_f = DegFT(value);
   return pbuilder;
@@ -816,6 +888,9 @@ LobBuilder* LobBuilderTemperatureDegF(LobBuilder* pbuilder, double value) {
 
 LobBuilder* LobBuilderAltitudeOfThermometerFt(LobBuilder* pbuilder,
                                               double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->altitude_of_thermometer_ft = FeetT(value);
   return pbuilder;
@@ -823,12 +898,18 @@ LobBuilder* LobBuilderAltitudeOfThermometerFt(LobBuilder* pbuilder,
 
 LobBuilder* LobBuilderRelativeHumidityPercent(LobBuilder* pbuilder,
                                               double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->relative_humidity_percent = PercentT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderWindHeading(LobBuilder* pbuilder, LobClockAngleT value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   const DegreesT kDegreesPerClockNumber = DegreesT(kDegreesPerTurn) / 12;
   const DegreesT kPosition(3 - static_cast<uint8_t>(value));
@@ -842,6 +923,9 @@ LobBuilder* LobBuilderWindHeading(LobBuilder* pbuilder, LobClockAngleT value) {
 }
 
 LobBuilder* LobBuilderWindHeadingDeg(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   const DegreesT kFullTurn(kDegreesPerTurn);
   const DegreesT kQuarterTurn(kFullTurn / 4);
@@ -858,61 +942,87 @@ LobBuilder* LobBuilderWindHeadingDeg(LobBuilder* pbuilder, double value) {
 }
 
 LobBuilder* LobBuilderWindSpeedFps(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->wind_speed_fps = FpsT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderWindSpeedMph(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->wind_speed_fps = MphT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderAzimuthDeg(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->azimuth_rad = DegreesT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderLatitudeDeg(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->latitude_rad = DegreesT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderRangeAngleDeg(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->range_angle_rad = RadiansT(DegreesT(value));
   return pbuilder;
 }
 
 LobBuilder* LobBuilderMinimumSpeed(LobBuilder* pbuilder, uint16_t value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->minimum_speed_fps = FpsT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderMinimumEnergy(LobBuilder* pbuilder, uint16_t value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->minimum_energy_ft_lbs = FtLbsT(value);
   return pbuilder;
 }
 
 LobBuilder* LobBuilderMaximumTime(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->max_time_sec = value;
   return pbuilder;
 }
 
 LobBuilder* LobBuilderStepSize(LobBuilder* pbuilder, uint16_t value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->step_size_in = value;
   return pbuilder;
 }
 
 void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
-  assert(pbuilder != nullptr && presult != nullptr);
   if (pbuilder == nullptr || presult == nullptr) {
     return;
   }

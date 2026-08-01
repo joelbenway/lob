@@ -158,20 +158,20 @@ typedef struct {
 /** @brief Gets the library version in major.minor.patch format. */
 LOB_EXPORT extern const char* LobVersion(void);
 
-/** @brief Initializes a builder to default state. */
+/** @brief Initializes a builder to default state. No-op if pbuilder is null. */
 LOB_EXPORT extern void LobBuilderInit(LobBuilder* pbuilder);
-/** @brief Destroys a builder and releases resources. */
+/** @brief Destroys a builder and releases resources. No-op if pbuilder is null. */
 LOB_EXPORT extern void LobBuilderDestroy(LobBuilder* pbuilder);
-/** @brief Copies builder state from src to dst. */
+/** @brief Copies builder state from src to dst. No-op if either is null. */
 LOB_EXPORT extern void LobBuilderCopy(LobBuilder* dst, const LobBuilder* src);
-/** @brief Resets a builder state by re-initializing. */
+/** @brief Resets a builder state by re-initializing. No-op if pbuilder is null. */
 LOB_EXPORT extern LobBuilder* LobBuilderReset(LobBuilder* pbuilder);
 
 /**
  * @brief Sets the ballistic coefficient (Psi).
  * @param pbuilder Pointer to the builder.
  * @param value The ballistic coefficient value.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderBallisticCoefficientPsi(
     LobBuilder* pbuilder, double value);
@@ -180,7 +180,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderBallisticCoefficientPsi(
  * @brief Sets the atmosphere reference associated with ballistic coefficient.
  * @param pbuilder Pointer to the builder.
  * @param type The atmosphere reference type.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderBCAtmosphere(
     LobBuilder* pbuilder, LobAtmosphereReferenceT type);
@@ -189,7 +189,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderBCAtmosphere(
  * @brief Sets the drag function associated with ballistic coefficient.
  * @param pbuilder Pointer to the builder.
  * @param type The drag function type.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderBCDragFunction(LobBuilder* pbuilder,
                                                        LobDragFunctionT type);
@@ -198,7 +198,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderBCDragFunction(LobBuilder* pbuilder,
  * @brief Sets the projectile diameter (caliber) in inches.
  * @param pbuilder Pointer to the builder.
  * @param value The diameter in inches.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderDiameterInch(LobBuilder* pbuilder,
                                                      double value);
@@ -207,7 +207,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderDiameterInch(LobBuilder* pbuilder,
  * @brief Sets the projectile meplat diameter in inches.
  * @param pbuilder Pointer to the builder.
  * @param value The meplat in inches.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderMeplatDiameterInch(LobBuilder* pbuilder,
                                                            double value);
@@ -216,7 +216,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderMeplatDiameterInch(LobBuilder* pbuilder,
  * @brief Sets the projectile base diameter in inches.
  * @param pbuilder Pointer to the builder.
  * @param value The base diameter in inches.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderBaseDiameterInch(LobBuilder* pbuilder,
                                                          double value);
@@ -225,7 +225,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderBaseDiameterInch(LobBuilder* pbuilder,
  * @brief Sets the projectile length in inches.
  * @param pbuilder Pointer to the builder.
  * @param value The length in inches.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderLengthInch(LobBuilder* pbuilder,
                                                    double value);
@@ -234,7 +234,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderLengthInch(LobBuilder* pbuilder,
  * @brief Sets the projectile nose length in inches.
  * @param pbuilder Pointer to the builder.
  * @param value The nose length in inches.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderNoseLengthInch(LobBuilder* pbuilder,
                                                        double value);
@@ -243,7 +243,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderNoseLengthInch(LobBuilder* pbuilder,
  * @brief Sets the projectile tail length in inches.
  * @param pbuilder Pointer to the builder.
  * @param value The tail length in inches.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderTailLengthInch(LobBuilder* pbuilder,
                                                        double value);
@@ -252,7 +252,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderTailLengthInch(LobBuilder* pbuilder,
  * @brief Sets the Rt/R ratio of the projectile ogive.
  * @param pbuilder Pointer to the builder.
  * @param value The Rt/R ratio.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderOgiveRtR(LobBuilder* pbuilder,
                                                  double value);
@@ -268,7 +268,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderOgiveRtR(LobBuilder* pbuilder,
  * @param pmachs Pointer to an array of mach values.
  * @param pdrags Pointer to an array of associated drag values.
  * @param size The number of mach-drag pairs in the table.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderSplineFitTable(LobBuilder* pbuilder,
                                                        const float* pmachs,
@@ -279,7 +279,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderSplineFitTable(LobBuilder* pbuilder,
  * @brief Sets the projectile mass in grains.
  * @param pbuilder Pointer to the builder.
  * @param value The mass in grains.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderMassGrains(LobBuilder* pbuilder,
                                                    double value);
@@ -288,7 +288,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderMassGrains(LobBuilder* pbuilder,
  * @brief Sets the initial velocity of the projectile in feet per second.
  * @param pbuilder Pointer to the builder.
  * @param value The initial velocity in fps.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderInitialVelocityFps(LobBuilder* pbuilder,
                                                            uint16_t value);
@@ -297,7 +297,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderInitialVelocityFps(LobBuilder* pbuilder,
  * @brief Sets the height of the optic above the bore in inches.
  * @param pbuilder Pointer to the builder.
  * @param value The optic height in inches.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderOpticHeightInches(LobBuilder* pbuilder,
                                                           double value);
@@ -307,7 +307,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderOpticHeightInches(LobBuilder* pbuilder,
  * @note Used to calculate adjustments for spin drift and aerodynamic jump.
  * @param pbuilder Pointer to the builder.
  * @param value The twist rate in inches per turn.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderTwistInchesPerTurn(LobBuilder* pbuilder,
                                                            double value);
@@ -319,7 +319,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderTwistInchesPerTurn(LobBuilder* pbuilder,
  * from zeroing conditions.
  * @param pbuilder Pointer to the builder.
  * @param value The zero angle in MOA.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderZeroAngleMOA(LobBuilder* pbuilder,
                                                      double value);
@@ -328,7 +328,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderZeroAngleMOA(LobBuilder* pbuilder,
  * @brief Sets the zero distance in yards.
  * @param pbuilder Pointer to the builder.
  * @param value The zero distance in yards.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderZeroDistanceYds(LobBuilder* pbuilder,
                                                         double value);
@@ -339,7 +339,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderZeroDistanceYds(LobBuilder* pbuilder,
  * example.
  * @param pbuilder Pointer to the builder.
  * @param value The zero impact height in inches.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderZeroImpactHeightInches(
     LobBuilder* pbuilder, double value);
@@ -348,7 +348,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderZeroImpactHeightInches(
  * @brief Sets the altitude of the firing site in feet.
  * @param pbuilder Pointer to the builder.
  * @param value The altitude in feet.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderAltitudeOfFiringSiteFt(
     LobBuilder* pbuilder, double value);
@@ -357,7 +357,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderAltitudeOfFiringSiteFt(
  * @brief Sets the air pressure in inches of mercury (inHg).
  * @param pbuilder Pointer to the builder.
  * @param value The air pressure in inHg.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderAirPressureInHg(LobBuilder* pbuilder,
                                                         double value);
@@ -370,7 +370,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderAirPressureInHg(LobBuilder* pbuilder,
  * weather station.
  * @param pbuilder Pointer to the builder.
  * @param value The altitude in feet.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderAltitudeOfBarometerFt(
     LobBuilder* pbuilder, double value);
@@ -379,7 +379,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderAltitudeOfBarometerFt(
  * @brief Sets the temperature in degrees Fahrenheit.
  * @param pbuilder Pointer to the builder.
  * @param value The temperature in degrees F.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderTemperatureDegF(LobBuilder* pbuilder,
                                                         double value);
@@ -392,7 +392,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderTemperatureDegF(LobBuilder* pbuilder,
  * weather station.
  * @param pbuilder Pointer to the builder.
  * @param value The altitude in feet.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderAltitudeOfThermometerFt(
     LobBuilder* pbuilder, double value);
@@ -401,7 +401,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderAltitudeOfThermometerFt(
  * @brief Sets the relative humidity at the firing site in percent.
  * @param pbuilder Pointer to the builder.
  * @param value The relative humidity in percent.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderRelativeHumidityPercent(
     LobBuilder* pbuilder, double value);
@@ -411,7 +411,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderRelativeHumidityPercent(
  * @note Twelve O'Clock is pure tailwind, Six O'Clock is a pure headwind.
  * @param pbuilder Pointer to the builder.
  * @param value The wind heading as a clock angle.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderWindHeading(LobBuilder* pbuilder,
                                                     LobClockAngleT value);
@@ -421,7 +421,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindHeading(LobBuilder* pbuilder,
  * @note 0 is pure tailwind, 180 is pure headwind.
  * @param pbuilder Pointer to the builder.
  * @param value The wind heading in degrees.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderWindHeadingDeg(LobBuilder* pbuilder,
                                                        double value);
@@ -430,7 +430,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindHeadingDeg(LobBuilder* pbuilder,
  * @brief Sets the wind speed in feet per second.
  * @param pbuilder Pointer to the builder.
  * @param value The wind speed in fps.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderWindSpeedFps(LobBuilder* pbuilder,
                                                      double value);
@@ -439,7 +439,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindSpeedFps(LobBuilder* pbuilder,
  * @brief Sets the wind speed in miles per hour.
  * @param pbuilder Pointer to the builder.
  * @param value The wind speed in mph.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderWindSpeedMph(LobBuilder* pbuilder,
                                                      double value);
@@ -449,7 +449,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindSpeedMph(LobBuilder* pbuilder,
  * @note Used for making coriolis effect corrections.
  * @param pbuilder Pointer to the builder.
  * @param value The azimuth in degrees.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderAzimuthDeg(LobBuilder* pbuilder,
                                                    double value);
@@ -459,7 +459,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderAzimuthDeg(LobBuilder* pbuilder,
  * @note Used for making coriolis effect corrections.
  * @param pbuilder Pointer to the builder.
  * @param value The latitude in degrees.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderLatitudeDeg(LobBuilder* pbuilder,
                                                     double value);
@@ -468,7 +468,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderLatitudeDeg(LobBuilder* pbuilder,
  * @brief Sets the range angle (inclination) to the target in degrees.
  * @param pbuilder Pointer to the builder.
  * @param value The range angle in degrees.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderRangeAngleDeg(LobBuilder* pbuilder,
                                                       double value);
@@ -478,7 +478,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderRangeAngleDeg(LobBuilder* pbuilder,
  * @param pbuilder Pointer to the builder.
  * @param value The minimum speed in feet per second (fps) at which the solver
  * will stop calculations.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderMinimumSpeed(LobBuilder* pbuilder,
                                                      uint16_t value);
@@ -488,7 +488,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderMinimumSpeed(LobBuilder* pbuilder,
  * @param pbuilder Pointer to the builder.
  * @param value The minimum energy in foot-pounds (ft*lbf) at which the solver
  * will stop calculations.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderMinimumEnergy(LobBuilder* pbuilder,
                                                       uint16_t value);
@@ -498,7 +498,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderMinimumEnergy(LobBuilder* pbuilder,
  * @param pbuilder Pointer to the builder.
  * @param value The maximum time in seconds after which the solver will stop
  * calculations.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderMaximumTime(LobBuilder* pbuilder,
                                                     double value);
@@ -508,7 +508,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderMaximumTime(LobBuilder* pbuilder,
  * @note If set to zero (the default) the solver uses a 1-yard step.
  * @param pbuilder Pointer to the builder.
  * @param value The spatial step size in inches. 0 = default.
- * @return Pointer to the builder.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderStepSize(LobBuilder* pbuilder,
                                                  uint16_t value);
@@ -516,8 +516,8 @@ LOB_EXPORT extern LobBuilder* LobBuilderStepSize(LobBuilder* pbuilder,
 /**
  * @brief Builds the LobContext object with the configured parameters.
  * @param pbuilder Pointer to the builder.
- * @param presult Pointer to the LobContext to populate. Must not be NULL.
- * @warning Passing NULL for result is undefined behavior.
+ * @param presult Pointer to the LobContext to populate. Null pointers are
+ * ignored (the call is a no-op).
  */
 LOB_EXPORT extern void LobBuilderBuild(LobBuilder* pbuilder,
                                        LobContext* presult);
