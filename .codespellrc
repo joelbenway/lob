@@ -4,4 +4,4 @@ check-filenames =
 check-hidden =
 skip = */.git,*/build,*/prefix,*/.direnv,*/.opencode
 quiet-level = 2
-ignore-words-list = ws
+ignore-words-list = ws,cachegrind,valgrind,setarch,boatright,epicyclic,ir,cg

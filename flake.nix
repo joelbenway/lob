@@ -98,6 +98,7 @@
             gtest
             lcov
             nlohmann_json
+            valgrind
           ];
           shellHook = let
             projectName = "lob";
@@ -121,7 +122,6 @@
             cmake-format
             mold-wrapped
             ninja
-            valgrind
           ]
           ++ (
             if system == "aarch64-darwin"
