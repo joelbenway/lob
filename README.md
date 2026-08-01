@@ -1,6 +1,6 @@
 [![CI](https://github.com/joelbenway/lob/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/joelbenway/lob/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob)
 
-<img alt="Pretty proud of this hand-coded svg" src="https://github.com/joelbenway/lob/blob/master/lob.svg?raw=true" width="100%"></img>
+<img alt="Pretty proud of this hand-coded svg" src="https://github.com/joelbenway/lob/blob/master/docs/lob.svg?raw=true" width="100%"></img>
 
 # lob
 This is lob, a useful and free exterior ballistics calculation library written in industrial-strength C++. :rocket:
