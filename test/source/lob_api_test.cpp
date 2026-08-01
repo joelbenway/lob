@@ -6,7 +6,9 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
+#include <utility>
 
 #include "eng_units.hpp"
 #include "lob/lob.h"
@@ -149,7 +151,7 @@ TEST(LobAPITest, ZeroAngleSearchNegativeBracket) {
                                 .ZeroImpactHeightInches(-60.0)
                                 .OpticHeightInches(3.0)
                                 .Build();
-  EXPECT_EQ(kCtx.error, kLobErrorNone);
+  EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
   EXPECT_FALSE(std::isnan(kCtx.zero_angle));
   EXPECT_LT(kCtx.zero_angle, 0.0);
   EXPECT_GT(kCtx.zero_angle, -45.0 * 60.0);
@@ -161,7 +163,7 @@ TEST(LobAPITest, ZeroAngleSearchExhaustsIterations) {
                                 .InitialVelocityFps(600U)
                                 .ZeroDistanceYds(2000.0)
                                 .Build();
-  EXPECT_EQ(kCtx.error, kLobErrorInternalError);
+  EXPECT_EQ(kCtx.error, lob::ErrorT::kInternalError);
   EXPECT_TRUE(std::isnan(kCtx.zero_angle));
 }
 
@@ -179,8 +181,8 @@ TEST(LobAPITest, ZeroAngleSearchExtremeInputsDontCrash) {
                                       .InitialVelocityFps(kV)
                                       .ZeroDistanceYds(kRange)
                                       .Build();
-        const bool kOk = (kCtx.error == kLobErrorNone);
-        const bool kFailed = (kCtx.error == kLobErrorInternalError);
+        const bool kOk = (kCtx.error == lob::ErrorT::kNone);
+        const bool kFailed = (kCtx.error == lob::ErrorT::kInternalError);
         EXPECT_TRUE(kOk || kFailed)
             << "BC=" << kBc << " v=" << kV << " d=" << kRange
             << " error=" << static_cast<int>(kCtx.error);
@@ -465,14 +467,111 @@ TEST(LobAPITest, DegCToDegF) {
 }
 
 TEST(LobAPITest, ErrorTComparisonWithCEnum) {
-  EXPECT_TRUE(lob::ErrorT::kNone == kLobErrorNone);
-  EXPECT_TRUE(kLobErrorNone == lob::ErrorT::kNone);
-  EXPECT_FALSE(lob::ErrorT::kNone == kLobErrorBallisticCoefficientRequired);
-  EXPECT_FALSE(kLobErrorBallisticCoefficientRequired == lob::ErrorT::kNone);
-  EXPECT_TRUE(lob::ErrorT::kNone != kLobErrorBallisticCoefficientRequired);
-  EXPECT_TRUE(kLobErrorBallisticCoefficientRequired != lob::ErrorT::kNone);
-  EXPECT_FALSE(lob::ErrorT::kNone != kLobErrorNone);
-  EXPECT_FALSE(kLobErrorNone != lob::ErrorT::kNone);
+  constexpr std::array<std::pair<lob::ErrorT, ::LobErrorT>, 31> kErrors = {
+      {{lob::ErrorT::kNone, ::kLobErrorNone},
+       {lob::ErrorT::kAirPressureOOR, ::kLobErrorAirPressureOOR},
+       {lob::ErrorT::kAltitudeOfBarometerOOR,
+        ::kLobErrorAltitudeOfBarometerOOR},
+       {lob::ErrorT::kAltitudeOfFiringSiteOOR,
+        ::kLobErrorAltitudeOfFiringSiteOOR},
+       {lob::ErrorT::kAltitudeOfThermometerOOR,
+        ::kLobErrorAltitudeOfThermometerOOR},
+       {lob::ErrorT::kAzimuthOOR, ::kLobErrorAzimuthOOR},
+       {lob::ErrorT::kBallisticCoefficientOOR,
+        ::kLobErrorBallisticCoefficientOOR},
+       {lob::ErrorT::kBallisticCoefficientRequired,
+        ::kLobErrorBallisticCoefficientRequired},
+       {lob::ErrorT::kBaseDiameterOOR, ::kLobErrorBaseDiameterOOR},
+       {lob::ErrorT::kDiameterOOR, ::kLobErrorDiameterOOR},
+       {lob::ErrorT::kHumidityOOR, ::kLobErrorHumidityOOR},
+       {lob::ErrorT::kInitialVelocityRequired,
+        ::kLobErrorInitialVelocityRequired},
+       {lob::ErrorT::kInternalError, ::kLobErrorInternalError},
+       {lob::ErrorT::kLatitudeOOR, ::kLobErrorLatitudeOOR},
+       {lob::ErrorT::kLengthOOR, ::kLobErrorLengthOOR},
+       {lob::ErrorT::kMachDragTableInvalid, ::kLobErrorMachDragTableInvalid},
+       {lob::ErrorT::kMachDragTableNotMonotonic,
+        ::kLobErrorMachDragTableNotMonotonic},
+       {lob::ErrorT::kMachDragTableTooNarrow,
+        ::kLobErrorMachDragTableTooNarrow},
+       {lob::ErrorT::kMachDragTableTooShort, ::kLobErrorMachDragTableTooShort},
+       {lob::ErrorT::kMassOOR, ::kLobErrorMassOOR},
+       {lob::ErrorT::kMaximumTimeOOR, ::kLobErrorMaximumTimeOOR},
+       {lob::ErrorT::kMeplatDiameterOOR, ::kLobErrorMeplatDiameterOOR},
+       {lob::ErrorT::kNoseLengthOOR, ::kLobErrorNoseLengthOOR},
+       {lob::ErrorT::kOgiveRtROOR, ::kLobErrorOgiveRtROOR},
+       {lob::ErrorT::kRangeAngleOOR, ::kLobErrorRangeAngleOOR},
+       {lob::ErrorT::kTailLengthOOR, ::kLobErrorTailLengthOOR},
+       {lob::ErrorT::kWindHeadingOOR, ::kLobErrorWindHeadingOOR},
+       {lob::ErrorT::kZeroAngleOOR, ::kLobErrorZeroAngleOOR},
+       {lob::ErrorT::kZeroDataRequired, ::kLobErrorZeroDataRequired},
+       {lob::ErrorT::kZeroDistanceOOR, ::kLobErrorZeroDistanceOOR},
+       {lob::ErrorT::kNotFormed, ::kLobErrorNotFormed}}};
+  static_assert(kErrors.size() == static_cast<size_t>(::kLobErrorNotFormed) + 1,
+                "Error enumeration changed; update the pair table above");
+  for (const auto& error : kErrors) {
+    EXPECT_TRUE(error.first == error.second)
+        << "error=" << static_cast<int>(error.first);
+  }
+}
+
+TEST(LobAPITest, CEnumBCAtmosphereOverload) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  const lob::Context kResult =
+      lob::Builder()
+          .BallisticCoefficientPsi(kTestBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .InitialVelocityFps(kTestMuzzleVelocity)
+          .ZeroAngleMOA(kTestZeroAngle)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kNone);
+}
+
+TEST(LobAPITest, CEnumBCDragFunctionOverload) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  const lob::Context kResult = lob::Builder()
+                                   .BallisticCoefficientPsi(kTestBC)
+                                   .BCDragFunction(lob::DragFunctionT::kG1)
+                                   .InitialVelocityFps(kTestMuzzleVelocity)
+                                   .ZeroAngleMOA(kTestZeroAngle)
+                                   .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kNone);
+}
+
+TEST(LobAPITest, CEnumWindHeadingOverload) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  const lob::Context kResult = lob::Builder()
+                                   .BallisticCoefficientPsi(kTestBC)
+                                   .WindHeading(lob::ClockAngleT::kXII)
+                                   .InitialVelocityFps(kTestMuzzleVelocity)
+                                   .ZeroAngleMOA(kTestZeroAngle)
+                                   .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kNone);
+}
+
+TEST(LobAPITest, SingleRangeSolveOverload) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  const lob::Context kResult = lob::Builder()
+                                   .BallisticCoefficientPsi(kTestBC)
+                                   .InitialVelocityFps(kTestMuzzleVelocity)
+                                   .ZeroAngleMOA(kTestZeroAngle)
+                                   .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kNone);
+  const uint32_t kRange = 30U;
+  lob::Output out;
+  const auto kSize = lob::Solve(kResult, kRange, &out);
+  EXPECT_EQ(kSize, 1);
+  EXPECT_TRUE(std::isfinite(out.range));
+  EXPECT_TRUE(std::isfinite(out.elevation));
+  EXPECT_TRUE(std::isfinite(out.time_of_flight));
 }
 
 }  // namespace tests
