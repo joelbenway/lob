@@ -676,6 +676,11 @@ TEST_F(BuilderTestFixture, MachVsDragTableCoverageNaNDrag) {
   EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableInvalid);
 }
 
+TEST_F(BuilderTestFixture, StepSize) {
+  const lob::Context kResult = puut->StepSize(12U).Build();
+  EXPECT_EQ(kResult.step_size, 12U);
+}
+
 TEST_F(BuilderTestFixture, RangeAngleDeg) {
   const double kError = 1E-6;
   const lob::Context kResult =
