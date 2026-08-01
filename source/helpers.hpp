@@ -118,25 +118,6 @@ constexpr double Modulo(double a, double b) { return Fmod(a, b); }
 
 constexpr float Modulo(float a, float b) { return Fmod(a, b); }
 
-constexpr double Sqrt(double x) {
-  if (x < 0.0 || IsNan(x)) {
-    return NaN();
-  }
-  if (AreEqual(x, 0.0)) {
-    return 0.0;
-  }
-  if (x >= std::numeric_limits<double>::infinity()) {
-    return std::numeric_limits<double>::infinity();
-  }
-  double curr = x;
-  double prev = 0;
-  while (!AreEqual(curr, prev)) {
-    prev = curr;
-    curr = (curr + x / curr) / 2;
-  }
-  return curr;
-}
-
 }  // namespace lob
 
 // This file is part of lob.
