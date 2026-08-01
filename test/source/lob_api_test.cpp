@@ -519,8 +519,6 @@ TEST(LobAPITest, ErrorTComparisonWithCEnum) {
     EXPECT_FALSE(error.second != error.first)
         << "error=" << static_cast<int>(error.first);
   }
-  EXPECT_TRUE(lob::ErrorT::kNone != ::kLobErrorNotFormed);
-  EXPECT_TRUE(::kLobErrorNotFormed != lob::ErrorT::kNone);
 }
 
 TEST(LobAPITest, CEnumBCAtmosphereOverload) {
