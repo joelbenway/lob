@@ -209,13 +209,7 @@ jobs:
       && github.event_name == 'push'
 
     permissions:
-      contents: read
-      pages: write
-      id-token: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      contents: write
       
     steps:
     - uses: actions/checkout@v5
@@ -228,14 +222,13 @@ jobs:
         "cmake -DPROJECT_SOURCE_DIR=$PWD -DPROJECT_BINARY_DIR=$PWD/build
         -P cmake/docs-ci.cmake"
 
-    - name: Upload docs
-      uses: actions/upload-pages-artifact@v3
+    - name: Deploy Docs to gh-pages
+      uses: peaceiris/actions-gh-pages@v4
       with:
-        path: build/docs/html
-
-    - name: Deploy docs to GitHub Pages
-      uses: actions/deploy-pages@v4
-      id: deployment
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./build/docs/html
+        destination_dir: docs
+        keep_files: true
 
   benchmark:
     needs: [sanitize, test]
@@ -310,7 +303,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with:
-        persist-credentials: false
+        persist-credentials: true
     - name: Install Nix
       uses: cachix/install-nix-action@v31
       with:
@@ -328,6 +321,8 @@ jobs:
         output-file-path: build/benchmark/cachegrind/lob_bench.json
         github-token: ${{ secrets.GITHUB_TOKEN }}
         auto-push: true
+        gh-pages-branch: gh-pages
+        benchmark-data-dir-path: bench
         alert-threshold: '102%'
         comment-on-alert: true
         fail-on-alert: false
