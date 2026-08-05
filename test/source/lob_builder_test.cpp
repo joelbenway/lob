@@ -690,7 +690,7 @@ TEST_F(BuilderTestFixture, RangeAngleDeg) {
           .ZeroAngleMOA(5.0)
           .RangeAngleDeg(-5.0)
           .Build();
-  const double kGravityFpsps = -32.1740;
+  const double kGravityFpsps = -lob::kStandardGravityFtPerSecSq;
   const double kExpectedGravityX =
       kGravityFpsps * std::sin(lob::RadiansT(lob::DegreesT(-5.0)).Value());
   const double kExpectedGravityY =

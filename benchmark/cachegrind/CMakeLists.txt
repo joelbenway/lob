@@ -15,7 +15,7 @@ add_cachegrind_benchmark(lob_bench
     build_boatright:500
     build_zero_search:400
     solve_basic:200
-    solve_boatright:200)
+    solve_inverse:200)
 
 # Cheap gate so a broken builder chain fails the test job instead of
 # silently reporting a stable, meaningless number.

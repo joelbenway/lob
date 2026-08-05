@@ -71,16 +71,17 @@ endif()
 # ---- Tests ----
 # cmake-format: off
 set(LOB_TEST_SOURCES
-    source/lob_test.cpp
-    source/lob_api_test.cpp
     source/c_api_test.cpp
-    source/lob_cwaj_test.cpp
+    source/lob_api_test.cpp
     source/lob_builder_test.cpp
     source/lob_coriolis_test.cpp
+    source/lob_cwaj_test.cpp
     source/lob_env_test.cpp
+    source/lob_inverse_test.cpp
     source/lob_spin_drift_test.cpp
+    source/lob_test.cpp
     source/lob_wind_test.cpp
-    source/splines_test.cpp)
+    )
 
 set(HELPER_TEST_SOURCES
     source/boatright_test.cpp
@@ -90,7 +91,10 @@ set(HELPER_TEST_SOURCES
     source/helpers_test.cpp
     source/litz_test.cpp
     source/ode_test.cpp
-    source/solve_step_test.cpp)
+    source/solve_angle_test.cpp
+    source/solve_step_test.cpp
+    source/splines_test.cpp
+    )
 # cmake-format: on
 
 if(BUILD_SHARED_LIBS)

@@ -28,7 +28,7 @@ In addition to ballistic solutions, lob provides instrumental values it calculat
 This repo includes a tiny example CLI program, lobber, which demonstrates the library's use either by taking json arguments via stdin/stdout or through an easy interactive wizard.
 
 ## Design
-Lob was intended to be **easy** to work with, **accurate**, and **fast** in that order.
+Lob is intended to be **easy** to work with, **accurate**, and **fast** in that order.
 
 ### Easy
 Ballistics solutions require many inputs to model all the factors affecting the trajectory of a projectile. Making the most of imperfect or incomplete data is a central goal of lob. Maybe the best environmental data available is from a weather station at the wrong altitude; lob should adjust it for you. Maybe you know X and Y but not Z. Lob should make an informed estimate on Z or substitute a less demanding formula that doesn't require it. Give lob whatever you do know and it will do its best to fill in the gaps with frog DNA! :sauropod:
@@ -38,7 +38,7 @@ Lob's architecture follows an [hourglass pattern](https://www.youtube.com/watch?
 To use lob in your project, [the C++ header](include/lob/lob.hpp) has everything you need! Or use [the C header](include/lob/lob.h) directly. Lob does not dynamically allocate memory or throw exceptions. It is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating-point math. Lob is CMake FetchContent-friendly with no dependencies of its own. Easy to add, easy to use! :thumbsup:
 
 ### How do I use lob?
-Lob uses a straightforward API featuring a few data structures and free functions that act on them. At the heart of lob is the `Builder` class which is used to build `Context` which is then consumed by the `Solver` functions. Why this two stage process? Ballistic solutions take dozens of optional, interacting inputs. The builder pattern allows you to name the ones you know, defaults the rest, and validates the full set before the solver sees it.
+Lob uses a straightforward API featuring a few data structures and free functions that act on them. At the heart of lob is the `Builder` class which is used to build `Context` which is then consumed by the `Solver` functions. Why this two stage process? Ballistic solutions take dozens of optional, interacting inputs. The builder pattern allows you to name the ones you know, default the rest, and validate the full set before the solver sees it.
 ```C++
 #include <iomanip>
 #include <iostream>
@@ -60,7 +60,7 @@ const std::array<uint32_t, kNumToSolve> kRanges = {
 std::array<lob::Output, kNumToSolve> solver_outputs = {};
 const size_t kNumSolved =
     lob::Solve(kSolverCtx, kRanges.data(), solver_outputs.data(),
-               kRanges.size());
+               kNumToSolve);
 
 std::cout << std::fixed << std::setprecision(2);
 for (size_t i = 0; i < kNumSolved; i++) {

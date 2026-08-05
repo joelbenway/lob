@@ -18,6 +18,7 @@
 #include "litz.hpp"
 #include "lob/lob.h"
 #include "ode.hpp"
+#include "solve_angle.hpp"
 #include "solve_step.hpp"
 #include "splines.hpp"
 
@@ -533,11 +534,9 @@ void BuildLitzAerodynamicJump(Impl* pimpl, LobContext* pout) {
 void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
-  constexpr MoaT kZeroAngleLimit = DegreesT(45);
-
   if (!std::isnan(pimpl->zero_angle_moa)) {
-    if (pimpl->zero_angle_moa > kZeroAngleLimit ||
-        pimpl->zero_angle_moa < kZeroAngleLimit * -1) {
+    if (pimpl->zero_angle_moa > constant::kMaxAngle ||
+        pimpl->zero_angle_moa < constant::kMinAngle) {
       pout->error = kLobErrorZeroAngleOOR;
     }
     return;
@@ -559,67 +558,22 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
     pimpl->zero_impact_height = FeetT(0.0);
   }
 
-  constexpr RadiansT kZeroAngleError = MoaT(0.01);
-  constexpr RadiansT kMaxZeroAngle = kZeroAngleLimit;
-  constexpr RadiansT kMinZeroAngle = kZeroAngleLimit * -1;
-  constexpr size_t kMaxIterations = 10;
+  constexpr RadiansT kMaxZeroAngle = constant::kMaxAngle;
+  constexpr RadiansT kMinZeroAngle = constant::kMinAngle;
 
   assert(pimpl->velocity_fps > FpsT(0));
-  const auto kVacuumSeed =
-      RadiansT(kStandardGravityFtPerSecSq * pimpl->zero_distance_ft.Value() /
-               (pimpl->velocity_fps * pimpl->velocity_fps).Value());
+  const auto kVacuumSeed = RadiansT(
+      0.5 * kStandardGravityFtPerSecSq * pimpl->zero_distance_ft.Value() /
+      (pimpl->velocity_fps * pimpl->velocity_fps).Value());
   const auto kClampedVacuumSeed =
       std::max(kMinZeroAngle, std::min(kMaxZeroAngle, kVacuumSeed));
-  RadiansT theta = kClampedVacuumSeed;
-
-  auto fire_to_target = [&](RadiansT launch_angle) -> FeetT {
-    const RadiansT kAngle =
-        launch_angle + RadiansT(MoaT(pout->aerodynamic_jump));
-    const FpsT kVelocity = pimpl->velocity_fps;
-    TrajectoryStateT s(
-        CartesianT<FeetT>(FeetT(0.0)),
-        CartesianT<FpsT>(kVelocity * std::cos(kAngle.Value()),
-                         kVelocity * std::sin(kAngle.Value()), FpsT(0.0)));
-    spline::CurveView zero_drag_curve(spline::kKnots.data(), &pout->drags[0]);
-    while (s.P().X() < pimpl->zero_distance_ft) {
-      if (s.V().X() <= FpsT(0)) {
-        pout->error = kLobErrorInternalError;
-        return FeetT(NaN());
-      }
-      SolveStep(*pout, &s, &zero_drag_curve, pimpl->zero_distance_ft);
-    }
-    return s.P().Y() - FeetT(pout->optic_height) - pimpl->zero_impact_height;
-  };
-
-  FeetT f = fire_to_target(theta);
-  if (pout->error != kLobErrorNotFormed) {
+  const MoaT kAngle = SolveAngle(*pout, pimpl->zero_distance_ft,
+                                 pimpl->zero_impact_height, kClampedVacuumSeed);
+  if (std::isnan(kAngle)) {
+    pout->error = kLobErrorInternalError;
     return;
   }
-
-  for (size_t iter = 0; iter < kMaxIterations; ++iter) {
-    const RadiansT kDTheta =
-        RadiansT(-(f.Value() / pimpl->zero_distance_ft.Value()));
-    const RadiansT kThetaNext = theta + kDTheta;
-
-    if (kThetaNext < kMinZeroAngle || kThetaNext > kMaxZeroAngle ||
-        std::isnan(kThetaNext.Value())) {
-      pout->error = kLobErrorInternalError;
-      return;
-    }
-
-    if (std::abs((kThetaNext - theta).Value()) <= kZeroAngleError.Value()) {
-      pout->zero_angle = MoaT(kThetaNext).Value();
-      return;
-    }
-
-    theta = kThetaNext;
-    f = fire_to_target(theta);
-    if (pout->error != kLobErrorNotFormed) {
-      return;
-    }
-  }
-
-  pout->error = kLobErrorInternalError;
+  pout->zero_angle = kAngle.Value();
 }
 
 void BuildOptions(Impl* pimpl, LobContext* pout) {
@@ -632,7 +586,9 @@ void BuildOptions(Impl* pimpl, LobContext* pout) {
 
   const FpsT kMinSpeed = CalculateVelocityFromKineticEnergy(
       pimpl->minimum_energy_ft_lbs, SlugT(pimpl->mass_lbs));
-  pout->minimum_speed = std::max(pout->minimum_speed, kMinSpeed.U16());
+  pout->minimum_speed =
+      std::max(pout->minimum_speed,
+               kMinSpeed.IsNaN() ? static_cast<uint16_t>(0) : kMinSpeed.U16());
 }
 
 }  // namespace
@@ -1073,11 +1029,14 @@ void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
     return;
   }
   BuildLitzAerodynamicJump(pimpl, presult);
+  BuildOptions(pimpl, presult);
+  if (presult->error != kLobErrorNotFormed) {
+    return;
+  }
   BuildZeroAngle(pimpl, presult);
   if (presult->error != kLobErrorNotFormed) {
     return;
   }
-  BuildOptions(pimpl, presult);
 
   if (presult->error == kLobErrorNotFormed) {
     presult->error = kLobErrorNone;

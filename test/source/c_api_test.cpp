@@ -69,6 +69,25 @@ TEST(LobCAPITest, BuilderNullptrReturnsNullptr) {
   LobBuilderBuild(nullptr, &ctx);
 }
 
+TEST(LobCAPITest, SolveFunctionsNullptrReturnsZero) {
+  const uint32_t kRange = 300U;
+  LobOutput out{};
+  const LobContext kCtx{};
+  EXPECT_EQ(LobSolve(nullptr, &kRange, &out, 1U), 0U);
+  EXPECT_EQ(LobSolve(&kCtx, nullptr, &out, 1U), 0U);
+  EXPECT_EQ(LobSolve(&kCtx, &kRange, nullptr, 1U), 0U);
+  EXPECT_EQ(LobSolve(&kCtx, &kRange, &out, 0U), 0U);
+
+  EXPECT_EQ(LobFastInverse(nullptr, &out, 1U), 0U);
+  EXPECT_EQ(LobFastInverse(&kCtx, nullptr, 1U), 0U);
+  EXPECT_EQ(LobFastInverse(&kCtx, &out, 0U), 0U);
+
+  EXPECT_EQ(LobSolveInverse(nullptr, &kRange, &out, 1U), 0U);
+  EXPECT_EQ(LobSolveInverse(&kCtx, nullptr, &out, 1U), 0U);
+  EXPECT_EQ(LobSolveInverse(&kCtx, &kRange, nullptr, 1U), 0U);
+  EXPECT_EQ(LobSolveInverse(&kCtx, &kRange, &out, 0U), 0U);
+}
+
 TEST(LobCAPITest, BuilderDestroyNullptrIsNoOp) { LobBuilderDestroy(nullptr); }
 
 TEST(LobCAPITest, BuilderCopyNullptrIsNoOp) {

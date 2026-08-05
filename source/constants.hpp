@@ -9,7 +9,7 @@
 namespace lob {
 constexpr double kPi = 3.14159265358979323846;
 constexpr int32_t kDegreesPerTurn = 360;
-constexpr double kStandardGravityFtPerSecSq = 32.1740;
+constexpr double kStandardGravityFtPerSecSq = 32.17405;
 constexpr double kIsaSeaLevelDegF = 59.0;
 constexpr double kIsaSeaLevelHumidityPercent = 0.0;
 constexpr double kIsaSeaLevelPressureInHg = 29.92;
