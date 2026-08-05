@@ -680,6 +680,9 @@ class Builder {
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
+ * Results contain a forward-solution.
+ * @note A forward-solution solves for the expected change in elevation and
+ * deflection (in inches) at a given range.
  * @param ctx Context parameters for the calculation.
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
  * @param pouts Pointer to an array where the output results will be stored.
@@ -695,6 +698,7 @@ inline size_t Solve(const Context& ctx, const uint32_t* pranges, Output* pouts,
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
+ * Results contain a forward-solution.
  * @tparam N The number of ranges to solve for.
  * @param ctx Context parameters for the calculation.
  * @param ranges Reference to an array of ranges (in feet) to solve for.
@@ -711,6 +715,7 @@ inline size_t Solve(const Context& ctx, const std::array<uint32_t, N>& ranges,
 
 /**
  * @brief Solves the exterior ballistics problem for a single range.
+ * Results contain a forward-solution.
  * @param ctx Context parameters for the calculation.
  * @param range Ranges (in feet) to solve for.
  * @param pout Pointer to an output where results will be stored.
@@ -720,6 +725,97 @@ inline size_t Solve(const Context& ctx, uint32_t range, Output* pout) {
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
   return ::LobSolve(reinterpret_cast<const ::LobContext*>(&ctx), &range, pout,
                     1);
+}
+
+/**
+ * @brief Converts forward-solution output to inverse-solution adjustments.
+ * @param ctx Context parameters for the calculation.
+ * @param pouts Pointer to an array of forward-solution outputs to convert in
+ * place.
+ * @param size The number of outputs to convert.
+ * @return The number of successful conversions, or 0 on invalid arguments.
+ * Entries with zero range are skipped and not counted.
+ */
+inline size_t FastInverse(const Context& ctx, Output* pouts, size_t size) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobFastInverse(reinterpret_cast<const ::LobContext*>(&ctx), pouts,
+                          size);
+}
+
+/**
+ * @brief Converts forward-solution output to inverse-solution adjustments.
+ * @tparam N The number of outputs to convert.
+ * @param ctx Context parameters for the calculation.
+ * @param pouts Reference to an array of outputs to convert in place.
+ * @return The number of successful conversions.
+ */
+template <size_t N>
+inline size_t FastInverse(const Context& ctx, std::array<Output, N>* pouts) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobFastInverse(reinterpret_cast<const ::LobContext*>(&ctx),
+                          pouts->data(), N);
+}
+
+/**
+ * @brief Converts forward-solution output to inverse-solution adjustments for a
+ * single output.
+ * @param ctx Context parameters for the calculation.
+ * @param pout Pointer to an output to convert in place.
+ * @return The number of successful conversions (0 or 1).
+ */
+inline size_t FastInverse(const Context& ctx, Output* pout) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobFastInverse(reinterpret_cast<const ::LobContext*>(&ctx), pout, 1);
+}
+
+/**
+ * @brief Solves the exterior ballistics problem for a given set of ranges.
+ * Results contain an inverse-solution.
+ * @note An inverse-solution solves for the adjustments (in MOA) required to
+ * hit at a given range.
+ * @param ctx Context parameters for the calculation.
+ * @param pranges Pointer to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @param size The number of ranges to solve for.
+ * @return The number of successful solutions.
+ */
+inline size_t SolveInverse(const Context& ctx, const uint32_t* pranges,
+                           Output* pouts, size_t size) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobSolveInverse(reinterpret_cast<const ::LobContext*>(&ctx), pranges,
+                           pouts, size);
+}
+
+/**
+ * @brief Solves the exterior ballistics problem for a given set of ranges.
+ * Results contain an inverse-solution.
+ * @tparam N The number of ranges to solve for.
+ * @param ctx Context parameters for the calculation.
+ * @param ranges Reference to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @return The number of successful solutions.
+ */
+template <size_t N>
+inline size_t SolveInverse(const Context& ctx,
+                           const std::array<uint32_t, N>& ranges,
+                           std::array<Output, N>* pouts) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobSolveInverse(reinterpret_cast<const ::LobContext*>(&ctx),
+                           ranges.data(), pouts->data(), N);
+}
+
+/**
+ * @brief Solves the exterior ballistics problem for a single range.
+ * Results contain an inverse-solution.
+ * @param ctx Context parameters for the calculation.
+ * @param range Range (in feet) to solve for.
+ * @param pout Pointer to an output where results will be stored.
+ * @return The number of successful solutions (0 or 1).
+ */
+inline size_t SolveInverse(const Context& ctx, uint32_t range, Output* pout) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobSolveInverse(reinterpret_cast<const ::LobContext*>(&ctx), &range,
+                           pout, 1);
 }
 
 /**

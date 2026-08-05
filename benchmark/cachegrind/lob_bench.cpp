@@ -155,6 +155,19 @@ void RunSolve(std::uint64_t reps) {
   (void)(sink = acc);
 }
 
+template <lob::Context (*Fn)()>
+void RunSolveInverse(std::uint64_t reps) {
+  const lob::Context kCtx = Fn();  // setup outside the loop
+  std::array<lob::Output, kNumRanges> outputs = {};
+  double acc = 0.0;
+  for (std::uint64_t i = 0; i < reps; ++i) {
+    const std::size_t kSolved = lob::SolveInverse(kCtx, kRanges, &outputs);
+    acc += static_cast<double>(kSolved) + outputs.at(kNumRanges - 1U).elevation;
+  }
+  static volatile double sink = 0.0;
+  (void)(sink = acc);
+}
+
 struct Case {
   const char* name;
   void (*run)(std::uint64_t);
@@ -168,7 +181,7 @@ constexpr std::array<Case, 7> kCases = {{
     {"build_boatright", &RunBuild<&BuildBoatright>, &BuildBoatright},
     {"build_zero_search", &RunBuild<&BuildZeroSearch>, &BuildZeroSearch},
     {"solve_basic", &RunSolve<&BuildBasic>, &BuildBasic},
-    {"solve_boatright", &RunSolve<&BuildBoatright>, &BuildBoatright},
+    {"solve_inverse", &RunSolveInverse<&BuildBasic>, &BuildBasic},
 }};
 
 }  // namespace

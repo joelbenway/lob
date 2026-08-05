@@ -138,11 +138,14 @@ typedef struct {
 
 /** @brief Structure holding the output results of a ballistic calculation. */
 typedef struct {
-  uint32_t range;         ///< @brief Associated range in feet.
-  uint16_t velocity;      ///< @brief Calculated velocity in feet per second.
-  uint32_t energy;        ///< @brief Calculated energy in foot-pounds.
-  double elevation;       ///< @brief Calculated elevation change in inches.
-  double deflection;      ///< @brief Calculated windage deflection in inches.
+  uint32_t range;     ///< @brief Associated range in feet.
+  uint16_t velocity;  ///< @brief Calculated velocity in feet per second.
+  uint32_t energy;    ///< @brief Calculated energy in foot-pounds.
+  double elevation;   ///< @brief Elevation change in inches (forward-solution)
+                      ///< or MOA adjustment (inverse-solution).
+  double
+      deflection;  ///< @brief Windage deflection in inches (forward-solution)
+                   ///< or MOA adjustment (inverse-solution).
   double time_of_flight;  ///< @brief Time of flight in seconds.
 } LobOutput;
 
@@ -160,11 +163,13 @@ LOB_EXPORT extern const char* LobVersion(void);
 
 /** @brief Initializes a builder to default state. No-op if pbuilder is null. */
 LOB_EXPORT extern void LobBuilderInit(LobBuilder* pbuilder);
-/** @brief Destroys a builder and releases resources. No-op if pbuilder is null. */
+/** @brief Destroys a builder and releases resources. No-op if pbuilder is null.
+ */
 LOB_EXPORT extern void LobBuilderDestroy(LobBuilder* pbuilder);
 /** @brief Copies builder state from src to dst. No-op if either is null. */
 LOB_EXPORT extern void LobBuilderCopy(LobBuilder* dst, const LobBuilder* src);
-/** @brief Resets a builder state by re-initializing. No-op if pbuilder is null. */
+/** @brief Resets a builder state by re-initializing. No-op if pbuilder is null.
+ */
 LOB_EXPORT extern LobBuilder* LobBuilderReset(LobBuilder* pbuilder);
 
 /**
@@ -524,6 +529,9 @@ LOB_EXPORT extern void LobBuilderBuild(LobBuilder* pbuilder,
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
+ * Results contain a forward-solution.
+ * @note A forward-solution solves for the expected change in elevation and
+ * deflection (in inches) at a given range.
  * @param ctx Pointer to context parameters for the calculation.
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
  * @param pouts Pointer to an array where the output results will be stored.
@@ -533,6 +541,36 @@ LOB_EXPORT extern void LobBuilderBuild(LobBuilder* pbuilder,
 LOB_EXPORT extern size_t LobSolve(const LobContext* pctx,
                                   const uint32_t* pranges, LobOutput* pouts,
                                   size_t size);
+
+/**
+ * @brief Converts forward-solution output to inverse-solution adjustments.
+ * @note A one-step approximation. Only convert outputs whose forward solution
+ * reached the target range; fall-short trajectories yield meaningless results.
+ * @param pctx Pointer to context parameters for the calculation.
+ * @param pouts Pointer to an array of forward-solution outputs to convert in
+ * place.
+ * @param size The number of outputs to convert.
+ * @return The number of successful conversions, or 0 on invalid arguments.
+ * Entries with zero range are skipped and not counted.
+ */
+LOB_EXPORT extern size_t LobFastInverse(const LobContext* pctx,
+                                        LobOutput* pouts, size_t size);
+
+/**
+ * @brief Solves the exterior ballistics problem for a given set of ranges.
+ * Results contain an inverse-solution.
+ * @note An inverse-solution solves for the adjustments (in MOA) required to
+ * hit at a given range. Entries with zero range are counted but their
+ * adjustments are zeroed.
+ * @param pctx Pointer to context parameters for the calculation.
+ * @param pranges Pointer to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @param size The number of ranges to solve for.
+ * @return The number of successful solutions.
+ */
+LOB_EXPORT extern size_t LobSolveInverse(const LobContext* pctx,
+                                         const uint32_t* pranges,
+                                         LobOutput* pouts, size_t size);
 
 /** @brief Converts minutes of angle (MOA) to milliradians (MIL).
  * @param value Angle in MOA.

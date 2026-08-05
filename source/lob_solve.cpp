@@ -13,6 +13,7 @@
 #include "litz.hpp"
 #include "lob/lob.h"
 #include "ode.hpp"
+#include "solve_angle.hpp"
 #include "solve_step.hpp"
 #include "splines.hpp"
 
@@ -83,14 +84,9 @@ using namespace lob;  // NOLINT(google-build-using-namespace)
 
 size_t LobSolve(const LobContext* pctx, const uint32_t* pranges,
                 LobOutput* pouts, size_t size) {
-  assert(pctx != nullptr);
-  assert(pranges != nullptr);
-  assert(pouts != nullptr);
-  assert(size > 0);
-
-  if (pctx == nullptr || pctx->error != kLobErrorNone || pranges == nullptr ||
-      pouts == nullptr || size == 0 || pctx->velocity == 0 ||
-      pctx->speed_of_sound <= 0.0) {
+  if (pctx == nullptr || pranges == nullptr || pouts == nullptr || size == 0 ||
+      pctx->error != kLobErrorNone || pctx->velocity == 0 ||
+      pctx->speed_of_sound <= 0.0 || MoaT(pctx->zero_angle).IsNaN()) {
     return 0;
   }
   for (size_t i = 1; i < size; i++) {
@@ -151,6 +147,55 @@ size_t LobSolve(const LobContext* pctx, const uint32_t* pranges,
   }
   ApplyGyroscopicSpinDrift(*pctx, pouts, index);
   return index;
+}
+
+size_t LobFastInverse(const LobContext* pctx, LobOutput* pouts, size_t size) {
+  if (pctx == nullptr || pouts == nullptr || size == 0 ||
+      pctx->error != kLobErrorNone || MoaT(pctx->zero_angle).IsNaN()) {
+    return 0;
+  }
+  const RadiansT kTheta =
+      RadiansT(MoaT(pctx->zero_angle + pctx->aerodynamic_jump));
+  size_t count = 0;
+  for (size_t i = 0; i < size; i++) {
+    if (pouts[i].range == 0) {
+      continue;
+    }
+    const FeetT kRange = FeetT(pouts[i].range);
+    const FeetT kElevation = FeetT(InchT(pouts[i].elevation));
+    pouts[i].elevation =
+        MoaT(FastInverseAngle(kTheta, kElevation, kRange) - kTheta).Value();
+    pouts[i].deflection = LobInchToMoa(-pouts[i].deflection, kRange.Value());
+    count++;
+  }
+  return count;
+}
+
+size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
+                       LobOutput* pouts, size_t size) {
+  if (pctx == nullptr || pranges == nullptr || pouts == nullptr || size == 0 ||
+      pctx->error != kLobErrorNone || MoaT(pctx->zero_angle).IsNaN()) {
+    return 0;
+  }
+  const size_t kForwardSolves = LobSolve(pctx, pranges, pouts, size);
+  const RadiansT kTheta0 = MoaT(pctx->zero_angle);
+  for (size_t i = 0; i < kForwardSolves; i++) {
+    if (pouts[i].range == 0) {
+      pouts[i].elevation = 0.0;
+      pouts[i].deflection = 0.0;
+      continue;
+    }
+    const FeetT kElevation = InchT(pouts[i].elevation);
+    const FeetT kRange = FeetT(pouts[i].range);
+    const RadiansT kSeed = FastInverseAngle(kTheta0, kElevation, kRange);
+    const RadiansT kTheta = SolveAngle(*pctx, kRange, FeetT(0.0), kSeed);
+    if (kTheta.IsNaN()) {
+      return i;
+    }
+    pouts[i].elevation = MoaT(kTheta - kTheta0).Value();
+    pouts[i].deflection = LobInchToMoa(-pouts[i].deflection, kRange.Value());
+  }
+  return kForwardSolves;
 }
 
 }  // extern "C"
