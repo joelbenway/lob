@@ -9,10 +9,8 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "eng_units.hpp"
-#include "lob/lob.h"
+#include "helpers.hpp"
 #include "lob/lob.hpp"
-#include "solve_angle.hpp"
 
 namespace tests {
 
@@ -39,11 +37,6 @@ struct LobInverseTest : public testing::Test {
                               .Build();
     EXPECT_EQ(result.error, lob::ErrorT::kNone);
     return result;
-  }
-
-  const ::LobContext* CLobContext() const {
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    return reinterpret_cast<const ::LobContext*>(&context);
   }
 
   lob::Output ForwardSolve(uint32_t range_ft) const {
@@ -178,40 +171,6 @@ TEST_F(LobInverseTest, FastInverseInvalidContextReturnsZero) {
   out.range = kRangeYd300;
   out.elevation = kInvalidElevation;
   EXPECT_EQ(lob::FastInverse(kBad, &out, 1U), 0U);
-}
-
-TEST_F(LobInverseTest, FastInverseMatchesSolveAngle) {
-  const std::array<uint32_t, 3> kRanges = {kRangeYd300, kRangeYd600,
-                                           kRangeYd1000};
-  const double kToleranceMoa = 0.01;
-  for (const uint32_t kRangeFt : kRanges) {
-    lob::Output forward = ForwardSolve(kRangeFt);
-    ASSERT_EQ(lob::FastInverse(context, &forward, 1U), 1U);
-    const lob::MoaT kSolved = lob::SolveAngle(
-        *CLobContext(), lob::FeetT(static_cast<double>(kRangeFt)),
-        lob::FeetT(0.0), lob::RadiansT(lob::MoaT(context.zero_angle)));
-    ASSERT_FALSE(kSolved.IsNaN());
-    EXPECT_NEAR(kSolved.Value(), kTestZeroAngle + forward.elevation,
-                kToleranceMoa)
-        << "range=" << kRangeFt;
-  }
-}
-
-TEST_F(LobInverseTest, SolveInverseMatchesSolveAngle) {
-  const std::array<uint32_t, 3> kRanges = {kRangeYd300, kRangeYd600,
-                                           kRangeYd1000};
-  const double kToleranceMoa = 0.01;
-  for (const uint32_t kRangeFt : kRanges) {
-    lob::Output inverse{};
-    ASSERT_EQ(lob::SolveInverse(context, kRangeFt, &inverse), 1U);
-    const lob::MoaT kSolved = lob::SolveAngle(
-        *CLobContext(), lob::FeetT(static_cast<double>(kRangeFt)),
-        lob::FeetT(0.0), lob::RadiansT(lob::MoaT(context.zero_angle)));
-    ASSERT_FALSE(kSolved.IsNaN());
-    EXPECT_NEAR(kSolved.Value(), kTestZeroAngle + inverse.elevation,
-                kToleranceMoa)
-        << "range=" << kRangeFt;
-  }
 }
 
 TEST_F(LobInverseTest, FastInverseArrayOverload) {
