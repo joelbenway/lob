@@ -38,7 +38,7 @@ Lob's architecture follows an [hourglass pattern](https://www.youtube.com/watch?
 To use lob in your project, [the C++ header](include/lob/lob.hpp) has everything you need! Or use [the C header](include/lob/lob.h) directly. Lob does not dynamically allocate memory or throw exceptions. It is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating-point math. Lob is CMake FetchContent-friendly with no dependencies of its own. Easy to add, easy to use! :thumbsup:
 
 ### How do I use lob?
-Lob uses a straightforward API featuring a few data structures and free functions that act on them. At the heart of lob is the `Builder` class which is used to build `Context` which is then consumed by the `Solve` functions. Why this two stage process? Ballistic solutions take dozens of optional, interacting inputs. The builder pattern allows you to name the ones you know, default the rest, and validate the full set before the solver sees it.
+Lob uses a straightforward API featuring a few data structures and free functions that act on them. At the heart of lob is the `Builder` class which is used to build `Context` which is then consumed by the `Solve` functions. Why this two-stage process? Ballistic solutions take dozens of optional, interacting inputs. The builder pattern allows you to name the ones you know, default the rest, and validate the full set before the solver sees it.
 ```C++
 #include <iomanip>
 #include <iostream>
