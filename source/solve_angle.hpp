@@ -37,6 +37,7 @@ inline MoaT SolveAngle(const LobContext& ctx, FeetT range, FeetT impact_height,
   constexpr size_t kMaxIterations = 10;
   const FpsT kVelocity = FpsT(ctx.velocity);
   const FpsT kMinimumSpeed(ctx.minimum_speed);
+  spline::CurveView drag_curve(spline::kKnots.data(), &ctx.drags[0]);
 
   auto fire_to_target = [&](RadiansT launch_angle) -> FeetT {
     const RadiansT kAngle = launch_angle + RadiansT(MoaT(ctx.aerodynamic_jump));
@@ -44,7 +45,6 @@ inline MoaT SolveAngle(const LobContext& ctx, FeetT range, FeetT impact_height,
         CartesianT<FeetT>(FeetT(0.0)),
         CartesianT<FpsT>(kVelocity * std::cos(kAngle.Value()),
                          kVelocity * std::sin(kAngle.Value()), FpsT(0.0)));
-    spline::CurveView drag_curve(spline::kKnots.data(), &ctx.drags[0]);
     while (s.P().X() < range) {
       if (s.V().X() <= FpsT(0) || s.TOF() >= SecT(ctx.max_time) ||
           s.V().Magnitude() <= kMinimumSpeed) {
@@ -57,7 +57,7 @@ inline MoaT SolveAngle(const LobContext& ctx, FeetT range, FeetT impact_height,
 
   RadiansT theta = seed;
   FeetT f = fire_to_target(theta);
-  for (size_t iter = 0; iter < kMaxIterations && !std::isnan(f.Value());
+  for (size_t iter = 0; iter < kMaxIterations && std::isfinite(f.Value());
        ++iter) {
     const RadiansT kThetaNext = FastInverseAngle(theta, f, range);
 
