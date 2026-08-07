@@ -201,10 +201,10 @@ TEST_F(LobInverseTest, SolveInverseZeroRangeReturnsZeroAdjustment) {
 
 TEST_F(LobInverseTest, SolveInverseStopsAtUnreachableRange) {
   const lob::Context kWeak = lob::Builder()
-                                .BallisticCoefficientPsi(0.05)
-                                .InitialVelocityFps(500U)
-                                .ZeroAngleMOA(kTestZeroAngle)
-                                .Build();
+                                 .BallisticCoefficientPsi(0.05)
+                                 .InitialVelocityFps(500U)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .Build();
   ASSERT_EQ(kWeak.error, lob::ErrorT::kNone);
   const uint32_t kRange = 4000U;
   lob::Output out{};
@@ -215,10 +215,10 @@ TEST_F(LobInverseTest, SolveInverseStopsAtUnreachableRange) {
 
 TEST_F(LobInverseTest, SolveInverseStopsAtFirstUnreachableInArray) {
   const lob::Context kWeak = lob::Builder()
-                              .BallisticCoefficientPsi(0.05)
-                              .InitialVelocityFps(500U)
-                              .ZeroAngleMOA(kTestZeroAngle)
-                              .Build();
+                                 .BallisticCoefficientPsi(0.05)
+                                 .InitialVelocityFps(500U)
+                                 .ZeroAngleMOA(kTestZeroAngle)
+                                 .Build();
   ASSERT_EQ(kWeak.error, lob::ErrorT::kNone);
   const std::array<uint32_t, 3> kRanges = {300U, 900U, 4000U};
   std::array<lob::Output, 3> outs{};
