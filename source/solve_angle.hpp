@@ -47,7 +47,8 @@ inline MoaT SolveAngle(const LobContext& ctx, FeetT range, FeetT impact_height,
                          kVelocity * std::sin(kAngle.Value()), FpsT(0.0)));
     while (s.P().X() < range) {
       if (s.V().X() <= FpsT(0) || s.TOF() >= SecT(ctx.max_time) ||
-          s.V().Magnitude() <= kMinimumSpeed) {
+          (s.V().X() <= kMinimumSpeed &&  // skip evaluating Magnitude
+           s.V().Magnitude() <= kMinimumSpeed)) {
         return FeetT(NaN());
       }
       SolveStep(ctx, &s, &drag_curve, range);
