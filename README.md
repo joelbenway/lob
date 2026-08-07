@@ -38,7 +38,7 @@ Lob's architecture follows an [hourglass pattern](https://www.youtube.com/watch?
 To use lob in your project, [the C++ header](include/lob/lob.hpp) has everything you need! Or use [the C header](include/lob/lob.h) directly. Lob does not dynamically allocate memory or throw exceptions. It is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating-point math. Lob is CMake FetchContent-friendly with no dependencies of its own. Easy to add, easy to use! :thumbsup:
 
 ### How do I use lob?
-Lob uses a straightforward API featuring a few data structures and free functions that act on them. At the heart of lob is the `Builder` class which is used to build `Context` which is then consumed by the `Solver` functions. Why this two stage process? Ballistic solutions take dozens of optional, interacting inputs. The builder pattern allows you to name the ones you know, default the rest, and validate the full set before the solver sees it.
+Lob uses a straightforward API featuring a few data structures and free functions that act on them. At the heart of lob is the `Builder` class which is used to build `Context` which is then consumed by the `Solve` functions. Why this two stage process? Ballistic solutions take dozens of optional, interacting inputs. The builder pattern allows you to name the ones you know, default the rest, and validate the full set before the solver sees it.
 ```C++
 #include <iomanip>
 #include <iostream>
@@ -53,11 +53,10 @@ const lob::Context kSolverCtx =
         .Build();
 
 constexpr size_t kNumToSolve = 7U;
-
 const std::array<uint32_t, kNumToSolve> kRanges = {
     0U, 300U, 600U, 900U, 1200U, 1500U, 1800U};
-
 std::array<lob::Output, kNumToSolve> solver_outputs = {};
+
 const size_t kNumSolved =
     lob::Solve(kSolverCtx, kRanges.data(), solver_outputs.data(),
                kNumToSolve);
@@ -79,7 +78,7 @@ Drop at 1800 feet is -102.87 inches
 ```
 It only takes a few parameters for lob to make a well-formed, if minimal, ballistic solution. By providing more data, our solver can be more accurate.
 ```C++
-const lob::Context kMoreCtx =
+const lob::Context kBetterCtx =
   lob::Builder()
   .BallisticCoefficientPsi(0.214)
   .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
