@@ -183,7 +183,9 @@ size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
   }
   const size_t kForwardSolves = LobSolve(pctx, pranges, pouts, size);
   const RadiansT kZeroAngle = MoaT(pctx->zero_angle);
-  const RadiansT kSeedBase = MoaT(pctx->zero_angle + pctx->aerodynamic_jump);
+  // Seed represents mechanical launch angle. SolveAngle adds aerodynamic_jump
+  // internally during trajectory evaluation.
+  const RadiansT kSeedBase = MoaT(pctx->zero_angle);
   for (size_t i = 0; i < kForwardSolves; i++) {
     if (pouts[i].range == 0) {
       pouts[i].elevation = 0.0;
