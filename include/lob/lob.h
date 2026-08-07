@@ -89,6 +89,7 @@ enum {
   kLobErrorZeroAngleOOR,
   kLobErrorZeroDataRequired,
   kLobErrorZeroDistanceOOR,
+  kLobErrorZeroUnreachable,
   kLobErrorNotFormed
 };
 

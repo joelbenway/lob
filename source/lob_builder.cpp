@@ -558,19 +558,16 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
     pimpl->zero_impact_height = FeetT(0.0);
   }
 
-  constexpr RadiansT kMaxZeroAngle = constant::kMaxAngle;
-  constexpr RadiansT kMinZeroAngle = constant::kMinAngle;
-
   assert(pimpl->velocity_fps > FpsT(0));
   const auto kVacuumSeed = RadiansT(
       0.5 * kStandardGravityFtPerSecSq * pimpl->zero_distance_ft.Value() /
       (pimpl->velocity_fps * pimpl->velocity_fps).Value());
   const auto kClampedVacuumSeed =
-      std::max(kMinZeroAngle, std::min(kMaxZeroAngle, kVacuumSeed));
+      std::max(constant::kMinAngle, std::min(constant::kMaxAngle, kVacuumSeed));
   const MoaT kAngle = SolveAngle(*pout, pimpl->zero_distance_ft,
                                  pimpl->zero_impact_height, kClampedVacuumSeed);
   if (std::isnan(kAngle)) {
-    pout->error = kLobErrorInternalError;
+    pout->error = kLobErrorZeroUnreachable;
     return;
   }
   pout->zero_angle = kAngle.Value();

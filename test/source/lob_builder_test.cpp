@@ -219,6 +219,7 @@ constexpr double kNoslerAccubondBaseDiameter = 0.245;
 constexpr double kNoslerAccubondMeplatDiameter = 0.0;
 constexpr double kNoslerAccubondOgiveRtR = 0.88;
 constexpr double kTransonicTimeoutBC = 1.0e6;
+constexpr double kZeroUnreachableMaximumTime = 0.05;
 }  // namespace
 
 INSTANTIATE_TEST_SUITE_P(
@@ -571,7 +572,19 @@ INSTANTIATE_TEST_SUITE_P(
                                     .ZeroDistanceYds(10000)
                                     .Build();
                               },
-                              lob::ErrorT::kInternalError}),
+                              lob::ErrorT::kZeroUnreachable},
+        BuilderErrorTestParam{
+            "ZeroUnreachableMaximumTime",
+            [](lob::Builder& b) {
+              return b.BallisticCoefficientPsi(kSierraGameKingBC)
+                  .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                  .InitialVelocityFps(kM70MuzzleVelocity)
+                  .ZeroDistanceYds(kJackOConnorZeroYardage)
+                  .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+                  .MaximumTime(kZeroUnreachableMaximumTime)
+                  .Build();
+            },
+            lob::ErrorT::kZeroUnreachable}),
     [](const auto& test_param) { return test_param.param.name; });
 
 TEST_F(BuilderTestFixture, MachVsDragTableBadParamsIgnored) {

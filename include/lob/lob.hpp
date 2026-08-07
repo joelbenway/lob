@@ -88,6 +88,7 @@ enum class ErrorT : LobErrorT {
   kZeroAngleOOR = ::kLobErrorZeroAngleOOR,
   kZeroDataRequired = ::kLobErrorZeroDataRequired,
   kZeroDistanceOOR = ::kLobErrorZeroDistanceOOR,
+  kZeroUnreachable = ::kLobErrorZeroUnreachable,
   kNotFormed = ::kLobErrorNotFormed
 };
 
