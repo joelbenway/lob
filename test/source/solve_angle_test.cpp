@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -13,6 +14,7 @@
 #include "cartesian.hpp"
 #include "constants.hpp"
 #include "eng_units.hpp"
+#include "helpers.hpp"
 #include "lob/lob.h"
 #include "ode.hpp"
 #include "solve_step.hpp"
@@ -51,6 +53,17 @@ TEST_F(SolveAngleTest, FastInverseAngleZeroResidualReturnsInputAngle) {
   const lob::RadiansT kResult =
       lob::FastInverseAngle(kTheta, kResidual, kRange);
   EXPECT_DOUBLE_EQ(kResult.Value(), kTheta.Value());
+}
+
+TEST_F(SolveAngleTest, FastInverseAngleNonPositiveRangeReturnsInputAngle) {
+  const lob::RadiansT kTheta(0.1);
+  const lob::FeetT kResidual(3.0);
+  for (const double kRangeValue : {0.0, -300.0}) {
+    const lob::FeetT kRange(kRangeValue);
+    const lob::RadiansT kResult =
+        lob::FastInverseAngle(kTheta, kResidual, kRange);
+    EXPECT_DOUBLE_EQ(kResult.Value(), kTheta.Value());
+  }
 }
 
 TEST_F(SolveAngleTest, FastInverseAngleNegativeResidualIncreasesAngle) {
