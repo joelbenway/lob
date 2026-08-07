@@ -199,6 +199,35 @@ TEST_F(LobInverseTest, SolveInverseZeroRangeReturnsZeroAdjustment) {
   EXPECT_TRUE(std::isfinite(outs[1].elevation));
 }
 
+TEST_F(LobInverseTest, SolveInverseStopsAtUnreachableRange) {
+  const lob::Context kWeak = lob::Builder()
+                                .BallisticCoefficientPsi(0.05)
+                                .InitialVelocityFps(500U)
+                                .ZeroAngleMOA(kTestZeroAngle)
+                                .Build();
+  ASSERT_EQ(kWeak.error, lob::ErrorT::kNone);
+  const uint32_t kRange = 4000U;
+  lob::Output out{};
+  ASSERT_EQ(lob::Solve(kWeak, kRange, &out), 1U);
+  ASSERT_LT(out.range, kRange);
+  EXPECT_EQ(lob::SolveInverse(kWeak, kRange, &out), 0U);
+}
+
+TEST_F(LobInverseTest, SolveInverseStopsAtFirstUnreachableInArray) {
+  const lob::Context kWeak = lob::Builder()
+                              .BallisticCoefficientPsi(0.05)
+                              .InitialVelocityFps(500U)
+                              .ZeroAngleMOA(kTestZeroAngle)
+                              .Build();
+  ASSERT_EQ(kWeak.error, lob::ErrorT::kNone);
+  const std::array<uint32_t, 3> kRanges = {300U, 900U, 4000U};
+  std::array<lob::Output, 3> outs{};
+  const size_t kSize = lob::SolveInverse(kWeak, kRanges, &outs);
+  EXPECT_EQ(kSize, 2U);
+  EXPECT_TRUE(std::isfinite(outs[0].elevation));
+  EXPECT_TRUE(std::isfinite(outs[1].elevation));
+}
+
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobInverseTest, SolveInverseMatchesFastInverseWithJump) {
   const lob::Context kCtx = lob::Builder()
