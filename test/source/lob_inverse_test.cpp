@@ -151,6 +151,25 @@ TEST_F(LobInverseTest, FastInverseSkipsZeroRangeOutputs) {
   EXPECT_DOUBLE_EQ(out.deflection, kZeroRangeDeflection);
 }
 
+TEST_F(LobInverseTest, FastInverseSkipsNonFiniteElevation) {
+  lob::Output out{};
+  out.range = kRangeYd300;
+  out.elevation = lob::NaN();
+  out.deflection = 0.0;
+  const size_t kSize = lob::FastInverse(context, &out, 1U);
+  EXPECT_EQ(kSize, 0U);
+  EXPECT_TRUE(std::isnan(out.elevation));
+}
+
+TEST_F(LobInverseTest, FastInverseSkipsNonFiniteDeflection) {
+  lob::Output out{};
+  out.range = kRangeYd300;
+  out.elevation = 0.0;
+  out.deflection = lob::NaN();
+  const size_t kSize = lob::FastInverse(context, &out, 1U);
+  EXPECT_EQ(kSize, 0U);
+}
+
 TEST_F(LobInverseTest, FastInverseInvalidContextReturnsZero) {
   const lob::Context kBad =
       lob::Builder().BallisticCoefficientPsi(kTestBC).Build();
@@ -235,7 +254,7 @@ TEST_F(LobInverseTest, SolveInverseMatchesFastInverseWithJump) {
                                 .Build();
   ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
   ASSERT_NE(kCtx.aerodynamic_jump, 0.0);
-  for (const uint32_t kRangeFt : {kRangeYd300, kRangeYd1000}) {
+  for (const uint32_t kRangeFt : {kRangeYd300, kRangeYd1000, 4500U}) {
     lob::Output forward{};
     ASSERT_EQ(lob::Solve(kCtx, kRangeFt, &forward), 1U);
     ASSERT_EQ(lob::FastInverse(kCtx, &forward, 1U), 1U);

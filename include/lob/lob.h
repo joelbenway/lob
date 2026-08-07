@@ -547,6 +547,7 @@ LOB_EXPORT extern size_t LobSolve(const LobContext* pctx,
  * @brief Converts forward-solution output to inverse-solution adjustments.
  * @note A one-step approximation. Only convert outputs whose forward solution
  * reached the target range; fall-short trajectories yield meaningless results.
+ * Entries with non-finite elevation or deflection are skipped and not counted.
  * @param pctx Pointer to context parameters for the calculation.
  * @param pouts Pointer to an array of forward-solution outputs to convert in
  * place.
@@ -562,7 +563,10 @@ LOB_EXPORT extern size_t LobFastInverse(const LobContext* pctx,
  * Results contain an inverse-solution.
  * @note An inverse-solution solves for the adjustments (in MOA) required to
  * hit at a given range. Entries with zero range are counted but their
- * adjustments are zeroed.
+ * adjustments are zeroed. Adjustments for ranges the projectile cannot reach
+ * (fall-short solutions) are not produced; solving stops at the first such
+ * entry. Unlike LobFastInverse, a fall-short entry is not silently given a
+ * meaningless adjustment.
  * @param pctx Pointer to context parameters for the calculation.
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
  * @param pouts Pointer to an array where the output results will be stored.
