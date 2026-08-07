@@ -161,6 +161,10 @@ size_t LobFastInverse(const LobContext* pctx, LobOutput* pouts, size_t size) {
     if (pouts[i].range == 0) {
       continue;
     }
+    if (!std::isfinite(pouts[i].elevation) ||
+        !std::isfinite(pouts[i].deflection)) {
+      continue;
+    }
     const FeetT kRange = FeetT(pouts[i].range);
     const FeetT kElevation = FeetT(InchT(pouts[i].elevation));
     pouts[i].elevation =
@@ -178,7 +182,8 @@ size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
     return 0;
   }
   const size_t kForwardSolves = LobSolve(pctx, pranges, pouts, size);
-  const RadiansT kTheta0 = MoaT(pctx->zero_angle);
+  const RadiansT kZeroAngle = MoaT(pctx->zero_angle);
+  const RadiansT kSeedBase = MoaT(pctx->zero_angle + pctx->aerodynamic_jump);
   for (size_t i = 0; i < kForwardSolves; i++) {
     if (pouts[i].range == 0) {
       pouts[i].elevation = 0.0;
@@ -187,12 +192,12 @@ size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
     }
     const FeetT kElevation = InchT(pouts[i].elevation);
     const FeetT kRange = FeetT(pouts[i].range);
-    const RadiansT kSeed = FastInverseAngle(kTheta0, kElevation, kRange);
+    const RadiansT kSeed = FastInverseAngle(kSeedBase, kElevation, kRange);
     const RadiansT kTheta = SolveAngle(*pctx, kRange, FeetT(0.0), kSeed);
     if (kTheta.IsNaN()) {
       return i;
     }
-    pouts[i].elevation = MoaT(kTheta - kTheta0).Value();
+    pouts[i].elevation = MoaT(kTheta - kZeroAngle).Value();
     pouts[i].deflection = LobInchToMoa(-pouts[i].deflection, kRange.Value());
   }
   return kForwardSolves;
