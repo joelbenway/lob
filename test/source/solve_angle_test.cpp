@@ -10,6 +10,7 @@
 #include <cstdint>
 
 #include "cartesian.hpp"
+#include "constants.hpp"
 #include "eng_units.hpp"
 #include "lob/lob.h"
 #include "ode.hpp"
@@ -182,6 +183,33 @@ TEST_F(SolveAngleTest, SolveAngleAngleClampPastMaxAngleReturnsNaN) {
   const lob::MoaT kAngle = lob::SolveAngle(ctx, kRange, lob::FeetT(15.0),
                                            lob::RadiansT(lob::DegreesT(44)));
   EXPECT_TRUE(kAngle.IsNaN());
+}
+
+TEST(BuilderZeroAngleTest, MatchesSolveAngle) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kZeroDistanceYards = 100.0;
+
+  LobBuilder builder{};
+  LobBuilderInit(&builder);
+  LobBuilderBallisticCoefficientPsi(&builder, kTestBC);
+  LobBuilderInitialVelocityFps(&builder, kTestMuzzleVelocity);
+  LobBuilderZeroDistanceYds(&builder, kZeroDistanceYards);
+  LobContext ctx{};
+  LobBuilderBuild(&builder, &ctx);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  LobBuilderDestroy(&builder);
+
+  const lob::FeetT kRange = lob::FeetT(lob::YardT(kZeroDistanceYards));
+  const auto kSeed = std::max(
+      lob::constant::kMinAngle,
+      std::min(
+          lob::constant::kMaxAngle,
+          lob::RadiansT(0.5 * lob::kStandardGravityFtPerSecSq * kRange.Value() /
+                        (kTestMuzzleVelocity * kTestMuzzleVelocity))));
+  const lob::MoaT kAngle = lob::SolveAngle(ctx, kRange, lob::FeetT(0.0), kSeed);
+  ASSERT_FALSE(kAngle.IsNaN());
+  EXPECT_NEAR(kAngle.Value(), ctx.zero_angle, 1.0e-6);
 }
 
 }  // namespace
