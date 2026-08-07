@@ -567,8 +567,26 @@ TEST(SplinesBuildTest, RuntimeBuildMatchesCompileTimeMakeCoefs) {
   }
 }
 
+TEST(SplinesBuildTest, MakeCoefsReproducesCustomTableAtKnots) {
+  const float kSlope = 0.1F;
+  const float kIntercept = 0.5F;
+  std::array<float, lob::dragtable::kMachs.size()> drags{};
+  for (size_t i = 0; i < lob::dragtable::kMachs.size(); ++i) {
+    const float kMach = *(lob::dragtable::kMachs.data() + i);
+    *(drags.data() + i) = kIntercept + (kSlope * kMach);
+  }
+  const auto kCoefs = lob::spline::MakeCoefs(drags);
+  lob::spline::CurveView curve(lob::spline::kKnots, kCoefs);
+  for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
+    const float kMach = *(lob::spline::kKnots.data() + i);
+    const float kWant = kIntercept + (kSlope * kMach);
+    EXPECT_NEAR(curve.Eval(kMach), kWant, kEpsLoose)
+        << "knot mach #" << i << " = " << kMach;
+  }
+}
+
 TEST(SplinesBuildTest, MakeCoefsRuntimeWithCustomDragTable) {
-  constexpr std::array<float, 2> kDrags = {0.5F, 0.3F};
+  const std::array<float, 2> kDrags = {0.5F, 0.3F};
   const auto kCoefs = lob::spline::MakeCoefs<2>(kDrags);
   EXPECT_EQ(kCoefs.size(), lob::spline::kCoefsSize);
   for (const auto kCoef : kCoefs) {
