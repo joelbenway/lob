@@ -163,7 +163,7 @@ TEST(LobAPITest, ZeroAngleSearchExhaustsIterations) {
                                 .InitialVelocityFps(600U)
                                 .ZeroDistanceYds(2000.0)
                                 .Build();
-  EXPECT_EQ(kCtx.error, lob::ErrorT::kInternalError);
+  EXPECT_EQ(kCtx.error, lob::ErrorT::kZeroUnreachable);
   EXPECT_TRUE(std::isnan(kCtx.zero_angle));
 }
 
@@ -182,7 +182,7 @@ TEST(LobAPITest, ZeroAngleSearchExtremeInputsDontCrash) {
                                       .ZeroDistanceYds(kRange)
                                       .Build();
         const bool kOk = (kCtx.error == lob::ErrorT::kNone);
-        const bool kFailed = (kCtx.error == lob::ErrorT::kInternalError);
+        const bool kFailed = (kCtx.error == lob::ErrorT::kZeroUnreachable);
         EXPECT_TRUE(kOk || kFailed)
             << "BC=" << kBc << " v=" << kV << " d=" << kRange
             << " error=" << static_cast<int>(kCtx.error);
@@ -467,7 +467,7 @@ TEST(LobAPITest, DegCToDegF) {
 }
 
 TEST(LobAPITest, ErrorTComparisonWithCEnum) {
-  constexpr std::array<std::pair<lob::ErrorT, ::LobErrorT>, 31> kErrors = {
+  constexpr std::array<std::pair<lob::ErrorT, ::LobErrorT>, 32> kErrors = {
       {{lob::ErrorT::kNone, ::kLobErrorNone},
        {lob::ErrorT::kAirPressureOOR, ::kLobErrorAirPressureOOR},
        {lob::ErrorT::kAltitudeOfBarometerOOR,
@@ -506,6 +506,7 @@ TEST(LobAPITest, ErrorTComparisonWithCEnum) {
        {lob::ErrorT::kZeroAngleOOR, ::kLobErrorZeroAngleOOR},
        {lob::ErrorT::kZeroDataRequired, ::kLobErrorZeroDataRequired},
        {lob::ErrorT::kZeroDistanceOOR, ::kLobErrorZeroDistanceOOR},
+       {lob::ErrorT::kZeroUnreachable, ::kLobErrorZeroUnreachable},
        {lob::ErrorT::kNotFormed, ::kLobErrorNotFormed}}};
   static_assert(kErrors.size() == static_cast<size_t>(::kLobErrorNotFormed) + 1,
                 "Error enumeration changed; update the pair table above");
