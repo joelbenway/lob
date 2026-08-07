@@ -199,6 +199,7 @@ TEST_F(LobInverseTest, SolveInverseZeroRangeReturnsZeroAdjustment) {
   EXPECT_TRUE(std::isfinite(outs[1].elevation));
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(LobInverseTest, SolveInverseMatchesFastInverseWithJump) {
   const lob::Context kCtx = lob::Builder()
                                 .BallisticCoefficientPsi(kTestBC)
