@@ -17,5 +17,3 @@ env.bat
 env.ps1
 prefix/
 result
-result.worktrees/
-Testing/Temporary/
