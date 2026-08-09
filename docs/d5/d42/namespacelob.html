@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.9.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.10.0</span>
    </div>
   </td>
     <td>        <div id="MSearchBox" class="MSearchBoxInactive">
@@ -212,6 +212,7 @@ Enumerations</h2></td></tr>
 , <br />
 &#160;&#160;<a class="el" href="#a7da6daf158000ec72c4f3099a205705fab709bbebe2fa363ead1d855e9a16d15d">kZeroDataRequired</a> = ::kLobErrorZeroDataRequired
 , <a class="el" href="#a7da6daf158000ec72c4f3099a205705fa1f7dbc19857b2e20a43a87a254e5104c">kZeroDistanceOOR</a> = ::kLobErrorZeroDistanceOOR
+, <a class="el" href="#a7da6daf158000ec72c4f3099a205705fab38a4e2c8de2a7bfa4b3b51fd00a38be">kZeroUnreachable</a> = ::kLobErrorZeroUnreachable
 , <a class="el" href="#a7da6daf158000ec72c4f3099a205705fa2ffd5265e7f702dd063b78f72a14e8c6">kNotFormed</a> = ::kLobErrorNotFormed
 <br />
  }</td></tr>
@@ -229,15 +230,35 @@ Functions</h2></td></tr>
 <tr class="memitem:a9eed1ba9f254d5cc4585681ee81864bc" id="r_a9eed1ba9f254d5cc4585681ee81864bc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9eed1ba9f254d5cc4585681ee81864bc">operator!=</a> (<a class="el" href="#a7da6daf158000ec72c4f3099a205705f">ErrorT</a> a, <a class="el" href="../../d0/d9f/lob_8h.html#aa69b9c6df9e548a70d321783e8ed4c7b">::LobErrorT</a> b) noexcept</td></tr>
 <tr class="separator:a9eed1ba9f254d5cc4585681ee81864bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a931309ce695a3cdf584ea5f04de2c613" id="r_a931309ce695a3cdf584ea5f04de2c613"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a931309ce695a3cdf584ea5f04de2c613">Solve</a> (const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;ctx, const uint32_t *pranges, <a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a> *pouts, size_t size)</td></tr>
-<tr class="memdesc:a931309ce695a3cdf584ea5f04de2c613"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the exterior ballistics problem for a given set of ranges.  <br /></td></tr>
+<tr class="memdesc:a931309ce695a3cdf584ea5f04de2c613"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution.  <br /></td></tr>
 <tr class="separator:a931309ce695a3cdf584ea5f04de2c613"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf37fbe8676f42b859ab81103486f002" id="r_acf37fbe8676f42b859ab81103486f002"><td class="memTemplParams" colspan="2">template&lt;size_t N&gt; </td></tr>
 <tr class="memitem:acf37fbe8676f42b859ab81103486f002"><td class="memTemplItemLeft" align="right" valign="top">size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#acf37fbe8676f42b859ab81103486f002">Solve</a> (const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;ctx, const std::array&lt; uint32_t, N &gt; &amp;ranges, std::array&lt; <a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a>, N &gt; *pouts)</td></tr>
-<tr class="memdesc:acf37fbe8676f42b859ab81103486f002"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the exterior ballistics problem for a given set of ranges.  <br /></td></tr>
+<tr class="memdesc:acf37fbe8676f42b859ab81103486f002"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution.  <br /></td></tr>
 <tr class="separator:acf37fbe8676f42b859ab81103486f002"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a43a3329767ba08923b0221f255329008" id="r_a43a3329767ba08923b0221f255329008"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a43a3329767ba08923b0221f255329008">Solve</a> (const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;ctx, uint32_t range, <a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a> *pout)</td></tr>
-<tr class="memdesc:a43a3329767ba08923b0221f255329008"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the exterior ballistics problem for a single range.  <br /></td></tr>
+<tr class="memdesc:a43a3329767ba08923b0221f255329008"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the exterior ballistics problem for a single range. Results contain a forward-solution.  <br /></td></tr>
 <tr class="separator:a43a3329767ba08923b0221f255329008"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a02a4732d477e951bc80be057c0a7c549" id="r_a02a4732d477e951bc80be057c0a7c549"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a02a4732d477e951bc80be057c0a7c549">FastInverse</a> (const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;ctx, <a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a> *pouts, size_t size)</td></tr>
+<tr class="memdesc:a02a4732d477e951bc80be057c0a7c549"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts forward-solution output to inverse-solution adjustments.  <br /></td></tr>
+<tr class="separator:a02a4732d477e951bc80be057c0a7c549"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17d686253dd5001086600b99ad324c0d" id="r_a17d686253dd5001086600b99ad324c0d"><td class="memTemplParams" colspan="2">template&lt;size_t N&gt; </td></tr>
+<tr class="memitem:a17d686253dd5001086600b99ad324c0d"><td class="memTemplItemLeft" align="right" valign="top">size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a17d686253dd5001086600b99ad324c0d">FastInverse</a> (const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;ctx, std::array&lt; <a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a>, N &gt; *pouts)</td></tr>
+<tr class="memdesc:a17d686253dd5001086600b99ad324c0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts forward-solution output to inverse-solution adjustments.  <br /></td></tr>
+<tr class="separator:a17d686253dd5001086600b99ad324c0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6c82c674090243a06fc4e5bfec97eeb" id="r_ac6c82c674090243a06fc4e5bfec97eeb"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac6c82c674090243a06fc4e5bfec97eeb">FastInverse</a> (const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;ctx, <a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a> *pout)</td></tr>
+<tr class="memdesc:ac6c82c674090243a06fc4e5bfec97eeb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts forward-solution output to inverse-solution adjustments for a single output.  <br /></td></tr>
+<tr class="separator:ac6c82c674090243a06fc4e5bfec97eeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae421dd3de679d130370106e2dae8bf8f" id="r_ae421dd3de679d130370106e2dae8bf8f"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae421dd3de679d130370106e2dae8bf8f">SolveInverse</a> (const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;ctx, const uint32_t *pranges, <a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a> *pouts, size_t size)</td></tr>
+<tr class="memdesc:ae421dd3de679d130370106e2dae8bf8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the exterior ballistics problem for a given set of ranges. Results contain an inverse-solution.  <br /></td></tr>
+<tr class="separator:ae421dd3de679d130370106e2dae8bf8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a693548f2eaa86890d07f63db7a39afe2" id="r_a693548f2eaa86890d07f63db7a39afe2"><td class="memTemplParams" colspan="2">template&lt;size_t N&gt; </td></tr>
+<tr class="memitem:a693548f2eaa86890d07f63db7a39afe2"><td class="memTemplItemLeft" align="right" valign="top">size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a693548f2eaa86890d07f63db7a39afe2">SolveInverse</a> (const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;ctx, const std::array&lt; uint32_t, N &gt; &amp;ranges, std::array&lt; <a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a>, N &gt; *pouts)</td></tr>
+<tr class="memdesc:a693548f2eaa86890d07f63db7a39afe2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the exterior ballistics problem for a given set of ranges. Results contain an inverse-solution.  <br /></td></tr>
+<tr class="separator:a693548f2eaa86890d07f63db7a39afe2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add8974cc91aa94d833628deda53e2734" id="r_add8974cc91aa94d833628deda53e2734"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#add8974cc91aa94d833628deda53e2734">SolveInverse</a> (const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;ctx, uint32_t range, <a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a> *pout)</td></tr>
+<tr class="memdesc:add8974cc91aa94d833628deda53e2734"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the exterior ballistics problem for a single range. Results contain an inverse-solution.  <br /></td></tr>
+<tr class="separator:add8974cc91aa94d833628deda53e2734"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adeaf960933203ac1a09031d1b0fee221" id="r_adeaf960933203ac1a09031d1b0fee221"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adeaf960933203ac1a09031d1b0fee221">Version</a> ()</td></tr>
 <tr class="memdesc:adeaf960933203ac1a09031d1b0fee221"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the library version in major.minor.patch format.  <br /></td></tr>
 <tr class="separator:adeaf960933203ac1a09031d1b0fee221"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -617,6 +638,7 @@ Variables</h2></td></tr>
 <tr><td class="fieldname"><a id="a7da6daf158000ec72c4f3099a205705facb105ae0499561b3b516f24329b7ff6f" name="a7da6daf158000ec72c4f3099a205705facb105ae0499561b3b516f24329b7ff6f"></a>kZeroAngleOOR&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a7da6daf158000ec72c4f3099a205705fab709bbebe2fa363ead1d855e9a16d15d" name="a7da6daf158000ec72c4f3099a205705fab709bbebe2fa363ead1d855e9a16d15d"></a>kZeroDataRequired&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a7da6daf158000ec72c4f3099a205705fa1f7dbc19857b2e20a43a87a254e5104c" name="a7da6daf158000ec72c4f3099a205705fa1f7dbc19857b2e20a43a87a254e5104c"></a>kZeroDistanceOOR&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a7da6daf158000ec72c4f3099a205705fab38a4e2c8de2a7bfa4b3b51fd00a38be" name="a7da6daf158000ec72c4f3099a205705fab38a4e2c8de2a7bfa4b3b51fd00a38be"></a>kZeroUnreachable&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a7da6daf158000ec72c4f3099a205705fa2ffd5265e7f702dd063b78f72a14e8c6" name="a7da6daf158000ec72c4f3099a205705fa2ffd5265e7f702dd063b78f72a14e8c6"></a>kNotFormed&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
@@ -756,6 +778,139 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Equivalent angle in MOA. </dd></dl>
+
+</div>
+</div>
+<a id="ac6c82c674090243a06fc4e5bfec97eeb" name="ac6c82c674090243a06fc4e5bfec97eeb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac6c82c674090243a06fc4e5bfec97eeb">&#9670;&#160;</a></span>FastInverse() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t lob::FastInverse </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>ctx</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a> *</td>          <td class="paramname"><span class="paramname"><em>pout</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Converts forward-solution output to inverse-solution adjustments for a single output. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ctx</td><td><a class="el" href="../../dc/d65/structlob_1_1Context.html" title="Structure of parameters consumed by the solver.">Context</a> parameters for the calculation. </td></tr>
+    <tr><td class="paramname">pout</td><td>Pointer to an output to convert in place. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of successful conversions (0 or 1). </dd></dl>
+
+</div>
+</div>
+<a id="a02a4732d477e951bc80be057c0a7c549" name="a02a4732d477e951bc80be057c0a7c549"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a02a4732d477e951bc80be057c0a7c549">&#9670;&#160;</a></span>FastInverse() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t lob::FastInverse </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>ctx</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a> *</td>          <td class="paramname"><span class="paramname"><em>pouts</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>size</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Converts forward-solution output to inverse-solution adjustments. </p>
+<dl class="section note"><dt>Note</dt><dd>A one-step approximation. Only convert outputs whose forward solution reached the target range; fall-short trajectories yield meaningless results. Entries with non-finite elevation or deflection are skipped and not counted. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ctx</td><td><a class="el" href="../../dc/d65/structlob_1_1Context.html" title="Structure of parameters consumed by the solver.">Context</a> parameters for the calculation. </td></tr>
+    <tr><td class="paramname">pouts</td><td>Pointer to an array of forward-solution outputs to convert in place. </td></tr>
+    <tr><td class="paramname">size</td><td>The number of outputs to convert. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of successful conversions, or 0 on invalid arguments. Entries with zero range are skipped and not counted. </dd></dl>
+
+</div>
+</div>
+<a id="a17d686253dd5001086600b99ad324c0d" name="a17d686253dd5001086600b99ad324c0d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17d686253dd5001086600b99ad324c0d">&#9670;&#160;</a></span>FastInverse() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;size_t N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t lob::FastInverse </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>ctx</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::array&lt; <a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a>, N &gt; *</td>          <td class="paramname"><span class="paramname"><em>pouts</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Converts forward-solution output to inverse-solution adjustments. </p>
+<dl class="section note"><dt>Note</dt><dd>A one-step approximation. Only convert outputs whose forward solution reached the target range; fall-short trajectories yield meaningless results. Entries with non-finite elevation or deflection are skipped and not counted. </dd></dl>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">N</td><td>The number of outputs to convert. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ctx</td><td><a class="el" href="../../dc/d65/structlob_1_1Context.html" title="Structure of parameters consumed by the solver.">Context</a> parameters for the calculation. </td></tr>
+    <tr><td class="paramname">pouts</td><td>Reference to an array of outputs to convert in place. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of successful conversions. </dd></dl>
 
 </div>
 </div>
@@ -2090,7 +2245,7 @@ template&lt;size_t N&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Solves the exterior ballistics problem for a given set of ranges. </p>
+<p>Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">N</td><td>The number of ranges to solve for. </td></tr>
@@ -2146,7 +2301,8 @@ template&lt;size_t N&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Solves the exterior ballistics problem for a given set of ranges. </p>
+<p>Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution. </p>
+<dl class="section note"><dt>Note</dt><dd>A forward-solution solves for the expected change in elevation and deflection (in inches) at a given range. </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ctx</td><td><a class="el" href="../../dc/d65/structlob_1_1Context.html" title="Structure of parameters consumed by the solver.">Context</a> parameters for the calculation. </td></tr>
@@ -2192,7 +2348,7 @@ template&lt;size_t N&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Solves the exterior ballistics problem for a single range. </p>
+<p>Solves the exterior ballistics problem for a single range. Results contain a forward-solution. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ctx</td><td><a class="el" href="../../dc/d65/structlob_1_1Context.html" title="Structure of parameters consumed by the solver.">Context</a> parameters for the calculation. </td></tr>
@@ -2202,6 +2358,156 @@ template&lt;size_t N&gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The number of successful solutions. </dd></dl>
+
+</div>
+</div>
+<a id="a693548f2eaa86890d07f63db7a39afe2" name="a693548f2eaa86890d07f63db7a39afe2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a693548f2eaa86890d07f63db7a39afe2">&#9670;&#160;</a></span>SolveInverse() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;size_t N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t lob::SolveInverse </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>ctx</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::array&lt; uint32_t, N &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>ranges</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::array&lt; <a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a>, N &gt; *</td>          <td class="paramname"><span class="paramname"><em>pouts</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Solves the exterior ballistics problem for a given set of ranges. Results contain an inverse-solution. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">N</td><td>The number of ranges to solve for. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ctx</td><td><a class="el" href="../../dc/d65/structlob_1_1Context.html" title="Structure of parameters consumed by the solver.">Context</a> parameters for the calculation. </td></tr>
+    <tr><td class="paramname">ranges</td><td>Reference to an array of ranges (in feet) to solve for. </td></tr>
+    <tr><td class="paramname">pouts</td><td>Pointer to an array where the output results will be stored. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of successful solutions. </dd></dl>
+
+</div>
+</div>
+<a id="ae421dd3de679d130370106e2dae8bf8f" name="ae421dd3de679d130370106e2dae8bf8f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae421dd3de679d130370106e2dae8bf8f">&#9670;&#160;</a></span>SolveInverse() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t lob::SolveInverse </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>ctx</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const uint32_t *</td>          <td class="paramname"><span class="paramname"><em>pranges</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a> *</td>          <td class="paramname"><span class="paramname"><em>pouts</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>size</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Solves the exterior ballistics problem for a given set of ranges. Results contain an inverse-solution. </p>
+<dl class="section note"><dt>Note</dt><dd>An inverse-solution solves for the adjustments (in MOA) required to hit at a given range. Entries with zero range are counted but their adjustments are zeroed. Adjustments for ranges the projectile cannot reach (fall-short solutions) are not produced; solving stops at the first such entry. Unlike FastInverse, a fall-short entry is not silently given a meaningless adjustment. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ctx</td><td><a class="el" href="../../dc/d65/structlob_1_1Context.html" title="Structure of parameters consumed by the solver.">Context</a> parameters for the calculation. </td></tr>
+    <tr><td class="paramname">pranges</td><td>Pointer to an array of ranges (in feet) to solve for. </td></tr>
+    <tr><td class="paramname">pouts</td><td>Pointer to an array where the output results will be stored. </td></tr>
+    <tr><td class="paramname">size</td><td>The number of ranges to solve for. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of successful solutions. </dd></dl>
+
+</div>
+</div>
+<a id="add8974cc91aa94d833628deda53e2734" name="add8974cc91aa94d833628deda53e2734"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#add8974cc91aa94d833628deda53e2734">&#9670;&#160;</a></span>SolveInverse() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t lob::SolveInverse </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/d65/structlob_1_1Context.html">Context</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>ctx</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t</td>          <td class="paramname"><span class="paramname"><em>range</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#a56d6ad7c0448becc9ec3b7667d49d843">Output</a> *</td>          <td class="paramname"><span class="paramname"><em>pout</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Solves the exterior ballistics problem for a single range. Results contain an inverse-solution. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ctx</td><td><a class="el" href="../../dc/d65/structlob_1_1Context.html" title="Structure of parameters consumed by the solver.">Context</a> parameters for the calculation. </td></tr>
+    <tr><td class="paramname">range</td><td>Range (in feet) to solve for. </td></tr>
+    <tr><td class="paramname">pout</td><td>Pointer to an output where results will be stored. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of successful solutions (0 or 1). </dd></dl>
 
 </div>
 </div>

@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.9.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.10.0</span>
    </div>
   </td>
     <td>        <div id="MSearchBox" class="MSearchBoxInactive">
@@ -235,6 +235,7 @@ Enumerations</h2></td></tr>
 , <br />
 &#160;&#160;<a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dea64964e57d416d646b9911b070cbef2c3">kLobErrorZeroDataRequired</a>
 , <a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0deac9b9515937f8e09ea0db00c6ffc8f0de">kLobErrorZeroDistanceOOR</a>
+, <a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dea5113343963edbd50b2ead4ec9416141c">kLobErrorZeroUnreachable</a>
 , <a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dea051cbac419d884b4436aaa4614de5740">kLobErrorNotFormed</a>
 <br />
  }</td></tr>
@@ -366,8 +367,14 @@ Functions</h2></td></tr>
 <tr class="memdesc:af5041f99ea5eecaba32938f2a1f6acad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds the <a class="el" href="../../d9/d86/structLobContext.html" title="Structure of parameters consumed by the solver.">LobContext</a> object with the configured parameters.  <br /></td></tr>
 <tr class="separator:af5041f99ea5eecaba32938f2a1f6acad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa501da33a23e3df106d6168b4c92274a" id="r_aa501da33a23e3df106d6168b4c92274a"><td class="memItemLeft" align="right" valign="top">LOB_EXPORT size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa501da33a23e3df106d6168b4c92274a">LobSolve</a> (const <a class="el" href="../../d9/d86/structLobContext.html">LobContext</a> *pctx, const uint32_t *pranges, <a class="el" href="../../dc/d5b/structLobOutput.html">LobOutput</a> *pouts, size_t size)</td></tr>
-<tr class="memdesc:aa501da33a23e3df106d6168b4c92274a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the exterior ballistics problem for a given set of ranges.  <br /></td></tr>
+<tr class="memdesc:aa501da33a23e3df106d6168b4c92274a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution.  <br /></td></tr>
 <tr class="separator:aa501da33a23e3df106d6168b4c92274a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ea236eddfe5c123e4e7f53a43b6d825" id="r_a7ea236eddfe5c123e4e7f53a43b6d825"><td class="memItemLeft" align="right" valign="top">LOB_EXPORT size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7ea236eddfe5c123e4e7f53a43b6d825">LobFastInverse</a> (const <a class="el" href="../../d9/d86/structLobContext.html">LobContext</a> *pctx, <a class="el" href="../../dc/d5b/structLobOutput.html">LobOutput</a> *pouts, size_t size)</td></tr>
+<tr class="memdesc:a7ea236eddfe5c123e4e7f53a43b6d825"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts forward-solution output to inverse-solution adjustments.  <br /></td></tr>
+<tr class="separator:a7ea236eddfe5c123e4e7f53a43b6d825"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8c6b4350464139340b53503278697386" id="r_a8c6b4350464139340b53503278697386"><td class="memItemLeft" align="right" valign="top">LOB_EXPORT size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8c6b4350464139340b53503278697386">LobSolveInverse</a> (const <a class="el" href="../../d9/d86/structLobContext.html">LobContext</a> *pctx, const uint32_t *pranges, <a class="el" href="../../dc/d5b/structLobOutput.html">LobOutput</a> *pouts, size_t size)</td></tr>
+<tr class="memdesc:a8c6b4350464139340b53503278697386"><td class="mdescLeft">&#160;</td><td class="mdescRight">Solves the exterior ballistics problem for a given set of ranges. Results contain an inverse-solution.  <br /></td></tr>
+<tr class="separator:a8c6b4350464139340b53503278697386"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a087330f8b47f89b3c53988fe6d2b5af2" id="r_a087330f8b47f89b3c53988fe6d2b5af2"><td class="memItemLeft" align="right" valign="top">LOB_EXPORT double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a087330f8b47f89b3c53988fe6d2b5af2">LobMoaToMil</a> (double value)</td></tr>
 <tr class="memdesc:a087330f8b47f89b3c53988fe6d2b5af2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts minutes of angle (MOA) to milliradians (MIL).  <br /></td></tr>
 <tr class="separator:a087330f8b47f89b3c53988fe6d2b5af2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -727,6 +734,7 @@ Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="a8011dd29b51e4cc80be2e5174f29f0dea489da6bb91a2ca19579855bf4cb7b19a" name="a8011dd29b51e4cc80be2e5174f29f0dea489da6bb91a2ca19579855bf4cb7b19a"></a>kLobErrorZeroAngleOOR&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a8011dd29b51e4cc80be2e5174f29f0dea64964e57d416d646b9911b070cbef2c3" name="a8011dd29b51e4cc80be2e5174f29f0dea64964e57d416d646b9911b070cbef2c3"></a>kLobErrorZeroDataRequired&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a8011dd29b51e4cc80be2e5174f29f0deac9b9515937f8e09ea0db00c6ffc8f0de" name="a8011dd29b51e4cc80be2e5174f29f0deac9b9515937f8e09ea0db00c6ffc8f0de"></a>kLobErrorZeroDistanceOOR&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a8011dd29b51e4cc80be2e5174f29f0dea5113343963edbd50b2ead4ec9416141c" name="a8011dd29b51e4cc80be2e5174f29f0dea5113343963edbd50b2ead4ec9416141c"></a>kLobErrorZeroUnreachable&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a8011dd29b51e4cc80be2e5174f29f0dea051cbac419d884b4436aaa4614de5740" name="a8011dd29b51e4cc80be2e5174f29f0dea051cbac419d884b4436aaa4614de5740"></a>kLobErrorNotFormed&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
@@ -2408,6 +2416,52 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a7ea236eddfe5c123e4e7f53a43b6d825" name="a7ea236eddfe5c123e4e7f53a43b6d825"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ea236eddfe5c123e4e7f53a43b6d825">&#9670;&#160;</a></span>LobFastInverse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">LOB_EXPORT size_t LobFastInverse </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d9/d86/structLobContext.html">LobContext</a> *</td>          <td class="paramname"><span class="paramname"><em>pctx</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../dc/d5b/structLobOutput.html">LobOutput</a> *</td>          <td class="paramname"><span class="paramname"><em>pouts</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>size</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel extern">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Converts forward-solution output to inverse-solution adjustments. </p>
+<dl class="section note"><dt>Note</dt><dd>A one-step approximation. Only convert outputs whose forward solution reached the target range; fall-short trajectories yield meaningless results. Entries with non-finite elevation or deflection are skipped and not counted. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">pctx</td><td>Pointer to context parameters for the calculation. </td></tr>
+    <tr><td class="paramname">pouts</td><td>Pointer to an array of forward-solution outputs to convert in place. </td></tr>
+    <tr><td class="paramname">size</td><td>The number of outputs to convert. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of successful conversions, or 0 on invalid arguments. Entries with zero range are skipped and not counted. </dd></dl>
+
+</div>
+</div>
 <a id="a53b2d6d11124d85a3dcf22934a934e28" name="a53b2d6d11124d85a3dcf22934a934e28"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a53b2d6d11124d85a3dcf22934a934e28">&#9670;&#160;</a></span>LobFpsToMps()</h2>
 
@@ -3626,10 +3680,63 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Solves the exterior ballistics problem for a given set of ranges. </p>
+<p>Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution. </p>
+<dl class="section note"><dt>Note</dt><dd>A forward-solution solves for the expected change in elevation and deflection (in inches) at a given range. </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ctx</td><td>Pointer to context parameters for the calculation. </td></tr>
+    <tr><td class="paramname">pranges</td><td>Pointer to an array of ranges (in feet) to solve for. </td></tr>
+    <tr><td class="paramname">pouts</td><td>Pointer to an array where the output results will be stored. </td></tr>
+    <tr><td class="paramname">size</td><td>The number of ranges to solve for. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of successful solutions. </dd></dl>
+
+</div>
+</div>
+<a id="a8c6b4350464139340b53503278697386" name="a8c6b4350464139340b53503278697386"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8c6b4350464139340b53503278697386">&#9670;&#160;</a></span>LobSolveInverse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">LOB_EXPORT size_t LobSolveInverse </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d9/d86/structLobContext.html">LobContext</a> *</td>          <td class="paramname"><span class="paramname"><em>pctx</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const uint32_t *</td>          <td class="paramname"><span class="paramname"><em>pranges</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../dc/d5b/structLobOutput.html">LobOutput</a> *</td>          <td class="paramname"><span class="paramname"><em>pouts</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>size</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel extern">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Solves the exterior ballistics problem for a given set of ranges. Results contain an inverse-solution. </p>
+<dl class="section note"><dt>Note</dt><dd>An inverse-solution solves for the adjustments (in MOA) required to hit at a given range. Entries with zero range are counted but their adjustments are zeroed. Adjustments for ranges the projectile cannot reach (fall-short solutions) are not produced; solving stops at the first such entry. Unlike LobFastInverse, a fall-short entry is not silently given a meaningless adjustment. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">pctx</td><td>Pointer to context parameters for the calculation. </td></tr>
     <tr><td class="paramname">pranges</td><td>Pointer to an array of ranges (in feet) to solve for. </td></tr>
     <tr><td class="paramname">pouts</td><td>Pointer to an array where the output results will be stored. </td></tr>
     <tr><td class="paramname">size</td><td>The number of ranges to solve for. </td></tr>
