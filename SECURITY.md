@@ -4,7 +4,7 @@ Lob is a math library with no I/O, no networking, and no dynamic memory allocati
 
 ## What to do
 
-Report security issues with [GitHub's private vulnerability reporting](https://github.com/joelbenway/lob/security/advisories/new) rather than a public issue. If private reporting isn't available for the repository, [raise an issue](https://github.com/joelbenway/lob/issues) and note it as a security report.
+Report security issues with [GitHub's private vulnerability reporting](https://github.com/joelbenway/lob/security/advisories/new) rather than a public issue. If private reporting isn't available for the repository, [raise an issue](https://github.com/joelbenway/lob/issues) to request a private channel.
 
 Please do not disclose the vulnerability publicly until I've had a chance to triage it. Whatever channel you use, be generous with detail: version and commit, platform and compiler, and a minimal reproduction. A good report is worth a lot more than a good fix.
 
