@@ -243,7 +243,8 @@ LobErrorT ValidateBcBands(Impl* pimpl) {
       return kLobErrorBcBandsNotMonotonic;
     }
   }
-  if (pimpl->diameter_in <= InchT(0) || pimpl->mass_lbs <= LbsT(0)) {
+  if (isnan(pimpl->diameter_in) || isnan(pimpl->mass_lbs) ||
+      pimpl->diameter_in <= InchT(0) || pimpl->mass_lbs <= LbsT(0)) {
     return kLobErrorBcBandsSdRequired;
   }
   return kLobErrorNone;
