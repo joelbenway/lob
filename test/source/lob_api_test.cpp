@@ -467,7 +467,7 @@ TEST(LobAPITest, DegCToDegF) {
 }
 
 TEST(LobAPITest, ErrorTComparisonWithCEnum) {
-  constexpr std::array<std::pair<lob::ErrorT, ::LobErrorT>, 32> kErrors = {
+  constexpr std::array<std::pair<lob::ErrorT, ::LobErrorT>, 36> kErrors = {
       {{lob::ErrorT::kNone, ::kLobErrorNone},
        {lob::ErrorT::kAirPressureOOR, ::kLobErrorAirPressureOOR},
        {lob::ErrorT::kAltitudeOfBarometerOOR,
@@ -506,8 +506,12 @@ TEST(LobAPITest, ErrorTComparisonWithCEnum) {
        {lob::ErrorT::kZeroAngleOOR, ::kLobErrorZeroAngleOOR},
        {lob::ErrorT::kZeroDataRequired, ::kLobErrorZeroDataRequired},
        {lob::ErrorT::kZeroDistanceOOR, ::kLobErrorZeroDistanceOOR},
-       {lob::ErrorT::kZeroUnreachable, ::kLobErrorZeroUnreachable},
-       {lob::ErrorT::kNotFormed, ::kLobErrorNotFormed}}};
+        {lob::ErrorT::kZeroUnreachable, ::kLobErrorZeroUnreachable},
+        {lob::ErrorT::kBcBandsInvalid, ::kLobErrorBcBandsInvalid},
+        {lob::ErrorT::kBcBandsNotMonotonic, ::kLobErrorBcBandsNotMonotonic},
+        {lob::ErrorT::kBcBandsSdRequired, ::kLobErrorBcBandsSdRequired},
+        {lob::ErrorT::kBcBandsTooShort, ::kLobErrorBcBandsTooShort},
+        {lob::ErrorT::kNotFormed, ::kLobErrorNotFormed}}};
   static_assert(kErrors.size() == static_cast<size_t>(::kLobErrorNotFormed) + 1,
                 "Error enumeration changed; update the pair table above");
   for (const auto& error : kErrors) {
