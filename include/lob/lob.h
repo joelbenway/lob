@@ -197,6 +197,9 @@ LOB_EXPORT extern LobBuilder* LobBuilderBCAtmosphere(
 
 /**
  * @brief Sets the drag function associated with ballistic coefficient.
+ * @note Does not clear a table loaded via LobBuilderSplineFitTable or
+ * LobBuilderBCVelocityBands; those override the drag function at Build time.
+ * Call LobBuilderReset to return to a standard drag function.
  * @param pbuilder Pointer to the builder.
  * @param type The drag function type.
  * @return Pointer to the builder, or nullptr if pbuilder is null.
@@ -298,7 +301,9 @@ LOB_EXPORT extern LobBuilder* LobBuilderSplineFitTable(LobBuilder* pbuilder,
  * @param pbuilder Pointer to the builder.
  * @param pfps Pointer to an array of velocity values in feet per second.
  * @param pbcs Pointer to an array of associated ballistic coefficients.
- * @param size The number of velocity-bc pairs. Must be at least 2.
+ * @param size The number of velocity-bc pairs. Must be at least 2 and at most
+ * 16; velocities must be positive and strictly increasing, BCs positive, and
+ * the highest velocity below Mach 5.
  * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderBCVelocityBands(LobBuilder* pbuilder,
