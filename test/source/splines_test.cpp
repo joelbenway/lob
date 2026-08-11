@@ -895,6 +895,48 @@ TEST(SplinesFormFactorTest, RuntimeMatchesCompileTimeVariant) {
   }
 }
 
+TEST(SplinesMergeTest, IdentityWithConstantOneCurve) {
+  std::array<float, lob::spline::kCoefsSize> ones{};
+  for (size_t i = 0; i < lob::spline::kSegmentCount; ++i) {
+    ones.at(i * 4) = 1.0F;
+  }
+  lob::spline::CurveView g1(lob::spline::kKnots, lob::spline::kG1Coefs);
+  lob::spline::CurveView one(lob::spline::kKnots, ones);
+  const auto kMerged = lob::spline::Merge(g1, one);
+  lob::spline::CurveView out(lob::spline::kKnots, kMerged);
+  for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
+    const float kM = lob::spline::kKnots.at(i);
+    EXPECT_NEAR(out.Eval(kM), g1.Eval(kM), kEpsLoose) << "knot i=" << i;
+  }
+}
+
+TEST(SplinesMergeTest, ValuesAtKnotsAreProducts) {
+  lob::spline::CurveView a(lob::spline::kKnots, lob::spline::kG1Coefs);
+  lob::spline::CurveView b(lob::spline::kKnots, lob::spline::kG1Coefs);
+  const auto kMerged = lob::spline::Merge(a, b);
+  lob::spline::CurveView out(lob::spline::kKnots, kMerged);
+  for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
+    const float kM = lob::spline::kKnots.at(i);
+    EXPECT_NEAR(out.Eval(kM), a.Eval(kM) * b.Eval(kM), kEpsLoose)
+        << "knot i=" << i;
+  }
+}
+
+TEST(SplinesMergeTest, DerivativesFollowProductRuleAtKnots) {
+  lob::spline::CurveView a(lob::spline::kKnots, lob::spline::kG1Coefs);
+  lob::spline::CurveView b(lob::spline::kKnots, lob::spline::kG7Coefs);
+  const auto kMerged = lob::spline::Merge(a, b);
+  lob::spline::CurveView out(lob::spline::kKnots, kMerged);
+  for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
+    const float kM = lob::spline::kKnots.at(i);
+    const float kDya = a.Deriv(kM);
+    const float kDyb = b.Deriv(kM);
+    EXPECT_NEAR(out.Deriv(kM),
+                (kDya * b.Eval(kM)) + (a.Eval(kM) * kDyb), kEpsLoose)
+        << "knot i=" << i;
+  }
+}
+
 TEST(SplineOptimization, BaselineAccuracyBudget) {
   for (size_t i = 1; i < kTargetKnotSize; ++i) {
     ASSERT_GT(lob::spline::kKnots.at(i), lob::spline::kKnots.at(i - 1))
