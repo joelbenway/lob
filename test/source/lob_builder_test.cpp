@@ -866,6 +866,206 @@ TEST_F(BuilderTestFixture, BCVelocityBandsSdRequiredMissingDiameter) {
   EXPECT_EQ(kResult.error, lob::ErrorT::kBcBandsSdRequired);
 }
 
+TEST_F(BuilderTestFixture, BCVelocityBandsZeroFpsRejected) {
+  const std::array<float, 2> kFps = {0.0F, 3000.0F};
+  const std::array<float, 2> kBcs = {0.250F, 0.200F};
+  const lob::Context kResult =
+      puut->DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .BCVelocityBands(kFps, kBcs)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kBcBandsInvalid);
+}
+
+TEST_F(BuilderTestFixture, BCVelocityBandsZeroBcRejected) {
+  const std::array<float, 2> kFps = {2000.0F, 3000.0F};
+  const std::array<float, 2> kBcs = {0.250F, 0.0F};
+  const lob::Context kResult =
+      puut->DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .BCVelocityBands(kFps, kBcs)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kBcBandsInvalid);
+}
+
+TEST_F(BuilderTestFixture, BCVelocityBandsMachRangeExceedsDomain) {
+  const std::array<float, 2> kFps = {2000.0F, 7000.0F};
+  const std::array<float, 2> kBcs = {0.250F, 0.200F};
+  const lob::Context kResult =
+      puut->DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .BCVelocityBands(kFps, kBcs)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kBcBandsInvalid);
+}
+
+TEST_F(BuilderTestFixture, BCVelocityBandsMaxPairs) {
+  constexpr size_t kPairCount = 16;
+  constexpr float kBaseFps = 1000.0F;
+  constexpr float kFpsStep = 200.0F;
+  constexpr float kConstantBc = 0.250F;
+  std::array<float, kPairCount> fps{};
+  std::array<float, kPairCount> bcs{};
+  for (size_t i = 0; i < kPairCount; ++i) {
+    fps.at(i) = kBaseFps + (kFpsStep * static_cast<float>(i));
+    bcs.at(i) = kConstantBc;
+  }
+  const lob::Context kResult =
+      puut->DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .BCVelocityBands(fps, bcs)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kNone);
+}
+
+TEST_F(BuilderTestFixture, BCVelocityBandsDragFunctionOrderIndependent) {
+  const std::array<float, 2> kFps = {2000.0F, 3000.0F};
+  const std::array<float, 2> kBcs = {0.250F, 0.250F};
+  const lob::Context kResult =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .BCVelocityBands(kFps, kBcs)
+          .BCDragFunction(lob::DragFunctionT::kG7)
+          .Build();
+  ASSERT_EQ(kResult.error, lob::ErrorT::kNone);
+  const auto kSd = static_cast<float>((168.0 / 7000.0) / (0.308 * 0.308));
+  const float kFormFactor = kSd / 0.250F;
+  lob::spline::CurveView curve(lob::spline::kKnots, kResult.drags);
+  for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
+    const float kMach = lob::spline::kKnots.at(i);
+    lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG7Coefs);
+    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kFormFactor, 1.0e-4F)
+        << "knot i=" << i;
+  }
+}
+
+TEST_F(BuilderTestFixture, BCVelocityBandsLastCallWins) {
+  const std::array<float, 2> kMachs = {0.0F, 5.0F};
+  const std::array<float, 2> kDrags = {0.5F, 0.2F};
+  const std::array<float, 2> kFps = {2000.0F, 3000.0F};
+  const std::array<float, 2> kBcs = {0.250F, 0.250F};
+  const lob::Context kResult =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .MachVsDragTable(kMachs, kDrags)
+          .BCVelocityBands(kFps, kBcs)
+          .Build();
+  ASSERT_EQ(kResult.error, lob::ErrorT::kNone);
+  const auto kSd = static_cast<float>((168.0 / 7000.0) / (0.308 * 0.308));
+  const float kFormFactor = kSd / 0.250F;
+  lob::spline::CurveView curve(lob::spline::kKnots, kResult.drags);
+  for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
+    const float kMach = lob::spline::kKnots.at(i);
+    lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG1Coefs);
+    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kFormFactor, 1.0e-4F)
+        << "knot i=" << i;
+  }
+}
+
+TEST_F(BuilderTestFixture, ResetClearsBcBands) {
+  constexpr double kDiameter = 0.308;
+  constexpr double kMass = 168.0;
+  const std::array<float, 2> kFps = {2000.0F, 3000.0F};
+  const std::array<float, 2> kBcs = {0.250F, 0.250F};
+  puut->BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+      .DiameterInch(kDiameter)
+      .MassGrains(kMass)
+      .BCVelocityBands(kFps, kBcs)
+      .Reset();
+  const lob::Context kResult =
+      puut->BallisticCoefficientPsi(0.250)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .Build();
+  ASSERT_EQ(kResult.error, lob::ErrorT::kNone);
+  lob::spline::CurveView curve(lob::spline::kKnots, kResult.drags);
+  for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
+    const float kMach = lob::spline::kKnots.at(i);
+    lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG1Coefs);
+    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach), 1.0e-6F)
+        << "knot i=" << i;
+  }
+}
+
+TEST_F(BuilderTestFixture, BCVelocityBandsErrorPrecedence) {
+  const std::array<float, 3> kFps = {2000.0F, 3000.0F, 3000.0F};
+  const std::array<float, 3> kBcs = {0.250F, 0.200F, 0.150F};
+  const lob::Context kResult =
+      puut->InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .BCVelocityBands(kFps, kBcs)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kBcBandsNotMonotonic);
+}
+
+TEST_F(BuilderTestFixture, BCVelocityBandsMatchesSingleBcJump) {
+  const std::array<float, 3> kFps = {2000.0F, 2500.0F, 3000.0F};
+  const std::array<float, 3> kBcs = {0.308F, 0.308F, 0.308F};
+  const lob::Context kSingle =
+      puut->BallisticCoefficientPsi(0.308)
+          .BCDragFunction(lob::DragFunctionT::kG7)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .DiameterInch(0.338)
+          .MassGrains(250.0)
+          .LengthInch(1.471)
+          .MeplatDiameterInch(0.069)
+          .BaseDiameterInch(0.276)
+          .NoseLengthInch(0.748)
+          .TailLengthInch(0.257)
+          .OgiveRtR(0.99)
+          .TwistInchesPerTurn(11.0)
+          .InitialVelocityFps(3071U)
+          .OpticHeightInches(2.0)
+          .ZeroAngleMOA(6.53)
+          .WindSpeedMph(15.0)
+          .WindHeading(lob::ClockAngleT::kIX)
+          .Build();
+  const lob::Context kBands =
+      puut->BCDragFunction(lob::DragFunctionT::kG7)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .DiameterInch(0.338)
+          .MassGrains(250.0)
+          .LengthInch(1.471)
+          .MeplatDiameterInch(0.069)
+          .BaseDiameterInch(0.276)
+          .NoseLengthInch(0.748)
+          .TailLengthInch(0.257)
+          .OgiveRtR(0.99)
+          .TwistInchesPerTurn(11.0)
+          .InitialVelocityFps(3071U)
+          .OpticHeightInches(2.0)
+          .ZeroAngleMOA(6.53)
+          .WindSpeedMph(15.0)
+          .WindHeading(lob::ClockAngleT::kIX)
+          .BCVelocityBands(kFps, kBcs)
+          .Build();
+  ASSERT_EQ(kSingle.error, lob::ErrorT::kNone);
+  ASSERT_EQ(kBands.error, lob::ErrorT::kNone);
+  EXPECT_NEAR(kBands.aerodynamic_jump, kSingle.aerodynamic_jump, 0.02);
+}
+
 TEST_F(BuilderTestFixture, StepSize) {
   const lob::Context kResult = puut->StepSize(12U).Build();
   EXPECT_EQ(kResult.step_size, 12U);
