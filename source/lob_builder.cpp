@@ -24,6 +24,16 @@
 
 namespace lob {
 
+namespace {
+
+enum class DragTableMode : uint8_t {
+  kStandard,
+  kCustomTable,
+  kBcBands,
+};
+
+}  // namespace
+
 class Impl {
  public:
   LbsPerCuFtT air_density_lbs_per_cu_ft{NaN()};
@@ -55,9 +65,9 @@ class Impl {
   FeetT zero_distance_ft{NaN()};
   FeetT zero_impact_height{NaN()};
 
-  size_t custom_count{0};
-  const float* custom_machs{nullptr};
-  const float* custom_drags{nullptr};
+  size_t table_count{0};
+  const float* table_xs{nullptr};
+  const float* table_ys{nullptr};
 
   FpsT velocity_fps{NaN()};
   FpsT minimum_speed_fps{NaN()};
@@ -65,6 +75,7 @@ class Impl {
   LobAtmosphereReferenceT atmosphere_reference{
       kLobAtmosphereReferenceArmyStandardMetro};
   LobDragFunctionT drag_function{kLobDragFunctionG1};
+  DragTableMode drag_table_mode{DragTableMode::kStandard};
 };
 
 namespace {
@@ -194,40 +205,53 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   pout->speed_of_sound = kSpeedOfSound.Value();
 }
 
+LobErrorT ValidateCustomTable(Impl* pimpl) {
+  if (pimpl->table_count < 2) {
+    return kLobErrorMachDragTableTooShort;
+  }
+  if (pimpl->table_xs[0] > spline::kKnots.front() ||
+      pimpl->table_xs[pimpl->table_count - 1] < spline::kKnots.back()) {
+    return kLobErrorMachDragTableTooNarrow;
+  }
+  for (size_t i = 0; i < pimpl->table_count; i++) {
+    if (std::isnan(pimpl->table_xs[i]) || std::isnan(pimpl->table_ys[i])) {
+      return kLobErrorMachDragTableInvalid;
+    }
+    if (pimpl->table_xs[i] < 0.0F || pimpl->table_ys[i] < 0.0F) {
+      return kLobErrorMachDragTableInvalid;
+    }
+    if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {
+      return kLobErrorMachDragTableNotMonotonic;
+    }
+  }
+  return kLobErrorNone;
+}
+
+LobErrorT ValidateBcBands(Impl* pimpl) {
+  if (pimpl->table_count < 2) {
+    return kLobErrorBcBandsTooShort;
+  }
+  if (pimpl->table_count > spline::kKnotCount) {
+    return kLobErrorBcBandsInvalid;
+  }
+  for (size_t i = 0; i < pimpl->table_count; i++) {
+    if (std::isnan(pimpl->table_xs[i]) || std::isnan(pimpl->table_ys[i]) ||
+        pimpl->table_xs[i] < 0.0F || pimpl->table_ys[i] < 0.0F) {
+      return kLobErrorBcBandsInvalid;
+    }
+    if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {
+      return kLobErrorBcBandsNotMonotonic;
+    }
+  }
+  if (pimpl->diameter_in <= InchT(0) || pimpl->mass_lbs <= LbsT(0)) {
+    return kLobErrorBcBandsSdRequired;
+  }
+  return kLobErrorNone;
+}
+
 void BuildSpline(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
-  if (pimpl->custom_machs != nullptr) {
-    if (pimpl->custom_count < 2) {
-      pout->error = kLobErrorMachDragTableTooShort;
-      return;
-    }
-    if (pimpl->custom_machs[0] > spline::kKnots.front() ||
-        pimpl->custom_machs[pimpl->custom_count - 1] < spline::kKnots.back()) {
-      pout->error = kLobErrorMachDragTableTooNarrow;
-      return;
-    }
-    for (size_t i = 0; i < pimpl->custom_count; i++) {
-      if (std::isnan(pimpl->custom_machs[i]) ||
-          std::isnan(pimpl->custom_drags[i])) {
-        pout->error = kLobErrorMachDragTableInvalid;
-        return;
-      }
-      if (pimpl->custom_machs[i] < 0.0F || pimpl->custom_drags[i] < 0.0F) {
-        pout->error = kLobErrorMachDragTableInvalid;
-        return;
-      }
-      if (i > 0 && pimpl->custom_machs[i] <= pimpl->custom_machs[i - 1]) {
-        pout->error = kLobErrorMachDragTableNotMonotonic;
-        return;
-      }
-    }
-    spline::Build(pimpl->custom_machs, pimpl->custom_drags, pimpl->custom_count,
-                  spline::kKnots.data(), spline::kKnotCount, &pout->drags[0]);
 
-    pimpl->ballistic_coefficient_psi = PmsiT(1);
-    pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
-    return;
-  }
   const std::array<float, spline::kCoefsSize>* coefs{nullptr};
   switch (pimpl->drag_function) {
     case kLobDragFunctionG2:
@@ -249,6 +273,55 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
       coefs = &spline::kG1Coefs;
       break;
   }
+
+  if (pimpl->drag_table_mode == DragTableMode::kCustomTable) {
+    const LobErrorT kErr = ValidateCustomTable(pimpl);
+    if (kErr != kLobErrorNone) {
+      pout->error = kErr;
+      return;
+    }
+    spline::Build(pimpl->table_xs, pimpl->table_ys, pimpl->table_count,
+                  spline::kKnots.data(), spline::kKnotCount, &pout->drags[0]);
+
+    pimpl->ballistic_coefficient_psi = PmsiT(1);
+    pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
+    return;
+  }
+
+  if (pimpl->drag_table_mode == DragTableMode::kBcBands) {
+    const LobErrorT kErr = ValidateBcBands(pimpl);
+    if (kErr != kLobErrorNone) {
+      pout->error = kErr;
+      return;
+    }
+    const PmsiT kSd = CalculateSectionalDensity(pimpl->diameter_in,
+                                                pimpl->mass_lbs);
+    const auto kSos = static_cast<float>(pout->speed_of_sound);
+    const auto kConvert =
+        pimpl->atmosphere_reference == kLobAtmosphereReferenceArmyStandardMetro
+            ? static_cast<float>(kArmyToIcaoBcConversionFactor)
+            : 1.0F;
+    std::array<float, spline::kKnotCount> machs{};
+    std::array<float, spline::kKnotCount> bcs{};
+    for (size_t i = 0; i < pimpl->table_count; i++) {
+      machs.at(i) = pimpl->table_xs[i] / kSos;
+      bcs.at(i) = pimpl->table_ys[i] * kConvert;
+    }
+    std::array<float, spline::kCoefsSize> form_coefs{};
+    spline::MakeFormFactorCoefs(static_cast<float>(kSd.Value()), machs.data(),
+                                bcs.data(), pimpl->table_count,
+                                form_coefs.data());
+    spline::CurveView form_curve(spline::kKnots, form_coefs);
+    spline::CurveView ref_curve(spline::kKnots, *coefs);
+    const auto kMerged = spline::Merge(form_curve, ref_curve);
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    std::copy_n(kMerged.data(), spline::kCoefsSize, &pout->drags[0]);
+
+    pimpl->ballistic_coefficient_psi = PmsiT(1);
+    pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
+    return;
+  }
+
   // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   std::copy_n(coefs->data(), spline::kCoefsSize, &pout->drags[0]);
 }
@@ -490,7 +563,7 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
       kVelocity, kTwist, kIyOverIx, kR, kOmega, kV);
 
   PmsiT bc_g7(0);
-  if (pimpl->custom_machs == nullptr &&
+  if (pimpl->drag_table_mode == DragTableMode::kStandard &&
       pimpl->drag_function == kLobDragFunctionG7) {
     bc_g7 = kBc;
   } else {
@@ -656,9 +729,6 @@ LobBuilder* LobBuilderBCDragFunction(LobBuilder* pbuilder,
   }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->drag_function = type;
-  pimpl->custom_machs = nullptr;
-  pimpl->custom_drags = nullptr;
-  pimpl->custom_count = 0;
   return pbuilder;
 }
 
@@ -731,9 +801,23 @@ LobBuilder* LobBuilderSplineFitTable(LobBuilder* pbuilder, const float* pmachs,
     return pbuilder;
   }
   auto* pimpl = Pimpl(pbuilder);
-  pimpl->custom_machs = pmachs;
-  pimpl->custom_drags = pdrags;
-  pimpl->custom_count = size;
+  pimpl->table_xs = pmachs;
+  pimpl->table_ys = pdrags;
+  pimpl->table_count = size;
+  pimpl->drag_table_mode = DragTableMode::kCustomTable;
+  return pbuilder;
+}
+
+LobBuilder* LobBuilderBCVelocityBands(LobBuilder* pbuilder, const float* pfps,
+                                      const float* pbcs, size_t size) {
+  if (pbuilder == nullptr || pfps == nullptr || pbcs == nullptr) {
+    return pbuilder;
+  }
+  auto* pimpl = Pimpl(pbuilder);
+  pimpl->table_xs = pfps;
+  pimpl->table_ys = pbcs;
+  pimpl->table_count = size;
+  pimpl->drag_table_mode = DragTableMode::kBcBands;
   return pbuilder;
 }
 
