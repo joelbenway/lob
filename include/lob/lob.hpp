@@ -387,6 +387,39 @@ class Builder {
   }
 
   /**
+   * @brief Loads a BC-velocity table for the projectile.
+   * @note The manufacturer-supplied BC values are converted to a
+   * piecewise-Hermite form factor curve, which is merged with the configured
+   * reference drag function.
+   * @param pfps Pointer to an array of muzzle velocities in fps.
+   * @param pbcvs Pointer to an array of associated BC values.
+   * @param size The number of fps-BC pairs in the table.
+   * @return A reference to the Builder object.
+   */
+  Builder& BCVelocityBands(const float* pfps, const float* pbcvs,
+                           size_t size) {
+    ::LobBuilderBCVelocityBands(&builder_, pfps, pbcvs, size);
+    return *this;
+  }
+
+  /**
+   * @brief Loads a BC-velocity table for the projectile.
+   * @note The manufacturer-supplied BC values are converted to a
+   * piecewise-Hermite form factor curve, which is merged with the configured
+   * reference drag function.
+   * @tparam N The number of fps-BC pairs in the table.
+   * @param fps Reference to an array of muzzle velocities in fps.
+   * @param bcvs Reference to an array of associated BC values.
+   * @return A reference to the Builder object.
+   */
+  template <size_t N>
+  Builder& BCVelocityBands(const std::array<float, N>& fps,
+                           const std::array<float, N>& bcvs) {
+    ::LobBuilderBCVelocityBands(&builder_, fps.data(), bcvs.data(), N);
+    return *this;
+  }
+
+  /**
    * @brief Sets the projectile mass in grains.
    * @param value The mass in grains.
    * @return A reference to the Builder object.
