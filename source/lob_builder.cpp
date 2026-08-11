@@ -205,6 +205,26 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   pout->speed_of_sound = kSpeedOfSound.Value();
 }
 
+LobErrorT ValidateTablePairs(Impl* pimpl, LobErrorT invalid_code,
+                             LobErrorT not_monotonic_code,
+                             bool require_positive) {
+  for (size_t i = 0; i < pimpl->table_count; i++) {
+    const bool kBad = std::isnan(pimpl->table_xs[i]) ||
+                      std::isnan(pimpl->table_ys[i]) ||
+                      pimpl->table_xs[i] < 0.0F || pimpl->table_ys[i] < 0.0F ||
+                      (require_positive &&
+                       (pimpl->table_xs[i] <= 0.0F ||
+                        pimpl->table_ys[i] <= 0.0F));
+    if (kBad) {
+      return invalid_code;
+    }
+    if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {
+      return not_monotonic_code;
+    }
+  }
+  return kLobErrorNone;
+}
+
 LobErrorT ValidateCustomTable(Impl* pimpl) {
   if (pimpl->table_count < 2) {
     return kLobErrorMachDragTableTooShort;
@@ -213,18 +233,9 @@ LobErrorT ValidateCustomTable(Impl* pimpl) {
       pimpl->table_xs[pimpl->table_count - 1] < spline::kKnots.back()) {
     return kLobErrorMachDragTableTooNarrow;
   }
-  for (size_t i = 0; i < pimpl->table_count; i++) {
-    if (std::isnan(pimpl->table_xs[i]) || std::isnan(pimpl->table_ys[i])) {
-      return kLobErrorMachDragTableInvalid;
-    }
-    if (pimpl->table_xs[i] < 0.0F || pimpl->table_ys[i] < 0.0F) {
-      return kLobErrorMachDragTableInvalid;
-    }
-    if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {
-      return kLobErrorMachDragTableNotMonotonic;
-    }
-  }
-  return kLobErrorNone;
+  return ValidateTablePairs(pimpl, kLobErrorMachDragTableInvalid,
+                            kLobErrorMachDragTableNotMonotonic,
+                            /*require_positive=*/false);
 }
 
 LobErrorT ValidateBcBands(Impl* pimpl) {
@@ -234,14 +245,11 @@ LobErrorT ValidateBcBands(Impl* pimpl) {
   if (pimpl->table_count > spline::kKnotCount) {
     return kLobErrorBcBandsInvalid;
   }
-  for (size_t i = 0; i < pimpl->table_count; i++) {
-    if (std::isnan(pimpl->table_xs[i]) || std::isnan(pimpl->table_ys[i]) ||
-        pimpl->table_xs[i] < 0.0F || pimpl->table_ys[i] < 0.0F) {
-      return kLobErrorBcBandsInvalid;
-    }
-    if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {
-      return kLobErrorBcBandsNotMonotonic;
-    }
+  const LobErrorT kErr = ValidateTablePairs(
+      pimpl, kLobErrorBcBandsInvalid, kLobErrorBcBandsNotMonotonic,
+      /*require_positive=*/true);
+  if (kErr != kLobErrorNone) {
+    return kErr;
   }
   if (isnan(pimpl->diameter_in) || isnan(pimpl->mass_lbs) ||
       pimpl->diameter_in <= InchT(0) || pimpl->mass_lbs <= LbsT(0)) {
@@ -298,6 +306,11 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
     const PmsiT kSd = CalculateSectionalDensity(pimpl->diameter_in,
                                                 pimpl->mass_lbs);
     const auto kSos = static_cast<float>(pout->speed_of_sound);
+    if (pimpl->table_xs[pimpl->table_count - 1] / kSos >=
+        spline::kKnots.back()) {
+      pout->error = kLobErrorBcBandsInvalid;
+      return;
+    }
     const auto kConvert =
         pimpl->atmosphere_reference == kLobAtmosphereReferenceArmyStandardMetro
             ? static_cast<float>(kArmyToIcaoBcConversionFactor)
@@ -530,7 +543,10 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const auto kGamma =
       boatright::CalculateCrosswindAngleGamma(kZWind, kVelocity);
   const auto kCD0 =
-      boatright::CalculateZeroYawDragCoefficientOfDrag(kCdRef, kMass, kD, kBc);
+      pimpl->drag_table_mode == DragTableMode::kStandard
+          ? boatright::CalculateZeroYawDragCoefficientOfDrag(kCdRef, kMass,
+                                                             kD, kBc)
+          : static_cast<double>(kCdRef);
   const auto kCDAdjustment =
       boatright::CalculateYawDragAdjustment(kGamma, kR, kCDa);
   const auto kCD = kCD0 + kCDAdjustment;
