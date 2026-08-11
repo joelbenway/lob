@@ -89,6 +89,10 @@ enum class ErrorT : LobErrorT {
   kZeroDataRequired = ::kLobErrorZeroDataRequired,
   kZeroDistanceOOR = ::kLobErrorZeroDistanceOOR,
   kZeroUnreachable = ::kLobErrorZeroUnreachable,
+  kBcBandsInvalid = ::kLobErrorBcBandsInvalid,
+  kBcBandsNotMonotonic = ::kLobErrorBcBandsNotMonotonic,
+  kBcBandsSdRequired = ::kLobErrorBcBandsSdRequired,
+  kBcBandsTooShort = ::kLobErrorBcBandsTooShort,
   kNotFormed = ::kLobErrorNotFormed
 };
 
