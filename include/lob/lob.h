@@ -90,6 +90,10 @@ enum {
   kLobErrorZeroDataRequired,
   kLobErrorZeroDistanceOOR,
   kLobErrorZeroUnreachable,
+  kLobErrorBcBandsInvalid,
+  kLobErrorBcBandsNotMonotonic,
+  kLobErrorBcBandsSdRequired,
+  kLobErrorBcBandsTooShort,
   kLobErrorNotFormed
 };
 
@@ -280,6 +284,27 @@ LOB_EXPORT extern LobBuilder* LobBuilderSplineFitTable(LobBuilder* pbuilder,
                                                        const float* pmachs,
                                                        const float* pdrags,
                                                        size_t size);
+
+/**
+ * @brief Loads ballistic coefficients measured at multiple velocities.
+ * @note Describes the projectile's drag as a form-factor curve derived from
+ * sectional density divided by each BC, merged with the drag function set via
+ * LobBuilderBCDragFunction for a blended curve.
+ * @note The BCs use the same units as LobBuilderBallisticCoefficientPsi and
+ * respect the atmosphere reference set via LobBuilderBCAtmosphere.
+ * @warning The caller must keep pfps and pbcs valid until LobBuilderBuild
+ * is called. The builder copies no data; the pointers are referenced during
+ * Build().
+ * @param pbuilder Pointer to the builder.
+ * @param pfps Pointer to an array of velocity values in feet per second.
+ * @param pbcs Pointer to an array of associated ballistic coefficients.
+ * @param size The number of velocity-bc pairs. Must be at least 2.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
+ */
+LOB_EXPORT extern LobBuilder* LobBuilderBCVelocityBands(LobBuilder* pbuilder,
+                                                        const float* pfps,
+                                                        const float* pbcs,
+                                                        size_t size);
 
 /**
  * @brief Sets the projectile mass in grains.
