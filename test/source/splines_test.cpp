@@ -853,6 +853,48 @@ TEST(SplinesRuntimeContextsTest, MakeCoefsMatchesCompileTimeGlobal) {
   }
 }
 
+TEST(SplinesFormFactorTest, ConstantBcProducesFlatCurve) {
+  constexpr float kSd = 0.250F;
+  constexpr float kBc = 0.300F;
+  const std::array<float, 3> kMachs{0.5F, 1.0F, 2.0F};
+  const std::array<float, 3> kBcs{kBc, kBc, kBc};
+  std::array<float, lob::spline::kCoefsSize> coefs{};
+  lob::spline::MakeFormFactorCoefs(kSd, kMachs.data(), kBcs.data(),
+                                   kMachs.size(), coefs.data());
+  lob::spline::CurveView curve(lob::spline::kKnots, coefs);
+  for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
+    EXPECT_NEAR(curve.Eval(lob::spline::kKnots.at(i)), kSd / kBc, kEpsLoose)
+        << "knot i=" << i;
+  }
+}
+
+TEST(SplinesFormFactorTest, ExtrapolatesFlatOutsideBandRange) {
+  constexpr float kSd = 0.250F;
+  const std::array<float, 2> kMachs{2.5F, 3.5F};
+  const std::array<float, 2> kBcs{0.300F, 0.200F};
+  std::array<float, lob::spline::kCoefsSize> coefs{};
+  lob::spline::MakeFormFactorCoefs(kSd, kMachs.data(), kBcs.data(),
+                                   kMachs.size(), coefs.data());
+  lob::spline::CurveView curve(lob::spline::kKnots, coefs);
+  EXPECT_NEAR(curve.Eval(0.0F), kSd / kBcs[0], kEpsLoose);
+  EXPECT_NEAR(curve.Eval(5.0F), kSd / kBcs[1], kEpsLoose);
+}
+
+TEST(SplinesFormFactorTest, RuntimeMatchesCompileTimeVariant) {
+  constexpr size_t kN = 4;
+  constexpr float kSd = 0.250F;
+  const std::array<float, kN> kMachs{0.4F, 0.8F, 1.2F, 3.0F};
+  const std::array<float, kN> kBcs{0.35F, 0.30F, 0.25F, 0.20F};
+  const auto kExpected =
+      lob::spline::MakeFormFactorCoefs<float, kN>(kSd, kMachs, kBcs);
+  std::array<float, lob::spline::kCoefsSize> got{};
+  lob::spline::MakeFormFactorCoefs(kSd, kMachs.data(), kBcs.data(), kN,
+                                   got.data());
+  for (size_t i = 0; i < got.size(); ++i) {
+    EXPECT_FLOAT_EQ(got.at(i), kExpected.at(i)) << "coef i=" << i;
+  }
+}
+
 TEST(SplineOptimization, BaselineAccuracyBudget) {
   for (size_t i = 1; i < kTargetKnotSize; ++i) {
     ASSERT_GT(lob::spline::kKnots.at(i), lob::spline::kKnots.at(i - 1))

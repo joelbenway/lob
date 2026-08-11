@@ -215,6 +215,79 @@ constexpr auto kG6Coefs = MakeCoefs(lob::dragtable::kG6Drags);
 constexpr auto kG7Coefs = MakeCoefs(lob::dragtable::kG7Drags);
 constexpr auto kG8Coefs = MakeCoefs(lob::dragtable::kG8Drags);
 
+template <typename T = float>
+constexpr void MakeFormFactorCoefs(T sectional_density, const T* input_machs,
+                                   const T* input_bcs, size_t size,
+                                   T* coefs_out) {
+  assert(size >= 2 && size <= kKnotCount);
+  // 1. Add boundary padding points at kKnots[0] (0.0) and kKnots[N-1] (5.0).
+  // This enforces flat (constant) form factor extrapolation outside the
+  // user's Mach range.
+  constexpr size_t kPaddedSize = kKnotCount + 2;
+  std::array<T, kPaddedSize> machs{};
+  std::array<T, kPaddedSize> i_factors{};
+
+  // Low Mach clamp (Mach 0.0) using the lowest-velocity BC
+  machs[0] = kKnots[0];
+  i_factors[0] = sectional_density / input_bcs[0];
+
+  // User input points
+  for (size_t k = 0; k < size; ++k) {
+    machs[k + 1] = input_machs[k];
+    i_factors[k + 1] = sectional_density / input_bcs[k];
+  }
+
+  // High Mach clamp (Mach 5.0) using the highest-velocity BC
+  machs[size + 1] = kKnots[kKnotCount - 1];
+  i_factors[size + 1] = sectional_density / input_bcs[size - 1];
+
+  // 2. Project the PCHIP-interpolated form factor curve onto kKnots
+  Build(machs.data(), i_factors.data(), size + 2, kKnots.data(), kKnotCount,
+        coefs_out);
+}
+
+template <typename T = float, size_t N>
+constexpr std::array<T, kCoefsSize> MakeFormFactorCoefs(
+    T sectional_density, const std::array<T, N>& input_machs,
+    const std::array<T, N>& input_bcs) {
+  static_assert(N >= 2, "At least two BC bands are required");
+  std::array<T, kCoefsSize> coefs{};
+  MakeFormFactorCoefs(sectional_density, input_machs.data(), input_bcs.data(),
+                      N, coefs.data());
+  return coefs;
+}
+
+template <typename T = float, size_t N = kKnotCount>
+constexpr std::array<T, (N - 1) * 4> Merge(
+    Cursor<T, N>& curve_a,
+    Cursor<T, N>& curve_b,
+    const std::array<T, N>& knots = kKnots) {
+  
+  std::array<T, N> y_fused{};
+  std::array<T, N> dy_fused{};
+
+  for (size_t i = 0; i < N; i++) {
+    const T kM = knots[i];
+    const T kYa = curve_a.Eval(kM);
+    const T kDya = curve_a.Deriv(kM);
+    const T kYb = curve_b.Eval(kM);
+    const T kDyb = curve_b.Deriv(kM);
+
+    y_fused[i] = kYa * kYb;
+    dy_fused[i] = (kDya * kYb) + (kYa * kDyb);
+  }
+
+  std::array<T, (N - 1) * 4> coefs_out{};
+  for (size_t i = 0; i + 1 < N; i++) {
+    detail::Hermite(knots[i], knots[i + 1], 
+                    y_fused[i], y_fused[i + 1],
+                    dy_fused[i], dy_fused[i + 1], 
+                    &coefs_out[i * 4]);
+  }
+
+  return coefs_out;
+}
+
 }  // namespace spline
 }  // namespace lob
 
