@@ -233,13 +233,13 @@ constexpr void MakeFormFactorCoefs(T sectional_density, const T* input_machs,
 
   // User input points
   for (size_t k = 0; k < size; ++k) {
-    machs[k + 1] = input_machs[k];
-    i_factors[k + 1] = sectional_density / input_bcs[k];
+    machs.at(k + 1) = input_machs[k];
+    i_factors.at(k + 1) = sectional_density / input_bcs[k];
   }
 
   // High Mach clamp (Mach 5.0) using the highest-velocity BC
-  machs[size + 1] = kKnots[kKnotCount - 1];
-  i_factors[size + 1] = sectional_density / input_bcs[size - 1];
+  machs.at(size + 1) = kKnots[kKnotCount - 1];
+  i_factors.at(size + 1) = sectional_density / input_bcs[size - 1];
 
   // 2. Project the PCHIP-interpolated form factor curve onto kKnots
   Build(machs.data(), i_factors.data(), size + 2, kKnots.data(), kKnotCount,
@@ -267,22 +267,22 @@ constexpr std::array<T, (N - 1) * 4> Merge(
   std::array<T, N> dy_fused{};
 
   for (size_t i = 0; i < N; i++) {
-    const T kM = knots[i];
+    const T kM = knots.at(i);
     const T kYa = curve_a.Eval(kM);
     const T kDya = curve_a.Deriv(kM);
     const T kYb = curve_b.Eval(kM);
     const T kDyb = curve_b.Deriv(kM);
 
-    y_fused[i] = kYa * kYb;
-    dy_fused[i] = (kDya * kYb) + (kYa * kDyb);
+    y_fused.at(i) = kYa * kYb;
+    dy_fused.at(i) = (kDya * kYb) + (kYa * kDyb);
   }
 
   std::array<T, (N - 1) * 4> coefs_out{};
   for (size_t i = 0; i + 1 < N; i++) {
-    detail::Hermite(knots[i], knots[i + 1], 
-                    y_fused[i], y_fused[i + 1],
-                    dy_fused[i], dy_fused[i + 1], 
-                    &coefs_out[i * 4]);
+    detail::Hermite(knots.at(i), knots.at(i + 1), 
+                    y_fused.at(i), y_fused.at(i + 1),
+                    dy_fused.at(i), dy_fused.at(i + 1), 
+                    &coefs_out.at(i * 4));
   }
 
   return coefs_out;
