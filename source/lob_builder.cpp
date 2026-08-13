@@ -37,10 +37,6 @@ enum class DragTableMode : uint8_t {
 class Impl {
  public:
   LbsPerCuFtT air_density_lbs_per_cu_ft{NaN()};
-  LbsT mass_lbs{NaN()};
-  FeetT optic_height_ft{NaN()};
-  MoaT zero_angle_moa{NaN()};
-  double max_time_sec{NaN()};
   FeetT altitude_ft{NaN()};
   FeetT altitude_of_barometer_ft{NaN()};
   FeetT altitude_of_thermometer_ft{NaN()};
@@ -51,26 +47,29 @@ class Impl {
   InchT diameter_in{NaN()};
   RadiansT latitude_rad{NaN()};
   InchT length_in{NaN()};
+  LbsT mass_lbs{NaN()};
+  SecT max_time_sec{NaN()};
   InchT meplat_diameter_in{NaN()};
   FtLbsT minimum_energy_ft_lbs{NaN()};
+  FpsT minimum_speed_fps{NaN()};
   InchT nose_length_in{NaN()};
   double ogive_rtr{NaN()};
+  FeetT optic_height_ft{NaN()};
   RadiansT range_angle_rad{NaN()};
   PercentT relative_humidity_percent{NaN()};
   InchT tail_length_in{NaN()};
   DegFT temperature_deg_f{NaN()};
   InchPerTwistT twist_inches_per_turn{NaN()};
+  FpsT velocity_fps{NaN()};
   RadiansT wind_heading_rad{NaN()};
   FpsT wind_speed_fps{NaN()};
+  MoaT zero_angle_moa{NaN()};
   FeetT zero_distance_ft{NaN()};
   FeetT zero_impact_height{NaN()};
 
   size_t table_count{0};
   const float* table_xs{nullptr};
   const float* table_ys{nullptr};
-
-  FpsT velocity_fps{NaN()};
-  FpsT minimum_speed_fps{NaN()};
   uint16_t step_size_in{0};
   LobAtmosphereReferenceT atmosphere_reference{
       kLobAtmosphereReferenceArmyStandardMetro};
@@ -328,16 +327,35 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
     spline::CurveView form_curve(spline::kKnots, form_coefs);
     spline::CurveView ref_curve(spline::kKnots, *coefs);
     const auto kMerged = spline::Merge(form_curve, ref_curve);
+    // The merged curve is the drag function scaled by SD / BC; dividing by SD
+    // leaves the drag function scaled by 1 / BC so a constant BC band matches
+    // LobBuilderBallisticCoefficientPsi.
+    const float kInvSd = 1.0F / static_cast<float>(kSd.Value());
+    auto scaled_coeffs = kMerged;
+    for (size_t i = 0; i < spline::kCoefsSize; ++i) {
+      scaled_coeffs.at(i) *= kInvSd;
+    }
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    std::copy_n(kMerged.data(), spline::kCoefsSize, &pout->drags[0]);
+    std::copy_n(scaled_coeffs.data(), spline::kCoefsSize, &pout->drags[0]);
 
     pimpl->ballistic_coefficient_psi = PmsiT(1);
     pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
     return;
   }
 
+  const double kConvert =
+      pimpl->atmosphere_reference == kLobAtmosphereReferenceArmyStandardMetro
+          ? kArmyToIcaoBcConversionFactor
+          : 1.0;
+  pimpl->ballistic_coefficient_psi *= kConvert;
+  const float kInvBc =
+      1.0F / static_cast<float>(pimpl->ballistic_coefficient_psi.Value());
+  auto scaled_coeffs = *coefs;
+  for (size_t i = 0; i < spline::kCoefsSize; ++i) {
+    scaled_coeffs.at(i) *= kInvBc;
+  }
   // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-  std::copy_n(coefs->data(), spline::kCoefsSize, &pout->drags[0]);
+  std::copy_n(scaled_coeffs.data(), spline::kCoefsSize, &pout->drags[0]);
 }
 
 void BuildCoefficients(Impl* pimpl, LobContext* pout) {
@@ -353,14 +371,9 @@ void BuildCoefficients(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  if (pimpl->atmosphere_reference == kLobAtmosphereReferenceArmyStandardMetro) {
-    pimpl->ballistic_coefficient_psi *= kArmyToIcaoBcConversionFactor;
-    pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
-  }
-
   assert(!pimpl->air_density_lbs_per_cu_ft.IsNaN());
   pout->drag_coeff = CalculateCdCoefficient(pimpl->air_density_lbs_per_cu_ft,
-                                            pimpl->ballistic_coefficient_psi);
+                                            PmsiT(1));
 }
 
 void BuildWind(Impl* pimpl, LobContext* pout) {
@@ -543,9 +556,10 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const auto kGamma =
       boatright::CalculateCrosswindAngleGamma(kZWind, kVelocity);
   const auto kCD0 =
-      pimpl->drag_table_mode == DragTableMode::kStandard
+      pimpl->drag_table_mode == DragTableMode::kStandard ||
+              pimpl->drag_table_mode == DragTableMode::kBcBands
           ? boatright::CalculateZeroYawDragCoefficientOfDrag(kCdRef, kMass,
-                                                             kD, kBc)
+                                                             kD, PmsiT(1))
           : static_cast<double>(kCdRef);
   const auto kCDAdjustment =
       boatright::CalculateYawDragAdjustment(kGamma, kR, kCDa);
@@ -1063,7 +1077,7 @@ LobBuilder* LobBuilderMaximumTime(LobBuilder* pbuilder, double value) {
     return nullptr;
   }
   auto* pimpl = Pimpl(pbuilder);
-  pimpl->max_time_sec = value;
+  pimpl->max_time_sec = SecT(value);
   return pbuilder;
 }
 
@@ -1088,7 +1102,7 @@ void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
   presult->minimum_speed =
       pimpl->minimum_speed_fps.IsNaN() ? 0 : pimpl->minimum_speed_fps.U16();
   presult->step_size = pimpl->step_size_in;
-  presult->max_time = pimpl->max_time_sec;
+  presult->max_time = pimpl->max_time_sec.Value();
   presult->zero_angle =
       pimpl->zero_angle_moa.IsNaN() ? NaN() : pimpl->zero_angle_moa.Value();
 

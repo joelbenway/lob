@@ -998,7 +998,7 @@ TEST_F(BuilderTestFixture, ResetClearsBcBands) {
   for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
     const float kMach = lob::spline::kKnots.at(i);
     lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG1Coefs);
-    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) / 0.250F, 1.0e-6F)
+    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) / (0.250F * 0.982F), 1.0e-6F)
         << "knot i=" << i;
   }
 }
