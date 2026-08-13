@@ -150,6 +150,7 @@ TEST_F(BuilderTestFixture, InvalidDragFunctionIsG1) {
   // NOLINTNEXTLINE (clang-analyzer-optin.core.EnumCastOutOfRange)
   const auto kInvalidDragFunction = static_cast<lob::DragFunctionT>(0xFF);
   const lob::Context kResult = puut->BallisticCoefficientPsi(kTestBC)
+                                   .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
                                    .BCDragFunction(kInvalidDragFunction)
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .ZeroAngleMOA(kTestZeroAngle)
