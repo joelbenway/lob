@@ -702,13 +702,12 @@ TEST_F(BuilderTestFixture, BCVelocityBandsConstantBcScalesG1Curve) {
           .BCVelocityBands(kFps, kBcs)
           .Build();
   ASSERT_EQ(kResult.error, lob::ErrorT::kNone);
-  const auto kSd = static_cast<float>((168.0 / 7000.0) / (0.308 * 0.308));
-  const float kFormFactor = kSd / (0.250F * 0.982F);
+  const float kCurveScale = 1.0F / (0.250F * 0.982F);
   lob::spline::CurveView curve(lob::spline::kKnots, kResult.drags);
   for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
     const float kMach = lob::spline::kKnots.at(i);
     lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG1Coefs);
-    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kFormFactor, 1.0e-4F)
+    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kCurveScale, 1.0e-4F)
         << "knot i=" << i;
   }
 }
@@ -726,13 +725,12 @@ TEST_F(BuilderTestFixture, BCVelocityBandsIcaoSkipsConversionFactor) {
           .BCVelocityBands(kFps, kBcs)
           .Build();
   ASSERT_EQ(kIcao.error, lob::ErrorT::kNone);
-  const auto kSd = static_cast<float>((168.0 / 7000.0) / (0.308 * 0.308));
-  const float kFormFactor = kSd / 0.250F;
+  const float kCurveScale = 1.0F / 0.250F;
   lob::spline::CurveView curve(lob::spline::kKnots, kIcao.drags);
   for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
     const float kMach = lob::spline::kKnots.at(i);
     lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG1Coefs);
-    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kFormFactor, 1.0e-4F)
+    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kCurveScale, 1.0e-4F)
         << "knot i=" << i;
   }
 }
@@ -751,13 +749,12 @@ TEST_F(BuilderTestFixture, BCVelocityBandsMergesAgainstSelectedDragFunction) {
           .BCVelocityBands(kFps, kBcs)
           .Build();
   ASSERT_EQ(kResult.error, lob::ErrorT::kNone);
-  const auto kSd = static_cast<float>((168.0 / 7000.0) / (0.308 * 0.308));
-  const float kFormFactor = kSd / 0.250F;
+  const float kCurveScale = 1.0F / 0.250F;
   lob::spline::CurveView curve(lob::spline::kKnots, kResult.drags);
   for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
     const float kMach = lob::spline::kKnots.at(i);
     lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG7Coefs);
-    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kFormFactor, 1.0e-4F)
+    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kCurveScale, 1.0e-4F)
         << "knot i=" << i;
   }
 }
@@ -944,13 +941,12 @@ TEST_F(BuilderTestFixture, BCVelocityBandsDragFunctionOrderIndependent) {
           .BCDragFunction(lob::DragFunctionT::kG7)
           .Build();
   ASSERT_EQ(kResult.error, lob::ErrorT::kNone);
-  const auto kSd = static_cast<float>((168.0 / 7000.0) / (0.308 * 0.308));
-  const float kFormFactor = kSd / 0.250F;
+  const float kCurveScale = 1.0F / 0.250F;
   lob::spline::CurveView curve(lob::spline::kKnots, kResult.drags);
   for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
     const float kMach = lob::spline::kKnots.at(i);
     lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG7Coefs);
-    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kFormFactor, 1.0e-4F)
+    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kCurveScale, 1.0e-4F)
         << "knot i=" << i;
   }
 }
@@ -971,13 +967,12 @@ TEST_F(BuilderTestFixture, BCVelocityBandsLastCallWins) {
           .BCVelocityBands(kFps, kBcs)
           .Build();
   ASSERT_EQ(kResult.error, lob::ErrorT::kNone);
-  const auto kSd = static_cast<float>((168.0 / 7000.0) / (0.308 * 0.308));
-  const float kFormFactor = kSd / 0.250F;
+  const float kCurveScale = 1.0F / 0.250F;
   lob::spline::CurveView curve(lob::spline::kKnots, kResult.drags);
   for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
     const float kMach = lob::spline::kKnots.at(i);
     lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG1Coefs);
-    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kFormFactor, 1.0e-4F)
+    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kCurveScale, 1.0e-4F)
         << "knot i=" << i;
   }
 }
@@ -1003,7 +998,7 @@ TEST_F(BuilderTestFixture, ResetClearsBcBands) {
   for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
     const float kMach = lob::spline::kKnots.at(i);
     lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG1Coefs);
-    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach), 1.0e-6F)
+    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) / 0.250F, 1.0e-6F)
         << "knot i=" << i;
   }
 }
@@ -1064,6 +1059,82 @@ TEST_F(BuilderTestFixture, BCVelocityBandsMatchesSingleBcJump) {
   ASSERT_EQ(kSingle.error, lob::ErrorT::kNone);
   ASSERT_EQ(kBands.error, lob::ErrorT::kNone);
   EXPECT_NEAR(kBands.aerodynamic_jump, kSingle.aerodynamic_jump, 0.02);
+}
+
+TEST_F(BuilderTestFixture,
+       BCVelocityBandsConstantBcMatchesSingleBallisticCoefficient) {
+  const std::array<float, 5> kFps = {1250.0F, 1750.0F, 2250.0F, 2750.0F,
+                                     3250.0F};
+  const std::array<float, 5> kBcs = {0.308F, 0.308F, 0.308F, 0.308F, 0.308F};
+  const lob::Context kSingle =
+      puut->BallisticCoefficientPsi(0.308)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(2800U)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .Build();
+  puut->Reset();
+  const lob::Context kBands =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(2800U)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .BCVelocityBands(kFps, kBcs)
+          .Build();
+  ASSERT_EQ(kSingle.error, lob::ErrorT::kNone);
+  ASSERT_EQ(kBands.error, lob::ErrorT::kNone);
+  constexpr size_t kNumRanges = 6;
+  const std::array<uint32_t, kNumRanges> kRanges = {100U, 300U, 600U,
+                                                    900U, 1200U, 1500U};
+  std::array<lob::Output, kNumRanges> single_out = {};
+  std::array<lob::Output, kNumRanges> bands_out = {};
+  ASSERT_EQ(lob::Solve(kSingle, kRanges.data(), single_out.data(), kNumRanges),
+            kNumRanges);
+  ASSERT_EQ(lob::Solve(kBands, kRanges.data(), bands_out.data(), kNumRanges),
+            kNumRanges);
+  for (size_t i = 0; i < kNumRanges; ++i) {
+    EXPECT_NEAR(bands_out.at(i).elevation, single_out.at(i).elevation, 0.01)
+        << "range=" << kRanges.at(i);
+  }
+}
+
+TEST_F(BuilderTestFixture,
+       BCVelocityBandsConstantBcDragsMatchSingleBallisticCoefficient) {
+  const std::array<float, 5> kFps = {1250.0F, 1750.0F, 2250.0F, 2750.0F,
+                                     3250.0F};
+  const std::array<float, 5> kBcs = {0.308F, 0.308F, 0.308F, 0.308F, 0.308F};
+  const lob::Context kSingle =
+      puut->BallisticCoefficientPsi(0.308)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(2800U)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .Build();
+  puut->Reset();
+  const lob::Context kBands =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(2800U)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .BCVelocityBands(kFps, kBcs)
+          .Build();
+  ASSERT_EQ(kSingle.error, lob::ErrorT::kNone);
+  ASSERT_EQ(kBands.error, lob::ErrorT::kNone);
+  lob::spline::CurveView single_curve(lob::spline::kKnots, kSingle.drags);
+  lob::spline::CurveView bands_curve(lob::spline::kKnots, kBands.drags);
+  for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
+    EXPECT_NEAR(bands_curve.Eval(lob::spline::kKnots.at(i)),
+                single_curve.Eval(lob::spline::kKnots.at(i)), 1.0e-6F)
+        << "knot i=" << i;
+  }
 }
 
 TEST_F(BuilderTestFixture, StepSize) {
