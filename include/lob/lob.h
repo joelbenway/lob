@@ -122,7 +122,7 @@ typedef struct {
  * provided LobBuilder.
  */
 typedef struct {
-  double drag_coeff;        ///< @brief Drag coefficient scaling.
+  double drag_coeff;  ///< @brief Drag coefficient scaling: rho * pi / (8 * 144).
   double speed_of_sound;    ///< @brief The local speed of sound in Fps.
   double mass;              ///< @brief Mass of the projectile in pounds.
   double optic_height;      ///< @brief Height of the optic above the bore.
@@ -134,7 +134,8 @@ typedef struct {
   double aerodynamic_jump;  ///< @brief Aerodynamic jump effect in Moa.
   double spindrift_factor;  ///< @brief Spin drift factor.
   double max_time;          ///< @brief Max time of flight for solver.
-  float drags[LOB_SPLINE_SEGMENTS * 4];  ///< @brief Required for drag curve.
+  float drags[LOB_SPLINE_SEGMENTS * 4];
+  ///< @brief Drag curve coefficients, scaled by the effective 1/BC.
   uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
   uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
   uint16_t step_size;      ///< @brief Solver step size in inches.
@@ -290,9 +291,10 @@ LOB_EXPORT extern LobBuilder* LobBuilderSplineFitTable(LobBuilder* pbuilder,
 
 /**
  * @brief Loads ballistic coefficients measured at multiple velocities.
- * @note Describes the projectile's drag as a form-factor curve derived from
- * sectional density divided by each BC, merged with the drag function set via
- * LobBuilderBCDragFunction for a blended curve.
+ * @note Describes the projectile's drag as the drag function set via
+ * LobBuilderBCDragFunction, scaled by the inverse of each BC and blended
+ * across the velocity bands. A constant BC across all bands reproduces the
+ * result of LobBuilderBallisticCoefficientPsi with that BC.
  * @note The BCs use the same units as LobBuilderBallisticCoefficientPsi and
  * respect the atmosphere reference set via LobBuilderBCAtmosphere.
  * @warning The caller must keep pfps and pbcs valid until LobBuilderBuild
