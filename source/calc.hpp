@@ -178,10 +178,10 @@ inline FpsT CalculateVelocityFromKineticEnergy(FtLbsT energy, SlugT mass) {
 
 // Page 90 of Modern Exterior Ballistics - McCoy
 constexpr PmsiT CalculateSectionalDensity(InchT bullet_diameter,
-                                       LbsT bullet_mass) {
+                                          LbsT bullet_mass) {
   if (bullet_diameter > InchT(0)) {
     return PmsiT(bullet_mass.Value() /
-               (bullet_diameter.Value() * bullet_diameter.Value()));
+                 (bullet_diameter.Value() * bullet_diameter.Value()));
   }
   return PmsiT(0);
 }

@@ -204,26 +204,6 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   pout->speed_of_sound = kSpeedOfSound.Value();
 }
 
-LobErrorT ValidateTablePairs(Impl* pimpl, LobErrorT invalid_code,
-                             LobErrorT not_monotonic_code,
-                             bool require_positive) {
-  for (size_t i = 0; i < pimpl->table_count; i++) {
-    const bool kBad = std::isnan(pimpl->table_xs[i]) ||
-                      std::isnan(pimpl->table_ys[i]) ||
-                      pimpl->table_xs[i] < 0.0F || pimpl->table_ys[i] < 0.0F ||
-                      (require_positive &&
-                       (pimpl->table_xs[i] <= 0.0F ||
-                        pimpl->table_ys[i] <= 0.0F));
-    if (kBad) {
-      return invalid_code;
-    }
-    if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {
-      return not_monotonic_code;
-    }
-  }
-  return kLobErrorNone;
-}
-
 LobErrorT ValidateCustomTable(Impl* pimpl) {
   if (pimpl->table_count < 2) {
     return kLobErrorMachDragTableTooShort;
@@ -232,9 +212,16 @@ LobErrorT ValidateCustomTable(Impl* pimpl) {
       pimpl->table_xs[pimpl->table_count - 1] < spline::kKnots.back()) {
     return kLobErrorMachDragTableTooNarrow;
   }
-  return ValidateTablePairs(pimpl, kLobErrorMachDragTableInvalid,
-                            kLobErrorMachDragTableNotMonotonic,
-                            /*require_positive=*/false);
+  for (size_t i = 0; i < pimpl->table_count; i++) {
+    if (std::isnan(pimpl->table_xs[i]) || std::isnan(pimpl->table_ys[i]) ||
+        pimpl->table_xs[i] < 0.0F || pimpl->table_ys[i] < 0.0F) {
+      return kLobErrorMachDragTableInvalid;
+    }
+    if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {
+      return kLobErrorMachDragTableNotMonotonic;
+    }
+  }
+  return kLobErrorNone;
 }
 
 LobErrorT ValidateBcBands(Impl* pimpl) {
@@ -244,15 +231,14 @@ LobErrorT ValidateBcBands(Impl* pimpl) {
   if (pimpl->table_count > spline::kKnotCount) {
     return kLobErrorBcBandsInvalid;
   }
-  const LobErrorT kErr = ValidateTablePairs(
-      pimpl, kLobErrorBcBandsInvalid, kLobErrorBcBandsNotMonotonic,
-      /*require_positive=*/true);
-  if (kErr != kLobErrorNone) {
-    return kErr;
-  }
-  if (isnan(pimpl->diameter_in) || isnan(pimpl->mass_lbs) ||
-      pimpl->diameter_in <= InchT(0) || pimpl->mass_lbs <= LbsT(0)) {
-    return kLobErrorBcBandsSdRequired;
+  for (size_t i = 0; i < pimpl->table_count; i++) {
+    if (std::isnan(pimpl->table_xs[i]) || std::isnan(pimpl->table_ys[i]) ||
+        pimpl->table_xs[i] <= 0.0F || pimpl->table_ys[i] <= 0.0F) {
+      return kLobErrorBcBandsInvalid;
+    }
+    if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {
+      return kLobErrorBcBandsNotMonotonic;
+    }
   }
   return kLobErrorNone;
 }
@@ -302,8 +288,6 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
       pout->error = kErr;
       return;
     }
-    const PmsiT kSd = CalculateSectionalDensity(pimpl->diameter_in,
-                                                pimpl->mass_lbs);
     const auto kSos = static_cast<float>(pout->speed_of_sound);
     if (pimpl->table_xs[pimpl->table_count - 1] / kSos >=
         spline::kKnots.back()) {
@@ -320,23 +304,14 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
       machs.at(i) = pimpl->table_xs[i] / kSos;
       bcs.at(i) = pimpl->table_ys[i] * kConvert;
     }
-    std::array<float, spline::kCoefsSize> form_coefs{};
-    spline::MakeFormFactorCoefs(static_cast<float>(kSd.Value()), machs.data(),
-                                bcs.data(), pimpl->table_count,
-                                form_coefs.data());
-    spline::CurveView form_curve(spline::kKnots, form_coefs);
-    spline::CurveView ref_curve(spline::kKnots, *coefs);
-    const auto kMerged = spline::Merge(form_curve, ref_curve);
-    // The merged curve is the drag function scaled by SD / BC; dividing by SD
-    // leaves the drag function scaled by 1 / BC so a constant BC band matches
-    // LobBuilderBallisticCoefficientPsi.
-    const float kInvSd = 1.0F / static_cast<float>(kSd.Value());
-    auto scaled_coeffs = kMerged;
-    for (size_t i = 0; i < spline::kCoefsSize; ++i) {
-      scaled_coeffs.at(i) *= kInvSd;
-    }
+    std::array<float, spline::kCoefsSize> scale_coefs{};
+    spline::MakeRetardationCoefs(machs.data(), bcs.data(), pimpl->table_count,
+                                 scale_coefs.data());
+    spline::CurveView scaling_curve(spline::kKnots, scale_coefs);
+    spline::CurveView drag_curve(spline::kKnots, *coefs);
+    auto merged_curve = spline::Merge(scaling_curve, drag_curve);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    std::copy_n(scaled_coeffs.data(), spline::kCoefsSize, &pout->drags[0]);
+    std::copy_n(merged_curve.data(), spline::kCoefsSize, &pout->drags[0]);
 
     pimpl->ballistic_coefficient_psi = PmsiT(1);
     pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
@@ -372,8 +347,8 @@ void BuildCoefficients(Impl* pimpl, LobContext* pout) {
   }
 
   assert(!pimpl->air_density_lbs_per_cu_ft.IsNaN());
-  pout->drag_coeff = CalculateCdCoefficient(pimpl->air_density_lbs_per_cu_ft,
-                                            PmsiT(1));
+  pout->drag_coeff =
+      CalculateCdCoefficient(pimpl->air_density_lbs_per_cu_ft, PmsiT(1));
 }
 
 void BuildWind(Impl* pimpl, LobContext* pout) {
@@ -555,12 +530,11 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const auto kTn = boatright::CalculateFirstNutationPeriod(kF1F2Sum - kF2, kF2);
   const auto kGamma =
       boatright::CalculateCrosswindAngleGamma(kZWind, kVelocity);
-  const auto kCD0 =
-      pimpl->drag_table_mode == DragTableMode::kStandard ||
-              pimpl->drag_table_mode == DragTableMode::kBcBands
-          ? boatright::CalculateZeroYawDragCoefficientOfDrag(kCdRef, kMass,
-                                                             kD, PmsiT(1))
-          : static_cast<double>(kCdRef);
+  const auto kCD0 = pimpl->drag_table_mode == DragTableMode::kStandard ||
+                            pimpl->drag_table_mode == DragTableMode::kBcBands
+                        ? boatright::CalculateZeroYawDragCoefficientOfDrag(
+                              kCdRef, kMass, kD, PmsiT(1))
+                        : static_cast<double>(kCdRef);
   const auto kCDAdjustment =
       boatright::CalculateYawDragAdjustment(kGamma, kR, kCDa);
   const auto kCD = kCD0 + kCDAdjustment;
