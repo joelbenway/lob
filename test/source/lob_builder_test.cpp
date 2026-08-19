@@ -703,7 +703,9 @@ TEST_F(BuilderTestFixture, BCVelocityBandsConstantBcScalesG1Curve) {
           .BCVelocityBands(kFps, kBcs)
           .Build();
   ASSERT_EQ(kResult.error, lob::ErrorT::kNone);
-  const float kCurveScale = 1.0F / (0.250F * 0.982F);
+  const float kCurveScale =
+      1.0F /
+      (kBcs.front() * static_cast<float>(lob::kArmyToIcaoBcConversionFactor));
   lob::spline::CurveView curve(lob::spline::kKnots, kResult.drags);
   for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
     const float kMach = lob::spline::kKnots.at(i);
@@ -989,7 +991,7 @@ TEST_F(BuilderTestFixture, ResetClearsBcBands) {
       .BCVelocityBands(kFps, kBcs)
       .Reset();
   const lob::Context kResult =
-      puut->BallisticCoefficientPsi(0.250)
+      puut->BallisticCoefficientPsi(static_cast<double>(kBcs.front()))
           .InitialVelocityFps(kM70MuzzleVelocity)
           .ZeroDistanceYds(kJackOConnorZeroYardage)
           .ZeroImpactHeightInches(kJackOConnorZeroHeight)
@@ -1201,7 +1203,7 @@ TEST_F(BuilderTestFixture, ReadmeMinimalExampleProducesExpectedOutput) {
   ASSERT_EQ(kCount, kNumRanges);
 
   const std::array<double, kNumRanges> kExpected = {
-      -1.50, 0.00, -4.15, -15.01, -33.91, -62.51, -102.87};
+      -1.50, 0.00, -4.15, -15.01, -33.91, -62.50, -102.85};
   for (size_t i = 0; i < kNumRanges; i++) {
     EXPECT_NEAR(out.at(i).elevation, kExpected.at(i), 0.005)
         << "range=" << kRanges.at(i);

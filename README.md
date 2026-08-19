@@ -73,8 +73,8 @@ Drop at 300 feet is 0.00 inches
 Drop at 600 feet is -4.15 inches
 Drop at 900 feet is -15.01 inches
 Drop at 1200 feet is -33.91 inches
-Drop at 1500 feet is -62.51 inches
-Drop at 1800 feet is -102.87 inches
+Drop at 1500 feet is -62.50 inches
+Drop at 1800 feet is -102.85 inches
 ```
 It only takes a few parameters for lob to make a well-formed, if minimal, ballistic solution. By providing more data, our solver can be more accurate.
 ```C++

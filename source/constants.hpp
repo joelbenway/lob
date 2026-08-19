@@ -19,7 +19,9 @@ constexpr double kIsaLapseDegFPerFt = 0.00356616;
 constexpr double kIsaTropopauseAltitudeFt = 36'090.0;
 constexpr double kIsaStratosphereAltitudeFt = 65'617.0;
 constexpr double kIsaMinimumTempDegF = -69.7;
-constexpr double kArmyToIcaoBcConversionFactor = 0.982;
+constexpr double kArmySeaLevelAirDensityLbsPerCuFt = 0.0751265;
+constexpr double kArmyToIcaoBcConversionFactor =
+    kArmySeaLevelAirDensityLbsPerCuFt / kIsaSeaLevelAirDensityLbsPerCuFt;
 constexpr double kAngularVelocityOfEarthRadPerSec = 7.292115E-5;
 }  // namespace lob
 
