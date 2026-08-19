@@ -325,12 +325,10 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
   pimpl->ballistic_coefficient_psi *= kConvert;
   const float kInvBc =
       1.0F / static_cast<float>(pimpl->ballistic_coefficient_psi.Value());
-  auto scaled_coeffs = *coefs;
   for (size_t i = 0; i < spline::kCoefsSize; ++i) {
-    scaled_coeffs.at(i) *= kInvBc;
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+    pout->drags[i] = coefs->at(i) * kInvBc;
   }
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-  std::copy_n(scaled_coeffs.data(), spline::kCoefsSize, &pout->drags[0]);
 }
 
 void BuildCoefficients(Impl* pimpl, LobContext* pout) {
