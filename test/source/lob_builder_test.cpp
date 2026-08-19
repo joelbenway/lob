@@ -836,7 +836,7 @@ TEST_F(BuilderTestFixture, BCVelocityBandsTooManyPairs) {
           .InitialVelocityFps(kM70MuzzleVelocity)
           .ZeroDistanceYds(kJackOConnorZeroYardage)
           .ZeroImpactHeightInches(kJackOConnorZeroHeight)
-          .BCVelocityBands(fps, bcs)
+          .BCVelocityBands(fps.data(), bcs.data(), fps.size())
           .Build();
   EXPECT_EQ(kResult.error, lob::ErrorT::kBcBandsInvalid);
 }

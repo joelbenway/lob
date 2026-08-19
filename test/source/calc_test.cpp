@@ -312,6 +312,8 @@ TEST(CalcTests, CalculateSectionalDensity) {
   EXPECT_NEAR(
       CalculateSectionalDensity(lob::InchT(.375), lob::GrainT(270)).Value(),
       0.274, 1E-3);
+  EXPECT_DOUBLE_EQ(
+      CalculateSectionalDensity(lob::InchT(0), lob::GrainT(77)).Value(), 0.0);
 }
 
 }  // namespace tests
