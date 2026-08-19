@@ -92,7 +92,6 @@ enum {
   kLobErrorZeroUnreachable,
   kLobErrorBcBandsInvalid,
   kLobErrorBcBandsNotMonotonic,
-  kLobErrorBcBandsSdRequired,
   kLobErrorBcBandsTooShort,
   kLobErrorNotFormed
 };
@@ -122,7 +121,7 @@ typedef struct {
  * provided LobBuilder.
  */
 typedef struct {
-  double drag_coeff;  ///< @brief Drag coefficient scaling: rho * pi / (8 * 144).
+  double drag_coeff;        ///< @brief Drag coefficient scaling factor.
   double speed_of_sound;    ///< @brief The local speed of sound in Fps.
   double mass;              ///< @brief Mass of the projectile in pounds.
   double optic_height;      ///< @brief Height of the optic above the bore.
@@ -273,8 +272,8 @@ LOB_EXPORT extern LobBuilder* LobBuilderOgiveRtR(LobBuilder* pbuilder,
 
 /**
  * @brief Loads a custom Mach vs Drag table for the projectile.
- * @note This is a direct alternative to using a ballistic coefficient and a
- * reference drag function.
+ * @details This is a direct alternative to using a ballistic coefficient and
+ * a reference drag function.
  * @warning The caller must keep pmachs and pdrags valid until LobBuilderBuild
  * is called. The builder copies no data; the pointers are referenced during
  * Build().
@@ -291,9 +290,10 @@ LOB_EXPORT extern LobBuilder* LobBuilderSplineFitTable(LobBuilder* pbuilder,
 
 /**
  * @brief Loads ballistic coefficients measured at multiple velocities.
- * @note Describes the projectile's drag as the drag function set via
- * LobBuilderBCDragFunction, scaled by the inverse of each BC and blended
- * across the velocity bands. A constant BC across all bands reproduces the
+ * @details A projectile's effective BC varies with velocity. Supplying BCs at
+ * several velocities tailors the drag function set via
+ * LobBuilderBCDragFunction to better fit the projectile's actual
+ * velocity-dependent drag. A constant BC across all bands reproduces the
  * result of LobBuilderBallisticCoefficientPsi with that BC.
  * @note The BCs use the same units as LobBuilderBallisticCoefficientPsi and
  * respect the atmosphere reference set via LobBuilderBCAtmosphere.

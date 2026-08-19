@@ -216,53 +216,49 @@ constexpr auto kG7Coefs = MakeCoefs(lob::dragtable::kG7Drags);
 constexpr auto kG8Coefs = MakeCoefs(lob::dragtable::kG8Drags);
 
 template <typename T = float>
-constexpr void MakeFormFactorCoefs(T sectional_density, const T* input_machs,
-                                   const T* input_bcs, size_t size,
-                                   T* coefs_out) {
+constexpr void MakeRetardationCoefs(const T* input_machs, const T* input_bcs,
+                                    size_t size, T* coefs_out) {
   assert(size >= 2 && size <= kKnotCount);
   // 1. Add boundary padding points at kKnots[0] (0.0) and kKnots[N-1] (5.0).
-  // This enforces flat (constant) form factor extrapolation outside the
-  // user's Mach range.
+  // This enforces flat (constant) 1/BC extrapolation outside the user's Mach
+  // range.
   constexpr size_t kPaddedSize = kKnotCount + 2;
   std::array<T, kPaddedSize> machs{};
   std::array<T, kPaddedSize> i_factors{};
 
   // Low Mach clamp (Mach 0.0) using the lowest-velocity BC
   machs[0] = kKnots[0];
-  i_factors[0] = sectional_density / input_bcs[0];
+  i_factors[0] = T(1) / input_bcs[0];
 
   // User input points
   for (size_t k = 0; k < size; ++k) {
     machs.at(k + 1) = input_machs[k];
-    i_factors.at(k + 1) = sectional_density / input_bcs[k];
+    i_factors.at(k + 1) = T(1) / input_bcs[k];
   }
 
   // High Mach clamp (Mach 5.0) using the highest-velocity BC
   machs.at(size + 1) = kKnots[kKnotCount - 1];
-  i_factors.at(size + 1) = sectional_density / input_bcs[size - 1];
+  i_factors.at(size + 1) = T(1) / input_bcs[size - 1];
 
-  // 2. Project the PCHIP-interpolated form factor curve onto kKnots
+  // 2. Project the PCHIP-interpolated 1/BC curve onto kKnots
   Build(machs.data(), i_factors.data(), size + 2, kKnots.data(), kKnotCount,
         coefs_out);
 }
 
 template <typename T = float, size_t N>
-constexpr std::array<T, kCoefsSize> MakeFormFactorCoefs(
-    T sectional_density, const std::array<T, N>& input_machs,
-    const std::array<T, N>& input_bcs) {
+constexpr std::array<T, kCoefsSize> MakeRetardationCoefs(
+    const std::array<T, N>& input_machs, const std::array<T, N>& input_bcs) {
   static_assert(N >= 2, "At least two BC bands are required");
+  static_assert(N <= kKnotCount, "Too many BC bands");
   std::array<T, kCoefsSize> coefs{};
-  MakeFormFactorCoefs(sectional_density, input_machs.data(), input_bcs.data(),
-                      N, coefs.data());
+  MakeRetardationCoefs(input_machs.data(), input_bcs.data(), N, coefs.data());
   return coefs;
 }
 
 template <typename T = float, size_t N = kKnotCount>
 constexpr std::array<T, (N - 1) * 4> Merge(
-    Cursor<T, N>& curve_a,
-    Cursor<T, N>& curve_b,
+    Cursor<T, N>& curve_a, Cursor<T, N>& curve_b,
     const std::array<T, N>& knots = kKnots) {
-  
   std::array<T, N> y_fused{};
   std::array<T, N> dy_fused{};
 
@@ -279,9 +275,8 @@ constexpr std::array<T, (N - 1) * 4> Merge(
 
   std::array<T, (N - 1) * 4> coefs_out{};
   for (size_t i = 0; i + 1 < N; i++) {
-    detail::Hermite(knots.at(i), knots.at(i + 1), 
-                    y_fused.at(i), y_fused.at(i + 1),
-                    dy_fused.at(i), dy_fused.at(i + 1), 
+    detail::Hermite(knots.at(i), knots.at(i + 1), y_fused.at(i),
+                    y_fused.at(i + 1), dy_fused.at(i), dy_fused.at(i + 1),
                     &coefs_out.at(i * 4));
   }
 

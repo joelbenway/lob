@@ -149,12 +149,13 @@ TEST_F(BuilderTestFixture, InvalidDragFunctionIsG1) {
   const double kTestZeroAngle = 5.59;
   // NOLINTNEXTLINE (clang-analyzer-optin.core.EnumCastOutOfRange)
   const auto kInvalidDragFunction = static_cast<lob::DragFunctionT>(0xFF);
-  const lob::Context kResult = puut->BallisticCoefficientPsi(kTestBC)
-                                   .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-                                   .BCDragFunction(kInvalidDragFunction)
-                                   .InitialVelocityFps(kTestMuzzleVelocity)
-                                   .ZeroAngleMOA(kTestZeroAngle)
-                                   .Build();
+  const lob::Context kResult =
+      puut->BallisticCoefficientPsi(kTestBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .BCDragFunction(kInvalidDragFunction)
+          .InitialVelocityFps(kTestMuzzleVelocity)
+          .ZeroAngleMOA(kTestZeroAngle)
+          .Build();
 
   EXPECT_EQ(kResult.error, lob::ErrorT::kNone);
   EXPECT_THAT(kResult.drags, testing::ElementsAreArray(lob::spline::kG1Coefs));
@@ -840,7 +841,7 @@ TEST_F(BuilderTestFixture, BCVelocityBandsTooManyPairs) {
   EXPECT_EQ(kResult.error, lob::ErrorT::kBcBandsInvalid);
 }
 
-TEST_F(BuilderTestFixture, BCVelocityBandsSdRequiredMissingMass) {
+TEST_F(BuilderTestFixture, BCVelocityBandsWithoutMassSucceeds) {
   const std::array<float, 2> kFps = {2000.0F, 3000.0F};
   const std::array<float, 2> kBcs = {0.250F, 0.200F};
   const lob::Context kResult =
@@ -850,10 +851,10 @@ TEST_F(BuilderTestFixture, BCVelocityBandsSdRequiredMissingMass) {
           .ZeroImpactHeightInches(kJackOConnorZeroHeight)
           .BCVelocityBands(kFps, kBcs)
           .Build();
-  EXPECT_EQ(kResult.error, lob::ErrorT::kBcBandsSdRequired);
+  EXPECT_EQ(kResult.error, lob::ErrorT::kNone);
 }
 
-TEST_F(BuilderTestFixture, BCVelocityBandsSdRequiredMissingDiameter) {
+TEST_F(BuilderTestFixture, BCVelocityBandsWithoutDiameterSucceeds) {
   const std::array<float, 2> kFps = {2000.0F, 3000.0F};
   const std::array<float, 2> kBcs = {0.250F, 0.200F};
   const lob::Context kResult =
@@ -863,7 +864,7 @@ TEST_F(BuilderTestFixture, BCVelocityBandsSdRequiredMissingDiameter) {
           .ZeroImpactHeightInches(kJackOConnorZeroHeight)
           .BCVelocityBands(kFps, kBcs)
           .Build();
-  EXPECT_EQ(kResult.error, lob::ErrorT::kBcBandsSdRequired);
+  EXPECT_EQ(kResult.error, lob::ErrorT::kNone);
 }
 
 TEST_F(BuilderTestFixture, BCVelocityBandsZeroFpsRejected) {
@@ -1001,7 +1002,11 @@ TEST_F(BuilderTestFixture, ResetClearsBcBands) {
   for (size_t i = 0; i < lob::spline::kKnotCount; ++i) {
     const float kMach = lob::spline::kKnots.at(i);
     lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG1Coefs);
-    EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) / (0.250F * 0.982F), 1.0e-6F)
+    EXPECT_NEAR(curve.Eval(kMach),
+                ref.Eval(kMach) /
+                    (kBcs.front() *
+                     static_cast<float>(lob::kArmyToIcaoBcConversionFactor)),
+                1.0e-6F)
         << "knot i=" << i;
   }
 }
@@ -1091,7 +1096,7 @@ TEST_F(BuilderTestFixture,
   ASSERT_EQ(kSingle.error, lob::ErrorT::kNone);
   ASSERT_EQ(kBands.error, lob::ErrorT::kNone);
   constexpr size_t kNumRanges = 6;
-  const std::array<uint32_t, kNumRanges> kRanges = {100U, 300U, 600U,
+  const std::array<uint32_t, kNumRanges> kRanges = {100U, 300U,  600U,
                                                     900U, 1200U, 1500U};
   std::array<lob::Output, kNumRanges> single_out = {};
   std::array<lob::Output, kNumRanges> bands_out = {};

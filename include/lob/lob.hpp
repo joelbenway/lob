@@ -91,7 +91,6 @@ enum class ErrorT : LobErrorT {
   kZeroUnreachable = ::kLobErrorZeroUnreachable,
   kBcBandsInvalid = ::kLobErrorBcBandsInvalid,
   kBcBandsNotMonotonic = ::kLobErrorBcBandsNotMonotonic,
-  kBcBandsSdRequired = ::kLobErrorBcBandsSdRequired,
   kBcBandsTooShort = ::kLobErrorBcBandsTooShort,
   kNotFormed = ::kLobErrorNotFormed
 };
@@ -108,23 +107,24 @@ using Coriolis = ::LobCoriolis;
  * provided Builder class. Layout-compatible with @c LobContext.
  */
 struct Context {
-  double drag_coeff;
-  double speed_of_sound;
-  double mass;
-  double optic_height;
-  Gravity gravity;
-  Wind wind;
-  Coriolis coriolis;
-  double zero_angle;
-  double stability_factor;
-  double aerodynamic_jump;
-  double spindrift_factor;
-  double max_time;
+  double drag_coeff;        ///< @brief Drag coefficient scaling factor.
+  double speed_of_sound;    ///< @brief The local speed of sound in Fps.
+  double mass;              ///< @brief Mass of the projectile in pounds.
+  double optic_height;      ///< @brief Height of the optic above the bore.
+  Gravity gravity;          ///< @brief Gravity vector.
+  Wind wind;                ///< @brief Wind vector.
+  Coriolis coriolis;        ///< @brief Coriolis effect parameters.
+  double zero_angle;        ///< @brief Angle between sight and trajectory.
+  double stability_factor;  ///< @brief Miller stability factor.
+  double aerodynamic_jump;  ///< @brief Aerodynamic jump effect in Moa.
+  double spindrift_factor;  ///< @brief Spin drift factor.
+  double max_time;          ///< @brief Max time of flight for solver.
   std::array<float, kLobCoeffsSize> drags;
-  uint16_t velocity;
-  uint16_t minimum_speed;
-  uint16_t step_size;
-  ErrorT error;
+  ///< @brief Drag curve coefficients, scaled by the effective 1/BC.
+  uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
+  uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
+  uint16_t step_size;      ///< @brief Solver step size in inches.
+  ErrorT error;            ///< @brief Error status after build.
 };
 
 static_assert(sizeof(Context) == sizeof(::LobContext),
@@ -266,6 +266,9 @@ class Builder {
 
   /**
    * @brief Sets the drag function associated with ballistic coefficient.
+   * @note Does not clear a table loaded via MachVsDragTable or
+   * BCVelocityBands; those override the drag function at Build time.
+   * Call Reset to return to a standard drag function.
    * @param type The drag function type.
    * @return A reference to the Builder object.
    */
@@ -277,6 +280,9 @@ class Builder {
 
   /**
    * @brief Sets the drag function associated with ballistic coefficient.
+   * @note Does not clear a table loaded via MachVsDragTable or
+   * BCVelocityBands; those override the drag function at Build time.
+   * Call Reset to return to a standard drag function.
    * @param type The drag function type.
    * @return A reference to the Builder object.
    */
@@ -357,8 +363,11 @@ class Builder {
 
   /**
    * @brief Loads a custom Mach vs Drag table for the projectile.
-   * @note This is a direct alternative to using a ballistic coefficient and a
-   * reference drag function.
+   * @details This is a direct alternative to using a ballistic coefficient
+   * and a reference drag function.
+   * @warning The caller must keep pmachs and pdrags valid until Build is
+   * called. The builder copies no data; the pointers are referenced during
+   * Build().
    * @param pmachs Pointer to an array of mach values.
    * @param pdrags Pointer to an array of associated drag values.
    * @param size The number of mach-drag pairs in the table.
@@ -372,8 +381,10 @@ class Builder {
 
   /**
    * @brief Loads a custom Mach vs Drag table for the projectile.
-   * @note This is a direct alternative to using a ballistic coefficient and a
-   * reference drag function.
+   * @details This is a direct alternative to using a ballistic coefficient
+   * and a reference drag function.
+   * @warning The arrays must remain valid until Build is called; the builder
+   * copies no data and references them during Build().
    * @tparam N The number of mach-drag pairs in the table.
    * @param machs Reference to an array of mach values.
    * @param drags Reference to an array of associated drag values.
@@ -387,27 +398,38 @@ class Builder {
   }
 
   /**
-   * @brief Loads a BC-velocity table for the projectile.
-   * @note The manufacturer-supplied BC values are converted to a
-   * piecewise-Hermite form factor curve, which is merged with the configured
-   * reference drag function.
+   * @brief Loads ballistic coefficients measured at multiple velocities.
+   * @details A projectile's effective BC varies with velocity. Supplying BCs
+   * at several velocities tailors the reference drag function to better fit
+   * the projectile's actual velocity-dependent drag.
+   * @note The BCs use the same units as BallisticCoefficientPsi and respect
+   * the atmosphere reference set via BCAtmosphere.
+   * @warning The caller must keep pfps and pbcvs valid until Build is called.
+   * The builder copies no data; the pointers are referenced during Build().
    * @param pfps Pointer to an array of muzzle velocities in fps.
    * @param pbcvs Pointer to an array of associated BC values.
-   * @param size The number of fps-BC pairs in the table.
+   * @param size The number of fps-BC pairs in the table. Must be at least 2
+   * and at most 16; velocities must be positive and strictly increasing, BCs
+   * positive, and the highest velocity below Mach 5.
    * @return A reference to the Builder object.
    */
-  Builder& BCVelocityBands(const float* pfps, const float* pbcvs,
-                           size_t size) {
+  Builder& BCVelocityBands(const float* pfps, const float* pbcvs, size_t size) {
     ::LobBuilderBCVelocityBands(&builder_, pfps, pbcvs, size);
     return *this;
   }
 
   /**
-   * @brief Loads a BC-velocity table for the projectile.
-   * @note The manufacturer-supplied BC values are converted to a
-   * piecewise-Hermite form factor curve, which is merged with the configured
-   * reference drag function.
-   * @tparam N The number of fps-BC pairs in the table.
+   * @brief Loads ballistic coefficients measured at multiple velocities.
+   * @details A projectile's effective BC varies with velocity. Supplying BCs
+   * at several velocities tailors the reference drag function to better fit
+   * the projectile's actual velocity-dependent drag.
+   * @note The BCs use the same units as BallisticCoefficientPsi and respect
+   * the atmosphere reference set via BCAtmosphere.
+   * @warning The arrays must remain valid until Build is called; the builder
+   * copies no data and references them during Build().
+   * @tparam N The number of fps-BC pairs in the table. Must be at least 2 and
+   * at most 16; velocities must be positive and strictly increasing, BCs
+   * positive, and the highest velocity below Mach 5.
    * @param fps Reference to an array of muzzle velocities in fps.
    * @param bcvs Reference to an array of associated BC values.
    * @return A reference to the Builder object.
