@@ -24,6 +24,8 @@ The following can be accounted for in lob's solutions:
  * Coriolis effect :globe_with_meridians:
  * Gyroscopic spin drift (two methods)
  * Crosswind aerodynamic (two methods)
+ * Forward solutions (distance dropped at range)
+ * Inverse solutions (adjustment required to hit target at range)
 
 In addition to ballistic solutions, lob provides instrumental values it calculates including the local speed of sound, stability factor, and the "zero angle" between the line of sight and line of fire. All native units are customary American freedom units :statue_of_liberty: but a collection of unit conversion functions are included :hammer_and_wrench:
 
@@ -109,7 +111,9 @@ const lob::Context kBetterCtx =
 Now we're cooking! :cook:
 
 ### Accurate
-Under the hood lob solves ordinary differential equations (ODEs) which model the projectile motion of a point mass using numerical methods. To reduce the risk of mathematical error lob is overbuilt with tender loving obsession. Internally lob uses a custom [strong type](/source/eng_units.hpp) system for engineering units that eliminate an entire class of potential bugs. Every calculation lob uses is validated against published data by comprehensive unit tests. :mechanical_arm:
+Under the hood lob uses numerical methods to solve well-known ordinary differential equations (ODEs) which model the projectile motion of a point mass like any good workhorse solver. The path to accuracy begins preventing errors in the implementation and this is where lob is painfully overbuilt. Every calculation lob uses is validated against published material by comprehensive unit tests. Internally lob uses a custom [strong type](/source/eng_units.hpp) system for engineering units that eliminate an entire class of potential bugs. Quality is strictly enforced by [continuous integration](https://github.com/joelbenway/lob/actions/workflows/ci.yml) befitting a critical software system. :mechanical_arm:
+
+There are features that set lob's accuracy apart as well. A solution can only be as good as the drag function used so whether provided with a single ballistics coefficent (BC), a set of BC/velocity pairs provided by a projectile manufacturer, or a full table of empirical radar measurements lob is ready squeeze every drop of accuracy from the known data. Lob implements the most common formulas for estimating the spin-related phenomena of cross-wind aerodynamic jump and gyroscopic spin drift, however with enough data it will calculate these effects from the expected precession and nutation of the projectile for a higher fidelity solution.
 
 ### Fast!
 Lob is not just high-performance because it's C++; it was designed with performance in mind and benchmarked along the way. To speed up the solver's most critical performance path lob uniquely models drag functions as cubic Hermite spline curves built from mach vs drag tables at compile-time. These spline curves evaluate with just a handful of arithmetic ops for extraordinary speed! :checkered_flag:
