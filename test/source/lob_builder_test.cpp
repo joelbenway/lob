@@ -836,7 +836,7 @@ TEST_F(BuilderTestFixture, BCVelocityBandsInvalidNaNbc) {
 }
 
 TEST_F(BuilderTestFixture, BCVelocityBandsTooManyPairs) {
-  constexpr size_t kPairCount = 17;
+  constexpr size_t kPairCount = lob::spline::kKnotCount + 1;
   constexpr float kBaseFps = 1000.0F;
   constexpr float kFpsStep = 200.0F;
   constexpr float kConstantBc = 0.250F;
@@ -926,7 +926,7 @@ TEST_F(BuilderTestFixture, BCVelocityBandsMachRangeExceedsDomain) {
 }
 
 TEST_F(BuilderTestFixture, BCVelocityBandsMaxPairs) {
-  constexpr size_t kPairCount = 16;
+  constexpr size_t kPairCount = lob::spline::kKnotCount;
   constexpr float kBaseFps = 1000.0F;
   constexpr float kFpsStep = 200.0F;
   constexpr float kConstantBc = 0.250F;

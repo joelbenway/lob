@@ -115,6 +115,15 @@ constexpr std::array<float, kKnotCount> kKnots = {
     1.075537801F, 1.213106632F, 1.373186588F, 1.688344240F,
     2.126063108F, 2.808904648F, 3.926963568F, 5.000000000F};
 
+template <typename T>
+constexpr std::array<T, kKnotCount> MakeKnots() {
+  std::array<T, kKnotCount> knots{};
+  for (size_t i = 0; i < kKnotCount; ++i) {
+    knots.at(i) = kKnots.at(i);
+  }
+  return knots;
+}
+
 template <typename T = float, size_t N = kKnotCount>
 class Cursor {
  public:
@@ -225,9 +234,10 @@ constexpr void MakeRetardationCoefs(const T* input_machs, const T* input_bcs,
   constexpr size_t kPaddedSize = kKnotCount + 2;
   std::array<T, kPaddedSize> machs{};
   std::array<T, kPaddedSize> i_factors{};
+  const std::array<T, kKnotCount> kKnotsT = MakeKnots<T>();
 
   // Low Mach clamp (Mach 0.0) using the lowest-velocity BC
-  machs[0] = kKnots[0];
+  machs[0] = kKnotsT[0];
   i_factors[0] = T(1) / input_bcs[0];
 
   // User input points
@@ -237,11 +247,11 @@ constexpr void MakeRetardationCoefs(const T* input_machs, const T* input_bcs,
   }
 
   // High Mach clamp (Mach 5.0) using the highest-velocity BC
-  machs.at(size + 1) = kKnots[kKnotCount - 1];
+  machs.at(size + 1) = kKnotsT[kKnotCount - 1];
   i_factors.at(size + 1) = T(1) / input_bcs[size - 1];
 
   // 2. Project the PCHIP-interpolated 1/BC curve onto kKnots
-  Build(machs.data(), i_factors.data(), size + 2, kKnots.data(), kKnotCount,
+  Build(machs.data(), i_factors.data(), size + 2, kKnotsT.data(), kKnotCount,
         coefs_out);
 }
 
@@ -258,7 +268,7 @@ constexpr std::array<T, kCoefsSize> MakeRetardationCoefs(
 template <typename T = float, size_t N = kKnotCount>
 constexpr std::array<T, (N - 1) * 4> Merge(
     Cursor<T, N>& curve_a, Cursor<T, N>& curve_b,
-    const std::array<T, N>& knots = kKnots) {
+    const std::array<T, N>& knots = MakeKnots<T>()) {
   std::array<T, N> y_fused{};
   std::array<T, N> dy_fused{};
 
