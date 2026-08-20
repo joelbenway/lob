@@ -12,15 +12,16 @@
 
 namespace lob {
 
-inline DegFT CalculateTemperatureAtAltitude(FeetT altitude, DegFT temperature) {
+constexpr DegFT CalculateTemperatureAtAltitude(FeetT altitude,
+                                               DegFT temperature) {
   const DegFT kTemperature =
       temperature - DegFT(kIsaLapseDegFPerFt * altitude.Value());
   return std::max(kTemperature, DegFT(kIsaMinimumTempDegF));
 }
 
 // Page 166 of Modern Exterior Ballistics - McCoy
-inline DegFT CalculateTemperatureAtAltitudeMcCoy(FeetT altitude,
-                                                 DegFT sea_level_temperature) {
+constexpr DegFT CalculateTemperatureAtAltitudeMcCoy(
+    FeetT altitude, DegFT sea_level_temperature) {
   const double kK = 6.858E-6 + (2.776E-11 * altitude.Value());
   const double kA = DegRT(DegFT(0)).Value();
   // Note that the formula printed in 2e of Modern External Ballistics omits the
@@ -89,13 +90,13 @@ inline InHgT CalculateWaterVaporSaturationPressure(DegFT temperature) {
 }
 
 // Page 167 of Modern Exterior Ballistics - McCoy
-inline double CalculateAirDensityRatio(InHgT pressure, DegFT temperature) {
+constexpr double CalculateAirDensityRatio(InHgT pressure, DegFT temperature) {
   return pressure.Value() / kIsaSeaLevelPressureInHg *
          (DegRT(DegFT(kIsaSeaLevelDegF)) / DegRT(temperature)).Value();
 }
 
 // Page 167 of Modern Exterior Ballistics - McCoy
-inline double CalculateAirDensityRatioHumidityCorrection(
+constexpr double CalculateAirDensityRatioHumidityCorrection(
     PercentT humidity_pct, InHgT water_vapor_sat_pressure) {
   const double kAVal = 0.00378;
 
@@ -104,7 +105,7 @@ inline double CalculateAirDensityRatioHumidityCorrection(
 }
 
 // Page 168 of Modern Exterior Ballistics - McCoy
-inline double CalculateSpeedOfSoundHumidityCorrection(
+constexpr double CalculateSpeedOfSoundHumidityCorrection(
     PercentT humidity_pct, InHgT water_vapor_sat_pressure) {
   const double kAVal = 0.0014;
 
@@ -113,7 +114,7 @@ inline double CalculateSpeedOfSoundHumidityCorrection(
 }
 
 // Page 90 of Modern Exterior Ballistics - McCoy
-inline double CalculateCdCoefficient(LbsPerCuFtT air_density, PmsiT bc) {
+constexpr double CalculateCdCoefficient(LbsPerCuFtT air_density, PmsiT bc) {
   const double kSqInPerSqFt = (InchT(FeetT(1)) * InchT(FeetT(1))).Value();
   const double kCoeff =
       air_density.Value() * kPi / (bc.Value() * kSqInPerSqFt * 8);
@@ -145,25 +146,25 @@ inline double CalculateMillerTwistRuleStabilityFactor(
   return kOutput * (barrel_twist.Value() >= 0 ? 1.0 : -1.0);
 }
 
-inline double CalculateMillerTwistRuleCorrectionFactor(InHgT pressure,
-                                                       DegFT temperature) {
+constexpr double CalculateMillerTwistRuleCorrectionFactor(InHgT pressure,
+                                                          DegFT temperature) {
   const double kAVal = 460.0;
   return (temperature.Value() + kAVal) / (kIsaSeaLevelDegF + kAVal) *
          (kIsaSeaLevelPressureInHg / pressure.Value());
 }
 
-inline double CalculateMillerTwistRuleCorrectionFactor(
+constexpr double CalculateMillerTwistRuleCorrectionFactor(
     LbsPerCuFtT air_density) {
   return kIsaSeaLevelAirDensityLbsPerCuFt / air_density.Value();
 }
 
 // Page 33 of Modern Exterior Ballistics - McCoy
-inline SqInT CalculateProjectileReferenceArea(InchT bullet_diameter) {
+constexpr SqInT CalculateProjectileReferenceArea(InchT bullet_diameter) {
   const double kDiameter = bullet_diameter.Value();
   return SqInT(kDiameter * kDiameter * kPi / 4);
 }
 
-inline FtLbsT CalculateKineticEnergy(FpsT velocity, SlugT mass) {
+constexpr FtLbsT CalculateKineticEnergy(FpsT velocity, SlugT mass) {
   if (velocity.IsNaN() || mass.IsNaN()) {
     return FtLbsT(0);
   }
