@@ -67,6 +67,9 @@ enum class ErrorT : LobErrorT {
   kBallisticCoefficientOOR = ::kLobErrorBallisticCoefficientOOR,
   kBallisticCoefficientRequired = ::kLobErrorBallisticCoefficientRequired,
   kBaseDiameterOOR = ::kLobErrorBaseDiameterOOR,
+  kBcBandsInvalid = ::kLobErrorBcBandsInvalid,
+  kBcBandsNotMonotonic = ::kLobErrorBcBandsNotMonotonic,
+  kBcBandsTooShort = ::kLobErrorBcBandsTooShort,
   kDiameterOOR = ::kLobErrorDiameterOOR,
   kHumidityOOR = ::kLobErrorHumidityOOR,
   kInitialVelocityRequired = ::kLobErrorInitialVelocityRequired,
@@ -81,6 +84,7 @@ enum class ErrorT : LobErrorT {
   kMaximumTimeOOR = ::kLobErrorMaximumTimeOOR,
   kMeplatDiameterOOR = ::kLobErrorMeplatDiameterOOR,
   kNoseLengthOOR = ::kLobErrorNoseLengthOOR,
+  kNotFormed = ::kLobErrorNotFormed,
   kOgiveRtROOR = ::kLobErrorOgiveRtROOR,
   kRangeAngleOOR = ::kLobErrorRangeAngleOOR,
   kTailLengthOOR = ::kLobErrorTailLengthOOR,
@@ -88,11 +92,7 @@ enum class ErrorT : LobErrorT {
   kZeroAngleOOR = ::kLobErrorZeroAngleOOR,
   kZeroDataRequired = ::kLobErrorZeroDataRequired,
   kZeroDistanceOOR = ::kLobErrorZeroDistanceOOR,
-  kZeroUnreachable = ::kLobErrorZeroUnreachable,
-  kBcBandsInvalid = ::kLobErrorBcBandsInvalid,
-  kBcBandsNotMonotonic = ::kLobErrorBcBandsNotMonotonic,
-  kBcBandsTooShort = ::kLobErrorBcBandsTooShort,
-  kNotFormed = ::kLobErrorNotFormed
+  kZeroUnreachable = ::kLobErrorZeroUnreachable
 };
 
 /** @brief Gravity vector. See @c LobGravity for member details. */
@@ -384,7 +384,8 @@ class Builder {
    * @details This is a direct alternative to using a ballistic coefficient
    * and a reference drag function.
    * @warning The arrays must remain valid until Build is called; the builder
-   * copies no data and references them during Build().
+   * copies no data and references them during Build(). Temporaries are
+   * rejected at compile time.
    * @tparam N The number of mach-drag pairs in the table.
    * @param machs Reference to an array of mach values.
    * @param drags Reference to an array of associated drag values.
@@ -396,6 +397,15 @@ class Builder {
     ::LobBuilderSplineFitTable(&builder_, machs.data(), drags.data(), N);
     return *this;
   }
+  template <size_t N>
+  Builder& MachVsDragTable(const std::array<float, N>&& machs,
+                           const std::array<float, N>& drags) = delete;
+  template <size_t N>
+  Builder& MachVsDragTable(const std::array<float, N>& machs,
+                           const std::array<float, N>&& drags) = delete;
+  template <size_t N>
+  Builder& MachVsDragTable(const std::array<float, N>&& machs,
+                           const std::array<float, N>&& drags) = delete;
 
   /**
    * @brief Loads ballistic coefficients measured at multiple velocities.
@@ -406,7 +416,7 @@ class Builder {
    * the atmosphere reference set via BCAtmosphere.
    * @warning The caller must keep pfps and pbcvs valid until Build is called.
    * The builder copies no data; the pointers are referenced during Build().
-   * @param pfps Pointer to an array of muzzle velocities in fps.
+   * @param pfps Pointer to an array of velocity values in fps.
    * @param pbcvs Pointer to an array of associated BC values.
    * @param size The number of fps-BC pairs in the table. Must be at least 2
    * and at most 16; velocities must be positive and strictly increasing, BCs
@@ -426,11 +436,12 @@ class Builder {
    * @note The BCs use the same units as BallisticCoefficientPsi and respect
    * the atmosphere reference set via BCAtmosphere.
    * @warning The arrays must remain valid until Build is called; the builder
-   * copies no data and references them during Build().
+   * copies no data and references them during Build(). Temporaries are
+   * rejected at compile time.
    * @tparam N The number of fps-BC pairs in the table. Must be at least 2 and
    * at most 16; velocities must be positive and strictly increasing, BCs
    * positive, and the highest velocity below Mach 5.
-   * @param fps Reference to an array of muzzle velocities in fps.
+   * @param fps Reference to an array of velocity values in fps.
    * @param bcvs Reference to an array of associated BC values.
    * @return A reference to the Builder object.
    */
@@ -440,6 +451,15 @@ class Builder {
     ::LobBuilderBCVelocityBands(&builder_, fps.data(), bcvs.data(), N);
     return *this;
   }
+  template <size_t N>
+  Builder& BCVelocityBands(const std::array<float, N>&& fps,
+                           const std::array<float, N>& bcvs) = delete;
+  template <size_t N>
+  Builder& BCVelocityBands(const std::array<float, N>& fps,
+                           const std::array<float, N>&& bcvs) = delete;
+  template <size_t N>
+  Builder& BCVelocityBands(const std::array<float, N>&& fps,
+                           const std::array<float, N>&& bcvs) = delete;
 
   /**
    * @brief Sets the projectile mass in grains.
