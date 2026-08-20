@@ -272,6 +272,22 @@ TEST_F(BuilderTestFixture, ResetWorks) {
   EXPECT_TRUE(kResult2.error != lob::ErrorT::kNone);
 }
 
+TEST_F(BuilderTestFixture, RepeatedBuildsProduceIdenticalDrags) {
+  const lob::Context kFirst =
+      puut->BallisticCoefficientPsi(kSierraGameKingBC)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .Build();
+  const lob::Context kSecond = puut->Build();
+  ASSERT_EQ(kFirst.error, lob::ErrorT::kNone);
+  ASSERT_EQ(kSecond.error, lob::ErrorT::kNone);
+  for (size_t i = 0; i < kFirst.drags.size(); ++i) {
+    EXPECT_FLOAT_EQ(kFirst.drags.at(i), kSecond.drags.at(i)) << "knot i=" << i;
+  }
+}
+
 TEST_P(BuilderErrorTestFixture, BuilderReturnsCorrectError) {
   const auto& param = GetParam();
   const lob::Context kResult = param.build_fn(*puut);
@@ -1045,6 +1061,7 @@ TEST_F(BuilderTestFixture, BCVelocityBandsMatchesSingleBcJump) {
           .WindSpeedMph(15.0)
           .WindHeading(lob::ClockAngleT::kIX)
           .Build();
+  puut->Reset();
   const lob::Context kBands =
       puut->BCDragFunction(lob::DragFunctionT::kG7)
           .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
