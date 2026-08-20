@@ -213,8 +213,9 @@ LobErrorT ValidateCustomTable(Impl* pimpl) {
     return kLobErrorMachDragTableTooNarrow;
   }
   for (size_t i = 0; i < pimpl->table_count; i++) {
-    if (std::isnan(pimpl->table_xs[i]) || std::isnan(pimpl->table_ys[i]) ||
-        pimpl->table_xs[i] < 0.0F || pimpl->table_ys[i] < 0.0F) {
+    if (!std::isfinite(pimpl->table_xs[i]) ||
+        !std::isfinite(pimpl->table_ys[i]) || pimpl->table_xs[i] < 0.0F ||
+        pimpl->table_ys[i] < 0.0F) {
       return kLobErrorMachDragTableInvalid;
     }
     if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {
@@ -232,8 +233,9 @@ LobErrorT ValidateBcBands(Impl* pimpl) {
     return kLobErrorBcBandsInvalid;
   }
   for (size_t i = 0; i < pimpl->table_count; i++) {
-    if (std::isnan(pimpl->table_xs[i]) || std::isnan(pimpl->table_ys[i]) ||
-        pimpl->table_xs[i] <= 0.0F || pimpl->table_ys[i] <= 0.0F) {
+    if (!std::isfinite(pimpl->table_xs[i]) ||
+        !std::isfinite(pimpl->table_ys[i]) || pimpl->table_xs[i] <= 0.0F ||
+        pimpl->table_ys[i] <= 0.0F) {
       return kLobErrorBcBandsInvalid;
     }
     if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {

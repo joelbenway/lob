@@ -707,6 +707,34 @@ TEST_F(BuilderTestFixture, MachVsDragTableCoverageNaNDrag) {
   EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableInvalid);
 }
 
+TEST_F(BuilderTestFixture, MachVsDragTableCoverageInfiniteMachs) {
+  const std::array<float, 2> kMachs = {0.0F,
+                                       std::numeric_limits<float>::infinity()};
+  const std::array<float, 2> kDrags = {0.5F, 1.0F};
+  const lob::Context kResult =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .MachVsDragTable(kMachs, kDrags)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableInvalid);
+}
+
+TEST_F(BuilderTestFixture, MachVsDragTableCoverageInfiniteDrag) {
+  const std::array<float, 2> kMachs = {0.0F, 5.0F};
+  const std::array<float, 2> kDrags = {0.5F,
+                                       std::numeric_limits<float>::infinity()};
+  const lob::Context kResult =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .MachVsDragTable(kMachs, kDrags)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableInvalid);
+}
+
 TEST_F(BuilderTestFixture, BCVelocityBandsConstantBcScalesG1Curve) {
   const std::array<float, 3> kFps = {2000.0F, 2500.0F, 3000.0F};
   const std::array<float, 3> kBcs = {0.250F, 0.250F, 0.250F};
@@ -824,6 +852,36 @@ TEST_F(BuilderTestFixture, BCVelocityBandsInvalidNegativeFps) {
 TEST_F(BuilderTestFixture, BCVelocityBandsInvalidNaNbc) {
   const std::array<float, 2> kFps = {2000.0F, 3000.0F};
   const std::array<float, 2> kBcs = {0.250F, lob::NaN<float>()};
+  const lob::Context kResult =
+      puut->DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .BCVelocityBands(kFps, kBcs)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kBcBandsInvalid);
+}
+
+TEST_F(BuilderTestFixture, BCVelocityBandsInvalidInfiniteFps) {
+  const std::array<float, 2> kFps = {2000.0F,
+                                     std::numeric_limits<float>::infinity()};
+  const std::array<float, 2> kBcs = {0.250F, 0.250F};
+  const lob::Context kResult =
+      puut->DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .BCVelocityBands(kFps, kBcs)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kBcBandsInvalid);
+}
+
+TEST_F(BuilderTestFixture, BCVelocityBandsInvalidInfiniteBc) {
+  const std::array<float, 2> kFps = {2000.0F, 3000.0F};
+  const std::array<float, 2> kBcs = {0.250F,
+                                     std::numeric_limits<float>::infinity()};
   const lob::Context kResult =
       puut->DiameterInch(0.308)
           .MassGrains(168.0)
