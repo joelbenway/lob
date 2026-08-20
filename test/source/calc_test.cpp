@@ -14,25 +14,16 @@
 #include "eng_units.hpp"
 #include "helpers.hpp"
 
-namespace {
-
-constexpr double kAssertAltitudeFt = 1000.0;
-constexpr double kAssertDiameterInch = 0.224;
-constexpr double kAssertBcPmsi = 0.200;
-constexpr double kAssertMinAreaSqIn = 0.03;
-
-}  // namespace
-
 namespace tests {
 
-static_assert(
-    lob::CalculateTemperatureAtAltitude(lob::FeetT(kAssertAltitudeFt),
-                                        lob::DegFT(lob::kIsaSeaLevelDegF))
-            .Value() >=
-        lob::kIsaSeaLevelDegF - lob::kIsaLapseDegFPerFt * kAssertAltitudeFt,
-    "CalculateTemperatureAtAltitude not constexpr");
-
 TEST(CalcTests, CalculateTemperatureAtAltitude) {
+  constexpr double kAssertAltitudeFt = 1000.0;
+  static_assert(
+      lob::CalculateTemperatureAtAltitude(lob::FeetT(kAssertAltitudeFt),
+                                          lob::DegFT(lob::kIsaSeaLevelDegF))
+              .Value() >=
+          lob::kIsaSeaLevelDegF - lob::kIsaLapseDegFPerFt * kAssertAltitudeFt,
+      "CalculateTemperatureAtAltitude not constexpr");
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
   const std::vector<uint32_t> kAltitudesFt = {
       0,    500,  1000, 1500,  2000,  3000,  4000,  5000,  6000,
@@ -269,12 +260,12 @@ TEST(CalcTests, CalculateSpeedOfSoundHumidityCorrection) {
   }
 }
 
-static_assert(lob::CalculateCdCoefficient(
-                  lob::LbsPerCuFtT(lob::kIsaSeaLevelAirDensityLbsPerCuFt),
-                  lob::PmsiT(kAssertBcPmsi)) > 0.0,
-              "CalculateCdCoefficient not constexpr");
-
 TEST(CalcTests, CalculateCdCoefficient) {
+  constexpr double kAssertBcPmsi = 0.200;
+  static_assert(lob::CalculateCdCoefficient(
+                    lob::LbsPerCuFtT(lob::kIsaSeaLevelAirDensityLbsPerCuFt),
+                    lob::PmsiT(kAssertBcPmsi)) > 0.0,
+                "CalculateCdCoefficient not constexpr");
   // Test data from Ball M1911 round
   const lob::PmsiT kBC(0.162);
   const lob::InchT kDiameter(0.452);
@@ -306,13 +297,12 @@ TEST(CalcTests, CalculateMillerTwistRuleStabilityFactor) {
   EXPECT_NEAR(result, kExpectedStabilityFactor, kError);
 }
 
-static_assert(lob::AreEqual(lob::CalculateMillerTwistRuleCorrectionFactor(
-                                lob::InHgT(lob::kIsaSeaLevelPressureInHg),
-                                lob::DegFT(lob::kIsaSeaLevelDegF)),
-                            1.0),
-              "CalculateMillerTwistRuleCorrectionFactor not constexpr");
-
 TEST(CalcTests, CalculateMillerTwistRuleCorrectionFactor) {
+  static_assert(lob::AreEqual(lob::CalculateMillerTwistRuleCorrectionFactor(
+                                  lob::InHgT(lob::kIsaSeaLevelPressureInHg),
+                                  lob::DegFT(lob::kIsaSeaLevelDegF)),
+                              1.0),
+                "CalculateMillerTwistRuleCorrectionFactor not constexpr");
   // Test data from Sample Calculations section of A New Rule for Estimating
   // Rifling Twist - Miller
   const auto kTestPressure = lob::InHgT(lob::kIsaSeaLevelPressureInHg);
