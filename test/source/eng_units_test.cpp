@@ -9,9 +9,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <limits>
 #include <memory>
 #include <utility>
+
+#include "helpers.hpp"
 
 namespace tests {
 
@@ -115,7 +116,7 @@ TEST(EngUnitTests, ModuloOperator) {
   const auto kC = TestT(1);
   EXPECT_EQ(kA % kB, kC);
   EXPECT_EQ(kA % kB.Value(), kC);
-  EXPECT_EQ(kA % 0, TestT(std::numeric_limits<double>::quiet_NaN()));
+  EXPECT_EQ(kA % 0, TestT(lob::NaN()));
 }
 
 TEST(EngUnitTests, AdditionAssignmentOperator) {
@@ -168,7 +169,7 @@ TEST(EngUnitTests, IsNaN) {
   constexpr double kTwo = 2.0;
   static_assert(!lob::FeetT(kTwo).IsNaN(), "IsNaN not constexpr");
   const TestT kA(5);
-  const TestT kB(std::numeric_limits<double>::quiet_NaN());
+  const TestT kB(lob::NaN());
   EXPECT_FALSE(kA.IsNaN());
   EXPECT_TRUE(kB.IsNaN());
 
@@ -232,7 +233,7 @@ TEST(EngUnitTests, Comparisons) {
 }
 
 TEST(EngUnitsTests, isnan) {
-  EXPECT_TRUE(std::isnan(TestT(std::numeric_limits<double>::quiet_NaN())));
+  EXPECT_TRUE(std::isnan(TestT(lob::NaN())));
   EXPECT_FALSE(std::isnan(TestT(90)));
 }
 
