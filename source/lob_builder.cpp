@@ -322,9 +322,9 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
       pimpl->atmosphere_reference == kLobAtmosphereReferenceArmyStandardMetro
           ? kArmyToIcaoBcConversionFactor
           : 1.0;
-  pimpl->ballistic_coefficient_psi *= kConvert;
   const float kInvBc =
-      1.0F / static_cast<float>(pimpl->ballistic_coefficient_psi.Value());
+      1.0F /
+      static_cast<float>(pimpl->ballistic_coefficient_psi.Value() * kConvert);
   for (size_t i = 0; i < spline::kCoefsSize; ++i) {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
     pout->drags[i] = coefs->at(i) * kInvBc;
