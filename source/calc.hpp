@@ -81,11 +81,11 @@ inline InHgT CalculateWaterVaporSaturationPressure(DegFT temperature) {
   const double kD1Val = (kIsWater) ? 237.1 : 278.0;
   const double kD2Val = (kIsWater) ? 105.0 : 868.0;
 
-  const double kDegC = kTDegC.Value();
-  const double kPOutPascal = std::exp(kAVal - (kBVal / (kDegC + kD1Val)) -
-                                      (kCVal * std::log(kDegC + kD2Val)));
+  const PaT kPOutPascal =
+      PaT(std::exp(kAVal - (kBVal / (kTDegC.Value() + kD1Val)) -
+                   (kCVal * std::log(kTDegC.Value() + kD2Val))));
 
-  return InHgT(PaT(kPOutPascal));
+  return InHgT(kPOutPascal);
 }
 
 // Page 167 of Modern Exterior Ballistics - McCoy
@@ -127,7 +127,6 @@ inline double CalculateMillerTwistRuleStabilityFactor(
     InchT bullet_diameter, GrainT bullet_mass, InchT bullet_length,
     InchPerTwistT barrel_twist, FpsT muzzle_velocity) {
   const auto kAVal = 30.0;
-  const auto kBVal = 1.0 / 3.0;
   const auto kNominalVelocity = 2'800.0;
   const auto kDiameter = bullet_diameter.Value();
   const auto kMass = static_cast<double>(bullet_mass);
@@ -136,11 +135,12 @@ inline double CalculateMillerTwistRuleStabilityFactor(
       std::abs(barrel_twist.Value() / bullet_diameter.Value());
   const auto kMuzzleVelocity = std::max(FpsT(1120.0), muzzle_velocity).Value();
 
-  const double kFv = std::pow(kMuzzleVelocity / kNominalVelocity, kBVal);
+  const double kFv = std::cbrt(kMuzzleVelocity / kNominalVelocity);
 
-  const double kOutput = (kFv * kAVal * kMass) /
-                         (std::pow(kTwistRatio, 2) * std::pow(kDiameter, 3) *
-                          kLengthRatio * (1 + std::pow(kLengthRatio, 2)));
+  const double kOutput =
+      (kFv * kAVal * kMass) /
+      (kTwistRatio * kTwistRatio * kDiameter * kDiameter * kDiameter *
+       kLengthRatio * (1 + kLengthRatio * kLengthRatio));
 
   return kOutput * (barrel_twist.Value() >= 0 ? 1.0 : -1.0);
 }
@@ -159,14 +159,15 @@ inline double CalculateMillerTwistRuleCorrectionFactor(
 
 // Page 33 of Modern Exterior Ballistics - McCoy
 inline SqInT CalculateProjectileReferenceArea(InchT bullet_diameter) {
-  return SqInT(std::pow(bullet_diameter, 2).Value() * kPi / 4);
+  const double kDiameter = bullet_diameter.Value();
+  return SqInT(kDiameter * kDiameter * kPi / 4);
 }
 
 inline FtLbsT CalculateKineticEnergy(FpsT velocity, SlugT mass) {
   if (velocity.IsNaN() || mass.IsNaN()) {
     return FtLbsT(0);
   }
-  return FtLbsT(mass.Value() * std::pow(velocity.Value(), 2) / 2);
+  return FtLbsT(mass.Value() * velocity.Value() * velocity.Value() / 2);
 }
 
 inline FpsT CalculateVelocityFromKineticEnergy(FtLbsT energy, SlugT mass) {
