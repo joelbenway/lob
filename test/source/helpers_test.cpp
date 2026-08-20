@@ -12,22 +12,18 @@
 
 namespace tests {
 
-namespace {
-constexpr double kZero = 0.0;
-constexpr double kOne = 1.0;
-constexpr double kTwo = 2.0;
-}  // namespace
+TEST(HelpersTest, NaNdouble) {
+  static_assert(std::is_same<double, decltype(lob::NaN())>::value,
+                "NaN() not constexpr");
 
-static_assert(std::is_same<double, decltype(lob::NaN())>::value,
-              "NaN() not constexpr");
-
-TEST(HelpersTest, NaNdouble) { EXPECT_TRUE(std::isnan(lob::NaN())); }
+  EXPECT_TRUE(std::isnan(lob::NaN()));
+}
 
 TEST(HelpersTest, NaNfloat) { EXPECT_TRUE(std::isnan(lob::NaN<float>())); }
 
-static_assert(lob::AreEqual(kTwo, kTwo), "AreEqual not constexpr");
-
 TEST(HelpersTest, AreEqual) {
+  constexpr double kTwo = 2.0;
+  static_assert(lob::AreEqual(kTwo, kTwo), "AreEqual not constexpr");
   const int kIntA = 7;
   const int kIntB = kIntA;
   const int kIntC = kIntA + 1;
@@ -49,10 +45,12 @@ TEST(HelpersTest, AreEqual) {
   EXPECT_TRUE(lob::AreEqual(kNaN, kNaN));
 }
 
-static_assert(lob::AreEqual(lob::Modulo(kTwo, kOne), kZero),
-              "Modulo not constexpr");
-
 TEST(HelpersTest, Modulo) {
+  constexpr double kZero = 0.0;
+  constexpr double kOne = 1.0;
+  constexpr double kTwo = 2.0;
+  static_assert(lob::AreEqual(lob::Modulo(kTwo, kOne), kZero),
+                "Modulo not constexpr");
   const int kIntA = 100;
   const int kIntB = 3;
   const int kIntC = 1;
@@ -68,10 +66,11 @@ TEST(HelpersTest, Modulo) {
   EXPECT_TRUE(std::isnan(lob::Modulo(kDoubleA, 0.0)));
 }
 
-static_assert(lob::AreFloatingPointsEqual(kZero, kZero),
-              "AreFloatingPointsEqual not constexpr");
-
 TEST(HelpersTest, FloatEqualityNearZero) {
+  constexpr double kZero = 0.0;
+  static_assert(lob::AreFloatingPointsEqual(kZero, kZero),
+                "AreFloatingPointsEqual not constexpr");
+
   const double kZeroClose = 1.0e-15;
   const double kZeroFar = 1.0e-13;
   EXPECT_TRUE(lob::AreFloatingPointsEqual(0.0, kZeroClose));
@@ -142,9 +141,10 @@ TEST(IsNanTest, FiniteIsNotNaN) {
   EXPECT_FALSE(lob::IsNan(-1.0));
 }
 
-static_assert(lob::AreEqual(lob::Fabs(-kTwo), kTwo), "Fabs not constexpr");
-
 TEST(FabsTest, PositiveValue) {
+  constexpr double kTwo = 2.0;
+  static_assert(lob::AreEqual(lob::Fabs(-kTwo), kTwo), "Fabs not constexpr");
+
   const double kVal = 3.0;
   EXPECT_DOUBLE_EQ(lob::Fabs(kVal), kVal);
 }
@@ -175,9 +175,12 @@ TEST(FabsTest, NaN) {
   EXPECT_TRUE(std::isnan(lob::Fabs(kNaN)));
 }
 
-static_assert(lob::AreEqual(lob::Fmax(kTwo, kOne), kTwo), "Fmax not constexpr");
-
 TEST(FmaxTest, FirstLarger) {
+  constexpr double kOne = 1.0;
+  constexpr double kTwo = 2.0;
+  static_assert(lob::AreEqual(lob::Fmax(kTwo, kOne), kTwo),
+                "Fmax not constexpr");
+
   const double kFive = 5.0;
   const double kThree = 3.0;
   EXPECT_DOUBLE_EQ(lob::Fmax(kFive, kThree), kFive);
