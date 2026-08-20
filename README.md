@@ -11,17 +11,19 @@ Building a world-class ballistics app? Lob's got the math covered. :mage_man:
 The following can be accounted for in lob's solutions:
  * Aerodynamic drag
     * Standard drag curves (G1, G7, etc)
+    * Tailored drag curves via BC/velocity pairs :zap:
     * Custom user-provided drag curves :sparkles:
+    * Drag curves comprised from cubic hermite splines :brain:
  * Gravity :earth_americas:
  * Wind :flags:
  * Atmospheric conditions :partly_sunny:
-   * Altitude
+   * Altitude :mountain_snow:
    * Air pressure
-   * Temperature
+   * Temperature :thermometer:
    * Relative humidity
  * Coriolis effect :globe_with_meridians:
- * Gyroscopic spin drift
- * Crosswind aerodynamic jump
+ * Gyroscopic spin drift (two methods)
+ * Crosswind aerodynamic (two methods)
 
 In addition to ballistic solutions, lob provides instrumental values it calculates including the local speed of sound, stability factor, and the "zero angle" between the line of sight and line of fire. All native units are customary American freedom units :statue_of_liberty: but a collection of unit conversion functions are included :hammer_and_wrench:
 
@@ -67,6 +69,9 @@ for (size_t i = 0; i < kNumSolved; i++) {
             << solver_outputs.at(i).elevation << " inches\n";
 }
 ```
+<details>
+<summary>Output</summary>
+
 ```text
 Drop at 0 feet is -1.50 inches
 Drop at 300 feet is 0.00 inches
@@ -76,6 +81,8 @@ Drop at 1200 feet is -33.91 inches
 Drop at 1500 feet is -62.50 inches
 Drop at 1800 feet is -102.85 inches
 ```
+
+</details>
 It only takes a few parameters for lob to make a well-formed, if minimal, ballistic solution. By providing more data, our solver can be more accurate.
 ```C++
 const lob::Context kBetterCtx =
