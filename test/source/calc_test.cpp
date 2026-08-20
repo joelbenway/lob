@@ -118,13 +118,12 @@ TEST(CalcTests, BarometricFormulaNegative) {
               kExpectedResult, kError);
 }
 
-static_assert(lob::AreEqual(lob::CalculateAirDensityRatio(
-                                lob::InHgT(lob::kIsaSeaLevelPressureInHg),
-                                lob::DegFT(lob::kIsaSeaLevelDegF)),
-                            1.0),
-              "CalculateAirDensityRatio not constexpr");
-
 TEST(CalcTests, CalculateAirDensityAtAltitude) {
+  static_assert(lob::AreEqual(lob::CalculateAirDensityRatio(
+                                  lob::InHgT(lob::kIsaSeaLevelPressureInHg),
+                                  lob::DegFT(lob::kIsaSeaLevelDegF)),
+                              1.0),
+                "CalculateAirDensityRatio not constexpr");
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
   const std::vector<uint32_t> kAltitudesFt = {
       0,    500,  1000, 1500,  2000,  3000,  4000,  5000,  6000,
@@ -203,12 +202,11 @@ TEST(CalcTests, CalculateAirDensityRatio) {
   }
 }
 
-static_assert(lob::AreEqual(lob::CalculateAirDensityRatioHumidityCorrection(
-                                lob::PercentT(0.0), lob::InHgT(0.0)),
-                            1.0),
-              "CalculateAirDensityRatioHumidityCorrection not constexpr");
-
 TEST(CalcTests, CalculateAirDensityRatioHumidityCorrection) {
+  static_assert(lob::AreEqual(lob::CalculateAirDensityRatioHumidityCorrection(
+                                  lob::PercentT(0.0), lob::InHgT(0.0)),
+                              1.0),
+                "CalculateAirDensityRatioHumidityCorrection not constexpr");
   // Test data from page 169 of Modern Exterior Ballistics - McCoy
   const std::vector<uint8_t> kTempsDegF = {0, 32, 59, 70, 100, 130};
   const std::vector<double> kUncorrectedDensities = {1.128, 1.055, 1.0,
@@ -232,12 +230,11 @@ TEST(CalcTests, CalculateAirDensityRatioHumidityCorrection) {
   }
 }
 
-static_assert(lob::AreEqual(lob::CalculateSpeedOfSoundHumidityCorrection(
-                                lob::PercentT(0.0), lob::InHgT(0.0)),
-                            1.0),
-              "CalculateSpeedOfSoundHumidityCorrection not constexpr");
-
 TEST(CalcTests, CalculateSpeedOfSoundHumidityCorrection) {
+  static_assert(lob::AreEqual(lob::CalculateSpeedOfSoundHumidityCorrection(
+                                  lob::PercentT(0.0), lob::InHgT(0.0)),
+                              1.0),
+                "CalculateSpeedOfSoundHumidityCorrection not constexpr");
   // Test data from page 169 of Modern Exterior Ballistics - McCoy
   const std::vector<uint8_t> kTempsDegF = {0, 32, 59, 70, 100, 130};
   const std::vector<double> kUncorrectedSpeedOfSoundFps = {
