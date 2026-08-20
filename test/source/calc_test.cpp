@@ -12,8 +12,25 @@
 
 #include "constants.hpp"
 #include "eng_units.hpp"
+#include "helpers.hpp"
+
+namespace {
+
+constexpr double kAssertAltitudeFt = 1000.0;
+constexpr double kAssertDiameterInch = 0.224;
+constexpr double kAssertBcPmsi = 0.200;
+constexpr double kAssertMinAreaSqIn = 0.03;
+
+}  // namespace
 
 namespace tests {
+
+static_assert(
+    lob::CalculateTemperatureAtAltitude(lob::FeetT(kAssertAltitudeFt),
+                                        lob::DegFT(lob::kIsaSeaLevelDegF))
+            .Value() >=
+        lob::kIsaSeaLevelDegF - lob::kIsaLapseDegFPerFt * kAssertAltitudeFt,
+    "CalculateTemperatureAtAltitude not constexpr");
 
 TEST(CalcTests, CalculateTemperatureAtAltitude) {
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
@@ -109,6 +126,12 @@ TEST(CalcTests, BarometricFormulaNegative) {
               kExpectedResult, kError);
 }
 
+static_assert(lob::AreEqual(lob::CalculateAirDensityRatio(
+                                lob::InHgT(lob::kIsaSeaLevelPressureInHg),
+                                lob::DegFT(lob::kIsaSeaLevelDegF)),
+                            1.0),
+              "CalculateAirDensityRatio not constexpr");
+
 TEST(CalcTests, CalculateAirDensityAtAltitude) {
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
   const std::vector<uint32_t> kAltitudesFt = {
@@ -188,6 +211,11 @@ TEST(CalcTests, CalculateAirDensityRatio) {
   }
 }
 
+static_assert(lob::AreEqual(lob::CalculateAirDensityRatioHumidityCorrection(
+                                lob::PercentT(0.0), lob::InHgT(0.0)),
+                            1.0),
+              "CalculateAirDensityRatioHumidityCorrection not constexpr");
+
 TEST(CalcTests, CalculateAirDensityRatioHumidityCorrection) {
   // Test data from page 169 of Modern Exterior Ballistics - McCoy
   const std::vector<uint8_t> kTempsDegF = {0, 32, 59, 70, 100, 130};
@@ -212,6 +240,11 @@ TEST(CalcTests, CalculateAirDensityRatioHumidityCorrection) {
   }
 }
 
+static_assert(lob::AreEqual(lob::CalculateSpeedOfSoundHumidityCorrection(
+                                lob::PercentT(0.0), lob::InHgT(0.0)),
+                            1.0),
+              "CalculateSpeedOfSoundHumidityCorrection not constexpr");
+
 TEST(CalcTests, CalculateSpeedOfSoundHumidityCorrection) {
   // Test data from page 169 of Modern Exterior Ballistics - McCoy
   const std::vector<uint8_t> kTempsDegF = {0, 32, 59, 70, 100, 130};
@@ -235,6 +268,11 @@ TEST(CalcTests, CalculateSpeedOfSoundHumidityCorrection) {
     }
   }
 }
+
+static_assert(lob::CalculateCdCoefficient(
+                  lob::LbsPerCuFtT(lob::kIsaSeaLevelAirDensityLbsPerCuFt),
+                  lob::PmsiT(kAssertBcPmsi)) > 0.0,
+              "CalculateCdCoefficient not constexpr");
 
 TEST(CalcTests, CalculateCdCoefficient) {
   // Test data from Ball M1911 round
@@ -268,6 +306,12 @@ TEST(CalcTests, CalculateMillerTwistRuleStabilityFactor) {
   EXPECT_NEAR(result, kExpectedStabilityFactor, kError);
 }
 
+static_assert(lob::AreEqual(lob::CalculateMillerTwistRuleCorrectionFactor(
+                                lob::InHgT(lob::kIsaSeaLevelPressureInHg),
+                                lob::DegFT(lob::kIsaSeaLevelDegF)),
+                            1.0),
+              "CalculateMillerTwistRuleCorrectionFactor not constexpr");
+
 TEST(CalcTests, CalculateMillerTwistRuleCorrectionFactor) {
   // Test data from Sample Calculations section of A New Rule for Estimating
   // Rifling Twist - Miller
@@ -281,10 +325,21 @@ TEST(CalcTests, CalculateMillerTwistRuleCorrectionFactor) {
   EXPECT_NEAR(result, kExpectedCorrectionFactor, kError);
 }
 
+static_assert(
+    lob::CalculateProjectileReferenceArea(lob::InchT(kAssertDiameterInch))
+            .Value() > kAssertMinAreaSqIn,
+    "CalculateProjectileReferenceArea not constexpr");
+
 TEST(CalcTests, CalculateProjectileReferenceArea) {
   EXPECT_NEAR(CalculateProjectileReferenceArea(lob::InchT(0.308)).Value(),
               0.074506, 1E-3);
 }
+
+static_assert(lob::AreEqual(lob::CalculateKineticEnergy(lob::FpsT(0.0),
+                                                        lob::SlugT(0.0))
+                                .Value(),
+                            0.0),
+              "CalculateKineticEnergy not constexpr");
 
 TEST(CalcTests, CalculateKineticEnergy) {
   EXPECT_NEAR(CalculateKineticEnergy(lob::FpsT(3000), lob::GrainT(180)).Value(),
