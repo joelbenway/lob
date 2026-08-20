@@ -19,13 +19,13 @@ constexpr double kTwo = 2.0;
 }  // namespace
 
 static_assert(std::is_same<double, decltype(lob::NaN())>::value,
-              "NaN() is constexpr");
+              "NaN() not constexpr");
 
 TEST(HelpersTest, NaNdouble) { EXPECT_TRUE(std::isnan(lob::NaN())); }
 
 TEST(HelpersTest, NaNfloat) { EXPECT_TRUE(std::isnan(lob::NaN<float>())); }
 
-static_assert(lob::AreEqual(kTwo, kTwo), "AreEqual is constexpr");
+static_assert(lob::AreEqual(kTwo, kTwo), "AreEqual not constexpr");
 
 TEST(HelpersTest, AreEqual) {
   const int kIntA = 7;
@@ -50,7 +50,7 @@ TEST(HelpersTest, AreEqual) {
 }
 
 static_assert(lob::AreEqual(lob::Modulo(kTwo, kOne), kZero),
-              "Modulo is constexpr");
+              "Modulo not constexpr");
 
 TEST(HelpersTest, Modulo) {
   const int kIntA = 100;
@@ -69,7 +69,7 @@ TEST(HelpersTest, Modulo) {
 }
 
 static_assert(lob::AreFloatingPointsEqual(kZero, kZero),
-              "AreFloatingPointsEqual is constexpr");
+              "AreFloatingPointsEqual not constexpr");
 
 TEST(HelpersTest, FloatEqualityNearZero) {
   const double kZeroClose = 1.0e-15;
@@ -104,7 +104,7 @@ TEST(HelpersTest, FmodSpecialCases) {
 }
 
 static_assert(lob::IsInf(std::numeric_limits<double>::infinity()),
-              "IsInf is constexpr");
+              "IsInf not constexpr");
 
 TEST(IsInfTest, PositiveInfinity) {
   const double kInfinity = std::numeric_limits<double>::infinity();
@@ -142,7 +142,7 @@ TEST(IsNanTest, FiniteIsNotNaN) {
   EXPECT_FALSE(lob::IsNan(-1.0));
 }
 
-static_assert(lob::AreEqual(lob::Fabs(-kTwo), kTwo), "Fabs is constexpr");
+static_assert(lob::AreEqual(lob::Fabs(-kTwo), kTwo), "Fabs not constexpr");
 
 TEST(FabsTest, PositiveValue) {
   const double kVal = 3.0;
@@ -175,7 +175,7 @@ TEST(FabsTest, NaN) {
   EXPECT_TRUE(std::isnan(lob::Fabs(kNaN)));
 }
 
-static_assert(lob::AreEqual(lob::Fmax(kTwo, kOne), kTwo), "Fmax is constexpr");
+static_assert(lob::AreEqual(lob::Fmax(kTwo, kOne), kTwo), "Fmax not constexpr");
 
 TEST(FmaxTest, FirstLarger) {
   const double kFive = 5.0;
