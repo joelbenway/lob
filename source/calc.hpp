@@ -81,11 +81,11 @@ inline InHgT CalculateWaterVaporSaturationPressure(DegFT temperature) {
   const double kD1Val = (kIsWater) ? 237.1 : 278.0;
   const double kD2Val = (kIsWater) ? 105.0 : 868.0;
 
-  const PaT kPOutPascal =
-      PaT(std::exp(kAVal - (kBVal / (kTDegC.Value() + kD1Val))) /
-          std::pow(kTDegC.Value() + kD2Val, kCVal));
+  const double kDegC = kTDegC.Value();
+  const double kPOutPascal = std::exp(kAVal - (kBVal / (kDegC + kD1Val)) -
+                                      (kCVal * std::log(kDegC + kD2Val)));
 
-  return InHgT(kPOutPascal);
+  return InHgT(PaT(kPOutPascal));
 }
 
 // Page 167 of Modern Exterior Ballistics - McCoy
