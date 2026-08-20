@@ -325,28 +325,33 @@ TEST(CalcTests, CalculateMillerTwistRuleCorrectionFactor) {
   EXPECT_NEAR(result, kExpectedCorrectionFactor, kError);
 }
 
-static_assert(
-    lob::CalculateProjectileReferenceArea(lob::InchT(kAssertDiameterInch))
-            .Value() > kAssertMinAreaSqIn,
-    "CalculateProjectileReferenceArea not constexpr");
-
 TEST(CalcTests, CalculateProjectileReferenceArea) {
+  constexpr double kAssertDiameterInch = 0.224;
+  constexpr double kAssertMinAreaSqIn = 0.03;
+  static_assert(
+      lob::CalculateProjectileReferenceArea(lob::InchT(kAssertDiameterInch))
+              .Value() > kAssertMinAreaSqIn,
+      "CalculateProjectileReferenceArea not constexpr");
   EXPECT_NEAR(CalculateProjectileReferenceArea(lob::InchT(0.308)).Value(),
               0.074506, 1E-3);
 }
 
-static_assert(lob::AreEqual(lob::CalculateKineticEnergy(lob::FpsT(0.0),
-                                                        lob::SlugT(0.0))
-                                .Value(),
-                            0.0),
-              "CalculateKineticEnergy not constexpr");
-
 TEST(CalcTests, CalculateKineticEnergy) {
-  EXPECT_NEAR(CalculateKineticEnergy(lob::FpsT(3000), lob::GrainT(180)).Value(),
-              3596.5, 0.1);
+  constexpr double kAssertVelocityFps = 3000.0;
+  constexpr double kAssertMassGrains = 180.0;
+  static_assert(!lob::CalculateKineticEnergy(lob::FpsT(kAssertVelocityFps),
+                                             lob::GrainT(kAssertMassGrains))
+                     .IsNaN(),
+                "CalculateKineticEnergy not constexpr");
+
+  const double kExpectedEnergyFtLbs = 3596.5;
+  EXPECT_NEAR(CalculateKineticEnergy(lob::FpsT(kAssertVelocityFps),
+                                     lob::GrainT(kAssertMassGrains))
+                  .Value(),
+              kExpectedEnergyFtLbs, 0.1);
   const double kNaN = std::numeric_limits<double>::quiet_NaN();
-  EXPECT_DOUBLE_EQ(
-      CalculateKineticEnergy(lob::FpsT(kNaN), lob::GrainT(kNaN)).Value(), 0.0);
+  EXPECT_TRUE(std::isnan(
+      CalculateKineticEnergy(lob::FpsT(kNaN), lob::GrainT(kNaN)).Value()));
 }
 
 TEST(CalcTests, CalculateVelocityFromKineticEnergy) {

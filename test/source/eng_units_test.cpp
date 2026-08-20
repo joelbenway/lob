@@ -165,6 +165,7 @@ TEST(EngUnitTests, IncrementOperators) {
 }
 
 TEST(EngUnitTests, IsNaN) {
+  static_assert(!lob::FeetT(5.0).IsNaN(), "IsNaN not constexpr");
   const TestT kA(5);
   const TestT kB(std::numeric_limits<double>::quiet_NaN());
   EXPECT_FALSE(kA.IsNaN());
@@ -192,15 +193,23 @@ TEST(EngUnitTests, Float) {
 }
 
 TEST(EngUnitTests, U32) {
+  static_assert(lob::FeetT(lob::NaN<double>()).U32() == 0U,
+                "U32 not constexpr");
   const TestT kA(std::acos(-1));
   const auto kB(static_cast<uint32_t>(std::round(std::acos(-1))));
   EXPECT_EQ(kA.U32(), kB);
+  const TestT kNaN(TestT(lob::NaN<double>()));
+  EXPECT_EQ(kNaN.U32(), 0U);
 }
 
 TEST(EngUnitTests, U16) {
+  static_assert(lob::FeetT(lob::NaN<double>()).U16() == 0U,
+                "U16 not constexpr");
   const TestT kA(std::acos(-1));
   const auto kB(static_cast<uint16_t>(std::round(std::acos(-1))));
   EXPECT_EQ(kA.U16(), kB);
+  const TestT kNaN(TestT(lob::NaN<double>()));
+  EXPECT_EQ(kNaN.U16(), 0U);
 }
 
 TEST(EngUnitTests, Comparisons) {

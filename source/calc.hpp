@@ -165,9 +165,6 @@ constexpr SqInT CalculateProjectileReferenceArea(InchT bullet_diameter) {
 }
 
 constexpr FtLbsT CalculateKineticEnergy(FpsT velocity, SlugT mass) {
-  if (velocity.IsNaN() || mass.IsNaN()) {
-    return FtLbsT(0);
-  }
   return FtLbsT(mass.Value() * velocity.Value() * velocity.Value() / 2);
 }
 

@@ -230,7 +230,7 @@ class StrongT {
   template <typename TT = T>
   constexpr auto IsNaN() const ->
       typename std::enable_if_t<std::is_floating_point<TT>::value, bool> {
-    return std::isnan(value_);
+    return IsNan(value_);
   }
   template <typename TT = T>
   constexpr auto IsNaN() const ->
@@ -241,10 +241,12 @@ class StrongT {
   constexpr T Value() const { return value_; }
   constexpr float Float() const { return static_cast<float>(value_); }
   constexpr uint32_t U32() const {
-    return value_ < 0 ? 0U : static_cast<uint32_t>(std::round(value_));
+    return IsNaN() || value_ < 0 ? 0U
+                                 : static_cast<uint32_t>(std::round(value_));
   }
   constexpr uint16_t U16() const {
-    return value_ < 0 ? 0U : static_cast<uint16_t>(std::round(value_));
+    return IsNaN() || value_ < 0 ? 0U
+                                 : static_cast<uint16_t>(std::round(value_));
   }
 
  private:
