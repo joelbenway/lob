@@ -68,6 +68,9 @@ enum {
   kLobErrorBallisticCoefficientOOR,
   kLobErrorBallisticCoefficientRequired,
   kLobErrorBaseDiameterOOR,
+  kLobErrorBcBandsInvalid,
+  kLobErrorBcBandsNotMonotonic,
+  kLobErrorBcBandsTooShort,
   kLobErrorDiameterOOR,
   kLobErrorHumidityOOR,
   kLobErrorInitialVelocityRequired,
@@ -82,6 +85,7 @@ enum {
   kLobErrorMaximumTimeOOR,
   kLobErrorMeplatDiameterOOR,
   kLobErrorNoseLengthOOR,
+  kLobErrorNotFormed,
   kLobErrorOgiveRtROOR,
   kLobErrorRangeAngleOOR,
   kLobErrorTailLengthOOR,
@@ -89,11 +93,7 @@ enum {
   kLobErrorZeroAngleOOR,
   kLobErrorZeroDataRequired,
   kLobErrorZeroDistanceOOR,
-  kLobErrorZeroUnreachable,
-  kLobErrorBcBandsInvalid,
-  kLobErrorBcBandsNotMonotonic,
-  kLobErrorBcBandsTooShort,
-  kLobErrorNotFormed
+  kLobErrorZeroUnreachable
 };
 
 /** @brief Gravity vector. */

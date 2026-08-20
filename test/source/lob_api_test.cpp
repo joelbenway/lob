@@ -482,6 +482,9 @@ TEST(LobAPITest, ErrorTComparisonWithCEnum) {
        {lob::ErrorT::kBallisticCoefficientRequired,
         ::kLobErrorBallisticCoefficientRequired},
        {lob::ErrorT::kBaseDiameterOOR, ::kLobErrorBaseDiameterOOR},
+       {lob::ErrorT::kBcBandsInvalid, ::kLobErrorBcBandsInvalid},
+       {lob::ErrorT::kBcBandsNotMonotonic, ::kLobErrorBcBandsNotMonotonic},
+       {lob::ErrorT::kBcBandsTooShort, ::kLobErrorBcBandsTooShort},
        {lob::ErrorT::kDiameterOOR, ::kLobErrorDiameterOOR},
        {lob::ErrorT::kHumidityOOR, ::kLobErrorHumidityOOR},
        {lob::ErrorT::kInitialVelocityRequired,
@@ -499,6 +502,7 @@ TEST(LobAPITest, ErrorTComparisonWithCEnum) {
        {lob::ErrorT::kMaximumTimeOOR, ::kLobErrorMaximumTimeOOR},
        {lob::ErrorT::kMeplatDiameterOOR, ::kLobErrorMeplatDiameterOOR},
        {lob::ErrorT::kNoseLengthOOR, ::kLobErrorNoseLengthOOR},
+       {lob::ErrorT::kNotFormed, ::kLobErrorNotFormed},
        {lob::ErrorT::kOgiveRtROOR, ::kLobErrorOgiveRtROOR},
        {lob::ErrorT::kRangeAngleOOR, ::kLobErrorRangeAngleOOR},
        {lob::ErrorT::kTailLengthOOR, ::kLobErrorTailLengthOOR},
@@ -506,13 +510,10 @@ TEST(LobAPITest, ErrorTComparisonWithCEnum) {
        {lob::ErrorT::kZeroAngleOOR, ::kLobErrorZeroAngleOOR},
        {lob::ErrorT::kZeroDataRequired, ::kLobErrorZeroDataRequired},
        {lob::ErrorT::kZeroDistanceOOR, ::kLobErrorZeroDistanceOOR},
-       {lob::ErrorT::kZeroUnreachable, ::kLobErrorZeroUnreachable},
-       {lob::ErrorT::kBcBandsInvalid, ::kLobErrorBcBandsInvalid},
-       {lob::ErrorT::kBcBandsNotMonotonic, ::kLobErrorBcBandsNotMonotonic},
-       {lob::ErrorT::kBcBandsTooShort, ::kLobErrorBcBandsTooShort},
-       {lob::ErrorT::kNotFormed, ::kLobErrorNotFormed}}};
-  static_assert(kErrors.size() == static_cast<size_t>(::kLobErrorNotFormed) + 1,
-                "Error enumeration changed; update the pair table above");
+       {lob::ErrorT::kZeroUnreachable, ::kLobErrorZeroUnreachable}}};
+  static_assert(
+      kErrors.size() == static_cast<size_t>(::kLobErrorZeroUnreachable) + 1,
+      "Error enumeration changed; update the pair table above");
   for (const auto& error : kErrors) {
     EXPECT_TRUE(error.first == error.second)
         << "error=" << static_cast<int>(error.first);
