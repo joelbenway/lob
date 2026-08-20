@@ -165,7 +165,8 @@ TEST(EngUnitTests, IncrementOperators) {
 }
 
 TEST(EngUnitTests, IsNaN) {
-  static_assert(!lob::FeetT(5.0).IsNaN(), "IsNaN not constexpr");
+  constexpr double kTwo = 2.0;
+  static_assert(!lob::FeetT(kTwo).IsNaN(), "IsNaN not constexpr");
   const TestT kA(5);
   const TestT kB(std::numeric_limits<double>::quiet_NaN());
   EXPECT_FALSE(kA.IsNaN());
@@ -198,7 +199,7 @@ TEST(EngUnitTests, U32) {
   const TestT kA(std::acos(-1));
   const auto kB(static_cast<uint32_t>(std::round(std::acos(-1))));
   EXPECT_EQ(kA.U32(), kB);
-  const TestT kNaN(TestT(lob::NaN<double>()));
+  const TestT kNaN(lob::NaN<double>());
   EXPECT_EQ(kNaN.U32(), 0U);
 }
 
@@ -208,7 +209,7 @@ TEST(EngUnitTests, U16) {
   const TestT kA(std::acos(-1));
   const auto kB(static_cast<uint16_t>(std::round(std::acos(-1))));
   EXPECT_EQ(kA.U16(), kB);
-  const TestT kNaN(TestT(lob::NaN<double>()));
+  const TestT kNaN(lob::NaN<double>());
   EXPECT_EQ(kNaN.U16(), 0U);
 }
 
