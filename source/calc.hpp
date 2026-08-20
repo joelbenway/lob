@@ -20,8 +20,8 @@ constexpr DegFT CalculateTemperatureAtAltitude(FeetT altitude,
 }
 
 // Page 166 of Modern Exterior Ballistics - McCoy
-constexpr DegFT CalculateTemperatureAtAltitudeMcCoy(
-    FeetT altitude, DegFT sea_level_temperature) {
+inline DegFT CalculateTemperatureAtAltitudeMcCoy(FeetT altitude,
+                                                 DegFT sea_level_temperature) {
   const double kK = 6.858E-6 + (2.776E-11 * altitude.Value());
   const double kA = DegRT(DegFT(0)).Value();
   // Note that the formula printed in 2e of Modern External Ballistics omits the
