@@ -75,7 +75,7 @@ class CartesianT {
   constexpr void Z(const T& z_in) { z_ = z_in; }
 
   constexpr T Magnitude() const {
-    return std::sqrt(std::pow(x_, 2) + std::pow(y_, 2) + std::pow(z_, 2));
+    return std::sqrt((x_ * x_) + (y_ * y_) + (z_ * z_));
   }
 
  private:
@@ -84,14 +84,14 @@ class CartesianT {
 
 template <>
 constexpr FeetT CartesianT<FeetT>::Magnitude() const {
-  return FeetT(std::sqrt(std::pow(x_.Value(), 2) + std::pow(y_.Value(), 2) +
-                         std::pow(z_.Value(), 2)));
+  return FeetT(std::sqrt((x_.Value() * x_.Value()) + (y_.Value() * y_.Value()) +
+                         (z_.Value() * z_.Value())));
 }
 
 template <>
 constexpr FpsT CartesianT<FpsT>::Magnitude() const {
-  return FpsT(std::sqrt(std::pow(x_.Value(), 2) + std::pow(y_.Value(), 2) +
-                        std::pow(z_.Value(), 2)));
+  return FpsT(std::sqrt((x_.Value() * x_.Value()) + (y_.Value() * y_.Value()) +
+                        (z_.Value() * z_.Value())));
 }
 
 }  // namespace lob
