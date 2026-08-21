@@ -1223,6 +1223,7 @@ TEST_F(BuilderTestFixture, BCVelocityBandsMatchesSingleBcJump) {
   EXPECT_NEAR(kBands.aerodynamic_jump, kSingle.aerodynamic_jump, 0.02);
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_F(BuilderTestFixture,
        BCVelocityBandsConstantBcMatchesSingleBallisticCoefficient) {
   const std::array<float, 5> kFps = {1250.0F, 1750.0F, 2250.0F, 2750.0F,
