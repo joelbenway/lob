@@ -620,36 +620,51 @@ TEST_F(BuilderTestFixture, MachVsDragTableBadParamsIgnored) {
 TEST_F(BuilderTestFixture, MachVsDragTableNarrowClamped) {
   const std::array<float, 2> kMachsLow = {0.5F, 5.0F};
   const std::array<float, 2> kDragsLow = {0.2F, 1.0F};
-  EXPECT_EQ(puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-                .InitialVelocityFps(kM70MuzzleVelocity)
-                .ZeroDistanceYds(kJackOConnorZeroYardage)
-                .ZeroImpactHeightInches(kJackOConnorZeroHeight)
-                .MachVsDragTable(kMachsLow, kDragsLow)
-                .Build()
-                .error,
-            lob::ErrorT::kNone);
+  const lob::Context kLow =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .MachVsDragTable(kMachsLow, kDragsLow)
+          .Build();
+  ASSERT_EQ(kLow.error, lob::ErrorT::kNone);
+  {
+    lob::spline::CurveView curve(lob::spline::kKnots, kLow.drags);
+    EXPECT_NEAR(curve.Eval(0.0F), 0.11111111F, 1e-5F);
+    EXPECT_NEAR(curve.Eval(5.0F), 1.0F, 1e-5F);
+  }
 
   const std::array<float, 2> kMachsHigh = {0.0F, 4.0F};
   const std::array<float, 2> kDragsHigh = {0.2F, 1.0F};
-  EXPECT_EQ(puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-                .InitialVelocityFps(kM70MuzzleVelocity)
-                .ZeroDistanceYds(kJackOConnorZeroYardage)
-                .ZeroImpactHeightInches(kJackOConnorZeroHeight)
-                .MachVsDragTable(kMachsHigh, kDragsHigh)
-                .Build()
-                .error,
-            lob::ErrorT::kNone);
+  const lob::Context kHigh =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .MachVsDragTable(kMachsHigh, kDragsHigh)
+          .Build();
+  ASSERT_EQ(kHigh.error, lob::ErrorT::kNone);
+  {
+    lob::spline::CurveView curve(lob::spline::kKnots, kHigh.drags);
+    EXPECT_NEAR(curve.Eval(0.0F), 0.2F, 1e-5F);
+    EXPECT_NEAR(curve.Eval(5.0F), 1.2F, 1e-5F);
+  }
 
   const std::array<float, 2> kMachsBoth = {1.0F, 2.0F};
   const std::array<float, 2> kDragsBoth = {0.3F, 0.6F};
-  EXPECT_EQ(puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-                .InitialVelocityFps(kM70MuzzleVelocity)
-                .ZeroDistanceYds(kJackOConnorZeroYardage)
-                .ZeroImpactHeightInches(kJackOConnorZeroHeight)
-                .MachVsDragTable(kMachsBoth, kDragsBoth)
-                .Build()
-                .error,
-            lob::ErrorT::kNone);
+  const lob::Context kBoth =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .MachVsDragTable(kMachsBoth, kDragsBoth)
+          .Build();
+  ASSERT_EQ(kBoth.error, lob::ErrorT::kNone);
+  {
+    lob::spline::CurveView curve(lob::spline::kKnots, kBoth.drags);
+    EXPECT_NEAR(curve.Eval(0.0F), 0.0F, 1e-5F);
+    EXPECT_NEAR(curve.Eval(5.0F), 1.5F, 1e-5F);
+  }
 }
 
 TEST_F(BuilderTestFixture, MachVsDragTableNarrowLowExtrapolationInvalid) {
@@ -883,6 +898,45 @@ TEST_F(BuilderTestFixture, BCVelocityBandsMergesAgainstSelectedDragFunction) {
     lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG7Coefs);
     EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kCurveScale, 1.0e-4F)
         << "knot i=" << i;
+  }
+}
+
+TEST_F(BuilderTestFixture, BCVelocityBandsNonConstantClampingAndInterpolation) {
+  const std::array<float, 3> kFps = {2000.0F, 2500.0F, 3000.0F};
+  const std::array<float, 3> kBcs = {0.20F, 0.30F, 0.40F};
+  const lob::Context kResult =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .BCVelocityBands(kFps, kBcs)
+          .Build();
+  ASSERT_EQ(kResult.error, lob::ErrorT::kNone);
+  const auto kSos = static_cast<float>(kResult.speed_of_sound);
+  lob::spline::CurveView curve(lob::spline::kKnots, kResult.drags);
+  lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG1Coefs);
+  // Below first band: clamped to first BC (0.20)
+  {
+    const float kMach = 1500.0F / kSos;
+    const float kExpected = ref.Eval(kMach) / 0.20F;
+    EXPECT_NEAR(curve.Eval(kMach), kExpected, 1e-4F);
+  }
+  // Between bands: PCHIP-interpolated BC between 0.20 and 0.30
+  {
+    const float kMach = 2250.0F / kSos;
+    const float kDragLow = ref.Eval(kMach) / 0.20F;
+    const float kDragHigh = ref.Eval(kMach) / 0.30F;
+    const float kDrag = curve.Eval(kMach);
+    EXPECT_GT(kDrag, kDragHigh);
+    EXPECT_LT(kDrag, kDragLow);
+  }
+  // Above last band: clamped to last BC (0.40)
+  {
+    const float kMach = 3500.0F / kSos;
+    const float kExpected = ref.Eval(kMach) / 0.40F;
+    EXPECT_NEAR(curve.Eval(kMach), kExpected, 1e-4F);
   }
 }
 
@@ -1132,6 +1186,29 @@ TEST_F(BuilderTestFixture, BCVelocityBandsLastCallWins) {
     EXPECT_NEAR(curve.Eval(kMach), ref.Eval(kMach) * kCurveScale, 1.0e-4F)
         << "knot i=" << i;
   }
+}
+
+TEST_F(BuilderTestFixture, MachVsDragTableLastCallWins) {
+  const std::array<float, 2> kMachs = {0.0F, 5.0F};
+  const std::array<float, 2> kDrags = {0.5F, 0.2F};
+  const std::array<float, 2> kFps = {2000.0F, 3000.0F};
+  const std::array<float, 2> kBcs = {0.250F, 0.250F};
+  const lob::Context kResult =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .DiameterInch(0.308)
+          .MassGrains(168.0)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .BCVelocityBands(kFps, kBcs)
+          .MachVsDragTable(kMachs, kDrags)
+          .Build();
+  ASSERT_EQ(kResult.error, lob::ErrorT::kNone);
+  lob::spline::CurveView curve(lob::spline::kKnots, kResult.drags);
+  EXPECT_NEAR(curve.Eval(0.0F), 0.5F, 1e-4F);
+  EXPECT_NEAR(curve.Eval(5.0F), 0.2F, 1e-4F);
+  lob::spline::CurveView ref(lob::spline::kKnots, lob::spline::kG1Coefs);
+  EXPECT_NE(curve.Eval(2.0F), ref.Eval(2.0F) / 0.250F);
 }
 
 TEST_F(BuilderTestFixture, ResetClearsBcBands) {
