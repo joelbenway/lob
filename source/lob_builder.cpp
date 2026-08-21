@@ -208,10 +208,6 @@ LobErrorT ValidateCustomTable(Impl* pimpl) {
   if (pimpl->table_count < 2) {
     return kLobErrorMachDragTableTooShort;
   }
-  if (pimpl->table_xs[0] > spline::kKnots.front() ||
-      pimpl->table_xs[pimpl->table_count - 1] < spline::kKnots.back()) {
-    return kLobErrorMachDragTableTooNarrow;
-  }
   for (size_t i = 0; i < pimpl->table_count; i++) {
     if (!std::isfinite(pimpl->table_xs[i]) ||
         !std::isfinite(pimpl->table_ys[i]) || pimpl->table_xs[i] < 0.0F ||
@@ -221,6 +217,10 @@ LobErrorT ValidateCustomTable(Impl* pimpl) {
     if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {
       return kLobErrorMachDragTableNotMonotonic;
     }
+  }
+  if (pimpl->table_xs[0] > spline::kKnots.front() ||
+      pimpl->table_xs[pimpl->table_count - 1] < spline::kKnots.back()) {
+    return kLobErrorMachDragTableTooNarrow;
   }
   return kLobErrorNone;
 }
