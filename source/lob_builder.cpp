@@ -346,7 +346,6 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
       return;
     }
     pimpl->ballistic_coefficient_psi = PmsiT(1);
-    pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
     return;
   }
 
