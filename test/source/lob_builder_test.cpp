@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <utility>
 
@@ -683,6 +684,34 @@ TEST_F(BuilderTestFixture, MachVsDragTableCoverageNegativeDrag) {
 
 TEST_F(BuilderTestFixture, MachVsDragTableCoverageNaNMachs) {
   const std::array<float, 2> kMachs = {lob::NaN<float>(), 5.0F};
+  const std::array<float, 2> kDrags = {0.5F, 1.0F};
+  const lob::Context kResult =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .MachVsDragTable(kMachs, kDrags)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableInvalid);
+}
+
+TEST_F(BuilderTestFixture, MachVsDragTableCoverageInfiniteFirstMach) {
+  const std::array<float, 2> kMachs = {std::numeric_limits<float>::infinity(),
+                                       5.0F};
+  const std::array<float, 2> kDrags = {0.5F, 1.0F};
+  const lob::Context kResult =
+      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+          .InitialVelocityFps(kM70MuzzleVelocity)
+          .ZeroDistanceYds(kJackOConnorZeroYardage)
+          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+          .MachVsDragTable(kMachs, kDrags)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableInvalid);
+}
+
+TEST_F(BuilderTestFixture, MachVsDragTableCoverageInfiniteLastMach) {
+  const std::array<float, 2> kMachs = {0.0F,
+                                       -std::numeric_limits<float>::infinity()};
   const std::array<float, 2> kDrags = {0.5F, 1.0F};
   const lob::Context kResult =
       puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
