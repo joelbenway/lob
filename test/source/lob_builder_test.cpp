@@ -617,17 +617,39 @@ TEST_F(BuilderTestFixture, MachVsDragTableBadParamsIgnored) {
   EXPECT_EQ(kResult.error, lob::ErrorT::kBallisticCoefficientRequired);
 }
 
-TEST_F(BuilderTestFixture, MachVsDragTableCoverageTooNarrow) {
-  const std::array<float, 2> kMachs = {0.5F, 5.0F};
-  const std::array<float, 2> kDrags = {0.0F, 1.0F};
-  const lob::Context kResult =
-      puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
-          .InitialVelocityFps(kM70MuzzleVelocity)
-          .ZeroDistanceYds(kJackOConnorZeroYardage)
-          .ZeroImpactHeightInches(kJackOConnorZeroHeight)
-          .MachVsDragTable(kMachs, kDrags)
-          .Build();
-  EXPECT_EQ(kResult.error, lob::ErrorT::kMachDragTableTooNarrow);
+TEST_F(BuilderTestFixture, MachVsDragTableNarrowClamped) {
+  const std::array<float, 2> kMachsLow = {0.5F, 5.0F};
+  const std::array<float, 2> kDragsLow = {0.2F, 1.0F};
+  EXPECT_EQ(puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                .InitialVelocityFps(kM70MuzzleVelocity)
+                .ZeroDistanceYds(kJackOConnorZeroYardage)
+                .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+                .MachVsDragTable(kMachsLow, kDragsLow)
+                .Build()
+                .error,
+            lob::ErrorT::kNone);
+
+  const std::array<float, 2> kMachsHigh = {0.0F, 4.0F};
+  const std::array<float, 2> kDragsHigh = {0.2F, 1.0F};
+  EXPECT_EQ(puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                .InitialVelocityFps(kM70MuzzleVelocity)
+                .ZeroDistanceYds(kJackOConnorZeroYardage)
+                .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+                .MachVsDragTable(kMachsHigh, kDragsHigh)
+                .Build()
+                .error,
+            lob::ErrorT::kNone);
+
+  const std::array<float, 2> kMachsBoth = {1.0F, 2.0F};
+  const std::array<float, 2> kDragsBoth = {0.3F, 0.6F};
+  EXPECT_EQ(puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                .InitialVelocityFps(kM70MuzzleVelocity)
+                .ZeroDistanceYds(kJackOConnorZeroYardage)
+                .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+                .MachVsDragTable(kMachsBoth, kDragsBoth)
+                .Build()
+                .error,
+            lob::ErrorT::kNone);
 }
 
 TEST_F(BuilderTestFixture, MachVsDragTableCoverageTooShort) {
