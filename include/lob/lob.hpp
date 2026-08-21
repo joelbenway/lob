@@ -118,8 +118,7 @@ struct Context {
   double aerodynamic_jump;  ///< @brief Aerodynamic jump effect in Moa.
   double spindrift_factor;  ///< @brief Spin drift factor.
   double max_time;          ///< @brief Max time of flight for solver.
-  std::array<float, kLobCoeffsSize> drags;
-  ///< @brief Drag curve coefficients, scaled by the effective 1/BC.
+  std::array<float, kLobCoeffsSize> drags;  ///< @brief Drag curve coefficients.
   uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
   uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
   uint16_t step_size;      ///< @brief Solver step size in inches.
@@ -267,7 +266,8 @@ class Builder {
    * @brief Sets the drag function associated with ballistic coefficient.
    * @note Does not clear a table loaded via MachVsDragTable or
    * BCVelocityBands; those override the drag function at Build time.
-   * Call Reset to return to a standard drag function.
+   * If both table types are configured, the last call wins regardless of
+   * order. Call Reset to return to a standard drag function.
    * @param type The drag function type.
    * @return A reference to the Builder object.
    */
@@ -281,7 +281,8 @@ class Builder {
    * @brief Sets the drag function associated with ballistic coefficient.
    * @note Does not clear a table loaded via MachVsDragTable or
    * BCVelocityBands; those override the drag function at Build time.
-   * Call Reset to return to a standard drag function.
+   * If both table types are configured, the last call wins regardless of
+   * order. Call Reset to return to a standard drag function.
    * @param type The drag function type.
    * @return A reference to the Builder object.
    */

@@ -133,8 +133,7 @@ typedef struct {
   double aerodynamic_jump;  ///< @brief Aerodynamic jump effect in Moa.
   double spindrift_factor;  ///< @brief Spin drift factor.
   double max_time;          ///< @brief Max time of flight for solver.
-  float drags[LOB_SPLINE_SEGMENTS * 4];
-  ///< @brief Drag curve coefficients, scaled by the effective 1/BC.
+  float drags[LOB_SPLINE_SEGMENTS * 4];  ///< @brief Drag curve coefficients.
   uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
   uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
   uint16_t step_size;      ///< @brief Solver step size in inches.
@@ -199,7 +198,8 @@ LOB_EXPORT extern LobBuilder* LobBuilderBCAtmosphere(
  * @brief Sets the drag function associated with ballistic coefficient.
  * @note Does not clear a table loaded via LobBuilderSplineFitTable or
  * LobBuilderBCVelocityBands; those override the drag function at Build time.
- * Call LobBuilderReset to return to a standard drag function.
+ * If both table types are configured, the last call wins regardless of
+ * order. Call LobBuilderReset to return to a standard drag function.
  * @param pbuilder Pointer to the builder.
  * @param type The drag function type.
  * @return Pointer to the builder, or nullptr if pbuilder is null.
