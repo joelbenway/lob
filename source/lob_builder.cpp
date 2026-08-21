@@ -209,18 +209,39 @@ LobErrorT ValidateCustomTable(Impl* pimpl) {
     return kLobErrorMachDragTableTooShort;
   }
   for (size_t i = 0; i < pimpl->table_count; i++) {
-    if (!std::isfinite(pimpl->table_xs[i]) ||
-        !std::isfinite(pimpl->table_ys[i]) || pimpl->table_xs[i] < 0.0F ||
-        pimpl->table_ys[i] < 0.0F) {
+    const float kX = pimpl->table_xs[i];
+    const float kY = pimpl->table_ys[i];
+    if (kX < 0.0F || kY < 0.0F || !std::isfinite(kX) || !std::isfinite(kY)) {
       return kLobErrorMachDragTableInvalid;
     }
-    if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {
+    if (i > 0 && kX <= pimpl->table_xs[i - 1]) {
       return kLobErrorMachDragTableNotMonotonic;
     }
   }
-  if (pimpl->table_xs[0] > spline::kKnots.front() ||
-      pimpl->table_xs[pimpl->table_count - 1] < spline::kKnots.back()) {
-    return kLobErrorMachDragTableTooNarrow;
+  return kLobErrorNone;
+}
+
+LobErrorT BuildCustomTableSpline(Impl* pimpl, LobContext* pout) {
+  const bool kNeedLow = pimpl->table_xs[0] > spline::kKnots.front();
+  const bool kNeedHigh =
+      pimpl->table_xs[pimpl->table_count - 1] < spline::kKnots.back();
+  spline::Build(pimpl->table_xs, pimpl->table_ys, pimpl->table_count,
+                spline::kKnots.data(), spline::kKnotCount, &pout->drags[0]);
+  if (!kNeedLow && !kNeedHigh) {
+    return kLobErrorNone;
+  }
+  spline::CurveView curve(spline::kKnots.data(), &pout->drags[0]);
+  if (kNeedLow) {
+    const float kCd = curve.Eval(spline::kKnots.front());
+    if (kCd < 0.0F || !std::isfinite(kCd)) {
+      return kLobErrorMachDragTableInvalid;
+    }
+  }
+  if (kNeedHigh) {
+    const float kCd = curve.Eval(spline::kKnots.back());
+    if (kCd < 0.0F || !std::isfinite(kCd)) {
+      return kLobErrorMachDragTableInvalid;
+    }
   }
   return kLobErrorNone;
 }
@@ -233,15 +254,42 @@ LobErrorT ValidateBcBands(Impl* pimpl) {
     return kLobErrorBcBandsInvalid;
   }
   for (size_t i = 0; i < pimpl->table_count; i++) {
-    if (!std::isfinite(pimpl->table_xs[i]) ||
-        !std::isfinite(pimpl->table_ys[i]) || pimpl->table_xs[i] <= 0.0F ||
-        pimpl->table_ys[i] <= 0.0F) {
+    const float kX = pimpl->table_xs[i];
+    const float kY = pimpl->table_ys[i];
+    if (kX <= 0.0F || kY <= 0.0F || !std::isfinite(kX) || !std::isfinite(kY)) {
       return kLobErrorBcBandsInvalid;
     }
-    if (i > 0 && pimpl->table_xs[i] <= pimpl->table_xs[i - 1]) {
+    if (i > 0 && kX <= pimpl->table_xs[i - 1]) {
       return kLobErrorBcBandsNotMonotonic;
     }
   }
+  return kLobErrorNone;
+}
+
+LobErrorT BuildBcBandsSpline(
+    Impl* pimpl, LobContext* pout,
+    const std::array<float, spline::kCoefsSize>* coefs) {
+  const auto kSos = static_cast<float>(pout->speed_of_sound);
+  if (pimpl->table_xs[pimpl->table_count - 1] / kSos >= spline::kKnots.back()) {
+    return kLobErrorBcBandsInvalid;
+  }
+  const auto kConvert =
+      pimpl->atmosphere_reference == kLobAtmosphereReferenceArmyStandardMetro
+          ? static_cast<float>(kArmyToIcaoBcConversionFactor)
+          : 1.0F;
+  std::array<float, spline::kKnotCount> machs{};
+  std::array<float, spline::kKnotCount> bcs{};
+  for (size_t i = 0; i < pimpl->table_count; i++) {
+    machs.at(i) = pimpl->table_xs[i] / kSos;
+    bcs.at(i) = pimpl->table_ys[i] * kConvert;
+  }
+  std::array<float, spline::kCoefsSize> scale_coefs{};
+  spline::MakeRetardationCoefs(machs.data(), bcs.data(), pimpl->table_count,
+                               scale_coefs.data());
+  spline::CurveView scaling_curve(spline::kKnots, scale_coefs);
+  spline::CurveView drag_curve(spline::kKnots, *coefs);
+  auto merged_curve = spline::Merge(scaling_curve, drag_curve);
+  std::copy_n(merged_curve.data(), spline::kCoefsSize, &pout->drags[0]);
   return kLobErrorNone;
 }
 
@@ -276,9 +324,11 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
       pout->error = kErr;
       return;
     }
-    spline::Build(pimpl->table_xs, pimpl->table_ys, pimpl->table_count,
-                  spline::kKnots.data(), spline::kKnotCount, &pout->drags[0]);
-
+    const LobErrorT kBuildErr = BuildCustomTableSpline(pimpl, pout);
+    if (kBuildErr != kLobErrorNone) {
+      pout->error = kBuildErr;
+      return;
+    }
     pimpl->ballistic_coefficient_psi = PmsiT(1);
     pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
     return;
@@ -290,31 +340,11 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
       pout->error = kErr;
       return;
     }
-    const auto kSos = static_cast<float>(pout->speed_of_sound);
-    if (pimpl->table_xs[pimpl->table_count - 1] / kSos >=
-        spline::kKnots.back()) {
-      pout->error = kLobErrorBcBandsInvalid;
+    const LobErrorT kBuildErr = BuildBcBandsSpline(pimpl, pout, coefs);
+    if (kBuildErr != kLobErrorNone) {
+      pout->error = kBuildErr;
       return;
     }
-    const auto kConvert =
-        pimpl->atmosphere_reference == kLobAtmosphereReferenceArmyStandardMetro
-            ? static_cast<float>(kArmyToIcaoBcConversionFactor)
-            : 1.0F;
-    std::array<float, spline::kKnotCount> machs{};
-    std::array<float, spline::kKnotCount> bcs{};
-    for (size_t i = 0; i < pimpl->table_count; i++) {
-      machs.at(i) = pimpl->table_xs[i] / kSos;
-      bcs.at(i) = pimpl->table_ys[i] * kConvert;
-    }
-    std::array<float, spline::kCoefsSize> scale_coefs{};
-    spline::MakeRetardationCoefs(machs.data(), bcs.data(), pimpl->table_count,
-                                 scale_coefs.data());
-    spline::CurveView scaling_curve(spline::kKnots, scale_coefs);
-    spline::CurveView drag_curve(spline::kKnots, *coefs);
-    auto merged_curve = spline::Merge(scaling_curve, drag_curve);
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    std::copy_n(merged_curve.data(), spline::kCoefsSize, &pout->drags[0]);
-
     pimpl->ballistic_coefficient_psi = PmsiT(1);
     pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
     return;
