@@ -76,10 +76,9 @@ enum class ErrorT : LobErrorT {
   kInternalError = ::kLobErrorInternalError,
   kLatitudeOOR = ::kLobErrorLatitudeOOR,
   kLengthOOR = ::kLobErrorLengthOOR,
-  kMachDragTableInvalid = kLobErrorMachDragTableInvalid,
-  kMachDragTableNotMonotonic = kLobErrorMachDragTableNotMonotonic,
-  kMachDragTableTooNarrow = kLobErrorMachDragTableTooNarrow,
-  kMachDragTableTooShort = kLobErrorMachDragTableTooShort,
+  kMachDragTableInvalid = ::kLobErrorMachDragTableInvalid,
+  kMachDragTableNotMonotonic = ::kLobErrorMachDragTableNotMonotonic,
+  kMachDragTableTooShort = ::kLobErrorMachDragTableTooShort,
   kMassOOR = ::kLobErrorMassOOR,
   kMaximumTimeOOR = ::kLobErrorMaximumTimeOOR,
   kMeplatDiameterOOR = ::kLobErrorMeplatDiameterOOR,
@@ -92,7 +91,7 @@ enum class ErrorT : LobErrorT {
   kZeroAngleOOR = ::kLobErrorZeroAngleOOR,
   kZeroDataRequired = ::kLobErrorZeroDataRequired,
   kZeroDistanceOOR = ::kLobErrorZeroDistanceOOR,
-  kZeroUnreachable = ::kLobErrorZeroUnreachable
+  kZeroUnreachable = ::kLobErrorZeroUnreachable,
 };
 
 /** @brief Gravity vector. See @c LobGravity for member details. */
@@ -365,6 +364,10 @@ class Builder {
    * @brief Loads a custom Mach vs Drag table for the projectile.
    * @details This is a direct alternative to using a ballistic coefficient
    * and a reference drag function.
+   * @note If the table does not span Mach 0..5 it is extrapolated; if
+   * extrapolation would produce invalid drag, Build returns
+   * ErrorT::kMachDragTableInvalid — pad the table with explicit entries at
+   * 0 and/or 5.0 to define the desired edge behavior.
    * @warning The caller must keep pmachs and pdrags valid until Build is
    * called. The builder copies no data; the pointers are referenced during
    * Build().
@@ -383,6 +386,10 @@ class Builder {
    * @brief Loads a custom Mach vs Drag table for the projectile.
    * @details This is a direct alternative to using a ballistic coefficient
    * and a reference drag function.
+   * @note If the table does not span Mach 0..5 it is extrapolated; if
+   * extrapolation would produce invalid drag, Build returns
+   * ErrorT::kMachDragTableInvalid — pad the table with explicit entries at
+   * 0 and/or 5.0 to define the desired edge behavior.
    * @warning The arrays must remain valid until Build is called; the builder
    * copies no data and references them during Build(). Temporaries are
    * rejected at compile time.
