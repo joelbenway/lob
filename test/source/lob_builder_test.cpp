@@ -652,6 +652,34 @@ TEST_F(BuilderTestFixture, MachVsDragTableNarrowClamped) {
             lob::ErrorT::kNone);
 }
 
+TEST_F(BuilderTestFixture, MachVsDragTableNarrowLowExtrapolationInvalid) {
+  // {0.5,5.0} with {0.0,1.0} extrapolates to Cd(0) = -0.11 -> line 237
+  const std::array<float, 2> kMachs = {0.5F, 5.0F};
+  const std::array<float, 2> kDrags = {0.0F, 1.0F};
+  EXPECT_EQ(puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                .InitialVelocityFps(kM70MuzzleVelocity)
+                .ZeroDistanceYds(kJackOConnorZeroYardage)
+                .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+                .MachVsDragTable(kMachs, kDrags)
+                .Build()
+                .error,
+            lob::ErrorT::kMachDragTableInvalid);
+}
+
+TEST_F(BuilderTestFixture, MachVsDragTableNarrowHighExtrapolationInvalid) {
+  // {0.0,4.0} with {1.0,0.0} extrapolates to Cd(5) = -0.25 -> line 243
+  const std::array<float, 2> kMachs = {0.0F, 4.0F};
+  const std::array<float, 2> kDrags = {1.0F, 0.0F};
+  EXPECT_EQ(puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                .InitialVelocityFps(kM70MuzzleVelocity)
+                .ZeroDistanceYds(kJackOConnorZeroYardage)
+                .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+                .MachVsDragTable(kMachs, kDrags)
+                .Build()
+                .error,
+            lob::ErrorT::kMachDragTableInvalid);
+}
+
 TEST_F(BuilderTestFixture, MachVsDragTableCoverageTooShort) {
   const std::array<float, 1> kMachs = {0.5F};
   const std::array<float, 1> kDrags = {0.0F};
@@ -1234,6 +1262,9 @@ TEST_F(BuilderTestFixture,
     EXPECT_NEAR(bands_out.at(i).elevation, single_out.at(i).elevation, 0.01)
         << "range=" << kRanges.at(i);
   }
+  const lob::Context kBandsAgain = puut->Build();
+  ASSERT_EQ(kBandsAgain.error, lob::ErrorT::kNone);
+  EXPECT_EQ(kBandsAgain.drags, kBands.drags);
 }
 
 TEST_F(BuilderTestFixture,
