@@ -21,6 +21,7 @@ var lob_8h =
     [ "LobBuilderBaseDiameterInch", "d0/d9f/lob_8h.html#a29bfd3b43cfa31541b92a78e235d527d", null ],
     [ "LobBuilderBCAtmosphere", "d0/d9f/lob_8h.html#aeca6cb05f4bc4c7a4c77924b1ce2750c", null ],
     [ "LobBuilderBCDragFunction", "d0/d9f/lob_8h.html#abb585386428d4468196a0815815bb8c4", null ],
+    [ "LobBuilderBCVelocityBands", "d0/d9f/lob_8h.html#a3814f7a9cb43c041971f2b491cc80bc8", null ],
     [ "LobBuilderBuild", "d0/d9f/lob_8h.html#af5041f99ea5eecaba32938f2a1f6acad", null ],
     [ "LobBuilderCopy", "d0/d9f/lob_8h.html#ad28ad0182f51f97e78297c302a5555aa", null ],
     [ "LobBuilderDestroy", "d0/d9f/lob_8h.html#a1adc6b7a846d546093c1d28e7846cb3e", null ],
