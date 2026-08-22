@@ -85,6 +85,7 @@ Drop at 1800 feet is -102.85 inches
 ```
 
 </details>
+
 It only takes a few parameters for lob to make a well-formed, if minimal, ballistic solution. By providing more data, our solver can be more accurate.
 ```C++
 const lob::Context kBetterCtx =
