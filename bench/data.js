@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786317555429,
+  "lastUpdate": 1787374616155,
   "repoUrl": "https://github.com/joelbenway/lob",
   "entries": {
     "lob instruction counts": [
@@ -117,6 +117,65 @@ window.BENCHMARK_DATA = {
           {
             "name": "lob_bench/solve_inverse",
             "value": 1089716.995,
+            "unit": "Ir/op"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "user.email",
+            "username": "joelbenway"
+          },
+          "committer": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "distinct": true,
+          "id": "d60866865abe3683750111f7f59ef4a85dfc8131",
+          "message": "style: fix alignment in PCHIP test\n\nclang-format alignment for kMachs/kBcsPchip initializers.",
+          "timestamp": "2026-08-22T04:42:55Z",
+          "tree_id": "153917961eac39dc65c03d8ee53d3ff6ec95954e",
+          "url": "https://github.com/joelbenway/lob/commit/d60866865abe3683750111f7f59ef4a85dfc8131"
+        },
+        "date": 1787374615119,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "lob_bench/build_basic",
+            "value": 782,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_full",
+            "value": 1805,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_custom_table",
+            "value": 7747.001,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_boatright",
+            "value": 579493.006,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_zero_search",
+            "value": 80245.005,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_basic",
+            "value": 261077.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse",
+            "value": 1089615.995,
             "unit": "Ir/op"
           }
         ]
