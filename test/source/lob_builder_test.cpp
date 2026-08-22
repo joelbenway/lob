@@ -931,6 +931,17 @@ TEST_F(BuilderTestFixture, BCVelocityBandsNonConstantClampingAndInterpolation) {
     const float kDrag = curve.Eval(kMach);
     EXPECT_GT(kDrag, kDragHigh);
     EXPECT_LT(kDrag, kDragLow);
+    // Exact PCHIP-based expected via retardation curve from kFps/kBcs
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    std::array<float, 3> kMachs = {kFps[0] / kSos, kFps[1] / kSos,
+                                      kFps[2] / kSos};  // NOLINT
+    std::array<float, 3> kBcsPchip = {0.20F, 0.30F, 0.40F};  // NOLINT
+    std::array<float, lob::spline::kCoefsSize> kScaleCoefs{};  // NOLINT
+    lob::spline::MakeRetardationCoefs(kMachs.data(), kBcsPchip.data(), 3,
+                                      kScaleCoefs.data());
+    lob::spline::CurveView kScale(lob::spline::kKnots, kScaleCoefs);  // NOLINT
+    const float kExpected = ref.Eval(kMach) * kScale.Eval(kMach);
+    EXPECT_NEAR(kDrag, kExpected, 2e-3F);
   }
   // Above last band: clamped to last BC (0.40)
   {
