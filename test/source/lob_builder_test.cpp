@@ -934,8 +934,8 @@ TEST_F(BuilderTestFixture, BCVelocityBandsNonConstantClampingAndInterpolation) {
     // Exact PCHIP-based expected via retardation curve from kFps/kBcs
     // NOLINTNEXTLINE(readability-identifier-naming)
     std::array<float, 3> kMachs = {kFps[0] / kSos, kFps[1] / kSos,
-                                      kFps[2] / kSos};  // NOLINT
-    std::array<float, 3> kBcsPchip = {0.20F, 0.30F, 0.40F};  // NOLINT
+                                   kFps[2] / kSos};            // NOLINT
+    std::array<float, 3> kBcsPchip = {0.20F, 0.30F, 0.40F};    // NOLINT
     std::array<float, lob::spline::kCoefsSize> kScaleCoefs{};  // NOLINT
     lob::spline::MakeRetardationCoefs(kMachs.data(), kBcsPchip.data(), 3,
                                       kScaleCoefs.data());
