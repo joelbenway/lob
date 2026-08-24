@@ -68,11 +68,11 @@ to lower-fidelity formulas or skips the correction entirely
 
 - `kLobErrorBallisticCoefficientRequired` / `kLobErrorInitialVelocityRequired`
   / `kLobErrorZeroDataRequired`
- - `kLobErrorZeroUnreachable` — zero distance cannot be reached within
-  `@ref num_zero_angle` bounds (±45°, 10 iterations; above 45° a high/low
-  duplicate solution would exist and the solver does not disambiguate)
- - Table errors: `kLobErrorMachDragTable*`, `kLobErrorBcBands*`
- - Range/atmosphere OOR errors
+- `kLobErrorZeroUnreachable` — zero distance cannot be reached within
+   `@ref num_zero_angle` bounds (±45°, 10 iterations; above 45° a high/low
+   duplicate solution would exist and the solver does not disambiguate)
+- Table errors: `kLobErrorMachDragTable*`, `kLobErrorBcBands*`
+- Range/atmosphere OOR errors
 
 `Build()` stops at the first error; later setters still overwrite stored
 values but the error is reported only at build time.  See
@@ -93,7 +93,7 @@ a table and does not affect the choice):
   to control the edge (`include/lob/lob.h`).
 - `BCVelocityBands` / `LobBuilderBCVelocityBands` — velocity (fps) vs BC.
   `2 <= size <= 16`, velocities positive strictly increasing, BCs positive
-  finite, highest velocity ` < Mach 5` at local speed of sound.  See
+  finite, highest velocity `< Mach 5` at local speed of sound.  See
   @ref bc_transformation for the transformation.
 
 Both setters copy no data; the caller must keep the pointed-to arrays alive

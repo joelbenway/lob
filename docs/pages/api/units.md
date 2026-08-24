@@ -13,8 +13,8 @@ fail to compile.  Conversion helpers are exposed as C and C++ free functions.
 
 `StrongT` is templated on an enum category `E` (Length, Speed, Angle …),
 a specific unit `U`, and a representation `T`.  Arithmetic preserves the
-category; cross-category operations require explicit conversion via the
-specialized `operator Other` (e.g. `InchT → FeetT`, `MoaT → RadiansT`).
+category; same-category unit conversions (e.g. `InchT → FeetT`, `MoaT → RadiansT`)
+change only the unit via the supplied `operator StrongT<E, Other, T>`; cross-category operations are ill-formed.
 Helpers like `IsNaN()`, `Value()`, `U32()`, `U16()` and `Inverse()` are
 provided.  The type is `constexpr` where possible.
 
@@ -23,8 +23,8 @@ disappear at the ABI boundary — `LobContext` fields are plain `double`.
 
 @section api-units-conversions Conversion helpers
 
-All conversions are exact multiplications by constants from
-`source/eng_units.hpp` (`convert::` namespace).  Selected helpers
+Most conversions are exact multiplications by scale factors from
+`source/eng_units.hpp` (`convert::` namespace); `LobMoaToInch` also depends on `range_ft` and Celsius-to-Fahrenheit includes an additive offset.  Selected helpers
 (`include/lob/lob.h`):
 
 - Angle: `LobMoaToMil`, `LobMoaToDeg`, `LobMoaToIphy`, `LobMoaToInch(moa, range_ft)`,

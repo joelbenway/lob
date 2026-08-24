@@ -83,6 +83,4 @@ batch — it is silently given a (wrong) number, hence the warning.
 - Non-monotonic `pranges` → `0` (same guard as forward).
 - Zero `range` → `LobSolveInverse` counts it with `0` MOA; `LobFastInverse`
   skips it and does not count it (`source/lob_solve.cpp`).
-- Multiple ranges: both functions require strictly increasing order (for
-  `LobSolveInverse` the check is the same `LobSolve` guard; `LobFastInverse`
-  operates in-place and does not re-check `pranges`).
+- Multiple ranges: `LobSolveInverse` requires strictly increasing `pranges` (same guard as `LobSolve`); `LobFastInverse` is an in-place conversion of the supplied `pouts` and does not receive `pranges`.

@@ -21,16 +21,16 @@ exposed from a successful `Build()`; `kLobErrorNumberOfErrors` is the count.
 | `kInitialVelocityRequired` | missing or `≤0` fps (`BuildStability`) |
 | `kZeroDataRequired` | neither `ZeroAngleMOA` nor `ZeroDistanceYds` |
 | `kZeroDistanceOOR` | `ZeroDistanceYds ≤ 0` |
-| `kZeroAngleOOR` | explicit `|ZeroAngleMOA| > 45°` |
+| `kZeroAngleOOR` | explicit `abs(ZeroAngleMOA) > 45°` |
 | `kZeroUnreachable` | `SolveAngle` returns NaN for the zero distance (vacuum-parabola seed, 10 iters, ±45°) |
-| `kRangeAngleOOR` | `|RangeAngleDeg| ≥ 90°` |
+| `kRangeAngleOOR` | `abs(RangeAngleDeg) ≥ 90°` |
 | `kDiameterOOR` / `kLengthOOR` / `kMassOOR` | non-positive geometry needed for `stability_factor` |
 | `kMeplatDiameterOOR` / `kBaseDiameterOOR` / `kNoseLengthOOR` / `kTailLengthOOR` / `kOgiveRtROOR` | Boatright geometry out of `[0,∞)` or `ogiveRtR ∉ [0,1]` |
-| `kAltitudeOfFiringSiteOOR` / `kAltitudeOfBarometerOOR` / `kAltitudeOfThermometerOOR` | `|alt| ≥ 65 617 ft` (`kIsaStratosphereAltitudeFt`) |
+| `kAltitudeOfFiringSiteOOR` / `kAltitudeOfBarometerOOR` / `kAltitudeOfThermometerOOR` | `abs(alt) ≥ 65 617 ft` (`kIsaStratosphereAltitudeFt`) |
 | `kAirPressureOOR` | `AirPressureInHg < 0` |
 | `kHumidityOOR` | `RelativeHumidityPercent ∉ [0,100]` |
-| `kAzimuthOOR` | `|azimuth| > 360°` |
-| `kLatitudeOOR` | `|latitude| > 90°` |
+| `kAzimuthOOR` | `abs(azimuth) > 360°` |
+| `kLatitudeOOR` | `abs(latitude) > 90°` |
 | `kWindHeadingOOR` | internal `wind_heading_rad` outside `±360°` |
 | `kMaximumTimeOOR` | `MaximumTime < 0` |
 | `kMachDragTableTooShort` | `size < 2` |
