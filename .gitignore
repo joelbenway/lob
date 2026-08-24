@@ -17,3 +17,6 @@ env.bat
 env.ps1
 prefix/
 result
+__pycache__/
+*.pyc
+*.pyo

@@ -139,6 +139,18 @@ I wrote lob for fun, to learn, [because this is what computers are for](https://
 
 [Calculating Yaw of Repose and Spin Drift for Firing Point Conditions – Boatright & Ruiz](https://www.researchgate.net/publication/327582502_Calculating_Yaw_of_Repose_and_Spin_Drift) Another paper from Boatright & Ruiz with a similar model for calculating spin drift.
 
+## Documentation
+lob ships a [technical reference](docs/pages/overview.md) (source) — API +
+ballistic model + numerical methods + BC transformation case study +
+validation — built with Doxygen and kept separate from the README.  Build it
+locally:
+
+```bash
+cmake -B build -DLOB_DEVELOPER_MODE=ON -DBUILD_DOCS=ON
+cmake --build build --target docs
+# open build/docs/html/index.html  (Technical Reference Overview)
+```
+
 ## Building and Installing
 See the [BUILDING](BUILDING.md) document.
 

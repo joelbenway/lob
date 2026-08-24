@@ -1,7 +1,12 @@
 /**
  * @page about About
- * @section about-doxygen Doxygen documentation
- * This page is auto generated using
- * <a href="https://www.doxygen.nl/">Doxygen</a>, making use of some useful
- * <a href="https://www.doxygen.nl/manual/commands.html">special commands</a>.
+ * @section about-doxygen About this site
+ * This site is generated with <a href="https://www.doxygen.nl/">Doxygen</a>
+ * from the headers in <code>include/</code> and the technical pages in
+ * <code>docs/pages/</code>.  It is intentionally separate from the
+ * repository's root docs (<code>README.md</code>, <code>BUILDING.md</code>,
+ * etc.).  Start at the main page (Technical Reference Overview).  Build it
+ * locally with <code>cmake -DLOB_DEVELOPER_MODE=ON -DBUILD_DOCS=ON &amp;&amp;
+ * cmake --build build --target docs</code> (developer mode is required for
+ * the <code>docs</code> target).
  */

@@ -569,15 +569,15 @@ LOB_EXPORT extern void LobBuilderBuild(LobBuilder* pbuilder,
  * Results contain a forward-solution.
  * @note A forward-solution solves for the expected change in elevation and
  * deflection (in inches) at a given range.
- * @param ctx Pointer to context parameters for the calculation.
+ * @param pctx Pointer to context parameters for the calculation.
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
  * @param pouts Pointer to an array where the output results will be stored.
  * @param size The number of ranges to solve for.
  * @return The number of successful solutions.
  */
 LOB_EXPORT extern size_t LobSolve(const LobContext* pctx,
-                                  const uint32_t* pranges, LobOutput* pouts,
-                                  size_t size);
+                                   const uint32_t* pranges, LobOutput* pouts,
+                                   size_t size);
 
 /**
  * @brief Converts forward-solution output to inverse-solution adjustments.
