@@ -1,9 +1,9 @@
-[![CI](https://github.com/joelbenway/lob/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/joelbenway/lob/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob)
-
-<img alt="Pretty proud of this hand-coded svg" src="https://github.com/joelbenway/lob/blob/master/docs/lob.svg?raw=true" width="100%"></img>
+<img alt="Pretty proud of this hand-coded svg" src="docs/lob.svg" width="100%"></img>
 
 # lob
 This is lob, a useful and free exterior ballistics calculation library written in industrial-strength C++. :rocket:
+
+[![CI](https://github.com/joelbenway/lob/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/joelbenway/lob/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob) [![Release](https://img.shields.io/github/v/release/joelbenway/lob?label=release)](https://github.com/joelbenway/lob/releases) [![C++14](https://img.shields.io/badge/C%2B%2B-14-blue.svg)](https://isocpp.org/) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](COPYING.md)
 
 ## Features
 Building a world-class ballistics app? Lob's got the math covered. :mage_man:
@@ -112,9 +112,9 @@ const lob::Context kBetterCtx =
 Now we're cooking! :cook:
 
 ### Accurate
-Under the hood lob uses numerical methods to solve well-known ordinary differential equations (ODEs) which model the projectile motion of a point mass like any good workhorse solver. The path to accuracy begins preventing errors in the implementation and this is where lob is painfully overbuilt. Every calculation lob uses is validated against published material by comprehensive unit tests. Internally lob uses a custom [strong type](/source/eng_units.hpp) system for engineering units that eliminate an entire class of potential bugs. Quality is strictly enforced by [continuous integration](https://github.com/joelbenway/lob/actions/workflows/ci.yml) befitting a critical software system. :mechanical_arm:
+Under the hood lob uses numerical methods to solve well-known ordinary differential equations (ODEs) which model the projectile motion of a point mass like any good workhorse solver. The path to accuracy begins with preventing errors. Every calculation lob uses is validated against published material by comprehensive unit tests. Internally lob uses a custom [strong type](source/eng_units.hpp) system for engineering units that eliminate an entire class of potential bugs. Quality is strictly enforced by [continuous integration](https://github.com/joelbenway/lob/actions/workflows/ci.yml) befitting a critical software system. :mechanical_arm:
 
-There are features that set lob's accuracy apart as well. A solution can only be as good as the drag function used so whether provided with a single ballistics coefficient (BC), a set of BC/velocity pairs provided by a projectile manufacturer, or a full table of empirical radar measurements lob is ready squeeze every drop of accuracy from the known data. Lob implements the most common formulas for estimating the spin-related phenomena of cross-wind aerodynamic jump and gyroscopic spin drift, however with enough data it will calculate these effects from the expected precession and nutation of the projectile for a higher fidelity solution.
+There are features that set lob's accuracy apart as well. A solution can only be as good as the drag function used so whether provided with a single ballistics coefficient (BC), a set of BC/velocity pairs provided by a projectile manufacturer, or a full table of empirical radar measurements lob is ready to match the performance of your data. Lob implements the most common formulas for estimating the spin-related phenomena of cross-wind aerodynamic jump and gyroscopic spin drift, however with enough data it will calculate these effects from the expected precession and nutation of the projectile for a higher fidelity solution.
 
 ### Fast!
 Lob is not just high-performance because it's C++; it was designed with performance in mind and benchmarked along the way. To speed up the solver's most critical performance path lob uniquely models drag functions as cubic Hermite spline curves built from mach vs drag tables at compile-time. These spline curves evaluate with just a handful of arithmetic ops for extraordinary speed! :checkered_flag:
