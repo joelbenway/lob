@@ -1,10 +1,25 @@
 var searchData=
 [
-  ['ogivertr_0',['OgiveRtR',['../d0/d99/classlob_1_1Builder.html#adf15c9e2070628d642da3b51fe031208',1,'lob::Builder']]],
-  ['operator_21_3d_1',['operator!=',['../d5/d42/namespacelob.html#aad53e27c8e08cae0c3b97f79c614da40',1,'lob::operator!=(::LobErrorT a, ErrorT b) noexcept'],['../d5/d42/namespacelob.html#a9eed1ba9f254d5cc4585681ee81864bc',1,'lob::operator!=(ErrorT a, ::LobErrorT b) noexcept']]],
-  ['operator_3d_2',['operator=',['../d0/d99/classlob_1_1Builder.html#a0f87fac85fae2e6cb5d496524478ac01',1,'lob::Builder::operator=(const Builder &amp;rhs)'],['../d0/d99/classlob_1_1Builder.html#a32c9b2b2afe8ba67157502351612835d',1,'lob::Builder::operator=(Builder &amp;&amp;rhs) noexcept']]],
-  ['operator_3d_3d_3',['operator==',['../d5/d42/namespacelob.html#a1fced6ca7ae724ad17f0d4de92cc31c2',1,'lob::operator==(::LobErrorT a, ErrorT b) noexcept'],['../d5/d42/namespacelob.html#aad3fdd20b38a3e93e779b6325b569234',1,'lob::operator==(ErrorT a, ::LobErrorT b) noexcept']]],
-  ['optic_5fheight_4',['optic_height',['../d9/d86/structLobContext.html#a956628cb3077d84056333e61aa41ebc0',1,'LobContext::optic_height'],['../dc/d65/structlob_1_1Context.html#a48e85fb08b0b01ad74a5247e6d5c172c',1,'lob::Context::optic_height']]],
-  ['opticheightinches_5',['OpticHeightInches',['../d0/d99/classlob_1_1Builder.html#a88e732a7ac663e2a7c39c332fd5cc489',1,'lob::Builder']]],
-  ['output_6',['Output',['../d5/d42/namespacelob.html#a56d6ad7c0448becc9ec3b7667d49d843',1,'lob']]]
+  ['observed_20accuracy_0',['Observed accuracy',['../num_ode.html#num-ode-accuracy',1,'']]],
+  ['ode_20integration_1',['ODE Integration',['../num_ode.html',1,'ODE Integration'],['../num_ode.html#autotoc_md20',1,'ODE Integration']]],
+  ['ode_2emd_2',['ode.md',['../ode_8md.html',1,'']]],
+  ['of_20motion_3',['Equations of motion',['../model_point_mass.html#model-pm-equations',1,'']]],
+  ['of_20sharing_4',['Validation of sharing',['../design_shared_solver.html#design-shared-validation',1,'']]],
+  ['ogivertr_5',['OgiveRtR',['../classlob_1_1Builder.html#adf15c9e2070628d642da3b51fe031208',1,'lob::Builder']]],
+  ['one_20solver_6',['One solver',['../design_shared_solver.html#design-shared-solution',1,'']]],
+  ['one_20solver_7',['Two APIs, one solver',['../num_inverse.html#num-inverse-two',1,'']]],
+  ['operator_21_3d_8',['operator!=',['../namespacelob.html#aad53e27c8e08cae0c3b97f79c614da40',1,'lob::operator!=(::LobErrorT a, ErrorT b) noexcept'],['../namespacelob.html#a9eed1ba9f254d5cc4585681ee81864bc',1,'lob::operator!=(ErrorT a, ::LobErrorT b) noexcept']]],
+  ['operator_3d_9',['operator=',['../classlob_1_1Builder.html#a0f87fac85fae2e6cb5d496524478ac01',1,'lob::Builder::operator=(const Builder &amp;rhs)'],['../classlob_1_1Builder.html#a32c9b2b2afe8ba67157502351612835d',1,'lob::Builder::operator=(Builder &amp;&amp;rhs) noexcept']]],
+  ['operator_3d_3d_10',['operator==',['../namespacelob.html#a1fced6ca7ae724ad17f0d4de92cc31c2',1,'lob::operator==(::LobErrorT a, ErrorT b) noexcept'],['../namespacelob.html#aad3fdd20b38a3e93e779b6325b569234',1,'lob::operator==(ErrorT a, ::LobErrorT b) noexcept']]],
+  ['optic_20and_20zero_20helpers_11',['Optic and zero helpers',['../api_options.html#api-options-optic',1,'']]],
+  ['optic_5fheight_12',['optic_height',['../structLobContext.html#a956628cb3077d84056333e61aa41ebc0',1,'LobContext::optic_height'],['../structlob_1_1Context.html#a48e85fb08b0b01ad74a5247e6d5c172c',1,'lob::Context::optic_height']]],
+  ['opticheightinches_13',['OpticHeightInches',['../classlob_1_1Builder.html#a88e732a7ac663e2a7c39c332fd5cc489',1,'lob::Builder']]],
+  ['optional_14',['Required vs optional',['../api_builder.html#api-builder-required',1,'']]],
+  ['options_15',['Options',['../api_options.html',1,'Solver Options'],['../api_options.html#autotoc_md6',1,'Solver Options']]],
+  ['options_2emd_16',['options.md',['../options_8md.html',1,'']]],
+  ['organized_17',['How this documentation is organized',['../index.html#overview-map',1,'']]],
+  ['output_18',['Output',['../namespacelob.html#a56d6ad7c0448becc9ec3b7667d49d843',1,'lob::Output'],['../api_context.html#api-context-output',1,'Output'],['../api_forward.html#api-forward-output',1,'Output']]],
+  ['output_20in_20context_19',['Output in Context',['../model_atmosphere.html#model-atm-output',1,'']]],
+  ['overview_20',['Overview',['../bc_overview.html',1,'Ballistic Coefficient Overview'],['../api_units.html#api-units-overview',1,'Overview'],['../model_atmosphere.html#model-atm-overview',1,'Overview'],['../index.html',1,'Technical Reference Overview']]],
+  ['overview_2emd_21',['overview.md',['../bc_2overview_8md.html',1,'(Global Namespace)'],['../design_2overview_8md.html',1,'(Global Namespace)'],['../overview_8md.html',1,'(Global Namespace)'],['../validation_2overview_8md.html',1,'(Global Namespace)']]]
 ];
