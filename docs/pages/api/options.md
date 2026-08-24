@@ -3,9 +3,9 @@
 # Solver Options
 
 Termination and stepping options live in `LobContext` and are set via the
-builder. All default to "off" (zero) unless noted — the solver then uses its
+builder. All default to “off” unless noted — the solver then uses its
 1-yard Heun grid and runs to the last requested range unless another stop
-fires.
+fires. (`max_time` defaults to `NaN` for “no limit”; see below.)
 
 @section api-options-step Step size
 
@@ -29,11 +29,7 @@ out to 1000 yd — tighten only when you need it and can pay for it.
 - **Context:** `minimum_speed` fps — `BuildOptions` (`source/lob_builder.cpp`) computes `speed_from_energy = CalculateVelocityFromKineticEnergy(minimum_energy, mass)` (`source/calc.hpp`) and stores `max(explicit, from_energy)`.
 - **Solver:** if `|v| ≤ minimum_speed` and previous `> minimum_speed`, last `Output` is interpolated to that speed (`source/lob_solve.cpp`). Both are floors — whistling past either stops the trajectory.
 
-All three — `max_time`, `minimum_speed`, `minimum_energy` — are "stop and
-interpolate" conditions: the output at the stop is a `LerpOutput` between the two
-Heun steps straddling the limit, and `LobSolve` returns only up to that point.
-`LobSolveInverse` consequently sees a short `kForwardSolves` and stops per its
-`SolveAngle` NaN rule (@ref api_inverse).
+`max_time`, `minimum_speed`, `minimum_energy`, and tumble are forward-stop “stop and interpolate” conditions: the output at the stop is a `LerpOutput` between the two Heun steps straddling the limit, and `LobSolve` returns only up to that point. Any of those stops may therefore shorten `kForwardSolves` independently of angle solving. Separately, `LobSolveInverse` stops when `SolveAngle` returns `NaN` for an unreachable angle (@ref api_inverse).
 
 @section api-options-optic Optic and zero helpers
 
