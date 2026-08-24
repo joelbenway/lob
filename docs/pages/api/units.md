@@ -24,7 +24,7 @@ disappear at the ABI boundary — `LobContext` fields are plain `double`.
 @section api-units-conversions Conversion helpers
 
 Most conversions are exact multiplications by scale factors from
-`source/eng_units.hpp` (`convert::` namespace); `LobMoaToInch` also depends on `range_ft` and Celsius-to-Fahrenheit includes an additive offset.  Selected helpers
+`source/eng_units.hpp` (`convert::` namespace); `LobMoaToInch` and `LobInchToMoa` also depend on `range_ft` and Celsius-to-Fahrenheit includes an additive offset.  Selected helpers
 (`include/lob/lob.h`):
 
 - Angle: `LobMoaToMil`, `LobMoaToDeg`, `LobMoaToIphy`, `LobMoaToInch(moa, range_ft)`,
