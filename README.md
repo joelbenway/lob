@@ -3,7 +3,7 @@
 # lob
 This is lob, a useful and free exterior ballistics calculation library written in industrial-strength C++. :rocket:
 
-[![CI](https://github.com/joelbenway/lob/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/joelbenway/lob/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob) [![Release](https://img.shields.io/github/v/release/joelbenway/lob?label=release)](https://github.com/joelbenway/lob/releases) [![C++14](https://img.shields.io/badge/C%2B%2B-14-blue.svg)](https://isocpp.org/) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](COPYING.md)
+[![CI](https://github.com/joelbenway/lob/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/joelbenway/lob/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob) [![C++14](https://img.shields.io/badge/C%2B%2B-14-blue.svg)](https://isocpp.org/) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](COPYING.md)
 
 ## Features
 Building a world-class ballistics app? Lob's got the math covered. :mage_man:
@@ -138,18 +138,6 @@ I wrote lob for fun, to learn, [because this is what computers are for](https://
 [Calculating Aerodynamic Jump for Firing Point Conditions by James Boatright & Gustavo Ruiz](https://www.researchgate.net/publication/327427851_Updated_Calculation_of_Crosswind_Aerodynamic_Jump_for_Firing_Point_Conditions-A_novel_and_practical_approach_for_computing_the_wind-induced_jump_perturbations) This paper offers a sophisticated method for calculating aerodynamic jump based on the precession and nutation of the spinning projectile. It promises increased accuracy but requires full bullet geometry.
 
 [Calculating Yaw of Repose and Spin Drift for Firing Point Conditions – Boatright & Ruiz](https://www.researchgate.net/publication/327582502_Calculating_Yaw_of_Repose_and_Spin_Drift) Another paper from Boatright & Ruiz with a similar model for calculating spin drift.
-
-## Documentation
-lob ships a [technical reference](docs/pages/overview.md) (source) — API +
-ballistic model + numerical methods + BC transformation case study +
-validation — built with Doxygen and kept separate from the README.  Build it
-locally:
-
-```bash
-cmake -B build -DLOB_DEVELOPER_MODE=ON -DBUILD_DOCS=ON
-cmake --build build --target docs
-# open build/docs/html/index.html  (Technical Reference Overview)
-```
 
 ## Building and Installing
 See the [BUILDING](BUILDING.md) document.
