@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787586672196,
+  "lastUpdate": 1787594327544,
   "repoUrl": "https://github.com/joelbenway/lob",
   "entries": {
     "lob instruction counts": [
@@ -200,6 +200,65 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/joelbenway/lob/commit/7edcdd3f056f8c3db3a9a12d707ae0041bff2a1d"
         },
         "date": 1787586670904,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "lob_bench/build_basic",
+            "value": 782,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_full",
+            "value": 1805,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_custom_table",
+            "value": 7747.001,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_boatright",
+            "value": 579493.006,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_zero_search",
+            "value": 80245.005,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_basic",
+            "value": 261077.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse",
+            "value": 1089615.995,
+            "unit": "Ir/op"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "user.email",
+            "username": "joelbenway"
+          },
+          "committer": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "distinct": true,
+          "id": "4a0610254b71af45c55d3176158c4c9552befb6e",
+          "message": "docs(readme): remove Documentation section and Release badge",
+          "timestamp": "2026-08-24T12:44:49-05:00",
+          "tree_id": "280366597932a4c4597637907d5f355429fe9cc4",
+          "url": "https://github.com/joelbenway/lob/commit/4a0610254b71af45c55d3176158c4c9552befb6e"
+        },
+        "date": 1787594326385,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
