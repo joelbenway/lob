@@ -4,7 +4,7 @@
 
 # ---- Dependencies ----
 
-find_package(Doxygen REQUIRED)
+find_package(Doxygen 1.13.1 REQUIRED)
 
 # ---- Declare documentation target ----
 
