@@ -48,7 +48,7 @@ separate from this reference).
 - **New user** → @ref getting_started then @ref api_builder.
 - **Auditing the physics** → @ref model_point_mass → @ref model_drag → @ref model_atmosphere.
 - **Auditing the numerics** → @ref num_ode → @ref num_splines → @ref num_zero_angle.
-- **Understanding BC bands** → @ref bc_transformation (the most complete worked example).
+- **Understanding BC bands** → @ref bc_worked_example (the most complete worked example).
 
 @section overview-code Where to find the code
 

@@ -35,10 +35,10 @@ the figure below the reference is **G1** (the most familiar shape) with
 @section bc-t-pairs BC/velocity pairs
 
 The caller supplies `N` pairs `(fps_i, BC_i)` via
-@ref LobBuilderBCVelocityBands / `Builder::BCVelocityBands`
-(`include/lob/lob.h`):
+@ref LobBuilderBCVelocityBands (`include/lob/lob.h`) / `Builder::BCVelocityBands`
+(`include/lob/lob.hpp`):
 
-```
+```text
 fps  = [2000, 2500, 3000]   strictly increasing,  >0,  highest < Mach 5
 BC   = [0.20, 0.30, 0.40]   each >0 finite
 2 ≤ N ≤ 16
@@ -47,7 +47,7 @@ BC   = [0.20, 0.30, 0.40]   each >0 finite
 `fps_i` is converted to Mach `M_i = fps_i / c` where `c = ctx.speed_of_sound`
 (~1116 fps at ISA sea level).  `BC_i` is multiplied by the atmosphere factor:
 
-```
+```text
 BC_icao = BC · k   with k = kArmyToIcaoBcConversionFactor if Army, else 1
 ```
 
@@ -63,7 +63,7 @@ Two splines are built:
 1. **Scaling (retardation) spline** `S(M) = 1/BC(M)` via
    `MakeRetardationCoefs` (`source/splines.hpp`):
 
-   ```
+   ```text
    inputs:  M_i = fps_i/c,   Y_i = 1/BC_icao,i
    padded:  (0, 1/BC_0) and (5, 1/BC_{N-1})   // flat extrapolation
    S = PCHIP(inputs ∪ padding) resampled onto the 16 knots
@@ -78,7 +78,7 @@ Two splines are built:
 
 They are **merged** via `Merge` (`source/splines.hpp`):
 
-```
+```text
 Cd(M) = S(M) · Cd_std(M)
 dCd/dM = S'·Cd_std + S·Cd_std'
 ```
@@ -88,12 +88,12 @@ the solver's `CurveView::Eval` returns the product directly with correct
 derivatives.
 
 For a constant `BC` the inputs are collinear, `S(M)=1/BC` is flat, and
-`Merge` degenerates to `Cd_std/BC` — bit-identical to the single-BC path
-(modulo floating-point order).  The constant-BC tests verify `1e-4` agreement.
+`Merge` degenerates to `Cd_std/BC` — numerically equivalent to the single-BC path
+within `1e-4`.  The constant-BC tests verify `1e-4` agreement.
 
 Math summary:
 
-```
+```text
 Given M_i, BC_i, build S(M) = PCHIP(1/BC | M) with flat ends on [0,5]
        Cd(M) = S(M) · Cd_std(M)
 ```

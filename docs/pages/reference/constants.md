@@ -11,7 +11,7 @@ the source so a reader can audit the physical model without reading every file.
 
 `source/constants.hpp`:
 
-```
+```text
 kPi                              = 3.14159265358979323846
 kStandardGravityFtPerSecSq       = 32.17405  ft/s²  (also kLbsPerSlug)
 kDegreesPerTurn                  = 360
@@ -38,7 +38,7 @@ then isothermal exponential above 36 090 ft.
 
 `source/eng_units.hpp` `convert::`:
 
-```
+```text
 Angle: kRadiansPerDegree=π/180, kMoaPerDegree=60, kMoaPerRadian=60/kRadiansPerDegree,
        kMilPerRadian=1000, kMoaPerMil, kIphyPerMoa=1.047
 Length: kInchPerFoot=12, kFeetPerYard=3, kMeterPerFoot=0.3048,
@@ -57,7 +57,7 @@ constants; helpers like `LobMoaToInch(moa, range_ft)` multiply by them exactly
 
 @section ref-const-physics Formulas
 
-```
+```text
 CalculateCdCoefficient(ρ, BC) = ρ·π / (8·BC·144)   (144 = in²/ft²)  `source/calc.hpp`
 CalculateKineticEnergy(v,m)   = m·v²/2            `source/calc.hpp`
 CalculateProjectileReferenceArea(D) = π·D²/4

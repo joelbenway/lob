@@ -4,14 +4,14 @@
 
 @section design-shared-problem The two places an angle is solved
 
-```
+```text
 Builder:  ZeroDistanceYds(R)  →  SolveAngle(R, 0) → zero_angle
 Inverse:  range R             →  SolveAngle(R, 0) → θ* → adjustment = θ* − zero_angle
 ```
 
 Both are the same mathematical problem: find `θ` with
 
-```
+```text
 f(θ) = y(R; θ) − optic − impact = 0
 ```
 

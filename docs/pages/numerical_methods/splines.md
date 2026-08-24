@@ -69,8 +69,8 @@ coefficients and a cached segment index `idx_`:
 - `Eval(m) = PolyVal(c + 4·idx_, m − knots[idx_])`
 - `Deriv(m) = PolyDeriv(c + 4·idx_, m − knots[idx_])`
 
-Both are `constexpr`-friendly and allocate nothing.  The 60 floats fit in one
-cache line.
+Both are `constexpr`-friendly and allocate nothing.  The 60 floats are 240 bytes
+of contiguous storage.
 
 Custom tables (`source/lob_builder.cpp`) produce coefficients via the same
 `Build`; BC bands use `MakeRetardationCoefs` + `Merge` (see @ref bc_transformation).

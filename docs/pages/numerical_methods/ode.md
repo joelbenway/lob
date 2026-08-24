@@ -45,8 +45,8 @@ return (dp/dt·kDtDx, dv/dt·kDtDx)
 ```
 
 `TOF` is **not** integrated via `f`; it is advanced by the trapezoidal
-estimate `2·Δx/(vx_old+vx_new)` after the Heun step (`source/solve_step.cpp`),
-which is exact for a linear velocity profile over the step.
+approximation `2·Δx/(vx_old+vx_new)` after the Heun step (`source/solve_step.cpp`),
+which is exact only if the velocity profile were linear over the step.
 
 `source/ode.hpp` also implements
 `EulerStep`, `RungeKuttaStep` (RK4) and `IterativeHeunStep`; they are not used
