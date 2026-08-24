@@ -18,6 +18,14 @@ find_program(DOXYGEN_EXECUTABLE NAMES doxygen)
 if(NOT DOXYGEN_EXECUTABLE)
   message(FATAL_ERROR "Doxygen executable was not found")
 endif()
+execute_process(
+  COMMAND "${DOXYGEN_EXECUTABLE}" --version
+  OUTPUT_VARIABLE DOXYGEN_VERSION
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET)
+if(DOXYGEN_VERSION VERSION_LESS "1.13.1")
+  message(FATAL_ERROR "Doxygen 1.13.1 or newer is required (found ${DOXYGEN_VERSION})")
+endif()
 
 # ---- Process project() call in CMakeLists.txt ----
 
