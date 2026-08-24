@@ -7,7 +7,7 @@
 A ballistic coefficient (BC) is a sectional-density / form-factor ratio that
 scales a standard drag curve to a particular bullet:
 
-```
+```text
 Cd_bullet(M) = Cd_std(M) / BC_effective(M)
 ```
 
@@ -37,7 +37,7 @@ the curve; the atmosphere reference (Army vs ICAO) adds the
 
 With `BallisticCoefficientPsi(BC)` the context stores
 
-```
+```text
 drags[i] = coefs_std[i] / (BC · conversion)   (source/lob_builder.cpp)
 ```
 

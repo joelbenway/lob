@@ -49,7 +49,7 @@ Humidity enters via Huang's saturation-pressure formula
 p_sat(T) = exp(A − B/(T_C+D1) − C·ln(T_C+D2))   distinct A,B,C,D1,D2 for water vs ice
 ```
 
-and two linear corrections (McCoy p. 167–168):
+and two linear corrections (McCoy p. 167–168, with `h = RelativeHumidityPercent` ∈ [0, 100] as a percent value, not a 0–1 fraction; `0.00378` and `0.00140` already include the percent scaling):
 
 ```
 ρ/ρ0 = (p/p0)·(T0_R/T_R)
@@ -65,8 +65,9 @@ c = c(T)·c_corr    with c(T)=49.0223·√T_R
 @section model-atm-output Output in Context
 
 `BuildEnvironment` writes `ctx.speed_of_sound` (fps) and the intermediate
-`Impl::air_density_lbs_per_cu_ft` which later becomes `ctx.drag_coeff`
-(`source/lob_builder.cpp`).  No per-step altitude dependence remains.
+`Impl::air_density_lbs_per_cu_ft`, which is converted to `ctx.drag_coeff`
+via `CalculateCdCoefficient` using the solver's ρ·π/8 relationship at BC=1
+(`source/lob_builder.cpp`, `source/calc.hpp`).  No per-step altitude dependence remains.
 
 @section model-atm-limitations Limitations
 

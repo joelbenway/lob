@@ -95,7 +95,7 @@ reducing it monotonically improves accuracy (benchmark `benchmark/ode.cpp`).
 
 No universal speed claim is made. Reproduce locally:
 
-```
+```bash
 cmake --preset=ci-benchmark && cmake --build build/benchmark -j && ./build/benchmark/ode && ./build/benchmark/loblerp
 ```
 

@@ -19,6 +19,12 @@ How to read it:
 @section bc-we-worked Worked example — bands to trajectory
 
 ```cpp
+#include <array>
+#include <cassert>
+#include <cstdint>
+
+#include "lob/lob.hpp"
+
 const float fps[] = {2000.f, 2500.f, 3000.f};
 const float bcs[] = {0.20f,  0.30f,  0.40f};
 
@@ -29,7 +35,7 @@ lob::Context ctx = lob::Builder()
     .MassGrains(168.0)
     .InitialVelocityFps(3100)
     .ZeroDistanceYds(100.0)
-    .BCVelocityBands(fps, bcs)                  // last call wins
+    .BCVelocityBands(fps, bcs, 3)               // last call wins
     .Build();
 assert(ctx.error == lob::ErrorT::kNone);
 
@@ -45,7 +51,7 @@ lob::Solve(ctx, ranges, &outs);          // forward (inches)
 lob::SolveInverse(ctx, ranges, &outs);   // or MOA adjustments directly
 ```
 
-For comparison, a constant `BC=0.30` is `Builder().BallisticCoefficientPsi(0.30)` and yields a proportionally scaled curve — the bands case uses more drag low and less drag high, so the trajectory drops less at short range and more at long range than any single-BC fit.
+For comparison, a constant `BC=0.30` is `Builder().BallisticCoefficientPsi(0.30)` and yields a proportionally scaled curve — the bands case uses more drag low and less drag high, so the trajectory drops less at short range and more at long range than the `BC=0.30` baseline.
 
 The three regimes are locked by `test/source/lob_builder_test.cpp` (`BCVelocityBandsNonConstantClampingAndInterpolation`): below the slowest band clamped to first BC, between bands strictly between the bracketing scalings and matching the retardation product to `2e-3`, above the fastest band clamped to last BC.
 

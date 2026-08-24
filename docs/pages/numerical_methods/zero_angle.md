@@ -7,7 +7,7 @@
 Find the bore-vs-sight angle `θ` that makes the trajectory hit a desired
 impact height at range `R`:
 
-```
+```text
 f(θ) = y(R; θ) − optic_height − impact_height = 0
 ```
 
@@ -23,7 +23,7 @@ unreachability rather than a spurious angle.
 `SolveAngle` (`source/solve_angle.hpp`) is a fixed-point iteration with a
 geometric one-step:
 
-```
+```text
 FastInverseAngle(θ, f, R) = atan(tan θ − f/R)
 ```
 
@@ -33,7 +33,7 @@ straight line — then corrected by re-integrating.
 
 Pseudocode:
 
-```
+```text
 θ = seed
 f = fire_to_target(θ)          // integrate to R, NaN if vx≤0 / TOF≥max / vacuum
 for iter in 0..9
@@ -63,7 +63,7 @@ propagating to a NaN return (unreachable).
 `BuildZeroAngle` (`source/lob_builder.cpp`) supplies the seed when the
 caller gave `ZeroDistanceYds` instead of `ZeroAngleMOA`:
 
-```
+```text
 θ_vac = 0.5·g·R / v0²           (vacuum parabola angle)
 seed  = clamp(θ_vac, −45°, 45°)
 ```
