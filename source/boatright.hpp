@@ -26,7 +26,8 @@ inline CaliberT CalculateRadiusOfTangentOgive(CaliberT ogive_length,
                                               CaliberT meplat_diameter) {
   const auto kLN = ogive_length;
   const auto kDM = meplat_diameter;
-  return (kLN * kLN + std::pow((1 - kDM.Value()) / 2, 2)) / (1 - kDM.Value());
+  const double kD = (1.0 - kDM.Value()) / 2.0;
+  return (kLN * kLN + kD * kD) / (1 - kDM.Value());
 }
 
 inline CaliberT CalculateFullNoseLength(CaliberT ogive_length,
@@ -90,7 +91,8 @@ inline double CalculateFrustrumVolume(InchT d1, InchT d2, InchT length) {
 }
 
 inline double CalculateCylinderVolume(InchT diameter, InchT length) {
-  return (std::pow(diameter / 2, 2) * kPi * length).Value();
+  const double kR = diameter.Value() / 2.0;
+  return kR * kR * kPi * length.Value();
 }
 
 inline double CalculateAverageDensity(InchT diameter, InchT length,
@@ -175,13 +177,15 @@ inline double CalculateInertialRatio(InchT caliber, CaliberT length,
                                      double average_density) {
   const auto kLL = length - ogive_length + full_ogive_length;
   const auto kH = full_ogive_length.Value() / kLL.Value();
-  const GrainT kWtCalc =
-      GrainT(kPi / 4 * average_density * std::pow(caliber.Value(), 3) *
-             kLL.Value() * (1 - 2 * kH / 3));
+  const double kCal = caliber.Value();
+  const double kH2 = kH * kH;
+  const double kH3 = kH2 * kH;
+  const double kH4 = kH2 * kH2;
+  const GrainT kWtCalc = GrainT(kPi / 4 * average_density * kCal * kCal * kCal *
+                                kLL.Value() * (1 - 2 * kH / 3));
   const double kF1 = 15 - (12 * kH) +
                      ((kLL * kLL).Value() *
-                      (60 - (160 * kH) + (180 * std::pow(kH, 2)) -
-                       (96 * std::pow(kH, 3)) + (19 * std::pow(kH, 4))) /
+                      (60 - (160 * kH) + (180 * kH2) - (96 * kH3) + (19 * kH4)) /
                       (3 - (2 * kH)));
   const double kIyOverIx =
       std::pow(mass / kWtCalc, 0.894).Value() * kF1 / (30 * (1 - (4 * kH / 5)));
@@ -255,7 +259,8 @@ inline double CalculateZeroYawDragCoefficientOfDrag(double cd_ref, GrainT mass,
 
 inline double CalculateYawDragAdjustment(double gamma, double r, double cda) {
   const double kEpicyclicSwerveMagnitude = gamma * r / (r - 1);
-  const double kAdjustment = std::pow(kEpicyclicSwerveMagnitude, 2) * cda;
+  const double kAdjustment =
+      kEpicyclicSwerveMagnitude * kEpicyclicSwerveMagnitude * cda;
   return kAdjustment;
 }
 
@@ -362,7 +367,8 @@ inline double CalculatePotentialDragForce(InchT diameter,
 
 inline double CalculateCoefficientOfLiftAtT(double cl0, FpsT initial_velocity,
                                             SecT supersonic_time) {
-  const double kA = std::pow(initial_velocity / FpsT(2600), 2.0).Value();
+  const double kV = initial_velocity.Value() / 2600.0;
+  const double kA = kV * kV;
   const double kB = 1.430 / supersonic_time.Value();
   const double kExponent = -0.3711 * kA * kB;
   return cl0 * std::exp(kExponent);
