@@ -33,7 +33,8 @@ inline RadiansT FastInverseAngle(RadiansT launch_angle, FeetT residual,
 
 inline MoaT SolveAngle(const LobContext& ctx, FeetT range, FeetT impact_height,
                        RadiansT seed,
-                       RadiansT tolerance = constant::kDefaultAngleTolerance) {
+                       RadiansT tolerance = constant::kDefaultAngleTolerance,
+                       bool use_dynamic = false) {
   constexpr size_t kMaxIterations = 10;
   const FpsT kVelocity = FpsT(ctx.velocity);
   const FpsT kMinimumSpeed(ctx.minimum_speed);
@@ -51,7 +52,7 @@ inline MoaT SolveAngle(const LobContext& ctx, FeetT range, FeetT impact_height,
            s.V().Magnitude() <= kMinimumSpeed)) {
         return FeetT(NaN());
       }
-      SolveStep(ctx, &s, &drag_curve, range);
+      SolveStep(ctx, &s, &drag_curve, range, use_dynamic);
     }
     return s.P().Y() - FeetT(ctx.optic_height) - impact_height;
   };

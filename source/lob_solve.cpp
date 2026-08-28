@@ -193,10 +193,13 @@ size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
       pouts[i].deflection = 0.0;
       continue;
     }
+    const bool kUseDynamic = pouts[i].elevation < -1200.0;  // >100ft drop
     const FeetT kElevation = InchT(pouts[i].elevation);
     const FeetT kRange = FeetT(pouts[i].range);
     const RadiansT kSeed = FastInverseAngle(kSeedBase, kElevation, kRange);
-    const RadiansT kTheta = SolveAngle(*pctx, kRange, FeetT(0.0), kSeed);
+    const RadiansT kTheta =
+        SolveAngle(*pctx, kRange, FeetT(0.0), kSeed,
+                   constant::kDefaultAngleTolerance, kUseDynamic);
     if (kTheta.IsNaN()) {
       return i;
     }

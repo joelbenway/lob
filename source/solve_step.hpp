@@ -13,7 +13,8 @@
 namespace lob {
 
 void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
-               spline::CurveView* pcurve, FeetT target_x = FeetT(NaN()));
+               spline::CurveView* pcurve, FeetT target_x = FeetT(NaN()),
+               bool use_dynamic = false);
 }  // namespace lob
 
 // This file is part of lob.
