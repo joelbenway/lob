@@ -95,12 +95,13 @@ size_t LobSolve(const LobContext* pctx, const uint32_t* pranges,
     }
   }
   const FpsT kMinimumSpeed(pctx->minimum_speed);
-  const auto kAngle =
-      RadiansT(MoaT(pctx->zero_angle + pctx->aerodynamic_jump)).Value();
+  const auto kAngle = RadiansT(MoaT(pctx->zero_angle + pctx->aerodynamic_jump));
+
   TrajectoryStateT s(
       CartesianT<FeetT>(FeetT(0.0)),
-      CartesianT<FpsT>(FpsT(pctx->velocity) * std::cos(kAngle),
-                       FpsT(pctx->velocity) * std::sin(kAngle), FpsT(0.0)));
+      CartesianT<FpsT>(FpsT(pctx->velocity) * std::cos(kAngle.Value()),
+                       FpsT(pctx->velocity) * std::sin(kAngle.Value()),
+                       FpsT(0.0)));
   size_t index = 0;
 
   spline::CurveView curve(spline::kKnots.data(), &pctx->drags[0]);

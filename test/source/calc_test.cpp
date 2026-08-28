@@ -21,9 +21,9 @@ TEST(CalcTests, CalculateTemperatureAtAltitude) {
   constexpr double kAssertAltitudeFt = 1000.0;
   static_assert(
       lob::CalculateTemperatureAtAltitude(lob::FeetT(kAssertAltitudeFt),
-                                          lob::DegFT(lob::kIsaSeaLevelDegF))
+                                          lob::DegFT(lob::isa::kSeaLevelDegF))
               .Value() >=
-          lob::kIsaSeaLevelDegF - lob::kIsaLapseDegFPerFt * kAssertAltitudeFt,
+          lob::isa::kSeaLevelDegF - lob::isa::kLapseDegFPerFt * kAssertAltitudeFt,
       "CalculateTemperatureAtAltitude not constexpr");
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
   const std::vector<uint32_t> kAltitudesFt = {
@@ -38,7 +38,7 @@ TEST(CalcTests, CalculateTemperatureAtAltitude) {
     EXPECT_NEAR(
         kExpectedResultsDegF.at(i),
         lob::CalculateTemperatureAtAltitude(lob::FeetT(kAltitudesFt.at(i)),
-                                            lob::DegFT(lob::kIsaSeaLevelDegF))
+                                            lob::DegFT(lob::isa::kSeaLevelDegF))
             .Value(),
         kError);
   }
@@ -60,7 +60,7 @@ TEST(CalcTests, CalculateTemperatureAtAltitudeMcCoy) {
     EXPECT_NEAR(
         kExpectedResultsDegF.at(i),
         lob::CalculateTemperatureAtAltitudeMcCoy(
-            lob::FeetT(kAltitudesFt.at(i)), lob::DegFT(lob::kIsaSeaLevelDegF))
+            lob::FeetT(kAltitudesFt.at(i)), lob::DegFT(lob::isa::kSeaLevelDegF))
             .Value(),
         kError);
   }
@@ -79,8 +79,8 @@ TEST(CalcTests, BarometricFormula) {
     EXPECT_NEAR(
         kExpectedResultsInHg.at(i),
         lob::BarometricFormula(lob::FeetT(kAltitudesFt.at(i)),
-                               lob::InHgT(lob::kIsaSeaLevelPressureInHg),
-                               lob::DegFT(lob::kIsaSeaLevelDegF))
+                               lob::InHgT(lob::isa::kSeaLevelPressureInHg),
+                               lob::DegFT(lob::isa::kSeaLevelDegF))
             .Value(),
         kError);
   }
@@ -100,8 +100,8 @@ TEST(CalcTests, BarometricFormulaStratosphere) {
     EXPECT_NEAR(
         kExpectedResultsInHg.at(i),
         lob::BarometricFormula(lob::FeetT(kAltitudesFt.at(i)),
-                               lob::InHgT(lob::kIsaSeaLevelPressureInHg),
-                               lob::DegFT(lob::kIsaSeaLevelDegF))
+                               lob::InHgT(lob::isa::kSeaLevelPressureInHg),
+                               lob::DegFT(lob::isa::kSeaLevelDegF))
             .Value(),
         kError);
   }
@@ -112,23 +112,23 @@ TEST(CalcTests, BarometricFormulaNegative) {
   constexpr double kExpectedResult = 31.02;
   const double kError = 0.025;
   EXPECT_NEAR(lob::BarometricFormula(lob::FeetT(kAltitude),
-                                     lob::InHgT(lob::kIsaSeaLevelPressureInHg),
-                                     lob::DegFT(lob::kIsaSeaLevelDegF))
+                                     lob::InHgT(lob::isa::kSeaLevelPressureInHg),
+                                     lob::DegFT(lob::isa::kSeaLevelDegF))
                   .Value(),
               kExpectedResult, kError);
 }
 
 TEST(CalcTests, CalculateAirDensityAtAltitude) {
   static_assert(lob::AreEqual(lob::CalculateAirDensityRatio(
-                                  lob::InHgT(lob::kIsaSeaLevelPressureInHg),
-                                  lob::DegFT(lob::kIsaSeaLevelDegF)),
+                                  lob::InHgT(lob::isa::kSeaLevelPressureInHg),
+                                  lob::DegFT(lob::isa::kSeaLevelDegF)),
                               1.0),
                 "CalculateAirDensityRatio not constexpr");
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
   const std::vector<uint32_t> kAltitudesFt = {
       0,    500,  1000, 1500,  2000,  3000,  4000,  5000,  6000,
       7000, 8000, 9000, 10000, 15000, 20000, 25000, 30000, 35000};
-  const double kP0 = lob::kIsaSeaLevelAirDensityLbsPerCuFt;
+  const double kP0 = lob::isa::kSeaLevelAirDensityLbsPerCuFt;
   const std::vector<double> kExpectedResultsLbsPerCuFt = {
       1.0 * kP0,  .985 * kP0, .971 * kP0, .957 * kP0, .943 * kP0, .915 * kP0,
       .888 * kP0, .862 * kP0, .836 * kP0, .811 * kP0, .786 * kP0, .761 * kP0,
@@ -138,7 +138,7 @@ TEST(CalcTests, CalculateAirDensityAtAltitude) {
     EXPECT_NEAR(kExpectedResultsLbsPerCuFt.at(i),
                 lob::CalculateAirDensityAtAltitude(
                     lob::FeetT(kAltitudesFt.at(i)),
-                    lob::LbsPerCuFtT(lob::kIsaSeaLevelAirDensityLbsPerCuFt))
+                    lob::LbsPerCuFtT(lob::isa::kSeaLevelAirDensityLbsPerCuFt))
                     .Value(),
                 kError);
   }
@@ -261,7 +261,7 @@ TEST(CalcTests, CalculateSpeedOfSoundHumidityCorrection) {
 TEST(CalcTests, CalculateCdCoefficient) {
   constexpr double kAssertBcPmsi = 0.200;
   static_assert(lob::CalculateCdCoefficient(
-                    lob::LbsPerCuFtT(lob::kIsaSeaLevelAirDensityLbsPerCuFt),
+                    lob::LbsPerCuFtT(lob::isa::kSeaLevelAirDensityLbsPerCuFt),
                     lob::PmsiT(kAssertBcPmsi)) > 0.0,
                 "CalculateCdCoefficient not constexpr");
   // Test data from Ball M1911 round
@@ -297,13 +297,13 @@ TEST(CalcTests, CalculateMillerTwistRuleStabilityFactor) {
 
 TEST(CalcTests, CalculateMillerTwistRuleCorrectionFactor) {
   static_assert(lob::AreEqual(lob::CalculateMillerTwistRuleCorrectionFactor(
-                                  lob::InHgT(lob::kIsaSeaLevelPressureInHg),
-                                  lob::DegFT(lob::kIsaSeaLevelDegF)),
+                                  lob::InHgT(lob::isa::kSeaLevelPressureInHg),
+                                  lob::DegFT(lob::isa::kSeaLevelDegF)),
                               1.0),
                 "CalculateMillerTwistRuleCorrectionFactor not constexpr");
   // Test data from Sample Calculations section of A New Rule for Estimating
   // Rifling Twist - Miller
-  const auto kTestPressure = lob::InHgT(lob::kIsaSeaLevelPressureInHg);
+  const auto kTestPressure = lob::InHgT(lob::isa::kSeaLevelPressureInHg);
   const auto kTestTemperature = lob::DegFT(-10.0);
   const double kExpectedCorrectionFactor = 0.8671;
 

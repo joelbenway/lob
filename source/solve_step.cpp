@@ -16,6 +16,26 @@
 
 namespace lob {
 namespace {
+inline double GetDimensionlessAltitude(const LobContext& ctx,
+                                       const TrajectoryStateT& s) noexcept {
+  const double kGDotR =
+      (s.P().X().Value() * ctx.gravity.x) + (s.P().Y().Value() * ctx.gravity.y);
+  return -ctx.k_lapse * kGDotR;
+}
+
+inline double GetScaledDragCoeff(const LobContext& ctx, double u) noexcept {
+  constexpr double kAlpha =
+      (isa::kHydrostaticExponent - 1.0) / (2.0 * isa::kHydrostaticExponent);
+  const double kDensityRatio = 1.0 - (u * (1.0 - (kAlpha * u)));
+  return ctx.drag_coeff * kDensityRatio;
+}
+
+inline FpsT GetScaledSpeedOfSound(const LobContext& ctx, double u) noexcept {
+  constexpr double kBeta = 1.0 / (2.0 * isa::kHydrostaticExponent);
+  const double kSpeedOfSoundRatio = 1.0 - (kBeta * u);
+  return FpsT(ctx.speed_of_sound * kSpeedOfSoundRatio);
+}
+
 TrajectoryStateT DsDx(const LobContext& ctx, const TrajectoryStateT& s,
                       spline::CurveView* pcurve) {
   const FpsT kVx = s.V().X();
@@ -24,8 +44,11 @@ TrajectoryStateT DsDx(const LobContext& ctx, const TrajectoryStateT& s,
   }
   const double kDtDx = 1.0 / kVx.Value();
   const CartesianT<FpsT> kWind(FpsT(ctx.wind.x), FpsT(0.0), FpsT(ctx.wind.z));
-  const MachT kMach(s.V().Magnitude(), FpsT(ctx.speed_of_sound).Inverse());
-  const double kCd = pcurve->Eval(kMach) * ctx.drag_coeff;
+  const double kU = GetDimensionlessAltitude(ctx, s);
+  const double kScaledDragCoeff = GetScaledDragCoeff(ctx, kU);
+  const FpsT kScaledSpeedOfSound = GetScaledSpeedOfSound(ctx, kU);
+  const MachT kMach(s.V().Magnitude(), kScaledSpeedOfSound.Inverse());
+  const double kCd = pcurve->Eval(kMach) * kScaledDragCoeff;
 
   const CartesianT<FeetT> kDpDt(FeetT(s.V().X().Value()),
                                 FeetT(s.V().Y().Value()),
@@ -40,7 +63,7 @@ TrajectoryStateT DsDx(const LobContext& ctx, const TrajectoryStateT& s,
           s.V().Y() * ctx.coriolis.cos_l_cos_a);
   dv_dt.X(dv_dt.X() + ctx.gravity.x);
   dv_dt.Y(dv_dt.Y() + ctx.gravity.y);
-  return TrajectoryStateT{kDpDt * FeetT(kDtDx), dv_dt * FpsT(kDtDx), s.TOF()};
+  return TrajectoryStateT{kDpDt * FeetT(kDtDx), dv_dt * FpsT(kDtDx), SecT(kDtDx)};
 }
 }  // namespace
 
@@ -58,14 +81,12 @@ void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
   auto f = [&](FeetT, const TrajectoryStateT& s) {
     return DsDx(ctx, s, pcurve);
   };
-  const FpsT kOldVx = ps->V().X();
   *ps = HeunStep(FeetT(0), *ps, kStep, f);
   const FpsT kVx = ps->V().X();
   if (kVx <= FpsT(0)) {
     ps->V(FpsT(0));
     return;
   }
-  ps->TOF(ps->TOF() + SecT((2 * kStep.Value()) / (kOldVx + kVx).Value()));
 }
 
 }  // namespace lob

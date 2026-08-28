@@ -132,6 +132,7 @@ typedef struct {
   double stability_factor;  ///< @brief Miller stability factor.
   double aerodynamic_jump;  ///< @brief Aerodynamic jump effect in Moa.
   double spindrift_factor;  ///< @brief Spin drift factor.
+  double k_lapse;           ///< @brief Projected linear density lapse coeff.
   double max_time;          ///< @brief Max time of flight for solver.
   float drags[LOB_SPLINE_SEGMENTS * 4];  ///< @brief Drag curve coefficients.
   uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
@@ -576,8 +577,8 @@ LOB_EXPORT extern void LobBuilderBuild(LobBuilder* pbuilder,
  * @return The number of successful solutions.
  */
 LOB_EXPORT extern size_t LobSolve(const LobContext* pctx,
-                                   const uint32_t* pranges, LobOutput* pouts,
-                                   size_t size);
+                                  const uint32_t* pranges, LobOutput* pouts,
+                                  size_t size);
 
 /**
  * @brief Converts forward-solution output to inverse-solution adjustments.
