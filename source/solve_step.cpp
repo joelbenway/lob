@@ -37,16 +37,19 @@ inline FpsT GetScaledSpeedOfSound(const LobContext& ctx, double u) noexcept {
 }
 
 TrajectoryStateT DsDx(const LobContext& ctx, const TrajectoryStateT& s,
-                      spline::CurveView* pcurve) {
+                      spline::CurveView* pcurve, bool use_dynamic) {
   const FpsT kVx = s.V().X();
   if (kVx <= FpsT(0)) {
     return {CartesianT<FeetT>(FeetT(0)), CartesianT<FpsT>(FpsT(0))};
   }
   const double kDtDx = 1.0 / kVx.Value();
   const CartesianT<FpsT> kWind(FpsT(ctx.wind.x), FpsT(0.0), FpsT(ctx.wind.z));
-  const double kU = GetDimensionlessAltitude(ctx, s);
-  const double kScaledDragCoeff = GetScaledDragCoeff(ctx, kU);
-  const FpsT kScaledSpeedOfSound = GetScaledSpeedOfSound(ctx, kU);
+  const double kU =
+      use_dynamic ? GetDimensionlessAltitude(ctx, s) : 0.0;
+  const double kScaledDragCoeff =
+      use_dynamic ? GetScaledDragCoeff(ctx, kU) : ctx.drag_coeff;
+  const FpsT kScaledSpeedOfSound =
+      use_dynamic ? GetScaledSpeedOfSound(ctx, kU) : FpsT(ctx.speed_of_sound);
   const MachT kMach(s.V().Magnitude(), kScaledSpeedOfSound.Inverse());
   const double kCd = pcurve->Eval(kMach) * kScaledDragCoeff;
 
@@ -68,7 +71,7 @@ TrajectoryStateT DsDx(const LobContext& ctx, const TrajectoryStateT& s,
 }  // namespace
 
 void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
-               spline::CurveView* pcurve, FeetT target_x) {
+               spline::CurveView* pcurve, FeetT target_x, bool use_dynamic) {
   assert(ps != nullptr && pcurve != nullptr);
 
   const FeetT kStepSize = ctx.step_size == 0
@@ -79,7 +82,7 @@ void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
                           : kStepSize;
 
   auto f = [&](FeetT, const TrajectoryStateT& s) {
-    return DsDx(ctx, s, pcurve);
+    return DsDx(ctx, s, pcurve, use_dynamic);
   };
   *ps = HeunStep(FeetT(0), *ps, kStep, f);
   const FpsT kVx = ps->V().X();
