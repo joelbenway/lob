@@ -31,51 +31,77 @@ inline RadiansT FastInverseAngle(RadiansT launch_angle, FeetT residual,
   return std::atan(std::tan(launch_angle) - (residual / range).Value());
 }
 
-inline MoaT SolveAngle(const LobContext& ctx, FeetT range, FeetT impact_height,
-                       RadiansT seed,
-                       RadiansT tolerance = constant::kDefaultAngleTolerance,
-                       bool use_dynamic = false) {
-  constexpr size_t kMaxIterations = 10;
+namespace detail {
+inline TrajectoryStateT MakeInitialState(const LobContext& ctx,
+                                         RadiansT launch_angle) noexcept {
   const FpsT kVelocity = FpsT(ctx.velocity);
-  const FpsT kMinimumSpeed(ctx.minimum_speed);
+  const RadiansT kAngle = launch_angle + RadiansT(MoaT(ctx.aerodynamic_jump));
+  return {CartesianT<FeetT>(FeetT(0.0)),
+          CartesianT<FpsT>(kVelocity * std::cos(kAngle.Value()),
+                           kVelocity * std::sin(kAngle.Value()), FpsT(0.0))};
+}
+
+inline bool IsTerminal(const TrajectoryStateT& s, const LobContext& ctx,
+                       FpsT minimum_speed) noexcept {
+  return s.V().X() <= FpsT(0) || s.TOF() >= SecT(ctx.max_time) ||
+         (s.V().X() <= minimum_speed && s.V().Magnitude() <= minimum_speed);
+}
+
+template <typename StepFunc>
+inline FeetT FireToTarget(const LobContext& ctx, FeetT range,
+                          FeetT impact_height, RadiansT launch_angle,
+                          StepFunc step) {
+  TrajectoryStateT s = MakeInitialState(ctx, launch_angle);
+  const FpsT kMinimumSpeed = FpsT(ctx.minimum_speed);
   spline::CurveView drag_curve(spline::kKnots.data(), &ctx.drags[0]);
-
-  auto fire_to_target = [&](RadiansT launch_angle) -> FeetT {
-    const RadiansT kAngle = launch_angle + RadiansT(MoaT(ctx.aerodynamic_jump));
-    TrajectoryStateT s(
-        CartesianT<FeetT>(FeetT(0.0)),
-        CartesianT<FpsT>(kVelocity * std::cos(kAngle.Value()),
-                         kVelocity * std::sin(kAngle.Value()), FpsT(0.0)));
-    while (s.P().X() < range) {
-      if (s.V().X() <= FpsT(0) || s.TOF() >= SecT(ctx.max_time) ||
-          (s.V().X() <= kMinimumSpeed &&  // skip evaluating Magnitude
-           s.V().Magnitude() <= kMinimumSpeed)) {
-        return FeetT(NaN());
-      }
-      SolveStep(ctx, &s, &drag_curve, range, use_dynamic);
+  while (s.P().X() < range) {
+    if (IsTerminal(s, ctx, kMinimumSpeed)) {
+      return FeetT(NaN());
     }
-    return s.P().Y() - FeetT(ctx.optic_height) - impact_height;
-  };
+    step(ctx, &s, &drag_curve, range);
+  }
+  return s.P().Y() - FeetT(ctx.optic_height) - impact_height;
+}
 
+template <typename StepFunc>
+inline MoaT SolveAngleImpl(const LobContext& ctx, FeetT range,
+                           FeetT impact_height, RadiansT seed,
+                           RadiansT tolerance, StepFunc step) {
+  constexpr size_t kMaxIterations = 10;
+  auto fire = [&](RadiansT launch_angle) -> FeetT {
+    return FireToTarget(ctx, range, impact_height, launch_angle, step);
+  };
   RadiansT theta = seed;
-  FeetT f = fire_to_target(theta);
+  FeetT f = fire(theta);
   for (size_t iter = 0; iter < kMaxIterations && std::isfinite(f.Value());
        ++iter) {
     const RadiansT kThetaNext = FastInverseAngle(theta, f, range);
-
     if (kThetaNext < constant::kMinAngle || kThetaNext > constant::kMaxAngle ||
         std::isnan(kThetaNext.Value())) {
       return MoaT(NaN());
     }
-
     if (std::abs((kThetaNext - theta).Value()) <= tolerance.Value()) {
       return MoaT(kThetaNext);
     }
-
     theta = kThetaNext;
-    f = fire_to_target(theta);
+    f = fire(theta);
   }
   return MoaT(NaN());
+}
+}  // namespace detail
+
+inline MoaT FastSolveAngle(
+    const LobContext& ctx, FeetT range, FeetT impact_height, RadiansT seed,
+    RadiansT tolerance = constant::kDefaultAngleTolerance) {
+  return detail::SolveAngleImpl(ctx, range, impact_height, seed, tolerance,
+                                FastSolveStep);
+}
+
+inline MoaT SolveAngle(const LobContext& ctx, FeetT range, FeetT impact_height,
+                       RadiansT seed,
+                       RadiansT tolerance = constant::kDefaultAngleTolerance) {
+  return detail::SolveAngleImpl(ctx, range, impact_height, seed, tolerance,
+                                SolveStep);
 }
 
 }  // namespace lob

@@ -36,28 +36,31 @@ inline FpsT GetScaledSpeedOfSound(const LobContext& ctx, double u) noexcept {
   return FpsT(ctx.speed_of_sound * kSpeedOfSoundRatio);
 }
 
-TrajectoryStateT DsDx(const LobContext& ctx, const TrajectoryStateT& s,
-                      spline::CurveView* pcurve, bool use_dynamic) {
-  const FpsT kVx = s.V().X();
-  if (kVx <= FpsT(0)) {
-    return {CartesianT<FeetT>(FeetT(0)), CartesianT<FpsT>(FpsT(0))};
-  }
-  const double kDtDx = 1.0 / kVx.Value();
-  const CartesianT<FpsT> kWind(FpsT(ctx.wind.x), FpsT(0.0), FpsT(ctx.wind.z));
-  const double kU =
-      use_dynamic ? GetDimensionlessAltitude(ctx, s) : 0.0;
-  const double kScaledDragCoeff =
-      use_dynamic ? GetScaledDragCoeff(ctx, kU) : ctx.drag_coeff;
-  const FpsT kScaledSpeedOfSound =
-      use_dynamic ? GetScaledSpeedOfSound(ctx, kU) : FpsT(ctx.speed_of_sound);
-  const MachT kMach(s.V().Magnitude(), kScaledSpeedOfSound.Inverse());
-  const double kCd = pcurve->Eval(kMach) * kScaledDragCoeff;
+inline double GetDtDx(FpsT vx) noexcept { return 1.0 / vx.Value(); }
 
-  const CartesianT<FeetT> kDpDt(FeetT(s.V().X().Value()),
-                                FeetT(s.V().Y().Value()),
-                                FeetT(s.V().Z().Value()));
-  const FpsT kScalarVelocity = (s.V() - kWind).Magnitude();
-  CartesianT<FpsT> dv_dt = (s.V() - kWind) * FpsT(-1 * kCd) * kScalarVelocity;
+inline CartesianT<FpsT> GetWind(const LobContext& ctx) noexcept {
+  return {FpsT(ctx.wind.x), FpsT(0.0), FpsT(ctx.wind.z)};
+}
+
+inline MachT GetMach(const TrajectoryStateT& s, FpsT speed_of_sound) noexcept {
+  return MachT(s.V().Magnitude(), speed_of_sound.Inverse());
+}
+
+inline double GetCd(spline::CurveView* pcurve, MachT mach,
+                    double drag_coeff) noexcept {
+  return pcurve->Eval(mach) * drag_coeff;
+}
+
+inline CartesianT<FeetT> GetDpDt(const TrajectoryStateT& s) noexcept {
+  return {FeetT(s.V().X().Value()), FeetT(s.V().Y().Value()),
+          FeetT(s.V().Z().Value())};
+}
+
+inline CartesianT<FpsT> GetDvDt(const LobContext& ctx,
+                                const TrajectoryStateT& s,
+                                const CartesianT<FpsT>& wind, double cd) {
+  const FpsT kScalarVelocity = (s.V() - wind).Magnitude();
+  CartesianT<FpsT> dv_dt = (s.V() - wind) * FpsT(-1 * cd) * kScalarVelocity;
   dv_dt.X(dv_dt.X() - s.V().Y() * ctx.coriolis.cos_l_sin_a -
           s.V().Z() * ctx.coriolis.sin_l);
   dv_dt.Y(dv_dt.Y() + s.V().X() * ctx.coriolis.cos_l_sin_a +
@@ -66,23 +69,71 @@ TrajectoryStateT DsDx(const LobContext& ctx, const TrajectoryStateT& s,
           s.V().Y() * ctx.coriolis.cos_l_cos_a);
   dv_dt.X(dv_dt.X() + ctx.gravity.x);
   dv_dt.Y(dv_dt.Y() + ctx.gravity.y);
-  return TrajectoryStateT{kDpDt * FeetT(kDtDx), dv_dt * FpsT(kDtDx), SecT(kDtDx)};
+  return dv_dt;
 }
-}  // namespace
 
-void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
-               spline::CurveView* pcurve, FeetT target_x, bool use_dynamic) {
-  assert(ps != nullptr && pcurve != nullptr);
+inline TrajectoryStateT DsDxCore(const LobContext& ctx,
+                                 const TrajectoryStateT& s,
+                                 spline::CurveView* pcurve, double drag_coeff,
+                                 FpsT speed_of_sound) {
+  const FpsT kVx = s.V().X();
+  if (kVx <= FpsT(0)) {
+    return {CartesianT<FeetT>(FeetT(0)), CartesianT<FpsT>(FpsT(0))};
+  }
+  const double kDtDx = GetDtDx(kVx);
+  const CartesianT<FpsT> kWind = GetWind(ctx);
+  const MachT kMach = GetMach(s, speed_of_sound);
+  const double kCd = GetCd(pcurve, kMach, drag_coeff);
+  const CartesianT<FeetT> kDpDt = GetDpDt(s);
+  const CartesianT<FpsT> kDvDt = GetDvDt(ctx, s, kWind, kCd);
+  return TrajectoryStateT{kDpDt * FeetT(kDtDx), kDvDt * FpsT(kDtDx),
+                          SecT(kDtDx)};
+}
 
+TrajectoryStateT FastDsDx(const LobContext& ctx, const TrajectoryStateT& s,
+                          spline::CurveView* pcurve) {
+  return DsDxCore(ctx, s, pcurve, ctx.drag_coeff, FpsT(ctx.speed_of_sound));
+}
+
+TrajectoryStateT DsDx(const LobContext& ctx, const TrajectoryStateT& s,
+                      spline::CurveView* pcurve) {
+  const double kU = GetDimensionlessAltitude(ctx, s);
+  const double kScaledDragCoeff = GetScaledDragCoeff(ctx, kU);
+  const FpsT kScaledSpeedOfSound = GetScaledSpeedOfSound(ctx, kU);
+  return DsDxCore(ctx, s, pcurve, kScaledDragCoeff, kScaledSpeedOfSound);
+}
+
+inline FeetT ComputeStep(const LobContext& ctx, const TrajectoryStateT& s,
+                         FeetT target_x) noexcept {
   const FeetT kStepSize = ctx.step_size == 0
                               ? FeetT(YardT(1))
                               : static_cast<FeetT>(InchT(ctx.step_size));
-  const FeetT kStep = target_x > ps->P().X()
-                          ? std::min(target_x - ps->P().X(), kStepSize)
-                          : kStepSize;
+  return target_x > s.P().X() ? std::min(target_x - s.P().X(), kStepSize)
+                              : kStepSize;
+}
+}  // namespace
 
+void FastSolveStep(const LobContext& ctx, TrajectoryStateT* ps,
+                   spline::CurveView* pcurve, FeetT target_x) {
+  assert(ps != nullptr && pcurve != nullptr);
+  const FeetT kStep = ComputeStep(ctx, *ps, target_x);
   auto f = [&](FeetT, const TrajectoryStateT& s) {
-    return DsDx(ctx, s, pcurve, use_dynamic);
+    return FastDsDx(ctx, s, pcurve);
+  };
+  *ps = HeunStep(FeetT(0), *ps, kStep, f);
+  const FpsT kVx = ps->V().X();
+  if (kVx <= FpsT(0)) {
+    ps->V(FpsT(0));
+    return;
+  }
+}
+
+void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
+               spline::CurveView* pcurve, FeetT target_x) {
+  assert(ps != nullptr && pcurve != nullptr);
+  const FeetT kStep = ComputeStep(ctx, *ps, target_x);
+  auto f = [&](FeetT, const TrajectoryStateT& s) {
+    return DsDx(ctx, s, pcurve);
   };
   *ps = HeunStep(FeetT(0), *ps, kStep, f);
   const FpsT kVx = ps->V().X();

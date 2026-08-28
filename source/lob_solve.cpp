@@ -19,6 +19,7 @@
 
 namespace lob {
 namespace {
+constexpr InchT kDynamicDropThreshold = FeetT(100.0);
 
 LobOutput OutputAtState(const TrajectoryStateT& s, const LobContext& ctx) {
   const FpsT kVelocity = s.V().Magnitude();
@@ -110,7 +111,7 @@ size_t LobSolve(const LobContext* pctx, const uint32_t* pranges,
     const TrajectoryStateT kS = s;
 
     if (pranges[index] > 0) {
-      SolveStep(*pctx, &s, &curve, FeetT(pranges[index]));
+      FastSolveStep(*pctx, &s, &curve, FeetT(pranges[index]));
     }
 
     if (s.P().X() >= FeetT(pranges[index])) {
@@ -193,13 +194,15 @@ size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
       pouts[i].deflection = 0.0;
       continue;
     }
-    const bool kUseDynamic = pouts[i].elevation < -1200.0;  // >100ft drop
+    const bool kUseDynamic =
+        InchT(pouts[i].elevation) < kDynamicDropThreshold * -1;
     const FeetT kElevation = InchT(pouts[i].elevation);
     const FeetT kRange = FeetT(pouts[i].range);
     const RadiansT kSeed = FastInverseAngle(kSeedBase, kElevation, kRange);
-    const RadiansT kTheta =
-        SolveAngle(*pctx, kRange, FeetT(0.0), kSeed,
-                   constant::kDefaultAngleTolerance, kUseDynamic);
+    const RadiansT kTheta = kUseDynamic
+                                ? SolveAngle(*pctx, kRange, FeetT(0.0), kSeed)
+                                : FastSolveAngle(*pctx, kRange, FeetT(0.0),
+                                                 kSeed);
     if (kTheta.IsNaN()) {
       return i;
     }
