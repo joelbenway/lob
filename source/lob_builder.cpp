@@ -597,7 +597,7 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
       pout->error = kLobErrorInternalError;
       return;
     }
-    SolveStep(*pout, &s, &drag_curve);
+    FastSolveStep(*pout, &s, &drag_curve);
   }
 
   const auto kV = boatright::CalculateKV(kVelocity, kTransonicBarrier);
@@ -682,8 +682,9 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
       (pimpl->velocity_fps * pimpl->velocity_fps).Value());
   const auto kClampedVacuumSeed =
       std::max(constant::kMinAngle, std::min(constant::kMaxAngle, kVacuumSeed));
-  const MoaT kAngle = SolveAngle(*pout, pimpl->zero_distance_ft,
-                                 pimpl->zero_impact_height, kClampedVacuumSeed);
+  const MoaT kAngle = FastSolveAngle(*pout, pimpl->zero_distance_ft,
+                                     pimpl->zero_impact_height,
+                                     kClampedVacuumSeed);
   if (std::isnan(kAngle)) {
     pout->error = kLobErrorZeroUnreachable;
     return;

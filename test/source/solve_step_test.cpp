@@ -50,7 +50,7 @@ size_t CountStepsTo(const LobContext& ctx, lob::FeetT target) {
   // ~1e-13 ft); any real step-size error is at least 1 inch.
   constexpr double kRoundingToleranceFt = 1e-6;
   while (s.P().X() < target - lob::FeetT(kRoundingToleranceFt)) {
-    lob::SolveStep(ctx, &s, &curve, target);
+    lob::FastSolveStep(ctx, &s, &curve, target);
     ++steps;
   }
   return steps;
