@@ -54,11 +54,6 @@ window.BENCHMARK_DATA = {
             "name": "lob_bench/solve_basic",
             "value": 261181.995,
             "unit": "Ir/op"
-          },
-          {
-            "name": "lob_bench/solve_boatright",
-            "value": 261339.01,
-            "unit": "Ir/op"
           }
         ]
       },
