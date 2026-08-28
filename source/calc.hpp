@@ -33,15 +33,15 @@ inline DegFT CalculateTemperatureAtAltitudeMcCoy(FeetT altitude,
 // https://wikipedia.org/wiki/Barometric_formula
 inline InHgT BarometricFormula(FeetT altitude, InHgT pressure,
                                DegFT temperature) {
+  if (!(altitude > FeetT(0) || altitude < FeetT(0))) {
+    return pressure;
+  }
   const FeetT kHeight = std::min(altitude, FeetT(isa::kTropopauseAltitudeFt));
-
-  const double kExponent = kStandardGravityFtPerSecSq /
-                           (isa::kGasConstantAir * isa::kLapseDegFPerFt);
 
   const double kBase = 1.0 - (isa::kLapseDegFPerFt * kHeight.Value() /
                               DegRT(temperature).Value());
 
-  InHgT output = pressure * std::pow(kBase, kExponent);
+  InHgT output = pressure * std::pow(kBase, isa::kBarometricExponent);
 
   if (altitude > FeetT(isa::kTropopauseAltitudeFt)) {
     const double kNumerator = -1.0 * kStandardGravityFtPerSecSq *

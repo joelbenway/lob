@@ -91,11 +91,11 @@ const Impl* Pimpl(const LobBuilder* pbuilder) {
 
 void BuildDynamicDensity(DegFT temperature_at_firing_site, LobContext* pout) {
   assert(pout != nullptr);
-  constexpr double kLapseLinearCoeff =
-      isa::kHydrostaticExponent * isa::kLapseDegFPerFt;
-  const DegRT kTemperature = temperature_at_firing_site;
-  const double kAPrime = kLapseLinearCoeff / kTemperature.Value();
-  pout->k_lapse = kAPrime / kStandardGravityFtPerSecSq;
+  constexpr double kInvLapseDenom =
+      (1.0 / isa::kGasConstantAir) -
+      (isa::kLapseDegFPerFt / kStandardGravityFtPerSecSq);
+  pout->k_lapse =
+      kInvLapseDenom / DegRT(temperature_at_firing_site).Value();
 }
 
 void BuildEnvironment(Impl* pimpl, LobContext* pout) {
@@ -118,10 +118,16 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  pout->gravity.x = kStandardGravityFtPerSecSq * -1 *
-                    std::sin(pimpl->range_angle_rad.Value());
-  pout->gravity.y = kStandardGravityFtPerSecSq * -1 *
-                    std::cos(pimpl->range_angle_rad.Value());
+  if (!(pimpl->range_angle_rad > RadiansT(0) ||
+        pimpl->range_angle_rad < RadiansT(0))) {
+    pout->gravity.x = 0.0;
+    pout->gravity.y = -kStandardGravityFtPerSecSq;
+  } else {
+    pout->gravity.x = kStandardGravityFtPerSecSq * -1 *
+                      std::sin(pimpl->range_angle_rad.Value());
+    pout->gravity.y = kStandardGravityFtPerSecSq * -1 *
+                      std::cos(pimpl->range_angle_rad.Value());
+  }
 
   if (!std::isnan(pimpl->altitude_ft)) {
     altitude_of_firing_site = pimpl->altitude_ft;
@@ -188,23 +194,30 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  const InHgT kWaterVaporSaturationPressureInHg =
-      CalculateWaterVaporSaturationPressure(temperature_at_firing_site);
-
   const double kAirDensityRatio = CalculateAirDensityRatio(
       pressure_at_firing_site, temperature_at_firing_site);
 
-  const double kHumidityCorrection = CalculateAirDensityRatioHumidityCorrection(
-      pimpl->relative_humidity_percent, kWaterVaporSaturationPressureInHg);
+  const InHgT kWaterVaporSaturationPressureInHg =
+      pimpl->relative_humidity_percent > PercentT(0.0)
+          ? CalculateWaterVaporSaturationPressure(temperature_at_firing_site)
+          : InHgT(0.0);
+  const double kHumidityCorrection =
+      pimpl->relative_humidity_percent > PercentT(0.0)
+          ? CalculateAirDensityRatioHumidityCorrection(
+                pimpl->relative_humidity_percent,
+                kWaterVaporSaturationPressureInHg)
+          : 1.0;
+  const double kSpeedOfSoundCorrection =
+      pimpl->relative_humidity_percent > PercentT(0.0)
+          ? CalculateSpeedOfSoundHumidityCorrection(
+                pimpl->relative_humidity_percent,
+                kWaterVaporSaturationPressureInHg)
+          : 1.0;
 
   const LbsPerCuFtT kAirDensity(isa::kSeaLevelAirDensityLbsPerCuFt *
                                 kAirDensityRatio * kHumidityCorrection);
 
   pimpl->air_density_lbs_per_cu_ft = kAirDensity;
-
-  const double kSpeedOfSoundCorrection =
-      CalculateSpeedOfSoundHumidityCorrection(
-          pimpl->relative_humidity_percent, kWaterVaporSaturationPressureInHg);
 
   const FpsT kSpeedOfSound =
       CalculateSpeedOfSoundInAir(temperature_at_firing_site) *
@@ -387,8 +400,9 @@ void BuildCoefficients(Impl* pimpl, LobContext* pout) {
   }
 
   assert(!pimpl->air_density_lbs_per_cu_ft.IsNaN());
+  constexpr double kDragScale = kPi / 1152.0;  // pi/(144*8) for Pmsi=1
   pout->drag_coeff =
-      CalculateCdCoefficient(pimpl->air_density_lbs_per_cu_ft, PmsiT(1));
+      pimpl->air_density_lbs_per_cu_ft.Value() * kDragScale;
 }
 
 void BuildWind(Impl* pimpl, LobContext* pout) {
@@ -407,6 +421,13 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
 
   if (std::isnan(pimpl->wind_speed_fps)) {
     pimpl->wind_speed_fps = FpsT(0);
+  }
+
+  if (!(pimpl->wind_speed_fps > FpsT(0) ||
+        pimpl->wind_speed_fps < FpsT(0))) {
+    pout->wind.x = 0.0;
+    pout->wind.z = 0.0;
+    return;
   }
 
   pout->wind.x =
@@ -480,16 +501,16 @@ void BuildCoriolis(Impl* pimpl, LobContext* pout) {
       pout->error = kLobErrorLatitudeOOR;
       return;
     }
-    const double kCosL = std::cos(pimpl->latitude_rad).Value();
-    const double kSinA = std::sin(pimpl->azimuth_rad).Value();
-    const double kSinL = std::sin(pimpl->latitude_rad).Value();
-    const double kCosA = std::cos(pimpl->azimuth_rad).Value();
+    constexpr double k2Omega = 2.0 * kAngularVelocityOfEarthRadPerSec;
+    const double kSinL = std::sin(pimpl->latitude_rad.Value());
+    const double kCosL = std::cos(pimpl->latitude_rad.Value());
+    const double kSinA = std::sin(pimpl->azimuth_rad.Value());
+    const double kCosA = std::cos(pimpl->azimuth_rad.Value());
+    const double kCosL2Omega = k2Omega * kCosL;
 
-    pout->coriolis.cos_l_sin_a =
-        2 * kAngularVelocityOfEarthRadPerSec * kCosL * kSinA;
-    pout->coriolis.sin_l = 2 * kAngularVelocityOfEarthRadPerSec * kSinL;
-    pout->coriolis.cos_l_cos_a =
-        2 * kAngularVelocityOfEarthRadPerSec * kCosL * kCosA;
+    pout->coriolis.cos_l_sin_a = kCosL2Omega * kSinA;
+    pout->coriolis.sin_l = k2Omega * kSinL;
+    pout->coriolis.cos_l_cos_a = kCosL2Omega * kCosA;
   } else {
     pout->coriolis.cos_l_sin_a = 0;
     pout->coriolis.sin_l = 0;
@@ -525,12 +546,21 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
     return;
   }
 
+  // Fast path: skip heavy Caliber math if geometry incomplete (common)
+  if (pimpl->diameter_in.IsNaN() || pimpl->length_in.IsNaN() ||
+      pimpl->mass_lbs.IsNaN() || pimpl->twist_inches_per_turn.IsNaN() ||
+      std::isnan(pout->stability_factor) || std::isnan(pout->speed_of_sound) ||
+      pimpl->velocity_fps.IsNaN() || pimpl->ballistic_coefficient_psi.IsNaN()) {
+    return;
+  }
+
   const InchT kD(pimpl->diameter_in);
-  const CaliberT kDM(pimpl->meplat_diameter_in, kD.Inverse());
-  const CaliberT kDB(pimpl->base_diameter_in, kD.Inverse());
-  const CaliberT kL(pimpl->length_in, kD.Inverse());
-  const CaliberT kLN(pimpl->nose_length_in, kD.Inverse());
-  const CaliberT kLBT(pimpl->tail_length_in, kD.Inverse());
+  const double kInvD = 1.0 / kD.Value();
+  const CaliberT kDM(pimpl->meplat_diameter_in.Value() * kInvD);
+  const CaliberT kDB(pimpl->base_diameter_in.Value() * kInvD);
+  const CaliberT kL(pimpl->length_in.Value() * kInvD);
+  const CaliberT kLN(pimpl->nose_length_in.Value() * kInvD);
+  const CaliberT kLBT(pimpl->tail_length_in.Value() * kInvD);
   const auto kRTR(pimpl->ogive_rtr);
   const FpsT kVelocity(pimpl->velocity_fps);
   const FpsT kSos(pout->speed_of_sound);
@@ -571,18 +601,26 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const auto kGamma =
       boatright::CalculateCrosswindAngleGamma(kZWind, kVelocity);
   const auto kCD0 = pimpl->drag_table_mode == DragTableMode::kStandard ||
-                            pimpl->drag_table_mode == DragTableMode::kBcBands
-                        ? boatright::CalculateZeroYawDragCoefficientOfDrag(
-                              kCdRef, kMass, kD, PmsiT(1))
-                        : static_cast<double>(kCdRef);
-  const auto kCDAdjustment =
-      boatright::CalculateYawDragAdjustment(kGamma, kR, kCDa);
-  const auto kCD = kCD0 + kCDAdjustment;
-  const auto kPitch = boatright::CalculateVerticalPitch(kGamma, kR, kN);
-  const auto kJv = boatright::CalculateVerticalImpulse(kTwist, kN, kTn, kQ, kS,
-                                                       kCL, kCD, kPitch);
+                             pimpl->drag_table_mode == DragTableMode::kBcBands
+                         ? boatright::CalculateZeroYawDragCoefficientOfDrag(
+                               kCdRef, kMass, kD, PmsiT(1))
+                         : static_cast<double>(kCdRef);
+  const double kCD =
+      (kGamma < 0.0 || kGamma > 0.0)
+          ? kCD0 + boatright::CalculateYawDragAdjustment(kGamma, kR, kCDa)
+          : kCD0;
+  const double kPitch = (kGamma < 0.0 || kGamma > 0.0)
+                            ? boatright::CalculateVerticalPitch(kGamma, kR, kN)
+                            : 0.0;
+  const double kJv =
+      (kGamma < 0.0 || kGamma > 0.0)
+          ? boatright::CalculateVerticalImpulse(kTwist, kN, kTn, kQ, kS, kCL,
+                                                kCD, kPitch)
+          : 0.0;
   const auto kMOM = boatright::CalculateMagnitudeOfMomentum(kMass, kVelocity);
-  const MoaT kJump = RadiansT(-1 * kJv / kMOM);
+  const MoaT kJump = (kGamma < 0.0 || kGamma > 0.0)
+                         ? MoaT(RadiansT(-1 * kJv / kMOM))
+                         : MoaT(0);
   pout->aerodynamic_jump = kJump.Value();
 
   TrajectoryStateT s(
@@ -700,8 +738,11 @@ void BuildOptions(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  const FpsT kMinSpeed = CalculateVelocityFromKineticEnergy(
-      pimpl->minimum_energy_ft_lbs, SlugT(pimpl->mass_lbs));
+  const FpsT kMinSpeed = pimpl->minimum_energy_ft_lbs.IsNaN()
+                                   ? FpsT(0)
+                                   : CalculateVelocityFromKineticEnergy(
+                                         pimpl->minimum_energy_ft_lbs,
+                                         SlugT(pimpl->mass_lbs));
   pout->minimum_speed =
       std::max(pout->minimum_speed,
                kMinSpeed.IsNaN() ? static_cast<uint16_t>(0) : kMinSpeed.U16());
