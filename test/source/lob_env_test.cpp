@@ -105,7 +105,7 @@ TEST_F(LobEnvTestFixture, SolveAtICAOAtmosphere) {
 TEST_F(LobEnvTestFixture, SolveWithAltitude4500ft) {
   const int32_t kAltitude = 4500;
   const auto kContext = puut->AltitudeOfFiringSiteFt(kAltitude)
-                            .TemperatureDegF(lob::kIsaSeaLevelDegF)
+                            .TemperatureDegF(lob::isa::kSeaLevelDegF)
                             .Build();
   constexpr lob::FpsT kVelocityError(1);
   constexpr lob::FtLbsT kEnergyError(5);

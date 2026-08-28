@@ -89,14 +89,23 @@ const Impl* Pimpl(const LobBuilder* pbuilder) {
   return reinterpret_cast<const Impl*>(&pbuilder->buffer);
 }
 
+void BuildDynamicDensity(DegFT temperature_at_firing_site, LobContext* pout) {
+  assert(pout != nullptr);
+  constexpr double kLapseLinearCoeff =
+      isa::kHydrostaticExponent * isa::kLapseDegFPerFt;
+  const DegRT kTemperature = temperature_at_firing_site;
+  const double kAPrime = kLapseLinearCoeff / kTemperature.Value();
+  pout->k_lapse = kAPrime / kStandardGravityFtPerSecSq;
+}
+
 void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
   FeetT altitude_of_firing_site = FeetT(0);
   FeetT altitude_of_barometer = FeetT(0);
   FeetT altitude_of_thermometer = FeetT(0);
-  DegFT temperature_at_firing_site = DegFT(kIsaSeaLevelDegF);
-  DegFT temperature_at_barometer = DegFT(kIsaSeaLevelDegF);
-  InHgT pressure_at_firing_site = InHgT(kIsaSeaLevelPressureInHg);
+  DegFT temperature_at_firing_site = DegFT(isa::kSeaLevelDegF);
+  DegFT temperature_at_barometer = DegFT(isa::kSeaLevelDegF);
+  InHgT pressure_at_firing_site = InHgT(isa::kSeaLevelPressureInHg);
 
   if (std::isnan(pimpl->range_angle_rad)) {
     pimpl->range_angle_rad = RadiansT(DegreesT(0));
@@ -124,8 +133,8 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
                                   : pimpl->altitude_of_thermometer_ft;
 
     auto is_altitude_valid = [](FeetT altitude) -> bool {
-      return FeetT(-kIsaStratosphereAltitudeFt) < altitude &&
-             altitude < FeetT(kIsaStratosphereAltitudeFt);
+      return FeetT(-isa::kStratosphereAltitudeFt) < altitude &&
+             altitude < FeetT(isa::kStratosphereAltitudeFt);
     };
 
     if (!is_altitude_valid(altitude_of_firing_site)) {
@@ -144,10 +153,10 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
     }
 
     temperature_at_firing_site = CalculateTemperatureAtAltitude(
-        altitude_of_firing_site, DegFT(kIsaSeaLevelDegF));
-    pressure_at_firing_site = BarometricFormula(altitude_of_firing_site,
-                                                InHgT(kIsaSeaLevelPressureInHg),
-                                                DegFT(kIsaSeaLevelDegF));
+        altitude_of_firing_site, DegFT(isa::kSeaLevelDegF));
+    pressure_at_firing_site = BarometricFormula(
+        altitude_of_firing_site, InHgT(isa::kSeaLevelPressureInHg),
+        DegFT(isa::kSeaLevelDegF));
   }
 
   if (!std::isnan(pimpl->temperature_deg_f)) {
@@ -170,7 +179,7 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   }
 
   if (std::isnan(pimpl->relative_humidity_percent)) {
-    pimpl->relative_humidity_percent = PercentT(kIsaSeaLevelHumidityPercent);
+    pimpl->relative_humidity_percent = PercentT(isa::kSeaLevelHumidityPercent);
   }
 
   if (pimpl->relative_humidity_percent < PercentT(0.0) ||
@@ -188,7 +197,7 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   const double kHumidityCorrection = CalculateAirDensityRatioHumidityCorrection(
       pimpl->relative_humidity_percent, kWaterVaporSaturationPressureInHg);
 
-  const LbsPerCuFtT kAirDensity(kIsaSeaLevelAirDensityLbsPerCuFt *
+  const LbsPerCuFtT kAirDensity(isa::kSeaLevelAirDensityLbsPerCuFt *
                                 kAirDensityRatio * kHumidityCorrection);
 
   pimpl->air_density_lbs_per_cu_ft = kAirDensity;
@@ -202,6 +211,8 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
       kSpeedOfSoundCorrection;
 
   pout->speed_of_sound = kSpeedOfSound.Value();
+
+  BuildDynamicDensity(temperature_at_firing_site, pout);
 }
 
 LobErrorT ValidateCustomTable(Impl* pimpl) {
@@ -1113,6 +1124,7 @@ void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
   presult->aerodynamic_jump = NaN();
   presult->spindrift_factor = NaN();
   presult->optic_height = NaN();
+  presult->k_lapse = 0.0;
 
   BuildEnvironment(pimpl, presult);
   if (presult->error != kLobErrorNotFormed) {

@@ -24,19 +24,6 @@ constexpr Y HeunStep(const T& t_i, const Y& y_i, T dt, const F& f) {
   return y_i + ((k1 + k2) * kQuanta);
 }
 
-// Generic implementation of Heun's method with iteratively applied corrector
-template <size_t kMaxIter = 3, typename T, typename Y, typename F>
-constexpr Y IterativeHeunStep(const T& t_i, const Y& y_i, T dt, const F& f) {
-  const T kQuanta = dt / 2;
-  const Y k1 = f(t_i, y_i);
-  Y y = y_i + (k1 * dt);
-  for (size_t i = 0; i < kMaxIter; ++i) {
-    const Y k2 = f(t_i + dt, y);
-    y = y_i + ((k1 + k2) * kQuanta);
-  }
-  return y;
-}
-
 // Generic implementation of fourth order Runge-Kutta method
 template <typename T, typename Y, typename F>
 constexpr Y RungeKuttaStep(const T& t_i, const Y& y_i, T dt, const F& f) {
@@ -50,63 +37,74 @@ constexpr Y RungeKuttaStep(const T& t_i, const Y& y_i, T dt, const F& f) {
   return y_i + ((k1 + k2 * kDouble + k3 * kDouble + k4) * kQuanta);
 }
 
-// Numerical method friendly container for velocity and position
+// Numerical method friendly container for velocity, position, and time of
+// flight
 class TrajectoryStateT {
  public:
   constexpr TrajectoryStateT() : time_of_flight_(SecT(0)) {}
+
   constexpr TrajectoryStateT(CartesianT<FeetT> p, CartesianT<FpsT> v,
                              SecT tof = SecT(0))
       : position_(std::move(p)),
         velocity_(std::move(v)),
         time_of_flight_(std::move(tof)) {}
-  constexpr TrajectoryStateT(const TrajectoryStateT& other) = default;
-  constexpr TrajectoryStateT(TrajectoryStateT&& other) noexcept = default;
-  constexpr TrajectoryStateT& operator=(const TrajectoryStateT& rhs) {
-    if (this != &rhs) {
-      position_ = rhs.position_;
-      velocity_ = rhs.velocity_;
-      time_of_flight_ = rhs.time_of_flight_;
-    }
-    return *this;
-  }
+
+  constexpr TrajectoryStateT(const TrajectoryStateT&) = default;
+  constexpr TrajectoryStateT(TrajectoryStateT&&) noexcept = default;
+  constexpr TrajectoryStateT& operator=(const TrajectoryStateT&) = default;
+  constexpr TrajectoryStateT& operator=(TrajectoryStateT&&) noexcept = default;
   ~TrajectoryStateT() = default;
-  constexpr TrajectoryStateT& operator=(TrajectoryStateT&& rhs) noexcept {
-    if (this != &rhs) {
-      position_ = std::move(rhs.position_);
-      velocity_ = std::move(rhs.velocity_);
-      time_of_flight_ = std::move(rhs.time_of_flight_);
-      rhs.position_ = CartesianT<FeetT>(FeetT(0));
-      rhs.velocity_ = CartesianT<FpsT>(FpsT(0));
-      rhs.time_of_flight_ = SecT(0);
-    }
-    return *this;
+
+  constexpr TrajectoryStateT operator+(const TrajectoryStateT& rhs) const {
+    return TrajectoryStateT{position_ + rhs.position_,
+                            velocity_ + rhs.velocity_,
+                            time_of_flight_ + rhs.time_of_flight_};
   }
 
   constexpr TrajectoryStateT operator-(const TrajectoryStateT& rhs) const {
     return TrajectoryStateT{position_ - rhs.position_,
-                            velocity_ - rhs.velocity_, time_of_flight_};
+                            velocity_ - rhs.velocity_,
+                            time_of_flight_ - rhs.time_of_flight_};
   }
-  constexpr TrajectoryStateT operator+(const TrajectoryStateT& rhs) const {
-    return TrajectoryStateT{position_ + rhs.position_,
-                            velocity_ + rhs.velocity_, time_of_flight_};
-  }
-  template <typename T,
-            typename std::enable_if_t<std::is_arithmetic<T>::value ||
-                                          std::is_same<T, FeetT>::value,
-                                      int> = 0>
+
+  template <typename T>
   constexpr TrajectoryStateT operator+(const T& rhs) const {
-    return TrajectoryStateT{position_ + FeetT(static_cast<double>(rhs)),
-                            velocity_ + FpsT(static_cast<double>(rhs)),
-                            time_of_flight_};
+    return TrajectoryStateT{position_ + FeetT(ToDouble(rhs)),
+                            velocity_ + FpsT(ToDouble(rhs)),
+                            time_of_flight_ + SecT(ToDouble(rhs))};
   }
-  template <typename T,
-            typename std::enable_if_t<std::is_arithmetic<T>::value ||
-                                          std::is_same<T, FeetT>::value,
-                                      int> = 0>
+
+  template <typename T>
+  constexpr TrajectoryStateT operator-(const T& rhs) const {
+    return TrajectoryStateT{position_ - FeetT(ToDouble(rhs)),
+                            velocity_ - FpsT(ToDouble(rhs)),
+                            time_of_flight_ - SecT(ToDouble(rhs))};
+  }
+
+  template <typename T>
   constexpr TrajectoryStateT operator*(const T& rhs) const {
-    return TrajectoryStateT{position_ * FeetT(static_cast<double>(rhs)),
-                            velocity_ * FpsT(static_cast<double>(rhs)),
-                            time_of_flight_};
+    return TrajectoryStateT{position_ * FeetT(ToDouble(rhs)),
+                            velocity_ * FpsT(ToDouble(rhs)),
+                            time_of_flight_ * ToDouble(rhs)};
+  }
+
+  template <typename T>
+  constexpr TrajectoryStateT operator/(const T& rhs) const {
+    return TrajectoryStateT{position_ / FeetT(ToDouble(rhs)),
+                            velocity_ / FpsT(ToDouble(rhs)),
+                            time_of_flight_ / ToDouble(rhs)};
+  }
+
+  template <typename T>
+  friend constexpr TrajectoryStateT operator+(const T& lhs,
+                                              const TrajectoryStateT& rhs) {
+    return rhs + lhs;
+  }
+
+  template <typename T>
+  friend constexpr TrajectoryStateT operator*(const T& lhs,
+                                              const TrajectoryStateT& rhs) {
+    return rhs * lhs;
   }
 
   constexpr CartesianT<FeetT> P() const { return position_; }
@@ -114,13 +112,36 @@ class TrajectoryStateT {
   constexpr void P(double input) {
     position_ = CartesianT<FeetT>(FeetT(input));
   }
+
   constexpr CartesianT<FpsT> V() const { return velocity_; }
   constexpr void V(FpsT input) { velocity_ = CartesianT<FpsT>(input); }
   constexpr void V(double input) { velocity_ = CartesianT<FpsT>(FpsT(input)); }
+
   constexpr SecT TOF() const { return time_of_flight_; }
   constexpr void TOF(SecT input) { time_of_flight_ = input; }
 
  private:
+  struct PriorityLow {};
+  struct PriorityHigh : PriorityLow {};
+
+  template <typename T>
+  static constexpr auto ToDoubleImpl(const T& val, PriorityHigh tag) noexcept
+      -> decltype(val.Value()) {
+    (void)tag;
+    return val.Value();
+  }
+
+  template <typename T>
+  static constexpr double ToDoubleImpl(const T& val, PriorityLow tag) noexcept {
+    (void)tag;
+    return static_cast<double>(val);
+  }
+
+  template <typename T>
+  static constexpr double ToDouble(const T& val) noexcept {
+    return static_cast<double>(ToDoubleImpl(val, PriorityHigh{}));
+  }
+
   CartesianT<FeetT> position_;
   CartesianT<FpsT> velocity_;
   SecT time_of_flight_;

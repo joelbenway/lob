@@ -71,34 +71,6 @@ TEST(OdeTests, HeunStep) {
   }
 }
 
-TEST(OdeTests, IterativeHeunStep) {
-  const double kY0 = 1.0;
-  const double kT0 = 0.0;
-  const double kTFinal = 5.0;
-  const double kDT = 0.1;
-
-  // This is ordinary differential equation to solve
-  auto ode = [](double t, double y) { return std::pow(std::sin(t), 2) * y; };
-
-  // The solved ode will provide an expected solution
-  auto y_exact = [](double t_0, double y_0, double t) {
-    auto exponent = ((t - t_0) - (std::sin(t) * std::cos(t) -
-                                  std::sin(t_0) * std::cos(t_0))) /
-                    2;
-    return y_0 * std::exp(exponent);
-  };
-
-  double y = kY0;
-  double t = kT0;
-  const double kError = 0.1;
-  while (t < kTFinal) {
-    y = lob::IterativeHeunStep(t, y, kDT, ode);
-    t += kDT;
-    const double kExpectedSolution = y_exact(kT0, kY0, t);
-    EXPECT_NEAR(y, kExpectedSolution, kError);
-  }
-}
-
 TEST(OdeTests, RungeKuttaStep) {
   const double kY0 = 1.0;
   const double kT0 = 0.0;

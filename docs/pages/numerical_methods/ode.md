@@ -19,7 +19,7 @@ dependent variable via the velocity history.
 
 @section num-ode-method Method
 
-`source/ode.hpp` provides four steppers; lob uses **Heun's method**
+`source/ode.hpp` provides three steppers; lob uses **Heun's method**
 (RK2 predictor-corrector) in `SolveStep` (`source/solve_step.cpp`):
 
 ```
@@ -49,7 +49,7 @@ approximation `2·Δx/(vx_old+vx_new)` after the Heun step (`source/solve_step.c
 which is exact only if the velocity profile were linear over the step.
 
 `source/ode.hpp` also implements
-`EulerStep`, `RungeKuttaStep` (RK4) and `IterativeHeunStep`; they are not used
+`EulerStep` and `RungeKuttaStep` (RK4); they are not used
 in production but are exercised in `test/source/ode_test.cpp` to demonstrate
 convergence on the test ODE `dy/dt = sin²(t)·y`.
 

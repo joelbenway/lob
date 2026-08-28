@@ -11,6 +11,7 @@
 #include "splines.hpp"
 
 namespace lob {
+
 void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
                spline::CurveView* pcurve, FeetT target_x = FeetT(NaN()));
 }  // namespace lob

@@ -104,7 +104,6 @@ Sample (4×3400 MHz, 2026-08-22, `benchmark_min_time=0.2s`):
 | Benchmark | Time | Error (ft) vs exact ODE |
 |-----------|------|------------------------|
 | Heun (production, 1-yd) | 33 226 ns | 7.36 |
-| IterativeHeun 3× | 67 766 ns | 6.94 |
 | LobLerp | 329 128 ns | — |
 | CurveView (PCHIP) | 167 774 ns | — |
 
