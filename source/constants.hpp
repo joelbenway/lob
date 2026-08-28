@@ -25,6 +25,7 @@ constexpr double kGasConstantAir = 1716.46;  // ft·lbf / (slug·°R)
 
 constexpr double kHydrostaticExponent =
     (kStandardGravityFtPerSecSq / (kGasConstantAir * kLapseDegFPerFt)) - 1.0;
+constexpr double kBarometricExponent = kHydrostaticExponent + 1.0;
 }  // namespace isa
 
 constexpr double kArmySeaLevelAirDensityLbsPerCuFt = 0.0751265;
