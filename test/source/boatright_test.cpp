@@ -162,7 +162,7 @@ TEST(BoatrightTests, CalculateCoefficientOfLift) {
       lob::boatright::CalculateRadiusOfTangentOgive(kLN, kDM);
   const lob::CaliberT kLFN =
       lob::boatright::CalculateFullNoseLength(kLN, kDM, kRT, kRTR);
-  const lob::MachT kVelocity(2800 / lob::kIsaSeaLevelSpeedOfSoundFps);
+  const lob::MachT kVelocity(2800 / lob::isa::kSeaLevelSpeedOfSoundFps);
   const double kExpected(2.807);
   const double kActual = CalculateCoefficientOfLift(kLFN, kVelocity);
   EXPECT_NEAR(kActual, kExpected, 1E-3);
@@ -212,7 +212,7 @@ TEST(BoatrightTests, CalculateYawDragCoefficient) {
   // Test data from Sample Calculations of Calculating Aerodynamic Jump for
   // Firing Point Conditions – Boatright & Ruiz – rev. June/2018
   using lob::boatright::CalculateYawDragCoefficient;
-  const lob::MachT kVelocity(2800 / lob::kIsaSeaLevelSpeedOfSoundFps);
+  const lob::MachT kVelocity(2800 / lob::isa::kSeaLevelSpeedOfSoundFps);
   const double kCL(2.807);
   const double kAR(2.1840);
   const double kExpected(4.4212);

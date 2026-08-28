@@ -15,8 +15,8 @@ namespace lob {
 constexpr DegFT CalculateTemperatureAtAltitude(FeetT altitude,
                                                DegFT temperature) {
   const DegFT kTemperature =
-      temperature - DegFT(kIsaLapseDegFPerFt * altitude.Value());
-  return std::max(kTemperature, DegFT(kIsaMinimumTempDegF));
+      temperature - DegFT(isa::kLapseDegFPerFt * altitude.Value());
+  return std::max(kTemperature, DegFT(isa::kMinimumTempDegF));
 }
 
 // Page 166 of Modern Exterior Ballistics - McCoy
@@ -33,22 +33,21 @@ inline DegFT CalculateTemperatureAtAltitudeMcCoy(FeetT altitude,
 // https://wikipedia.org/wiki/Barometric_formula
 inline InHgT BarometricFormula(FeetT altitude, InHgT pressure,
                                DegFT temperature) {
-  const double kGasConstant = 1716.49;  // ft-lb / slug^{-1}R^{-1}
-  const FeetT kHeight = std::min(altitude, FeetT(kIsaTropopauseAltitudeFt));
+  const FeetT kHeight = std::min(altitude, FeetT(isa::kTropopauseAltitudeFt));
 
-  const double kExponent =
-      kStandardGravityFtPerSecSq / (kGasConstant * kIsaLapseDegFPerFt);
+  const double kExponent = kStandardGravityFtPerSecSq /
+                           (isa::kGasConstantAir * isa::kLapseDegFPerFt);
 
-  const double kBase =
-      1.0 - (kIsaLapseDegFPerFt * kHeight.Value() / DegRT(temperature).Value());
+  const double kBase = 1.0 - (isa::kLapseDegFPerFt * kHeight.Value() /
+                              DegRT(temperature).Value());
 
   InHgT output = pressure * std::pow(kBase, kExponent);
 
-  if (altitude > FeetT(kIsaTropopauseAltitudeFt)) {
+  if (altitude > FeetT(isa::kTropopauseAltitudeFt)) {
     const double kNumerator = -1.0 * kStandardGravityFtPerSecSq *
-                              (altitude - kIsaTropopauseAltitudeFt).Value();
+                              (altitude - isa::kTropopauseAltitudeFt).Value();
     const double kDenominator =
-        kGasConstant * DegRT(DegFT(kIsaMinimumTempDegF)).Value();
+        isa::kGasConstantAir * DegRT(DegFT(isa::kMinimumTempDegF)).Value();
     output *= std::exp(kNumerator / kDenominator);
   }
 
@@ -91,8 +90,8 @@ inline InHgT CalculateWaterVaporSaturationPressure(DegFT temperature) {
 
 // Page 167 of Modern Exterior Ballistics - McCoy
 constexpr double CalculateAirDensityRatio(InHgT pressure, DegFT temperature) {
-  return pressure.Value() / kIsaSeaLevelPressureInHg *
-         (DegRT(DegFT(kIsaSeaLevelDegF)) / DegRT(temperature)).Value();
+  return pressure.Value() / isa::kSeaLevelPressureInHg *
+         (DegRT(DegFT(isa::kSeaLevelDegF)) / DegRT(temperature)).Value();
 }
 
 // Page 167 of Modern Exterior Ballistics - McCoy
@@ -101,7 +100,7 @@ constexpr double CalculateAirDensityRatioHumidityCorrection(
   const double kAVal = 0.00378;
 
   return 1.0 - (kAVal * humidity_pct.Value() *
-                water_vapor_sat_pressure.Value() / kIsaSeaLevelPressureInHg);
+                water_vapor_sat_pressure.Value() / isa::kSeaLevelPressureInHg);
 }
 
 // Page 168 of Modern Exterior Ballistics - McCoy
@@ -110,7 +109,7 @@ constexpr double CalculateSpeedOfSoundHumidityCorrection(
   const double kAVal = 0.0014;
 
   return 1.0 + (kAVal * humidity_pct.Value() *
-                water_vapor_sat_pressure.Value() / kIsaSeaLevelPressureInHg);
+                water_vapor_sat_pressure.Value() / isa::kSeaLevelPressureInHg);
 }
 
 // Page 90 of Modern Exterior Ballistics - McCoy
@@ -149,13 +148,13 @@ inline double CalculateMillerTwistRuleStabilityFactor(
 constexpr double CalculateMillerTwistRuleCorrectionFactor(InHgT pressure,
                                                           DegFT temperature) {
   const double kAVal = 460.0;
-  return (temperature.Value() + kAVal) / (kIsaSeaLevelDegF + kAVal) *
-         (kIsaSeaLevelPressureInHg / pressure.Value());
+  return (temperature.Value() + kAVal) / (isa::kSeaLevelDegF + kAVal) *
+         (isa::kSeaLevelPressureInHg / pressure.Value());
 }
 
 constexpr double CalculateMillerTwistRuleCorrectionFactor(
     LbsPerCuFtT air_density) {
-  return kIsaSeaLevelAirDensityLbsPerCuFt / air_density.Value();
+  return isa::kSeaLevelAirDensityLbsPerCuFt / air_density.Value();
 }
 
 // Page 33 of Modern Exterior Ballistics - McCoy

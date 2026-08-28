@@ -318,7 +318,7 @@ INSTANTIATE_TEST_SUITE_P(
                   .InitialVelocityFps(kM70MuzzleVelocity)
                   .ZeroDistanceYds(kJackOConnorZeroYardage)
                   .ZeroImpactHeightInches(kJackOConnorZeroHeight)
-                  .AltitudeOfFiringSiteFt(lob::kIsaStratosphereAltitudeFt + 1)
+                  .AltitudeOfFiringSiteFt(lob::isa::kStratosphereAltitudeFt + 1)
                   .Build();
             },
             lob::ErrorT::kAltitudeOfFiringSiteOOR},
@@ -331,7 +331,7 @@ INSTANTIATE_TEST_SUITE_P(
                   .ZeroDistanceYds(kJackOConnorZeroYardage)
                   .ZeroImpactHeightInches(kJackOConnorZeroHeight)
                   .AltitudeOfFiringSiteFt(0.0)
-                  .AltitudeOfBarometerFt(lob::kIsaStratosphereAltitudeFt + 1)
+                  .AltitudeOfBarometerFt(lob::isa::kStratosphereAltitudeFt + 1)
                   .Build();
             },
             lob::ErrorT::kAltitudeOfBarometerOOR},
@@ -344,7 +344,7 @@ INSTANTIATE_TEST_SUITE_P(
                   .ZeroDistanceYds(kJackOConnorZeroYardage)
                   .ZeroImpactHeightInches(kJackOConnorZeroHeight)
                   .AltitudeOfFiringSiteFt(0.0)
-                  .AltitudeOfThermometerFt(lob::kIsaStratosphereAltitudeFt + 1)
+                  .AltitudeOfThermometerFt(lob::isa::kStratosphereAltitudeFt + 1)
                   .Build();
             },
             lob::ErrorT::kAltitudeOfThermometerOOR},

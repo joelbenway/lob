@@ -91,60 +91,6 @@ void HeunStepBM(benchmark::State& state) {
   }
 }
 
-void IterativeHeunStep3BM(benchmark::State& state) {
-  constexpr double kDt = 1e-3;
-  constexpr auto kStep = static_cast<size_t>(kTFinal / kDt);
-  for (auto _ : state) {
-    auto ode = MakeBallisticOde();
-    Ball2 y = kInit;
-    double t = 0.0;
-    for (size_t i = 0; i < kStep; ++i) {
-      y = lob::IterativeHeunStep<3>(t, y, kDt, ode);
-      t += kDt;
-    }
-    benchmark::DoNotOptimize(y);
-    const auto& ref = Ref();
-    const double kErr = std::hypot(y.x - ref.x, y.y - ref.y);
-    state.counters["error_ft"] = kErr;
-  }
-}
-
-void IterativeHeunStep2BM(benchmark::State& state) {
-  constexpr double kDt = 1e-3;
-  constexpr auto kStep = static_cast<size_t>(kTFinal / kDt);
-  for (auto _ : state) {
-    auto ode = MakeBallisticOde();
-    Ball2 y = kInit;
-    double t = 0.0;
-    for (size_t i = 0; i < kStep; ++i) {
-      y = lob::IterativeHeunStep<2>(t, y, kDt, ode);
-      t += kDt;
-    }
-    benchmark::DoNotOptimize(y);
-    const auto& ref = Ref();
-    const double kErr = std::hypot(y.x - ref.x, y.y - ref.y);
-    state.counters["error_ft"] = kErr;
-  }
-}
-
-void IterativeHeunStep1BM(benchmark::State& state) {
-  constexpr double kDt = 1e-3;
-  constexpr auto kStep = static_cast<size_t>(kTFinal / kDt);
-  for (auto _ : state) {
-    auto ode = MakeBallisticOde();
-    Ball2 y = kInit;
-    double t = 0.0;
-    for (size_t i = 0; i < kStep; ++i) {
-      y = lob::IterativeHeunStep<1>(t, y, kDt, ode);
-      t += kDt;
-    }
-    benchmark::DoNotOptimize(y);
-    const auto& ref = Ref();
-    const double kErr = std::hypot(y.x - ref.x, y.y - ref.y);
-    state.counters["error_ft"] = kErr;
-  }
-}
-
 void RungeKuttaStepBM(benchmark::State& state) {
   constexpr double kDt = 1e-2;
   constexpr auto kStep = static_cast<size_t>(kTFinal / kDt);
@@ -167,9 +113,6 @@ void RungeKuttaStepBM(benchmark::State& state) {
 
 BENCHMARK(EulerStepBM);
 BENCHMARK(HeunStepBM);
-BENCHMARK(IterativeHeunStep3BM);
-BENCHMARK(IterativeHeunStep2BM);
-BENCHMARK(IterativeHeunStep1BM);
 BENCHMARK(RungeKuttaStepBM);
 
 }  // namespace benchmark

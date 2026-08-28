@@ -117,6 +117,7 @@ struct Context {
   double stability_factor;  ///< @brief Miller stability factor.
   double aerodynamic_jump;  ///< @brief Aerodynamic jump effect in Moa.
   double spindrift_factor;  ///< @brief Spin drift factor.
+  double k_lapse;           ///< @brief Projected linear density lapse coeff.
   double max_time;          ///< @brief Max time of flight for solver.
   std::array<float, kLobCoeffsSize> drags;  ///< @brief Drag curve coefficients.
   uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
