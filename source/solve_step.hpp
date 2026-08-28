@@ -12,9 +12,10 @@
 
 namespace lob {
 
+void FastSolveStep(const LobContext& ctx, TrajectoryStateT* ps,
+                   spline::CurveView* pcurve, FeetT target_x = FeetT(NaN()));
 void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
-               spline::CurveView* pcurve, FeetT target_x = FeetT(NaN()),
-               bool use_dynamic = false);
+               spline::CurveView* pcurve, FeetT target_x = FeetT(NaN()));
 }  // namespace lob
 
 // This file is part of lob.
