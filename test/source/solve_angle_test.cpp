@@ -246,7 +246,8 @@ TEST_F(SolveAngleTest, SolveInverseMatchesSolveAngle) {
   }
 }
 
-TEST_F(SolveAngleTest, SolveInverseMatchesSolveAngleDynamic) {  // NOLINT(readability-function-cognitive-complexity)
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+TEST_F(SolveAngleTest, SolveInverseMatchesSolveAngleDynamic) {
   const std::array<uint32_t, 3> kRanges = {6000U, 7500U, 9000U};
   const double kToleranceMoa = 0.01;
   for (const uint32_t kRangeFt : kRanges) {
