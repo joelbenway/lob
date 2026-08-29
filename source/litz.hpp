@@ -25,8 +25,9 @@ inline MoaT CalculateAerodynamicJump(double stability, InchT caliber,
   const double kSgCoeff = 0.01;
   const double kLCoeff = 0.0024;
   const double kIntercept = 0.032;
-  const double kY = (kSgCoeff * std::abs(stability)) -
-                    (kLCoeff * (length / caliber).Value()) + kIntercept;
+  const double kAbsSg = std::abs(stability);
+  const double kY =
+      (kSgCoeff * kAbsSg) - (kLCoeff * (length / caliber).Value()) + kIntercept;
   const double kDirection = stability >= 0 ? -1.0 : 1.0;
   return MoaT(kDirection * kY * zwind.Value());
 }
@@ -36,12 +37,12 @@ inline InchT CalculateGyroscopicSpinDrift(double stability, SecT time) {
   if (std::isnan(stability) || time.IsNaN()) {
     return InchT(0);
   }
+  const double kAbsSg = std::abs(stability);
   const double kAVal = 1.25 * (stability >= 0 ? 1.0 : -1.0);
   const double kBVal = 1.2;
   const double kExponent = 1.83;
 
-  return InchT(kAVal * (std::abs(stability) + kBVal) *
-               std::pow(time.Value(), kExponent));
+  return InchT(kAVal * (kAbsSg + kBVal) * std::pow(time.Value(), kExponent));
 }
 
 // Page 427 of Applied Ballistics for Long-Range Shooting 3d - Litz
@@ -54,11 +55,14 @@ inline double CalculateG7FormFactorPrediction(
   const double kD = 0.018 * ogive_rtr;
   const double kE = 0.072 * ogive_rtr * ogive_rtr;
   const double kF = 2.520 * meplat_diameter.Value();
-  const double kG = -3.584 * std::pow(meplat_diameter.Value(), 2);
+  const double kMeplat = meplat_diameter.Value();
+  const double kG = -3.584 * kMeplat * kMeplat;
   const double kH = -0.171 * tail_length.Value();
-  const double kI = -0.111 * boattail_angle.Value();
-  const double kJ = 0.0118 * std::pow(boattail_angle.Value(), 2);
-  const double kK = -0.000359 * std::pow(boattail_angle.Value(), 3);
+  const double kBoattail = boattail_angle.Value();
+  const double kBoattail2 = kBoattail * kBoattail;
+  const double kI = -0.111 * kBoattail;
+  const double kJ = 0.0118 * kBoattail2;
+  const double kK = -0.000359 * kBoattail2 * kBoattail;
   return kA + kB + kC + kD + kE + kF + kG + kH + kI + kJ + kK;
 }
 
