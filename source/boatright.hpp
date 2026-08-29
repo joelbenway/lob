@@ -183,10 +183,11 @@ inline double CalculateInertialRatio(InchT caliber, CaliberT length,
   const double kH4 = kH2 * kH2;
   const GrainT kWtCalc = GrainT(kPi / 4 * average_density * kCal * kCal * kCal *
                                 kLL.Value() * (1 - 2 * kH / 3));
-  const double kF1 = 15 - (12 * kH) +
-                     ((kLL * kLL).Value() *
-                      (60 - (160 * kH) + (180 * kH2) - (96 * kH3) + (19 * kH4)) /
-                      (3 - (2 * kH)));
+  const double kF1 =
+      15 - (12 * kH) +
+      ((kLL * kLL).Value() *
+       (60 - (160 * kH) + (180 * kH2) - (96 * kH3) + (19 * kH4)) /
+       (3 - (2 * kH)));
   const double kIyOverIx =
       std::pow(mass / kWtCalc, 0.894).Value() * kF1 / (30 * (1 - (4 * kH / 5)));
   return kIyOverIx;
