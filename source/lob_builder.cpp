@@ -94,10 +94,10 @@ void BuildDynamicDensity(DegFT temperature_at_firing_site, LobContext* pout) {
   constexpr double kInvLapseDenom =
       (1.0 / isa::kGasConstantAir) -
       (isa::kLapseDegFPerFt / kStandardGravityFtPerSecSq);
-  pout->k_lapse =
-      kInvLapseDenom / DegRT(temperature_at_firing_site).Value();
+  pout->k_lapse = kInvLapseDenom / DegRT(temperature_at_firing_site).Value();
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
   FeetT altitude_of_firing_site = FeetT(0);
@@ -401,8 +401,7 @@ void BuildCoefficients(Impl* pimpl, LobContext* pout) {
 
   assert(!pimpl->air_density_lbs_per_cu_ft.IsNaN());
   constexpr double kDragScale = kPi / 1152.0;  // pi/(144*8) for Pmsi=1
-  pout->drag_coeff =
-      pimpl->air_density_lbs_per_cu_ft.Value() * kDragScale;
+  pout->drag_coeff = pimpl->air_density_lbs_per_cu_ft.Value() * kDragScale;
 }
 
 void BuildWind(Impl* pimpl, LobContext* pout) {
@@ -423,8 +422,7 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
     pimpl->wind_speed_fps = FpsT(0);
   }
 
-  if (!(pimpl->wind_speed_fps > FpsT(0) ||
-        pimpl->wind_speed_fps < FpsT(0))) {
+  if (!(pimpl->wind_speed_fps > FpsT(0) || pimpl->wind_speed_fps < FpsT(0))) {
     pout->wind.x = 0.0;
     pout->wind.z = 0.0;
     return;
@@ -518,6 +516,7 @@ void BuildCoriolis(Impl* pimpl, LobContext* pout) {
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void BuildBoatright(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
@@ -601,10 +600,10 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const auto kGamma =
       boatright::CalculateCrosswindAngleGamma(kZWind, kVelocity);
   const auto kCD0 = pimpl->drag_table_mode == DragTableMode::kStandard ||
-                             pimpl->drag_table_mode == DragTableMode::kBcBands
-                         ? boatright::CalculateZeroYawDragCoefficientOfDrag(
-                               kCdRef, kMass, kD, PmsiT(1))
-                         : static_cast<double>(kCdRef);
+                            pimpl->drag_table_mode == DragTableMode::kBcBands
+                        ? boatright::CalculateZeroYawDragCoefficientOfDrag(
+                              kCdRef, kMass, kD, PmsiT(1))
+                        : static_cast<double>(kCdRef);
   const double kCD =
       (kGamma < 0.0 || kGamma > 0.0)
           ? kCD0 + boatright::CalculateYawDragAdjustment(kGamma, kR, kCDa)
@@ -612,11 +611,10 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const double kPitch = (kGamma < 0.0 || kGamma > 0.0)
                             ? boatright::CalculateVerticalPitch(kGamma, kR, kN)
                             : 0.0;
-  const double kJv =
-      (kGamma < 0.0 || kGamma > 0.0)
-          ? boatright::CalculateVerticalImpulse(kTwist, kN, kTn, kQ, kS, kCL,
-                                                kCD, kPitch)
-          : 0.0;
+  const double kJv = (kGamma < 0.0 || kGamma > 0.0)
+                         ? boatright::CalculateVerticalImpulse(
+                               kTwist, kN, kTn, kQ, kS, kCL, kCD, kPitch)
+                         : 0.0;
   const auto kMOM = boatright::CalculateMagnitudeOfMomentum(kMass, kVelocity);
   const MoaT kJump = (kGamma < 0.0 || kGamma > 0.0)
                          ? MoaT(RadiansT(-1 * kJv / kMOM))
@@ -720,9 +718,9 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
       (pimpl->velocity_fps * pimpl->velocity_fps).Value());
   const auto kClampedVacuumSeed =
       std::max(constant::kMinAngle, std::min(constant::kMaxAngle, kVacuumSeed));
-  const MoaT kAngle = FastSolveAngle(*pout, pimpl->zero_distance_ft,
-                                     pimpl->zero_impact_height,
-                                     kClampedVacuumSeed);
+  const MoaT kAngle =
+      FastSolveAngle(*pout, pimpl->zero_distance_ft, pimpl->zero_impact_height,
+                     kClampedVacuumSeed);
   if (std::isnan(kAngle)) {
     pout->error = kLobErrorZeroUnreachable;
     return;
@@ -738,11 +736,11 @@ void BuildOptions(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  const FpsT kMinSpeed = pimpl->minimum_energy_ft_lbs.IsNaN()
-                                   ? FpsT(0)
-                                   : CalculateVelocityFromKineticEnergy(
-                                         pimpl->minimum_energy_ft_lbs,
-                                         SlugT(pimpl->mass_lbs));
+  const FpsT kMinSpeed =
+      pimpl->minimum_energy_ft_lbs.IsNaN()
+          ? FpsT(0)
+          : CalculateVelocityFromKineticEnergy(pimpl->minimum_energy_ft_lbs,
+                                               SlugT(pimpl->mass_lbs));
   pout->minimum_speed =
       std::max(pout->minimum_speed,
                kMinSpeed.IsNaN() ? static_cast<uint16_t>(0) : kMinSpeed.U16());

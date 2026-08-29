@@ -22,8 +22,8 @@ TEST(CalcTests, CalculateTemperatureAtAltitude) {
   static_assert(
       lob::CalculateTemperatureAtAltitude(lob::FeetT(kAssertAltitudeFt),
                                           lob::DegFT(lob::isa::kSeaLevelDegF))
-              .Value() >=
-          lob::isa::kSeaLevelDegF - lob::isa::kLapseDegFPerFt * kAssertAltitudeFt,
+              .Value() >= lob::isa::kSeaLevelDegF -
+                              lob::isa::kLapseDegFPerFt * kAssertAltitudeFt,
       "CalculateTemperatureAtAltitude not constexpr");
   // Test data from page 167 of Modern Exterior Ballistics - McCoy
   const std::vector<uint32_t> kAltitudesFt = {
@@ -111,11 +111,12 @@ TEST(CalcTests, BarometricFormulaNegative) {
   constexpr int16_t kAltitude = -1000;
   constexpr double kExpectedResult = 31.02;
   const double kError = 0.025;
-  EXPECT_NEAR(lob::BarometricFormula(lob::FeetT(kAltitude),
-                                     lob::InHgT(lob::isa::kSeaLevelPressureInHg),
-                                     lob::DegFT(lob::isa::kSeaLevelDegF))
-                  .Value(),
-              kExpectedResult, kError);
+  EXPECT_NEAR(
+      lob::BarometricFormula(lob::FeetT(kAltitude),
+                             lob::InHgT(lob::isa::kSeaLevelPressureInHg),
+                             lob::DegFT(lob::isa::kSeaLevelDegF))
+          .Value(),
+      kExpectedResult, kError);
 }
 
 TEST(CalcTests, CalculateAirDensityAtAltitude) {

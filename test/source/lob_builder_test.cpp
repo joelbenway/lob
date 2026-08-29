@@ -344,7 +344,8 @@ INSTANTIATE_TEST_SUITE_P(
                   .ZeroDistanceYds(kJackOConnorZeroYardage)
                   .ZeroImpactHeightInches(kJackOConnorZeroHeight)
                   .AltitudeOfFiringSiteFt(0.0)
-                  .AltitudeOfThermometerFt(lob::isa::kStratosphereAltitudeFt + 1)
+                  .AltitudeOfThermometerFt(lob::isa::kStratosphereAltitudeFt +
+                                           1)
                   .Build();
             },
             lob::ErrorT::kAltitudeOfThermometerOOR},
