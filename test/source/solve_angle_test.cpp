@@ -246,6 +246,28 @@ TEST_F(SolveAngleTest, SolveInverseMatchesSolveAngle) {
   }
 }
 
+TEST_F(SolveAngleTest, SolveInverseMatchesSolveAngleDynamic) {
+  const std::array<uint32_t, 3> kRanges = {6000U, 7500U, 9000U};
+  const double kToleranceMoa = 0.01;
+  for (const uint32_t kRangeFt : kRanges) {
+    LobOutput forward{};
+    ASSERT_EQ(LobSolve(&ctx, &kRangeFt, &forward, 1U), 1U);
+    ASSERT_LT(forward.elevation, -1200.0)
+        << "range=" << kRangeFt << " forward elevation " << forward.elevation
+        << " should be < -1200 to exercise dynamic branch";
+
+    LobOutput inverse{};
+    ASSERT_EQ(LobSolveInverse(&ctx, &kRangeFt, &inverse, 1U), 1U);
+    const lob::MoaT kSolved = lob::SolveAngle(
+        ctx, lob::FeetT(static_cast<double>(kRangeFt)), lob::FeetT(0.0),
+        lob::RadiansT(lob::MoaT(ctx.zero_angle)));
+    ASSERT_FALSE(kSolved.IsNaN());
+    EXPECT_NEAR(kSolved.Value(), kTestZeroAngle + inverse.elevation,
+                kToleranceMoa)
+        << "range=" << kRangeFt;
+  }
+}
+
 TEST(BuilderZeroAngleTest, MatchesSolveAngle) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
