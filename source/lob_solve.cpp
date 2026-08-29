@@ -199,10 +199,9 @@ size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
     const FeetT kElevation = InchT(pouts[i].elevation);
     const FeetT kRange = FeetT(pouts[i].range);
     const RadiansT kSeed = FastInverseAngle(kSeedBase, kElevation, kRange);
-    const RadiansT kTheta = kUseDynamic
-                                ? SolveAngle(*pctx, kRange, FeetT(0.0), kSeed)
-                                : FastSolveAngle(*pctx, kRange, FeetT(0.0),
-                                                 kSeed);
+    const RadiansT kTheta =
+        kUseDynamic ? SolveAngle(*pctx, kRange, FeetT(0.0), kSeed)
+                    : FastSolveAngle(*pctx, kRange, FeetT(0.0), kSeed);
     if (kTheta.IsNaN()) {
       return i;
     }
