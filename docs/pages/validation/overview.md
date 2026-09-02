@@ -76,7 +76,7 @@ accuracy promise is made.
 
 - Per-step lapse is gated (`Fast*` firing-site vs `DsDx`/`SolveStep`/`SolveAngle`
   when forward `drop>100ft`), not universal — see @ref model_atmosphere and
-  `source/lob_solve.cpp` `kDynamicDropThresholdIn`. Long-range `>100ft` inverse
+  `source/lob_solve.cpp` `kDynamicDropThreshold`. Long-range `>100ft` inverse
   accuracy vs field data would be a stronger anchor than builder-time ISA alone.
 - No field-data validation beyond the BRL tables and borrowed reference
   trajectories; a “field vs radar” data set would be a stronger anchor.

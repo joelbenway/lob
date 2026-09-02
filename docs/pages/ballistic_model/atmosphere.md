@@ -18,14 +18,14 @@ site conditions, and then optionally stratified per step via `ctx.k_lapse`
 
 Builder inputs that affect the atmosphere (`source/lob_builder.cpp`):
 
-- `AltitudeOfFiringSiteFt` — feet, `|alt| < kIsaStratosphereAltitudeFt`
+- `AltitudeOfFiringSiteFt` — feet, `|alt| < kStratosphereAltitudeFt`
   (65 617 ft).  Outside that → `kLobErrorAltitudeOfFiringSiteOOR`.
 - `AirPressureInHg` — inHg, `≥ 0`.  If absent, ISA sea-level 29.92 inHg
   propagated via the barometric formula from the site altitude.
 - `AltitudeOfBarometerFt` — where the pressure was read; defaults to the
   firing-site altitude.  The pressure is barometrically shifted to the firing
   site (`source/lob_builder.cpp`).
-- `TemperatureDegF` — degrees F.  If absent, `kIsaSeaLevelDegF` (59 °F) at
+- `TemperatureDegF` — degrees F.  If absent, `kSeaLevelDegF` (59 °F) at
   sea level lapsed to the site.  If a thermometer altitude is given,
   `AltitudeOfThermometerFt`, the temperature is shifted similarly
   (`source/lob_builder.cpp`).
@@ -35,9 +35,9 @@ All altitudes are validated against the same ISA ceiling.
 
 @section model-atm-formulas Formulas
 
-Lapse and barometric formula (`source/calc.hpp`, `source/calc.hpp`):
+Lapse and barometric formula (`source/calc.hpp`):
 
-```
+```text
 T(h) = max(T0 − L·h, T_min)               with L = 0.00356616 °F/ft, T_min = −69.7 °F
 p(h) = p0·(1 − L·h / T_R)^e · exp(...)     e = g/(R·L), with tropopause/stratosphere branch
 ```
@@ -48,13 +48,13 @@ isothermal exponential above it, matching the implementation.
 Humidity enters via Huang's saturation-pressure formula
 (`source/calc.hpp`):
 
-```
+```text
 p_sat(T) = exp(A − B/(T_C+D1) − C·ln(T_C+D2))   distinct A,B,C,D1,D2 for water vs ice
 ```
 
 and two linear corrections (McCoy p. 167–168, with `h = RelativeHumidityPercent` ∈ [0, 100] as a percent value, not a 0–1 fraction; `0.00378` and `0.00140` already include the percent scaling):
 
-```
+```text
 ρ/ρ0 = (p/p0)·(T0_R/T_R)
 ρ_corr = 1 − 0.00378·h·p_sat/p0
 c_corr = 1 + 0.00140·h·p_sat/p0
@@ -76,17 +76,17 @@ via `CalculateCdCoefficient` using the solver's ρ·π/8 relationship at BC=1
 per step.
 
 Per-step stratification (`source/solve_step.cpp`):
-```
+```text
 u = −k_lapse·P·G          // dimensionless altitude projected onto G
 ρ/ρ0 = 1 − u·(1−α·u)      // α=(e−1)/2e, e=kHydrostaticExponent
 c/c0 = 1 − β·u            // β=1/2e
-Cd = curve(Mach)·drag·(ρ/ρ0),  Mach=|v|/c·(c0/c)
+Cd = curve(Mach)·drag·(ρ/ρ0),  Mach=|v|/c
 ```
 `DsDx` scales `drag_coeff`/`speed_of_sound` by `ρ/ρ0`/`c/c0`; `FastDsDx`
 uses firing-site values.  `LobSolve` (forward) and `BuildBoatright`/`BuildZeroAngle`
 use `Fast*` fast path; `LobSolveInverse` uses `FastSolveAngle` or `SolveAngle`
 per-range gated on forward `drop>100ft` (`elevation < −1200in`,
-`source/lob_solve.cpp` `kDynamicDropThresholdIn`).
+`source/lob_solve.cpp` `kDynamicDropThreshold`).
 
 @section model-atm-limitations Limitations
 
