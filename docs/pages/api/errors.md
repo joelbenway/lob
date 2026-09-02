@@ -26,7 +26,7 @@ exposed from a successful `Build()`; `kLobErrorNumberOfErrors` is the count.
 | `kRangeAngleOOR` | `abs(RangeAngleDeg) ≥ 90°` |
 | `kDiameterOOR` / `kLengthOOR` / `kMassOOR` | non-positive geometry needed for `stability_factor` |
 | `kMeplatDiameterOOR` / `kBaseDiameterOOR` / `kNoseLengthOOR` / `kTailLengthOOR` / `kOgiveRtROOR` | Boatright geometry out of `[0,∞)` or `ogiveRtR ∉ [0,1]` |
-| `kAltitudeOfFiringSiteOOR` / `kAltitudeOfBarometerOOR` / `kAltitudeOfThermometerOOR` | `abs(alt) ≥ 65 617 ft` (`kIsaStratosphereAltitudeFt`) |
+| `kAltitudeOfFiringSiteOOR` / `kAltitudeOfBarometerOOR` / `kAltitudeOfThermometerOOR` | `abs(alt) ≥ 65 617 ft` (`kStratosphereAltitudeFt`) |
 | `kAirPressureOOR` | `AirPressureInHg < 0` |
 | `kHumidityOOR` | `RelativeHumidityPercent ∉ [0,100]` |
 | `kAzimuthOOR` | `abs(azimuth) > 360°` |
