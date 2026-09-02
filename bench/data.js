@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787594327544,
+  "lastUpdate": 1788354523604,
   "repoUrl": "https://github.com/joelbenway/lob",
   "entries": {
     "lob instruction counts": [
@@ -289,6 +289,65 @@ window.BENCHMARK_DATA = {
           {
             "name": "lob_bench/solve_inverse",
             "value": 1089615.995,
+            "unit": "Ir/op"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "user.email",
+            "username": "joelbenway"
+          },
+          "committer": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "distinct": true,
+          "id": "4435aefc69c9c22c1d0b80d459240d62201a751b",
+          "message": "docs: mark numerical-methods pseudocode as text\n\nUse text fences for Heun/pseudocode/ASCII diagrams so\nDoxygen does not highlight them as C++, and keep the\ninverse solver NaN guard concise (θ* defined by the\ngated ternary).\n\nCo-authored-by: muse-spark-1.2",
+          "timestamp": "2026-09-02T07:54:11-05:00",
+          "tree_id": "a2863b0c2fe6189d71f95e510f34ae0c17896ecc",
+          "url": "https://github.com/joelbenway/lob/commit/4435aefc69c9c22c1d0b80d459240d62201a751b"
+        },
+        "date": 1788354523016,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "lob_bench/build_basic",
+            "value": 615,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_full",
+            "value": 1731,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_custom_table",
+            "value": 7608.001,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_boatright",
+            "value": 491408.006,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_zero_search",
+            "value": 67566.005,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_basic",
+            "value": 223277.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse",
+            "value": 919539.995,
             "unit": "Ir/op"
           }
         ]
