@@ -160,9 +160,9 @@ Coverage and checks</h1>
 <h1><a class="anchor" id="validation-future"></a>
 Gaps and follow-ups</h1>
 <ul>
-<li>No per-step atmospheric stratification claim; altitude dependence is builder- time only — per-step atmospheric lapse is a planned feature.</li>
+<li>Per-step lapse is gated (<code>Fast*</code> firing-site vs <code>DsDx</code>/<code>SolveStep</code>/<code>SolveAngle</code> when forward <code>drop&gt;100ft</code>), not universal — see <a class="el" href="model_atmosphere.html">Atmospheric Model</a> and <code>source/lob_solve.cpp</code> <code>kDynamicDropThreshold</code>. Long-range <code>&gt;100ft</code> inverse accuracy vs field data would be a stronger anchor than builder-time ISA alone.</li>
 <li>No field-data validation beyond the BRL tables and borrowed reference trajectories; a “field vs radar” data set would be a stronger anchor.</li>
-<li>Performance is benchmarked but no regression gate is enforced in CI.</li>
+<li>Performance is benchmarked (<code>ci-benchmark</code> <code>cachegrind</code>) but no regression gate is enforced in CI beyond <code>CG_MAX_REGRESSION_BP</code>.</li>
 <li>The spline knot optimization (<code>5e-3</code> budget) is validated but its derivation is not documented beyond the exhaustive test's <code>5000</code>-point grid — worth a short note if the knot set ever changes. </li>
 </ul>
 </div></div><!-- contents -->

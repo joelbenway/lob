@@ -6,6 +6,7 @@ var structLobContext =
     [ "drags", "structLobContext.html#a09075a661d42db50cbfa01711e044509", null ],
     [ "error", "structLobContext.html#a7dc861e86fed013a6e71799d52da3a23", null ],
     [ "gravity", "structLobContext.html#a958dbdacdb002c6d2e2f34ae78194212", null ],
+    [ "k_lapse", "structLobContext.html#a22553dd319140a37ad2f48e5b83ad6e8", null ],
     [ "mass", "structLobContext.html#a896e5c8cda237b1e5e6875b543fa1fd5", null ],
     [ "max_time", "structLobContext.html#a60d1d5394cb1b2d7bb34cd7d63ad400a", null ],
     [ "minimum_speed", "structLobContext.html#a9239b3631836f6a21555df6fce312d79", null ],

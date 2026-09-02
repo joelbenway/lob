@@ -141,7 +141,7 @@ Builder pattern</h1>
 <p>See <a class="el" href="api_builder.html">Builder</a>. Ballistic solves have ~25 optional interacting inputs; a flat function would have an unusable arity and no place for cross-field validation (e.g. “zero distance without velocity is meaningless”, “Army vs ICAO conversion”). The builder lets callers name only what they know, defaults the rest to ISA/zero, and validates the whole set before the solver runs. The two stages also let high-fidelity branches (Boatright) test “is this geometry complete?” without penalizing minimal builds.</p>
 <h1><a class="anchor" id="design-integration"></a>
 Numerical integration choices</h1>
-<p>See <a class="el" href="num_ode.html">ODE Integration</a>. lob integrates in down-range distance using <b>Heun (RK2)</b> with a fixed 1-yard default step and a trapezoidal <code>TOF</code> update. Integrating over distance with a configurable step size provides flexibility across diverse applications — intercepting a drone at 50 yards within a millisecond requires different spatial resolution than calculating a multi-mile long-range shot.</p>
+<p>See <a class="el" href="num_ode.html">ODE Integration</a>. lob integrates in down-range distance using <b>Heun (RK2)</b> with a fixed 1-yard default step and <code>TOF</code> integrated as <code>d(TOF)/dx=1/vx</code> in <code>DsDx</code> (<code>source/solve_step.cpp</code> <code>DsDxCore</code>). Integrating over distance with a configurable step size provides flexibility across diverse applications — intercepting a drone at 50 yards within a millisecond requires different spatial resolution than calculating a multi-mile long-range shot. Per-step air-density lapse (<code>k_lapse</code>, <a class="el" href="model_atmosphere.html">Atmospheric Model</a>) is <code>FastDsDx</code>/<code>FastSolveStep</code> (firing-site) for forward/zero/Boatright and <code>DsDx</code>/<code>SolveStep</code> for <code>LobSolveInverse</code> ranges with forward <code>drop&gt;100ft</code> (<code>elevation &lt; −1200in</code>).</p>
 <p>The method choice follows BRL experience: "The cumulative experience of the Ballistic Research Laboratory has shown that
 the one-step, second-order methods are, in the practical sense, optimum
 solutions of the point-mass trajectory problem." (McCoy, <em>Modern Exterior Ballistics — The Launch and Flight Dynamics of Symmetric Projectiles</em>, 2nd ed). RK4 is ~2× the cost and cannot quite double the step size (<code>benchmark/ode.cpp</code> — each method there is tuned to ~1 ft error vs an RK4 <code>dt=1e-5</code> reference, so the 2× is cost-matched, not <code>dt</code>-matched); Euler needs sub-inch steps to meet the <code>1 fps</code> tolerance. Heun on the 1-yard grid passes the registered reference trajectories within <code>@ref validation_overview</code> tolerances with linear cost.</p>
@@ -162,16 +162,14 @@ Performance considerations</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Heun (production, 1-yd)   </td><td class="markdownTableBodyNone">33 226 ns   </td><td class="markdownTableBodyNone">7.36    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">IterativeHeun 3×   </td><td class="markdownTableBodyNone">67 766 ns   </td><td class="markdownTableBodyNone">6.94    </td></tr>
-<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">LobLerp   </td><td class="markdownTableBodyNone">329 128 ns   </td><td class="markdownTableBodyNone">—    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">CurveView (PCHIP)   </td><td class="markdownTableBodyNone">167 774 ns   </td><td class="markdownTableBodyNone">—   </td></tr>
 </table>
-<p>Heun is ~2× faster than 3×-iterated Heun for 0.4 ft error delta; <code>CurveView</code> is ~1.96× faster than linear lerp on the same 87-point table. Step size via <code>Builder::StepSize</code> reduces error monotonically with linear cost — measure your trajectory, don’t trust a global number.</p>
+<p><code>CurveView</code> is ~1.96× faster than linear lerp on the same 87-point table. <code>FastDsDx</code>/<code>FastSolveStep</code>/<code>FastSolveAngle</code> (firing-site density) vs <code>DsDx</code>/<code>SolveStep</code>/<code>SolveAngle</code> (lapse-scaled) share <code>DsDxCore</code> helpers; <code>LobSolveInverse</code> gates per-range <code>&gt;100ft</code> to <code>SolveAngle</code>. Step size via <code>Builder::StepSize</code> reduces error monotonically with linear cost — measure your trajectory, don’t trust a global number.</p>
 <h1><a class="anchor" id="design-shared"></a>
 Shared angle solver — why it matters</h1>
-<p>See <a class="el" href="design_shared_solver.html">Shared Angle Solver</a> for the dedicated treatment. In short, zero finding and inverse solving solve the same root <code>f(θ)=0</code>; sharing <code>SolveAngle</code>/<code>FastInverseAngle</code> (<code>source/solve_angle.hpp</code>) guarantees the zero used at build time and the adjustments returned later are consistent. </p>
+<p>See <a class="el" href="design_shared_solver.html">Shared Angle Solver</a> for the dedicated treatment. In short, zero finding (<code>FastSolveAngle</code>) and inverse solving (<code>FastSolveAngle</code> or <code>SolveAngle</code> per-range) solve the same root <code>f(θ)=0</code>; sharing <code>SolveAngle</code>/<code>FastSolveAngle</code>/<code>FastInverseAngle</code> (<code>source/solve_angle.hpp</code>) guarantees the zero used at build time and the adjustments returned later are consistent. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->

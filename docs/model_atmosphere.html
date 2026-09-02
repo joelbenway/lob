@@ -120,21 +120,21 @@ $(function(){initNavTree('model_atmosphere.html',''); initResizable(true); });
 Atmospheric Model</h1>
 <h1><a class="anchor" id="model-atm-overview"></a>
 Overview</h1>
-<p>The atmosphere determines two quantities the integrator needs: air density (through <code>drag_coeff</code>) and speed of sound (for Mach). lob implements the International Standard Atmosphere (ISA) with humidity corrections (McCoy pp. 166–168; Huang saturation-pressure formula). Lapse, humidity and barometric corrections are evaluated once at <code>Build()</code> time from the firing- site conditions — there is no per-step altitude stratification.</p>
+<p>The atmosphere determines two quantities the integrator needs: air density (through <code>drag_coeff</code>) and speed of sound (for Mach). lob implements the International Standard Atmosphere (ISA) with humidity corrections (McCoy pp. 166–168; Huang saturation-pressure formula). Lapse, humidity and barometric corrections are evaluated once at <code>Build()</code> time from the firing- site conditions, and then optionally stratified per step via <code>ctx.k_lapse</code> (<code>source/constants.hpp</code> <code>kHydrostaticExponent</code>/<code>kBarometricExponent</code>, <code>source/lob_builder.cpp</code> <code>BuildDynamicDensity</code>, <code>source/solve_step.cpp</code> <code>DsDx</code>/<code>FastDsDx</code>).</p>
 <h1><a class="anchor" id="model-atm-inputs"></a>
 Inputs</h1>
 <p>Builder inputs that affect the atmosphere (<code>source/lob_builder.cpp</code>):</p>
 <ul>
-<li><code>AltitudeOfFiringSiteFt</code> — feet, <code>|alt| &lt; kIsaStratosphereAltitudeFt</code> (65 617 ft). Outside that → <code>kLobErrorAltitudeOfFiringSiteOOR</code>.</li>
+<li><code>AltitudeOfFiringSiteFt</code> — feet, <code>|alt| &lt; kStratosphereAltitudeFt</code> (65 617 ft). Outside that → <code>kLobErrorAltitudeOfFiringSiteOOR</code>.</li>
 <li><code>AirPressureInHg</code> — inHg, <code>≥ 0</code>. If absent, ISA sea-level 29.92 inHg propagated via the barometric formula from the site altitude.</li>
 <li><code>AltitudeOfBarometerFt</code> — where the pressure was read; defaults to the firing-site altitude. The pressure is barometrically shifted to the firing site (<code>source/lob_builder.cpp</code>).</li>
-<li><code>TemperatureDegF</code> — degrees F. If absent, <code>kIsaSeaLevelDegF</code> (59 °F) at sea level lapsed to the site. If a thermometer altitude is given, <code>AltitudeOfThermometerFt</code>, the temperature is shifted similarly (<code>source/lob_builder.cpp</code>).</li>
+<li><code>TemperatureDegF</code> — degrees F. If absent, <code>kSeaLevelDegF</code> (59 °F) at sea level lapsed to the site. If a thermometer altitude is given, <code>AltitudeOfThermometerFt</code>, the temperature is shifted similarly (<code>source/lob_builder.cpp</code>).</li>
 <li><code>RelativeHumidityPercent</code> — 0–100, defaults to 0.</li>
 </ul>
 <p>All altitudes are validated against the same ISA ceiling.</p>
 <h1><a class="anchor" id="model-atm-formulas"></a>
 Formulas</h1>
-<p>Lapse and barometric formula (<code>source/calc.hpp</code>, <code>source/calc.hpp</code>):</p>
+<p>Lapse and barometric formula (<code>source/calc.hpp</code>):</p>
 <div class="fragment"><div class="line">T(h) = max(T0 − L·h, T_min)               with L = 0.00356616 °F/ft, T_min = −69.7 °F</div>
 <div class="line">p(h) = p0·(1 − L·h / T_R)^e · exp(...)     e = g/(R·L), with tropopause/stratosphere branch</div>
 </div><!-- fragment --><p><code>BarometricFormula</code> handles the tropopause at 36 090 ft and then an isothermal exponential above it, matching the implementation.</p>
@@ -149,11 +149,16 @@ Formulas</h1>
 </div><!-- fragment --><p><code>ρ0_ISA = 0.0764742 lb/ft³</code>, <code>c0_ISA = 1116.45 fps</code>. Army Standard Metro uses <code>0.0751265 lb/ft³</code> and is converted at the BC level, not here.</p>
 <h1><a class="anchor" id="model-atm-output"></a>
 Output in Context</h1>
-<p><code>BuildEnvironment</code> writes <code>ctx.speed_of_sound</code> (fps) and the intermediate <code>Impl::air_density_lbs_per_cu_ft</code>, which is converted to <code>ctx.drag_coeff</code> via <code>CalculateCdCoefficient</code> using the solver's ρ·π/8 relationship at BC=1 (<code>source/lob_builder.cpp</code>, <code>source/calc.hpp</code>). No per-step altitude dependence remains.</p>
+<p><code>BuildEnvironment</code> writes <code>ctx.speed_of_sound</code> (fps) and the intermediate <code>Impl::air_density_lbs_per_cu_ft</code>, which is converted to <code>ctx.drag_coeff</code> via <code>CalculateCdCoefficient</code> using the solver's ρ·π/8 relationship at BC=1 (<code>source/lob_builder.cpp</code>, <code>source/calc.hpp</code>). It also writes <code>ctx.k_lapse</code> (<code>(1/R−L/g)/T_R</code>, <code>source/lob_builder.cpp</code> <code>BuildDynamicDensity</code>) — the projected linear density lapse coefficient used per step.</p>
+<p>Per-step stratification (<code>source/solve_step.cpp</code>): </p><div class="fragment"><div class="line">u = −k_lapse·P·G          // dimensionless altitude projected onto G</div>
+<div class="line">ρ/ρ0 = 1 − u·(1−α·u)      // α=(e−1)/2e, e=kHydrostaticExponent</div>
+<div class="line">c/c0 = 1 − β·u            // β=1/2e</div>
+<div class="line">Cd = curve(Mach)·drag·(ρ/ρ0),  Mach=|v|/c</div>
+</div><!-- fragment --><p> <code>DsDx</code> scales <code>drag_coeff</code>/<code>speed_of_sound</code> by <code>ρ/ρ0</code>/<code>c/c0</code>; <code>FastDsDx</code> uses firing-site values. <code>LobSolve</code> (forward) and <code>BuildBoatright</code>/<code>BuildZeroAngle</code> use <code>Fast*</code> fast path; <code>LobSolveInverse</code> uses <code>FastSolveAngle</code> or <code>SolveAngle</code> per-range gated on forward <code>drop&gt;100ft</code> (<code>elevation &lt; −1200in</code>, <code>source/lob_solve.cpp</code> <code>kDynamicDropThreshold</code>).</p>
 <h1><a class="anchor" id="model-atm-limitations"></a>
 Limitations</h1>
 <ul>
-<li>No per-step density lapse along the trajectory; the firing-site density is used for the whole flight (per-step atmospheric lapse is a planned feature). For the ranges lob is validated against (<code>test/source/lob_env_test.cpp</code>) the error is bounded by the tests' tolerances rather than a claimed universal accuracy.</li>
+<li>Per-step lapse is gated: forward solves and <code>drop≤100ft</code> inverse ranges stay on <code>Fast*</code> (firing-site density) for speed; only <code>drop&gt;100ft</code> inverse ranges pay <code>DsDx</code>/<code>SolveStep</code>/<code>SolveAngle</code>. For the ranges lob is validated against (<code>test/source/lob_env_test.cpp</code>) the error is bounded by the tests' tolerances.</li>
 <li>Temperature is lapsed with the simple linear ISA lapse, not McCoy's exponential variant <code>CalculateTemperatureAtAltitudeMcCoy</code> (kept for reference only, <code>source/calc.hpp</code>). </li>
 </ul>
 </div></div><!-- contents -->

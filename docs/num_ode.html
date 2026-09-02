@@ -125,21 +125,25 @@ Problem</h1>
 </div><!-- fragment --><p>integrated in down-range distance <code>x</code> rather than time <code>t</code> because the shooter queries by distance. Integrating over distance with a configurable step size provides flexibility across diverse applications — intercepting a drone at 50 yards within a millisecond requires different spatial resolution than computing a multi-mile long-range shot. Time of flight is advanced as a dependent variable via the velocity history.</p>
 <h1><a class="anchor" id="num-ode-method"></a>
 Method</h1>
-<p><code>source/ode.hpp</code> provides four steppers; lob uses <b>Heun's method</b> (RK2 predictor-corrector) in <code>SolveStep</code> (<code>source/solve_step.cpp</code>):</p>
+<p><code>source/ode.hpp</code> provides three steppers; lob uses <b>Heun's method</b> (RK2 predictor-corrector) in <code>SolveStep</code> (<code>source/solve_step.cpp</code>):</p>
 <div class="fragment"><div class="line">k1 = f(x_n, y_n)</div>
 <div class="line">k2 = f(x_n+Δx, y_n + k1·Δx)</div>
 <div class="line">y_{n+1} = y_n + (k1+k2)/2 · Δx</div>
 </div><!-- fragment --><p><code>Δx</code> is one yard (36 in) by default or <code>ctx.step_size</code> inches if the caller set it (<code>source/solve_step.cpp</code>). The last step to a requested target <code>R</code> is clamped: <code>Δx = min(R − x_n, step)</code>.</p>
-<p><code>DsDx</code> (<code>source/solve_step.cpp</code>) evaluates <code>f</code>:</p>
-<div class="fragment"><div class="line">kDtDx = 1/vx   (guarded: if vx ≤ 0 → zero derivative)</div>
+<p><code>DsDx</code> / <code>FastDsDx</code> (<code>source/solve_step.cpp</code>) evaluates <code>f</code> via <code>DsDxCore</code> helpers (<code>GetDtDx</code>/<code>GetWind</code>/<code>GetMach</code>/<code>GetCd</code>/<code>GetDpDt</code>/<code>GetDvDt</code>):</p>
+<div class="fragment"><div class="line">kDtDx = 1/vx                    (guarded: if vx ≤ 0 → zero derivative)</div>
 <div class="line">wind  = (ctx.wind.x, 0, ctx.wind.z)</div>
+<div class="line">u     = −k_lapse·P·G            (only DsDx; FastDsDx skips)</div>
+<div class="line">drag  = drag_coeff·(1−u(1−αu))   (only DsDx; FastDsDx = drag_coeff)</div>
+<div class="line">c     = c·(1−βu)                (only DsDx; FastDsDx = c)</div>
 <div class="line">Mach  = |v|/c</div>
-<div class="line">Cd    = curve.Eval(Mach)·drag_coeff</div>
+<div class="line">Cd    = curve.Eval(Mach)·drag</div>
 <div class="line">dp/dt = v</div>
-<div class="line">dv/dt = −Cd·|v−w|·(v−w)  − Coriolis(v) + gravity</div>
-<div class="line">return (dp/dt·kDtDx, dv/dt·kDtDx)</div>
-</div><!-- fragment --><p><code>TOF</code> is <b>not</b> integrated via <code>f</code>; it is advanced by the trapezoidal approximation <code>2·Δx/(vx_old+vx_new)</code> after the Heun step (<code>source/solve_step.cpp</code>), which is exact only if the velocity profile were linear over the step.</p>
-<p><code>source/ode.hpp</code> also implements <code>EulerStep</code>, <code>RungeKuttaStep</code> (RK4) and <code>IterativeHeunStep</code>; they are not used in production but are exercised in <code>test/source/ode_test.cpp</code> to demonstrate convergence on the test ODE <code>dy/dt = sin²(t)·y</code>.</p>
+<div class="line">dv/dt = −Cd·|v−w|·(v−w) − Coriolis(v) + gravity</div>
+<div class="line">d(TOF)/dt = 1</div>
+<div class="line">return (dp/dt·kDtDx, dv/dt·kDtDx, 1/vx)</div>
+</div><!-- fragment --><p><code>TOF</code> is integrated as the third component of <code>f</code> via <code>d(TOF)/dx = 1/vx</code> (<code>DsDxCore</code> <code>SecT(kDtDx)</code>), integrated by <code>HeunStep</code> — <code>FastSolveStep</code> (<code>FastDsDx</code>) for forward/zero/Boatright and <code>SolveStep</code> (<code>DsDx</code>) for <code>drop&gt;100ft</code> inverse ranges.</p>
+<p><code>source/ode.hpp</code> also implements <code>EulerStep</code> and <code>RungeKuttaStep</code> (RK4); they are not used in production but are exercised in <code>test/source/ode_test.cpp</code> to demonstrate convergence on the test ODE <code>dy/dt = sin²(t)·y</code>.</p>
 <h1><a class="anchor" id="num-ode-accuracy"></a>
 Observed accuracy</h1>
 <p>No universal accuracy claim is made. The method choice follows BRL experience — "The cumulative experience of the Ballistic Research Laboratory has
@@ -154,8 +158,7 @@ optimum solutions of the point-mass trajectory problem." (McCoy, <em>Modern Exte
 Limitations</h1>
 <ul>
 <li>Fixed step size; no embedded error estimate or adaptive stepping.</li>
-<li>TOF via trapezoidal velocity average, not via integrating <code>dt/dx</code>.</li>
-<li>No per-step altitude stratification — density/c are firing-site values (per-step atmospheric lapse is planned). </li>
+<li>Per-step lapse is gated: <code>LobSolve</code>/<code>BuildBoatright</code>/<code>BuildZeroAngle</code> use <code>Fast*</code> (firing-site <code>ρ</code>/<code>c</code>); only <code>LobSolveInverse</code> ranges with forward <code>drop&gt;100ft</code> (<code>elevation &lt; −1200in</code>) use <code>DsDx</code>/<code>SolveStep</code>/<code>SolveAngle</code> lapse. </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->

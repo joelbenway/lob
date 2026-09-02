@@ -131,7 +131,7 @@ Equations of motion</h1>
 <div class="fragment"><div class="line">dp/dx = v / vx</div>
 <div class="line">dv/dx = dv/dt / vx</div>
 </div><!-- fragment --><p><code>DsDx</code> returns <code>(dp/dx, dv/dx)</code>. When <code>vx ≤ 0</code> the derivative is zeroed (<code>source/solve_step.cpp</code> <code>DsDx</code>) and the step clamps <code>vx</code> to zero — the projectile is falling straight down (<code>source/solve_step.cpp</code> <code>SolveStep</code>).</p>
-<p><code>drag_coeff</code> is <code>ρ·π / 8</code> (density term) for all paths; for the single-BC path the BC is divided into the spline coefficients <code>drags[60] = coefs/(BC·conversion)</code> (<code>source/calc.hpp</code>, <code>source/lob_builder.cpp</code>). For custom tables and BC bands the spline already embeds <code>1/BC</code> and <code>drag_coeff</code> remains <code>ρ·π / 8</code> at <code>BC=1</code>.</p>
+<p><code>drag_coeff</code> is <code>ρ·π / 8</code> (density term) for all paths; for the single-BC path the BC is divided into the spline coefficients <code>drags[60] = coefs/(BC·conversion)</code> (<code>source/calc.hpp</code>, <code>source/lob_builder.cpp</code>). For custom tables and BC bands the spline already embeds <code>1/BC</code> and <code>drag_coeff</code> remains <code>ρ·π / 8</code> at <code>BC=1</code>. Per step, <code>FastDsDx</code> uses firing-site <code>drag_coeff</code>/<code>c</code>, while <code>DsDx</code> scales them by <code>ρ/ρ0</code>/<code>c/c0</code> via <code>k_lapse</code> as described in <a class="el" href="model_atmosphere.html">Atmospheric Model</a> (<code>source/solve_step.cpp</code>).</p>
 <p>Coriolis is expanded as</p>
 <div class="fragment"><div class="line">dvx/dt −= vy·2Ω cos(lat) sin(az) + vz·2Ω sin(lat)</div>
 <div class="line">dvy/dt += vx·2Ω cos(lat) sin(az) + vz·2Ω cos(lat) cos(az)</div>
@@ -139,13 +139,13 @@ Equations of motion</h1>
 </div><!-- fragment --><p>with the three scalars precomputed in <code>BuildCoriolis</code> (<code>source/lob_builder.cpp</code>). Gravity is rotated by the range (inclination) angle: <code>gx = −g sin(rangeAngle)</code>, <code>gy = −g cos(rangeAngle)</code> (<code>source/lob_builder.cpp</code>).</p>
 <h1><a class="anchor" id="model-pm-integration"></a>
 How it is integrated</h1>
-<p>The integrator is Heun's method (RK2 predictor-corrector, <code>source/ode.hpp</code>): <code>y_{n+1}= y_n + (k1+k2)/2 · Δx</code> with <code>k1=f(x_n,y_n)</code>, <code>k2=f(x_n+Δx, y_n+k1·Δx)</code>. <code>Δx</code> is one yard by default (36 in) or <code>ctx.step_size</code> inches if non-zero, clamped to not over-shoot the requested target <code>x</code> (<code>source/solve_step.cpp</code>). Each <code>SolveStep</code> also advances <code>TOF</code> by the trapezoidal estimate <code>2·Δx/(vx_old+vx_new)</code> (<code>source/solve_step.cpp</code>).</p>
-<p>This is the same step used by both forward and inverse solves and by the zero-angle seed search. See <a class="el" href="num_ode.html">ODE Integration</a> for accuracy notes.</p>
+<p>The integrator is Heun's method (RK2 predictor-corrector, <code>source/ode.hpp</code>): <code>y_{n+1}= y_n + (k1+k2)/2 · Δx</code> with <code>k1=f(x_n,y_n)</code>, <code>k2=f(x_n+Δx, y_n+k1·Δx)</code>. <code>Δx</code> is one yard by default (36 in) or <code>ctx.step_size</code> inches if non-zero, clamped to not over-shoot the requested target <code>x</code> (<code>source/solve_step.cpp</code> <code>ComputeStep</code>). <code>TOF</code> is integrated as the third component of <code>f</code> via <code>d(TOF)/dx = 1/vx</code> in <code>DsDxCore</code> (<code>source/solve_step.cpp</code>), not by a separate trapezoidal post-step.</p>
+<p>This is the same step used by both forward and inverse solves and by the zero-angle seed search, with <code>FastSolveStep</code>/<code>FastDsDx</code> (firing-site density) for forward/zero/Boatright and <code>SolveStep</code>/<code>DsDx</code> (lapse-scaled) for <code>drop&gt;100ft</code> inverse ranges. See <a class="el" href="num_ode.html">ODE Integration</a> for accuracy notes.</p>
 <h1><a class="anchor" id="model-pm-assumptions"></a>
 Assumptions</h1>
 <ul>
 <li>Point mass: no lift except via the Boatright/Litz spin corrections applied as post-factors to <code>deflection</code> and as <code>aerodynamic_jump</code> added to the launch angle.</li>
-<li>Flat Earth within the integration horizon; altitude-dependent density is evaluated only at the firing site (no per-step density lapse).</li>
+<li>Flat Earth within the integration horizon; altitude-dependent density is <code>Fast*</code> firing-site for forward and <code>drop≤100ft</code> inverse, and per-step <code>k_lapse</code> lapse for <code>drop&gt;100ft</code> inverse.</li>
 <li>Wind is uniform and constant. </li>
 </ul>
 </div></div><!-- contents -->

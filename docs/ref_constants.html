@@ -122,21 +122,24 @@ Physical Constants</h1>
 <h1><a class="anchor" id="ref-const-atm"></a>
 ISA / atmosphere</h1>
 <p><code>source/constants.hpp</code>:</p>
-<div class="fragment"><div class="line">kPi                              = 3.14159265358979323846</div>
-<div class="line">kStandardGravityFtPerSecSq       = 32.17405  ft/s²  (also kLbsPerSlug)</div>
-<div class="line">kDegreesPerTurn                  = 360</div>
-<div class="line">kIsaSeaLevelDegF                 = 59.0 °F</div>
-<div class="line">kIsaSeaLevelHumidityPercent      = 0.0 %</div>
-<div class="line">kIsaSeaLevelPressureInHg         = 29.92 inHg</div>
-<div class="line">kIsaSeaLevelAirDensityLbsPerCuFt = 0.0764742 lb/ft³</div>
-<div class="line">kIsaSeaLevelSpeedOfSoundFps      = 1116.45 fps</div>
-<div class="line">kIsaLapseDegFPerFt               = 0.00356616 °F/ft</div>
-<div class="line">kIsaTropopauseAltitudeFt         = 36 090 ft</div>
-<div class="line">kIsaStratosphereAltitudeFt       = 65 617 ft</div>
-<div class="line">kIsaMinimumTempDegF              = -69.7 °F</div>
-<div class="line">kArmySeaLevelAirDensityLbsPerCuFt= 0.0751265 lb/ft³</div>
-<div class="line">kArmyToIcaoBcConversionFactor    = 0.0751265/0.0764742 ≈ 0.982</div>
-<div class="line">kAngularVelocityOfEarthRadPerSec = 7.292115e-5 rad/s</div>
+<div class="fragment"><div class="line">kPi                               = 3.14159265358979323846</div>
+<div class="line">kStandardGravityFtPerSecSq        = 32.17405  ft/s²  (also kLbsPerSlug)</div>
+<div class="line">kDegreesPerTurn                   = 360</div>
+<div class="line">kSeaLevelDegF                     = 59.0 °F</div>
+<div class="line">kSeaLevelHumidityPercent          = 0.0 %</div>
+<div class="line">kSeaLevelPressureInHg             = 29.92 inHg</div>
+<div class="line">kSeaLevelAirDensityLbsPerCuFt     = 0.0764742 lb/ft³</div>
+<div class="line">kSeaLevelSpeedOfSoundFps          = 1116.45 fps</div>
+<div class="line">kLapseDegFPerFt                   = 0.00356616 °F/ft</div>
+<div class="line">kTropopauseAltitudeFt             = 36 090 ft</div>
+<div class="line">kStratosphereAltitudeFt           = 65 617 ft</div>
+<div class="line">kMinimumTempDegF                  = -69.7 °F</div>
+<div class="line">kGasConstantAir                   = 1716.46 ft·lbf/(slug·°R)</div>
+<div class="line">kHydrostaticExponent              = g/(R·L)−1 ≈ 4.2562</div>
+<div class="line">kBarometricExponent               = g/(R·L)   ≈ 5.2562</div>
+<div class="line">kArmySeaLevelAirDensityLbsPerCuFt = 0.0751265 lb/ft³</div>
+<div class="line">kArmyToIcaoBcConversionFactor     = 0.0751265/0.0764742 ≈ 0.982</div>
+<div class="line">kAngularVelocityOfEarthRadPerSec  = 7.292115e-5 rad/s</div>
 </div><!-- fragment --><p><code>kArmyToIcaoBcConversionFactor</code> scales G* splines to ICAO; the BC setters respect <code>BCAtmosphere</code> (<code>source/lob_builder.cpp</code>). <code>BarometricFormula</code> and Lapse <code>T(h)=max(T0−L·h, T_min)</code> are in <code>source/calc.hpp</code> (McCoy p. 166); tropopause then isothermal exponential above 36 090 ft.</p>
 <h1><a class="anchor" id="ref-const-units"></a>
 Units</h1>
