@@ -12,24 +12,24 @@ the source so a reader can audit the physical model without reading every file.
 `source/constants.hpp`:
 
 ```text
-kPi                              = 3.14159265358979323846
-kStandardGravityFtPerSecSq       = 32.17405  ft/s²  (also kLbsPerSlug)
-kDegreesPerTurn                  = 360
-kIsaSeaLevelDegF                 = 59.0 °F
-kIsaSeaLevelHumidityPercent      = 0.0 %
-kIsaSeaLevelPressureInHg         = 29.92 inHg
-kIsaSeaLevelAirDensityLbsPerCuFt = 0.0764742 lb/ft³
-kIsaSeaLevelSpeedOfSoundFps      = 1116.45 fps
-kIsaLapseDegFPerFt               = 0.00356616 °F/ft
-kIsaTropopauseAltitudeFt         = 36 090 ft
-kIsaStratosphereAltitudeFt       = 65 617 ft
-kIsaMinimumTempDegF              = -69.7 °F
-kGasConstantAir                  = 1716.46 ft·lbf/(slug·°R)
-kHydrostaticExponent             = g/(R·L)−1 ≈ 4.2559
-kBarometricExponent              = g/(R·L)   ≈ 5.2559
-kArmySeaLevelAirDensityLbsPerCuFt= 0.0751265 lb/ft³
-kArmyToIcaoBcConversionFactor    = 0.0751265/0.0764742 ≈ 0.982
-kAngularVelocityOfEarthRadPerSec = 7.292115e-5 rad/s
+kPi                               = 3.14159265358979323846
+kStandardGravityFtPerSecSq        = 32.17405  ft/s²  (also kLbsPerSlug)
+kDegreesPerTurn                   = 360
+kSeaLevelDegF                     = 59.0 °F
+kSeaLevelHumidityPercent          = 0.0 %
+kSeaLevelPressureInHg             = 29.92 inHg
+kSeaLevelAirDensityLbsPerCuFt     = 0.0764742 lb/ft³
+kSeaLevelSpeedOfSoundFps          = 1116.45 fps
+kLapseDegFPerFt                   = 0.00356616 °F/ft
+kTropopauseAltitudeFt             = 36 090 ft
+kStratosphereAltitudeFt           = 65 617 ft
+kMinimumTempDegF                  = -69.7 °F
+kGasConstantAir                   = 1716.46 ft·lbf/(slug·°R)
+kHydrostaticExponent              = g/(R·L)−1 ≈ 4.2562
+kBarometricExponent               = g/(R·L)   ≈ 5.2562
+kArmySeaLevelAirDensityLbsPerCuFt = 0.0751265 lb/ft³
+kArmyToIcaoBcConversionFactor     = 0.0751265/0.0764742 ≈ 0.982
+kAngularVelocityOfEarthRadPerSec  = 7.292115e-5 rad/s
 ```
 
 `kArmyToIcaoBcConversionFactor` scales G* splines to ICAO; the BC setters
