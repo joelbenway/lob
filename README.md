@@ -14,6 +14,7 @@ The following can be accounted for in lob's solutions:
     * Tailored drag curves via BC/velocity pairs :zap:
     * Custom user-provided drag curves :sparkles:
     * Drag curves comprised from cubic hermite splines :brain:
+    * Drag coefficient of changing air density mid-flight :exploding_head:
  * Gravity :earth_americas:
  * Wind :flags:
  * Atmospheric conditions :partly_sunny:
@@ -22,8 +23,8 @@ The following can be accounted for in lob's solutions:
    * Temperature :thermometer:
    * Relative humidity
  * Coriolis effect :globe_with_meridians:
- * Gyroscopic spin drift (two methods)
- * Crosswind aerodynamic (two methods)
+ * Gyroscopic spin drift (two models)
+ * Crosswind aerodynamic (two models)
  * Forward solutions (distance dropped at range)
  * Inverse solutions (adjustment required to hit target at range)
 
@@ -39,7 +40,9 @@ Ballistics solutions require many inputs to model all the factors affecting the 
 
 Lob's architecture follows an [hourglass pattern](https://www.youtube.com/watch?v=PVYdHDm0q6Y): a C++ implementation at the base, a C API ([`lob.h`](include/lob/lob.h)) as the narrow waist providing a stable ABI boundary, and a C++ wrapper ([`lob.hpp`](include/lob/lob.hpp)) atop that restores the ergonomic C++ interface. The C interface makes it easy to bring your favorite language along and use lob as the little spoon. :hugs:
 
-To use lob in your project, [the C++ header](include/lob/lob.hpp) has everything you need! Or use [the C header](include/lob/lob.h) directly. Lob does not dynamically allocate memory or throw exceptions. It is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating-point math. Lob is CMake FetchContent-friendly with no dependencies of its own. Easy to add, easy to use! :thumbsup:
+To use lob in your project, [the C++ header](include/lob/lob.hpp) has everything you need! Or use [the C header](include/lob/lob.h) directly. Lob does not dynamically allocate memory or throw exceptions. It is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating-point math. Lob is CMake FetchContent-friendly with no dependencies of its own.
+
+Easy to use, easy to run, easy to integrate. :thumbsup:
 
 ### How do I use lob?
 Lob uses a straightforward API featuring a few data structures and free functions that act on them. At the heart of lob is the `Builder` class which is used to build `Context` which is then consumed by the `Solve` functions. Why this two-stage process? Ballistic solutions take dozens of optional, interacting inputs. The builder pattern allows you to name the ones you know, default the rest, and validate the full set before the solver sees it.
@@ -114,10 +117,10 @@ Now we're cooking! :cook:
 ### Accurate
 Under the hood lob uses numerical methods to solve well-known ordinary differential equations (ODEs) which model the projectile motion of a point mass like any good workhorse solver. The path to accuracy begins with preventing errors. Every calculation lob uses is validated against published material by comprehensive unit tests. Internally lob uses a custom [strong type](source/eng_units.hpp) system for engineering units that eliminate an entire class of potential bugs. Quality is strictly enforced by [continuous integration](https://github.com/joelbenway/lob/actions/workflows/ci.yml) befitting a critical software system. :mechanical_arm:
 
-There are features that set lob's accuracy apart as well. A solution can only be as good as the drag function used so whether provided with a single ballistics coefficient (BC), a set of BC/velocity pairs provided by a projectile manufacturer, or a full table of empirical radar measurements lob is ready to match the performance of your data. Lob implements the most common formulas for estimating the spin-related phenomena of cross-wind aerodynamic jump and gyroscopic spin drift, however with enough data it will calculate these effects from the expected precession and nutation of the projectile for a higher fidelity solution.
+There are features that set lob's accuracy apart as well. A solution can only be as good as the drag function used so whether provided with a single ballistics coefficient (BC), a set of BC/velocity pairs provided by a projectile manufacturer, or a full table of empirical radar measurements lob is ready to match the performance of your data. On an extreme long-range shot, lob will automatically account for the change in air density due to altitude during flight. Lob implements the most common formulas for estimating the spin-related phenomena of cross-wind aerodynamic jump and gyroscopic spin drift, however with enough data about your projectile's geometry it will calculate these effects from the expected precession and nutation for a higher fidelity solution.
 
 ### Fast!
-Lob is not just high-performance because it's C++; it was designed with performance in mind and benchmarked along the way. To speed up the solver's most critical performance path lob uniquely models drag functions as cubic Hermite spline curves built from mach vs drag tables at compile-time. These spline curves evaluate with just a handful of arithmetic ops for extraordinary speed! :checkered_flag:
+Lob is not just high-performance because it's C++; it was designed with performance in mind and [benchmarked](https://joelbenway.github.io/lob/bench) along the way. To speed up the solver's most critical performance path lob uniquely models drag functions as cubic Hermite spline curves built from mach vs drag tables at compile-time. These spline curves evaluate with just a handful of arithmetic ops for extraordinary speed! :checkered_flag:
 
 ## Why did you build this?
 I wrote lob for fun, to learn, [because this is what computers are for](https://en.wikipedia.org/wiki/ENIAC), and to share an example of my work.
