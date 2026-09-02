@@ -23,7 +23,7 @@ lob exposes two APIs over the same core (`source/lob_solve.cpp`,
 
 **`LobSolveInverse` / `lob::SolveInverse` — iterative, authoritative.**
 
-```
+```text
 n = LobSolve(ctx, ranges, outs, size)          // forward pass, reachability (Fast* fast path)
 for i in 0..n-1
     if ranges[i]==0 { outs[i].{elev,defl}=0; continue }
@@ -62,7 +62,7 @@ Both the builder's zero finding (`FastSolveAngle`) and inverse solving
 through `SolveAngle`/`FastSolveAngle`/`FastInverseAngle` in
 `source/solve_angle.hpp`:
 
-```
+```text
 zero-angle calculation (FastSolveAngle)
         │
         ├── shared angle solver (FastSolveAngle/SolveAngle + FastInverseAngle, gated per-range)
