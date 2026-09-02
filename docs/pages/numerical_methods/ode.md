@@ -6,7 +6,7 @@
 
 The point-mass dynamics (@ref model_point_mass) are
 
-```
+```text
 dy/dx = f(x, y)   with y = (p, v, TOF)
 ```
 
@@ -22,7 +22,7 @@ dependent variable via the velocity history.
 `source/ode.hpp` provides three steppers; lob uses **Heun's method**
 (RK2 predictor-corrector) in `SolveStep` (`source/solve_step.cpp`):
 
-```
+```text
 k1 = f(x_n, y_n)
 k2 = f(x_n+Δx, y_n + k1·Δx)
 y_{n+1} = y_n + (k1+k2)/2 · Δx
@@ -35,7 +35,7 @@ is clamped: `Δx = min(R − x_n, step)`.
 `DsDx` / `FastDsDx` (`source/solve_step.cpp`) evaluates `f` via
 `DsDxCore` helpers (`GetDtDx`/`GetWind`/`GetMach`/`GetCd`/`GetDpDt`/`GetDvDt`):
 
-```
+```text
 kDtDx = 1/vx                    (guarded: if vx ≤ 0 → zero derivative)
 wind  = (ctx.wind.x, 0, ctx.wind.z)
 u     = −k_lapse·P·G            (only DsDx; FastDsDx skips)
