@@ -9,7 +9,10 @@ The atmosphere determines two quantities the integrator needs: air density
 International Standard Atmosphere (ISA) with humidity corrections (McCoy
 pp. 166–168; Huang saturation-pressure formula).  Lapse, humidity and
 barometric corrections are evaluated once at `Build()` time from the firing-
-site conditions — there is no per-step altitude stratification.
+site conditions, and then optionally stratified per step via `ctx.k_lapse`
+(`source/constants.hpp` `kHydrostaticExponent`/`kBarometricExponent`,
+`source/lob_builder.cpp` `BuildDynamicDensity`, `source/solve_step.cpp`
+`DsDx`/`FastDsDx`).
 
 @section model-atm-inputs Inputs
 
@@ -67,15 +70,30 @@ c = c(T)·c_corr    with c(T)=49.0223·√T_R
 `BuildEnvironment` writes `ctx.speed_of_sound` (fps) and the intermediate
 `Impl::air_density_lbs_per_cu_ft`, which is converted to `ctx.drag_coeff`
 via `CalculateCdCoefficient` using the solver's ρ·π/8 relationship at BC=1
-(`source/lob_builder.cpp`, `source/calc.hpp`).  No per-step altitude dependence remains.
+(`source/lob_builder.cpp`, `source/calc.hpp`).  It also writes
+`ctx.k_lapse` (`(1/R−L/g)/T_R`, `source/lob_builder.cpp`
+`BuildDynamicDensity`) — the projected linear density lapse coefficient used
+per step.
+
+Per-step stratification (`source/solve_step.cpp`):
+```
+u = −k_lapse·P·G          // dimensionless altitude projected onto G
+ρ/ρ0 = 1 − u·(1−α·u)      // α=(e−1)/2e, e=kHydrostaticExponent
+c/c0 = 1 − β·u            // β=1/2e
+Cd = curve(Mach)·drag·(ρ/ρ0),  Mach=|v|/c·(c0/c)
+```
+`DsDx` scales `drag_coeff`/`speed_of_sound` by `ρ/ρ0`/`c/c0`; `FastDsDx`
+uses firing-site values.  `LobSolve` (forward) and `BuildBoatright`/`BuildZeroAngle`
+use `Fast*` fast path; `LobSolveInverse` uses `FastSolveAngle` or `SolveAngle`
+per-range gated on forward `drop>100ft` (`elevation < −1200in`,
+`source/lob_solve.cpp` `kDynamicDropThresholdIn`).
 
 @section model-atm-limitations Limitations
 
-- No per-step density lapse along the trajectory; the firing-site density is
-  used for the whole flight (per-step atmospheric lapse is a planned feature).
-  For the ranges lob is validated against (`test/source/lob_env_test.cpp`) the
-  error is bounded by the tests' tolerances rather than a claimed universal
-  accuracy.
+- Per-step lapse is gated: forward solves and `drop≤100ft` inverse ranges stay
+  on `Fast*` (firing-site density) for speed; only `drop>100ft` inverse ranges
+  pay `DsDx`/`SolveStep`/`SolveAngle`.  For the ranges lob is validated against
+  (`test/source/lob_env_test.cpp`) the error is bounded by the tests' tolerances.
 - Temperature is lapsed with the simple linear ISA lapse, not McCoy's
   exponential variant `CalculateTemperatureAtAltitudeMcCoy` (kept for
   reference only, `source/calc.hpp`).
