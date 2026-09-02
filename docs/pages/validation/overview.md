@@ -74,11 +74,14 @@ accuracy promise is made.
 
 @section validation-future Gaps and follow-ups
 
-- No per-step atmospheric stratification claim; altitude dependence is builder-
-  time only — per-step atmospheric lapse is a planned feature.
+- Per-step lapse is gated (`Fast*` firing-site vs `DsDx`/`SolveStep`/`SolveAngle`
+  when forward `drop>100ft`), not universal — see @ref model_atmosphere and
+  `source/lob_solve.cpp` `kDynamicDropThresholdIn`. Long-range `>100ft` inverse
+  accuracy vs field data would be a stronger anchor than builder-time ISA alone.
 - No field-data validation beyond the BRL tables and borrowed reference
   trajectories; a “field vs radar” data set would be a stronger anchor.
-- Performance is benchmarked but no regression gate is enforced in CI.
+- Performance is benchmarked (`ci-benchmark` `cachegrind`) but no regression
+  gate is enforced in CI beyond `CG_MAX_REGRESSION_BP`.
 - The spline knot optimization (`5e-3` budget) is validated but its derivation
   is not documented beyond the exhaustive test's `5000`-point grid — worth a
   short note if the knot set ever changes.

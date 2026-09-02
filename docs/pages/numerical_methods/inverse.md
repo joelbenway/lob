@@ -24,11 +24,12 @@ lob exposes two APIs over the same core (`source/lob_solve.cpp`,
 **`LobSolveInverse` / `lob::SolveInverse` — iterative, authoritative.**
 
 ```
-n = LobSolve(ctx, ranges, outs, size)          // forward pass, reachability
+n = LobSolve(ctx, ranges, outs, size)          // forward pass, reachability (Fast* fast path)
 for i in 0..n-1
     if ranges[i]==0 { outs[i].{elev,defl}=0; continue }
     seed = FastInverseAngle(zero_angle, elevation_inches, R)
-    θ*   = SolveAngle(ctx, R, 0, seed)         // shared solver, adds jump internally
+    θ*   = (elevation < −1200in) ? SolveAngle(ctx,R,0,seed)  // drop>100ft → lapse-scaled DsDx
+                                 : FastSolveAngle(ctx,R,0,seed) // else firing-site
     if θ* is NaN → return i                     // prefix only; shortfall is not counted
     outs[i].elevation = MOA(θ* − zero_angle)
     outs[i].deflection = InchToMoa(−deflection, R)
@@ -56,15 +57,17 @@ forward solve *reached* `R` — fall-short residuals are meaningless
 
 @section num-inverse-shared Shared angle solver
 
-Both the builder's zero finding and inverse solving route through
-`SolveAngle`/`FastInverseAngle` in `source/solve_angle.hpp`:
+Both the builder's zero finding (`FastSolveAngle`) and inverse solving
+(`FastSolveAngle` or `SolveAngle` per-range gated on `drop>100ft`) route
+through `SolveAngle`/`FastSolveAngle`/`FastInverseAngle` in
+`source/solve_angle.hpp`:
 
 ```
-zero-angle calculation
+zero-angle calculation (FastSolveAngle)
         │
-        ├── shared angle solver (SolveAngle + FastInverseAngle)
+        ├── shared angle solver (FastSolveAngle/SolveAngle + FastInverseAngle, gated per-range)
         │
-inverse trajectory solving
+inverse trajectory solving (FastSolveAngle or SolveAngle)
 ```
 
 Zero-angle uses a vacuum parabola seed; inverse uses the forward residual

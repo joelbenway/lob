@@ -68,10 +68,14 @@ solver runs.  The two stages also let high-fidelity branches (Boatright) test
 @section design-integration Numerical integration choices
 
 See @ref num_ode.  lob integrates in down-range distance using **Heun (RK2)**
-with a fixed 1-yard default step and a trapezoidal `TOF` update. Integrating
-over distance with a configurable step size provides flexibility across diverse
-applications — intercepting a drone at 50 yards within a millisecond requires
-different spatial resolution than calculating a multi-mile long-range shot.
+with a fixed 1-yard default step and `TOF` integrated as `d(TOF)/dx=1/vx` in
+`DsDx` (`source/solve_step.cpp` `DsDxCore`). Integrating over distance with a
+configurable step size provides flexibility across diverse applications —
+intercepting a drone at 50 yards within a millisecond requires different
+spatial resolution than calculating a multi-mile long-range shot. Per-step
+air-density lapse (`k_lapse`, @ref model_atmosphere) is `FastDsDx`/`FastSolveStep`
+(firing-site) for forward/zero/Boatright and `DsDx`/`SolveStep` for
+`LobSolveInverse` ranges with forward `drop>100ft` (`elevation < −1200in`).
 
 The method choice follows BRL experience:
 "The cumulative experience of the Ballistic Research Laboratory has shown that
@@ -107,12 +111,19 @@ Sample (4×3400 MHz, 2026-08-22, `benchmark_min_time=0.2s`):
 | LobLerp | 329 128 ns | — |
 | CurveView (PCHIP) | 167 774 ns | — |
 
-Heun is ~2× faster than 3×-iterated Heun for 0.4 ft error delta; `CurveView` is ~1.96× faster than linear lerp on the same 87-point table. Step size via `Builder::StepSize` reduces error monotonically with linear cost — measure your trajectory, don’t trust a global number.
+`CurveView` is ~1.96× faster than linear lerp on the same 87-point table.
+`FastDsDx`/`FastSolveStep`/`FastSolveAngle` (firing-site density) vs
+`DsDx`/`SolveStep`/`SolveAngle` (lapse-scaled) share `DsDxCore` helpers;
+`LobSolveInverse` gates per-range `>100ft` to `SolveAngle`. Step size via
+`Builder::StepSize` reduces error monotonically with linear cost — measure
+your trajectory, don’t trust a global number.
 
 @section design-shared Shared angle solver — why it matters
 
 See @ref design_shared_solver for the dedicated treatment.  In short, zero
-finding and inverse solving solve the same root `f(θ)=0`; sharing
-`SolveAngle`/`FastInverseAngle` (`source/solve_angle.hpp`) guarantees the
-zero used at build time and the adjustments returned later are consistent.
+finding (`FastSolveAngle`) and inverse solving (`FastSolveAngle` or
+`SolveAngle` per-range) solve the same root `f(θ)=0`; sharing
+`SolveAngle`/`FastSolveAngle`/`FastInverseAngle` (`source/solve_angle.hpp`)
+guarantees the zero used at build time and the adjustments returned later are
+consistent.
 
