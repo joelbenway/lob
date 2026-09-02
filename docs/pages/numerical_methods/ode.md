@@ -32,21 +32,27 @@ y_{n+1} = y_n + (k1+k2)/2 · Δx
 set it (`source/solve_step.cpp`).  The last step to a requested target `R`
 is clamped: `Δx = min(R − x_n, step)`.
 
-`DsDx` (`source/solve_step.cpp`) evaluates `f`:
+`DsDx` / `FastDsDx` (`source/solve_step.cpp`) evaluates `f` via
+`DsDxCore` helpers (`GetDtDx`/`GetWind`/`GetMach`/`GetCd`/`GetDpDt`/`GetDvDt`):
 
 ```
-kDtDx = 1/vx   (guarded: if vx ≤ 0 → zero derivative)
+kDtDx = 1/vx                    (guarded: if vx ≤ 0 → zero derivative)
 wind  = (ctx.wind.x, 0, ctx.wind.z)
+u     = −k_lapse·P·G            (only DsDx; FastDsDx skips)
+drag  = drag_coeff·(1−u(1−αu))   (only DsDx; FastDsDx = drag_coeff)
+c     = c·(1−βu)                (only DsDx; FastDsDx = c)
 Mach  = |v|/c
-Cd    = curve.Eval(Mach)·drag_coeff
+Cd    = curve.Eval(Mach)·drag
 dp/dt = v
-dv/dt = −Cd·|v−w|·(v−w)  − Coriolis(v) + gravity
-return (dp/dt·kDtDx, dv/dt·kDtDx)
+dv/dt = −Cd·|v−w|·(v−w) − Coriolis(v) + gravity
+d(TOF)/dt = 1
+return (dp/dt·kDtDx, dv/dt·kDtDx, 1/vx)
 ```
 
-`TOF` is **not** integrated via `f`; it is advanced by the trapezoidal
-approximation `2·Δx/(vx_old+vx_new)` after the Heun step (`source/solve_step.cpp`),
-which is exact only if the velocity profile were linear over the step.
+`TOF` is integrated as the third component of `f` via `d(TOF)/dx = 1/vx`
+(`DsDxCore` `SecT(kDtDx)`), integrated by `HeunStep` — `FastSolveStep`
+(`FastDsDx`) for forward/zero/Boatright and `SolveStep` (`DsDx`) for
+`drop>100ft` inverse ranges.
 
 `source/ode.hpp` also implements
 `EulerStep` and `RungeKuttaStep` (RK4); they are not used
@@ -75,5 +81,6 @@ Exterior Ballistics — The Launch and Flight Dynamics of Symmetric Projectiles*
 @section num-ode-limits Limitations
 
 - Fixed step size; no embedded error estimate or adaptive stepping.
-- TOF via trapezoidal velocity average, not via integrating `dt/dx`.
-- No per-step altitude stratification — density/c are firing-site values (per-step atmospheric lapse is planned).
+- Per-step lapse is gated: `LobSolve`/`BuildBoatright`/`BuildZeroAngle` use `Fast*`
+  (firing-site `ρ`/`c`); only `LobSolveInverse` ranges with forward `drop>100ft`
+  (`elevation < −1200in`) use `DsDx`/`SolveStep`/`SolveAngle` lapse.

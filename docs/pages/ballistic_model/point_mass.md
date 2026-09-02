@@ -40,6 +40,9 @@ projectile is falling straight down (`source/solve_step.cpp` `SolveStep`).
 path the BC is divided into the spline coefficients `drags[60] = coefs/(BC·conversion)`
 (`source/calc.hpp`, `source/lob_builder.cpp`).  For custom tables and BC bands
 the spline already embeds `1/BC` and `drag_coeff` remains `ρ·π / 8` at `BC=1`.
+Per step, `FastDsDx` uses firing-site `drag_coeff`/`c`, while `DsDx` scales
+them by `ρ/ρ0`/`c/c0` via `k_lapse` as described in @ref model_atmosphere
+(`source/solve_step.cpp`).
 
 Coriolis is expanded as
 
@@ -59,12 +62,15 @@ angle: `gx = −g sin(rangeAngle)`, `gy = −g cos(rangeAngle)`
 The integrator is Heun's method (RK2 predictor-corrector, `source/ode.hpp`):
 `y_{n+1}= y_n + (k1+k2)/2 · Δx` with `k1=f(x_n,y_n)`, `k2=f(x_n+Δx, y_n+k1·Δx)`.
 `Δx` is one yard by default (36 in) or `ctx.step_size` inches if non-zero,
-clamped to not over-shoot the requested target `x` (`source/solve_step.cpp`).
-Each `SolveStep` also advances `TOF` by the trapezoidal estimate
-`2·Δx/(vx_old+vx_new)` (`source/solve_step.cpp`).
+clamped to not over-shoot the requested target `x` (`source/solve_step.cpp`
+`ComputeStep`).  `TOF` is integrated as the third component of `f` via
+`d(TOF)/dx = 1/vx` in `DsDxCore` (`source/solve_step.cpp`), not by a separate
+trapezoidal post-step.
 
 This is the same step used by both forward and inverse solves and by the
-zero-angle seed search.  See @ref num_ode for accuracy notes.
+zero-angle seed search, with `FastSolveStep`/`FastDsDx` (firing-site density)
+for forward/zero/Boatright and `SolveStep`/`DsDx` (lapse-scaled) for
+`drop>100ft` inverse ranges.  See @ref num_ode for accuracy notes.
 
 @section model-pm-assumptions Assumptions
 
@@ -72,5 +78,6 @@ zero-angle seed search.  See @ref num_ode for accuracy notes.
   as post-factors to `deflection` and as `aerodynamic_jump` added to the
   launch angle.
 - Flat Earth within the integration horizon; altitude-dependent density is
-  evaluated only at the firing site (no per-step density lapse).
+  `Fast*` firing-site for forward and `drop≤100ft` inverse, and per-step
+  `k_lapse` lapse for `drop>100ft` inverse.
 - Wind is uniform and constant.
