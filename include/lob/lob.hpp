@@ -86,6 +86,7 @@ enum class ErrorT : LobErrorT {
   kNotFormed = ::kLobErrorNotFormed,
   kOgiveRtROOR = ::kLobErrorOgiveRtROOR,
   kRangeAngleOOR = ::kLobErrorRangeAngleOOR,
+  kSplineCoefsInvalid = ::kLobErrorSplineCoefsInvalid,
   kTailLengthOOR = ::kLobErrorTailLengthOOR,
   kWindHeadingOOR = ::kLobErrorWindHeadingOOR,
   kZeroAngleOOR = ::kLobErrorZeroAngleOOR,
@@ -265,10 +266,10 @@ class Builder {
 
   /**
    * @brief Sets the drag function associated with ballistic coefficient.
-   * @note Does not clear a table loaded via MachVsDragTable or
-   * BCVelocityBands; those override the drag function at Build time.
-   * If both table types are configured, the last call wins regardless of
-   * order. Call Reset to return to a standard drag function.
+   * @note Does not clear a table loaded via MachVsDragTable,
+   * BCVelocityBands, or SplineCoefficients; those override the drag function at
+   * Build time. If multiple drag sources are configured, the last call wins
+   * regardless of order. Call Reset to return to a standard drag function.
    * @param type The drag function type.
    * @return A reference to the Builder object.
    */
@@ -280,10 +281,10 @@ class Builder {
 
   /**
    * @brief Sets the drag function associated with ballistic coefficient.
-   * @note Does not clear a table loaded via MachVsDragTable or
-   * BCVelocityBands; those override the drag function at Build time.
-   * If both table types are configured, the last call wins regardless of
-   * order. Call Reset to return to a standard drag function.
+   * @note Does not clear a table loaded via MachVsDragTable,
+   * BCVelocityBands, or SplineCoefficients; those override the drag function at
+   * Build time. If multiple drag sources are configured, the last call wins
+   * regardless of order. Call Reset to return to a standard drag function.
    * @param type The drag function type.
    * @return A reference to the Builder object.
    */
@@ -469,6 +470,46 @@ class Builder {
   template <size_t N>
   Builder& BCVelocityBands(const std::array<float, N>&& fps,
                            const std::array<float, N>&& bcvs) = delete;
+
+  /**
+   * @brief Loads precomputed native spline coefficients for the drag curve.
+   * @details Directly sets the 60 coefficients used by the solver, bypassing
+   * Mach-vs-drag table fitting and BC scaling. This is the lowest-level drag
+   * input, useful for round-tripping a previously built context or importing
+   * coefficients from another lob instance. The array is `drags` as stored in
+   * `LobContext.drags`.
+   * @note This overrides any drag function, custom table, or BC bands; the last
+   * drag-setting call wins. Call `Reset` to return to a standard drag function.
+   * @warning The caller must keep `pcoefs` valid until `Build` is called. The
+   * builder copies no data; the pointer is referenced during `Build()`.
+   * @param pcoefs Pointer to an array of `kLobCoeffsSize` coefficients.
+   * @return A reference to the Builder object.
+   */
+  Builder& SplineCoefficients(const float* pcoefs) {
+    ::LobBuilderSplineCoefficients(&builder_, pcoefs);
+    return *this;
+  }
+
+  /**
+   * @brief Loads precomputed native spline coefficients for the drag curve.
+   * @details Directly sets the 60 coefficients used by the solver, bypassing
+   * Mach-vs-drag table fitting and BC scaling. This is the lowest-level drag
+   * input, useful for round-tripping a previously built context or importing
+   * coefficients from another lob instance. The array is `drags` as stored in
+   * `LobContext.drags`.
+   * @note This overrides any drag function, custom table, or BC bands; the last
+   * drag-setting call wins. Call `Reset` to return to a standard drag function.
+   * @warning The array must remain valid until `Build` is called; temporaries
+   * are rejected at compile time.
+   * @param coefs Reference to an array of `kLobCoeffsSize` coefficients.
+   * @return A reference to the Builder object.
+   */
+  Builder& SplineCoefficients(const std::array<float, kLobCoeffsSize>& coefs) {
+    ::LobBuilderSplineCoefficients(&builder_, coefs.data());
+    return *this;
+  }
+  Builder& SplineCoefficients(const std::array<float, kLobCoeffsSize>&& coefs) =
+      delete;
 
   /**
    * @brief Sets the projectile mass in grains.

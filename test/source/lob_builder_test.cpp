@@ -1457,6 +1457,148 @@ TEST_F(BuilderTestFixture, ReadmeExampleIsValid) {
   EXPECT_EQ(kSolverInput.error, lob::ErrorT::kNone);
 }
 
+TEST_F(BuilderTestFixture, SplineCoefficientsRoundTrip) {
+  const lob::Context kSrc = lob::Builder()
+                                .BallisticCoefficientPsi(0.5)
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  ASSERT_EQ(kSrc.error, lob::ErrorT::kNone);
+  const lob::Context kDst = lob::Builder()
+                                .SplineCoefficients(kSrc.drags.data())
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  ASSERT_EQ(kDst.error, lob::ErrorT::kNone);
+  EXPECT_EQ(kDst.drags, kSrc.drags);
+  const uint32_t kRange = 3000U;
+  lob::Output kOutSrc{};  // NOLINT
+  lob::Output kOutDst{};  // NOLINT
+  ASSERT_EQ(lob::Solve(kSrc, kRange, &kOutSrc), 1U);
+  ASSERT_EQ(lob::Solve(kDst, kRange, &kOutDst), 1U);
+  EXPECT_DOUBLE_EQ(kOutSrc.elevation, kOutDst.elevation);
+  EXPECT_EQ(kOutSrc.velocity, kOutDst.velocity);
+}
+
+TEST_F(BuilderTestFixture, SplineCoefficientsArrayOverload) {
+  const lob::Context kSrc = lob::Builder()
+                                .BallisticCoefficientPsi(0.45)
+                                .InitialVelocityFps(2700)
+                                .ZeroAngleMOA(4.0)
+                                .Build();
+  ASSERT_EQ(kSrc.error, lob::ErrorT::kNone);
+  std::array<float, lob::kLobCoeffsSize> arr{};
+  std::copy(kSrc.drags.begin(), kSrc.drags.end(), arr.begin());
+  const lob::Context kDst = lob::Builder()
+                                .SplineCoefficients(arr)
+                                .InitialVelocityFps(2700)
+                                .ZeroAngleMOA(4.0)
+                                .Build();
+  EXPECT_EQ(kDst.error, lob::ErrorT::kNone);
+  EXPECT_EQ(kDst.drags, arr);
+}
+
+TEST_F(BuilderTestFixture, SplineCoefficientsInvalidNonFinite) {
+  std::array<float, lob::kLobCoeffsSize> bad{};
+  bad.fill(1.0F);
+  bad[5] = std::numeric_limits<float>::quiet_NaN();  // NOLINT
+  const lob::Context kBad = lob::Builder()
+                                .SplineCoefficients(bad.data())
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)  // NOLINT
+                                .Build();
+  EXPECT_EQ(kBad.error, lob::ErrorT::kSplineCoefsInvalid);
+
+  std::array<float, lob::kLobCoeffsSize> inf{};
+  inf.fill(1.0F);
+  inf[10] = std::numeric_limits<float>::infinity();  // NOLINT
+  const lob::Context kInf = lob::Builder()
+                                .SplineCoefficients(inf.data())
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  EXPECT_EQ(kInf.error, lob::ErrorT::kSplineCoefsInvalid);
+}
+
+TEST_F(BuilderTestFixture, SplineCoefficientsLastCallWins) {
+  const lob::Context kSrc = lob::Builder()
+                                .BallisticCoefficientPsi(0.5)
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  ASSERT_EQ(kSrc.error, lob::ErrorT::kNone);
+  const std::array<float, 2> kMachs = {0.0F, 5.0F};
+  const std::array<float, 2> kDrags = {0.5F, 0.2F};
+  const std::array<float, 2> kFps = {2000.0F, 3000.0F};
+  const std::array<float, 2> kBcs = {0.25F, 0.25F};
+
+  const lob::Context kBandsLast =
+      lob::Builder()
+          .SplineCoefficients(kSrc.drags.data())
+          .BCVelocityBands(kFps, kBcs)
+          .InitialVelocityFps(2800)
+          .ZeroAngleMOA(5.0)
+          .DiameterInch(0.308)
+          .MassGrains(168.0)
+          .Build();
+  const lob::Context kNativeLast =
+      lob::Builder()
+          .BCVelocityBands(kFps, kBcs)
+          .SplineCoefficients(kSrc.drags.data())
+          .InitialVelocityFps(2800)
+          .ZeroAngleMOA(5.0)
+          .Build();
+  ASSERT_EQ(kBandsLast.error, lob::ErrorT::kNone);
+  ASSERT_EQ(kNativeLast.error, lob::ErrorT::kNone);
+  EXPECT_NE(kBandsLast.drags, kNativeLast.drags);
+  EXPECT_EQ(kNativeLast.drags, kSrc.drags);
+
+  const lob::Context kTableLast =
+      lob::Builder()
+          .SplineCoefficients(kSrc.drags.data())
+          .MachVsDragTable(kMachs, kDrags)
+          .InitialVelocityFps(2800)
+          .ZeroAngleMOA(5.0)
+          .Build();
+  EXPECT_NE(kTableLast.drags, kSrc.drags);
+}
+
+TEST_F(BuilderTestFixture, SplineCoefficientsNullIgnored) {
+  const lob::Context kResult =
+      puut->SplineCoefficients(nullptr)
+          .InitialVelocityFps(2800)
+          .ZeroAngleMOA(5.0)
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kBallisticCoefficientRequired);
+
+  EXPECT_EQ(LobBuilderSplineCoefficients(nullptr, nullptr), nullptr);
+  LobBuilder b{};
+  LobBuilderInit(&b);
+  EXPECT_EQ(LobBuilderSplineCoefficients(&b, nullptr), &b);
+  LobBuilderDestroy(&b);
+}
+
+TEST_F(BuilderTestFixture, SplineCoefficientsResetClears) {
+  const lob::Context kSrc = lob::Builder()
+                                .BallisticCoefficientPsi(0.5)
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  puut->SplineCoefficients(kSrc.drags.data());
+  puut->Reset();
+  const lob::Context kAfterReset = puut->BallisticCoefficientPsi(0.5)
+                                       .InitialVelocityFps(2800)
+                                       .ZeroAngleMOA(5.0)
+                                       .Build();
+  EXPECT_EQ(kAfterReset.error, lob::ErrorT::kNone);
+  const lob::Context kRef = lob::Builder()
+                                .BallisticCoefficientPsi(0.5)
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  EXPECT_EQ(kAfterReset.drags, kRef.drags);
+}
+
 }  // namespace tests
 
 // This file is part of lob.

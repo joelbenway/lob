@@ -39,6 +39,7 @@ exposed from a successful `Build()`; `kLobErrorNumberOfErrors` is the count.
 | `kBcBandsTooShort` | `size < 2` |
 | `kBcBandsInvalid` | `size > 16`, any `fps ≤ 0` / `BC ≤ 0` / non-finite, or `max(fps)/c ≥ 5.0` |
 | `kBcBandsNotMonotonic` | `fps` not strictly increasing |
+| `kSplineCoefsInvalid` | `SplineCoefficients` contains non-finite value |
 | `kInternalError` | Boatright supersonic integration to `Mach 1.2` exceeded 60 s (temporary guard) |
 | `kNotFormed` | internal sentinel — not returned |
 | `kNumberOfErrors` | count |

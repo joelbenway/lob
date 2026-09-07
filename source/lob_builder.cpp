@@ -25,9 +25,10 @@ namespace lob {
 namespace {
 
 enum class DragTableMode : uint8_t {
-  kStandard,
-  kCustomTable,
   kBcBands,
+  kCustomTable,
+  kNativeCoefs,
+  kStandard,
 };
 
 }  // namespace
@@ -368,6 +369,26 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
       return;
     }
     pimpl->ballistic_coefficient_psi = PmsiT(1);
+    return;
+  }
+
+  if (pimpl->drag_table_mode == DragTableMode::kNativeCoefs) {
+    if (pimpl->table_ys == nullptr) {
+      pout->error = kLobErrorInternalError;
+      return;
+    }
+    for (size_t i = 0; i < spline::kCoefsSize; ++i) {
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+      const float kV = pimpl->table_ys[i];
+      if (!std::isfinite(kV)) {
+        pout->error = kLobErrorSplineCoefsInvalid;
+        return;
+      }
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+      pout->drags[i] = kV;
+    }
+    pimpl->ballistic_coefficient_psi = PmsiT(1);
+    pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
     return;
   }
 
@@ -900,6 +921,19 @@ LobBuilder* LobBuilderBCVelocityBands(LobBuilder* pbuilder, const float* pfps,
   pimpl->table_ys = pbcs;
   pimpl->table_count = size;
   pimpl->drag_table_mode = DragTableMode::kBcBands;
+  return pbuilder;
+}
+
+LobBuilder* LobBuilderSplineCoefficients(LobBuilder* pbuilder,
+                                         const float* pcoefs) {
+  if (pbuilder == nullptr || pcoefs == nullptr) {
+    return pbuilder;
+  }
+  auto* pimpl = Pimpl(pbuilder);
+  pimpl->table_ys = pcoefs;
+  pimpl->table_xs = nullptr;
+  pimpl->table_count = 0;
+  pimpl->drag_table_mode = DragTableMode::kNativeCoefs;
   return pbuilder;
 }
 

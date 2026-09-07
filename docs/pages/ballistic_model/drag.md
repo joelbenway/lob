@@ -39,6 +39,18 @@ set the effective BC to 1 in the context (`source/lob_builder.cpp`).
 curve with BCs measured at several velocities (fps).  See @ref bc_transformation
 for the transformation.
 
+@section model-drag-native Native spline coefficients
+
+`LobBuilderSplineCoefficients` / `Builder::SplineCoefficients` sets the 60
+coefficients `drags[LOB_SPLINE_SEGMENTS * 4]` directly as stored in
+`LobContext.drags` (`include/lob/lob.h`, `source/lob_builder.cpp`).
+It bypasses table fitting and BC scaling; the effective BC is set to 1 and
+atmosphere to ICAO. Useful for round-tripping a built context
+(`ctx.drags` → `Builder::SplineCoefficients(ctx.drags)`) or importing
+coefficients from another `lob` instance. Non-finite coefficients are rejected
+with `kLobErrorSplineCoefsInvalid`. Like the other drag setters it borrows the
+pointer until `Build()` and the last drag-setting call wins.
+
 @section model-drag-curve The drag curve in the solver
 
 At each step `FastSolveStep`/`SolveStep` evaluates `Cd = curve.Eval(Mach) · drag`
