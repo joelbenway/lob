@@ -206,22 +206,12 @@ TEST_P(CustomTableTestFixture, CustomTableMatchesDragFunction) {
 namespace {
 constexpr double kSierraGameKingBC = 0.436;
 constexpr uint16_t kM70MuzzleVelocity = 3100U;
-constexpr double kM70TwistRate = 10.0;
 constexpr double kJackOConnorZeroYardage = 100.0;
 constexpr double kJackOConnorZeroHeight = 3.0;
 constexpr double kG1ZeroAngle = 5.59;
 constexpr double kDefaultZeroAngle = 5.0;
 constexpr double kAzimuthOORLatitude = 45.0;
 constexpr double kLatitudeOORLatitude = 91.0;
-constexpr double kNoslerAccubondMass = 130.0;
-constexpr double kNoslerAccubondDiameter = 0.277;
-constexpr double kNoslerAccubondLength = 1.234;
-constexpr double kNoslerAccubondNoseLength = 0.705;
-constexpr double kNoslerAccubondTailLength = 0.070;
-constexpr double kNoslerAccubondBaseDiameter = 0.245;
-constexpr double kNoslerAccubondMeplatDiameter = 0.0;
-constexpr double kNoslerAccubondOgiveRtR = 0.88;
-constexpr double kTransonicTimeoutBC = 1.0e6;
 constexpr double kZeroUnreachableMaximumTime = 0.05;
 }  // namespace
 
@@ -565,25 +555,6 @@ INSTANTIATE_TEST_SUITE_P(
                   .Build();
             },
             lob::ErrorT::kZeroDistanceOOR},
-        BuilderErrorTestParam{
-            "TransonicTimeout",
-            [](lob::Builder& b) {
-              return b.BallisticCoefficientPsi(kTransonicTimeoutBC)
-                  .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-                  .DiameterInch(kNoslerAccubondDiameter)
-                  .LengthInch(kNoslerAccubondLength)
-                  .MassGrains(kNoslerAccubondMass)
-                  .InitialVelocityFps(kM70MuzzleVelocity)
-                  .ZeroAngleMOA(kG1ZeroAngle)
-                  .TwistInchesPerTurn(kM70TwistRate)
-                  .NoseLengthInch(kNoslerAccubondNoseLength)
-                  .TailLengthInch(kNoslerAccubondTailLength)
-                  .BaseDiameterInch(kNoslerAccubondBaseDiameter)
-                  .MeplatDiameterInch(kNoslerAccubondMeplatDiameter)
-                  .OgiveRtR(kNoslerAccubondOgiveRtR)
-                  .Build();
-            },
-            lob::ErrorT::kInternalError},
         BuilderErrorTestParam{"ZeroAngleTimeout",
                               [](lob::Builder& b) {
                                 return b

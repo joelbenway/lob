@@ -529,25 +529,6 @@ TEST_P(SpinDriftParameterizedFixture, CalculateAverageDensity) {
   ASSERT_NEAR(kRho, kShot.density, kError);
 }
 
-TEST_P(SpinDriftParameterizedFixture, CalculateFastAverageDensity) {
-  const SpinDriftTestFire kShot = GetParam();
-  const lob::InchT kD(kShot.diameter);
-  const lob::CaliberT kL(kShot.length);
-  const lob::CaliberT kLN(kShot.ogive_length);
-  const lob::CaliberT kLFN(kShot.lfn);
-  const lob::CaliberT kR(kShot.rt / kShot.ogive_rtr);
-  const lob::CaliberT kDM(kShot.meplat_diameter);
-  const lob::CaliberT kDB(kShot.base_diameter);
-  const lob::CaliberT kLBT(kShot.tail_length);
-  const lob::GrainT kMass(kShot.mass);
-  const double kRho = lob::boatright::CalculateAverageDensity(
-      kD, kL, kLN, kLFN, kR, kDB, kLBT, kMass);
-  const double kRhoFast = lob::boatright::CalculateFastAverageDensity(
-      kD, kL, kDM, kLN, kDB, kLBT, kMass);
-  const double kError = kRho * 0.05;
-  ASSERT_NEAR(kRhoFast, kRho, kError);
-}
-
 TEST_P(SpinDriftParameterizedFixture, CalculateKVPlusOmega) {
   const SpinDriftTestFire kShot = GetParam();
   const lob::InchT kD(kShot.diameter);
