@@ -56,11 +56,12 @@ Implementation lives under `source/`; public headers under `include/lob/`:
 
 - Builder and environment: `LobBuilder`, `source/lob_builder.cpp`
 - Forward/inverse solves: `LobSolve()`, `LobSolveInverse()`, `source/lob_solve.cpp`
-- Single step: `source/solve_step.cpp`, `source/solve_step.hpp`
-- Angle solver: `source/solve_angle.hpp`
+- Single step: `source/solve_step.cpp`, `source/solve_step.hpp` (`FastDsDx`/`DsDx`, `k_lapse`)
+- Angle solver: `source/solve_angle.hpp` (`FastSolveAngle`/`SolveAngle`, `IsTerminal`)
 - Splines: `source/splines.hpp`
 - Drag tables: `source/tables.hpp`
-- Atmosphere/physics helpers: `source/calc.hpp`, `source/constants.hpp`
+- Atmosphere/physics helpers: `source/calc.hpp`, `source/constants.hpp` (`isa::`, `kHydrostaticExponent`)
+- Gauss-Legendre quadrature: `source/gauss_legendre.hpp`
 - Strong units: `source/eng_units.hpp`
 
 Tests under `test/source/` mirror each area and are cited from the technical

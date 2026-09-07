@@ -41,11 +41,14 @@ for the transformation.
 
 @section model-drag-curve The drag curve in the solver
 
-At each step `SolveStep` evaluates `Cd = curve.Eval(Mach) · drag_coeff`
-(`source/solve_step.cpp`) where `Mach = |v| / speed_of_sound` and `curve`
-is a `CurveView` over the context's 60 coefficients.  `CurveView::Eval`
-clamps Mach outside 0–5 to the edge value; the integration never evaluates
-beyond the checked domain.
+At each step `FastSolveStep`/`SolveStep` evaluates `Cd = curve.Eval(Mach) · drag`
+(`source/solve_step.cpp`) where `Mach = |v| / c` and `curve`
+is a `CurveView` over the context's 60 coefficients.  `FastDsDx` uses firing-site
+`drag = drag_coeff` and `c = speed_of_sound`; `DsDx` scales them per step by
+`ρ/ρ0 = 1−u(1−αu)` and `c/c0 = 1−βu` with `u = −k_lapse·P·G` via `k_lapse`
+(@ref model_atmosphere, `source/constants.hpp` `kHydrostaticExponent`).
+`CurveView::Eval` clamps Mach outside 0–5 to the edge value; the integration never
+evaluates beyond the checked domain.
 
 The precomputed G* coefficients are `constexpr` (`source/splines.hpp`)
 so they cost no runtime construction.  Custom/BC-band curves are built at

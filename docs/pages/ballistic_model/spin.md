@@ -8,12 +8,10 @@ Both are spin-induced corrections that lob models with two fidelity levels — *
 
 Lateral deflection from gyroscopic precession (yaw of repose), applied post-solve to `deflection`.
 
-**Boatright** (`source/lob_builder.cpp`) when diameter, meplat, base, length, nose, tail, `ogiveRtR`, velocity, `c`, mass, twist, `stability_factor`, BC and `wind.z` are known:
-1. Computes ogive geometry `RT`, `LFN`, aspect ratio, Mach, `Q`, `S`, `CL`, `CDa`, `ρ`, `Iy/Ix`, `P`, `R`, `N`, `F1+F2`, `F2`, `Tn`.
-2. Short-integrates to `v = Mach 1.2·c` (60 s timeout → `kLobErrorInternalError`,
-   temporary guard — revisit when boatright path is optimized) for supersonic
-   time.
-3. Forms `KV=log(1.2c/v0)`, `Kω`, `QTS`, `β(R,Ω)`, boattail-adjusted `CL`, `CL(T)` → `spindrift_factor = 0.388132·QTS·β·CL(T)/mass` stored in `ctx.spindrift_factor`. At solve time (`source/lob_solve.cpp`): `deflection += spindrift_factor · |elevation|`.
+**Boatright** (`source/lob_builder.cpp`, `source/boatright.hpp`) when diameter, meplat, base, length, nose, tail, `ogiveRtR`, velocity, `c`, mass, twist, `stability_factor`, BC and `wind.z` are known:
+1. Computes ogive geometry `RT`, `LFN`, aspect ratio, Mach, `Q`, `S`, `CL`, `CDa`, `ρ` via `CalculateAverageDensity` (ogive volume via `IntegrateGaussLegendre` `kG8` in `source/boatright.hpp`), `Iy/Ix`, `P`, `R`, `N`, `F1+F2`, `F2`, `Tn`.
+2. Short-integrates `∫_{1.2c}^{v0} dv/(v²·Cd·drag_coeff)` with `IntegrateGaussLegendre<8>` (`source/gauss_legendre.hpp`) to get supersonic `TOF` to `v = Mach 1.2·c` (60 s timeout → `kLobErrorInternalError`).
+3. Forms `KV=log(1.2c/v0)`, `Kω`, `QTS`, `β(R,Ω)`, boattail-adjusted `CL`, `CL(T)` → `spindrift_factor = 0.388132·QTS·β·CL(T)/mass` stored in `ctx.spindrift_factor`. At solve time (`source/lob_solve.cpp`): `deflection += spindrift_factor · |elevation|` gated on `elevation < −optic_height` (bore-line check).
 
 If incomplete, `spindrift_factor = NaN` and drift falls through to Litz.
 
@@ -38,7 +36,7 @@ launch = zero_angle + aerodynamic_jump   (source/lob_solve.cpp, source/solve_ang
 
 Computed once and reused for every solve (including zero-finding and inverse).
 
-**Boatright** when same full inputs present (`source/lob_builder.cpp`):
+**Boatright** when same full inputs present (`source/lob_builder.cpp`, uses `CalculateAverageDensity` with `IntegrateGaussLegendre` ogive volume):
 ```
 γ   = w_z / v0
 R   = epicyclic ratio from sg
@@ -48,7 +46,7 @@ pitch = γ·(R²−1)/(2πNR)·(1 − cos(2πN/(R−1)))
 Jv  = sign(twist)·N·Tn·Q·S·(CL+CD)·sin(pitch)
 jump = −Jv / MOM   (radians → MOA)
 ```
-Uses same supersonic `Tn` etc. as drift; stored in `ctx.aerodynamic_jump`.
+Uses same `IntegrateGaussLegendre` supersonic `Tn` etc. as drift; stored in `ctx.aerodynamic_jump`.
 
 **Litz** if Boatright didn't produce a jump (`source/lob_builder.cpp`):
 - `w_z==0` → 0

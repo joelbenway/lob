@@ -53,15 +53,20 @@ Constants (`source/solve_angle.hpp`):
   The solver restricts search to the flat-fire branch, treating >45° as
   out-of-bounds (returns NaN / `kLobErrorZeroUnreachable`).
 
-`fire_to_target` integrates step-by-step via `SolveStep` until `x ≥ R`
-and returns the vertical miss; any step where `vx ≤ 0`, `TOF ≥ max_time`, or
-speed ≤ `minimum_speed` yields `NaN` and the iteration becomes non-finite,
-propagating to a NaN return (unreachable).
+`fire_to_target` integrates step-by-step via `SolveStep`/`FastSolveStep`
+until `x ≥ R` and returns the vertical miss; any step where `vx ≤ 0`,
+`TOF ≥ max_time`, or speed ≤ `minimum_speed` yields `NaN` and the iteration
+becomes non-finite, propagating to a NaN return (unreachable). The builder's
+zero uses `FastSolveAngle`/`FastSolveStep` (firing-site density); inverse uses
+`FastSolveAngle` or `SolveAngle` per-range gated on forward `drop>100ft`
+(`source/lob_solve.cpp` `kDynamicDropThreshold`, `source/solve_angle.hpp`
+`FireToTarget`/`IsTerminal`).
 
 @section num-zero-seed Seed
 
 `BuildZeroAngle` (`source/lob_builder.cpp`) supplies the seed when the
-caller gave `ZeroDistanceYds` instead of `ZeroAngleMOA`:
+caller gave `ZeroDistanceYds` instead of `ZeroAngleMOA` (solved with
+`FastSolveAngle`/`FastSolveStep`, firing-site density):
 
 ```text
 θ_vac = 0.5·g·R / v0²           (vacuum parabola angle)

@@ -41,10 +41,11 @@ inverse solves they are angles in MOA (@ref api_inverse).
 
 @section api-forward-stops Termination
 
-Integration proceeds in down-range steps (@ref num_ode) until one of:
+Integration proceeds in down-range steps via `FastSolveStep`/`FastDsDx`
+(firing-site density, `source/solve_step.cpp`) until one of:
 
 - all requested ranges are reached — outputs are exact (last step clamped to
-  the target);
+  the target via `ComputeStep`);
 - `max_time` exceeded — the last output is linearly interpolated to `max_time`;
 - `minimum_speed` or `minimum_energy` (converted to a speed via
   `CalculateVelocityFromKineticEnergy`; the effective `minimum_speed` is
@@ -52,6 +53,10 @@ Integration proceeds in down-range steps (@ref num_ode) until one of:
   interpolated to that speed;
 - projectile tumbles (`|v_y| > 3 v_x` — treated as falling straight down,
   `source/lob_solve.cpp`). Output records the achieved state at that step.
+
+`LobSolveInverse` re-uses the same forward pass but may re-integrate each
+range with lapse-scaled `SolveStep`/`DsDx` when forward `drop>100ft`
+(`source/lob_solve.cpp` `kDynamicDropThreshold`, @ref model_atmosphere).
 
 If the projectile cannot reach a requested range, `LobSolve` still produces an
 output at the fall-short distance (`max_time` and `minimum_speed` are linearly
