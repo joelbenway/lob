@@ -11,6 +11,7 @@
 #include "calc.hpp"
 #include "constants.hpp"
 #include "eng_units.hpp"
+#include "gauss_legendre.hpp"
 
 namespace lob {
 namespace boatright {
@@ -49,23 +50,6 @@ inline SqInT CalculateOgiveCrossSectionalArea(InchT x, InchT rho,
   return SqInT(kPi * kY.Value() * kY.Value());
 }
 
-inline double CalculateOgiveSimpsonIntegral(InchT a, InchT b, uint16_t n,
-                                            InchT rho, double alpha) {
-  const uint16_t kEvenN = (n % 2U == 0) ? n : n + 1U;
-  const InchT kH = (b - a) / kEvenN;
-
-  SqInT sum = CalculateOgiveCrossSectionalArea(a, rho, alpha) +
-              CalculateOgiveCrossSectionalArea(b, rho, alpha);
-
-  for (uint16_t i = 1U; i < kEvenN; ++i) {
-    const auto kX = a + kH * i;
-    const auto kMultiple = (i % 2U == 0) ? 2U : 4U;
-    sum += CalculateOgiveCrossSectionalArea(kX, rho, alpha) * kMultiple;
-  }
-
-  return (kH.Value() / 3) * sum.Value();
-}
-
 inline double CalculateOgiveVolume(InchT diameter, InchT ogive_length,
                                    InchT full_ogive_length,
                                    InchT ogive_radius) {
@@ -79,8 +63,9 @@ inline double CalculateOgiveVolume(InchT diameter, InchT ogive_length,
 
   const InchT kA = full_ogive_length - ogive_length;
   const InchT kB = full_ogive_length;
-  const uint16_t kN = 100;
-  return CalculateOgiveSimpsonIntegral(kA, kB, kN, kRho, kAlpha);
+  return IntegrateGaussLegendre(kA.Value(), kB.Value(), [&](double x) {
+    return CalculateOgiveCrossSectionalArea(InchT(x), kRho, kAlpha).Value();
+  });
 }
 
 inline double CalculateFrustrumVolume(InchT d1, InchT d2, InchT length) {
@@ -126,36 +111,6 @@ inline double CalculateAverageDensity(InchT diameter, CaliberT length,
   const InchT kDB(base_diameter, diameter);
   const InchT kLBT(tail_length, diameter);
   return CalculateAverageDensity(diameter, kL, kLN, kLFN, kR, kDB, kLBT, mass);
-}
-
-inline double CalculateFastAverageDensity(InchT diameter, InchT length,
-                                          InchT meplat_diameter,
-                                          InchT ogive_length,
-                                          InchT base_diameter,
-                                          InchT tail_length, GrainT mass) {
-  const double kPinocchioFactor = 1.3;
-  const double kOgiveVolume =
-      kPinocchioFactor *
-      CalculateFrustrumVolume(diameter, meplat_diameter, ogive_length);
-  const double kBodyVolume =
-      CalculateCylinderVolume(diameter, length - ogive_length - tail_length);
-  const double kTailVolume =
-      CalculateFrustrumVolume(diameter, base_diameter, tail_length);
-  const double kRho = mass.Value() / (kOgiveVolume + kBodyVolume + kTailVolume);
-  return kRho;
-}
-
-inline double CalculateFastAverageDensity(InchT diameter, CaliberT length,
-                                          CaliberT meplat_diameter,
-                                          CaliberT ogive_length,
-                                          CaliberT base_diameter,
-                                          CaliberT tail_length, GrainT mass) {
-  const InchT kL(length, diameter);
-  const InchT kDM(meplat_diameter, diameter);
-  const InchT kLN(ogive_length, diameter);
-  const InchT kDB(base_diameter, diameter);
-  const InchT kLBT(tail_length, diameter);
-  return CalculateFastAverageDensity(diameter, kL, kDM, kLN, kDB, kLBT, mass);
 }
 
 inline double CalculateCoefficientOfLift(CaliberT full_ogive_length,
@@ -305,8 +260,8 @@ inline MoaT CalculateAerodynamicJump(
   const auto kM = lob::MachT(velocity, speed_of_sound.Inverse());
   const auto kCL = boatright::CalculateCoefficientOfLift(kLFN, kM);
   const auto kCDa = boatright::CalculateYawDragCoefficient(kM, kCL, kAR);
-  const auto kRho = boatright::CalculateFastAverageDensity(
-      diameter, kL, kDM, kLN, kDB, kLBT, mass);
+  const auto kRho = boatright::CalculateAverageDensity(
+      diameter, kL, kLN, kLFN, kRT/kRTR, kDB, kLBT, mass);
   const auto kIyOverIx =
       boatright::CalculateInertialRatio(diameter, kL, kLN, kLFN, mass, kRho);
   const auto kP = boatright::CalculateSpinRate(velocity, twist);
