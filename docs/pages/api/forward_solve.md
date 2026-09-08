@@ -54,7 +54,7 @@ Integration proceeds in down-range steps via `FastSolveStep`/`FastDsDx`
 - projectile tumbles (`|v_y| > 3 v_x` — treated as falling straight down,
   `source/lob_solve.cpp`). Output records the achieved state at that step.
 
-`LobSolveInverse` re-uses the same forward pass but may re-integrate each
+`LobSolveInverse` reuses the same forward pass but may re-integrate each
 range with lapse-scaled `SolveStep`/`DsDx` when forward `drop>100ft`
 (`source/lob_solve.cpp` `kDynamicDropThreshold`, @ref model_atmosphere).
 

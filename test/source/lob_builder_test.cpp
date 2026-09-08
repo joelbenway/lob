@@ -1512,12 +1512,12 @@ TEST_F(BuilderTestFixture, SplineCoefficientsInvalidNonFinite) {
   std::array<float, lob::kLobCoeffsSize> inf{};
   inf.fill(1.0F);
   inf[10] = std::numeric_limits<float>::infinity();  // NOLINT
-  const lob::Context kInf = lob::Builder()
-                                .SplineCoefficients(inf.data())
-                                .InitialVelocityFps(2800)
-                                .ZeroAngleMOA(5.0)
-                                .Build();
-  EXPECT_EQ(kInf.error, lob::ErrorT::kSplineCoefsInvalid);
+  const lob::Context kInfinite = lob::Builder()
+                                     .SplineCoefficients(inf.data())
+                                     .InitialVelocityFps(2800)
+                                     .ZeroAngleMOA(5.0)
+                                     .Build();
+  EXPECT_EQ(kInfinite.error, lob::ErrorT::kSplineCoefsInvalid);
 }
 
 TEST_F(BuilderTestFixture, SplineCoefficientsLastCallWins) {
@@ -1532,43 +1532,39 @@ TEST_F(BuilderTestFixture, SplineCoefficientsLastCallWins) {
   const std::array<float, 2> kFps = {2000.0F, 3000.0F};
   const std::array<float, 2> kBcs = {0.25F, 0.25F};
 
-  const lob::Context kBandsLast =
-      lob::Builder()
-          .SplineCoefficients(kSrc.drags.data())
-          .BCVelocityBands(kFps, kBcs)
-          .InitialVelocityFps(2800)
-          .ZeroAngleMOA(5.0)
-          .DiameterInch(0.308)
-          .MassGrains(168.0)
-          .Build();
-  const lob::Context kNativeLast =
-      lob::Builder()
-          .BCVelocityBands(kFps, kBcs)
-          .SplineCoefficients(kSrc.drags.data())
-          .InitialVelocityFps(2800)
-          .ZeroAngleMOA(5.0)
-          .Build();
+  const lob::Context kBandsLast = lob::Builder()
+                                      .SplineCoefficients(kSrc.drags.data())
+                                      .BCVelocityBands(kFps, kBcs)
+                                      .InitialVelocityFps(2800)
+                                      .ZeroAngleMOA(5.0)
+                                      .DiameterInch(0.308)
+                                      .MassGrains(168.0)
+                                      .Build();
+  const lob::Context kNativeLast = lob::Builder()
+                                       .BCVelocityBands(kFps, kBcs)
+                                       .SplineCoefficients(kSrc.drags.data())
+                                       .InitialVelocityFps(2800)
+                                       .ZeroAngleMOA(5.0)
+                                       .Build();
   ASSERT_EQ(kBandsLast.error, lob::ErrorT::kNone);
   ASSERT_EQ(kNativeLast.error, lob::ErrorT::kNone);
   EXPECT_NE(kBandsLast.drags, kNativeLast.drags);
   EXPECT_EQ(kNativeLast.drags, kSrc.drags);
 
-  const lob::Context kTableLast =
-      lob::Builder()
-          .SplineCoefficients(kSrc.drags.data())
-          .MachVsDragTable(kMachs, kDrags)
-          .InitialVelocityFps(2800)
-          .ZeroAngleMOA(5.0)
-          .Build();
+  const lob::Context kTableLast = lob::Builder()
+                                      .SplineCoefficients(kSrc.drags.data())
+                                      .MachVsDragTable(kMachs, kDrags)
+                                      .InitialVelocityFps(2800)
+                                      .ZeroAngleMOA(5.0)
+                                      .Build();
   EXPECT_NE(kTableLast.drags, kSrc.drags);
 }
 
 TEST_F(BuilderTestFixture, SplineCoefficientsNullIgnored) {
-  const lob::Context kResult =
-      puut->SplineCoefficients(nullptr)
-          .InitialVelocityFps(2800)
-          .ZeroAngleMOA(5.0)
-          .Build();
+  const lob::Context kResult = puut->SplineCoefficients(nullptr)
+                                   .InitialVelocityFps(2800)
+                                   .ZeroAngleMOA(5.0)
+                                   .Build();
   EXPECT_EQ(kResult.error, lob::ErrorT::kBallisticCoefficientRequired);
 
   EXPECT_EQ(LobBuilderSplineCoefficients(nullptr, nullptr), nullptr);

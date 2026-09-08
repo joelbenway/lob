@@ -19,8 +19,8 @@ constexpr void EvaluateLegendre(std::size_t n, double x, double* pp,
 
   for (std::size_t k = 1; k < n; ++k) {
     const double kPNext = (((2 * static_cast<double>(k)) + 1.0) * x * p_curr -
-                     static_cast<double>(k) * p_prev) /
-                    static_cast<double>(k + 1);
+                           static_cast<double>(k) * p_prev) /
+                          static_cast<double>(k + 1);
     p_prev = p_curr;
     p_curr = kPNext;
   }
@@ -33,7 +33,7 @@ constexpr void EvaluateLegendre(std::size_t n, double x, double* pp,
 
 template <std::size_t N>
 struct GaussLegendreRule {
-  double nodes[N]{};  // NOLINT
+  double nodes[N]{};    // NOLINT
   double weights[N]{};  // NOLINT
 };
 

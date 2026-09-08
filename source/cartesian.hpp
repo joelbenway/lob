@@ -61,10 +61,9 @@ class CartesianT {
   constexpr CartesianT operator*(const T& rhs) const {
     return CartesianT{x_ * rhs, y_ * rhs, z_ * rhs};
   }
-  template <typename U = T,
-            std::enable_if_t<!std::is_same<U, double>::value &&
-                                 !std::is_same<U, float>::value,
-                             int> = 0>
+  template <typename U = T, std::enable_if_t<!std::is_same<U, double>::value &&
+                                                 !std::is_same<U, float>::value,
+                                             int> = 0>
   constexpr CartesianT operator*(double rhs) const {
     return CartesianT{T(x_.Value() * rhs), T(y_.Value() * rhs),
                       T(z_.Value() * rhs)};
@@ -75,10 +74,9 @@ class CartesianT {
   constexpr CartesianT operator/(const T& rhs) const {
     return CartesianT{x_ / rhs, y_ / rhs, z_ / rhs};
   }
-  template <typename U = T,
-            std::enable_if_t<!std::is_same<U, double>::value &&
-                                 !std::is_same<U, float>::value,
-                             int> = 0>
+  template <typename U = T, std::enable_if_t<!std::is_same<U, double>::value &&
+                                                 !std::is_same<U, float>::value,
+                                             int> = 0>
   constexpr CartesianT operator/(double rhs) const {
     return CartesianT{T(x_.Value() / rhs), T(y_.Value() / rhs),
                       T(z_.Value() / rhs)};

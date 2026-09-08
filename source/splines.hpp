@@ -175,7 +175,8 @@ class Cursor {
         // NOLINTNEXTLINE(cppcoreguidelines-avoid-do-while)
       } while (idx_ > 0 && m < knots_[idx_]);
     } else if (__builtin_expect(idx_ + 2 < N && m >= knots_[idx_ + 1], 0)) {
-      // Rare: Mach increasing (large step or tailwind) — at most one knot per 1yd
+      // Rare: Mach increasing (large step or tailwind) — at most one knot per
+      // 1yd
       ++idx_;
       if (idx_ + 2 < N && m >= knots_[idx_ + 1]) {
         // NOLINTNEXTLINE(cppcoreguidelines-avoid-do-while)

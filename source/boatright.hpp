@@ -261,7 +261,7 @@ inline MoaT CalculateAerodynamicJump(
   const auto kCL = boatright::CalculateCoefficientOfLift(kLFN, kM);
   const auto kCDa = boatright::CalculateYawDragCoefficient(kM, kCL, kAR);
   const auto kRho = boatright::CalculateAverageDensity(
-      diameter, kL, kLN, kLFN, kRT/kRTR, kDB, kLBT, mass);
+      diameter, kL, kLN, kLFN, kRT / kRTR, kDB, kLBT, mass);
   const auto kIyOverIx =
       boatright::CalculateInertialRatio(diameter, kL, kLN, kLFN, mass, kRho);
   const auto kP = boatright::CalculateSpinRate(velocity, twist);

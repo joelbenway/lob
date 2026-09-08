@@ -42,7 +42,7 @@ constexpr double kLowerBound = -1.0;
 constexpr double kUpperBound = 1.0;
 
 constexpr std::array<double, 2> kNodes2{-0.5773502691896257,
-                                       0.5773502691896257};
+                                        0.5773502691896257};
 constexpr std::array<double, 2> kWeights2{1.0, 1.0};
 
 constexpr std::array<double, 8> kNodes8{
@@ -65,8 +65,8 @@ double LegendreP(std::size_t n, double x) {
   double p1 = x;
   for (std::size_t k = 1; k < n; ++k) {
     const double kP2 = ((kTwo * static_cast<double>(k) + 1.0) * x * p1 -
-                       static_cast<double>(k) * p0) /
-                      static_cast<double>(k + 1);
+                        static_cast<double>(k) * p0) /
+                       static_cast<double>(k + 1);
     p0 = p1;
     p1 = kP2;
   }
@@ -82,7 +82,8 @@ TEST(GaussLegendreEvaluateTest, MatchesRecurrence) {
       double p = 0.0;
       double dp = 0.0;
       lob::detail::EvaluateLegendre(order, kX, &p, &dp);
-      EXPECT_NEAR(p, LegendreP(order, kX), 1.0e-12) << "n=" << order << " x=" << kX;
+      EXPECT_NEAR(p, LegendreP(order, kX), 1.0e-12)
+          << "n=" << order << " x=" << kX;
     }
   }
 }
@@ -94,7 +95,8 @@ TEST(GaussLegendreEvaluateTest, Derivative) {
     double p = 0.0;
     double dp = 0.0;
     lob::detail::EvaluateLegendre(order, kX, &p, &dp);
-    const double kFd = (LegendreP(order, kX + kH) - LegendreP(order, kX - kH)) / (kTwo * kH);
+    const double kFd =
+        (LegendreP(order, kX + kH) - LegendreP(order, kX - kH)) / (kTwo * kH);
     EXPECT_NEAR(dp, kFd, 1e-5) << "n=" << order;
   }
   const double kX2 = 0.5;
@@ -164,10 +166,9 @@ TEST(MakeGaussLegendreRuleTest, Invariants) {
 }
 
 TEST(IsValidGaussLegendreRuleTest, Valid) {
+  EXPECT_TRUE(lob::IsValidGaussLegendreRule(lob::MakeGaussLegendreRule<1>()));
   EXPECT_TRUE(
-      lob::IsValidGaussLegendreRule(lob::MakeGaussLegendreRule<1>()));
-  EXPECT_TRUE(lob::IsValidGaussLegendreRule(
-      lob::MakeGaussLegendreRule<kOrder8>()));
+      lob::IsValidGaussLegendreRule(lob::MakeGaussLegendreRule<kOrder8>()));
 }
 
 TEST(IsValidGaussLegendreRuleTest, RejectsBadWeight) {
@@ -237,15 +238,15 @@ TEST(IntegrateGaussLegendreTest, BeyondExactness) {
 }
 
 TEST(IntegrateGaussLegendreTest, NonPolynomial) {
-  EXPECT_NEAR(lob::IntegrateGaussLegendre(
-                  -1.0, 1.0, [](double x) { return std::sin(x); }),
+  EXPECT_NEAR(lob::IntegrateGaussLegendre(-1.0, 1.0,
+                                          [](double x) { return std::sin(x); }),
               0.0, kTolTight);
-  EXPECT_NEAR(lob::IntegrateGaussLegendre(
-                  0.0, lob::kPi, [](double x) { return std::sin(x); }),
+  EXPECT_NEAR(lob::IntegrateGaussLegendre(0.0, lob::kPi,
+                                          [](double x) { return std::sin(x); }),
               kTwo, 1e-11);
   const double kExpExpected = std::exp(1.0) - 1.0;
-  EXPECT_NEAR(lob::IntegrateGaussLegendre(
-                  0.0, 1.0, [](double x) { return std::exp(x); }),
+  EXPECT_NEAR(lob::IntegrateGaussLegendre(0.0, 1.0,
+                                          [](double x) { return std::exp(x); }),
               kExpExpected, 1e-11);
 }
 
@@ -290,7 +291,8 @@ TEST(IntegrateGaussLegendreTest, StrongTAndLargeN) {
   EXPECT_NEAR(kRes.Value(), kEight / kThree, kTolLoose);
   auto s = [](double x) { return std::sin(x); };
   const double kR8 = lob::IntegrateGaussLegendre<kOrder8>(0.0, lob::kPi, s);
-  const double kR16 = lob::IntegrateGaussLegendre<kLargeOrder>(0.0, lob::kPi, s);
+  const double kR16 =
+      lob::IntegrateGaussLegendre<kLargeOrder>(0.0, lob::kPi, s);
   EXPECT_NEAR(kR8, kTwo, 1e-11);
   EXPECT_NEAR(kR16, kTwo, 1e-12);
 }
