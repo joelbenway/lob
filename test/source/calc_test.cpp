@@ -356,11 +356,10 @@ TEST(CalcTests, CalculateVelocityFromKineticEnergyZeroMassReturnsZero) {
       lob::CalculateVelocityFromKineticEnergy(lob::FtLbsT(100.0), lob::SlugT(0))
           .Value(),
       0.0);
-  EXPECT_DOUBLE_EQ(
-      lob::CalculateVelocityFromKineticEnergy(lob::FtLbsT(100.0),
-                                              lob::SlugT(lob::LbsT(-1.0)))
-          .Value(),
-      0.0);
+  EXPECT_DOUBLE_EQ(lob::CalculateVelocityFromKineticEnergy(
+                       lob::FtLbsT(100.0), lob::SlugT(lob::LbsT(-1.0)))
+                       .Value(),
+                   0.0);
 }
 
 TEST(CalcTests, CalculateSectionalDensity) {

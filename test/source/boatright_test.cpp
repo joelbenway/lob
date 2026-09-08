@@ -623,9 +623,9 @@ TEST(BoatrightTests, CalculateAerodynamicJumpRejectsInvalidOgiveRTR) {
   const lob::FpsT kSos(1116.45);
   const lob::PmsiT kBcG7(0.223);
   const double kCDref = 0.27;
-  for (const double kVal : {0.0, -0.1, 1.1,
-                             std::numeric_limits<double>::quiet_NaN(),
-                             std::numeric_limits<double>::infinity()}) {
+  for (const double kVal :
+       {0.0, -0.1, 1.1, std::numeric_limits<double>::quiet_NaN(),
+        std::numeric_limits<double>::infinity()}) {
     const lob::MoaT kResult = lob::boatright::CalculateAerodynamicJump(
         kD, kDM, kDB, kL, kLN, kLBT, kVal, kMass, kV, kSg, kTwist, kZwind,
         kAirDensity, kSos, kBcG7, kCDref);
