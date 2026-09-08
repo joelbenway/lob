@@ -375,10 +375,7 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
   }
 
   if (pimpl->drag_table_mode == DragTableMode::kNativeCoefs) {
-    if (pimpl->table_ys == nullptr) {  // LCOV_EXCL_LINE
-      pout->error = kLobErrorInternalError;  // LCOV_EXCL_LINE
-      return;                               // LCOV_EXCL_LINE
-    }
+    assert(pimpl->table_ys != nullptr);
     const float* src = pimpl->table_ys;
     if (std::any_of(src, src + spline::kCoefsSize,
                     [](float v) { return !std::isfinite(v); })) {
