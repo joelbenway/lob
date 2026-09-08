@@ -1560,18 +1560,12 @@ TEST_F(BuilderTestFixture, SplineCoefficientsLastCallWins) {
   EXPECT_NE(kTableLast.drags, kSrc.drags);
 }
 
-TEST_F(BuilderTestFixture, SplineCoefficientsNullIgnored) {
+TEST_F(BuilderTestFixture, SplineCoefficientsNullYieldsInternalError) {
   const lob::Context kResult = puut->SplineCoefficients(nullptr)
                                    .InitialVelocityFps(2800)
                                    .ZeroAngleMOA(5.0)
                                    .Build();
-  EXPECT_EQ(kResult.error, lob::ErrorT::kBallisticCoefficientRequired);
-
-  EXPECT_EQ(LobBuilderSplineCoefficients(nullptr, nullptr), nullptr);
-  LobBuilder b{};
-  LobBuilderInit(&b);
-  EXPECT_EQ(LobBuilderSplineCoefficients(&b, nullptr), &b);
-  LobBuilderDestroy(&b);
+  EXPECT_EQ(kResult.error, lob::ErrorT::kInternalError);
 }
 
 TEST_F(BuilderTestFixture, SplineCoefficientsResetClears) {

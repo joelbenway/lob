@@ -71,6 +71,57 @@ TEST(SolveStepTests, OneHundredEightyInchStepTenYardSolveTakesTwoSteps) {
   EXPECT_EQ(CountStepsTo(kCtx, kTarget), 2U);
 }
 
+TEST(SolveStepTests, ComputeStepTargetBehindReturnsStepSize) {
+  const LobContext kCtx = BuildContext(36U);  // 1 yard step
+  const double kAngle = lob::RadiansT(lob::MoaT(kCtx.zero_angle)).Value();
+  lob::TrajectoryStateT s(
+      lob::CartesianT<lob::FeetT>(lob::FeetT(100.0)),
+      lob::CartesianT<lob::FpsT>(lob::FpsT(kCtx.velocity) * std::cos(kAngle),
+                                 lob::FpsT(kCtx.velocity) * std::sin(kAngle),
+                                 lob::FpsT(0.0)));
+  lob::spline::CurveView curve(lob::spline::kKnots.data(), &kCtx.drags[0]);
+  const lob::FeetT kTargetBehind = lob::FeetT(50.0);  // behind s.P().X()=100
+  const lob::FeetT kBeforeX = s.P().X();
+  lob::FastSolveStep(kCtx, &s, &curve, kTargetBehind);
+  EXPECT_GT(s.P().X().Value(), kBeforeX.Value());
+
+  lob::TrajectoryStateT s2(
+      lob::CartesianT<lob::FeetT>(lob::FeetT(100.0)),
+      lob::CartesianT<lob::FpsT>(lob::FpsT(kCtx.velocity) * std::cos(kAngle),
+                                 lob::FpsT(kCtx.velocity) * std::sin(kAngle),
+                                 lob::FpsT(0.0)));
+  const lob::FeetT kBeforeX2 = s2.P().X();
+  lob::SolveStep(kCtx, &s2, &curve, kTargetBehind);
+  EXPECT_GT(s2.P().X().Value(), kBeforeX2.Value());
+}
+
+TEST(SolveStepTests, SolveStepClampsNegativeVx) {
+  constexpr uint16_t kLowVelocityFps = 600U;
+  constexpr double kHeadwindMph = 100.0;
+  constexpr double kHeadwindDeg = 180.0;
+  constexpr double kFarTargetFt = 1000.0;
+  LobBuilder builder{};
+  LobBuilderInit(&builder);
+  LobBuilderBallisticCoefficientPsi(&builder, kTestBC);
+  LobBuilderInitialVelocityFps(&builder, kLowVelocityFps);
+  LobBuilderZeroAngleMOA(&builder, kTestZeroAngle);
+  LobBuilderWindSpeedMph(&builder, kHeadwindMph);
+  LobBuilderWindHeadingDeg(&builder, kHeadwindDeg);
+  LobContext ctx{};
+  LobBuilderBuild(&builder, &ctx);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  LobBuilderDestroy(&builder);
+
+  lob::TrajectoryStateT s(lob::CartesianT<lob::FeetT>(lob::FeetT(0.0)),
+                          lob::CartesianT<lob::FpsT>(
+                              lob::FpsT(1.0), lob::FpsT(0.0), lob::FpsT(0.0)));
+  lob::spline::CurveView curve(lob::spline::kKnots.data(), &ctx.drags[0]);
+  lob::SolveStep(ctx, &s, &curve, lob::FeetT(kFarTargetFt));
+  EXPECT_EQ(s.V().X().Value(), 0.0);
+  EXPECT_EQ(s.V().Y().Value(), 0.0);
+  EXPECT_EQ(s.V().Z().Value(), 0.0);
+}
+
 }  // namespace tests
 
 // This file is part of lob.

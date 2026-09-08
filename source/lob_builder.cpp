@@ -379,16 +379,13 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
       pout->error = kLobErrorInternalError;
       return;
     }
-    for (size_t i = 0; i < spline::kCoefsSize; ++i) {
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-      const float kV = pimpl->table_ys[i];
-      if (!std::isfinite(kV)) {
-        pout->error = kLobErrorSplineCoefsInvalid;
-        return;
-      }
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-      pout->drags[i] = kV;
+    const float* src = pimpl->table_ys;
+    if (std::any_of(src, src + spline::kCoefsSize,
+                    [](float v) { return !std::isfinite(v); })) {
+      pout->error = kLobErrorSplineCoefsInvalid;
+      return;
     }
+    std::copy_n(src, spline::kCoefsSize, &pout->drags[0]);
     pimpl->ballistic_coefficient_psi = PmsiT(1);
     pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
     return;
@@ -925,8 +922,8 @@ LobBuilder* LobBuilderBCVelocityBands(LobBuilder* pbuilder, const float* pfps,
 
 LobBuilder* LobBuilderSplineCoefficients(LobBuilder* pbuilder,
                                          const float* pcoefs) {
-  if (pbuilder == nullptr || pcoefs == nullptr) {
-    return pbuilder;
+  if (pbuilder == nullptr) {
+    return nullptr;
   }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->table_ys = pcoefs;
