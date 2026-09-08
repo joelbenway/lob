@@ -275,7 +275,6 @@ jobs:
         -D CG_BASE=base/build/benchmark/cachegrind/lob_bench.results.cmake
         -D CG_HEAD=head/build/benchmark/cachegrind/lob_bench.results.cmake
         -D CG_MAX_REGRESSION_BP=100
-        -D "CG_THRESHOLD_OVERRIDE_build_custom_table=200"
         -D CG_SUMMARY="$GITHUB_STEP_SUMMARY"
         -P head/cmake/cachegrind-compare.cmake
 
