@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cmath>
+#include <type_traits>
 #include <utility>
 
 #include "eng_units.hpp"
@@ -60,11 +61,27 @@ class CartesianT {
   constexpr CartesianT operator*(const T& rhs) const {
     return CartesianT{x_ * rhs, y_ * rhs, z_ * rhs};
   }
+  template <typename U = T,
+            std::enable_if_t<!std::is_same<U, double>::value &&
+                                 !std::is_same<U, float>::value,
+                             int> = 0>
+  constexpr CartesianT operator*(double rhs) const {
+    return CartesianT{T(x_.Value() * rhs), T(y_.Value() * rhs),
+                      T(z_.Value() * rhs)};
+  }
   constexpr CartesianT operator/(const CartesianT& rhs) const {
     return CartesianT{x_ / rhs.x_, y_ / rhs.y_, z_ / rhs.z_};
   }
   constexpr CartesianT operator/(const T& rhs) const {
     return CartesianT{x_ / rhs, y_ / rhs, z_ / rhs};
+  }
+  template <typename U = T,
+            std::enable_if_t<!std::is_same<U, double>::value &&
+                                 !std::is_same<U, float>::value,
+                             int> = 0>
+  constexpr CartesianT operator/(double rhs) const {
+    return CartesianT{T(x_.Value() / rhs), T(y_.Value() / rhs),
+                      T(z_.Value() / rhs)};
   }
 
   constexpr T X() const { return x_; }
