@@ -9,7 +9,7 @@ include(../../cmake/cachegrind.cmake)
 add_cachegrind_benchmark(lob_bench
   SOURCES lob_bench.cpp
   CASES
-    build_basic:32000
+    build_basic:64000
     build_full:14000
     build_custom_table:3500
     build_boatright:500
