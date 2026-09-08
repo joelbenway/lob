@@ -922,8 +922,8 @@ LobBuilder* LobBuilderBCVelocityBands(LobBuilder* pbuilder, const float* pfps,
 
 LobBuilder* LobBuilderSplineCoefficients(LobBuilder* pbuilder,
                                          const float* pcoefs) {
-  if (pbuilder == nullptr) {
-    return nullptr;
+  if (pbuilder == nullptr || pcoefs == nullptr) {
+    return pbuilder;
   }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->table_ys = pcoefs;

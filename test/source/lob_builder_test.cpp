@@ -1560,12 +1560,31 @@ TEST_F(BuilderTestFixture, SplineCoefficientsLastCallWins) {
   EXPECT_NE(kTableLast.drags, kSrc.drags);
 }
 
-TEST_F(BuilderTestFixture, SplineCoefficientsNullYieldsInternalError) {
+TEST_F(BuilderTestFixture, SplineCoefficientsNullPreservesExisting) {
+  // nullptr coefs is a no-op (like SplineFitTable/BCVelocityBands)
   const lob::Context kResult = puut->SplineCoefficients(nullptr)
                                    .InitialVelocityFps(2800)
                                    .ZeroAngleMOA(5.0)
                                    .Build();
-  EXPECT_EQ(kResult.error, lob::ErrorT::kInternalError);
+  EXPECT_EQ(kResult.error, lob::ErrorT::kBallisticCoefficientRequired);
+
+  // When a valid drag source exists, nullptr preserves it
+  const lob::Context kSrc = lob::Builder()
+                                .BallisticCoefficientPsi(0.5)
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  ASSERT_EQ(kSrc.error, lob::ErrorT::kNone);
+  const lob::Context kPreserved =
+      puut->Reset()
+          .BallisticCoefficientPsi(0.5)
+          .InitialVelocityFps(2800)
+          .ZeroAngleMOA(5.0)
+          .SplineCoefficients(kSrc.drags.data())
+          .SplineCoefficients(nullptr)
+          .Build();
+  EXPECT_EQ(kPreserved.error, lob::ErrorT::kNone);
+  EXPECT_EQ(kPreserved.drags, kSrc.drags);
 }
 
 TEST_F(BuilderTestFixture, SplineCoefficientsResetClears) {
