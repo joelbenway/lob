@@ -93,7 +93,9 @@ void BuildDynamicDensity(DegFT temperature_at_firing_site, LobContext* pout) {
   constexpr double kInvLapseDenom =
       (1.0 / isa::kGasConstantAir) -
       (isa::kLapseDegFPerFt / kStandardGravityFtPerSecSq);
-  pout->k_lapse = kInvLapseDenom / DegRT(temperature_at_firing_site).Value();
+  const DegRT kTemp = DegRT(temperature_at_firing_site);
+  assert(kTemp.Value() > 0.0);
+  pout->k_lapse = kInvLapseDenom / kTemp.Value();
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
