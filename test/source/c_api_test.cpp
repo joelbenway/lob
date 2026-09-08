@@ -48,6 +48,10 @@ TEST(LobCAPITest, BuilderNullptrReturnsNullptr) {
   EXPECT_EQ(LobBuilderBCVelocityBands(&builder, kFps.data(), nullptr, kSize),
             &builder);
 
+  const std::array<float, LOB_SPLINE_SEGMENTS * 4> kDummyCoefs = {};
+  EXPECT_EQ(LobBuilderSplineCoefficients(nullptr, kDummyCoefs.data()), nullptr);
+  EXPECT_EQ(LobBuilderSplineCoefficients(nullptr, nullptr), nullptr);
+
   EXPECT_EQ(LobBuilderMassGrains(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderInitialVelocityFps(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderOpticHeightInches(nullptr, kDummy), nullptr);
