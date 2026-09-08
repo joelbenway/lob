@@ -607,6 +607,37 @@ TEST_P(SpinDriftParameterizedFixture, CalculateSpinDrift) {
   ASSERT_NEAR(kSD.Value(), kShot.sd_1000, 1E-2);
 }
 
+TEST(BoatrightTests, CalculateAerodynamicJumpRejectsInvalidOgiveRTR) {
+  const lob::InchT kD(0.308);
+  const lob::InchT kDM(0.211 * kD.Value());
+  const lob::InchT kDB(0.786 * kD.Value());
+  const lob::InchT kL(3.945 * kD.Value());
+  const lob::InchT kLN(2.240 * kD.Value());
+  const lob::InchT kLBT(0.455 * kD.Value());
+  const lob::GrainT kMass(168.0);
+  const lob::FpsT kV(2800);
+  const double kSg(1.74);
+  const lob::InchPerTwistT kTwist(12);
+  const lob::MphT kZwind(10);
+  const lob::LbsPerCuFtT kAirDensity(0.0764742);
+  const lob::FpsT kSos(1116.45);
+  const lob::PmsiT kBcG7(0.223);
+  const double kCDref = 0.27;
+  for (const double kVal : {0.0, -0.1, 1.1,
+                             std::numeric_limits<double>::quiet_NaN(),
+                             std::numeric_limits<double>::infinity()}) {
+    const lob::MoaT kResult = lob::boatright::CalculateAerodynamicJump(
+        kD, kDM, kDB, kL, kLN, kLBT, kVal, kMass, kV, kSg, kTwist, kZwind,
+        kAirDensity, kSos, kBcG7, kCDref);
+    EXPECT_TRUE(std::isnan(kResult.Value())) << "ogive_rtr=" << kVal;
+  }
+  // Valid 0.9 should not be NaN (sanity)
+  const lob::MoaT kGood = lob::boatright::CalculateAerodynamicJump(
+      kD, kDM, kDB, kL, kLN, kLBT, 0.9, kMass, kV, kSg, kTwist, kZwind,
+      kAirDensity, kSos, kBcG7, kCDref);
+  EXPECT_FALSE(std::isnan(kGood.Value()));
+}
+
 INSTANTIATE_TEST_SUITE_P(BoatrightTests, SpinDriftParameterizedFixture,
                          ::testing::Values(kInternational, kM118LR, kULDSB,
                                            kBergerTactical, kBergerLRBT));
