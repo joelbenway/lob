@@ -25,7 +25,7 @@ exposed from a successful `Build()`; `kLobErrorNumberOfErrors` is the count.
 | `kZeroUnreachable` | `SolveAngle` returns NaN for the zero distance (vacuum-parabola seed, 10 iters, ±45°) |
 | `kRangeAngleOOR` | `abs(RangeAngleDeg) ≥ 90°` |
 | `kDiameterOOR` / `kLengthOOR` / `kMassOOR` | non-positive geometry needed for `stability_factor` |
-| `kMeplatDiameterOOR` / `kBaseDiameterOOR` / `kNoseLengthOOR` / `kTailLengthOOR` / `kOgiveRtROOR` | Boatright geometry out of `[0,∞)` or `ogiveRtR ∉ [0,1]` |
+| `kMeplatDiameterOOR` / `kBaseDiameterOOR` / `kNoseLengthOOR` / `kTailLengthOOR` / `kOgiveRtROOR` | Boatright geometry out of `[0,∞)` or `ogiveRtR ∉ (0,1]` |
 | `kAltitudeOfFiringSiteOOR` / `kAltitudeOfBarometerOOR` / `kAltitudeOfThermometerOOR` | `abs(alt) ≥ 65 617 ft` (`kStratosphereAltitudeFt`) |
 | `kAirPressureOOR` | `AirPressureInHg < 0` |
 | `kHumidityOOR` | `RelativeHumidityPercent ∉ [0,100]` |
@@ -40,7 +40,7 @@ exposed from a successful `Build()`; `kLobErrorNumberOfErrors` is the count.
 | `kBcBandsInvalid` | `size > 16`, any `fps ≤ 0` / `BC ≤ 0` / non-finite, or `max(fps)/c ≥ 5.0` |
 | `kBcBandsNotMonotonic` | `fps` not strictly increasing |
 | `kSplineCoefsInvalid` | `SplineCoefficients` contains non-finite value |
-| `kInternalError` | Boatright supersonic integration to `Mach 1.2` exceeded 60 s (temporary guard) |
+| `kInternalError` | Defensive internal error (e.g., `SplineCoefficients` null checks) |
 | `kNotFormed` | internal sentinel — not returned |
 | `kNumberOfErrors` | count |
 

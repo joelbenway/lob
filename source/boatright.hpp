@@ -246,6 +246,9 @@ inline MoaT CalculateAerodynamicJump(
     InchT ogive_length, InchT tail_length, double ogive_rtr, GrainT mass,
     FpsT velocity, double stability, InchPerTwistT twist, FpsT zwind,
     LbsPerCuFtT air_density, FpsT speed_of_sound, PmsiT bc, double cd_ref) {
+  if (ogive_rtr <= 0.0 || ogive_rtr > 1.0 || !std::isfinite(ogive_rtr)) {
+    return MoaT(NaN());
+  }
   const CaliberT kDM(meplat_diameter, diameter.Inverse());
   const CaliberT kDB(base_diameter, diameter.Inverse());
   const CaliberT kL(length, diameter.Inverse());

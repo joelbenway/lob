@@ -559,7 +559,7 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  if (pimpl->ogive_rtr < 0 || pimpl->ogive_rtr > 1.0) {
+  if (pimpl->ogive_rtr <= 0 || pimpl->ogive_rtr > 1.0) {
     pout->error = kLobErrorOgiveRtROOR;
     return;
   }
