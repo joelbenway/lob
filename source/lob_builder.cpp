@@ -93,8 +93,6 @@ void BuildDynamicDensity(DegFT temperature_at_firing_site, LobContext* pout) {
   constexpr double kInvLapseDenom =
       (1.0 / isa::kGasConstantAir) -
       (isa::kLapseDegFPerFt / kStandardGravityFtPerSecSq);
-  const DegRT kTemp = temperature_at_firing_site;
-  assert(kTemp.Value() > 0.0);
   pout->k_lapse = kInvLapseDenom / DegRT(temperature_at_firing_site).Value();
 }
 
@@ -422,8 +420,7 @@ void BuildCoefficients(Impl* pimpl, LobContext* pout) {
   }
 
   assert(!pimpl->air_density_lbs_per_cu_ft.IsNaN());
-  constexpr double kDragScale =
-      CalculateCdCoefficient(LbsPerCuFtT(1), PmsiT(1));
+  constexpr double kDragScale = kPi / 1152.0;  // pi/(144*8) for Pmsi=1
   pout->drag_coeff = pimpl->air_density_lbs_per_cu_ft.Value() * kDragScale;
 }
 
@@ -622,8 +619,11 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const auto kTn = boatright::CalculateFirstNutationPeriod(kF1F2Sum - kF2, kF2);
   const auto kGamma =
       boatright::CalculateCrosswindAngleGamma(kZWind, kVelocity);
-  const auto kCD0 = boatright::CalculateZeroYawDragCoefficientOfDrag(
-      kCdRef, kMass, kD, PmsiT(1));
+  const auto kCD0 = pimpl->drag_table_mode == DragTableMode::kStandard ||
+                            pimpl->drag_table_mode == DragTableMode::kBcBands
+                        ? boatright::CalculateZeroYawDragCoefficientOfDrag(
+                              kCdRef, kMass, kD, PmsiT(1))
+                        : static_cast<double>(kCdRef);
   const double kCD =
       (kGamma < 0.0 || kGamma > 0.0)
           ? kCD0 + boatright::CalculateYawDragAdjustment(kGamma, kR, kCDa)
@@ -642,18 +642,13 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   pout->aerodynamic_jump = kJump.Value();
 
   const FpsT kTransonicBarrier(MachT(1.2), kSos);
-  SecT tof(0.0);
-
-  if (kVelocity > kTransonicBarrier) {
-    const double kIntegral = lob::IntegrateGaussLegendre<8>(
-        kTransonicBarrier.Value(), kVelocity.Value(), [&](double v) {
-          const auto kMach = static_cast<float>(v / kSos.Value());
-          const auto kCd =
-              static_cast<double>(drag_curve.Eval(kMach)) * pout->drag_coeff;
-          return 1.0 / (v * v * kCd);
-        });
-
-    tof = SecT(kIntegral);
+  constexpr SecT kTransonicTimeout(60.0);
+  while (s.V().X() > kTransonicBarrier) {
+    if (s.TOF() > kTransonicTimeout) {
+      pout->error = kLobErrorInternalError;
+      return;
+    }
+    FastSolveStep(*pout, &s, &drag_curve);
   }
 
   const auto kV = boatright::CalculateKV(kVelocity, kTransonicBarrier);
