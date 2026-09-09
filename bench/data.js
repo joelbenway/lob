@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788354523604,
+  "lastUpdate": 1788922623761,
   "repoUrl": "https://github.com/joelbenway/lob",
   "entries": {
     "lob instruction counts": [
@@ -348,6 +348,65 @@ window.BENCHMARK_DATA = {
           {
             "name": "lob_bench/solve_inverse",
             "value": 919539.995,
+            "unit": "Ir/op"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1304eac78d24c1b2b997348726548b0166eb7715",
+          "message": "Merge pull request #44 from joelbenway/feat/dynamic-air-density\n\nFeat/dynamic air density",
+          "timestamp": "2026-09-08T21:43:20-05:00",
+          "tree_id": "6a266ca8465505a115bbfbda367d98c0992f246f",
+          "url": "https://github.com/joelbenway/lob/commit/1304eac78d24c1b2b997348726548b0166eb7715"
+        },
+        "date": 1788922622412,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "lob_bench/build_basic",
+            "value": 623,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_full",
+            "value": 1728,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_custom_table",
+            "value": 7616.001,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_boatright",
+            "value": 2993.006,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_zero_search",
+            "value": 65330.005,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_basic",
+            "value": 216665.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse",
+            "value": 889674.995,
             "unit": "Ir/op"
           }
         ]
