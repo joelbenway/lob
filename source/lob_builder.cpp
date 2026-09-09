@@ -616,8 +616,12 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const auto kTn = boatright::CalculateFirstNutationPeriod(kF1F2Sum - kF2, kF2);
   const auto kGamma =
       boatright::CalculateCrosswindAngleGamma(kZWind, kVelocity);
-  const auto kCD0 = boatright::CalculateZeroYawDragCoefficientOfDrag(
-      kCdRef, kMass, kD, PmsiT(1));
+  const auto kCD0 =
+      pimpl->drag_table_mode == DragTableMode::kCustomTable ||
+              pimpl->drag_table_mode == DragTableMode::kNativeCoefs
+          ? static_cast<double>(kCdRef)
+          : boatright::CalculateZeroYawDragCoefficientOfDrag(kCdRef, kMass, kD,
+                                                             PmsiT(1));
   const double kCD =
       (kGamma < 0.0 || kGamma > 0.0)
           ? kCD0 + boatright::CalculateYawDragAdjustment(kGamma, kR, kCDa)

@@ -1605,6 +1605,51 @@ TEST_F(BuilderTestFixture, SplineCoefficientsResetClears) {
   EXPECT_EQ(kAfterReset.drags, kRef.drags);
 }
 
+TEST_F(BuilderTestFixture, CustomTableBoatrightUsesDirectCd) {
+  // Regression for kCD0 direct vs mass/diameter conversion
+  // Build standard G1 with full Boatright geometry
+  const lob::Context kStandard =
+      puut->BallisticCoefficientPsi(0.5)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .BCDragFunction(lob::DragFunctionT::kG1)
+          .DiameterInch(0.308)
+          .LengthInch(1.2)
+          .MassGrains(175.0)
+          .TwistInchesPerTurn(10.0)
+          .InitialVelocityFps(2800)
+          .ZeroAngleMOA(5.0)
+          .WindSpeedMph(10.0)
+          .WindHeading(lob::ClockAngleT::kIX)
+          .Build();
+  ASSERT_EQ(kStandard.error, lob::ErrorT::kNone);
+  ASSERT_FALSE(std::isnan(kStandard.aerodynamic_jump));
+
+  // Build custom table with same G1 data and same geometry — should use kCdRef
+  // directly
+  std::array<float, lob::dragtable::kTableSize> machs{};
+  std::array<float, lob::dragtable::kTableSize> drags{};
+  for (size_t i = 0; i < lob::dragtable::kTableSize; ++i) {
+    machs.at(i) = lob::dragtable::kMachs.at(i);
+    drags.at(i) = lob::dragtable::kG1Drags.at(i);
+  }
+  puut->Reset();
+  const lob::Context kCustom = puut->DiameterInch(0.308)
+                                   .LengthInch(1.2)
+                                   .MassGrains(175.0)
+                                   .TwistInchesPerTurn(10.0)
+                                   .InitialVelocityFps(2800)
+                                   .ZeroAngleMOA(5.0)
+                                   .WindSpeedMph(10.0)
+                                   .WindHeading(lob::ClockAngleT::kIX)
+                                   .MachVsDragTable(machs, drags)
+                                   .Build();
+  ASSERT_EQ(kCustom.error, lob::ErrorT::kNone);
+  ASSERT_FALSE(std::isnan(kCustom.aerodynamic_jump));
+  // Custom table's Cd is direct, so its jump should be close to standard's
+  // (within 10% — the mass/diameter conversion would make it ~30% different)
+  EXPECT_NEAR(kCustom.aerodynamic_jump, kStandard.aerodynamic_jump, 0.5);
+}
+
 }  // namespace tests
 
 // This file is part of lob.
