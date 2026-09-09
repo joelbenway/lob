@@ -11,7 +11,7 @@ fires. (`max_time` defaults to `NaN` for “no limit”; see below.)
 
 - **Builder:** `StepSize(uint16_t inches)` / `LobBuilderStepSize`
 - **Context:** `step_size` inches, `0` = default 1 yard (36 in)
-- **Code:** `source/solve_step.cpp` `SolveStep` — `Δx = min(target−x, step_size)` (last step clamped), Heun `k1+k2` + trapezoidal `TOF += 2·Δx/(vx_old+vx_new)`.
+- **Code:** `source/solve_step.cpp` `FastSolveStep`/`SolveStep` via `DsDxCore` — `Δx = min(target−x, step_size)` (last step clamped, `ComputeStep`), Heun `k1+k2` with `TOF` integrated as `d(TOF)/dx=1/vx` (`SecT(kDtDx)`) in `DsDxCore` (`FastDsDx` firing-site, `DsDx` lapse-scaled).
 
 Smaller `Δx` reduces truncation error monotonically; `benchmark/ode.cpp` shows
 linear cost in `1/Δx`. Default 1 yd meets the `validation_overview` tolerances
@@ -39,8 +39,8 @@ out to 1000 yd — tighten only when you need it and can pay for it.
 
 @section api-options-atm Atmosphere, wind, Coriolis
 
-- Atmosphere inputs (`AltitudeOfFiringSiteFt`, `AirPressureInHg`, `AltitudeOfBarometerFt`, `TemperatureDegF`, `AltitudeOfThermometerFt`, `RelativeHumidityPercent`) only affect `speed_of_sound` and `drag_coeff` at `Build()` time — see @ref model_atmosphere.
-- Wind (`WindHeading`/`WindHeadingDeg` + `WindSpeed*`) only enters as `v−w` in `DsDx` and `w_z` in jump — see @ref model_wind_coriolis.
+- Atmosphere inputs (`AltitudeOfFiringSiteFt`, `AirPressureInHg`, `AltitudeOfBarometerFt`, `TemperatureDegF`, `AltitudeOfThermometerFt`, `RelativeHumidityPercent`) set `speed_of_sound` and `drag_coeff` at `Build()` time and `k_lapse` for per-step lapse-scaled `DsDx` — see @ref model_atmosphere (`BuildDynamicDensity`, `kHydrostaticExponent`/`kBarometricExponent`). Forward/zero/Boatright use `FastDsDx` (firing-site); `drop>100ft` inverse ranges use `DsDx` (`LobSolveInverse` gating).
+- Wind (`WindHeading`/`WindHeadingDeg` + `WindSpeed*`) only enters as `v−w` in `DsDx`/`FastDsDx` and `w_z` in jump — see @ref model_wind_coriolis.
 - Coriolis needs both `AzimuthDeg` and `LatitudeDeg`; otherwise zeroed.
 
 None of these allocate; `Context` is self-contained after `Build()` (@ref api_context).

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstddef>
 #include <limits>
 #include <type_traits>
 
@@ -117,6 +118,19 @@ constexpr T Fmod(T x, T y) {
 constexpr double Modulo(double a, double b) { return Fmod(a, b); }
 
 constexpr float Modulo(float a, float b) { return Fmod(a, b); }
+
+template <typename T>
+constexpr T Cos(T x) noexcept {
+  const std::size_t kLength = 10;
+  T term = 1.0;
+  T sum = 1.0;
+  const T kX2 = x * x;
+  for (std::size_t i = 1; i <= kLength; i++) {
+    term *= -kX2 / (static_cast<T>((2 * i) - 1) * static_cast<T>(2 * i));
+    sum += term;
+  }
+  return sum;
+}
 
 }  // namespace lob
 

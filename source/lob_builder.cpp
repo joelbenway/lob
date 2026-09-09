@@ -11,15 +11,13 @@
 
 #include "boatright.hpp"
 #include "calc.hpp"
-#include "cartesian.hpp"
 #include "constants.hpp"
 #include "eng_units.hpp"
+#include "gauss_legendre.hpp"
 #include "helpers.hpp"
 #include "litz.hpp"
 #include "lob/lob.h"
-#include "ode.hpp"
 #include "solve_angle.hpp"
-#include "solve_step.hpp"
 #include "splines.hpp"
 
 namespace lob {
@@ -27,9 +25,10 @@ namespace lob {
 namespace {
 
 enum class DragTableMode : uint8_t {
-  kStandard,
-  kCustomTable,
   kBcBands,
+  kCustomTable,
+  kNativeCoefs,
+  kStandard,
 };
 
 }  // namespace
@@ -94,7 +93,9 @@ void BuildDynamicDensity(DegFT temperature_at_firing_site, LobContext* pout) {
   constexpr double kInvLapseDenom =
       (1.0 / isa::kGasConstantAir) -
       (isa::kLapseDegFPerFt / kStandardGravityFtPerSecSq);
-  pout->k_lapse = kInvLapseDenom / DegRT(temperature_at_firing_site).Value();
+  const DegRT kTemp = DegRT(temperature_at_firing_site);
+  assert(kTemp.Value() > 0.0);
+  pout->k_lapse = kInvLapseDenom / kTemp.Value();
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -373,16 +374,31 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
     return;
   }
 
+  if (pimpl->drag_table_mode == DragTableMode::kNativeCoefs) {
+    assert(pimpl->table_ys != nullptr);
+    const float* src = pimpl->table_ys;
+    if (std::any_of(src, src + spline::kCoefsSize,
+                    [](float v) { return !std::isfinite(v); })) {
+      pout->error = kLobErrorSplineCoefsInvalid;
+      return;
+    }
+    std::copy_n(src, spline::kCoefsSize, &pout->drags[0]);
+    pimpl->ballistic_coefficient_psi = PmsiT(1);
+    pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
+    return;
+  }
+
   const double kConvert =
       pimpl->atmosphere_reference == kLobAtmosphereReferenceArmyStandardMetro
           ? kArmyToIcaoBcConversionFactor
           : 1.0;
-  const float kInvBc =
-      1.0F /
-      static_cast<float>(pimpl->ballistic_coefficient_psi.Value() * kConvert);
+
+  const float kScale =
+      (pimpl->ballistic_coefficient_psi * kConvert).Inverse().Float();
+
   for (size_t i = 0; i < spline::kCoefsSize; ++i) {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-    pout->drags[i] = coefs->at(i) * kInvBc;
+    pout->drags[i] = coefs->at(i) * kScale;
   }
 }
 
@@ -400,7 +416,8 @@ void BuildCoefficients(Impl* pimpl, LobContext* pout) {
   }
 
   assert(!pimpl->air_density_lbs_per_cu_ft.IsNaN());
-  constexpr double kDragScale = kPi / 1152.0;  // pi/(144*8) for Pmsi=1
+  constexpr double kDragScale =
+      CalculateCdCoefficient(LbsPerCuFtT(1), PmsiT(1));
   pout->drag_coeff = pimpl->air_density_lbs_per_cu_ft.Value() * kDragScale;
 }
 
@@ -540,7 +557,7 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  if (pimpl->ogive_rtr < 0 || pimpl->ogive_rtr > 1.0) {
+  if (pimpl->ogive_rtr <= 0 || pimpl->ogive_rtr > 1.0) {
     pout->error = kLobErrorOgiveRtROOR;
     return;
   }
@@ -568,18 +585,18 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const double kSg(pout->stability_factor);
   const PmsiT kBc(pimpl->ballistic_coefficient_psi);
   const FpsT kZWind(pout->wind.z);
+  const LbsPerCuFtT kAirDensity = pimpl->air_density_lbs_per_cu_ft;
 
   if (kD.IsNaN() || kDM.IsNaN() || kDB.IsNaN() || kL.IsNaN() || kLN.IsNaN() ||
       kLBT.IsNaN() || std::isnan(kRTR) || !(kVelocity > FpsT(0)) ||
       kSos.IsNaN() || kMass.IsNaN() || kTwist.IsNaN() || std::isnan(kSg) ||
-      kBc.IsNaN() || kZWind.IsNaN()) {
+      kBc.IsNaN() || kZWind.IsNaN() || kAirDensity.IsNaN()) {
     return;
   }
 
   const CaliberT kRT = boatright::CalculateRadiusOfTangentOgive(kLN, kDM);
   const CaliberT kLFN = boatright::CalculateFullNoseLength(kLN, kDM, kRT, kRTR);
-  const PsiT kQ = boatright::CalculateDynamicPressure(
-      pimpl->air_density_lbs_per_cu_ft, kVelocity);
+  const PsiT kQ = boatright::CalculateDynamicPressure(kAirDensity, kVelocity);
   const SqInT kS = CalculateProjectileReferenceArea(kD);
   const auto kAR = boatright::CalculateAspectRatio(kL, kLFN, kLBT, kDB);
   const auto kM = MachT(kVelocity, kSos.Inverse());
@@ -587,8 +604,8 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const auto kCdRef = drag_curve.Eval(kM);
   const auto kCL = boatright::CalculateCoefficientOfLift(kLFN, kM);
   const auto kCDa = boatright::CalculateYawDragCoefficient(kM, kCL, kAR);
-  const auto kRho = boatright::CalculateFastAverageDensity(kD, kL, kDM, kLN,
-                                                           kDB, kLBT, kMass);
+  const auto kRho = boatright::CalculateAverageDensity(
+      kD, kL, kLN, kLFN, kRT / kRTR, kDB, kLBT, kMass);
   const auto kIyOverIx =
       boatright::CalculateInertialRatio(kD, kL, kLN, kLFN, kMass, kRho);
   const auto kP = boatright::CalculateSpinRate(kVelocity, kTwist);
@@ -599,11 +616,12 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const auto kTn = boatright::CalculateFirstNutationPeriod(kF1F2Sum - kF2, kF2);
   const auto kGamma =
       boatright::CalculateCrosswindAngleGamma(kZWind, kVelocity);
-  const auto kCD0 = pimpl->drag_table_mode == DragTableMode::kStandard ||
-                            pimpl->drag_table_mode == DragTableMode::kBcBands
-                        ? boatright::CalculateZeroYawDragCoefficientOfDrag(
-                              kCdRef, kMass, kD, PmsiT(1))
-                        : static_cast<double>(kCdRef);
+  const auto kCD0 =
+      pimpl->drag_table_mode == DragTableMode::kCustomTable ||
+              pimpl->drag_table_mode == DragTableMode::kNativeCoefs
+          ? static_cast<double>(kCdRef)
+          : boatright::CalculateZeroYawDragCoefficientOfDrag(kCdRef, kMass, kD,
+                                                             PmsiT(1));
   const double kCD =
       (kGamma < 0.0 || kGamma > 0.0)
           ? kCD0 + boatright::CalculateYawDragAdjustment(kGamma, kR, kCDa)
@@ -621,23 +639,23 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
                          : MoaT(0);
   pout->aerodynamic_jump = kJump.Value();
 
-  TrajectoryStateT s(
-      CartesianT<FeetT>(FeetT(0.0)),
-      CartesianT<FpsT>(FpsT(kVelocity * std::cos(0)),
-                       FpsT(kVelocity * std::sin(0)), FpsT(0.0)));
-
   const FpsT kTransonicBarrier(MachT(1.2), kSos);
-  constexpr SecT kTransonicTimeout(60.0);
-  while (s.V().X() > kTransonicBarrier) {
-    if (s.TOF() > kTransonicTimeout) {
-      pout->error = kLobErrorInternalError;
-      return;
-    }
-    FastSolveStep(*pout, &s, &drag_curve);
+  SecT tof(0.0);
+
+  if (kVelocity > kTransonicBarrier) {
+    const double kIntegral = lob::IntegrateGaussLegendre<8>(
+        kTransonicBarrier.Value(), kVelocity.Value(), [&](double v) {
+          const auto kMach = static_cast<float>(v / kSos.Value());
+          const auto kCd =
+              static_cast<double>(drag_curve.Eval(kMach)) * pout->drag_coeff;
+          return 1.0 / (v * v * kCd);
+        });
+
+    tof = SecT(kIntegral);
   }
 
   const auto kV = boatright::CalculateKV(kVelocity, kTransonicBarrier);
-  const auto kOmega = boatright::CalculateKOmega(kD, s.TOF());
+  const auto kOmega = boatright::CalculateKOmega(kD, tof);
   const double kQTS = boatright::CalculatePotentialDragForce(
       kD, pimpl->air_density_lbs_per_cu_ft, kTransonicBarrier);
   const auto kBetaROfT = boatright::CalculateYawOfRepose(
@@ -656,7 +674,7 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
       boatright::CalculateCLBoattailAdjustmentFactor(bc_g7);
   const double kClOf0 = kClBoattailAdjustment * kCL;
   const auto kClOfT =
-      boatright::CalculateCoefficientOfLiftAtT(kClOf0, kVelocity, s.TOF());
+      boatright::CalculateCoefficientOfLiftAtT(kClOf0, kVelocity, tof);
   pout->spindrift_factor =
       boatright::CalculateSpinDriftScaleFactor(kQTS, kBetaROfT, kClOfT, kMass);
 }
@@ -903,6 +921,19 @@ LobBuilder* LobBuilderBCVelocityBands(LobBuilder* pbuilder, const float* pfps,
   pimpl->table_ys = pbcs;
   pimpl->table_count = size;
   pimpl->drag_table_mode = DragTableMode::kBcBands;
+  return pbuilder;
+}
+
+LobBuilder* LobBuilderSplineCoefficients(LobBuilder* pbuilder,
+                                         const float* pcoefs) {
+  if (pbuilder == nullptr || pcoefs == nullptr) {
+    return pbuilder;
+  }
+  auto* pimpl = Pimpl(pbuilder);
+  pimpl->table_ys = pcoefs;
+  pimpl->table_xs = nullptr;
+  pimpl->table_count = 0;
+  pimpl->drag_table_mode = DragTableMode::kNativeCoefs;
   return pbuilder;
 }
 

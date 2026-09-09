@@ -167,12 +167,33 @@ class Cursor {
   }
 
   constexpr void Seek(T m) {
+#if defined(__GNUC__) || defined(__clang__)
+    if (__builtin_expect(idx_ > 0 && m < knots_[idx_], 0)) {
+      // NOLINTNEXTLINE(cppcoreguidelines-avoid-do-while)
+      do {
+        --idx_;
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-do-while)
+      } while (idx_ > 0 && m < knots_[idx_]);
+    } else if (__builtin_expect(idx_ + 2 < N && m >= knots_[idx_ + 1], 0)) {
+      // Rare: Mach increasing (large step or tailwind) — at most one knot per
+      // 1yd
+      ++idx_;
+      if (idx_ + 2 < N && m >= knots_[idx_ + 1]) {
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-do-while)
+        do {
+          ++idx_;
+          // NOLINTNEXTLINE(cppcoreguidelines-avoid-do-while)
+        } while (idx_ + 2 < N && m >= knots_[idx_ + 1]);
+      }
+    }
+#else
     while (idx_ > 0 && m < knots_[idx_]) {
       --idx_;
     }
     while (idx_ + 2 < N && m >= knots_[idx_ + 1]) {
       ++idx_;
     }
+#endif
   }
 
   const T* knots_;

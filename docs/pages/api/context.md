@@ -11,11 +11,16 @@
 Selected fields (units in the comments in the header):
 
 - `drag_coeff` — density term `ρ·π / 8` applied to `Cd(Mach)` inside `DsDx`
-  (`source/solve_step.cpp`).  For standard and BC-band paths the `1/BC`
+  / `FastDsDx` (`source/solve_step.cpp`).  For standard and BC-band paths the `1/BC`
   scaling is already baked into the spline `drags[60]`; for custom tables
-  `drag_coeff` scales density only.
+  `drag_coeff` scales density only.  Per-step `DsDx` scales `drag_coeff` by
+  `ρ/ρ0 = 1−u(1−αu)` and `speed_of_sound` by `c/c0 = 1−βu` via `k_lapse`
+  (@ref model_atmosphere); `FastDsDx` uses firing-site values.
 - `speed_of_sound` — fps, local value including humidity correction
   (`source/calc.hpp`).
+- `k_lapse` — projected linear density lapse coefficient `(1/R−L/g)/T_R`
+  (`source/constants.hpp`, `source/lob_builder.cpp` `BuildDynamicDensity`),
+  used per step by `DsDx` (`source/solve_step.cpp`).
 - `mass` — pounds, `LbsT(mass).Value()`.
 - `optic_height` — feet.
 - `gravity` — `{x,y}` ft/s² rotated by range angle (`source/lob_builder.cpp`).

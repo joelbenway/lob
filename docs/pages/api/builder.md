@@ -43,7 +43,8 @@ to the C function.  C setters are `nullptr`-safe; the C++ wrapper returns
 
 - ballistic coefficient (@ref LobBuilderBallisticCoefficientPsi) **or** a
   drag table (@ref LobBuilderSplineFitTable) **or** BC/velocity bands
-  (@ref LobBuilderBCVelocityBands) — one source of drag must be present;
+  (@ref LobBuilderBCVelocityBands) **or** native spline coefficients
+  (@ref LobBuilderSplineCoefficients) — one source of drag must be present;
 - initial velocity (@ref LobBuilderInitialVelocityFps);
 - a zero (@ref LobBuilderZeroAngleMOA **or** @ref LobBuilderZeroDistanceYds
   with optional @ref LobBuilderZeroImpactHeightInches).
@@ -71,7 +72,7 @@ to lower-fidelity formulas or skips the correction entirely
 - `kLobErrorZeroUnreachable` — zero distance cannot be reached within
    `@ref num_zero_angle` bounds (±45°, 10 iterations; above 45° a high/low
    duplicate solution would exist and the solver does not disambiguate)
-- Table errors: `kLobErrorMachDragTable*`, `kLobErrorBcBands*`
+- Table errors: `kLobErrorMachDragTable*`, `kLobErrorBcBands*`, `kLobErrorSplineCoefsInvalid`
 - Range/atmosphere OOR errors
 
 `Build()` stops at the first error; later setters still overwrite stored
@@ -80,10 +81,11 @@ values but the error is reported only at build time.  See
 
 @section api-builder-tables Drag tables
 
-Two table setters override the single-BC path; the **last call between the
-two table setters wins** regardless of order (`source/lob_builder.cpp`
-`LobBuilderSplineFitTable` / `LobBuilderBCVelocityBands`; `BCDragFunction` is not
-a table and does not affect the choice):
+Three drag setters override the single-BC path; the **last call among them
+wins** regardless of order (`source/lob_builder.cpp`
+`LobBuilderSplineFitTable` / `LobBuilderBCVelocityBands` /
+`LobBuilderSplineCoefficients`; `BCDragFunction` is not a table and does not
+affect the choice):
 
 - `MachVsDragTable` / `LobBuilderSplineFitTable` — Mach vs Cd.  Must have
   `size >= 2`, Machs strictly increasing, Cd finite and `>= 0`.  If the table
@@ -95,8 +97,12 @@ a table and does not affect the choice):
   `2 <= size <= 16`, velocities positive strictly increasing, BCs positive
   finite, highest velocity `< Mach 5` at local speed of sound.  See
   @ref bc_transformation for the transformation.
+- `SplineCoefficients` / `LobBuilderSplineCoefficients` — native
+  `drags[LOB_SPLINE_SEGMENTS * 4]` (60 floats) as stored in `LobContext.drags`.
+  Bypasses table fitting and BC scaling; useful for round-tripping a built
+  context.  Must be finite; otherwise `kLobErrorSplineCoefsInvalid`.
 
-Both setters copy no data; the caller must keep the pointed-to arrays alive
+All three copy no data; the caller must keep the pointed-to arrays alive
 until `Build()` returns.  The `lob::Builder` overloads taking
 `std::array` reject temporaries at compile time.
 

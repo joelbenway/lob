@@ -87,6 +87,7 @@ enum {
   kLobErrorNotFormed,
   kLobErrorOgiveRtROOR,
   kLobErrorRangeAngleOOR,
+  kLobErrorSplineCoefsInvalid,
   kLobErrorTailLengthOOR,
   kLobErrorWindHeadingOOR,
   kLobErrorZeroAngleOOR,
@@ -197,10 +198,11 @@ LOB_EXPORT extern LobBuilder* LobBuilderBCAtmosphere(
 
 /**
  * @brief Sets the drag function associated with ballistic coefficient.
- * @note Does not clear a table loaded via LobBuilderSplineFitTable or
- * LobBuilderBCVelocityBands; those override the drag function at Build time.
- * If both table types are configured, the last call wins regardless of
- * order. Call LobBuilderReset to return to a standard drag function.
+ * @note Does not clear a table loaded via LobBuilderSplineFitTable,
+ * LobBuilderBCVelocityBands, or LobBuilderSplineCoefficients; those override
+ * the drag function at Build time. If multiple drag sources are configured,
+ * the last call wins regardless of order. Call LobBuilderReset to return to
+ * a standard drag function.
  * @param pbuilder Pointer to the builder.
  * @param type The drag function type.
  * @return Pointer to the builder, or nullptr if pbuilder is null.
@@ -317,6 +319,26 @@ LOB_EXPORT extern LobBuilder* LobBuilderBCVelocityBands(LobBuilder* pbuilder,
                                                         const float* pfps,
                                                         const float* pbcs,
                                                         size_t size);
+
+/**
+ * @brief Loads precomputed native spline coefficients for the drag curve.
+ * @details Directly sets the 60 coefficients used by the solver, bypassing
+ * Mach-vs-drag table fitting and BC scaling. This is the lowest-level drag
+ * input, useful for round-tripping a previously built context or importing
+ * coefficients from another lob instance. The array is `drags` as stored in
+ * `LobContext.drags`.
+ * @note This overrides any drag function, custom table, or BC bands; the last
+ * drag-setting call wins. Call `LobBuilderReset` to return to a standard drag
+ * function.
+ * @warning The caller must keep `pcoefs` valid until `LobBuilderBuild` is
+ * called. The builder copies no data; the pointer is referenced during
+ * `Build()`.
+ * @param pbuilder Pointer to the builder.
+ * @param pcoefs Pointer to an array of `LOB_SPLINE_SEGMENTS * 4` coefficients.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
+ */
+LOB_EXPORT extern LobBuilder* LobBuilderSplineCoefficients(LobBuilder* pbuilder,
+                                                           const float* pcoefs);
 
 /**
  * @brief Sets the projectile mass in grains.

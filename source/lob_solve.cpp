@@ -62,8 +62,10 @@ void ApplyGyroscopicSpinDrift(const LobContext& ctx, LobOutput* pouts,
   assert(pouts != nullptr);
   if (!std::isnan(ctx.spindrift_factor)) {
     for (size_t i = 0; i < size; i++) {
-      pouts[i].deflection +=
-          ctx.spindrift_factor * std::fabs(pouts[i].elevation);
+      if (InchT(pouts[i].elevation) < InchT(FeetT(-ctx.optic_height))) {
+        pouts[i].deflection +=
+            ctx.spindrift_factor * std::fabs(pouts[i].elevation);
+      }
     }
     return;
   }

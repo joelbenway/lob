@@ -208,6 +208,16 @@ TEST(OdeTests, Input) {
   EXPECT_DOUBLE_EQ(b.V().X().Value(), kA);
 }
 
+TEST(OdeTests, TOFSetter) {
+  constexpr double kTof = 2.5;
+  lob::TrajectoryStateT s;
+  EXPECT_DOUBLE_EQ(s.TOF().Value(), 0.0);
+  s.TOF(lob::SecT(kTof));
+  EXPECT_DOUBLE_EQ(s.TOF().Value(), kTof);
+  s.TOF(lob::SecT(0.0));
+  EXPECT_DOUBLE_EQ(s.TOF().Value(), 0.0);
+}
+
 }  // namespace tests
 
 // This file is part of lob.

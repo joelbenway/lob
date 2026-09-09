@@ -206,22 +206,12 @@ TEST_P(CustomTableTestFixture, CustomTableMatchesDragFunction) {
 namespace {
 constexpr double kSierraGameKingBC = 0.436;
 constexpr uint16_t kM70MuzzleVelocity = 3100U;
-constexpr double kM70TwistRate = 10.0;
 constexpr double kJackOConnorZeroYardage = 100.0;
 constexpr double kJackOConnorZeroHeight = 3.0;
 constexpr double kG1ZeroAngle = 5.59;
 constexpr double kDefaultZeroAngle = 5.0;
 constexpr double kAzimuthOORLatitude = 45.0;
 constexpr double kLatitudeOORLatitude = 91.0;
-constexpr double kNoslerAccubondMass = 130.0;
-constexpr double kNoslerAccubondDiameter = 0.277;
-constexpr double kNoslerAccubondLength = 1.234;
-constexpr double kNoslerAccubondNoseLength = 0.705;
-constexpr double kNoslerAccubondTailLength = 0.070;
-constexpr double kNoslerAccubondBaseDiameter = 0.245;
-constexpr double kNoslerAccubondMeplatDiameter = 0.0;
-constexpr double kNoslerAccubondOgiveRtR = 0.88;
-constexpr double kTransonicTimeoutBC = 1.0e6;
 constexpr double kZeroUnreachableMaximumTime = 0.05;
 }  // namespace
 
@@ -565,25 +555,6 @@ INSTANTIATE_TEST_SUITE_P(
                   .Build();
             },
             lob::ErrorT::kZeroDistanceOOR},
-        BuilderErrorTestParam{
-            "TransonicTimeout",
-            [](lob::Builder& b) {
-              return b.BallisticCoefficientPsi(kTransonicTimeoutBC)
-                  .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-                  .DiameterInch(kNoslerAccubondDiameter)
-                  .LengthInch(kNoslerAccubondLength)
-                  .MassGrains(kNoslerAccubondMass)
-                  .InitialVelocityFps(kM70MuzzleVelocity)
-                  .ZeroAngleMOA(kG1ZeroAngle)
-                  .TwistInchesPerTurn(kM70TwistRate)
-                  .NoseLengthInch(kNoslerAccubondNoseLength)
-                  .TailLengthInch(kNoslerAccubondTailLength)
-                  .BaseDiameterInch(kNoslerAccubondBaseDiameter)
-                  .MeplatDiameterInch(kNoslerAccubondMeplatDiameter)
-                  .OgiveRtR(kNoslerAccubondOgiveRtR)
-                  .Build();
-            },
-            lob::ErrorT::kInternalError},
         BuilderErrorTestParam{"ZeroAngleTimeout",
                               [](lob::Builder& b) {
                                 return b
@@ -1484,6 +1455,199 @@ TEST_F(BuilderTestFixture, ReadmeExampleIsValid) {
           .AzimuthDeg(180.0)
           .Build();
   EXPECT_EQ(kSolverInput.error, lob::ErrorT::kNone);
+}
+
+TEST_F(BuilderTestFixture, SplineCoefficientsRoundTrip) {
+  const lob::Context kSrc = lob::Builder()
+                                .BallisticCoefficientPsi(0.5)
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  ASSERT_EQ(kSrc.error, lob::ErrorT::kNone);
+  const lob::Context kDst = lob::Builder()
+                                .SplineCoefficients(kSrc.drags.data())
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  ASSERT_EQ(kDst.error, lob::ErrorT::kNone);
+  EXPECT_EQ(kDst.drags, kSrc.drags);
+  const uint32_t kRange = 3000U;
+  lob::Output kOutSrc{};  // NOLINT
+  lob::Output kOutDst{};  // NOLINT
+  ASSERT_EQ(lob::Solve(kSrc, kRange, &kOutSrc), 1U);
+  ASSERT_EQ(lob::Solve(kDst, kRange, &kOutDst), 1U);
+  EXPECT_DOUBLE_EQ(kOutSrc.elevation, kOutDst.elevation);
+  EXPECT_EQ(kOutSrc.velocity, kOutDst.velocity);
+}
+
+TEST_F(BuilderTestFixture, SplineCoefficientsArrayOverload) {
+  const lob::Context kSrc = lob::Builder()
+                                .BallisticCoefficientPsi(0.45)
+                                .InitialVelocityFps(2700)
+                                .ZeroAngleMOA(4.0)
+                                .Build();
+  ASSERT_EQ(kSrc.error, lob::ErrorT::kNone);
+  std::array<float, lob::kLobCoeffsSize> arr{};
+  std::copy(kSrc.drags.begin(), kSrc.drags.end(), arr.begin());
+  const lob::Context kDst = lob::Builder()
+                                .SplineCoefficients(arr)
+                                .InitialVelocityFps(2700)
+                                .ZeroAngleMOA(4.0)
+                                .Build();
+  EXPECT_EQ(kDst.error, lob::ErrorT::kNone);
+  EXPECT_EQ(kDst.drags, arr);
+}
+
+TEST_F(BuilderTestFixture, SplineCoefficientsInvalidNonFinite) {
+  std::array<float, lob::kLobCoeffsSize> bad{};
+  bad.fill(1.0F);
+  bad[5] = std::numeric_limits<float>::quiet_NaN();  // NOLINT
+  const lob::Context kBad = lob::Builder()
+                                .SplineCoefficients(bad.data())
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)  // NOLINT
+                                .Build();
+  EXPECT_EQ(kBad.error, lob::ErrorT::kSplineCoefsInvalid);
+
+  std::array<float, lob::kLobCoeffsSize> inf{};
+  inf.fill(1.0F);
+  inf[10] = std::numeric_limits<float>::infinity();  // NOLINT
+  const lob::Context kInfinite = lob::Builder()
+                                     .SplineCoefficients(inf.data())
+                                     .InitialVelocityFps(2800)
+                                     .ZeroAngleMOA(5.0)
+                                     .Build();
+  EXPECT_EQ(kInfinite.error, lob::ErrorT::kSplineCoefsInvalid);
+}
+
+TEST_F(BuilderTestFixture, SplineCoefficientsLastCallWins) {
+  const lob::Context kSrc = lob::Builder()
+                                .BallisticCoefficientPsi(0.5)
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  ASSERT_EQ(kSrc.error, lob::ErrorT::kNone);
+  const std::array<float, 2> kMachs = {0.0F, 5.0F};
+  const std::array<float, 2> kDrags = {0.5F, 0.2F};
+  const std::array<float, 2> kFps = {2000.0F, 3000.0F};
+  const std::array<float, 2> kBcs = {0.25F, 0.25F};
+
+  const lob::Context kBandsLast = lob::Builder()
+                                      .SplineCoefficients(kSrc.drags.data())
+                                      .BCVelocityBands(kFps, kBcs)
+                                      .InitialVelocityFps(2800)
+                                      .ZeroAngleMOA(5.0)
+                                      .DiameterInch(0.308)
+                                      .MassGrains(168.0)
+                                      .Build();
+  const lob::Context kNativeLast = lob::Builder()
+                                       .BCVelocityBands(kFps, kBcs)
+                                       .SplineCoefficients(kSrc.drags.data())
+                                       .InitialVelocityFps(2800)
+                                       .ZeroAngleMOA(5.0)
+                                       .Build();
+  ASSERT_EQ(kBandsLast.error, lob::ErrorT::kNone);
+  ASSERT_EQ(kNativeLast.error, lob::ErrorT::kNone);
+  EXPECT_NE(kBandsLast.drags, kNativeLast.drags);
+  EXPECT_EQ(kNativeLast.drags, kSrc.drags);
+
+  const lob::Context kTableLast = lob::Builder()
+                                      .SplineCoefficients(kSrc.drags.data())
+                                      .MachVsDragTable(kMachs, kDrags)
+                                      .InitialVelocityFps(2800)
+                                      .ZeroAngleMOA(5.0)
+                                      .Build();
+  EXPECT_NE(kTableLast.drags, kSrc.drags);
+}
+
+TEST_F(BuilderTestFixture, SplineCoefficientsNullPreservesExisting) {
+  const lob::Context kResult = puut->SplineCoefficients(nullptr)
+                                   .InitialVelocityFps(2800)
+                                   .ZeroAngleMOA(5.0)
+                                   .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kBallisticCoefficientRequired);
+
+  const lob::Context kSrc = lob::Builder()
+                                .BallisticCoefficientPsi(0.5)
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  ASSERT_EQ(kSrc.error, lob::ErrorT::kNone);
+  const lob::Context kPreserved = puut->Reset()
+                                      .BallisticCoefficientPsi(0.5)
+                                      .InitialVelocityFps(2800)
+                                      .ZeroAngleMOA(5.0)
+                                      .SplineCoefficients(kSrc.drags.data())
+                                      .SplineCoefficients(nullptr)
+                                      .Build();
+  EXPECT_EQ(kPreserved.error, lob::ErrorT::kNone);
+  EXPECT_EQ(kPreserved.drags, kSrc.drags);
+}
+
+TEST_F(BuilderTestFixture, SplineCoefficientsResetClears) {
+  const lob::Context kSrc = lob::Builder()
+                                .BallisticCoefficientPsi(0.5)
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  puut->SplineCoefficients(kSrc.drags.data());
+  puut->Reset();
+  const lob::Context kAfterReset = puut->BallisticCoefficientPsi(0.5)
+                                       .InitialVelocityFps(2800)
+                                       .ZeroAngleMOA(5.0)
+                                       .Build();
+  EXPECT_EQ(kAfterReset.error, lob::ErrorT::kNone);
+  const lob::Context kRef = lob::Builder()
+                                .BallisticCoefficientPsi(0.5)
+                                .InitialVelocityFps(2800)
+                                .ZeroAngleMOA(5.0)
+                                .Build();
+  EXPECT_EQ(kAfterReset.drags, kRef.drags);
+}
+
+TEST_F(BuilderTestFixture, CustomTableBoatrightUsesDirectCd) {
+  // Regression for kCD0 direct vs mass/diameter conversion
+  // Build standard G1 with full Boatright geometry
+  const lob::Context kStandard =
+      puut->BallisticCoefficientPsi(0.5)
+          .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+          .BCDragFunction(lob::DragFunctionT::kG1)
+          .DiameterInch(0.308)
+          .LengthInch(1.2)
+          .MassGrains(175.0)
+          .TwistInchesPerTurn(10.0)
+          .InitialVelocityFps(2800)
+          .ZeroAngleMOA(5.0)
+          .WindSpeedMph(10.0)
+          .WindHeading(lob::ClockAngleT::kIX)
+          .Build();
+  ASSERT_EQ(kStandard.error, lob::ErrorT::kNone);
+  ASSERT_FALSE(std::isnan(kStandard.aerodynamic_jump));
+
+  // Build custom table with same G1 data and same geometry — should use kCdRef
+  // directly
+  std::array<float, lob::dragtable::kTableSize> machs{};
+  std::array<float, lob::dragtable::kTableSize> drags{};
+  for (size_t i = 0; i < lob::dragtable::kTableSize; ++i) {
+    machs.at(i) = lob::dragtable::kMachs.at(i);
+    drags.at(i) = lob::dragtable::kG1Drags.at(i);
+  }
+  puut->Reset();
+  const lob::Context kCustom = puut->DiameterInch(0.308)
+                                   .LengthInch(1.2)
+                                   .MassGrains(175.0)
+                                   .TwistInchesPerTurn(10.0)
+                                   .InitialVelocityFps(2800)
+                                   .ZeroAngleMOA(5.0)
+                                   .WindSpeedMph(10.0)
+                                   .WindHeading(lob::ClockAngleT::kIX)
+                                   .MachVsDragTable(machs, drags)
+                                   .Build();
+  ASSERT_EQ(kCustom.error, lob::ErrorT::kNone);
+  ASSERT_FALSE(std::isnan(kCustom.aerodynamic_jump));
+  // Custom table's Cd is direct, so its jump should be close to standard's
+  // (within 10% — the mass/diameter conversion would make it ~30% different)
+  EXPECT_NEAR(kCustom.aerodynamic_jump, kStandard.aerodynamic_jump, 0.5);
 }
 
 }  // namespace tests

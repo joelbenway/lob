@@ -39,13 +39,28 @@ set the effective BC to 1 in the context (`source/lob_builder.cpp`).
 curve with BCs measured at several velocities (fps).  See @ref bc_transformation
 for the transformation.
 
+@section model-drag-native Native spline coefficients
+
+`LobBuilderSplineCoefficients` / `Builder::SplineCoefficients` sets the 60
+coefficients `drags[LOB_SPLINE_SEGMENTS * 4]` directly as stored in
+`LobContext.drags` (`include/lob/lob.h`, `source/lob_builder.cpp`).
+It bypasses table fitting and BC scaling; the effective BC is set to 1 and
+atmosphere to ICAO. Useful for round-tripping a built context
+(`ctx.drags` → `Builder::SplineCoefficients(ctx.drags)`) or importing
+coefficients from another `lob` instance. Non-finite coefficients are rejected
+with `kLobErrorSplineCoefsInvalid`. Like the other drag setters it borrows the
+pointer until `Build()` and the last drag-setting call wins.
+
 @section model-drag-curve The drag curve in the solver
 
-At each step `SolveStep` evaluates `Cd = curve.Eval(Mach) · drag_coeff`
-(`source/solve_step.cpp`) where `Mach = |v| / speed_of_sound` and `curve`
-is a `CurveView` over the context's 60 coefficients.  `CurveView::Eval`
-clamps Mach outside 0–5 to the edge value; the integration never evaluates
-beyond the checked domain.
+At each step `FastSolveStep`/`SolveStep` evaluates `Cd = curve.Eval(Mach) · drag`
+(`source/solve_step.cpp`) where `Mach = |v| / c` and `curve`
+is a `CurveView` over the context's 60 coefficients.  `FastDsDx` uses firing-site
+`drag = drag_coeff` and `c = speed_of_sound`; `DsDx` scales them per step by
+`ρ/ρ0 = 1−u(1−αu)` and `c/c0 = 1−βu` with `u = −k_lapse·P·G` via `k_lapse`
+(@ref model_atmosphere, `source/constants.hpp` `kHydrostaticExponent`).
+`CurveView::Eval` clamps Mach outside 0–5 to the edge value; the integration never
+evaluates beyond the checked domain.
 
 The precomputed G* coefficients are `constexpr` (`source/splines.hpp`)
 so they cost no runtime construction.  Custom/BC-band curves are built at

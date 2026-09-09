@@ -466,6 +466,7 @@ TEST(LobAPITest, DegCToDegF) {
   EXPECT_DOUBLE_EQ(kA.Value(), lob::DegCT(kB).Value());
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(LobAPITest, ErrorTComparisonWithCEnum) {
   constexpr std::array<std::pair<lob::ErrorT, ::LobErrorT>,
                        kLobErrorNumberOfErrors>
@@ -507,6 +508,7 @@ TEST(LobAPITest, ErrorTComparisonWithCEnum) {
            {lob::ErrorT::kNotFormed, ::kLobErrorNotFormed},
            {lob::ErrorT::kOgiveRtROOR, ::kLobErrorOgiveRtROOR},
            {lob::ErrorT::kRangeAngleOOR, ::kLobErrorRangeAngleOOR},
+           {lob::ErrorT::kSplineCoefsInvalid, ::kLobErrorSplineCoefsInvalid},
            {lob::ErrorT::kTailLengthOOR, ::kLobErrorTailLengthOOR},
            {lob::ErrorT::kWindHeadingOOR, ::kLobErrorWindHeadingOOR},
            {lob::ErrorT::kZeroAngleOOR, ::kLobErrorZeroAngleOOR},
