@@ -8,6 +8,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <limits>
 
 #include "constants.hpp"
 #include "eng_units.hpp"
