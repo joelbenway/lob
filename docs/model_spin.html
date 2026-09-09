@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.11.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -122,10 +122,10 @@ Spin Drift and Aerodynamic Jump</h1>
 <h1><a class="anchor" id="model-spin-drift"></a>
 Spin drift</h1>
 <p>Lateral deflection from gyroscopic precession (yaw of repose), applied post-solve to <code>deflection</code>.</p>
-<p><b>Boatright</b> (<code>source/lob_builder.cpp</code>) when diameter, meplat, base, length, nose, tail, <code>ogiveRtR</code>, velocity, <code>c</code>, mass, twist, <code>stability_factor</code>, BC and <code>wind.z</code> are known:</p><ol type="1">
-<li>Computes ogive geometry <code>RT</code>, <code>LFN</code>, aspect ratio, Mach, <code>Q</code>, <code>S</code>, <code>CL</code>, <code>CDa</code>, <code>ρ</code>, <code>Iy/Ix</code>, <code>P</code>, <code>R</code>, <code>N</code>, <code>F1+F2</code>, <code>F2</code>, <code>Tn</code>.</li>
-<li>Short-integrates to <code>v = Mach 1.2·c</code> (60 s timeout → <code>kLobErrorInternalError</code>, temporary guard — revisit when boatright path is optimized) for supersonic time.</li>
-<li>Forms <code>KV=log(1.2c/v0)</code>, <code>Kω</code>, <code>QTS</code>, <code>β(R,Ω)</code>, boattail-adjusted <code>CL</code>, <code>CL(T)</code> → <code>spindrift_factor = 0.388132·QTS·β·CL(T)/mass</code> stored in <code>ctx.spindrift_factor</code>. At solve time (<code>source/lob_solve.cpp</code>): <code>deflection += spindrift_factor · |elevation|</code>.</li>
+<p><b>Boatright</b> (<code>source/lob_builder.cpp</code>, <code>source/boatright.hpp</code>) when diameter, meplat, base, length, nose, tail, <code>ogiveRtR</code>, velocity, <code>c</code>, mass, twist, <code>stability_factor</code>, BC and <code>wind.z</code> are known:</p><ol type="1">
+<li>Computes ogive geometry <code>RT</code>, <code>LFN</code>, aspect ratio, Mach, <code>Q</code>, <code>S</code>, <code>CL</code>, <code>CDa</code>, <code>ρ</code> via <code>CalculateAverageDensity</code> (ogive volume via <code>IntegrateGaussLegendre</code> <code>kG8</code> in <code>source/boatright.hpp</code>), <code>Iy/Ix</code>, <code>P</code>, <code>R</code>, <code>N</code>, <code>F1+F2</code>, <code>F2</code>, <code>Tn</code>.</li>
+<li>Short-integrates <code>∫_{1.2c}^{v0} dv/(v²·Cd·drag_coeff)</code> with <code>IntegrateGaussLegendre&lt;8&gt;</code> (<code>source/gauss_legendre.hpp</code>) to get supersonic <code>TOF</code> to <code>v = Mach 1.2·c</code>.</li>
+<li>Forms <code>KV=log(1.2c/v0)</code>, <code>Kω</code>, <code>QTS</code>, <code>β(R,Ω)</code>, boattail-adjusted <code>CL</code>, <code>CL(T)</code> → <code>spindrift_factor = 0.388132·QTS·β·CL(T)/mass</code> stored in <code>ctx.spindrift_factor</code>. At solve time (<code>source/lob_solve.cpp</code>): <code>deflection += spindrift_factor · |elevation|</code> gated on <code>elevation &lt; −optic_height</code> (bore-line check).</li>
 </ol>
 <p>If incomplete, <code>spindrift_factor = NaN</code> and drift falls through to Litz.</p>
 <p><b>Litz</b> (<code>source/litz.hpp</code>): <code>drift = 1.25·sign(sg)·(|sg|+1.2)·TOF^1.83</code> inches, applied when <code>spindrift_factor</code> is NaN and <code>|sg|&gt;0</code> (<code>source/lob_solve.cpp</code>). <code>sg</code> is Miller stability (<a class="el" href="model_atmosphere.html">Atmospheric Model</a>). Tests in <code>test/source/lob_spin_drift_test.cpp</code>.</p>
@@ -138,14 +138,14 @@ Aerodynamic jump</h1>
 <p>Vertical pitch at the muzzle from crosswind on a spinning projectile, modeled as an angle added to launch:</p>
 <div class="fragment"><div class="line">launch = zero_angle + aerodynamic_jump   (source/lob_solve.cpp, source/solve_angle.hpp)</div>
 </div><!-- fragment --><p>Computed once and reused for every solve (including zero-finding and inverse).</p>
-<p><b>Boatright</b> when same full inputs present (<code>source/lob_builder.cpp</code>): </p><div class="fragment"><div class="line">γ   = w_z / v0</div>
+<p><b>Boatright</b> when same full inputs present (<code>source/lob_builder.cpp</code>, uses <code>CalculateAverageDensity</code> with <code>IntegrateGaussLegendre</code> ogive volume): </p><div class="fragment"><div class="line">γ   = w_z / v0</div>
 <div class="line">R   = epicyclic ratio from sg</div>
 <div class="line">N   = nutation cycles</div>
 <div class="line">CD  = CD0 + γ²·R²/(R−1)²·CDa</div>
 <div class="line">pitch = γ·(R²−1)/(2πNR)·(1 − cos(2πN/(R−1)))</div>
 <div class="line">Jv  = sign(twist)·N·Tn·Q·S·(CL+CD)·sin(pitch)</div>
 <div class="line">jump = −Jv / MOM   (radians → MOA)</div>
-</div><!-- fragment --><p> Uses same supersonic <code>Tn</code> etc. as drift; stored in <code>ctx.aerodynamic_jump</code>.</p>
+</div><!-- fragment --><p> Uses same <code>IntegrateGaussLegendre</code> supersonic <code>Tn</code> etc. as drift; stored in <code>ctx.aerodynamic_jump</code>.</p>
 <p><b>Litz</b> if Boatright didn't produce a jump (<code>source/lob_builder.cpp</code>):</p><ul>
 <li><code>w_z==0</code> → 0</li>
 <li>else if <code>sg</code>, <code>diameter</code>, <code>length</code> available: <code>jump = sign(sg)·(0.01·|sg| − 0.0024·L/D + 0.032)·w_z_mph</code> MOA (<code>source/litz.hpp</code>, p.422)</li>

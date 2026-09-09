@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.11.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -133,9 +133,12 @@ Custom tables</h1>
 <h1><a class="anchor" id="model-drag-bands"></a>
 BC/velocity bands</h1>
 <p><code>LobBuilderBCVelocityBands</code> / <code>Builder::BCVelocityBands</code> tailors the standard curve with BCs measured at several velocities (fps). See <a class="el" href="bc_transformation.html">BC/Velocity-Band Transformation</a> for the transformation.</p>
+<h1><a class="anchor" id="model-drag-native"></a>
+Native spline coefficients</h1>
+<p><code>LobBuilderSplineCoefficients</code> / <code>Builder::SplineCoefficients</code> sets the 60 coefficients <code>drags[LOB_SPLINE_SEGMENTS * 4]</code> directly as stored in <code><a class="el" href="structLobContext.html#a09075a661d42db50cbfa01711e044509" title="Drag curve coefficients.">LobContext.drags</a></code> (<code><a class="el" href="lob_8h.html">include/lob/lob.h</a></code>, <code>source/lob_builder.cpp</code>). It bypasses table fitting and BC scaling; the effective BC is set to 1 and atmosphere to ICAO. Useful for round-tripping a built context (<code>ctx.drags</code> → <code>Builder::SplineCoefficients(ctx.drags)</code>) or importing coefficients from another <code>lob</code> instance. Non-finite coefficients are rejected with <code>kLobErrorSplineCoefsInvalid</code>. Like the other drag setters it borrows the pointer until <code>Build()</code> and the last drag-setting call wins.</p>
 <h1><a class="anchor" id="model-drag-curve"></a>
 The drag curve in the solver</h1>
-<p>At each step <code>SolveStep</code> evaluates <code>Cd = curve.Eval(Mach) · drag_coeff</code> (<code>source/solve_step.cpp</code>) where <code>Mach = |v| / speed_of_sound</code> and <code>curve</code> is a <code>CurveView</code> over the context's 60 coefficients. <code>CurveView::Eval</code> clamps Mach outside 0–5 to the edge value; the integration never evaluates beyond the checked domain.</p>
+<p>At each step <code>FastSolveStep</code>/<code>SolveStep</code> evaluates <code>Cd = curve.Eval(Mach) · drag</code> (<code>source/solve_step.cpp</code>) where <code>Mach = |v| / c</code> and <code>curve</code> is a <code>CurveView</code> over the context's 60 coefficients. <code>FastDsDx</code> uses firing-site <code>drag = drag_coeff</code> and <code>c = speed_of_sound</code>; <code>DsDx</code> scales them per step by <code>ρ/ρ0 = 1−u(1−αu)</code> and <code>c/c0 = 1−βu</code> with <code>u = −k_lapse·P·G</code> via <code>k_lapse</code> (<a class="el" href="model_atmosphere.html">Atmospheric Model</a>, <code>source/constants.hpp</code> <code>kHydrostaticExponent</code>). <code>CurveView::Eval</code> clamps Mach outside 0–5 to the edge value; the integration never evaluates beyond the checked domain.</p>
 <p>The precomputed G* coefficients are <code>constexpr</code> (<code>source/splines.hpp</code>) so they cost no runtime construction. Custom/BC-band curves are built at <code>Build()</code> time via the same spline machinery. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->

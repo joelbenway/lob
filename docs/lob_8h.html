@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.11.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -250,12 +250,13 @@ Enumerations</h2></td></tr>
 , <a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dea57f7306436a29d75d2c728d72cb95abf">kLobErrorOgiveRtROOR</a>
 , <a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dea5e308c6e4cbeacc52a18d34d99901910">kLobErrorRangeAngleOOR</a>
 , <br />
-&#160;&#160;<a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dea88345d149543be2b3ddf7d9d4105d0fc">kLobErrorTailLengthOOR</a>
+&#160;&#160;<a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dea804f8f6e2b203e46219ced1f7d2a1e3c">kLobErrorSplineCoefsInvalid</a>
+, <a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dea88345d149543be2b3ddf7d9d4105d0fc">kLobErrorTailLengthOOR</a>
 , <a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dead5236e0939139c84236f187744a4f27b">kLobErrorWindHeadingOOR</a>
 , <a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dea489da6bb91a2ca19579855bf4cb7b19a">kLobErrorZeroAngleOOR</a>
-, <a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dea64964e57d416d646b9911b070cbef2c3">kLobErrorZeroDataRequired</a>
 , <br />
-&#160;&#160;<a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0deac9b9515937f8e09ea0db00c6ffc8f0de">kLobErrorZeroDistanceOOR</a>
+&#160;&#160;<a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dea64964e57d416d646b9911b070cbef2c3">kLobErrorZeroDataRequired</a>
+, <a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0deac9b9515937f8e09ea0db00c6ffc8f0de">kLobErrorZeroDistanceOOR</a>
 , <a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0dea5113343963edbd50b2ead4ec9416141c">kLobErrorZeroUnreachable</a>
 , <a class="el" href="#a8011dd29b51e4cc80be2e5174f29f0deaf0a6deee2e38794d808719bb7dca73db">kLobErrorNumberOfErrors</a>
 <br />
@@ -315,6 +316,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a4ca34fa1b48de194cb468fe8b35dfba8" id="r_a4ca34fa1b48de194cb468fe8b35dfba8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structLobBuilder.html">LobBuilder</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4ca34fa1b48de194cb468fe8b35dfba8">LobBuilderBCVelocityBands</a> (<a class="el" href="structLobBuilder.html">LobBuilder</a> *pbuilder, const float *pfps, const float *pbcs, size_t size)</td></tr>
 <tr class="memdesc:a4ca34fa1b48de194cb468fe8b35dfba8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads ballistic coefficients measured at multiple velocities.  <br /></td></tr>
 <tr class="separator:a4ca34fa1b48de194cb468fe8b35dfba8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60e6ea3520621ba6ed00923e9421f793" id="r_a60e6ea3520621ba6ed00923e9421f793"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structLobBuilder.html">LobBuilder</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a60e6ea3520621ba6ed00923e9421f793">LobBuilderSplineCoefficients</a> (<a class="el" href="structLobBuilder.html">LobBuilder</a> *pbuilder, const float *pcoefs)</td></tr>
+<tr class="memdesc:a60e6ea3520621ba6ed00923e9421f793"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads precomputed native spline coefficients for the drag curve.  <br /></td></tr>
+<tr class="separator:a60e6ea3520621ba6ed00923e9421f793"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada3f0b73e825de57bc629fd931f1632c" id="r_ada3f0b73e825de57bc629fd931f1632c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structLobBuilder.html">LobBuilder</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ada3f0b73e825de57bc629fd931f1632c">LobBuilderMassGrains</a> (<a class="el" href="structLobBuilder.html">LobBuilder</a> *pbuilder, double value)</td></tr>
 <tr class="memdesc:ada3f0b73e825de57bc629fd931f1632c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the projectile mass in grains.  <br /></td></tr>
 <tr class="separator:ada3f0b73e825de57bc629fd931f1632c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -756,6 +760,7 @@ Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="a8011dd29b51e4cc80be2e5174f29f0dea051cbac419d884b4436aaa4614de5740" name="a8011dd29b51e4cc80be2e5174f29f0dea051cbac419d884b4436aaa4614de5740"></a>kLobErrorNotFormed&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a8011dd29b51e4cc80be2e5174f29f0dea57f7306436a29d75d2c728d72cb95abf" name="a8011dd29b51e4cc80be2e5174f29f0dea57f7306436a29d75d2c728d72cb95abf"></a>kLobErrorOgiveRtROOR&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a8011dd29b51e4cc80be2e5174f29f0dea5e308c6e4cbeacc52a18d34d99901910" name="a8011dd29b51e4cc80be2e5174f29f0dea5e308c6e4cbeacc52a18d34d99901910"></a>kLobErrorRangeAngleOOR&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a8011dd29b51e4cc80be2e5174f29f0dea804f8f6e2b203e46219ced1f7d2a1e3c" name="a8011dd29b51e4cc80be2e5174f29f0dea804f8f6e2b203e46219ced1f7d2a1e3c"></a>kLobErrorSplineCoefsInvalid&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a8011dd29b51e4cc80be2e5174f29f0dea88345d149543be2b3ddf7d9d4105d0fc" name="a8011dd29b51e4cc80be2e5174f29f0dea88345d149543be2b3ddf7d9d4105d0fc"></a>kLobErrorTailLengthOOR&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a8011dd29b51e4cc80be2e5174f29f0dead5236e0939139c84236f187744a4f27b" name="a8011dd29b51e4cc80be2e5174f29f0dead5236e0939139c84236f187744a4f27b"></a>kLobErrorWindHeadingOOR&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a8011dd29b51e4cc80be2e5174f29f0dea489da6bb91a2ca19579855bf4cb7b19a" name="a8011dd29b51e4cc80be2e5174f29f0dea489da6bb91a2ca19579855bf4cb7b19a"></a>kLobErrorZeroAngleOOR&#160;</td><td class="fielddoc"></td></tr>
@@ -1112,7 +1117,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Sets the drag function associated with ballistic coefficient. </p>
-<dl class="section note"><dt>Note</dt><dd>Does not clear a table loaded via LobBuilderSplineFitTable or LobBuilderBCVelocityBands; those override the drag function at Build time. If both table types are configured, the last call wins regardless of order. Call LobBuilderReset to return to a standard drag function. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Does not clear a table loaded via LobBuilderSplineFitTable, LobBuilderBCVelocityBands, or LobBuilderSplineCoefficients; those override the drag function at Build time. If multiple drag sources are configured, the last call wins regardless of order. Call LobBuilderReset to return to a standard drag function. </dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pbuilder</td><td>Pointer to the builder. </td></tr>
@@ -1871,6 +1876,47 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Resets a builder state by re-initializing. No-op if pbuilder is null. </p>
+
+</div>
+</div>
+<a id="a60e6ea3520621ba6ed00923e9421f793" name="a60e6ea3520621ba6ed00923e9421f793"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60e6ea3520621ba6ed00923e9421f793">&#9670;&#160;</a></span>LobBuilderSplineCoefficients()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structLobBuilder.html">LobBuilder</a> * LobBuilderSplineCoefficients </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structLobBuilder.html">LobBuilder</a> *</td>          <td class="paramname"><span class="paramname"><em>pbuilder</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float *</td>          <td class="paramname"><span class="paramname"><em>pcoefs</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel extern">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Loads precomputed native spline coefficients for the drag curve. </p>
+<p>Directly sets the 60 coefficients used by the solver, bypassing Mach-vs-drag table fitting and BC scaling. This is the lowest-level drag input, useful for round-tripping a previously built context or importing coefficients from another lob instance. The array is <code>drags</code> as stored in <code><a class="el" href="structLobContext.html#a09075a661d42db50cbfa01711e044509" title="Drag curve coefficients.">LobContext.drags</a></code>. </p><dl class="section note"><dt>Note</dt><dd>This overrides any drag function, custom table, or BC bands; the last drag-setting call wins. Call <code>LobBuilderReset</code> to return to a standard drag function. </dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>The caller must keep <code>pcoefs</code> valid until <code>LobBuilderBuild</code> is called. The builder copies no data; the pointer is referenced during <code>Build()</code>. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">pbuilder</td><td>Pointer to the builder. </td></tr>
+    <tr><td class="paramname">pcoefs</td><td>Pointer to an array of <code>LOB_SPLINE_SEGMENTS * 4</code> coefficients. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Pointer to the builder, or nullptr if pbuilder is null. </dd></dl>
 
 </div>
 </div>

@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.11.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -130,7 +130,7 @@ Reference data</h1>
 <ul>
 <li><b>BRL drag tables</b>: 87-point Mach 0–5 tables for G1…G8 from JBM (<code>source/tables.hpp</code>). The spline reproduces them within <code>5e-3</code> max absolute error over a 5000-point truth grid (<code>test/source/splines_test.cpp</code>, <code>SplineOptimization::BaselineAccuracyBudget</code>).</li>
 <li><b>Atmosphere &amp; ballistics</b>: reference trajectories in <code>test/source/lob_env_test.cpp</code> etc. for ICAO, altitude (+4500 ft), hot/low-pressure, barometer-offset and weather-station cases, each with expected <code>velocity ±1 fps</code>, <code>energy ±5 ft·lbf</code>, <code>0.1 MOA</code> equivalent and <code>±0.01 s</code> out to 1000 yd — matching McCoy's ISA treatment and Huang's saturation formula.</li>
-<li><b>Spin/jump</b>: Boatright and Litz against their papers; the builder test forces the Boatright supersonic integration to timeout (<code>kLobErrorInternalError</code>, <code>test/source/lob_builder_test.cpp</code>) to prove the guard fires.</li>
+<li><b>Spin/jump</b>: Boatright and Litz against their papers.</li>
 </ul>
 <h1><a class="anchor" id="validation-accuracy"></a>
 Numerical accuracy</h1>

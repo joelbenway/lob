@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.11.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -124,7 +124,7 @@ Step size</h1>
 <ul>
 <li><b>Builder:</b> <code>StepSize(uint16_t inches)</code> / <code>LobBuilderStepSize</code></li>
 <li><b>Context:</b> <code>step_size</code> inches, <code>0</code> = default 1 yard (36 in)</li>
-<li><b>Code:</b> <code>source/solve_step.cpp</code> <code>SolveStep</code> — <code>Δx = min(target−x, step_size)</code> (last step clamped), Heun <code>k1+k2</code> + trapezoidal <code>TOF += 2·Δx/(vx_old+vx_new)</code>.</li>
+<li><b>Code:</b> <code>source/solve_step.cpp</code> <code>FastSolveStep</code>/<code>SolveStep</code> via <code>DsDxCore</code> — <code>Δx = min(target−x, step_size)</code> (last step clamped, <code>ComputeStep</code>), Heun <code>k1+k2</code> with <code>TOF</code> integrated as <code>d(TOF)/dx=1/vx</code> (<code>SecT(kDtDx)</code>) in <code>DsDxCore</code> (<code>FastDsDx</code> firing-site, <code>DsDx</code> lapse-scaled).</li>
 </ul>
 <p>Smaller <code>Δx</code> reduces truncation error monotonically; <code>benchmark/ode.cpp</code> shows linear cost in <code>1/Δx</code>. Default 1 yd meets the <code>validation_overview</code> tolerances out to 1000 yd — tighten only when you need it and can pay for it.</p>
 <h1><a class="anchor" id="api-options-time"></a>
@@ -152,8 +152,8 @@ Optic and zero helpers</h1>
 <h1><a class="anchor" id="api-options-atm"></a>
 Atmosphere, wind, Coriolis</h1>
 <ul>
-<li>Atmosphere inputs (<code>AltitudeOfFiringSiteFt</code>, <code>AirPressureInHg</code>, <code>AltitudeOfBarometerFt</code>, <code>TemperatureDegF</code>, <code>AltitudeOfThermometerFt</code>, <code>RelativeHumidityPercent</code>) only affect <code>speed_of_sound</code> and <code>drag_coeff</code> at <code>Build()</code> time — see <a class="el" href="model_atmosphere.html">Atmospheric Model</a>.</li>
-<li>Wind (<code>WindHeading</code>/<code>WindHeadingDeg</code> + <code>WindSpeed*</code>) only enters as <code>v−w</code> in <code>DsDx</code> and <code>w_z</code> in jump — see <a class="el" href="model_wind_coriolis.html">Wind and Coriolis</a>.</li>
+<li>Atmosphere inputs (<code>AltitudeOfFiringSiteFt</code>, <code>AirPressureInHg</code>, <code>AltitudeOfBarometerFt</code>, <code>TemperatureDegF</code>, <code>AltitudeOfThermometerFt</code>, <code>RelativeHumidityPercent</code>) set <code>speed_of_sound</code> and <code>drag_coeff</code> at <code>Build()</code> time and <code>k_lapse</code> for per-step lapse-scaled <code>DsDx</code> — see <a class="el" href="model_atmosphere.html">Atmospheric Model</a> (<code>BuildDynamicDensity</code>, <code>kHydrostaticExponent</code>/<code>kBarometricExponent</code>). Forward/zero/Boatright use <code>FastDsDx</code> (firing-site); <code>drop&gt;100ft</code> inverse ranges use <code>DsDx</code> (<code>LobSolveInverse</code> gating).</li>
+<li>Wind (<code>WindHeading</code>/<code>WindHeadingDeg</code> + <code>WindSpeed*</code>) only enters as <code>v−w</code> in <code>DsDx</code>/<code>FastDsDx</code> and <code>w_z</code> in jump — see <a class="el" href="model_wind_coriolis.html">Wind and Coriolis</a>.</li>
 <li>Coriolis needs both <code>AzimuthDeg</code> and <code>LatitudeDeg</code>; otherwise zeroed.</li>
 </ul>
 <p>None of these allocate; <code>Context</code> is self-contained after <code>Build()</code> (<a class="el" href="api_context.html">Context and Results</a>). </p>

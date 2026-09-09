@@ -95,6 +95,7 @@ var NAVTREE =
       [ "Standard curves", "model_drag.html#model-drag-std", null ],
       [ "Custom tables", "model_drag.html#model-drag-custom", null ],
       [ "BC/velocity bands", "model_drag.html#model-drag-bands", null ],
+      [ "Native spline coefficients", "model_drag.html#model-drag-native", null ],
       [ "The drag curve in the solver", "model_drag.html#model-drag-curve", null ]
     ] ],
     [ "Point-Mass Model", "model_point_mass.html", [
@@ -243,8 +244,8 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "about.html",
-"lob_8h.html#a3fe0194a9f0a0dd6069370dd410b802f",
-"num_splines.html#num-splines-why"
+"lob_8h.html#a30e5aa26f3b785007d61e82e38f11f59",
+"num_ode.html#num-ode-limits"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronization';

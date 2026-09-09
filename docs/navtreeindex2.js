@@ -1,5 +1,14 @@
 var NAVTREEINDEX2 =
 {
+"num_ode.html#num-ode-limits":[21,4],
+"num_ode.html#num-ode-method":[21,2],
+"num_ode.html#num-ode-why":[21,1],
+"num_splines.html":[22],
+"num_splines.html#autotoc_md21":[22,0],
+"num_splines.html#num-splines-alternatives":[22,5],
+"num_splines.html#num-splines-eval":[22,4],
+"num_splines.html#num-splines-knots":[22,3],
+"num_splines.html#num-splines-math":[22,2],
 "num_splines.html#num-splines-why":[22,1],
 "num_zero_angle.html":[23],
 "num_zero_angle.html#autotoc_md22":[23,0],

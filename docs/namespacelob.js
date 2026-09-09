@@ -61,6 +61,7 @@ var namespacelob =
       [ "kNotFormed", "namespacelob.html#a7da6daf158000ec72c4f3099a205705fa2ffd5265e7f702dd063b78f72a14e8c6", null ],
       [ "kOgiveRtROOR", "namespacelob.html#a7da6daf158000ec72c4f3099a205705fa0551f74a0e44af52072d561989727ffd", null ],
       [ "kRangeAngleOOR", "namespacelob.html#a7da6daf158000ec72c4f3099a205705fad1b73ba155e89a4323e36cad03799dae", null ],
+      [ "kSplineCoefsInvalid", "namespacelob.html#a7da6daf158000ec72c4f3099a205705faf094f2cb3869bc59bef67236b832b625", null ],
       [ "kTailLengthOOR", "namespacelob.html#a7da6daf158000ec72c4f3099a205705fa36001292798f032098c3f1f33afd218b", null ],
       [ "kWindHeadingOOR", "namespacelob.html#a7da6daf158000ec72c4f3099a205705fa5a8523f8de39c95f7f988fc701ee6e2a", null ],
       [ "kZeroAngleOOR", "namespacelob.html#a7da6daf158000ec72c4f3099a205705facb105ae0499561b3b516f24329b7ff6f", null ],

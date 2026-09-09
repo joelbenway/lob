@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.11.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -179,11 +179,12 @@ Where to find the code</h1>
 <ul>
 <li>Builder and environment: <code><a class="el" href="structLobBuilder.html" title="Opaque builder type for constructing LobContext objects.">LobBuilder</a></code>, <code>source/lob_builder.cpp</code></li>
 <li>Forward/inverse solves: <code><a class="el" href="lob_8h.html#a0d291cea1a7fa38208d37eacebd5adb2" title="Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution.">LobSolve()</a></code>, <code><a class="el" href="lob_8h.html#adb173353dce638bee8a34497b6159aab" title="Solves the exterior ballistics problem for a given set of ranges. Results contain an inverse-solution...">LobSolveInverse()</a></code>, <code>source/lob_solve.cpp</code></li>
-<li>Single step: <code>source/solve_step.cpp</code>, <code>source/solve_step.hpp</code></li>
-<li>Angle solver: <code>source/solve_angle.hpp</code></li>
+<li>Single step: <code>source/solve_step.cpp</code>, <code>source/solve_step.hpp</code> (<code>FastDsDx</code>/<code>DsDx</code>, <code>k_lapse</code>)</li>
+<li>Angle solver: <code>source/solve_angle.hpp</code> (<code>FastSolveAngle</code>/<code>SolveAngle</code>, <code>IsTerminal</code>)</li>
 <li>Splines: <code>source/splines.hpp</code></li>
 <li>Drag tables: <code>source/tables.hpp</code></li>
-<li>Atmosphere/physics helpers: <code>source/calc.hpp</code>, <code>source/constants.hpp</code></li>
+<li>Atmosphere/physics helpers: <code>source/calc.hpp</code>, <code>source/constants.hpp</code> (<code>isa::</code>, <code>kHydrostaticExponent</code>)</li>
+<li>Gauss-Legendre quadrature: <code>source/gauss_legendre.hpp</code></li>
 <li>Strong units: <code>source/eng_units.hpp</code></li>
 </ul>
 <p>Tests under <code>test/source/</code> mirror each area and are cited from the technical pages as evidence rather than claims. </p>

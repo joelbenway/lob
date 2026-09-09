@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.11.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -123,8 +123,9 @@ Context</h1>
 <p><code><a class="el" href="structLobContext.html" title="Structure of parameters consumed by the solver.">LobContext</a></code> (<code><a class="el" href="lob_8h.html">include/lob/lob.h</a></code>) is the solver's immutable input. <code><a class="el" href="structlob_1_1Context.html" title="Structure of parameters consumed by the solver.">lob::Context</a></code> (<code><a class="el" href="lob_8hpp.html">include/lob/lob.hpp</a></code>) is layout-identical; a set of <code>static_assert</code>s guarantee no drift.</p>
 <p>Selected fields (units in the comments in the header):</p>
 <ul>
-<li><code>drag_coeff</code> — density term <code>ρ·π / 8</code> applied to <code>Cd(Mach)</code> inside <code>DsDx</code> (<code>source/solve_step.cpp</code>). For standard and BC-band paths the <code>1/BC</code> scaling is already baked into the spline <code>drags[60]</code>; for custom tables <code>drag_coeff</code> scales density only.</li>
+<li><code>drag_coeff</code> — density term <code>ρ·π / 8</code> applied to <code>Cd(Mach)</code> inside <code>DsDx</code> / <code>FastDsDx</code> (<code>source/solve_step.cpp</code>). For standard and BC-band paths the <code>1/BC</code> scaling is already baked into the spline <code>drags[60]</code>; for custom tables <code>drag_coeff</code> scales density only. Per-step <code>DsDx</code> scales <code>drag_coeff</code> by <code>ρ/ρ0 = 1−u(1−αu)</code> and <code>speed_of_sound</code> by <code>c/c0 = 1−βu</code> via <code>k_lapse</code> (<a class="el" href="model_atmosphere.html">Atmospheric Model</a>); <code>FastDsDx</code> uses firing-site values.</li>
 <li><code>speed_of_sound</code> — fps, local value including humidity correction (<code>source/calc.hpp</code>).</li>
+<li><code>k_lapse</code> — projected linear density lapse coefficient <code>(1/R−L/g)/T_R</code> (<code>source/constants.hpp</code>, <code>source/lob_builder.cpp</code> <code>BuildDynamicDensity</code>), used per step by <code>DsDx</code> (<code>source/solve_step.cpp</code>).</li>
 <li><code>mass</code> — pounds, <code>LbsT(mass).Value()</code>.</li>
 <li><code>optic_height</code> — feet.</li>
 <li><code>gravity</code> — <code>{x,y}</code> ft/s² rotated by range angle (<code>source/lob_builder.cpp</code>).</li>

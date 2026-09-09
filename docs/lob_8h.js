@@ -41,6 +41,7 @@ var lob_8h =
     [ "LobBuilderRangeAngleDeg", "lob_8h.html#a9f6880bcb6e50f636481c5a21ac12201", null ],
     [ "LobBuilderRelativeHumidityPercent", "lob_8h.html#a385d006c49a94a4459652d1286f927bf", null ],
     [ "LobBuilderReset", "lob_8h.html#a612d044abb7eab0a5c9e967765fe5557", null ],
+    [ "LobBuilderSplineCoefficients", "lob_8h.html#a60e6ea3520621ba6ed00923e9421f793", null ],
     [ "LobBuilderSplineFitTable", "lob_8h.html#a979b471cff1ac3d9452034ced8e64386", null ],
     [ "LobBuilderStepSize", "lob_8h.html#aa4881c3b0426bcfebae6a65788be136d", null ],
     [ "LobBuilderTailLengthInch", "lob_8h.html#a21cfa6c82e770b9e3fac361047b400f3", null ],

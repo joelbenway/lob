@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.11.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -143,10 +143,10 @@ Method</h1>
 <li><code>kDefaultAngleTolerance = 0.01 MOA</code> (≈ 2.9 µrad)</li>
 <li><code>kMaxAngle = 45°</code>, <code>kMinAngle = −45°</code> — lob targets flat-fire trajectories; above 45° a high (mortar) and a low direct-fire trajectory can both reach <code>R</code>. The solver restricts search to the flat-fire branch, treating &gt;45° as out-of-bounds (returns NaN / <code>kLobErrorZeroUnreachable</code>).</li>
 </ul>
-<p><code>fire_to_target</code> integrates step-by-step via <code>SolveStep</code> until <code>x ≥ R</code> and returns the vertical miss; any step where <code>vx ≤ 0</code>, <code>TOF ≥ max_time</code>, or speed ≤ <code>minimum_speed</code> yields <code>NaN</code> and the iteration becomes non-finite, propagating to a NaN return (unreachable).</p>
+<p><code>fire_to_target</code> integrates step-by-step via <code>SolveStep</code>/<code>FastSolveStep</code> until <code>x ≥ R</code> and returns the vertical miss; any step where <code>vx ≤ 0</code>, <code>TOF ≥ max_time</code>, or speed ≤ <code>minimum_speed</code> yields <code>NaN</code> and the iteration becomes non-finite, propagating to a NaN return (unreachable). The builder's zero uses <code>FastSolveAngle</code>/<code>FastSolveStep</code> (firing-site density); inverse uses <code>FastSolveAngle</code> or <code>SolveAngle</code> per-range gated on forward <code>drop&gt;100ft</code> (<code>source/lob_solve.cpp</code> <code>kDynamicDropThreshold</code>, <code>source/solve_angle.hpp</code> <code>FireToTarget</code>/<code>IsTerminal</code>).</p>
 <h1><a class="anchor" id="num-zero-seed"></a>
 Seed</h1>
-<p><code>BuildZeroAngle</code> (<code>source/lob_builder.cpp</code>) supplies the seed when the caller gave <code>ZeroDistanceYds</code> instead of <code>ZeroAngleMOA</code>:</p>
+<p><code>BuildZeroAngle</code> (<code>source/lob_builder.cpp</code>) supplies the seed when the caller gave <code>ZeroDistanceYds</code> instead of <code>ZeroAngleMOA</code> (solved with <code>FastSolveAngle</code>/<code>FastSolveStep</code>, firing-site density):</p>
 <div class="fragment"><div class="line">θ_vac = 0.5·g·R / v0²           (vacuum parabola angle)</div>
 <div class="line">seed  = clamp(θ_vac, −45°, 45°)</div>
 </div><!-- fragment --><p>The same seed construction is used in <code>test/source/solve_angle_test.cpp</code>. A poor seed (e.g. <code>0</code> or even <code>−30°</code>) still converges for the validated ranges (<code>test/source/solve_angle_test.cpp</code>), but the vacuum seed cuts typical iterations to 2–4.</p>
