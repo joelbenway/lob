@@ -40,7 +40,7 @@ exposed from a successful `Build()`; `kLobErrorNumberOfErrors` is the count.
 | `kBcBandsInvalid` | `size > 16`, any `fps ≤ 0` / `BC ≤ 0` / non-finite, or `max(fps)/c ≥ 5.0` |
 | `kBcBandsNotMonotonic` | `fps` not strictly increasing |
 | `kSplineCoefsInvalid` | `SplineCoefficients` contains non-finite value |
-| `kInternalError` | Defensive internal error (e.g., `SplineCoefficients` null checks) |
+| `kInternalError` | Not currently returned (defensive) |
 | `kNotFormed` | internal sentinel — not returned |
 | `kNumberOfErrors` | count |
 

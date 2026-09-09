@@ -26,8 +26,7 @@ accuracy promise is made.
   expected `velocity ±1 fps`, `energy ±5 ft·lbf`, `0.1 MOA` equivalent and
   `±0.01 s` out to 1000 yd — matching McCoy's ISA treatment and Huang's
   saturation formula.
-- **Spin/jump**: Boatright and Litz against their papers; `kLobErrorInternalError`
-  is covered via `SplineCoefficients` null checks (`test/source/lob_builder_test.cpp`).
+- **Spin/jump**: Boatright and Litz against their papers.
 
 @section validation-accuracy Numerical accuracy
 
