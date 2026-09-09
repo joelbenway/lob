@@ -61,7 +61,8 @@ inline CartesianT<FpsT> GetDvDt(const LobContext& ctx,
                                 const TrajectoryStateT& s,
                                 const CartesianT<FpsT>& wind, double cd) {
   const FpsT kScalarVelocity = (s.V() - wind).Magnitude();
-  CartesianT<FpsT> dv_dt = (s.V() - wind) * FpsT(-1 * cd) * kScalarVelocity;
+  const double kScale = -cd * kScalarVelocity.Value();
+  CartesianT<FpsT> dv_dt = (s.V() - wind) * kScale;
   dv_dt.X(dv_dt.X() - s.V().Y() * ctx.coriolis.cos_l_sin_a -
           s.V().Z() * ctx.coriolis.sin_l);
   dv_dt.Y(dv_dt.Y() + s.V().X() * ctx.coriolis.cos_l_sin_a +
@@ -87,8 +88,7 @@ inline TrajectoryStateT DsDxCore(const LobContext& ctx,
   const double kCd = GetCd(pcurve, kMach, drag_coeff);
   const CartesianT<FeetT> kDpDt = GetDpDt(s);
   const CartesianT<FpsT> kDvDt = GetDvDt(ctx, s, kWind, kCd);
-  return TrajectoryStateT{kDpDt * FeetT(kDtDx), kDvDt * FpsT(kDtDx),
-                          SecT(kDtDx)};
+  return TrajectoryStateT{kDpDt * kDtDx, kDvDt * kDtDx, SecT(kDtDx)};
 }
 
 TrajectoryStateT FastDsDx(const LobContext& ctx, const TrajectoryStateT& s,
