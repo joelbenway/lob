@@ -742,6 +742,44 @@ class Builder {
   }
 
   /**
+   * @brief Loads a downrange wind profile for the projectile.
+   * @details Point 0 sets the muzzle wind; subsequent points are copied to
+   * `wind_points`. The last wind-setting call wins: this overrides any uniform
+   * wind heading/speed, and those override this.
+   * @warning The caller must keep ppoints valid until Build is called. The
+   * builder copies no data; the pointer is referenced during Build().
+   * @param ppoints Pointer to an array of wind profile points. First range
+   * must be 0 with strictly increasing ranges; x/z speeds finite, heights
+   * finite or NaN.
+   * @param count The number of points. Must be 1..LOB_WIND_POINTS.
+   * @return A reference to the Builder object.
+   */
+  Builder& WindProfile(const LobWindPoint* ppoints, size_t count) {
+    ::LobBuilderWindProfile(&builder_, ppoints, count);
+    return *this;
+  }
+
+  /**
+   * @brief Loads a downrange wind profile for the projectile.
+   * @details Point 0 sets the muzzle wind; subsequent points are copied to
+   * `wind_points`. The last wind-setting call wins: this overrides any uniform
+   * wind heading/speed, and those override this.
+   * @warning The array must remain valid until Build is called; the builder
+   * copies no data and references it during Build(). Temporaries are rejected
+   * at compile time.
+   * @tparam N The number of wind profile points. Must be 1..LOB_WIND_POINTS.
+   * @param points Reference to an array of wind profile points.
+   * @return A reference to the Builder object.
+   */
+  template <size_t N>
+  Builder& WindProfile(const std::array<LobWindPoint, N>& points) {
+    ::LobBuilderWindProfile(&builder_, points.data(), points.size());
+    return *this;
+  }
+  template <size_t N>
+  Builder& WindProfile(const std::array<LobWindPoint, N>&& points) = delete;
+
+  /**
    * @brief Sets the azimuth (bearing) of the target in degrees.
    * @note Used for making coriolis effect corrections.
    * @param value The azimuth in degrees.
