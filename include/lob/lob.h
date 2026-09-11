@@ -18,7 +18,7 @@ extern "C" {
 /** @brief The number of spline pieces comprising a drag function. */
 #define LOB_SPLINE_SEGMENTS 15
 /** @brief The size in bytes of the builder buffer. */
-#define LOB_BUILDER_BUFFER_SIZE 272
+#define LOB_BUILDER_BUFFER_SIZE 296
 /** @brief Total wind profile points, muzzle point included. */
 #define LOB_WIND_POINTS 8
 

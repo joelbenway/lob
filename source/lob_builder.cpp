@@ -66,6 +66,10 @@ class Impl {
   FeetT zero_distance_ft{NaN()};
   FeetT zero_impact_height{NaN()};
 
+  const LobWindPoint* wind_profile_points{nullptr};
+  size_t wind_profile_count{0};
+  bool wind_use_profile{false};
+
   size_t table_count{0};
   const float* table_xs{nullptr};
   const float* table_ys{nullptr};
@@ -227,6 +231,32 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   pout->speed_of_sound = kSpeedOfSound.Value();
 
   BuildDynamicDensity(temperature_at_firing_site, pout);
+}
+
+LobErrorT ValidateWindProfile(Impl* pimpl) {
+  if (pimpl->wind_profile_points == nullptr || pimpl->wind_profile_count == 0 ||
+      pimpl->wind_profile_count > LOB_WIND_POINTS) {
+    return pimpl->wind_profile_count > LOB_WIND_POINTS
+               ? kLobErrorWindProfileTooLong
+               : kLobErrorWindProfileInvalid;
+  }
+  for (size_t i = 0; i < pimpl->wind_profile_count; i++) {
+    const LobWindPoint& kPt = pimpl->wind_profile_points[i];
+    if (!std::isfinite(kPt.range_ft) || !std::isfinite(kPt.x_fps) ||
+        !std::isfinite(kPt.z_fps) ||
+        (!std::isnan(kPt.height_ft_agl) && !std::isfinite(kPt.height_ft_agl))) {
+      return kLobErrorWindProfileInvalid;
+    }
+    if (i == 0) {
+      // Exact-zero test via ordered comparisons (avoids -Werror=float-equal).
+      if (kPt.range_ft > 0.0 || kPt.range_ft < 0.0) {
+        return kLobErrorWindProfileNotMonotonic;
+      }
+    } else if (!(kPt.range_ft > pimpl->wind_profile_points[i - 1].range_ft)) {
+      return kLobErrorWindProfileNotMonotonic;
+    }
+  }
+  return kLobErrorNone;
 }
 
 LobErrorT ValidateCustomTable(Impl* pimpl) {
@@ -424,33 +454,60 @@ void BuildCoefficients(Impl* pimpl, LobContext* pout) {
 void BuildWind(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
-  if (std::isnan(pimpl->wind_heading_rad)) {
-    pimpl->wind_heading_rad = DegreesT(0);
+  if (pimpl->wind_use_profile) {
+    const LobErrorT kErr = ValidateWindProfile(pimpl);
+    if (kErr != kLobErrorNone) {
+      pout->error = kErr;
+      return;
+    }
+    // Identity copy; Task 3 applies height normalization when scaling is on.
+    pout->wind.x = pimpl->wind_profile_points[0].x_fps;
+    pout->wind.z = pimpl->wind_profile_points[0].z_fps;
+    for (size_t i = 1; i < pimpl->wind_profile_count; i++) {
+      pout->wind_points[i - 1].range_ft =
+          pimpl->wind_profile_points[i].range_ft;
+      pout->wind_points[i - 1].x_fps = pimpl->wind_profile_points[i].x_fps;
+      pout->wind_points[i - 1].z_fps = pimpl->wind_profile_points[i].z_fps;
+      pout->wind_points[i - 1].height_ft_agl =
+          pimpl->wind_profile_points[i].height_ft_agl;
+    }
+    pout->wind_count = static_cast<uint8_t>(pimpl->wind_profile_count);
+  } else {
+    if (std::isnan(pimpl->wind_heading_rad)) {
+      pimpl->wind_heading_rad = DegreesT(0);
+    }
+
+    const DegreesT kFullTurn(kDegreesPerTurn);
+    if (pimpl->wind_heading_rad > kFullTurn ||
+        pimpl->wind_heading_rad < kFullTurn * -1) {
+      pout->error = kLobErrorWindHeadingOOR;
+      return;
+    }
+
+    if (std::isnan(pimpl->wind_speed_fps)) {
+      pimpl->wind_speed_fps = FpsT(0);
+    }
+
+    if (!(pimpl->wind_speed_fps > FpsT(0) || pimpl->wind_speed_fps < FpsT(0))) {
+      pout->wind.x = 0.0;
+      pout->wind.z = 0.0;
+    } else {
+      pout->wind.x = FpsT(pimpl->wind_speed_fps *
+                          std::sin(pimpl->wind_heading_rad.Value()))
+                         .Value();
+      pout->wind.z = FpsT(pimpl->wind_speed_fps *
+                          std::cos(pimpl->wind_heading_rad.Value()))
+                         .Value();
+    }
+    pout->wind_count = 1;
   }
 
-  const DegreesT kFullTurn(kDegreesPerTurn);
-  if (pimpl->wind_heading_rad > kFullTurn ||
-      pimpl->wind_heading_rad < kFullTurn * -1) {
-    pout->error = kLobErrorWindHeadingOOR;
-    return;
-  }
-
-  if (std::isnan(pimpl->wind_speed_fps)) {
-    pimpl->wind_speed_fps = FpsT(0);
-  }
-
-  if (!(pimpl->wind_speed_fps > FpsT(0) || pimpl->wind_speed_fps < FpsT(0))) {
-    pout->wind.x = 0.0;
-    pout->wind.z = 0.0;
-    return;
-  }
-
-  pout->wind.x =
-      FpsT(pimpl->wind_speed_fps * std::sin(pimpl->wind_heading_rad.Value()))
-          .Value();
-  pout->wind.z =
-      FpsT(pimpl->wind_speed_fps * std::cos(pimpl->wind_heading_rad.Value()))
-          .Value();
+  const double kTheta = pimpl->range_angle_rad.Value();
+  pout->wind_cos = std::cos(kTheta);
+  pout->wind_sin = std::sin(kTheta);
+  pout->wind_roughness_ft = NaN();
+  pout->wind_muzzle_height_ft = NaN();
+  pout->wind_inv_ln_denom = NaN();
 }
 
 void BuildOpticHeight(Impl* pimpl, LobContext* pout) {
@@ -1072,6 +1129,7 @@ LobBuilder* LobBuilderWindHeading(LobBuilder* pbuilder, LobClockAngleT value) {
     pimpl->wind_heading_rad =
         kDegreesPerClockNumber * kPosition + kDegreesPerTurn;
   }
+  pimpl->wind_use_profile = false;
   return pbuilder;
 }
 
@@ -1091,6 +1149,7 @@ LobBuilder* LobBuilderWindHeadingDeg(LobBuilder* pbuilder, double value) {
   }
 
   pimpl->wind_heading_rad = angle;
+  pimpl->wind_use_profile = false;
   return pbuilder;
 }
 
@@ -1100,6 +1159,7 @@ LobBuilder* LobBuilderWindSpeedFps(LobBuilder* pbuilder, double value) {
   }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->wind_speed_fps = FpsT(value);
+  pimpl->wind_use_profile = false;
   return pbuilder;
 }
 
@@ -1109,6 +1169,19 @@ LobBuilder* LobBuilderWindSpeedMph(LobBuilder* pbuilder, double value) {
   }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->wind_speed_fps = MphT(value);
+  pimpl->wind_use_profile = false;
+  return pbuilder;
+}
+
+LobBuilder* LobBuilderWindProfile(LobBuilder* pbuilder,
+                                  const LobWindPoint* ppoints, size_t count) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
+  auto* pimpl = Pimpl(pbuilder);
+  pimpl->wind_profile_points = ppoints;
+  pimpl->wind_profile_count = count;
+  pimpl->wind_use_profile = true;
   return pbuilder;
 }
 
