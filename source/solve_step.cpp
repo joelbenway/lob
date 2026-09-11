@@ -39,10 +39,6 @@ inline FpsT GetScaledSpeedOfSound(const LobContext& ctx, double u) noexcept {
 
 inline double GetDtDx(FpsT vx) noexcept { return 1.0 / vx.Value(); }
 
-inline CartesianT<FpsT> GetWind(const LobContext& ctx) noexcept {
-  return {FpsT(ctx.wind.x), FpsT(0.0), FpsT(ctx.wind.z)};
-}
-
 inline MachT GetMach(const TrajectoryStateT& s, FpsT speed_of_sound) noexcept {
   return MachT(s.V().Magnitude(), speed_of_sound.Inverse());
 }
@@ -83,7 +79,7 @@ inline TrajectoryStateT DsDxCore(const LobContext& ctx,
     return {CartesianT<FeetT>(FeetT(0)), CartesianT<FpsT>(FpsT(0))};
   }
   const double kDtDx = GetDtDx(kVx);
-  const CartesianT<FpsT> kWind = GetWind(ctx);
+  const CartesianT<FpsT> kWind = GetWind(ctx, s);
   const MachT kMach = GetMach(s, speed_of_sound);
   const double kCd = GetCd(pcurve, kMach, drag_coeff);
   const CartesianT<FeetT> kDpDt = GetDpDt(s);
@@ -113,6 +109,75 @@ inline FeetT ComputeStep(const LobContext& ctx, const TrajectoryStateT& s,
                               : kStepSize;
 }
 }  // namespace
+
+CartesianT<FpsT> GetWind(const LobContext& ctx,
+                         const TrajectoryStateT& s) noexcept {
+  // Historical path: uniform, flat, unscaled.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+  const bool kIsHistorical = ctx.wind_count <= 1 && ctx.wind_sin == 0.0 &&
+                             std::isnan(ctx.wind_roughness_ft);
+#pragma GCC diagnostic pop
+  if (kIsHistorical) {
+    return {FpsT(ctx.wind.x), FpsT(0.0), FpsT(ctx.wind.z)};
+  }
+  // 1. Downrange lerp over horizontal components (point 0 = ctx.wind at x=0).
+  double hx = ctx.wind.x;
+  double hz = ctx.wind.z;
+  size_t count = static_cast<size_t>(ctx.wind_count);
+  if (count > LOB_WIND_POINTS) {
+    count = LOB_WIND_POINTS;  // defensive: hand-built contexts
+  }
+  const double kX = s.P().X().Value();
+  if (count > 1 && kX > 0.0) {
+    double px = 0.0;
+    double phx = ctx.wind.x;
+    double phz = ctx.wind.z;
+    bool kFound = false;
+    for (size_t i = 0; i + 1 < count; ++i) {
+      const LobWindPoint& kPt = ctx.wind_points[i];
+      const double kDen = kPt.range_ft - px;
+      if (kX <= kPt.range_ft) {
+        const double kT = kDen > 0.0 ? (kX - px) / kDen : 0.0;
+        hx = phx + kT * (kPt.x_fps - phx);
+        hz = phz + kT * (kPt.z_fps - phz);
+        kFound = true;
+        break;
+      }
+      px = kPt.range_ft;
+      phx = kPt.x_fps;
+      phz = kPt.z_fps;
+    }
+    if (!kFound && kX > px) {  // clamp above the final point
+      hx = phx;
+      hz = phz;
+    }
+  }
+  // 2. Pitch into the shooting frame.
+  double wx = hx * ctx.wind_cos;
+  double wy = -hx * ctx.wind_sin;
+  double wz = hz;
+  // 3. Altitude scale about true vertical (flat-terrain assumption).
+  if (!std::isnan(ctx.wind_roughness_ft)) {
+    const double kGx = ctx.gravity.x;
+    const double kGy = ctx.gravity.y;
+    const double kG = std::sqrt(kGx * kGx + kGy * kGy);
+    const double kH =
+        kG > 0.0 ? -((s.P().X().Value() * kGx + s.P().Y().Value() * kGy) / kG)
+                 : 0.0;
+    double zagl = kH + ctx.wind_muzzle_height_ft;
+    const double kFloor = 1.05 * ctx.wind_roughness_ft;
+    if (!(zagl > kFloor)) {
+      zagl = kFloor;
+    }
+    const double kS =
+        std::log(zagl / ctx.wind_roughness_ft) * ctx.wind_inv_ln_denom;
+    wx *= kS;
+    wy *= kS;
+    wz *= kS;
+  }
+  return {FpsT(wx), FpsT(wy), FpsT(wz)};
+}
 
 void FastSolveStep(const LobContext& ctx, TrajectoryStateT* ps,
                    spline::CurveView* pcurve, FeetT target_x) {
