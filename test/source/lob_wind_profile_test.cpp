@@ -9,10 +9,10 @@
 #include <cstdint>
 #include <limits>
 
+#include "constants.hpp"
 #include "lob/lob.h"
 #include "lob/lob.hpp"
 #include "solve_step.hpp"
-#include "constants.hpp"
 
 TEST(WindProfileAbi, CapacityConstant) { EXPECT_EQ(LOB_WIND_POINTS, 8); }
 
@@ -58,8 +58,7 @@ const LobWindPoint kTwoPoint[2] = {
 }  // namespace
 
 TEST_F(WindProfileBuildFixture, CopiesProfileAndSetsCount) {
-  const lob::Context kCtx =
-      builder.WindProfile(kTwoPoint, 2).Build();
+  const lob::Context kCtx = builder.WindProfile(kTwoPoint, 2).Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
   EXPECT_EQ(kCtx.wind_count, 2u);
   EXPECT_DOUBLE_EQ(kCtx.wind.x, 0.0);
@@ -71,8 +70,8 @@ TEST_F(WindProfileBuildFixture, CopiesProfileAndSetsCount) {
 }
 
 TEST_F(WindProfileBuildFixture, SinglePointEqualsUniform) {
-  const LobWindPoint kOne[1] = {{0.0, 0.0, 7.33,
-                                 std::numeric_limits<double>::quiet_NaN()}};
+  const LobWindPoint kOne[1] = {
+      {0.0, 0.0, 7.33, std::numeric_limits<double>::quiet_NaN()}};
   const lob::Context kProfile = builder.WindProfile(kOne, 1).Build();
   lob::Builder plain;
   plain.BallisticCoefficientPsi(0.372)
@@ -125,11 +124,10 @@ TEST_F(WindProfileBuildFixture, RejectsEmptyProfile) {
 }
 
 TEST_F(WindProfileBuildFixture, LastWindCallWinsBothDirections) {
-  const lob::Context kProfileLast =
-      builder.WindHeading(lob::ClockAngleT::kIII)
-          .WindSpeedMph(5.0)
-          .WindProfile(kTwoPoint, 2)
-          .Build();
+  const lob::Context kProfileLast = builder.WindHeading(lob::ClockAngleT::kIII)
+                                        .WindSpeedMph(5.0)
+                                        .WindProfile(kTwoPoint, 2)
+                                        .Build();
   EXPECT_EQ(kProfileLast.wind_count, 2u);
   lob::Builder other;
   other.BallisticCoefficientPsi(0.372)
@@ -165,8 +163,7 @@ TEST(WindProfileAbi, ErrorCodesAppended) {
 
 TEST_F(WindProfileBuildFixture, NormalizesHighMeasurementToReference) {
   // z0 = 0.1 ft grass, muzzle 1 ft, drone reads 14.66 fps at 50 ft AGL.
-  const double kF =
-      std::log(1.0 / 0.1) / std::log(50.0 / 0.1);  // ≈ 0.37052
+  const double kF = std::log(1.0 / 0.1) / std::log(50.0 / 0.1);  // ≈ 0.37052
   const LobWindPoint kPts[2] = {
       {0.0, 0.0, 7.33, 1.0},
       {1500.0, 0.0, 14.66, 50.0},
@@ -251,26 +248,23 @@ LobContext MakeWindQueryCtx() {
   ctx.wind_count = 1;
   ctx.wind_cos = 1.0;
   ctx.wind_sin = 0.0;
-  ctx.wind_roughness_ft =
-      std::numeric_limits<double>::quiet_NaN();
-  ctx.wind_muzzle_height_ft =
-      std::numeric_limits<double>::quiet_NaN();
-  ctx.wind_inv_ln_denom =
-      std::numeric_limits<double>::quiet_NaN();
+  ctx.wind_roughness_ft = std::numeric_limits<double>::quiet_NaN();
+  ctx.wind_muzzle_height_ft = std::numeric_limits<double>::quiet_NaN();
+  ctx.wind_inv_ln_denom = std::numeric_limits<double>::quiet_NaN();
   return ctx;
 }
 
 TrajectoryStateT MakeStateAt(double x_ft, double y_ft) {
-  return TrajectoryStateT(CartesianT<FeetT>(FeetT(x_ft), FeetT(y_ft), FeetT(0.0)),
-                          CartesianT<FpsT>(FpsT(2000.0), FpsT(0.0), FpsT(0.0)));
+  return TrajectoryStateT(
+      CartesianT<FeetT>(FeetT(x_ft), FeetT(y_ft), FeetT(0.0)),
+      CartesianT<FpsT>(FpsT(2000.0), FpsT(0.0), FpsT(0.0)));
 }
 
 }  // namespace
 
 TEST(WindProfileQuery, UniformFlatIsHistoricalPath) {
   const LobContext kCtx = MakeWindQueryCtx();
-  const CartesianT<FpsT> kW =
-      lob::GetWind(kCtx, MakeStateAt(500.0, 0.0));
+  const CartesianT<FpsT> kW = lob::GetWind(kCtx, MakeStateAt(500.0, 0.0));
   EXPECT_DOUBLE_EQ(kW.X().Value(), 0.0);
   EXPECT_DOUBLE_EQ(kW.Y().Value(), 0.0);
   EXPECT_DOUBLE_EQ(kW.Z().Value(), 10.0);
@@ -283,14 +277,14 @@ TEST(WindProfileQuery, LerpsMidpointAndClampsEnds) {
                         std::numeric_limits<double>::quiet_NaN()};
   ctx.wind_points[1] = {2000.0, 0.0, 30.0,
                         std::numeric_limits<double>::quiet_NaN()};
-  EXPECT_DOUBLE_EQ(
-      lob::GetWind(ctx, MakeStateAt(1500.0, 0.0)).Z().Value(), 20.0);
-  EXPECT_DOUBLE_EQ(
-      lob::GetWind(ctx, MakeStateAt(1000.0, 0.0)).Z().Value(), 10.0);
-  EXPECT_DOUBLE_EQ(
-      lob::GetWind(ctx, MakeStateAt(5000.0, 0.0)).Z().Value(), 30.0);
-  EXPECT_DOUBLE_EQ(
-      lob::GetWind(ctx, MakeStateAt(-10.0, 0.0)).Z().Value(), 10.0);
+  EXPECT_DOUBLE_EQ(lob::GetWind(ctx, MakeStateAt(1500.0, 0.0)).Z().Value(),
+                   20.0);
+  EXPECT_DOUBLE_EQ(lob::GetWind(ctx, MakeStateAt(1000.0, 0.0)).Z().Value(),
+                   10.0);
+  EXPECT_DOUBLE_EQ(lob::GetWind(ctx, MakeStateAt(5000.0, 0.0)).Z().Value(),
+                   30.0);
+  EXPECT_DOUBLE_EQ(lob::GetWind(ctx, MakeStateAt(-10.0, 0.0)).Z().Value(),
+                   10.0);
 }
 
 TEST(WindProfileQuery, PitchesAlongTrackIntoFrame) {
@@ -385,16 +379,12 @@ TEST_F(WindProfileBuildFixture, CrosswindBlindToIncline) {
       .WindSpeedMph(10.0)
       .RangeAngleDeg(15.0);
   const lob::Context kHillCtx = qh.Build();
-  const LobContext& kFlatRaw =
-      reinterpret_cast<const LobContext&>(kFlatCtx);
-  const LobContext& kHillRaw =
-      reinterpret_cast<const LobContext&>(kHillCtx);
+  const LobContext& kFlatRaw = reinterpret_cast<const LobContext&>(kFlatCtx);
+  const LobContext& kHillRaw = reinterpret_cast<const LobContext&>(kHillCtx);
   const double kXs[3] = {100.0, 900.0, 2700.0};
   for (double x : kXs) {
-    const CartesianT<FpsT> kFlatW =
-        lob::GetWind(kFlatRaw, MakeStateAt(x, 0.0));
-    const CartesianT<FpsT> kHillW =
-        lob::GetWind(kHillRaw, MakeStateAt(x, 0.0));
+    const CartesianT<FpsT> kFlatW = lob::GetWind(kFlatRaw, MakeStateAt(x, 0.0));
+    const CartesianT<FpsT> kHillW = lob::GetWind(kHillRaw, MakeStateAt(x, 0.0));
     // ponytail: kIII heading is 2π rad; libm sin leaves ~3.6e-15 in
     // wind.x which pitch then scales — same 1e-12 tolerance as
     // SinglePointEqualsUniform. The crosswind (Z) component is bit-identical.
@@ -406,10 +396,9 @@ TEST_F(WindProfileBuildFixture, CrosswindBlindToIncline) {
   const std::array<uint32_t, 3> kRanges = {900, 1800, 2700};
   std::array<lob::Output, 3> flat_outs{};
   std::array<lob::Output, 3> hill_outs{};
-  const size_t kNFlat = lob::Solve(builder.WindHeading(lob::ClockAngleT::kIII)
-                                       .WindSpeedMph(10.0)
-                                       .Build(),
-                                   kRanges, &flat_outs);
+  const size_t kNFlat = lob::Solve(
+      builder.WindHeading(lob::ClockAngleT::kIII).WindSpeedMph(10.0).Build(),
+      kRanges, &flat_outs);
   lob::Builder hb;
   hb.BallisticCoefficientPsi(0.372)
       .BCDragFunction(lob::DragFunctionT::kG1)
