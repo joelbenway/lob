@@ -12,6 +12,8 @@
 
 namespace lob {
 
+CartesianT<FpsT> GetWind(const LobContext& ctx,
+                         const TrajectoryStateT& s) noexcept;
 void FastSolveStep(const LobContext& ctx, TrajectoryStateT* ps,
                    spline::CurveView* pcurve, FeetT target_x = FeetT(NaN()));
 void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
