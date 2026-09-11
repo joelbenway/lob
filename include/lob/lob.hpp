@@ -93,12 +93,17 @@ enum class ErrorT : LobErrorT {
   kZeroDataRequired = ::kLobErrorZeroDataRequired,
   kZeroDistanceOOR = ::kLobErrorZeroDistanceOOR,
   kZeroUnreachable = ::kLobErrorZeroUnreachable,
+  kWindProfileTooLong = ::kLobErrorWindProfileTooLong,
+  kWindProfileNotMonotonic = ::kLobErrorWindProfileNotMonotonic,
+  kWindProfileInvalid = ::kLobErrorWindProfileInvalid,
 };
 
 /** @brief Gravity vector. See @c LobGravity for member details. */
 using Gravity = ::LobGravity;
 /** @brief Wind vector. See @c LobWind for member details. */
 using Wind = ::LobWind;
+/** @brief Downrange wind profile point. See @c LobWindPoint for details. */
+using WindPoint = ::LobWindPoint;
 /** @brief Coriolis effect parameters. See @c LobCoriolis for member details. */
 using Coriolis = ::LobCoriolis;
 /**
@@ -125,6 +130,15 @@ struct Context {
   uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
   uint16_t step_size;      ///< @brief Solver step size in inches.
   ErrorT error;            ///< @brief Error status after build.
+  uint8_t wind_count;      ///< @brief Total wind points, 1..LOB_WIND_POINTS.
+  std::array<WindPoint, LOB_WIND_POINTS - 1>
+      wind_points;           ///< @brief Profile points 1...
+  double wind_cos;           ///< @brief cos(range angle), precomputed at Build.
+  double wind_sin;           ///< @brief sin(range angle), precomputed at Build.
+  double wind_roughness_ft;  ///< @brief Roughness length z0; NaN = scaling off.
+  double wind_muzzle_height_ft;  ///< @brief Bore height above ground in feet.
+  double
+      wind_inv_ln_denom;  ///< @brief 1 / ln(z_muz / z0), valid when scaling on.
 };
 
 static_assert(sizeof(Context) == sizeof(::LobContext),
@@ -173,6 +187,25 @@ static_assert(offsetof(Context, step_size) == offsetof(::LobContext, step_size),
               "step_size offset drift");
 static_assert(offsetof(Context, error) == offsetof(::LobContext, error),
               "error offset drift");
+static_assert(offsetof(Context, wind_count) ==
+                  offsetof(::LobContext, wind_count),
+              "wind_count offset drift");
+static_assert(offsetof(Context, wind_points) ==
+                  offsetof(::LobContext, wind_points),
+              "wind_points offset drift");
+static_assert(offsetof(Context, wind_cos) == offsetof(::LobContext, wind_cos),
+              "wind_cos offset drift");
+static_assert(offsetof(Context, wind_sin) == offsetof(::LobContext, wind_sin),
+              "wind_sin offset drift");
+static_assert(offsetof(Context, wind_roughness_ft) ==
+                  offsetof(::LobContext, wind_roughness_ft),
+              "wind_roughness_ft offset drift");
+static_assert(offsetof(Context, wind_muzzle_height_ft) ==
+                  offsetof(::LobContext, wind_muzzle_height_ft),
+              "wind_muzzle_height_ft offset drift");
+static_assert(offsetof(Context, wind_inv_ln_denom) ==
+                  offsetof(::LobContext, wind_inv_ln_denom),
+              "wind_inv_ln_denom offset drift");
 static_assert(static_cast<::LobErrorT>(ErrorT::kNone) == ::kLobErrorNone,
               "ErrorT kNone value drift");
 static_assert(static_cast<::LobErrorT>(ErrorT::kNotFormed) ==
