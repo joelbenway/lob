@@ -19,6 +19,8 @@ extern "C" {
 #define LOB_SPLINE_SEGMENTS 15
 /** @brief The size in bytes of the builder buffer. */
 #define LOB_BUILDER_BUFFER_SIZE 272
+/** @brief Total wind profile points, muzzle point included. */
+#define LOB_WIND_POINTS 8
 
 /** @brief Drag function type. */
 typedef uint8_t LobDragFunctionT;
@@ -94,6 +96,9 @@ enum {
   kLobErrorZeroDataRequired,
   kLobErrorZeroDistanceOOR,
   kLobErrorZeroUnreachable,
+  kLobErrorWindProfileTooLong,
+  kLobErrorWindProfileNotMonotonic,
+  kLobErrorWindProfileInvalid,
   kLobErrorNumberOfErrors  ///< @note Total number of enumerated Errors
 };
 
@@ -108,6 +113,14 @@ typedef struct {
   double x;  ///< @brief Wind speed in fps in the x-direction.
   double z;  ///< @brief Wind speed in fps in the z-direction.
 } LobWind;
+
+/** @brief Downrange wind profile point (horizontal-plane wind). */
+typedef struct {
+  double range_ft;  ///< @brief Downrange position in feet.
+  double x_fps;  ///< @brief Wind in fps, along-track horizontal (tailwind +).
+  double z_fps;  ///< @brief Wind in fps, lateral.
+  double height_ft_agl;  ///< @brief Measurement height above ground in feet.
+} LobWindPoint;
 
 /** @brief Coriolis effect parameters. */
 typedef struct {
@@ -140,6 +153,13 @@ typedef struct {
   uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
   uint16_t step_size;      ///< @brief Solver step size in inches.
   LobErrorT error;         ///< @brief Error status after build.
+  uint8_t wind_count;      ///< @brief Total wind points, 1..LOB_WIND_POINTS.
+  LobWindPoint wind_points[LOB_WIND_POINTS - 1];  ///< @brief Profile points 1...
+  double wind_cos;         ///< @brief cos(range angle), precomputed at Build.
+  double wind_sin;         ///< @brief sin(range angle), precomputed at Build.
+  double wind_roughness_ft;  ///< @brief Roughness length z0; NaN = scaling off.
+  double wind_muzzle_height_ft;  ///< @brief Bore height above ground in feet.
+  double wind_inv_ln_denom;  ///< @brief 1 / ln(z_muz / z0), valid when scaling on.
 } LobContext;
 
 /** @brief Structure holding the output results of a ballistic calculation. */
@@ -508,6 +528,34 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindSpeedFps(LobBuilder* pbuilder,
  */
 LOB_EXPORT extern LobBuilder* LobBuilderWindSpeedMph(LobBuilder* pbuilder,
                                                      double value);
+
+/**
+ * @brief Sets the downrange wind profile points.
+ * @param pbuilder Pointer to the builder.
+ * @param ppoints Pointer to an array of wind profile points.
+ * @param count The number of wind profile points.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
+ */
+LOB_EXPORT extern LobBuilder* LobBuilderWindProfile(
+    LobBuilder* pbuilder, const LobWindPoint* ppoints, size_t count);
+
+/**
+ * @brief Sets the roughness length for wind profile height scaling in feet.
+ * @param pbuilder Pointer to the builder.
+ * @param value The roughness length in feet.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
+ */
+LOB_EXPORT extern LobBuilder* LobBuilderWindRoughnessLengthFt(
+    LobBuilder* pbuilder, double value);
+
+/**
+ * @brief Sets the height of the bore above ground in feet.
+ * @param pbuilder Pointer to the builder.
+ * @param value The bore height above ground in feet.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
+ */
+LOB_EXPORT extern LobBuilder* LobBuilderHeightOfBoreAboveGroundFt(
+    LobBuilder* pbuilder, double value);
 
 /**
  * @brief Sets the azimuth (bearing) of the target in degrees.
