@@ -160,3 +160,75 @@ TEST(WindProfileAbi, ErrorCodesAppended) {
   EXPECT_EQ(static_cast<LobErrorT>(lob::ErrorT::kWindProfileInvalid),
             kLobErrorWindProfileInvalid);
 }
+
+TEST_F(WindProfileBuildFixture, NormalizesHighMeasurementToReference) {
+  // z0 = 0.1 ft grass, muzzle 1 ft, drone reads 14.66 fps at 50 ft AGL.
+  const double kF =
+      std::log(1.0 / 0.1) / std::log(50.0 / 0.1);  // ≈ 0.37052
+  const LobWindPoint kPts[2] = {
+      {0.0, 0.0, 7.33, 1.0},
+      {1500.0, 0.0, 14.66, 50.0},
+  };
+  const lob::Context kCtx = builder.WindProfile(kPts, 2)
+                                .WindRoughnessLengthFt(0.1)
+                                .HeightOfBoreAboveGroundFt(1.0)
+                                .Build();
+  EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
+  EXPECT_NEAR(kCtx.wind_points[0].z_fps, 14.66 * kF, 1E-9);
+  EXPECT_NEAR(kCtx.wind_points[0].height_ft_agl, 50.0, 0.0);
+  EXPECT_NEAR(kCtx.wind_inv_ln_denom, 1.0 / std::log(1.0 / 0.1), 1E-12);
+  EXPECT_DOUBLE_EQ(kCtx.wind_muzzle_height_ft, 1.0);
+}
+
+TEST_F(WindProfileBuildFixture, RoughnessUnsetLeavesValuesIdentical) {
+  const LobWindPoint kPts[2] = {
+      {0.0, 0.0, 7.33, 50.0},
+      {1500.0, 0.0, 14.66, 50.0},
+  };
+  const lob::Context kCtx = builder.WindProfile(kPts, 2).Build();
+  EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
+  EXPECT_DOUBLE_EQ(kCtx.wind_points[0].z_fps, 14.66);
+  EXPECT_TRUE(std::isnan(kCtx.wind_roughness_ft));
+}
+
+TEST_F(WindProfileBuildFixture, BoreHeightDefaultsToOneFootWhenScaling) {
+  const lob::Context kCtx =
+      builder.WindProfile(kTwoPoint, 2).WindRoughnessLengthFt(0.1).Build();
+  EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
+  EXPECT_DOUBLE_EQ(kCtx.wind_muzzle_height_ft, 1.0);
+}
+
+TEST_F(WindProfileBuildFixture, RejectsBadAltitudeConfig) {
+  // Non-positive roughness.
+  EXPECT_EQ(builder.WindRoughnessLengthFt(0.0).Build().error,
+            lob::ErrorT::kWindProfileInvalid);
+  // Bore height at/below roughness.
+  lob::Builder b2;
+  b2.BallisticCoefficientPsi(0.372)
+      .BCDragFunction(lob::DragFunctionT::kG1)
+      .DiameterInch(0.224)
+      .MassGrains(77.0)
+      .InitialVelocityFps(2720)
+      .ZeroAngleMOA(4.78)
+      .OpticHeightInches(2.5)
+      .WindRoughnessLengthFt(0.1)
+      .HeightOfBoreAboveGroundFt(0.1);
+  EXPECT_EQ(b2.Build().error, lob::ErrorT::kWindProfileInvalid);
+  // Measurement height at/below roughness while scaling is on.
+  const LobWindPoint kLow[2] = {
+      {0.0, 0.0, 7.33, 1.0},
+      {1500.0, 0.0, 14.66, 0.05},
+  };
+  lob::Builder b3;
+  b3.BallisticCoefficientPsi(0.372)
+      .BCDragFunction(lob::DragFunctionT::kG1)
+      .DiameterInch(0.224)
+      .MassGrains(77.0)
+      .InitialVelocityFps(2720)
+      .ZeroAngleMOA(4.78)
+      .OpticHeightInches(2.5)
+      .WindProfile(kLow, 2)
+      .WindRoughnessLengthFt(0.1)
+      .HeightOfBoreAboveGroundFt(1.0);
+  EXPECT_EQ(b3.Build().error, lob::ErrorT::kWindProfileInvalid);
+}

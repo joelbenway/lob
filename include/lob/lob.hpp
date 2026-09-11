@@ -780,6 +780,30 @@ class Builder {
   Builder& WindProfile(const std::array<LobWindPoint, N>&& points) = delete;
 
   /**
+   * @brief Sets the roughness length for log-law wind height scaling in feet.
+   * @details NaN (default) disables scaling; a positive value normalizes
+   * profile winds to bore height and arms solver-side scaling.
+   * @param value The roughness length in feet.
+   * @return A reference to the Builder object.
+   */
+  Builder& WindRoughnessLengthFt(double value) {
+    ::LobBuilderWindRoughnessLengthFt(&builder_, value);
+    return *this;
+  }
+
+  /**
+   * @brief Sets the height of the bore above ground in feet.
+   * @details Reference height for log-law scaling; defaults to 1 ft when
+   * scaling is on and unset. Must exceed the roughness length.
+   * @param value The bore height above ground in feet.
+   * @return A reference to the Builder object.
+   */
+  Builder& HeightOfBoreAboveGroundFt(double value) {
+    ::LobBuilderHeightOfBoreAboveGroundFt(&builder_, value);
+    return *this;
+  }
+
+  /**
    * @brief Sets the azimuth (bearing) of the target in degrees.
    * @note Used for making coriolis effect corrections.
    * @param value The azimuth in degrees.
