@@ -94,7 +94,7 @@ TEST_F(WindProfileBuildFixture, RejectsTooLong) {
   LobWindPoint many[LOB_WIND_POINTS + 1] = {};
   many[0].range_ft = 0.0;
   for (size_t i = 1; i <= LOB_WIND_POINTS; ++i) {
-    many[i].range_ft = 100.0 * i;
+    many[i].range_ft = 100.0 * static_cast<double>(i);
     many[i].z_fps = 1.0;
   }
   EXPECT_EQ(builder.WindProfile(many, LOB_WIND_POINTS + 1).Build().error,
