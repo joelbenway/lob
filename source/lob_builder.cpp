@@ -243,18 +243,19 @@ LobErrorT ValidateWindProfile(Impl* pimpl) {
                : kLobErrorWindProfileInvalid;
   }
   for (size_t i = 0; i < pimpl->wind_profile_count; i++) {
-    const LobWindPoint& kPt = pimpl->wind_profile_points[i];
-    if (!std::isfinite(kPt.range_ft) || !std::isfinite(kPt.x_fps) ||
-        !std::isfinite(kPt.z_fps) ||
-        (!std::isnan(kPt.height_ft_agl) && !std::isfinite(kPt.height_ft_agl))) {
+    const LobWindPoint& point = pimpl->wind_profile_points[i];
+    if (!std::isfinite(point.range_ft) || !std::isfinite(point.x_fps) ||
+        !std::isfinite(point.z_fps) ||
+        (!std::isnan(point.height_ft_agl) &&
+         !std::isfinite(point.height_ft_agl))) {
       return kLobErrorWindProfileInvalid;
     }
     if (i == 0) {
       // Exact-zero test via ordered comparisons (avoids -Werror=float-equal).
-      if (kPt.range_ft > 0.0 || kPt.range_ft < 0.0) {
+      if (point.range_ft > 0.0 || point.range_ft < 0.0) {
         return kLobErrorWindProfileNotMonotonic;
       }
-    } else if (!(kPt.range_ft > pimpl->wind_profile_points[i - 1].range_ft)) {
+    } else if (!(point.range_ft > pimpl->wind_profile_points[i - 1].range_ft)) {
       return kLobErrorWindProfileNotMonotonic;
     }
   }
@@ -469,8 +470,8 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
 
   // Resolve altitude configuration. NaN roughness means scaling off.
   double muzzle_height = pimpl->wind_bore_height_ft;
-  bool scaling = !std::isnan(pimpl->wind_roughness_ft);
-  if (scaling) {
+  const bool kScaling = !std::isnan(pimpl->wind_roughness_ft);
+  if (kScaling) {
     if (!(pimpl->wind_roughness_ft > 0.0) ||
         !std::isfinite(pimpl->wind_roughness_ft)) {
       pout->error = kLobErrorWindProfileInvalid;
@@ -494,47 +495,50 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
   pout->wind_roughness_ft = pimpl->wind_roughness_ft;
   pout->wind_muzzle_height_ft = muzzle_height;
 
+  // Pointer past the output array so the loops below index without tripping
+  // pro-bounds-constant-array-index (the count is runtime-validated).
+  LobWindPoint* wind_points = &pout->wind_points[0];
+
   if (pimpl->wind_use_profile) {
     const LobErrorT kErr = ValidateWindProfile(pimpl);
     if (kErr != kLobErrorNone) {
       pout->error = kErr;
       return;
     }
-    if (scaling) {
-      const LobWindPoint& kMuz = pimpl->wind_profile_points[0];
-      if (!std::isnan(kMuz.height_ft_agl) &&
-          !(kMuz.height_ft_agl > pimpl->wind_roughness_ft)) {
+    if (kScaling) {
+      const LobWindPoint& muzzle = pimpl->wind_profile_points[0];
+      if (!std::isnan(muzzle.height_ft_agl) &&
+          !(muzzle.height_ft_agl > pimpl->wind_roughness_ft)) {
         pout->error = kLobErrorWindProfileInvalid;
         return;
       }
-      const double kF0 = WindHeightFactor(kMuz.height_ft_agl, muzzle_height,
+      const double kF0 = WindHeightFactor(muzzle.height_ft_agl, muzzle_height,
                                           pimpl->wind_roughness_ft);
-      pout->wind.x = kMuz.x_fps * kF0;
-      pout->wind.z = kMuz.z_fps * kF0;
+      pout->wind.x = muzzle.x_fps * kF0;
+      pout->wind.z = muzzle.z_fps * kF0;
       for (size_t i = 1; i < pimpl->wind_profile_count; i++) {
-        const LobWindPoint& kPt = pimpl->wind_profile_points[i];
-        if (!std::isnan(kPt.height_ft_agl) &&
-            !(kPt.height_ft_agl > pimpl->wind_roughness_ft)) {
+        const LobWindPoint& point = pimpl->wind_profile_points[i];
+        if (!std::isnan(point.height_ft_agl) &&
+            !(point.height_ft_agl > pimpl->wind_roughness_ft)) {
           pout->error = kLobErrorWindProfileInvalid;
           return;
         }
-        const double kF = WindHeightFactor(kPt.height_ft_agl, muzzle_height,
+        const double kF = WindHeightFactor(point.height_ft_agl, muzzle_height,
                                            pimpl->wind_roughness_ft);
-        pout->wind_points[i - 1].range_ft = kPt.range_ft;
-        pout->wind_points[i - 1].x_fps = kPt.x_fps * kF;
-        pout->wind_points[i - 1].z_fps = kPt.z_fps * kF;
-        pout->wind_points[i - 1].height_ft_agl = kPt.height_ft_agl;
+        wind_points[i - 1].range_ft = point.range_ft;
+        wind_points[i - 1].x_fps = point.x_fps * kF;
+        wind_points[i - 1].z_fps = point.z_fps * kF;
+        wind_points[i - 1].height_ft_agl = point.height_ft_agl;
       }
     } else {
       // Identity copy; heights are provenance only when scaling is off.
       pout->wind.x = pimpl->wind_profile_points[0].x_fps;
       pout->wind.z = pimpl->wind_profile_points[0].z_fps;
       for (size_t i = 1; i < pimpl->wind_profile_count; i++) {
-        pout->wind_points[i - 1].range_ft =
-            pimpl->wind_profile_points[i].range_ft;
-        pout->wind_points[i - 1].x_fps = pimpl->wind_profile_points[i].x_fps;
-        pout->wind_points[i - 1].z_fps = pimpl->wind_profile_points[i].z_fps;
-        pout->wind_points[i - 1].height_ft_agl =
+        wind_points[i - 1].range_ft = pimpl->wind_profile_points[i].range_ft;
+        wind_points[i - 1].x_fps = pimpl->wind_profile_points[i].x_fps;
+        wind_points[i - 1].z_fps = pimpl->wind_profile_points[i].z_fps;
+        wind_points[i - 1].height_ft_agl =
             pimpl->wind_profile_points[i].height_ft_agl;
       }
     }
@@ -574,7 +578,7 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
   const size_t kUsedPoints =
       pimpl->wind_use_profile ? pimpl->wind_profile_count - 1 : 0;
   for (size_t i = kUsedPoints; i < LOB_WIND_POINTS - 1; i++) {
-    pout->wind_points[i] = LobWindPoint{};
+    wind_points[i] = LobWindPoint{};
   }
 
   const double kTheta = pimpl->range_angle_rad.Value();

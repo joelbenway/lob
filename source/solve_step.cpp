@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 
 #include "cartesian.hpp"
 #include "constants.hpp"
@@ -124,31 +125,31 @@ CartesianT<FpsT> GetWind(const LobContext& ctx,
   // 1. Downrange lerp over horizontal components (point 0 = ctx.wind at x=0).
   double hx = ctx.wind.x;
   double hz = ctx.wind.z;
-  size_t count = static_cast<size_t>(ctx.wind_count);
-  if (count > LOB_WIND_POINTS) {
-    count = LOB_WIND_POINTS;  // defensive: hand-built contexts
-  }
+  // Defensive clamp: hand-built contexts may exceed the capacity.
+  auto count = std::min(static_cast<size_t>(ctx.wind_count),
+                        static_cast<size_t>(LOB_WIND_POINTS));
+  const LobWindPoint* wind_points = &ctx.wind_points[0];
   const double kX = s.P().X().Value();
   if (count > 1 && kX > 0.0) {
     double px = 0.0;
     double phx = ctx.wind.x;
     double phz = ctx.wind.z;
-    bool kFound = false;
+    bool found = false;
     for (size_t i = 0; i + 1 < count; ++i) {
-      const LobWindPoint& kPt = ctx.wind_points[i];
-      const double kDen = kPt.range_ft - px;
-      if (kX <= kPt.range_ft) {
+      const LobWindPoint& point = wind_points[i];
+      const double kDen = point.range_ft - px;
+      if (kX <= point.range_ft) {
         const double kT = kDen > 0.0 ? (kX - px) / kDen : 0.0;
-        hx = phx + kT * (kPt.x_fps - phx);
-        hz = phz + kT * (kPt.z_fps - phz);
-        kFound = true;
+        hx = phx + kT * (point.x_fps - phx);
+        hz = phz + kT * (point.z_fps - phz);
+        found = true;
         break;
       }
-      px = kPt.range_ft;
-      phx = kPt.x_fps;
-      phz = kPt.z_fps;
+      px = point.range_ft;
+      phx = point.x_fps;
+      phz = point.z_fps;
     }
-    if (!kFound && kX > px) {  // clamp above the final point
+    if (!found && kX > px) {  // clamp above the final point
       hx = phx;
       hz = phz;
     }
@@ -161,10 +162,11 @@ CartesianT<FpsT> GetWind(const LobContext& ctx,
   if (!std::isnan(ctx.wind_roughness_ft)) {
     const double kGx = ctx.gravity.x;
     const double kGy = ctx.gravity.y;
-    const double kG = std::sqrt(kGx * kGx + kGy * kGy);
+    const double kG = std::sqrt((kGx * kGx) + (kGy * kGy));
     const double kH =
-        kG > 0.0 ? -((s.P().X().Value() * kGx + s.P().Y().Value() * kGy) / kG)
-                 : 0.0;
+        kG > 0.0
+            ? -(((s.P().X().Value() * kGx) + (s.P().Y().Value() * kGy)) / kG)
+            : 0.0;
     double zagl = kH + ctx.wind_muzzle_height_ft;
     const double kFloor = 1.05 * ctx.wind_roughness_ft;
     if (!(zagl > kFloor)) {
