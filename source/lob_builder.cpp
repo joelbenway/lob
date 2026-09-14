@@ -569,6 +569,14 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
     pout->wind_count = 1;
   }
 
+  // Zero the unused tail so identically-built contexts compare equal
+  // regardless of caller stack garbage (nothing reads past wind_count).
+  const size_t kUsedPoints =
+      pimpl->wind_use_profile ? pimpl->wind_profile_count - 1 : 0;
+  for (size_t i = kUsedPoints; i < LOB_WIND_POINTS - 1; i++) {
+    pout->wind_points[i] = LobWindPoint{};
+  }
+
   const double kTheta = pimpl->range_angle_rad.Value();
   pout->wind_cos = std::cos(kTheta);
   pout->wind_sin = std::sin(kTheta);

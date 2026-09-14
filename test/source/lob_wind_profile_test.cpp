@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 
 #include "constants.hpp"
@@ -480,4 +481,31 @@ TEST_F(WindProfileBuildFixture, InclinedScalingUsesTrueVertical) {
   // decisively from the frame-Y answer (S = 1).
   EXPECT_GT(std::abs(kS - 1.0), 2.0);
   EXPECT_NEAR(kW.Z().Value(), kRaw.wind.z * kS, 1e-9);
+}
+
+TEST(WindProfileBuild, ZeroesUnusedTailOverGarbage) {
+  // Build writes only wind_points[0..count-2]; the rest must be zeroed so
+  // identically-built contexts compare equal. Fill the output with garbage
+  // first — the C++ Builder zero-inits and would mask the bug.
+  LobBuilder cbuilder;
+  LobBuilderInit(&cbuilder);
+  LobBuilderBallisticCoefficientPsi(&cbuilder, 0.372);
+  LobBuilderInitialVelocityFps(&cbuilder, 2720);
+  LobBuilderZeroAngleMOA(&cbuilder, 4.78);
+  const LobWindPoint kPts[2] = {
+      {0.0, 0.0, 7.0, std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, 0.0, 8.0, std::numeric_limits<double>::quiet_NaN()}};
+  LobBuilderWindProfile(&cbuilder, kPts, 2);
+  LobContext ctx;
+  std::memset(&ctx, 0xAB, sizeof(ctx));
+  LobBuilderBuild(&cbuilder, &ctx);
+  LobBuilderDestroy(&cbuilder);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  ASSERT_EQ(ctx.wind_count, 2u);
+  for (size_t i = 1; i < LOB_WIND_POINTS - 1; i++) {
+    EXPECT_DOUBLE_EQ(ctx.wind_points[i].range_ft, 0.0);
+    EXPECT_DOUBLE_EQ(ctx.wind_points[i].x_fps, 0.0);
+    EXPECT_DOUBLE_EQ(ctx.wind_points[i].z_fps, 0.0);
+    EXPECT_DOUBLE_EQ(ctx.wind_points[i].height_ft_agl, 0.0);
+  }
 }
