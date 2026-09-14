@@ -326,7 +326,9 @@ TEST(WindProfileQuery, SubBoreFloorKeepsLogDefined) {
 
 TEST_F(WindProfileBuildFixture, TwoPointFlatProfileMatchesUniformSolve) {
   // Constant-valued 2-point profile must reproduce the uniform solution.
-  const double kFps = 10.0 * 22.0 / 15.0;
+  // Convert through the strong types so the test shares the library's own
+  // mph->fps factor instead of hand-spelling one.
+  const double kFps = lob::FpsT(lob::MphT(10.0)).Value();
   const LobWindPoint kFlat[2] = {
       {0.0, 0.0, kFps, std::numeric_limits<double>::quiet_NaN()},
       {3000.0, 0.0, kFps, std::numeric_limits<double>::quiet_NaN()}};
@@ -446,4 +448,36 @@ TEST_F(WindProfileBuildFixture, AltitudeScalingGrowsApexDrift) {
   // Sub-bore floor attenuation — the 100-yd-zero fixture drops far below bore
   // level by 3000 ft, where the floor clamps wind to ~2%.
   EXPECT_LT(scaled_outs[2].deflection, plain_outs[2].deflection);
+}
+
+TEST_F(WindProfileBuildFixture, InclinedScalingUsesTrueVertical) {
+  // Regression: altitude scaling must resolve height through the gravity
+  // vector, never frame-Y. At 15° incline and state (1500, 0), frame-Y says
+  // height 0 (S = 1) while true height is x*sin(15°) ≈ 388 ft (S ≈ 3.59).
+  lob::Builder ib;
+  ib.BallisticCoefficientPsi(0.372)
+      .BCDragFunction(lob::DragFunctionT::kG1)
+      .DiameterInch(0.224)
+      .MassGrains(77.0)
+      .InitialVelocityFps(2720)
+      .ZeroAngleMOA(4.78)
+      .OpticHeightInches(2.5)
+      .WindHeading(lob::ClockAngleT::kIII)
+      .WindSpeedMph(10.0)
+      .WindRoughnessLengthFt(0.1)
+      .HeightOfBoreAboveGroundFt(1.0)
+      .RangeAngleDeg(15.0);
+  const lob::Context kCtx = ib.Build();
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+  const LobContext& kRaw = reinterpret_cast<const LobContext&>(kCtx);
+  const CartesianT<FpsT> kW = lob::GetWind(kRaw, MakeStateAt(1500.0, 0.0));
+  const double kG = std::sqrt(kRaw.gravity.x * kRaw.gravity.x +
+                              kRaw.gravity.y * kRaw.gravity.y);
+  const double kH = -(1500.0 * kRaw.gravity.x) / kG;
+  const double kS =
+      std::log((kH + 1.0) / 0.1) / std::log(1.0 / 0.1);
+  // Guard against a vacuous test: the gravity-vector answer must differ
+  // decisively from the frame-Y answer (S = 1).
+  EXPECT_GT(std::abs(kS - 1.0), 2.0);
+  EXPECT_NEAR(kW.Z().Value(), kRaw.wind.z * kS, 1e-9);
 }
