@@ -14,7 +14,6 @@
 
 namespace tests {
 
-
 namespace {
 
 constexpr double kTestBcPsi = 0.372;
