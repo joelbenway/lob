@@ -230,8 +230,7 @@ TEST(WindProfileQuery, AltitudeScalesAboutMuzzleReference) {
   LobContext ctx = MakeWindQueryCtx();
   ctx.wind_roughness_ft = kGrassRoughnessFt;
   ctx.wind_muzzle_height_ft = kBoreHeightFt;
-  ctx.wind_inv_ln_denom =
-      1.0 / std::log(kBoreHeightFt / kGrassRoughnessFt);
+  ctx.wind_inv_ln_denom = 1.0 / std::log(kBoreHeightFt / kGrassRoughnessFt);
   const CartesianT<FpsT> kAtMuzzle = lob::GetWind(ctx, MakeStateAt(0.0, 0.0));
   EXPECT_NEAR(kAtMuzzle.Z().Value(), 10.0, 1E-9);  // S = 1 at muzzle
   const CartesianT<FpsT> kHigh = lob::GetWind(ctx, MakeStateAt(0.0, 9.0));
@@ -242,8 +241,7 @@ TEST(WindProfileQuery, SubBoreFloorKeepsLogDefined) {
   LobContext ctx = MakeWindQueryCtx();
   ctx.wind_roughness_ft = kGrassRoughnessFt;
   ctx.wind_muzzle_height_ft = kBoreHeightFt;
-  ctx.wind_inv_ln_denom =
-      1.0 / std::log(kBoreHeightFt / kGrassRoughnessFt);
+  ctx.wind_inv_ln_denom = 1.0 / std::log(kBoreHeightFt / kGrassRoughnessFt);
   const CartesianT<FpsT> kW = lob::GetWind(ctx, MakeStateAt(2500.0, -40.0));
   EXPECT_TRUE(std::isfinite(kW.X().Value()));
   EXPECT_TRUE(std::isfinite(kW.Y().Value()));
@@ -275,8 +273,8 @@ TEST(WindProfileQuery, InclinedScalingUsesTrueVertical) {
   // Regression: altitude scaling must resolve height through the gravity
   // vector, never frame-Y. At 15° incline and state (1500, 0), frame-Y says
   // height 0 (S = 1) while true height is x*sin(15°) ≈ 388 ft (S ≈ 3.59).
-  const LobContext kCtx = BuildUniformWindCtx(
-      kWindSpeedMph, kInclineDeg, kGrassRoughnessFt, kBoreHeightFt);
+  const LobContext kCtx = BuildUniformWindCtx(kWindSpeedMph, kInclineDeg,
+                                              kGrassRoughnessFt, kBoreHeightFt);
   const CartesianT<FpsT> kW = lob::GetWind(kCtx, MakeStateAt(1500.0, 0.0));
   const double kG = std::sqrt((kCtx.gravity.x * kCtx.gravity.x) +
                               (kCtx.gravity.y * kCtx.gravity.y));

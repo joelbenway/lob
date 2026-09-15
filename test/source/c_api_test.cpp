@@ -89,7 +89,8 @@ TEST(LobCAPITest, BuilderNullptrReturnsNullptr) {
   const std::array<LobWindPoint, 2> kWindPts{};
   EXPECT_EQ(LobBuilderWindProfile(nullptr, kWindPts.data(), kWindPts.size()),
             nullptr);
-  EXPECT_EQ(LobBuilderWindProfile(&builder, nullptr, kWindPts.size()), &builder);
+  EXPECT_EQ(LobBuilderWindProfile(&builder, nullptr, kWindPts.size()),
+            &builder);
   EXPECT_EQ(LobBuilderWindRoughnessLengthFt(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderHeightOfBoreAboveGroundFt(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderAzimuthDeg(nullptr, kDummy), nullptr);
