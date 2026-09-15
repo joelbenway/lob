@@ -530,6 +530,9 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindSpeedMph(LobBuilder* pbuilder,
 
 /**
  * @brief Sets the downrange wind profile points.
+ * @note Each point's wind is normalized to bore height at Build via the log
+ * law using its measurement height; a NaN height assumes a head-height
+ * measurement (5 ft Kestrel convention).
  * @param pbuilder Pointer to the builder.
  * @param ppoints Pointer to an array of wind profile points.
  * @param count The number of wind profile points.

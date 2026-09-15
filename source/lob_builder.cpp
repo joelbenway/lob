@@ -276,9 +276,14 @@ LobErrorT ValidateWindProfile(Impl* pimpl) {
   return kLobErrorNone;
 }
 
+// Assumed measurement height in feet for points without one (Kestrel head-
+// height convention); must exceed any configured roughness (see BuildWind).
+constexpr double kDefaultMeasurementHeightFt = 5.0;
+
 double WindHeightFactor(double height_agl, double muzzle_height,
                         double roughness) {
-  const double kMeas = std::isnan(height_agl) ? muzzle_height : height_agl;
+  const double kMeas =
+      std::isnan(height_agl) ? kDefaultMeasurementHeightFt : height_agl;
   // Callers guarantee roughness set, heights valid; guard anyway (noexcept).
   if (!(kMeas > roughness) || !(muzzle_height > roughness)) {
     return NaN();
@@ -523,8 +528,13 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
       const LobWindPoint& point = pimpl->wind_profile_points[i];
       double height_factor = 1.0;
       if (kScaling) {
-        if (!std::isnan(point.height_ft_agl) &&
-            !(point.height_ft_agl > pimpl->wind_roughness_ft)) {
+        // Effective height resolves the NaN default before validating, so a
+        // default assumption below a tall roughness fails loudly instead of
+        // flipping the wind via a negative log.
+        const double kMeasHeight = std::isnan(point.height_ft_agl)
+                                       ? kDefaultMeasurementHeightFt
+                                       : point.height_ft_agl;
+        if (!(kMeasHeight > pimpl->wind_roughness_ft)) {
           pout->error = kLobErrorWindProfileInvalid;
           return;
         }
@@ -555,6 +565,14 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
       pimpl->wind_speed_fps = FpsT(0);
     }
 
+    // Uniform inputs carry no measurement height, so they take the head-
+    // height default when scaling is on; a roughness above that default has
+    // no valid configuration.
+    if (kScaling && !(kDefaultMeasurementHeightFt > pimpl->wind_roughness_ft)) {
+      pout->error = kLobErrorWindProfileInvalid;
+      return;
+    }
+
     double wind_x_fps = 0.0;
     double wind_z_fps = 0.0;
     if (pimpl->wind_speed_fps > FpsT(0) || pimpl->wind_speed_fps < FpsT(0)) {
@@ -573,10 +591,19 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
       pout->error = kLobErrorWindProfileInvalid;
       return;
     }
+    // Uniform inputs carry no measurement height, so they take the head-
+    // height default exactly like NaN profile heights when scaling is on.
+    double height_factor = 1.0;
+    if (kScaling) {
+      height_factor =
+          WindHeightFactor(NaN(), muzzle_height, pimpl->wind_roughness_ft);
+    }
+    const double kHx = wind_x_fps * height_factor;
+    const double kHz = wind_z_fps * height_factor;
     wind_nodes[0].range_ft = 0U;
-    wind_nodes[0].x_fps = static_cast<float>(wind_x_fps * kCos);
-    wind_nodes[0].y_fps = static_cast<float>(-wind_x_fps * kSin);
-    wind_nodes[0].z_fps = static_cast<float>(wind_z_fps);
+    wind_nodes[0].x_fps = static_cast<float>(kHx * kCos);
+    wind_nodes[0].y_fps = static_cast<float>(-kHx * kSin);
+    wind_nodes[0].z_fps = static_cast<float>(kHz);
     pout->wind_count = 1;
   }
 

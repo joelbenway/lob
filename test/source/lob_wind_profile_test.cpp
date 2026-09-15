@@ -213,6 +213,53 @@ TEST_F(WindProfileBuildFixture, RejectsBadAltitudeConfig) {
       .WindRoughnessLengthFt(kGrassRoughnessFt)
       .HeightOfBoreAboveGroundFt(kBoreHeightFt);
   EXPECT_EQ(b3.Build().error, lob::ErrorT::kWindProfileInvalid);
+  // A roughness above the head-height default leaves NaN heights (and
+  // uniform inputs, which carry none) with no valid configuration.
+  constexpr double kTallRoughnessFt = 6.0;
+  constexpr double kHighBoreFt = 10.0;
+  EXPECT_EQ(builder.WindRoughnessLengthFt(kTallRoughnessFt).Build().error,
+            lob::ErrorT::kWindProfileInvalid);
+  EXPECT_EQ(builder.WindProfile(kTwoPoint)
+                .WindRoughnessLengthFt(kTallRoughnessFt)
+                .HeightOfBoreAboveGroundFt(kHighBoreFt)
+                .Build()
+                .error,
+            lob::ErrorT::kWindProfileInvalid);
+}
+
+TEST_F(WindProfileBuildFixture, MissingHeightsDefaultToHeadHeight) {
+  // NaN heights assume a head-height measurement per the Kestrel convention,
+  // so the stored muzzle wind scales down to the bore reference — identically
+  // for profile and uniform inputs.
+  constexpr double kHeadHeightFt = 5.0;
+  const double kExpectedFactor = std::log(kBoreHeightFt / kGrassRoughnessFt) /
+                                 std::log(kHeadHeightFt / kGrassRoughnessFt);
+  EXPECT_LT(kExpectedFactor, 1.0);
+  const lob::Context kProfileCtx = builder.WindProfile(kTwoPoint)
+                                       .WindRoughnessLengthFt(kGrassRoughnessFt)
+                                       .HeightOfBoreAboveGroundFt(kBoreHeightFt)
+                                       .Build();
+  ASSERT_EQ(kProfileCtx.error, lob::ErrorT::kNone);
+  EXPECT_NEAR(kProfileCtx.wind_nodes.at(0).z_fps,
+              kMuzzleWindFps * kExpectedFactor, 1e-5);
+  lob::Builder uniform;
+  uniform.BallisticCoefficientPsi(kTestBcPsi)
+      .BCDragFunction(lob::DragFunctionT::kG1)
+      .DiameterInch(kTestDiameterIn)
+      .MassGrains(kTestMassGrains)
+      .InitialVelocityFps(kTestVelocityFps)
+      .ZeroAngleMOA(kTestZeroAngleMoa)
+      .OpticHeightInches(kTestOpticHeightIn)
+      .WindHeading(lob::ClockAngleT::kIII)
+      .WindSpeedFps(kMuzzleWindFps)
+      .WindRoughnessLengthFt(kGrassRoughnessFt)
+      .HeightOfBoreAboveGroundFt(kBoreHeightFt);
+  const lob::Context kUniformCtx = uniform.Build();
+  ASSERT_EQ(kUniformCtx.error, lob::ErrorT::kNone);
+  EXPECT_NEAR(kProfileCtx.wind_nodes.at(0).x_fps,
+              kUniformCtx.wind_nodes.at(0).x_fps, 1e-12);
+  EXPECT_DOUBLE_EQ(kProfileCtx.wind_nodes.at(0).z_fps,
+                   kUniformCtx.wind_nodes.at(0).z_fps);
 }
 
 TEST_F(WindProfileBuildFixture, RejectsUnstorableValues) {
@@ -323,11 +370,12 @@ TEST_F(WindProfileBuildFixture, CrosswindBlindToInclineAtSolve) {
 }
 
 TEST_F(WindProfileBuildFixture, AltitudeScalingGrowsApexDrift) {
-  // Same profile with/without grass roughness: muzzle output identical,
-  // far output drifts further with scaling on.
+  // Same profile with/without grass roughness. Heights sit exactly at the
+  // bore reference, so normalization is identity on both sides and only the
+  // solver-side altitude factor differs.
   const std::array<lob::WindPoint, 2> kPts = {{
-      {0.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
-      {3000.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, 0.0, 14.66, kBoreHeightFt},
+      {3000.0, 0.0, 14.66, kBoreHeightFt},
   }};
   const std::array<uint32_t, 3> kRanges = {300, 1500, 3000};
   std::array<lob::Output, 3> plain_outs{};

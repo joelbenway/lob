@@ -733,8 +733,9 @@ class Builder {
    * @brief Loads a downrange wind profile for the projectile.
    * @details Point 0 sets the muzzle wind; all points are validated,
    * normalized to bore height, resolved into the shooting frame, and stored
-   * as solver-ready nodes. The last wind-setting call wins: this overrides
-   * any uniform wind heading/speed, and those override this.
+   * as solver-ready nodes. A NaN measurement height assumes a head-height
+   * measurement (5 ft Kestrel convention). The last wind-setting call wins:
+   * this overrides any uniform wind heading/speed, and those override this.
    * @warning The caller must keep ppoints valid until Build is called. The
    * builder copies no data; the pointer is referenced during Build().
    * @param ppoints Pointer to an array of wind profile points. First range
@@ -752,8 +753,9 @@ class Builder {
    * @brief Loads a downrange wind profile for the projectile.
    * @details Point 0 sets the muzzle wind; all points are validated,
    * normalized to bore height, resolved into the shooting frame, and stored
-   * as solver-ready nodes. The last wind-setting call wins: this overrides
-   * any uniform wind heading/speed, and those override this.
+   * as solver-ready nodes. A NaN measurement height assumes a head-height
+   * measurement (5 ft Kestrel convention). The last wind-setting call wins:
+   * this overrides any uniform wind heading/speed, and those override this.
    * @warning The array must remain valid until Build is called; the builder
    * copies no data and references it during Build(). Temporaries are rejected
    * at compile time.
