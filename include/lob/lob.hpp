@@ -16,6 +16,8 @@ namespace lob {
 constexpr size_t kLobBuilderBufferSize = LOB_BUILDER_BUFFER_SIZE;
 /** @brief The size of spline coeffs in Context. */
 constexpr size_t kLobCoeffsSize = LOB_SPLINE_SEGMENTS * static_cast<size_t>(4);
+/** @brief Total wind profile points, muzzle point included. */
+constexpr size_t kLobWindPoints = LOB_WIND_POINTS;
 
 /** @brief Enumerates the supported drag functions. */
 enum class DragFunctionT : LobDragFunctionT {

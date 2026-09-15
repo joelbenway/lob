@@ -7,10 +7,26 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <limits>
 
 #include "lob/lob.h"
 
 namespace tests {
+
+namespace {
+
+void ExpectWindTailZeroed(const LobContext& ctx) {
+  const LobWindPoint* points = &ctx.wind_points[0];
+  for (size_t i = 1; i < LOB_WIND_POINTS - 1; ++i) {
+    EXPECT_DOUBLE_EQ(points[i].range_ft, 0.0);
+    EXPECT_DOUBLE_EQ(points[i].x_fps, 0.0);
+    EXPECT_DOUBLE_EQ(points[i].z_fps, 0.0);
+    EXPECT_DOUBLE_EQ(points[i].height_ft_agl, 0.0);
+  }
+}
+
+}  // namespace
 
 TEST(LobCAPITest, BuilderNullptrReturnsNullptr) {
   const uint8_t kDummy = 4U;
@@ -69,6 +85,13 @@ TEST(LobCAPITest, BuilderNullptrReturnsNullptr) {
   EXPECT_EQ(LobBuilderWindHeadingDeg(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderWindSpeedFps(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderWindSpeedMph(nullptr, kDummy), nullptr);
+
+  const std::array<LobWindPoint, 2> kWindPts{};
+  EXPECT_EQ(LobBuilderWindProfile(nullptr, kWindPts.data(), kWindPts.size()),
+            nullptr);
+  EXPECT_EQ(LobBuilderWindProfile(&builder, nullptr, kWindPts.size()), &builder);
+  EXPECT_EQ(LobBuilderWindRoughnessLengthFt(nullptr, kDummy), nullptr);
+  EXPECT_EQ(LobBuilderHeightOfBoreAboveGroundFt(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderAzimuthDeg(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderLatitudeDeg(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderRangeAngleDeg(nullptr, kDummy), nullptr);
@@ -112,6 +135,61 @@ TEST(LobCAPITest, BuilderCopyNullptrIsNoOp) {
   LobBuilderInit(&dst);
   LobBuilderCopy(&dst, nullptr);
   LobBuilderCopy(nullptr, nullptr);
+}
+
+TEST(LobCAPITest, WindProfileCapacityConstant) {
+  EXPECT_EQ(LOB_WIND_POINTS, 8);
+}
+
+TEST(LobCAPITest, WindPointLayout) {
+  EXPECT_EQ(sizeof(LobWindPoint), 4 * sizeof(double));
+  EXPECT_EQ(offsetof(LobWindPoint, range_ft), 0U);
+  EXPECT_EQ(offsetof(LobWindPoint, x_fps), sizeof(double));
+  EXPECT_EQ(offsetof(LobWindPoint, z_fps), 2 * sizeof(double));
+  EXPECT_EQ(offsetof(LobWindPoint, height_ft_agl), 3 * sizeof(double));
+}
+
+TEST(LobCAPITest, WindContextAppendsPreserveHistory) {
+  // New members sit after every historical member.
+  EXPECT_GT(offsetof(LobContext, wind_count), offsetof(LobContext, error));
+  EXPECT_GT(offsetof(LobContext, wind_points), offsetof(LobContext, error));
+  EXPECT_EQ(sizeof(LobContext::wind_points),
+            static_cast<size_t>(LOB_WIND_POINTS - 1) * sizeof(LobWindPoint));
+  // LobWind itself is untouched.
+  EXPECT_EQ(sizeof(LobWind), 2 * sizeof(double));
+}
+
+TEST(LobCAPITest, WindProfileErrorCodesAppended) {
+  EXPECT_EQ(kLobErrorWindProfileTooLong, kLobErrorNumberOfErrors - 3);
+  EXPECT_EQ(kLobErrorWindProfileNotMonotonic, kLobErrorNumberOfErrors - 2);
+  EXPECT_EQ(kLobErrorWindProfileInvalid, kLobErrorNumberOfErrors - 1);
+}
+
+TEST(LobCAPITest, WindProfileBuildZeroesUnusedTail) {
+  // Build writes only wind_points[0..count-2]; the rest must be zeroed so
+  // identically-built contexts compare equal. Fill the output with garbage
+  // first to prove it.
+  const double kBcPsi = 0.372;
+  const uint16_t kVelocityFps = 2720U;
+  const double kZeroAngleMoa = 4.78;
+  const int kGarbageByte = 0xAB;
+  LobBuilder builder;
+  LobBuilderInit(&builder);
+  LobBuilderBallisticCoefficientPsi(&builder, kBcPsi);
+  LobBuilderInitialVelocityFps(&builder, kVelocityFps);
+  LobBuilderZeroAngleMOA(&builder, kZeroAngleMoa);
+  const std::array<LobWindPoint, 2> kPts = {{
+      {0.0, 0.0, 7.0, std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, 0.0, 8.0, std::numeric_limits<double>::quiet_NaN()},
+  }};
+  LobBuilderWindProfile(&builder, kPts.data(), kPts.size());
+  LobContext ctx;
+  std::memset(&ctx, kGarbageByte, sizeof(ctx));
+  LobBuilderBuild(&builder, &ctx);
+  LobBuilderDestroy(&builder);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  ASSERT_EQ(ctx.wind_count, 2U);
+  ExpectWindTailZeroed(ctx);
 }
 
 }  // namespace tests
