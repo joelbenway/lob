@@ -1405,8 +1405,10 @@ TEST_F(BuilderTestFixture, WindSpeedsAreEquivalent) {
           .WindHeadingDeg(45)
           .WindSpeedFps(14.6666667)
           .Build();
-  EXPECT_NEAR(kResult1.wind.x, kResult2.wind.x, kError);
-  EXPECT_NEAR(kResult1.wind.z, kResult2.wind.z, kError);
+  EXPECT_NEAR(kResult1.wind_nodes.at(0).x_fps, kResult2.wind_nodes.at(0).x_fps,
+              kError);
+  EXPECT_NEAR(kResult1.wind_nodes.at(0).z_fps, kResult2.wind_nodes.at(0).z_fps,
+              kError);
 }
 
 TEST_F(BuilderTestFixture, ReadmeMinimalExampleProducesExpectedOutput) {

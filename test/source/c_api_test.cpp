@@ -17,12 +17,12 @@ namespace tests {
 namespace {
 
 void ExpectWindTailZeroed(const LobContext& ctx) {
-  const LobWindPoint* points = &ctx.wind_points[0];
-  for (size_t i = 1; i < LOB_WIND_POINTS - 1; ++i) {
-    EXPECT_DOUBLE_EQ(points[i].range_ft, 0.0);
-    EXPECT_DOUBLE_EQ(points[i].x_fps, 0.0);
-    EXPECT_DOUBLE_EQ(points[i].z_fps, 0.0);
-    EXPECT_DOUBLE_EQ(points[i].height_ft_agl, 0.0);
+  const LobWindNode* nodes = &ctx.wind_nodes[0];
+  for (size_t i = ctx.wind_count; i < LOB_WIND_POINTS; ++i) {
+    EXPECT_EQ(nodes[i].range_ft, 0U);
+    EXPECT_DOUBLE_EQ(nodes[i].x_fps, 0.0);
+    EXPECT_DOUBLE_EQ(nodes[i].y_fps, 0.0);
+    EXPECT_DOUBLE_EQ(nodes[i].z_fps, 0.0);
   }
 }
 
@@ -142,22 +142,24 @@ TEST(LobCAPITest, WindProfileCapacityConstant) {
   EXPECT_EQ(LOB_WIND_POINTS, 8);
 }
 
-TEST(LobCAPITest, WindPointLayout) {
-  EXPECT_EQ(sizeof(LobWindPoint), 4 * sizeof(double));
-  EXPECT_EQ(offsetof(LobWindPoint, range_ft), 0U);
-  EXPECT_EQ(offsetof(LobWindPoint, x_fps), sizeof(double));
-  EXPECT_EQ(offsetof(LobWindPoint, z_fps), 2 * sizeof(double));
-  EXPECT_EQ(offsetof(LobWindPoint, height_ft_agl), 3 * sizeof(double));
+TEST(LobCAPITest, WindNodeLayout) {
+  EXPECT_EQ(sizeof(LobWindNode), (sizeof(uint32_t) + (3 * sizeof(float))));
+  EXPECT_EQ(offsetof(LobWindNode, range_ft), 0U);
+  EXPECT_EQ(offsetof(LobWindNode, x_fps), sizeof(uint32_t));
+  EXPECT_EQ(offsetof(LobWindNode, y_fps), (sizeof(uint32_t) + sizeof(float)));
+  EXPECT_EQ(offsetof(LobWindNode, z_fps),
+            (sizeof(uint32_t) + (2 * sizeof(float))));
 }
 
-TEST(LobCAPITest, WindContextAppendsPreserveHistory) {
-  // New members sit after every historical member.
-  EXPECT_GT(offsetof(LobContext, wind_count), offsetof(LobContext, error));
-  EXPECT_GT(offsetof(LobContext, wind_points), offsetof(LobContext, error));
-  EXPECT_EQ(sizeof(LobContext::wind_points),
-            static_cast<size_t>(LOB_WIND_POINTS - 1) * sizeof(LobWindPoint));
-  // LobWind itself is untouched.
-  EXPECT_EQ(sizeof(LobWind), 2 * sizeof(double));
+TEST(LobCAPITest, WindContextPacksWithoutWaste) {
+  // Wind nodes sit right after the drag table; the small-integer tail packs
+  // last. Each boundary is exact, so no padding byte exists anywhere.
+  EXPECT_EQ(offsetof(LobContext, wind_nodes),
+            offsetof(LobContext, drags) + sizeof(LobContext::drags));
+  EXPECT_EQ(offsetof(LobContext, velocity),
+            offsetof(LobContext, wind_muzzle_height_ft) + sizeof(double));
+  EXPECT_EQ(sizeof(LobContext),
+            offsetof(LobContext, wind_count) + sizeof(uint8_t));
 }
 
 TEST(LobCAPITest, WindProfileErrorCodesAppended) {
@@ -167,7 +169,7 @@ TEST(LobCAPITest, WindProfileErrorCodesAppended) {
 }
 
 TEST(LobCAPITest, WindProfileBuildZeroesUnusedTail) {
-  // Build writes only wind_points[0..count-2]; the rest must be zeroed so
+  // Build writes only wind_nodes[0..count-1]; the rest must be zeroed so
   // identically-built contexts compare equal. Fill the output with garbage
   // first to prove it.
   const double kBcPsi = 0.372;

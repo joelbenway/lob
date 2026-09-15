@@ -102,10 +102,10 @@ enum class ErrorT : LobErrorT {
 
 /** @brief Gravity vector. See @c LobGravity for member details. */
 using Gravity = ::LobGravity;
-/** @brief Wind vector. See @c LobWind for member details. */
-using Wind = ::LobWind;
 /** @brief Downrange wind profile point. See @c LobWindPoint for details. */
 using WindPoint = ::LobWindPoint;
+/** @brief Solver-ready wind profile node. See @c LobWindNode for details. */
+using WindNode = ::LobWindNode;
 /** @brief Coriolis effect parameters. See @c LobCoriolis for member details. */
 using Coriolis = ::LobCoriolis;
 /**
@@ -119,7 +119,6 @@ struct Context {
   double mass;              ///< @brief Mass of the projectile in pounds.
   double optic_height;      ///< @brief Height of the optic above the bore.
   Gravity gravity;          ///< @brief Gravity vector.
-  Wind wind;                ///< @brief Wind vector.
   Coriolis coriolis;        ///< @brief Coriolis effect parameters.
   double zero_angle;        ///< @brief Angle between sight and trajectory.
   double stability_factor;  ///< @brief Miller stability factor.
@@ -128,19 +127,15 @@ struct Context {
   double k_lapse;           ///< @brief Projected linear density lapse coeff.
   double max_time;          ///< @brief Max time of flight for solver.
   std::array<float, kLobCoeffsSize> drags;  ///< @brief Drag curve coefficients.
+  std::array<WindNode, LOB_WIND_POINTS>
+      wind_nodes;            ///< @brief Frame-resolved nodes; [0] is muzzle.
+  double wind_roughness_ft;  ///< @brief Roughness length z0; NaN = scaling off.
+  double wind_muzzle_height_ft;  ///< @brief Bore height above ground in feet.
   uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
   uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
   uint16_t step_size;      ///< @brief Solver step size in inches.
   ErrorT error;            ///< @brief Error status after build.
   uint8_t wind_count;      ///< @brief Total wind points, 1..LOB_WIND_POINTS.
-  std::array<WindPoint, LOB_WIND_POINTS - 1>
-      wind_points;           ///< @brief Profile points 1...
-  double wind_cos;           ///< @brief cos(range angle), precomputed at Build.
-  double wind_sin;           ///< @brief sin(range angle), precomputed at Build.
-  double wind_roughness_ft;  ///< @brief Roughness length z0; NaN = scaling off.
-  double wind_muzzle_height_ft;  ///< @brief Bore height above ground in feet.
-  double
-      wind_inv_ln_denom;  ///< @brief 1 / ln(z_muz / z0), valid when scaling on.
 };
 
 static_assert(sizeof(Context) == sizeof(::LobContext),
@@ -160,8 +155,6 @@ static_assert(offsetof(Context, optic_height) ==
               "optic_height offset drift");
 static_assert(offsetof(Context, gravity) == offsetof(::LobContext, gravity),
               "gravity offset drift");
-static_assert(offsetof(Context, wind) == offsetof(::LobContext, wind),
-              "wind offset drift");
 static_assert(offsetof(Context, coriolis) == offsetof(::LobContext, coriolis),
               "coriolis offset drift");
 static_assert(offsetof(Context, zero_angle) ==
@@ -180,6 +173,15 @@ static_assert(offsetof(Context, max_time) == offsetof(::LobContext, max_time),
               "max_time offset drift");
 static_assert(offsetof(Context, drags) == offsetof(::LobContext, drags),
               "drags offset drift");
+static_assert(offsetof(Context, wind_nodes) ==
+                  offsetof(::LobContext, wind_nodes),
+              "wind_nodes offset drift");
+static_assert(offsetof(Context, wind_roughness_ft) ==
+                  offsetof(::LobContext, wind_roughness_ft),
+              "wind_roughness_ft offset drift");
+static_assert(offsetof(Context, wind_muzzle_height_ft) ==
+                  offsetof(::LobContext, wind_muzzle_height_ft),
+              "wind_muzzle_height_ft offset drift");
 static_assert(offsetof(Context, velocity) == offsetof(::LobContext, velocity),
               "velocity offset drift");
 static_assert(offsetof(Context, minimum_speed) ==
@@ -192,22 +194,6 @@ static_assert(offsetof(Context, error) == offsetof(::LobContext, error),
 static_assert(offsetof(Context, wind_count) ==
                   offsetof(::LobContext, wind_count),
               "wind_count offset drift");
-static_assert(offsetof(Context, wind_points) ==
-                  offsetof(::LobContext, wind_points),
-              "wind_points offset drift");
-static_assert(offsetof(Context, wind_cos) == offsetof(::LobContext, wind_cos),
-              "wind_cos offset drift");
-static_assert(offsetof(Context, wind_sin) == offsetof(::LobContext, wind_sin),
-              "wind_sin offset drift");
-static_assert(offsetof(Context, wind_roughness_ft) ==
-                  offsetof(::LobContext, wind_roughness_ft),
-              "wind_roughness_ft offset drift");
-static_assert(offsetof(Context, wind_muzzle_height_ft) ==
-                  offsetof(::LobContext, wind_muzzle_height_ft),
-              "wind_muzzle_height_ft offset drift");
-static_assert(offsetof(Context, wind_inv_ln_denom) ==
-                  offsetof(::LobContext, wind_inv_ln_denom),
-              "wind_inv_ln_denom offset drift");
 static_assert(static_cast<::LobErrorT>(ErrorT::kNone) == ::kLobErrorNone,
               "ErrorT kNone value drift");
 static_assert(static_cast<::LobErrorT>(ErrorT::kNotFormed) ==
@@ -745,14 +731,15 @@ class Builder {
 
   /**
    * @brief Loads a downrange wind profile for the projectile.
-   * @details Point 0 sets the muzzle wind; subsequent points are copied to
-   * `wind_points`. The last wind-setting call wins: this overrides any uniform
-   * wind heading/speed, and those override this.
+   * @details Point 0 sets the muzzle wind; all points are validated,
+   * normalized to bore height, resolved into the shooting frame, and stored
+   * as solver-ready nodes. The last wind-setting call wins: this overrides
+   * any uniform wind heading/speed, and those override this.
    * @warning The caller must keep ppoints valid until Build is called. The
    * builder copies no data; the pointer is referenced during Build().
    * @param ppoints Pointer to an array of wind profile points. First range
-   * must be 0 with strictly increasing ranges; x/z speeds finite, heights
-   * finite or NaN.
+   * must be 0 with strictly increasing whole-foot ranges; x/z speeds finite
+   * and representable as float, heights finite or NaN.
    * @param count The number of points. Must be 1..LOB_WIND_POINTS.
    * @return A reference to the Builder object.
    */
@@ -763,9 +750,10 @@ class Builder {
 
   /**
    * @brief Loads a downrange wind profile for the projectile.
-   * @details Point 0 sets the muzzle wind; subsequent points are copied to
-   * `wind_points`. The last wind-setting call wins: this overrides any uniform
-   * wind heading/speed, and those override this.
+   * @details Point 0 sets the muzzle wind; all points are validated,
+   * normalized to bore height, resolved into the shooting frame, and stored
+   * as solver-ready nodes. The last wind-setting call wins: this overrides
+   * any uniform wind heading/speed, and those override this.
    * @warning The array must remain valid until Build is called; the builder
    * copies no data and references it during Build(). Temporaries are rejected
    * at compile time.

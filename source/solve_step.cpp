@@ -113,51 +113,48 @@ inline FeetT ComputeStep(const LobContext& ctx, const TrajectoryStateT& s,
 
 CartesianT<FpsT> GetWind(const LobContext& ctx,
                          const TrajectoryStateT& s) noexcept {
-  // Historical path: uniform, flat, unscaled.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-  const bool kIsHistorical = ctx.wind_count <= 1 && ctx.wind_sin == 0.0 &&
-                             std::isnan(ctx.wind_roughness_ft);
-#pragma GCC diagnostic pop
-  if (kIsHistorical) {
-    return {FpsT(ctx.wind.x), FpsT(0.0), FpsT(ctx.wind.z)};
-  }
-  // 1. Downrange lerp over horizontal components (point 0 = ctx.wind at x=0).
-  double hx = ctx.wind.x;
-  double hz = ctx.wind.z;
-  // Defensive clamp: hand-built contexts may exceed the capacity.
+  // Stored nodes are frame-resolved at Build (pitch baked in), so the query
+  // is pure downrange lerp plus optional altitude scaling: no trigonometry,
+  // no direction conversion. A single-point profile falls out naturally.
+  const LobWindNode* wind_nodes = &ctx.wind_nodes[0];
   auto count = std::min(static_cast<size_t>(ctx.wind_count),
                         static_cast<size_t>(LOB_WIND_POINTS));
-  const LobWindPoint* wind_points = &ctx.wind_points[0];
+  // Node components widen explicitly once here; all math below is double.
+  auto wx = static_cast<double>(wind_nodes[0].x_fps);
+  auto wy = static_cast<double>(wind_nodes[0].y_fps);
+  auto wz = static_cast<double>(wind_nodes[0].z_fps);
   const double kX = s.P().X().Value();
   if (count > 1 && kX > 0.0) {
-    double px = 0.0;
-    double phx = ctx.wind.x;
-    double phz = ctx.wind.z;
+    double px = wind_nodes[0].range_ft;
+    double phx = wx;
+    double phy = wy;
+    double phz = wz;
     bool found = false;
-    for (size_t i = 0; i + 1 < count; ++i) {
-      const LobWindPoint& point = wind_points[i];
-      const double kDen = point.range_ft - px;
-      if (kX <= point.range_ft) {
+    for (size_t i = 1; i < count; ++i) {
+      const double kRange = wind_nodes[i].range_ft;
+      const auto kNx = static_cast<double>(wind_nodes[i].x_fps);
+      const auto kNy = static_cast<double>(wind_nodes[i].y_fps);
+      const auto kNz = static_cast<double>(wind_nodes[i].z_fps);
+      if (kX <= kRange) {
+        const double kDen = kRange - px;
         const double kT = kDen > 0.0 ? (kX - px) / kDen : 0.0;
-        hx = phx + kT * (point.x_fps - phx);
-        hz = phz + kT * (point.z_fps - phz);
+        wx = phx + kT * (kNx - phx);
+        wy = phy + kT * (kNy - phy);
+        wz = phz + kT * (kNz - phz);
         found = true;
         break;
       }
-      px = point.range_ft;
-      phx = point.x_fps;
-      phz = point.z_fps;
+      px = kRange;
+      phx = kNx;
+      phy = kNy;
+      phz = kNz;
     }
     if (!found && kX > px) {  // clamp above the final point
-      hx = phx;
-      hz = phz;
+      wx = phx;
+      wy = phy;
+      wz = phz;
     }
   }
-  // 2. Pitch into the shooting frame.
-  double wx = hx * ctx.wind_cos;
-  double wy = -hx * ctx.wind_sin;
-  double wz = hz;
   // 3. Altitude scale about true vertical (flat-terrain assumption).
   if (!std::isnan(ctx.wind_roughness_ft)) {
     const double kGx = ctx.gravity.x;
@@ -172,8 +169,10 @@ CartesianT<FpsT> GetWind(const LobContext& ctx,
     if (!(zagl > kFloor)) {
       zagl = kFloor;
     }
+    // Log-law anchored at the muzzle reference: ln(z/z0)/ln(z_muz/z0).
     const double kS =
-        std::log(zagl / ctx.wind_roughness_ft) * ctx.wind_inv_ln_denom;
+        std::log(zagl / ctx.wind_roughness_ft) /
+        std::log(ctx.wind_muzzle_height_ft / ctx.wind_roughness_ft);
     wx *= kS;
     wy *= kS;
     wz *= kS;

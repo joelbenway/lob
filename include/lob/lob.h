@@ -108,12 +108,6 @@ typedef struct {
   double y;  ///< @brief Acceleration ft/s/s in the y-direction.
 } LobGravity;
 
-/** @brief Wind vector. */
-typedef struct {
-  double x;  ///< @brief Wind speed in fps in the x-direction.
-  double z;  ///< @brief Wind speed in fps in the z-direction.
-} LobWind;
-
 /** @brief Downrange wind profile point (horizontal-plane wind). */
 typedef struct {
   double range_ft;  ///< @brief Downrange position in feet.
@@ -121,6 +115,14 @@ typedef struct {
   double z_fps;  ///< @brief Wind in fps, lateral.
   double height_ft_agl;  ///< @brief Measurement height above ground in feet.
 } LobWindPoint;
+
+/** @brief Solver-ready wind profile node with frame-resolved components. */
+typedef struct {
+  uint32_t range_ft;  ///< @brief Downrange station in whole feet.
+  float x_fps;  ///< @brief Wind in fps, frame X (downrange).
+  float y_fps;  ///< @brief Wind in fps, frame Y (frame-up).
+  float z_fps;  ///< @brief Wind in fps, lateral.
+} LobWindNode;
 
 /** @brief Coriolis effect parameters. */
 typedef struct {
@@ -140,7 +142,6 @@ typedef struct {
   double mass;              ///< @brief Mass of the projectile in pounds.
   double optic_height;      ///< @brief Height of the optic above the bore.
   LobGravity gravity;       ///< @brief Gravity vector.
-  LobWind wind;             ///< @brief Wind vector.
   LobCoriolis coriolis;     ///< @brief Coriolis effect parameters.
   double zero_angle;        ///< @brief Angle between sight and trajectory.
   double stability_factor;  ///< @brief Miller stability factor.
@@ -149,17 +150,15 @@ typedef struct {
   double k_lapse;           ///< @brief Projected linear density lapse coeff.
   double max_time;          ///< @brief Max time of flight for solver.
   float drags[LOB_SPLINE_SEGMENTS * 4];  ///< @brief Drag curve coefficients.
+  LobWindNode wind_nodes[LOB_WIND_POINTS];  ///< @brief Frame-resolved profile
+                                            ///< nodes; [0] is the muzzle.
+  double wind_roughness_ft;  ///< @brief Roughness length z0; NaN = scaling off.
+  double wind_muzzle_height_ft;  ///< @brief Bore height above ground in feet.
   uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
   uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
   uint16_t step_size;      ///< @brief Solver step size in inches.
   LobErrorT error;         ///< @brief Error status after build.
   uint8_t wind_count;      ///< @brief Total wind points, 1..LOB_WIND_POINTS.
-  LobWindPoint wind_points[LOB_WIND_POINTS - 1];  ///< @brief Profile points 1...
-  double wind_cos;         ///< @brief cos(range angle), precomputed at Build.
-  double wind_sin;         ///< @brief sin(range angle), precomputed at Build.
-  double wind_roughness_ft;  ///< @brief Roughness length z0; NaN = scaling off.
-  double wind_muzzle_height_ft;  ///< @brief Bore height above ground in feet.
-  double wind_inv_ln_denom;  ///< @brief 1 / ln(z_muz / z0), valid when scaling on.
 } LobContext;
 
 /** @brief Structure holding the output results of a ballistic calculation. */
