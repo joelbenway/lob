@@ -197,30 +197,30 @@ TEST(WindProfileQuery, LerpsMidpointAndClampsEnds) {
                    10.0);
 }
 
-TEST(WindProfileQuery, AltitudeScalesAboutHeadHeightReference) {
-  // Fixed 5-ft reference with default shear: at the reference the wind
-  // holds (S = 1); at z = 250 ft, S = 50^0.143 ≈ 1.75; past the 300-ft
-  // surface-layer cap the factor pins at 60^0.143 ≈ 1.80.
+TEST(WindProfileQuery, AltitudeScalesAboutGroundReference) {
+  // Unit reference (prone muzzle height): at the reference the wind holds
+  // (S = 1); at z = 246 ft, S = 246^0.143 ≈ 2.20; past the 300-ft
+  // surface-layer cap the factor pins at 300^0.143 ≈ 2.26.
   LobContext ctx = MakeWindQueryCtx();
   ctx.wind_shear_exponent = lob::kDefaultWindShearExponent;
   const CartesianT<FpsT> kAtMuzzle = lob::GetWind(ctx, MakeStateAt(0.0, 0.0));
   EXPECT_NEAR(kAtMuzzle.Z().Value(), 10.0, 1E-9);  // S = 1 at reference
   const CartesianT<FpsT> kHigh = lob::GetWind(ctx, MakeStateAt(0.0, 245.0));
-  EXPECT_NEAR(kHigh.Z().Value(), 17.50, 1e-2);  // hand-computed ≈ 17.496
+  EXPECT_NEAR(kHigh.Z().Value(), 21.97, 1e-2);  // hand-computed ≈ 21.973
   const CartesianT<FpsT> kCapped = lob::GetWind(ctx, MakeStateAt(0.0, 1000.0));
-  EXPECT_NEAR(kCapped.Z().Value(), 17.96, 1e-2);  // hand-computed ≈ 17.958
+  EXPECT_NEAR(kCapped.Z().Value(), 22.61, 1e-2);  // hand-computed ≈ 22.606
 }
 
 TEST(WindProfileQuery, BelowMinHeightClampsToOneFoot) {
-  // Below the 1-ft evaluation floor the wind holds at the 1-ft value
-  // (S = 0.2^0.143 ≈ 0.79) instead of attenuating toward zero.
+  // Below the 1-ft evaluation floor the height clamps to the reference
+  // itself, so the factor is exactly 1 (never attenuates, never NaNs).
   LobContext ctx = MakeWindQueryCtx();
   ctx.wind_shear_exponent = lob::kDefaultWindShearExponent;
   const CartesianT<FpsT> kW = lob::GetWind(ctx, MakeStateAt(2500.0, -40.0));
   EXPECT_TRUE(std::isfinite(kW.X().Value()));
   EXPECT_TRUE(std::isfinite(kW.Y().Value()));
   EXPECT_TRUE(std::isfinite(kW.Z().Value()));
-  EXPECT_NEAR(kW.Z().Value(), 7.94, 1e-2);  // hand-computed ≈ 7.944
+  EXPECT_DOUBLE_EQ(kW.Z().Value(), 10.0);
 }
 
 TEST(WindProfileQuery, CrosswindResolvesIdenticallyWithIncline) {

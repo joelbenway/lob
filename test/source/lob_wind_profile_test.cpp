@@ -140,10 +140,10 @@ TEST_F(WindProfileBuildFixture, LastWindCallWinsBothDirections) {
 }
 
 TEST_F(WindProfileBuildFixture, NormalizesHighMeasurementToReference) {
-  // The drone reading at 50 ft AGL reduces to the fixed 5-ft reference by
+  // The drone reading at 50 ft AGL reduces to the 1-ft reference by
   // the power-law factor under test (default shear exponent).
   const double kF = std::pow(lob::kWindReferenceHeightFt / 50.0,
-                             lob::kDefaultWindShearExponent);  // ≈ 0.7196
+                             lob::kDefaultWindShearExponent);  // ≈ 0.5716
   const std::array<lob::WindPoint, 2> kPts = {{
       {0.0, 0.0, kMuzzleWindFps, 1.0},
       {1500.0, 0.0, 14.66, 50.0},
@@ -195,7 +195,7 @@ TEST_F(WindProfileBuildFixture, RejectsBadShearConfig) {
 }
 
 TEST_F(WindProfileBuildFixture, MissingHeightsStoreVerbatim) {
-  // NaN heights mean head-height measurements: the fixed reference itself,
+  // NaN heights mean reference-height measurements (1 ft): the fixed reference
   // so normalization is identity and stored winds equal entered winds —
   // identically for profile and uniform inputs.
   const lob::Context kProfileCtx = builder.WindProfile(kTwoPoint).Build();
@@ -326,7 +326,7 @@ TEST_F(WindProfileBuildFixture, CrosswindBlindToInclineAtSolve) {
 
 TEST_F(WindProfileBuildFixture, AltitudeScalingGrowsApexDrift) {
   // A high-arc trajectory (30-MOA zero) spends most of its flight above the
-  // 5-ft reference, so explicit shear grows drift at every range versus the
+  // 1-ft reference, so explicit shear grows drift at every range versus the
   // identical unscaled (alpha 0) profile. Verified by probe: GT holds with
   // growing margins (0.9/6.7/19.0 in at 900/1800/3000 ft).
   constexpr double kHighArcZeroMoa = 30.0;

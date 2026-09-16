@@ -530,9 +530,9 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindSpeedMph(LobBuilder* pbuilder,
 
 /**
  * @brief Sets the downrange wind profile points.
- * @note Each point's wind is normalized to the fixed 5-ft reference at
+ * @note Each point's wind is normalized to the fixed 1-ft reference at
  * Build via the power law using its measurement height; a NaN height
- * assumes a head-height measurement (the reference itself).
+ * assumes measurement at the 1-ft reference.
  * @param pbuilder Pointer to the builder.
  * @param ppoints Pointer to an array of wind profile points.
  * @param count The number of wind profile points.
