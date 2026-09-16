@@ -111,45 +111,6 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIII) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
-  const std::array<uint32_t, kSolutionLength> kRanges = {
-      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
-  const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2597, 1153, -0.60, 0.23, 0.056},
-      {300, 2477, 1049, 0.01, 0.94, 0.116},
-      {600, 2248, 864, -3.17, 3.97, 0.243},
-      {900, 2030, 705, -13.25, 9.34, 0.383},
-      {1200, 1826, 570, -31.80, 17.43, 0.539},
-      {1500, 1636, 458, -60.83, 28.65, 0.713},
-      {1800, 1464, 366, -102.89, 43.45, 0.907},
-      {2100, 1313, 295, -161.23, 62.24, 1.123},
-      {2400, 1187, 241, -239.80, 85.27, 1.364},
-      {2700, 1091, 204, -343.04, 112.43, 1.628},
-      {3000, 1020, 178, -475.47, 143.24, 1.913}};
-
-  std::array<lob::Output, kSolutionLength> solutions = {};
-  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
-  EXPECT_EQ(kSize, kSolutionLength);
-  VerifySolutions(solutions, kExpected,
-                  {kVelocityError, kEnergyError, kMoaError, kInchError,
-                   kTimeOfFlightError});
-}
-
-TEST_F(LobWindTestFixture, ZeroShearExponentMatchesUnscaledGoldens) {
-  // Shear exponent 0 disables scaling exactly: the solve must reproduce the
-  // pre-scaling golden table below, pinning refactor integrity against the
-  // default-alpha regeneration that follows.
-  ASSERT_NE(puut, nullptr);
-  const int32_t kWindSpeed = 10;
-  const lob::ClockAngleT kWindHeading = lob::ClockAngleT::kIII;
-  constexpr lob::FpsT kVelocityError{1};
-  constexpr lob::FtLbsT kEnergyError{5};
-  constexpr lob::MoaT kMoaError{0.1};
-  constexpr lob::InchT kInchError{0.1};
-  constexpr lob::SecT kTimeOfFlightError{0.01};
-  constexpr size_t kSolutionLength = 12;
   const auto kContext = puut->WindSpeedMph(kWindSpeed)
                             .WindHeading(kWindHeading)
                             .WindShearExponent(0.0)
@@ -188,23 +149,25 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIV) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeading(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2596, 1152, -0.60, 0.20, 0.056},
-      {300, 2476, 1048, 0.00, 0.82, 0.116},
-      {600, 2245, 862, -3.18, 3.45, 0.243},
-      {900, 2026, 702, -13.29, 8.13, 0.384},
-      {1200, 1821, 567, -31.90, 15.17, 0.540},
-      {1500, 1630, 454, -61.07, 24.95, 0.714},
-      {1800, 1457, 363, -103.39, 37.86, 0.909},
-      {2100, 1305, 291, -162.18, 54.27, 1.127},
-      {2400, 1180, 238, -241.48, 74.39, 1.369},
-      {2700, 1085, 201, -345.81, 98.09, 1.635},
-      {3000, 1015, 176, -479.74, 124.95, 1.921}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2596, 1151, -0.60, 0.20, 0.056},
+      {300, 2476, 1047, 0.00, 0.81, 0.116},
+      {600, 2245, 861, -3.19, 3.39, 0.243},
+      {900, 2026, 701, -13.30, 8.00, 0.383},
+      {1200, 1820, 566, -31.92, 14.99, 0.540},
+      {1500, 1630, 454, -61.08, 24.70, 0.714},
+      {1800, 1457, 362, -103.40, 37.55, 0.909},
+      {2100, 1305, 291, -162.19, 53.89, 1.126},
+      {2400, 1180, 238, -241.46, 73.93, 1.369},
+      {2700, 1085, 201, -345.75, 97.55, 1.634},
+      {3000, 1015, 176, -479.63, 124.34, 1.921}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -224,23 +187,25 @@ TEST_F(LobWindTestFixture, SolveWithClockWindV) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeading(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2596, 1152, -0.60, 0.12, 0.056},
-      {300, 2475, 1047, 0.00, 0.47, 0.116},
-      {600, 2243, 860, -3.18, 2.00, 0.243},
-      {900, 2023, 700, -13.31, 4.71, 0.384},
-      {1200, 1817, 564, -31.98, 8.79, 0.540},
-      {1500, 1625, 451, -61.24, 14.46, 0.715},
-      {1800, 1451, 360, -103.76, 21.96, 0.910},
-      {2100, 1299, 289, -162.88, 31.49, 1.129},
-      {2400, 1174, 236, -242.72, 43.18, 1.372},
-      {2700, 1080, 199, -347.86, 56.94, 1.639},
-      {3000, 1010, 175, -482.90, 72.53, 1.927}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2596, 1151, -0.60, 0.11, 0.056},
+      {300, 2475, 1046, 0.00, 0.47, 0.116},
+      {600, 2243, 859, -3.19, 1.96, 0.243},
+      {900, 2023, 699, -13.32, 4.63, 0.384},
+      {1200, 1817, 564, -31.99, 8.68, 0.540},
+      {1500, 1625, 451, -61.26, 14.32, 0.715},
+      {1800, 1451, 360, -103.76, 21.78, 0.910},
+      {2100, 1300, 289, -162.89, 31.27, 1.129},
+      {2400, 1175, 236, -242.71, 42.91, 1.372},
+      {2700, 1080, 199, -347.81, 56.63, 1.639},
+      {3000, 1011, 175, -482.79, 72.17, 1.927}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -260,23 +225,25 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVI) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeading(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2596, 1152, -0.60, -0.00, 0.056},
-      {300, 2475, 1047, 0.00, -0.00, 0.116},
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2596, 1151, -0.60, -0.00, 0.056},
+      {300, 2475, 1046, 0.00, -0.00, 0.116},
       {600, 2242, 859, -3.19, -0.00, 0.243},
-      {900, 2022, 699, -13.32, -0.00, 0.384},
+      {900, 2022, 699, -13.33, -0.00, 0.384},
       {1200, 1815, 563, -32.01, -0.00, 0.540},
       {1500, 1623, 450, -61.31, -0.00, 0.715},
-      {1800, 1449, 359, -103.89, -0.00, 0.911},
-      {2100, 1297, 288, -163.14, -0.00, 1.130},
-      {2400, 1172, 235, -243.18, -0.00, 1.374},
-      {2700, 1078, 199, -348.61, -0.00, 1.641},
-      {3000, 1009, 174, -484.06, -0.00, 1.929}};
+      {1800, 1449, 359, -103.90, -0.00, 0.911},
+      {2100, 1298, 288, -163.15, -0.00, 1.130},
+      {2400, 1173, 235, -243.16, -0.00, 1.373},
+      {2700, 1079, 199, -348.54, -0.00, 1.641},
+      {3000, 1009, 174, -483.96, -0.00, 1.929}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -296,23 +263,25 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVII) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeading(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2596, 1152, -0.60, -0.12, 0.056},
-      {300, 2475, 1047, 0.00, -0.47, 0.116},
-      {600, 2243, 860, -3.18, -2.00, 0.243},
-      {900, 2023, 700, -13.31, -4.71, 0.384},
-      {1200, 1817, 564, -31.98, -8.79, 0.540},
-      {1500, 1625, 451, -61.24, -14.46, 0.715},
-      {1800, 1451, 360, -103.76, -21.96, 0.910},
-      {2100, 1299, 289, -162.88, -31.49, 1.129},
-      {2400, 1174, 236, -242.72, -43.18, 1.372},
-      {2700, 1080, 199, -347.86, -56.94, 1.639},
-      {3000, 1010, 175, -482.90, -72.53, 1.927}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2596, 1151, -0.60, -0.11, 0.056},
+      {300, 2475, 1046, 0.00, -0.47, 0.116},
+      {600, 2243, 859, -3.19, -1.96, 0.243},
+      {900, 2023, 699, -13.32, -4.63, 0.384},
+      {1200, 1817, 564, -31.99, -8.68, 0.540},
+      {1500, 1625, 451, -61.26, -14.32, 0.715},
+      {1800, 1451, 360, -103.76, -21.78, 0.910},
+      {2100, 1300, 289, -162.89, -31.27, 1.129},
+      {2400, 1175, 236, -242.71, -42.91, 1.372},
+      {2700, 1080, 199, -347.81, -56.63, 1.639},
+      {3000, 1011, 175, -482.79, -72.17, 1.927}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -332,23 +301,25 @@ TEST_F(LobWindTestFixture, SolveWithClockWindVIII) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeading(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2596, 1152, -0.60, -0.20, 0.056},
-      {300, 2476, 1048, 0.00, -0.82, 0.116},
-      {600, 2245, 862, -3.18, -3.45, 0.243},
-      {900, 2026, 702, -13.29, -8.13, 0.384},
-      {1200, 1821, 567, -31.90, -15.17, 0.540},
-      {1500, 1630, 454, -61.07, -24.95, 0.714},
-      {1800, 1457, 363, -103.39, -37.86, 0.909},
-      {2100, 1305, 291, -162.18, -54.27, 1.127},
-      {2400, 1180, 238, -241.48, -74.39, 1.369},
-      {2700, 1085, 201, -345.81, -98.09, 1.635},
-      {3000, 1015, 176, -479.74, -124.95, 1.921}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2596, 1151, -0.60, -0.20, 0.056},
+      {300, 2476, 1047, 0.00, -0.81, 0.116},
+      {600, 2245, 861, -3.19, -3.39, 0.243},
+      {900, 2026, 701, -13.30, -8.00, 0.383},
+      {1200, 1820, 566, -31.92, -14.99, 0.540},
+      {1500, 1630, 454, -61.08, -24.70, 0.714},
+      {1800, 1457, 362, -103.40, -37.55, 0.909},
+      {2100, 1305, 291, -162.19, -53.89, 1.126},
+      {2400, 1180, 238, -241.46, -73.93, 1.369},
+      {2700, 1085, 201, -345.75, -97.55, 1.634},
+      {3000, 1015, 176, -479.63, -124.34, 1.921}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -368,23 +339,25 @@ TEST_F(LobWindTestFixture, SolveWithClockWindIX) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeading(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2597, 1153, -0.60, -0.23, 0.056},
-      {300, 2477, 1049, 0.01, -0.94, 0.116},
-      {600, 2248, 864, -3.17, -3.97, 0.243},
-      {900, 2030, 705, -13.25, -9.34, 0.383},
-      {1200, 1826, 570, -31.80, -17.43, 0.539},
-      {1500, 1636, 458, -60.83, -28.65, 0.713},
-      {1800, 1464, 366, -102.89, -43.45, 0.907},
-      {2100, 1313, 295, -161.23, -62.24, 1.123},
-      {2400, 1187, 241, -239.80, -85.27, 1.364},
-      {2700, 1091, 204, -343.04, -112.43, 1.628},
-      {3000, 1020, 178, -475.47, -143.24, 1.913}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2597, 1152, -0.60, -0.23, 0.056},
+      {300, 2477, 1048, 0.00, -0.93, 0.116},
+      {600, 2248, 863, -3.18, -3.90, 0.243},
+      {900, 2030, 704, -13.26, -9.20, 0.383},
+      {1200, 1826, 569, -31.81, -17.22, 0.539},
+      {1500, 1636, 457, -60.85, -28.37, 0.713},
+      {1800, 1464, 366, -102.90, -43.09, 0.906},
+      {2100, 1313, 294, -161.26, -61.81, 1.123},
+      {2400, 1188, 241, -239.80, -84.75, 1.364},
+      {2700, 1092, 204, -343.02, -111.82, 1.628},
+      {3000, 1021, 178, -475.39, -142.53, 1.913}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -404,23 +377,25 @@ TEST_F(LobWindTestFixture, SolveWithClockWindX) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeading(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2598, 1154, -0.60, -0.20, 0.056},
-      {300, 2479, 1050, 0.01, -0.81, 0.116},
-      {600, 2250, 866, -3.16, -3.42, 0.243},
-      {900, 2034, 707, -13.22, -8.06, 0.383},
-      {1200, 1831, 573, -31.71, -15.02, 0.538},
-      {1500, 1642, 461, -60.59, -24.68, 0.711},
-      {1800, 1471, 370, -102.40, -37.40, 0.904},
-      {2100, 1320, 298, -160.30, -53.54, 1.120},
-      {2400, 1195, 244, -238.15, -73.31, 1.359},
-      {2700, 1098, 206, -340.32, -96.64, 1.622},
-      {3000, 1026, 180, -471.26, -123.14, 1.905}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2598, 1153, -0.60, -0.20, 0.056},
+      {300, 2479, 1049, 0.00, -0.80, 0.116},
+      {600, 2250, 865, -3.17, -3.36, 0.242},
+      {900, 2034, 707, -13.23, -7.93, 0.383},
+      {1200, 1831, 573, -31.72, -14.84, 0.538},
+      {1500, 1642, 461, -60.62, -24.44, 0.711},
+      {1800, 1471, 370, -102.43, -37.09, 0.904},
+      {2100, 1321, 298, -160.31, -53.16, 1.120},
+      {2400, 1195, 244, -238.16, -72.86, 1.359},
+      {2700, 1098, 206, -340.32, -96.12, 1.621},
+      {3000, 1027, 180, -471.19, -122.53, 1.905}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -440,23 +415,25 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXI) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeading(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2598, 1154, -0.60, -0.11, 0.056},
-      {300, 2480, 1051, 0.01, -0.47, 0.116},
-      {600, 2252, 867, -3.16, -1.97, 0.242},
-      {900, 2037, 709, -13.20, -4.64, 0.383},
-      {1200, 1835, 575, -31.63, -8.64, 0.538},
-      {1500, 1647, 464, -60.42, -14.19, 0.710},
-      {1800, 1476, 373, -102.04, -21.49, 0.903},
-      {2100, 1326, 301, -159.62, -30.75, 1.117},
-      {2400, 1200, 246, -236.95, -42.10, 1.356},
-      {2700, 1103, 208, -338.35, -55.49, 1.617},
-      {3000, 1030, 181, -468.22, -70.71, 1.899}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2598, 1153, -0.60, -0.11, 0.056},
+      {300, 2480, 1050, 0.00, -0.46, 0.116},
+      {600, 2252, 866, -3.16, -1.93, 0.242},
+      {900, 2037, 709, -13.21, -4.57, 0.382},
+      {1200, 1835, 575, -31.65, -8.54, 0.538},
+      {1500, 1647, 463, -60.44, -14.05, 0.710},
+      {1800, 1476, 372, -102.07, -21.32, 0.903},
+      {2100, 1326, 300, -159.65, -30.54, 1.117},
+      {2400, 1201, 246, -237.00, -41.85, 1.356},
+      {2700, 1103, 208, -338.34, -55.19, 1.617},
+      {3000, 1031, 182, -468.20, -70.37, 1.899}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -476,23 +453,25 @@ TEST_F(LobWindTestFixture, SolveWithClockWindXII) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeading(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2598, 1154, -0.60, 0.00, 0.056},
-      {300, 2480, 1052, 0.01, 0.00, 0.116},
-      {600, 2253, 868, -3.16, 0.00, 0.242},
-      {900, 2038, 710, -13.19, 0.00, 0.382},
-      {1200, 1836, 576, -31.61, 0.00, 0.538},
-      {1500, 1649, 465, -60.36, 0.00, 0.710},
-      {1800, 1478, 374, -101.91, 0.00, 0.902},
-      {2100, 1328, 301, -159.38, 0.00, 1.117},
-      {2400, 1202, 247, -236.52, 0.00, 1.354},
-      {2700, 1104, 208, -337.63, 0.00, 1.615},
-      {3000, 1032, 182, -467.12, 0.00, 1.897}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2598, 1153, -0.60, 0.00, 0.056},
+      {300, 2480, 1051, 0.00, 0.00, 0.116},
+      {600, 2253, 867, -3.16, 0.00, 0.242},
+      {900, 2038, 709, -13.20, 0.00, 0.382},
+      {1200, 1836, 576, -31.62, 0.00, 0.537},
+      {1500, 1649, 464, -60.39, 0.00, 0.710},
+      {1800, 1478, 373, -101.93, 0.00, 0.902},
+      {2100, 1328, 301, -159.42, 0.00, 1.117},
+      {2400, 1203, 247, -236.55, 0.00, 1.354},
+      {2700, 1105, 208, -337.63, 0.00, 1.615},
+      {3000, 1032, 182, -467.08, 0.00, 1.897}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -512,23 +491,25 @@ TEST_F(LobWindTestFixture, SolveWithClockWindI) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeading(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2598, 1154, -0.60, 0.11, 0.056},
-      {300, 2480, 1051, 0.01, 0.47, 0.116},
-      {600, 2252, 867, -3.16, 1.97, 0.242},
-      {900, 2037, 709, -13.20, 4.64, 0.383},
-      {1200, 1835, 575, -31.63, 8.64, 0.538},
-      {1500, 1647, 464, -60.42, 14.19, 0.710},
-      {1800, 1476, 373, -102.04, 21.49, 0.903},
-      {2100, 1326, 301, -159.62, 30.75, 1.117},
-      {2400, 1200, 246, -236.95, 42.10, 1.356},
-      {2700, 1103, 208, -338.35, 55.49, 1.617},
-      {3000, 1030, 181, -468.22, 70.71, 1.899}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2598, 1153, -0.60, 0.11, 0.056},
+      {300, 2480, 1050, 0.00, 0.46, 0.116},
+      {600, 2252, 866, -3.16, 1.93, 0.242},
+      {900, 2037, 709, -13.21, 4.57, 0.382},
+      {1200, 1835, 575, -31.65, 8.54, 0.538},
+      {1500, 1647, 463, -60.44, 14.05, 0.710},
+      {1800, 1476, 372, -102.07, 21.32, 0.903},
+      {2100, 1326, 300, -159.65, 30.54, 1.117},
+      {2400, 1201, 246, -237.00, 41.85, 1.356},
+      {2700, 1103, 208, -338.34, 55.19, 1.617},
+      {3000, 1031, 182, -468.20, 70.37, 1.899}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -548,23 +529,25 @@ TEST_F(LobWindTestFixture, SolveWithClockWindII) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeading(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeading(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2598, 1154, -0.60, 0.20, 0.056},
-      {300, 2479, 1050, 0.01, 0.81, 0.116},
-      {600, 2250, 866, -3.16, 3.42, 0.243},
-      {900, 2034, 707, -13.22, 8.06, 0.383},
-      {1200, 1831, 573, -31.71, 15.02, 0.538},
-      {1500, 1642, 461, -60.59, 24.68, 0.711},
-      {1800, 1471, 370, -102.40, 37.40, 0.904},
-      {2100, 1320, 298, -160.30, 53.54, 1.120},
-      {2400, 1195, 244, -238.15, 73.31, 1.359},
-      {2700, 1098, 206, -340.32, 96.64, 1.622},
-      {3000, 1026, 180, -471.26, 123.14, 1.905}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2598, 1153, -0.60, 0.20, 0.056},
+      {300, 2479, 1049, 0.00, 0.80, 0.116},
+      {600, 2250, 865, -3.17, 3.36, 0.242},
+      {900, 2034, 707, -13.23, 7.93, 0.383},
+      {1200, 1831, 573, -31.72, 14.84, 0.538},
+      {1500, 1642, 461, -60.62, 24.44, 0.711},
+      {1800, 1471, 370, -102.43, 37.09, 0.904},
+      {2100, 1321, 298, -160.31, 53.16, 1.120},
+      {2400, 1195, 244, -238.16, 72.86, 1.359},
+      {2700, 1098, 206, -340.32, 96.12, 1.621},
+      {3000, 1027, 180, -471.19, 122.53, 1.905}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -584,23 +567,25 @@ TEST_F(LobWindTestFixture, SolveWithAngleWind150) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeadingDeg(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeadingDeg(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2595, 1151, -0.60, 0.23, 0.056},
-      {300, 2473, 1045, 0.00, 0.95, 0.116},
-      {600, 2238, 856, -3.20, 4.02, 0.243},
-      {900, 2016, 695, -13.37, 9.48, 0.384},
-      {1200, 1807, 558, -32.16, 17.73, 0.542},
-      {1500, 1614, 445, -61.66, 29.21, 0.717},
-      {1800, 1439, 354, -104.64, 44.40, 0.914},
-      {2100, 1286, 283, -164.58, 63.74, 1.135},
-      {2400, 1162, 231, -245.73, 87.46, 1.381},
-      {2700, 1069, 195, -352.82, 115.36, 1.651},
-      {3000, 1001, 171, -490.53, 146.89, 1.942}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2595, 1150, -0.60, 0.23, 0.056},
+      {300, 2473, 1044, 0.00, 0.94, 0.116},
+      {600, 2238, 856, -3.20, 3.94, 0.243},
+      {900, 2016, 694, -13.39, 9.34, 0.384},
+      {1200, 1808, 558, -32.16, 17.51, 0.541},
+      {1500, 1614, 445, -61.67, 28.91, 0.717},
+      {1800, 1439, 354, -104.65, 44.03, 0.914},
+      {2100, 1287, 283, -164.59, 63.30, 1.135},
+      {2400, 1162, 231, -245.71, 86.93, 1.381},
+      {2700, 1069, 195, -352.74, 114.72, 1.650},
+      {3000, 1001, 171, -490.36, 146.15, 1.941}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -620,23 +605,25 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeMagnitude) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeadingDeg(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeadingDeg(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2595, 1151, -0.60, 0.23, 0.056},
-      {300, 2473, 1045, 0.00, 0.95, 0.116},
-      {600, 2238, 856, -3.20, 4.02, 0.243},
-      {900, 2016, 695, -13.37, 9.48, 0.384},
-      {1200, 1807, 558, -32.16, 17.73, 0.542},
-      {1500, 1614, 445, -61.66, 29.21, 0.717},
-      {1800, 1439, 354, -104.64, 44.40, 0.914},
-      {2100, 1286, 283, -164.58, 63.74, 1.135},
-      {2400, 1162, 231, -245.73, 87.46, 1.381},
-      {2700, 1069, 195, -352.82, 115.36, 1.651},
-      {3000, 1001, 171, -490.53, 146.89, 1.942}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2595, 1150, -0.60, 0.23, 0.056},
+      {300, 2473, 1044, 0.00, 0.94, 0.116},
+      {600, 2238, 856, -3.20, 3.94, 0.243},
+      {900, 2016, 694, -13.39, 9.34, 0.384},
+      {1200, 1808, 558, -32.16, 17.51, 0.541},
+      {1500, 1614, 445, -61.67, 28.91, 0.717},
+      {1800, 1439, 354, -104.65, 44.03, 0.914},
+      {2100, 1287, 283, -164.59, 63.30, 1.135},
+      {2400, 1162, 231, -245.71, 86.93, 1.381},
+      {2700, 1069, 195, -352.74, 114.72, 1.650},
+      {3000, 1001, 171, -490.36, 146.15, 1.941}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -656,23 +643,25 @@ TEST_F(LobWindTestFixture, SolveWithAngleWindNegativeAngle) {
   constexpr lob::InchT kInchError{0.1};
   constexpr lob::SecT kTimeOfFlightError{0.01};
   constexpr size_t kSolutionLength = 12;
-  const auto kContext =
-      puut->WindSpeedMph(kWindSpeed).WindHeadingDeg(kWindHeading).Build();
+  const auto kContext = puut->WindSpeedMph(kWindSpeed)
+                            .WindHeadingDeg(kWindHeading)
+                            .WindShearExponent(0.0)
+                            .Build();
   const std::array<uint32_t, kSolutionLength> kRanges = {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
-      {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2595, 1151, -0.60, 0.23, 0.056},
-      {300, 2473, 1045, 0.00, 0.95, 0.116},
-      {600, 2238, 856, -3.20, 4.02, 0.243},
-      {900, 2016, 695, -13.37, 9.48, 0.384},
-      {1200, 1807, 558, -32.16, 17.73, 0.542},
-      {1500, 1614, 445, -61.66, 29.21, 0.717},
-      {1800, 1439, 354, -104.64, 44.40, 0.914},
-      {2100, 1286, 283, -164.58, 63.74, 1.135},
-      {2400, 1162, 231, -245.73, 87.46, 1.381},
-      {2700, 1069, 195, -352.82, 115.36, 1.651},
-      {3000, 1001, 171, -490.53, 146.89, 1.942}};
+      {0, 2720, 1264, -2.50, 0.00, 0.000},
+      {150, 2595, 1150, -0.60, 0.23, 0.056},
+      {300, 2473, 1044, 0.00, 0.94, 0.116},
+      {600, 2238, 856, -3.20, 3.94, 0.243},
+      {900, 2016, 694, -13.39, 9.34, 0.384},
+      {1200, 1808, 558, -32.16, 17.51, 0.541},
+      {1500, 1614, 445, -61.67, 28.91, 0.717},
+      {1800, 1439, 354, -104.65, 44.03, 0.914},
+      {2100, 1287, 283, -164.59, 63.30, 1.135},
+      {2400, 1162, 231, -245.71, 86.93, 1.381},
+      {2700, 1069, 195, -352.74, 114.72, 1.650},
+      {3000, 1001, 171, -490.36, 146.15, 1.941}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
