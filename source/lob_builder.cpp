@@ -71,7 +71,6 @@ class Impl {
   size_t wind_profile_count{0};
   bool wind_use_profile{false};
   double wind_roughness_ft{NaN()};
-  double wind_bore_height_ft{NaN()};
 
   size_t table_count{0};
   const float* table_xs{nullptr};
@@ -276,19 +275,18 @@ LobErrorT ValidateWindProfile(Impl* pimpl) {
   return kLobErrorNone;
 }
 
-// Assumed measurement height in feet for points without one (Kestrel head-
-// height convention); must exceed any configured roughness (see BuildWind).
-constexpr double kDefaultMeasurementHeightFt = 5.0;
-
-double WindHeightFactor(double height_agl, double muzzle_height,
-                        double roughness) {
-  const double kMeas =
-      std::isnan(height_agl) ? kDefaultMeasurementHeightFt : height_agl;
-  // Callers guarantee roughness set, heights valid; guard anyway (noexcept).
-  if (!(kMeas > roughness) || !(muzzle_height > roughness)) {
+double WindHeightFactor(double height_agl, double roughness) {
+  // Missing heights are head-height measurements: the fixed reference
+  // itself, so the factor is exactly 1.
+  if (std::isnan(height_agl)) {
+    return 1.0;
+  }
+  // Callers guarantee roughness set and heights valid; guard anyway.
+  if (!(height_agl > roughness)) {
     return NaN();
   }
-  return std::log(muzzle_height / roughness) / std::log(kMeas / roughness);
+  return std::log(kWindReferenceHeightFt / roughness) /
+         std::log(height_agl / roughness);
 }
 
 LobErrorT ValidateCustomTable(Impl* pimpl) {
@@ -486,28 +484,19 @@ void BuildCoefficients(Impl* pimpl, LobContext* pout) {
 void BuildWind(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
-  // Resolve altitude configuration. NaN roughness means scaling off.
-  double muzzle_height = pimpl->wind_bore_height_ft;
+  // Resolve altitude configuration. NaN roughness means scaling off; a set
+  // roughness must sit below the fixed head-height reference so the log-law
+  // denominator stays positive.
   const bool kScaling = !std::isnan(pimpl->wind_roughness_ft);
   if (kScaling) {
     if (!(pimpl->wind_roughness_ft > 0.0) ||
-        !std::isfinite(pimpl->wind_roughness_ft)) {
+        !std::isfinite(pimpl->wind_roughness_ft) ||
+        !(pimpl->wind_roughness_ft < kWindReferenceHeightFt)) {
       pout->error = kLobErrorWindProfileInvalid;
       return;
     }
-    if (std::isnan(muzzle_height)) {
-      muzzle_height = 1.0;
-    }
-    if (!(muzzle_height > pimpl->wind_roughness_ft) ||
-        !std::isfinite(muzzle_height)) {
-      pout->error = kLobErrorWindProfileInvalid;
-      return;
-    }
-  } else {
-    muzzle_height = NaN();
   }
   pout->wind_roughness_ft = pimpl->wind_roughness_ft;
-  pout->wind_muzzle_height_ft = muzzle_height;
 
   // Frame pitch resolved once here; stored nodes are frame components, so the
   // solver never executes wind-direction trigonometry.
@@ -528,18 +517,13 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
       const LobWindPoint& point = pimpl->wind_profile_points[i];
       double height_factor = 1.0;
       if (kScaling) {
-        // Effective height resolves the NaN default before validating, so a
-        // default assumption below a tall roughness fails loudly instead of
-        // flipping the wind via a negative log.
-        const double kMeasHeight = std::isnan(point.height_ft_agl)
-                                       ? kDefaultMeasurementHeightFt
-                                       : point.height_ft_agl;
-        if (!(kMeasHeight > pimpl->wind_roughness_ft)) {
+        if (!std::isnan(point.height_ft_agl) &&
+            !(point.height_ft_agl > pimpl->wind_roughness_ft)) {
           pout->error = kLobErrorWindProfileInvalid;
           return;
         }
-        height_factor = WindHeightFactor(point.height_ft_agl, muzzle_height,
-                                         pimpl->wind_roughness_ft);
+        height_factor =
+            WindHeightFactor(point.height_ft_agl, pimpl->wind_roughness_ft);
       }
       const double kHx = point.x_fps * height_factor;
       const double kHz = point.z_fps * height_factor;
@@ -565,14 +549,6 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
       pimpl->wind_speed_fps = FpsT(0);
     }
 
-    // Uniform inputs carry no measurement height, so they take the head-
-    // height default when scaling is on; a roughness above that default has
-    // no valid configuration.
-    if (kScaling && !(kDefaultMeasurementHeightFt > pimpl->wind_roughness_ft)) {
-      pout->error = kLobErrorWindProfileInvalid;
-      return;
-    }
-
     double wind_x_fps = 0.0;
     double wind_z_fps = 0.0;
     if (pimpl->wind_speed_fps > FpsT(0) || pimpl->wind_speed_fps < FpsT(0)) {
@@ -591,19 +567,12 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
       pout->error = kLobErrorWindProfileInvalid;
       return;
     }
-    // Uniform inputs carry no measurement height, so they take the head-
-    // height default exactly like NaN profile heights when scaling is on.
-    double height_factor = 1.0;
-    if (kScaling) {
-      height_factor =
-          WindHeightFactor(NaN(), muzzle_height, pimpl->wind_roughness_ft);
-    }
-    const double kHx = wind_x_fps * height_factor;
-    const double kHz = wind_z_fps * height_factor;
+    // No height normalization: uniform inputs are head-height measurements,
+    // the fixed reference itself, so the factor is exactly 1.
     wind_nodes[0].range_ft = 0U;
-    wind_nodes[0].x_fps = static_cast<float>(kHx * kCos);
-    wind_nodes[0].y_fps = static_cast<float>(-kHx * kSin);
-    wind_nodes[0].z_fps = static_cast<float>(kHz);
+    wind_nodes[0].x_fps = static_cast<float>(wind_x_fps * kCos);
+    wind_nodes[0].y_fps = static_cast<float>(-wind_x_fps * kSin);
+    wind_nodes[0].z_fps = static_cast<float>(wind_z_fps);
     pout->wind_count = 1;
   }
 
@@ -1301,15 +1270,6 @@ LobBuilder* LobBuilderWindRoughnessLengthFt(LobBuilder* pbuilder,
     return nullptr;
   }
   Pimpl(pbuilder)->wind_roughness_ft = value;
-  return pbuilder;
-}
-
-LobBuilder* LobBuilderHeightOfBoreAboveGroundFt(LobBuilder* pbuilder,
-                                                double value) {
-  if (pbuilder == nullptr) {
-    return nullptr;
-  }
-  Pimpl(pbuilder)->wind_bore_height_ft = value;
   return pbuilder;
 }
 

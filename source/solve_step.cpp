@@ -156,6 +156,9 @@ CartesianT<FpsT> GetWind(const LobContext& ctx,
     }
   }
   // 3. Altitude scale about true vertical (flat-terrain assumption).
+  // Heights resolve against the fixed head-height reference: at or below
+  // it the wind holds at full reference strength, aloft it follows the log
+  // law up to a double cap.
   if (!std::isnan(ctx.wind_roughness_ft)) {
     const double kGx = ctx.gravity.x;
     const double kGy = ctx.gravity.y;
@@ -164,15 +167,14 @@ CartesianT<FpsT> GetWind(const LobContext& ctx,
         kG > 0.0
             ? -(((s.P().X().Value() * kGx) + (s.P().Y().Value() * kGy)) / kG)
             : 0.0;
-    double zagl = kH + ctx.wind_muzzle_height_ft;
-    const double kFloor = 1.05 * ctx.wind_roughness_ft;
-    if (!(zagl > kFloor)) {
-      zagl = kFloor;
+    double zagl = kH + kWindReferenceHeightFt;
+    if (!(zagl > kWindReferenceHeightFt)) {
+      zagl = kWindReferenceHeightFt;
     }
-    // Log-law anchored at the muzzle reference: ln(z/z0)/ln(z_muz/z0).
     const double kS =
-        std::log(zagl / ctx.wind_roughness_ft) /
-        std::log(ctx.wind_muzzle_height_ft / ctx.wind_roughness_ft);
+        std::min(std::log(zagl / ctx.wind_roughness_ft) /
+                     std::log(kWindReferenceHeightFt / ctx.wind_roughness_ft),
+                 kMaxWindScaleFactor);
     wx *= kS;
     wy *= kS;
     wz *= kS;

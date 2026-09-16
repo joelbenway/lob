@@ -92,7 +92,6 @@ TEST(LobCAPITest, BuilderNullptrReturnsNullptr) {
   EXPECT_EQ(LobBuilderWindProfile(&builder, nullptr, kWindPts.size()),
             &builder);
   EXPECT_EQ(LobBuilderWindRoughnessLengthFt(nullptr, kDummy), nullptr);
-  EXPECT_EQ(LobBuilderHeightOfBoreAboveGroundFt(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderAzimuthDeg(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderLatitudeDeg(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderRangeAngleDeg(nullptr, kDummy), nullptr);
@@ -157,7 +156,7 @@ TEST(LobCAPITest, WindContextPacksWithoutWaste) {
   EXPECT_EQ(offsetof(LobContext, wind_nodes),
             offsetof(LobContext, drags) + sizeof(LobContext::drags));
   EXPECT_EQ(offsetof(LobContext, velocity),
-            offsetof(LobContext, wind_muzzle_height_ft) + sizeof(double));
+            offsetof(LobContext, wind_roughness_ft) + sizeof(double));
   EXPECT_EQ(sizeof(LobContext),
             offsetof(LobContext, wind_count) + sizeof(uint8_t));
 }

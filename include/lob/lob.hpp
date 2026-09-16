@@ -129,13 +129,13 @@ struct Context {
   std::array<float, kLobCoeffsSize> drags;  ///< @brief Drag curve coefficients.
   std::array<WindNode, LOB_WIND_POINTS>
       wind_nodes;            ///< @brief Frame-resolved nodes; [0] is muzzle.
-  double wind_roughness_ft;  ///< @brief Roughness length z0; NaN = scaling off.
-  double wind_muzzle_height_ft;  ///< @brief Bore height above ground in feet.
-  uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
-  uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
-  uint16_t step_size;      ///< @brief Solver step size in inches.
-  ErrorT error;            ///< @brief Error status after build.
-  uint8_t wind_count;      ///< @brief Total wind points, 1..LOB_WIND_POINTS.
+  double wind_roughness_ft;  ///< @brief Roughness length z0 in feet; NaN =
+                             ///< scaling off. Must be below 5 ft when set.
+  uint16_t velocity;         ///< @brief Initial velocity of projectile in Fps.
+  uint16_t minimum_speed;    ///< @brief Minimum speed for solver.
+  uint16_t step_size;        ///< @brief Solver step size in inches.
+  ErrorT error;              ///< @brief Error status after build.
+  uint8_t wind_count;        ///< @brief Total wind points, 1..LOB_WIND_POINTS.
 };
 
 static_assert(sizeof(Context) == sizeof(::LobContext),
@@ -179,9 +179,6 @@ static_assert(offsetof(Context, wind_nodes) ==
 static_assert(offsetof(Context, wind_roughness_ft) ==
                   offsetof(::LobContext, wind_roughness_ft),
               "wind_roughness_ft offset drift");
-static_assert(offsetof(Context, wind_muzzle_height_ft) ==
-                  offsetof(::LobContext, wind_muzzle_height_ft),
-              "wind_muzzle_height_ft offset drift");
 static_assert(offsetof(Context, velocity) == offsetof(::LobContext, velocity),
               "velocity offset drift");
 static_assert(offsetof(Context, minimum_speed) ==
@@ -773,25 +770,14 @@ class Builder {
 
   /**
    * @brief Sets the roughness length for log-law wind height scaling in feet.
-   * @details NaN (default) disables scaling; a positive value normalizes
-   * profile winds to bore height and arms solver-side scaling.
+   * @details NaN (default) disables scaling; a positive value below the
+   * fixed 5-ft reference normalizes profile winds to that reference and
+   * arms solver-side scaling.
    * @param value The roughness length in feet.
    * @return A reference to the Builder object.
    */
   Builder& WindRoughnessLengthFt(double value) {
     ::LobBuilderWindRoughnessLengthFt(&builder_, value);
-    return *this;
-  }
-
-  /**
-   * @brief Sets the height of the bore above ground in feet.
-   * @details Reference height for log-law scaling; defaults to 1 ft when
-   * scaling is on and unset. Must exceed the roughness length.
-   * @param value The bore height above ground in feet.
-   * @return A reference to the Builder object.
-   */
-  Builder& HeightOfBoreAboveGroundFt(double value) {
-    ::LobBuilderHeightOfBoreAboveGroundFt(&builder_, value);
     return *this;
   }
 
