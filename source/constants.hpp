@@ -12,8 +12,9 @@ constexpr int32_t kDegreesPerTurn = 360;
 constexpr double kStandardGravityFtPerSecSq = 32.17405;
 // Fixed reference height (feet above ground) for power-law wind scaling:
 // all winds normalize here, and the altitude factor is 1 here by
-// construction.
-constexpr double kWindReferenceHeightFt = 5.0;
+// construction. Set at prone muzzle height so S >= 1 everywhere and scaled
+// drift never comes in under plain drift.
+constexpr double kWindReferenceHeightFt = 1.0;
 // Evaluated trajectory heights clamp to this band (feet above ground);
 // the power law is a surface-layer model and is not extrapolated past it.
 constexpr double kMinWindHeightFt = 1.0;

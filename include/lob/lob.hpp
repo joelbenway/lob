@@ -729,9 +729,9 @@ class Builder {
   /**
    * @brief Loads a downrange wind profile for the projectile.
    * @details Point 0 sets the muzzle wind; all points are validated,
-   * normalized to the fixed 5-ft reference, resolved into the shooting
+   * normalized to the fixed 1-ft reference, resolved into the shooting
    * frame, and stored as solver-ready nodes. A NaN measurement height
-   * assumes a head-height measurement (the reference itself). The last
+   * assumes measurement at the 1-ft reference. The last
    * wind-setting call wins: this overrides any uniform wind heading/speed, and
    * those override this.
    * @warning The caller must keep ppoints valid until Build is called. The
@@ -750,9 +750,9 @@ class Builder {
   /**
    * @brief Loads a downrange wind profile for the projectile.
    * @details Point 0 sets the muzzle wind; all points are validated,
-   * normalized to the fixed 5-ft reference, resolved into the shooting
+   * normalized to the fixed 1-ft reference, resolved into the shooting
    * frame, and stored as solver-ready nodes. A NaN measurement height
-   * assumes a head-height measurement (the reference itself). The last
+   * assumes measurement at the 1-ft reference. The last
    * wind-setting call wins: this overrides any uniform wind heading/speed, and
    * those override this.
    * @warning The array must remain valid until Build is called; the builder
