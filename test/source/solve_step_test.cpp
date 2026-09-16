@@ -10,7 +10,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 
 #include "cartesian.hpp"
 #include "constants.hpp"
@@ -26,7 +25,6 @@ constexpr double kTestBC = 0.436;
 constexpr uint16_t kTestMuzzleVelocity = 3100U;
 constexpr double kTestZeroAngle = 6.11;
 constexpr double kWindSpeedMph = 10.0;
-constexpr double kGrassRoughnessFt = 0.1;
 constexpr double kInclineDeg = 15.0;
 constexpr double kQueryWindZFps = 10.0;
 constexpr double kQuerySpeedFps = 2000.0;
@@ -78,7 +76,7 @@ LobContext MakeWindQueryCtx() {
   ctx.wind_nodes[0].y_fps = 0.0;
   ctx.wind_nodes[0].z_fps = kQueryWindZFps;
   ctx.wind_count = 1;
-  ctx.wind_roughness_ft = std::numeric_limits<double>::quiet_NaN();
+  ctx.wind_shear_exponent = 0.0;
   return ctx;
 }
 
@@ -88,10 +86,10 @@ TrajectoryStateT MakeStateAt(double x_ft, double y_ft) {
 }
 
 // Builds a uniform-wind LobContext through the C API, so query tests can
-// hold the C type directly instead of casting out of lob::Context.
-LobContext BuildUniformWindCtx(
-    double speed_mph, double range_angle_deg,
-    double roughness_ft = std::numeric_limits<double>::quiet_NaN()) {
+// hold the C type directly instead of casting out of lob::Context. Shear
+// exponent 0 (the default here) disables scaling exactly (identity path).
+LobContext BuildUniformWindCtx(double speed_mph, double range_angle_deg,
+                               double alpha = 0.0) {
   LobBuilder builder;
   LobBuilderInit(&builder);
   LobBuilderBallisticCoefficientPsi(&builder, kTestBC);
@@ -100,9 +98,7 @@ LobContext BuildUniformWindCtx(
   LobBuilderWindHeading(&builder, kLobClockAngleIII);
   LobBuilderWindSpeedMph(&builder, speed_mph);
   LobBuilderRangeAngleDeg(&builder, range_angle_deg);
-  if (!std::isnan(roughness_ft)) {
-    LobBuilderWindRoughnessLengthFt(&builder, roughness_ft);
-  }
+  LobBuilderWindShearExponent(&builder, alpha);
   LobContext ctx{};
   LobBuilderBuild(&builder, &ctx);
   LobBuilderDestroy(&builder);
@@ -202,28 +198,29 @@ TEST(WindProfileQuery, LerpsMidpointAndClampsEnds) {
 }
 
 TEST(WindProfileQuery, AltitudeScalesAboutHeadHeightReference) {
-  // Fixed 5-ft reference: at or below it the wind holds at full reference
-  // strength; aloft it follows the log law up to a double cap.
+  // Fixed 5-ft reference with default shear: at the reference the wind
+  // holds (S = 1); at z = 250 ft, S = 50^0.143 ≈ 1.75; past the 300-ft
+  // surface-layer cap the factor pins at 60^0.143 ≈ 1.80.
   LobContext ctx = MakeWindQueryCtx();
-  ctx.wind_roughness_ft = kGrassRoughnessFt;
+  ctx.wind_shear_exponent = lob::kDefaultWindShearExponent;
   const CartesianT<FpsT> kAtMuzzle = lob::GetWind(ctx, MakeStateAt(0.0, 0.0));
   EXPECT_NEAR(kAtMuzzle.Z().Value(), 10.0, 1E-9);  // S = 1 at reference
   const CartesianT<FpsT> kHigh = lob::GetWind(ctx, MakeStateAt(0.0, 245.0));
-  EXPECT_NEAR(kHigh.Z().Value(), 20.0, 1E-9);  // S = ln(2500)/ln(50) ≈ 2
+  EXPECT_NEAR(kHigh.Z().Value(), 17.50, 1e-2);  // hand-computed ≈ 17.496
   const CartesianT<FpsT> kCapped = lob::GetWind(ctx, MakeStateAt(0.0, 1000.0));
-  EXPECT_NEAR(kCapped.Z().Value(), 20.0, 1E-9);  // capped at double
+  EXPECT_NEAR(kCapped.Z().Value(), 17.96, 1e-2);  // hand-computed ≈ 17.958
 }
 
-TEST(WindProfileQuery, BelowReferenceClampsToFullWind) {
-  // Below the 5-ft reference the wind holds at full reference strength
-  // instead of attenuating toward zero.
+TEST(WindProfileQuery, BelowMinHeightClampsToOneFoot) {
+  // Below the 1-ft evaluation floor the wind holds at the 1-ft value
+  // (S = 0.2^0.143 ≈ 0.79) instead of attenuating toward zero.
   LobContext ctx = MakeWindQueryCtx();
-  ctx.wind_roughness_ft = kGrassRoughnessFt;
+  ctx.wind_shear_exponent = lob::kDefaultWindShearExponent;
   const CartesianT<FpsT> kW = lob::GetWind(ctx, MakeStateAt(2500.0, -40.0));
   EXPECT_TRUE(std::isfinite(kW.X().Value()));
   EXPECT_TRUE(std::isfinite(kW.Y().Value()));
   EXPECT_TRUE(std::isfinite(kW.Z().Value()));
-  EXPECT_DOUBLE_EQ(kW.Z().Value(), 10.0);
+  EXPECT_NEAR(kW.Z().Value(), 7.94, 1e-2);  // hand-computed ≈ 7.944
 }
 
 TEST(WindProfileQuery, CrosswindResolvesIdenticallyWithIncline) {
@@ -250,16 +247,16 @@ TEST(WindProfileQuery, InclinedScalingUsesTrueVertical) {
   // Regression: altitude scaling must resolve height through the gravity
   // vector, never frame-Y. At 15° incline and state (500, 0), frame-Y plus
   // the reference offset says S = 1 while true height x*sin(15°) ≈ 129 ft
-  // (S ≈ 1.84).
-  const LobContext kCtx =
-      BuildUniformWindCtx(kWindSpeedMph, kInclineDeg, kGrassRoughnessFt);
+  // (S ≈ 1.60).
+  const LobContext kCtx = BuildUniformWindCtx(kWindSpeedMph, kInclineDeg,
+                                              lob::kDefaultWindShearExponent);
   const CartesianT<FpsT> kW = lob::GetWind(kCtx, MakeStateAt(500.0, 0.0));
   const double kG = std::sqrt((kCtx.gravity.x * kCtx.gravity.x) +
                               (kCtx.gravity.y * kCtx.gravity.y));
   const double kH = -((500.0 * kCtx.gravity.x) / kG);
   const double kS =
-      std::log((kH + lob::kWindReferenceHeightFt) / kGrassRoughnessFt) /
-      std::log(lob::kWindReferenceHeightFt / kGrassRoughnessFt);
+      std::pow((kH + lob::kWindReferenceHeightFt) / lob::kWindReferenceHeightFt,
+               lob::kDefaultWindShearExponent);
   // Guard against a vacuous test: the gravity-vector answer must differ
   // decisively from the frame-Y answer (S = 1).
   EXPECT_GT(std::abs(kS - 1.0), 0.5);

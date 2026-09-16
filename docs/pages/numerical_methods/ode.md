@@ -37,8 +37,8 @@ is clamped: `Δx = min(R − x_n, step)`.
 
 ```text
 kDtDx = 1/vx                    (guarded: if vx ≤ 0 → zero derivative)
-wind  = lerp(wind_nodes)        (frame-resolved at Build; optional log-law
-                                 altitude scale when roughness is set)
+wind  = lerp(wind_nodes)        (frame-resolved at Build; optional power-law
+                                 altitude scale when shear is nonzero)
 u     = −k_lapse·P·G            (only DsDx; FastDsDx skips)
 drag  = drag_coeff·(1−u(1−αu))   (only DsDx; FastDsDx = drag_coeff)
 c     = c·(1−βu)                (only DsDx; FastDsDx = c)

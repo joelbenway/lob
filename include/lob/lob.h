@@ -152,9 +152,8 @@ typedef struct {
   float drags[LOB_SPLINE_SEGMENTS * 4];  ///< @brief Drag curve coefficients.
   LobWindNode wind_nodes[LOB_WIND_POINTS];  ///< @brief Frame-resolved profile
                                             ///< nodes; [0] is the muzzle.
-  double wind_roughness_ft;  ///< @brief Roughness length z0 in feet; NaN =
-                             ///< scaling off. Must be below 5 ft (the fixed
-                             ///< wind reference height) when set.
+  double wind_shear_exponent;  ///< @brief Hellmann exponent alpha; scaling
+                                 ///< is always active, 0 disables it exactly.
   uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
   uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
   uint16_t step_size;      ///< @brief Solver step size in inches.
@@ -531,9 +530,9 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindSpeedMph(LobBuilder* pbuilder,
 
 /**
  * @brief Sets the downrange wind profile points.
- * @note Each point's wind is normalized to bore height at Build via the log
- * law using its measurement height; a NaN height assumes a head-height
- * measurement (5 ft Kestrel convention).
+ * @note Each point's wind is normalized to the fixed 5-ft reference at
+ * Build via the power law using its measurement height; a NaN height
+ * assumes a head-height measurement (the reference itself).
  * @param pbuilder Pointer to the builder.
  * @param ppoints Pointer to an array of wind profile points.
  * @param count The number of wind profile points.
@@ -543,15 +542,16 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindProfile(
     LobBuilder* pbuilder, const LobWindPoint* ppoints, size_t count);
 
 /**
- * @brief Sets the roughness length for wind profile height scaling in feet.
- * @details NaN (default) disables scaling. A positive value below 5 ft
- * normalizes profile winds to the fixed 5-ft reference and arms solver-side
- * scaling, clamped to at most double.
+ * @brief Sets the Hellmann shear exponent for wind profile height scaling.
+ * @details Wind shear follows the power law with this exponent; scaling is
+ * always active and 0 disables it exactly. Defaults to 0.143 (open
+ * terrain) when unset. Typical values: open water 0.10, open grassland
+ * 0.143, farmland/crops 0.20, suburban 0.25, forest/urban 0.30.
  * @param pbuilder Pointer to the builder.
- * @param value The roughness length in feet.
+ * @param value The shear exponent in [0, 1].
  * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
-LOB_EXPORT extern LobBuilder* LobBuilderWindRoughnessLengthFt(
+LOB_EXPORT extern LobBuilder* LobBuilderWindShearExponent(
     LobBuilder* pbuilder, double value);
 
 /**

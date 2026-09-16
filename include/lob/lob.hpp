@@ -128,14 +128,14 @@ struct Context {
   double max_time;          ///< @brief Max time of flight for solver.
   std::array<float, kLobCoeffsSize> drags;  ///< @brief Drag curve coefficients.
   std::array<WindNode, LOB_WIND_POINTS>
-      wind_nodes;            ///< @brief Frame-resolved nodes; [0] is muzzle.
-  double wind_roughness_ft;  ///< @brief Roughness length z0 in feet; NaN =
-                             ///< scaling off. Must be below 5 ft when set.
-  uint16_t velocity;         ///< @brief Initial velocity of projectile in Fps.
-  uint16_t minimum_speed;    ///< @brief Minimum speed for solver.
-  uint16_t step_size;        ///< @brief Solver step size in inches.
-  ErrorT error;              ///< @brief Error status after build.
-  uint8_t wind_count;        ///< @brief Total wind points, 1..LOB_WIND_POINTS.
+      wind_nodes;              ///< @brief Frame-resolved nodes; [0] is muzzle.
+  double wind_shear_exponent;  ///< @brief Hellmann exponent alpha; scaling
+                               ///< is always active, 0 disables it exactly.
+  uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
+  uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
+  uint16_t step_size;      ///< @brief Solver step size in inches.
+  ErrorT error;            ///< @brief Error status after build.
+  uint8_t wind_count;      ///< @brief Total wind points, 1..LOB_WIND_POINTS.
 };
 
 static_assert(sizeof(Context) == sizeof(::LobContext),
@@ -176,9 +176,9 @@ static_assert(offsetof(Context, drags) == offsetof(::LobContext, drags),
 static_assert(offsetof(Context, wind_nodes) ==
                   offsetof(::LobContext, wind_nodes),
               "wind_nodes offset drift");
-static_assert(offsetof(Context, wind_roughness_ft) ==
-                  offsetof(::LobContext, wind_roughness_ft),
-              "wind_roughness_ft offset drift");
+static_assert(offsetof(Context, wind_shear_exponent) ==
+                  offsetof(::LobContext, wind_shear_exponent),
+              "wind_shear_exponent offset drift");
 static_assert(offsetof(Context, velocity) == offsetof(::LobContext, velocity),
               "velocity offset drift");
 static_assert(offsetof(Context, minimum_speed) ==
@@ -729,10 +729,11 @@ class Builder {
   /**
    * @brief Loads a downrange wind profile for the projectile.
    * @details Point 0 sets the muzzle wind; all points are validated,
-   * normalized to bore height, resolved into the shooting frame, and stored
-   * as solver-ready nodes. A NaN measurement height assumes a head-height
-   * measurement (5 ft Kestrel convention). The last wind-setting call wins:
-   * this overrides any uniform wind heading/speed, and those override this.
+   * normalized to the fixed 5-ft reference, resolved into the shooting
+   * frame, and stored as solver-ready nodes. A NaN measurement height
+   * assumes a head-height measurement (the reference itself). The last
+   * wind-setting call wins: this overrides any uniform wind heading/speed, and
+   * those override this.
    * @warning The caller must keep ppoints valid until Build is called. The
    * builder copies no data; the pointer is referenced during Build().
    * @param ppoints Pointer to an array of wind profile points. First range
@@ -749,10 +750,11 @@ class Builder {
   /**
    * @brief Loads a downrange wind profile for the projectile.
    * @details Point 0 sets the muzzle wind; all points are validated,
-   * normalized to bore height, resolved into the shooting frame, and stored
-   * as solver-ready nodes. A NaN measurement height assumes a head-height
-   * measurement (5 ft Kestrel convention). The last wind-setting call wins:
-   * this overrides any uniform wind heading/speed, and those override this.
+   * normalized to the fixed 5-ft reference, resolved into the shooting
+   * frame, and stored as solver-ready nodes. A NaN measurement height
+   * assumes a head-height measurement (the reference itself). The last
+   * wind-setting call wins: this overrides any uniform wind heading/speed, and
+   * those override this.
    * @warning The array must remain valid until Build is called; the builder
    * copies no data and references it during Build(). Temporaries are rejected
    * at compile time.
@@ -769,15 +771,16 @@ class Builder {
   Builder& WindProfile(const std::array<LobWindPoint, N>&& points) = delete;
 
   /**
-   * @brief Sets the roughness length for log-law wind height scaling in feet.
-   * @details NaN (default) disables scaling; a positive value below the
-   * fixed 5-ft reference normalizes profile winds to that reference and
-   * arms solver-side scaling.
-   * @param value The roughness length in feet.
+   * @brief Sets the Hellmann shear exponent for wind profile height scaling.
+   * @details Wind shear follows the power law with this exponent; scaling
+   * is always active and 0 disables it exactly. Defaults to 0.143 (open
+   * terrain) when unset. Typical values: open water 0.10, open grassland
+   * 0.143, farmland/crops 0.20, suburban 0.25, forest/urban 0.30.
+   * @param value The shear exponent in [0, 1].
    * @return A reference to the Builder object.
    */
-  Builder& WindRoughnessLengthFt(double value) {
-    ::LobBuilderWindRoughnessLengthFt(&builder_, value);
+  Builder& WindShearExponent(double value) {
+    ::LobBuilderWindShearExponent(&builder_, value);
     return *this;
   }
 
