@@ -119,9 +119,9 @@ typedef struct {
 /** @brief Solver-ready wind profile node with frame-resolved components. */
 typedef struct {
   uint32_t range_ft;  ///< @brief Downrange station in whole feet.
-  float x_fps;  ///< @brief Wind in fps, frame X (downrange).
-  float y_fps;  ///< @brief Wind in fps, frame Y (frame-up).
-  float z_fps;  ///< @brief Wind in fps, lateral.
+  double x_fps;  ///< @brief Wind in fps, frame X (downrange).
+  double y_fps;  ///< @brief Wind in fps, frame Y (frame-up).
+  double z_fps;  ///< @brief Wind in fps, lateral.
 } LobWindNode;
 
 /** @brief Coriolis effect parameters. */

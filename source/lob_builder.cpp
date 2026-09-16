@@ -258,17 +258,13 @@ LobErrorT ValidateWindProfile(Impl* pimpl) {
     } else if (!(point.range_ft > pimpl->wind_profile_points[i - 1].range_ft)) {
       return kLobErrorWindProfileNotMonotonic;
     }
-    // Storage representability: whole feet within uint32, winds within float.
+    // Storage representability: whole feet within uint32.
     // (Monotonicity from 0 already guarantees non-negativity.)
     // Exact-equality via ordered comparisons (avoids -Werror=float-equal).
     const double kTruncatedRange = std::floor(point.range_ft);
     if (point.range_ft > kTruncatedRange || point.range_ft < kTruncatedRange ||
         !(point.range_ft <=
-          static_cast<double>(std::numeric_limits<uint32_t>::max())) ||
-        !(std::fabs(point.x_fps) <=
-          static_cast<double>(std::numeric_limits<float>::max())) ||
-        !(std::fabs(point.z_fps) <=
-          static_cast<double>(std::numeric_limits<float>::max()))) {
+          static_cast<double>(std::numeric_limits<uint32_t>::max()))) {
       return kLobErrorWindProfileInvalid;
     }
   }
@@ -528,9 +524,9 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
       const double kHx = point.x_fps * height_factor;
       const double kHz = point.z_fps * height_factor;
       wind_nodes[i].range_ft = static_cast<uint32_t>(point.range_ft);
-      wind_nodes[i].x_fps = static_cast<float>(kHx * kCos);
-      wind_nodes[i].y_fps = static_cast<float>(-kHx * kSin);
-      wind_nodes[i].z_fps = static_cast<float>(kHz);
+      wind_nodes[i].x_fps = kHx * kCos;
+      wind_nodes[i].y_fps = -kHx * kSin;
+      wind_nodes[i].z_fps = kHz;
     }
     pout->wind_count = static_cast<uint8_t>(pimpl->wind_profile_count);
   } else {
@@ -559,20 +555,12 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
                         std::cos(pimpl->wind_heading_rad.Value()))
                        .Value();
     }
-    // Largest finite float, exactly representable in double.
-    constexpr auto kMaxFloat =
-        static_cast<double>(std::numeric_limits<float>::max());
-    if (!(std::fabs(wind_x_fps) <= kMaxFloat) ||
-        !(std::fabs(wind_z_fps) <= kMaxFloat)) {
-      pout->error = kLobErrorWindProfileInvalid;
-      return;
-    }
     // No height normalization: uniform inputs are head-height measurements,
     // the fixed reference itself, so the factor is exactly 1.
     wind_nodes[0].range_ft = 0U;
-    wind_nodes[0].x_fps = static_cast<float>(wind_x_fps * kCos);
-    wind_nodes[0].y_fps = static_cast<float>(-wind_x_fps * kSin);
-    wind_nodes[0].z_fps = static_cast<float>(wind_z_fps);
+    wind_nodes[0].x_fps = wind_x_fps * kCos;
+    wind_nodes[0].y_fps = -wind_x_fps * kSin;
+    wind_nodes[0].z_fps = wind_z_fps;
     pout->wind_count = 1;
   }
 
@@ -714,7 +702,7 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const InchPerTwistT kTwist(pimpl->twist_inches_per_turn);
   const double kSg(pout->stability_factor);
   const PmsiT kBc(pimpl->ballistic_coefficient_psi);
-  const FpsT kZWind(static_cast<double>(pout->wind_nodes[0].z_fps));
+  const FpsT kZWind(pout->wind_nodes[0].z_fps);
   const LbsPerCuFtT kAirDensity = pimpl->air_density_lbs_per_cu_ft;
 
   if (kD.IsNaN() || kDM.IsNaN() || kDB.IsNaN() || kL.IsNaN() || kLN.IsNaN() ||
@@ -818,8 +806,7 @@ void BuildLitzAerodynamicJump(Impl* pimpl, LobContext* pout) {
 
   // Lateral muzzle wind; pitch preserves the lateral axis, so the stored
   // frame component equals the horizontal crosswind.
-  const auto kMuzzleCrosswindFps =
-      static_cast<double>(pout->wind_nodes[0].z_fps);
+  const double kMuzzleCrosswindFps = pout->wind_nodes[0].z_fps;
 
   if (AreEqual(kMuzzleCrosswindFps, 0.0)) {
     pout->aerodynamic_jump = MoaT(0).Value();

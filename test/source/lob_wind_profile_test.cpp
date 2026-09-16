@@ -49,12 +49,11 @@ TEST_F(WindProfileBuildFixture, CopiesProfileAndSetsCount) {
   const lob::Context kCtx = builder.WindProfile(kTwoPoint).Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
   EXPECT_EQ(kCtx.wind_count, 2U);
-  // Stored nodes hold frame-resolved floats: flat fire leaves x/z untouched
-  // up to float quantization (1e-5 covers the ~5e-7 worst case).
-  EXPECT_NEAR(kCtx.wind_nodes.at(0).x_fps, 0.0, 1e-5);
-  EXPECT_NEAR(kCtx.wind_nodes.at(0).z_fps, kMuzzleWindFps, 1e-5);
+  // Flat fire with no scaling stores inputs verbatim.
+  EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(0).x_fps, 0.0);
+  EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(0).z_fps, kMuzzleWindFps);
   EXPECT_EQ(kCtx.wind_nodes.at(1).range_ft, 1500U);
-  EXPECT_NEAR(kCtx.wind_nodes.at(1).z_fps, 14.66, 1e-5);
+  EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(1).z_fps, 14.66);
   EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(0).y_fps, 0.0);
 }
 
@@ -75,7 +74,7 @@ TEST_F(WindProfileBuildFixture, SinglePointEqualsUniform) {
       .WindSpeedFps(kMuzzleWindFps);
   const lob::Context kUniform = plain.Build();
   // ponytail: kIII heading is 2π rad; libm sin leaves ~1.8e-15 residue,
-  // identical through the shared float storage on both sides.
+  // identical through the shared node storage on both sides.
   EXPECT_NEAR(kProfile.wind_nodes.at(0).x_fps, kUniform.wind_nodes.at(0).x_fps,
               1e-12);
   EXPECT_DOUBLE_EQ(kProfile.wind_nodes.at(0).z_fps,
@@ -137,7 +136,7 @@ TEST_F(WindProfileBuildFixture, LastWindCallWinsBothDirections) {
       .WindSpeedMph(kLightWindSpeedMph);
   const lob::Context kUniformLast = other.Build();
   EXPECT_EQ(kUniformLast.wind_count, 1U);
-  EXPECT_GT(kUniformLast.wind_nodes.at(0).z_fps, 0.0F);
+  EXPECT_GT(kUniformLast.wind_nodes.at(0).z_fps, 0.0);
 }
 
 TEST_F(WindProfileBuildFixture, NormalizesHighMeasurementToReference) {
@@ -153,9 +152,7 @@ TEST_F(WindProfileBuildFixture, NormalizesHighMeasurementToReference) {
                                 .WindRoughnessLengthFt(kGrassRoughnessFt)
                                 .Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
-  // Stored nodes hold frame-resolved floats; compare against the inputs
-  // within float quantization (1e-5 covers the ~1e-6 worst case here).
-  EXPECT_NEAR(kCtx.wind_nodes.at(1).z_fps, 14.66 * kF, 1e-5);
+  EXPECT_NEAR(kCtx.wind_nodes.at(1).z_fps, 14.66 * kF, 1E-9);
   EXPECT_EQ(kCtx.wind_nodes.at(1).range_ft, 1500U);
 }
 
@@ -166,7 +163,7 @@ TEST_F(WindProfileBuildFixture, RoughnessUnsetLeavesValuesIdentical) {
   }};
   const lob::Context kCtx = builder.WindProfile(kPts).Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
-  EXPECT_NEAR(kCtx.wind_nodes.at(1).z_fps, 14.66, 1e-5);
+  EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(1).z_fps, 14.66);
   EXPECT_TRUE(std::isnan(kCtx.wind_roughness_ft));
 }
 TEST_F(WindProfileBuildFixture, RejectsBadAltitudeConfig) {
@@ -204,7 +201,7 @@ TEST_F(WindProfileBuildFixture, MissingHeightsStoreVerbatim) {
                                        .WindRoughnessLengthFt(kGrassRoughnessFt)
                                        .Build();
   ASSERT_EQ(kProfileCtx.error, lob::ErrorT::kNone);
-  EXPECT_NEAR(kProfileCtx.wind_nodes.at(0).z_fps, kMuzzleWindFps, 1e-5);
+  EXPECT_DOUBLE_EQ(kProfileCtx.wind_nodes.at(0).z_fps, kMuzzleWindFps);
   lob::Builder uniform;
   uniform.BallisticCoefficientPsi(kTestBcPsi)
       .BCDragFunction(lob::DragFunctionT::kG1)
@@ -225,8 +222,9 @@ TEST_F(WindProfileBuildFixture, MissingHeightsStoreVerbatim) {
 }
 
 TEST_F(WindProfileBuildFixture, RejectsUnstorableValues) {
-  // Nodes store whole-foot uint32 ranges and float winds; values that cannot
-  // round-trip are rejected instead of silently quantized.
+  // Node ranges are whole-foot uint32; values that cannot round-trip are
+  // rejected instead of silently quantized. (Winds are doubles and always
+  // representable once finite.)
   const std::array<lob::WindPoint, 2> kFractional = {{
       {0.0, 0.0, kMuzzleWindFps, std::numeric_limits<double>::quiet_NaN()},
       {1500.5, 0.0, kMuzzleWindFps, std::numeric_limits<double>::quiet_NaN()},
@@ -238,12 +236,6 @@ TEST_F(WindProfileBuildFixture, RejectsUnstorableValues) {
       {1e300, 0.0, kMuzzleWindFps, std::numeric_limits<double>::quiet_NaN()},
   }};
   EXPECT_EQ(builder.WindProfile(kHugeRange).Build().error,
-            lob::ErrorT::kWindProfileInvalid);
-  const std::array<lob::WindPoint, 2> kHugeWind = {{
-      {0.0, 0.0, 1e300, std::numeric_limits<double>::quiet_NaN()},
-      {1500.0, 0.0, 1e300, std::numeric_limits<double>::quiet_NaN()},
-  }};
-  EXPECT_EQ(builder.WindProfile(kHugeWind).Build().error,
             lob::ErrorT::kWindProfileInvalid);
 }
 
@@ -259,13 +251,13 @@ TEST_F(WindProfileBuildFixture, InclineBakesPitchIntoNodes) {
       builder.WindProfile(kTailwind).RangeAngleDeg(kInclineDeg).Build();
   ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
   EXPECT_NEAR(kCtx.wind_nodes.at(0).x_fps, kMuzzleWindFps * std::cos(kTheta),
-              1e-5);
+              1E-9);
   EXPECT_NEAR(kCtx.wind_nodes.at(0).y_fps, -kMuzzleWindFps * std::sin(kTheta),
-              1e-5);
+              1E-9);
   EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(0).z_fps, 0.0);
   // Guard against a vacuous test: the pitched values must differ decisively
   // from the unpitched inputs.
-  EXPECT_GT(std::abs(kCtx.wind_nodes.at(0).y_fps), 1.0F);
+  EXPECT_GT(std::abs(kCtx.wind_nodes.at(0).y_fps), 1.0);
 }
 
 TEST_F(WindProfileBuildFixture, TwoPointFlatProfileMatchesUniformSolve) {

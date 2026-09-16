@@ -74,9 +74,9 @@ LobContext MakeWindQueryCtx() {
   ctx.gravity.x = 0.0;
   ctx.gravity.y = -lob::kStandardGravityFtPerSecSq;
   ctx.wind_nodes[0].range_ft = 0U;
-  ctx.wind_nodes[0].x_fps = 0.0F;
-  ctx.wind_nodes[0].y_fps = 0.0F;
-  ctx.wind_nodes[0].z_fps = static_cast<float>(kQueryWindZFps);
+  ctx.wind_nodes[0].x_fps = 0.0;
+  ctx.wind_nodes[0].y_fps = 0.0;
+  ctx.wind_nodes[0].z_fps = kQueryWindZFps;
   ctx.wind_count = 1;
   ctx.wind_roughness_ft = std::numeric_limits<double>::quiet_NaN();
   return ctx;
@@ -109,8 +109,8 @@ LobContext BuildUniformWindCtx(
   return ctx;
 }
 
-const LobWindNode kLerpLow{1000U, 0.0F, 0.0F, 10.0F};
-const LobWindNode kLerpHigh{2000U, 0.0F, 0.0F, 30.0F};
+const LobWindNode kLerpLow{1000U, 0.0, 0.0, 10.0};
+const LobWindNode kLerpHigh{2000U, 0.0, 0.0, 30.0};
 }  // namespace
 
 TEST(SolveStepTests, TwelveInchStepOneYardSolveTakesThreeSteps) {
@@ -261,11 +261,9 @@ TEST(WindProfileQuery, InclinedScalingUsesTrueVertical) {
       std::log((kH + lob::kWindReferenceHeightFt) / kGrassRoughnessFt) /
       std::log(lob::kWindReferenceHeightFt / kGrassRoughnessFt);
   // Guard against a vacuous test: the gravity-vector answer must differ
-  // decisively from the frame-Y answer (S = 1). The expectation derives
-  // from the stored float node, so quantization cannot falsely fail it.
+  // decisively from the frame-Y answer (S = 1).
   EXPECT_GT(std::abs(kS - 1.0), 0.5);
-  EXPECT_NEAR(kW.Z().Value(),
-              static_cast<double>(kCtx.wind_nodes[0].z_fps) * kS, 1e-9);
+  EXPECT_NEAR(kW.Z().Value(), kCtx.wind_nodes[0].z_fps * kS, 1e-9);
 }
 
 }  // namespace tests
