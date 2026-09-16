@@ -27,7 +27,6 @@ constexpr uint16_t kTestMuzzleVelocity = 3100U;
 constexpr double kTestZeroAngle = 6.11;
 constexpr double kWindSpeedMph = 10.0;
 constexpr double kGrassRoughnessFt = 0.1;
-constexpr double kBoreHeightFt = 1.0;
 constexpr double kInclineDeg = 15.0;
 constexpr double kQueryWindZFps = 10.0;
 constexpr double kQuerySpeedFps = 2000.0;
@@ -80,7 +79,6 @@ LobContext MakeWindQueryCtx() {
   ctx.wind_nodes[0].z_fps = static_cast<float>(kQueryWindZFps);
   ctx.wind_count = 1;
   ctx.wind_roughness_ft = std::numeric_limits<double>::quiet_NaN();
-  ctx.wind_muzzle_height_ft = std::numeric_limits<double>::quiet_NaN();
   return ctx;
 }
 
@@ -93,8 +91,7 @@ TrajectoryStateT MakeStateAt(double x_ft, double y_ft) {
 // hold the C type directly instead of casting out of lob::Context.
 LobContext BuildUniformWindCtx(
     double speed_mph, double range_angle_deg,
-    double roughness_ft = std::numeric_limits<double>::quiet_NaN(),
-    double bore_height_ft = std::numeric_limits<double>::quiet_NaN()) {
+    double roughness_ft = std::numeric_limits<double>::quiet_NaN()) {
   LobBuilder builder;
   LobBuilderInit(&builder);
   LobBuilderBallisticCoefficientPsi(&builder, kTestBC);
@@ -105,7 +102,6 @@ LobContext BuildUniformWindCtx(
   LobBuilderRangeAngleDeg(&builder, range_angle_deg);
   if (!std::isnan(roughness_ft)) {
     LobBuilderWindRoughnessLengthFt(&builder, roughness_ft);
-    LobBuilderHeightOfBoreAboveGroundFt(&builder, bore_height_ft);
   }
   LobContext ctx{};
   LobBuilderBuild(&builder, &ctx);
@@ -205,27 +201,29 @@ TEST(WindProfileQuery, LerpsMidpointAndClampsEnds) {
                    10.0);
 }
 
-TEST(WindProfileQuery, AltitudeScalesAboutMuzzleReference) {
-  // z0 = grass roughness, muzzle at bore height: at true height 9 ft,
-  // z_agl = 10, S = 2 exactly.
+TEST(WindProfileQuery, AltitudeScalesAboutHeadHeightReference) {
+  // Fixed 5-ft reference: at or below it the wind holds at full reference
+  // strength; aloft it follows the log law up to a double cap.
   LobContext ctx = MakeWindQueryCtx();
   ctx.wind_roughness_ft = kGrassRoughnessFt;
-  ctx.wind_muzzle_height_ft = kBoreHeightFt;
   const CartesianT<FpsT> kAtMuzzle = lob::GetWind(ctx, MakeStateAt(0.0, 0.0));
-  EXPECT_NEAR(kAtMuzzle.Z().Value(), 10.0, 1E-9);  // S = 1 at muzzle
-  const CartesianT<FpsT> kHigh = lob::GetWind(ctx, MakeStateAt(0.0, 9.0));
-  EXPECT_NEAR(kHigh.Z().Value(), 20.0, 1E-9);  // S = ln(100)/ln(10) = 2
+  EXPECT_NEAR(kAtMuzzle.Z().Value(), 10.0, 1E-9);  // S = 1 at reference
+  const CartesianT<FpsT> kHigh = lob::GetWind(ctx, MakeStateAt(0.0, 245.0));
+  EXPECT_NEAR(kHigh.Z().Value(), 20.0, 1E-9);  // S = ln(2500)/ln(50) ≈ 2
+  const CartesianT<FpsT> kCapped = lob::GetWind(ctx, MakeStateAt(0.0, 1000.0));
+  EXPECT_NEAR(kCapped.Z().Value(), 20.0, 1E-9);  // capped at double
 }
 
-TEST(WindProfileQuery, SubBoreFloorKeepsLogDefined) {
+TEST(WindProfileQuery, BelowReferenceClampsToFullWind) {
+  // Below the 5-ft reference the wind holds at full reference strength
+  // instead of attenuating toward zero.
   LobContext ctx = MakeWindQueryCtx();
   ctx.wind_roughness_ft = kGrassRoughnessFt;
-  ctx.wind_muzzle_height_ft = kBoreHeightFt;
   const CartesianT<FpsT> kW = lob::GetWind(ctx, MakeStateAt(2500.0, -40.0));
   EXPECT_TRUE(std::isfinite(kW.X().Value()));
   EXPECT_TRUE(std::isfinite(kW.Y().Value()));
   EXPECT_TRUE(std::isfinite(kW.Z().Value()));
-  EXPECT_GE(kW.Z().Value(), 0.0);
+  EXPECT_DOUBLE_EQ(kW.Z().Value(), 10.0);
 }
 
 TEST(WindProfileQuery, CrosswindResolvesIdenticallyWithIncline) {
@@ -250,20 +248,22 @@ TEST(WindProfileQuery, CrosswindResolvesIdenticallyWithIncline) {
 
 TEST(WindProfileQuery, InclinedScalingUsesTrueVertical) {
   // Regression: altitude scaling must resolve height through the gravity
-  // vector, never frame-Y. At 15° incline and state (1500, 0), frame-Y says
-  // height 0 (S = 1) while true height is x*sin(15°) ≈ 388 ft (S ≈ 3.59).
-  const LobContext kCtx = BuildUniformWindCtx(kWindSpeedMph, kInclineDeg,
-                                              kGrassRoughnessFt, kBoreHeightFt);
-  const CartesianT<FpsT> kW = lob::GetWind(kCtx, MakeStateAt(1500.0, 0.0));
+  // vector, never frame-Y. At 15° incline and state (500, 0), frame-Y plus
+  // the reference offset says S = 1 while true height x*sin(15°) ≈ 129 ft
+  // (S ≈ 1.84).
+  const LobContext kCtx =
+      BuildUniformWindCtx(kWindSpeedMph, kInclineDeg, kGrassRoughnessFt);
+  const CartesianT<FpsT> kW = lob::GetWind(kCtx, MakeStateAt(500.0, 0.0));
   const double kG = std::sqrt((kCtx.gravity.x * kCtx.gravity.x) +
                               (kCtx.gravity.y * kCtx.gravity.y));
-  const double kH = -((1500.0 * kCtx.gravity.x) / kG);
-  const double kS = std::log((kH + kBoreHeightFt) / kGrassRoughnessFt) /
-                    std::log(kBoreHeightFt / kGrassRoughnessFt);
+  const double kH = -((500.0 * kCtx.gravity.x) / kG);
+  const double kS =
+      std::log((kH + lob::kWindReferenceHeightFt) / kGrassRoughnessFt) /
+      std::log(lob::kWindReferenceHeightFt / kGrassRoughnessFt);
   // Guard against a vacuous test: the gravity-vector answer must differ
   // decisively from the frame-Y answer (S = 1). The expectation derives
   // from the stored float node, so quantization cannot falsely fail it.
-  EXPECT_GT(std::abs(kS - 1.0), 2.0);
+  EXPECT_GT(std::abs(kS - 1.0), 0.5);
   EXPECT_NEAR(kW.Z().Value(),
               static_cast<double>(kCtx.wind_nodes[0].z_fps) * kS, 1e-9);
 }

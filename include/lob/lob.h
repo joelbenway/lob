@@ -152,8 +152,9 @@ typedef struct {
   float drags[LOB_SPLINE_SEGMENTS * 4];  ///< @brief Drag curve coefficients.
   LobWindNode wind_nodes[LOB_WIND_POINTS];  ///< @brief Frame-resolved profile
                                             ///< nodes; [0] is the muzzle.
-  double wind_roughness_ft;  ///< @brief Roughness length z0; NaN = scaling off.
-  double wind_muzzle_height_ft;  ///< @brief Bore height above ground in feet.
+  double wind_roughness_ft;  ///< @brief Roughness length z0 in feet; NaN =
+                             ///< scaling off. Must be below 5 ft (the fixed
+                             ///< wind reference height) when set.
   uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
   uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
   uint16_t step_size;      ///< @brief Solver step size in inches.
@@ -543,20 +544,14 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindProfile(
 
 /**
  * @brief Sets the roughness length for wind profile height scaling in feet.
+ * @details NaN (default) disables scaling. A positive value below 5 ft
+ * normalizes profile winds to the fixed 5-ft reference and arms solver-side
+ * scaling, clamped to at most double.
  * @param pbuilder Pointer to the builder.
  * @param value The roughness length in feet.
  * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderWindRoughnessLengthFt(
-    LobBuilder* pbuilder, double value);
-
-/**
- * @brief Sets the height of the bore above ground in feet.
- * @param pbuilder Pointer to the builder.
- * @param value The bore height above ground in feet.
- * @return Pointer to the builder, or nullptr if pbuilder is null.
- */
-LOB_EXPORT extern LobBuilder* LobBuilderHeightOfBoreAboveGroundFt(
     LobBuilder* pbuilder, double value);
 
 /**
