@@ -24,7 +24,7 @@ constexpr double kTestOpticHeightIn = 2.5;
 constexpr double kMuzzleWindFps = 7.33;
 constexpr double kWindSpeedMph = 10.0;
 constexpr double kLightWindSpeedMph = 5.0;
-constexpr double kGrassRoughnessFt = 0.1;
+constexpr double kTestShearExponent = 0.25;
 constexpr double kInclineDeg = 15.0;
 
 struct WindProfileBuildFixture : public testing::Test {
@@ -140,45 +140,47 @@ TEST_F(WindProfileBuildFixture, LastWindCallWinsBothDirections) {
 }
 
 TEST_F(WindProfileBuildFixture, NormalizesHighMeasurementToReference) {
-  // z0 = grass roughness; the drone reading at 50 ft AGL reduces to the
-  // fixed 5-ft reference by the log-law factor under test.
-  const double kF = std::log(lob::kWindReferenceHeightFt / kGrassRoughnessFt) /
-                    std::log(50.0 / kGrassRoughnessFt);
+  // The drone reading at 50 ft AGL reduces to the fixed 5-ft reference by
+  // the power-law factor under test (default shear exponent).
+  const double kF = std::pow(lob::kWindReferenceHeightFt / 50.0,
+                             lob::kDefaultWindShearExponent);  // ≈ 0.7196
   const std::array<lob::WindPoint, 2> kPts = {{
       {0.0, 0.0, kMuzzleWindFps, 1.0},
       {1500.0, 0.0, 14.66, 50.0},
   }};
-  const lob::Context kCtx = builder.WindProfile(kPts)
-                                .WindRoughnessLengthFt(kGrassRoughnessFt)
-                                .Build();
+  const lob::Context kCtx = builder.WindProfile(kPts).Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
   EXPECT_NEAR(kCtx.wind_nodes.at(1).z_fps, 14.66 * kF, 1E-9);
   EXPECT_EQ(kCtx.wind_nodes.at(1).range_ft, 1500U);
 }
 
-TEST_F(WindProfileBuildFixture, RoughnessUnsetLeavesValuesIdentical) {
+TEST_F(WindProfileBuildFixture, ZeroShearExponentStoresVerbatim) {
+  // Shear exponent 0 disables scaling exactly: explicit heights pass
+  // through untouched, pinning the off switch.
   const std::array<lob::WindPoint, 2> kPts = {{
       {0.0, 0.0, kMuzzleWindFps, 50.0},
       {1500.0, 0.0, 14.66, 50.0},
   }};
-  const lob::Context kCtx = builder.WindProfile(kPts).Build();
+  const lob::Context kCtx =
+      builder.WindProfile(kPts).WindShearExponent(0.0).Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
   EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(1).z_fps, 14.66);
-  EXPECT_TRUE(std::isnan(kCtx.wind_roughness_ft));
 }
-TEST_F(WindProfileBuildFixture, RejectsBadAltitudeConfig) {
-  // Non-positive roughness.
-  EXPECT_EQ(builder.WindRoughnessLengthFt(0.0).Build().error,
+
+TEST_F(WindProfileBuildFixture, RejectsBadShearConfig) {
+  // Non-finite, negative, or above-range exponents.
+  EXPECT_EQ(builder.WindShearExponent(-0.5).Build().error,
             lob::ErrorT::kWindProfileInvalid);
-  // Roughness at or above the fixed 5-ft reference leaves the log-law
-  // denominator non-positive.
-  constexpr double kTallRoughnessFt = 6.0;
-  EXPECT_EQ(builder.WindRoughnessLengthFt(kTallRoughnessFt).Build().error,
+  EXPECT_EQ(builder.WindShearExponent(1.5).Build().error,
             lob::ErrorT::kWindProfileInvalid);
-  // Measurement height at/below roughness while scaling is on.
+  EXPECT_EQ(builder.WindShearExponent(std::numeric_limits<double>::quiet_NaN())
+                .Build()
+                .error,
+            lob::ErrorT::kWindProfileInvalid);
+  // Measurement heights at or below zero have no power-law domain.
   const std::array<lob::WindPoint, 2> kLow = {{
       {0.0, 0.0, kMuzzleWindFps, 1.0},
-      {1500.0, 0.0, 14.66, 0.05},
+      {1500.0, 0.0, 14.66, 0.0},
   }};
   lob::Builder b3;
   b3.BallisticCoefficientPsi(kTestBcPsi)
@@ -188,8 +190,7 @@ TEST_F(WindProfileBuildFixture, RejectsBadAltitudeConfig) {
       .InitialVelocityFps(kTestVelocityFps)
       .ZeroAngleMOA(kTestZeroAngleMoa)
       .OpticHeightInches(kTestOpticHeightIn)
-      .WindProfile(kLow)
-      .WindRoughnessLengthFt(kGrassRoughnessFt);
+      .WindProfile(kLow);
   EXPECT_EQ(b3.Build().error, lob::ErrorT::kWindProfileInvalid);
 }
 
@@ -197,9 +198,7 @@ TEST_F(WindProfileBuildFixture, MissingHeightsStoreVerbatim) {
   // NaN heights mean head-height measurements: the fixed reference itself,
   // so normalization is identity and stored winds equal entered winds —
   // identically for profile and uniform inputs.
-  const lob::Context kProfileCtx = builder.WindProfile(kTwoPoint)
-                                       .WindRoughnessLengthFt(kGrassRoughnessFt)
-                                       .Build();
+  const lob::Context kProfileCtx = builder.WindProfile(kTwoPoint).Build();
   ASSERT_EQ(kProfileCtx.error, lob::ErrorT::kNone);
   EXPECT_DOUBLE_EQ(kProfileCtx.wind_nodes.at(0).z_fps, kMuzzleWindFps);
   lob::Builder uniform;
@@ -211,8 +210,7 @@ TEST_F(WindProfileBuildFixture, MissingHeightsStoreVerbatim) {
       .ZeroAngleMOA(kTestZeroAngleMoa)
       .OpticHeightInches(kTestOpticHeightIn)
       .WindHeading(lob::ClockAngleT::kIII)
-      .WindSpeedFps(kMuzzleWindFps)
-      .WindRoughnessLengthFt(kGrassRoughnessFt);
+      .WindSpeedFps(kMuzzleWindFps);
   const lob::Context kUniformCtx = uniform.Build();
   ASSERT_EQ(kUniformCtx.error, lob::ErrorT::kNone);
   EXPECT_NEAR(kProfileCtx.wind_nodes.at(0).x_fps,
@@ -295,12 +293,14 @@ TEST_F(WindProfileBuildFixture, TwoPointFlatProfileMatchesUniformSolve) {
 }
 
 TEST_F(WindProfileBuildFixture, CrosswindBlindToInclineAtSolve) {
-  // Solve-level: gravity pitches on incline so TOF differs slightly.
+  // Solve-level with scaling disabled: gravity pitches on incline so TOF
+  // differs slightly, isolating the gravity effect from altitude scaling.
   const std::array<uint32_t, 3> kRanges = {900, 1800, 2700};
   std::array<lob::Output, 3> flat_outs{};
   std::array<lob::Output, 3> hill_outs{};
   const size_t kNFlat = lob::Solve(builder.WindHeading(lob::ClockAngleT::kIII)
                                        .WindSpeedMph(kWindSpeedMph)
+                                       .WindShearExponent(0.0)
                                        .Build(),
                                    kRanges, &flat_outs);
   lob::Builder hb;
@@ -313,6 +313,7 @@ TEST_F(WindProfileBuildFixture, CrosswindBlindToInclineAtSolve) {
       .OpticHeightInches(kTestOpticHeightIn)
       .WindHeading(lob::ClockAngleT::kIII)
       .WindSpeedMph(kWindSpeedMph)
+      .WindShearExponent(0.0)
       .RangeAngleDeg(kInclineDeg);
   const size_t kNHill = lob::Solve(hb.Build(), kRanges, &hill_outs);
   EXPECT_EQ(kNFlat, kNHill);
@@ -324,30 +325,37 @@ TEST_F(WindProfileBuildFixture, CrosswindBlindToInclineAtSolve) {
 }
 
 TEST_F(WindProfileBuildFixture, AltitudeScalingGrowsApexDrift) {
-  // Same profile with/without grass roughness. NaN heights mean head-height
-  // measurements — the fixed reference — so normalization is identity on
-  // both sides and only the solver-side altitude factor differs. With the
-  // scale clamped at or above 1, scaled drift meets or exceeds plain drift
-  // at every range, strictly wherever the trajectory flies above reference.
+  // A high-arc trajectory (30-MOA zero) spends most of its flight above the
+  // 5-ft reference, so explicit shear grows drift at every range versus the
+  // identical unscaled (alpha 0) profile. Verified by probe: GT holds with
+  // growing margins (0.9/6.7/19.0 in at 900/1800/3000 ft).
+  constexpr double kHighArcZeroMoa = 30.0;
   const std::array<lob::WindPoint, 2> kPts = {{
       {0.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
       {3000.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
   }};
-  const std::array<uint32_t, 3> kRanges = {300, 1500, 3000};
+  const std::array<uint32_t, 3> kRanges = {900, 1800, 3000};
   std::array<lob::Output, 3> plain_outs{};
   std::array<lob::Output, 3> scaled_outs{};
-  lob::Solve(builder.WindProfile(kPts).Build(), kRanges, &plain_outs);
+  const lob::Context kPlainCtx = builder.WindProfile(kPts)
+                                     .ZeroAngleMOA(kHighArcZeroMoa)
+                                     .WindShearExponent(0.0)
+                                     .Build();
+  ASSERT_EQ(kPlainCtx.error, lob::ErrorT::kNone);
   lob::Builder sb;
   sb.BallisticCoefficientPsi(kTestBcPsi)
       .BCDragFunction(lob::DragFunctionT::kG1)
       .DiameterInch(kTestDiameterIn)
       .MassGrains(kTestMassGrains)
       .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
+      .ZeroAngleMOA(kHighArcZeroMoa)
       .OpticHeightInches(kTestOpticHeightIn)
       .WindProfile(kPts)
-      .WindRoughnessLengthFt(kGrassRoughnessFt);
-  lob::Solve(sb.Build(), kRanges, &scaled_outs);
+      .WindShearExponent(kTestShearExponent);
+  const lob::Context kScaledCtx = sb.Build();
+  ASSERT_EQ(kScaledCtx.error, lob::ErrorT::kNone);
+  lob::Solve(kPlainCtx, kRanges, &plain_outs);
+  lob::Solve(kScaledCtx, kRanges, &scaled_outs);
   for (size_t i = 0; i < kRanges.size(); ++i) {
     EXPECT_GT(scaled_outs.at(i).deflection, plain_outs.at(i).deflection);
   }

@@ -70,7 +70,7 @@ class Impl {
   const LobWindPoint* wind_profile_points{nullptr};
   size_t wind_profile_count{0};
   bool wind_use_profile{false};
-  double wind_roughness_ft{NaN()};
+  double wind_shear_exponent{kDefaultWindShearExponent};
 
   size_t table_count{0};
   const float* table_xs{nullptr};
@@ -271,18 +271,13 @@ LobErrorT ValidateWindProfile(Impl* pimpl) {
   return kLobErrorNone;
 }
 
-double WindHeightFactor(double height_agl, double roughness) {
+double WindHeightFactor(double height_agl, double alpha) {
   // Missing heights are head-height measurements: the fixed reference
-  // itself, so the factor is exactly 1.
+  // itself, so the factor is exactly 1 (pow(1, alpha) == 1).
   if (std::isnan(height_agl)) {
     return 1.0;
   }
-  // Callers guarantee roughness set and heights valid; guard anyway.
-  if (!(height_agl > roughness)) {
-    return NaN();
-  }
-  return std::log(kWindReferenceHeightFt / roughness) /
-         std::log(height_agl / roughness);
+  return std::pow(kWindReferenceHeightFt / height_agl, alpha);
 }
 
 LobErrorT ValidateCustomTable(Impl* pimpl) {
@@ -480,19 +475,15 @@ void BuildCoefficients(Impl* pimpl, LobContext* pout) {
 void BuildWind(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
-  // Resolve altitude configuration. NaN roughness means scaling off; a set
-  // roughness must sit below the fixed head-height reference so the log-law
-  // denominator stays positive.
-  const bool kScaling = !std::isnan(pimpl->wind_roughness_ft);
-  if (kScaling) {
-    if (!(pimpl->wind_roughness_ft > 0.0) ||
-        !std::isfinite(pimpl->wind_roughness_ft) ||
-        !(pimpl->wind_roughness_ft < kWindReferenceHeightFt)) {
-      pout->error = kLobErrorWindProfileInvalid;
-      return;
-    }
+  // Shear exponent: scaling is always active, with 0 disabling it exactly
+  // via pow(x, 0) == 1. Valid range is [0, 1].
+  if (!std::isfinite(pimpl->wind_shear_exponent) ||
+      pimpl->wind_shear_exponent < kMinWindShearExponent ||
+      pimpl->wind_shear_exponent > kMaxWindShearExponent) {
+    pout->error = kLobErrorWindProfileInvalid;
+    return;
   }
-  pout->wind_roughness_ft = pimpl->wind_roughness_ft;
+  pout->wind_shear_exponent = pimpl->wind_shear_exponent;
 
   // Frame pitch resolved once here; stored nodes are frame components, so the
   // solver never executes wind-direction trigonometry.
@@ -511,18 +502,16 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
     }
     for (size_t i = 0; i < pimpl->wind_profile_count; i++) {
       const LobWindPoint& point = pimpl->wind_profile_points[i];
-      double height_factor = 1.0;
-      if (kScaling) {
-        if (!std::isnan(point.height_ft_agl) &&
-            !(point.height_ft_agl > pimpl->wind_roughness_ft)) {
-          pout->error = kLobErrorWindProfileInvalid;
-          return;
-        }
-        height_factor =
-            WindHeightFactor(point.height_ft_agl, pimpl->wind_roughness_ft);
+      // Explicit heights must clear the power-law domain (NaN means the
+      // reference itself and needs no check).
+      if (!std::isnan(point.height_ft_agl) && !(point.height_ft_agl > 0.0)) {
+        pout->error = kLobErrorWindProfileInvalid;
+        return;
       }
-      const double kHx = point.x_fps * height_factor;
-      const double kHz = point.z_fps * height_factor;
+      const double kHeightFactor =
+          WindHeightFactor(point.height_ft_agl, pimpl->wind_shear_exponent);
+      const double kHx = point.x_fps * kHeightFactor;
+      const double kHz = point.z_fps * kHeightFactor;
       wind_nodes[i].range_ft = static_cast<uint32_t>(point.range_ft);
       wind_nodes[i].x_fps = kHx * kCos;
       wind_nodes[i].y_fps = -kHx * kSin;
@@ -1251,12 +1240,11 @@ LobBuilder* LobBuilderWindProfile(LobBuilder* pbuilder,
   return pbuilder;
 }
 
-LobBuilder* LobBuilderWindRoughnessLengthFt(LobBuilder* pbuilder,
-                                            double value) {
+LobBuilder* LobBuilderWindShearExponent(LobBuilder* pbuilder, double value) {
   if (pbuilder == nullptr) {
     return nullptr;
   }
-  Pimpl(pbuilder)->wind_roughness_ft = value;
+  Pimpl(pbuilder)->wind_shear_exponent = value;
   return pbuilder;
 }
 

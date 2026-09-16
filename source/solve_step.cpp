@@ -156,10 +156,10 @@ CartesianT<FpsT> GetWind(const LobContext& ctx,
     }
   }
   // 3. Altitude scale about true vertical (flat-terrain assumption).
-  // Heights resolve against the fixed head-height reference: at or below
-  // it the wind holds at full reference strength, aloft it follows the log
-  // law up to a double cap.
-  if (!std::isnan(ctx.wind_roughness_ft)) {
+  // Heights resolve against the fixed head-height reference; evaluated
+  // heights clamp to the surface-layer band, and alpha 0 disables scaling
+  // exactly via pow(x, 0) == 1.
+  if (ctx.wind_shear_exponent > 0.0 || ctx.wind_shear_exponent < 0.0) {
     const double kGx = ctx.gravity.x;
     const double kGy = ctx.gravity.y;
     const double kG = std::sqrt((kGx * kGx) + (kGy * kGy));
@@ -168,13 +168,14 @@ CartesianT<FpsT> GetWind(const LobContext& ctx,
             ? -(((s.P().X().Value() * kGx) + (s.P().Y().Value() * kGy)) / kG)
             : 0.0;
     double zagl = kH + kWindReferenceHeightFt;
-    if (!(zagl > kWindReferenceHeightFt)) {
-      zagl = kWindReferenceHeightFt;
+    if (!(zagl > kMinWindHeightFt)) {
+      zagl = kMinWindHeightFt;
+    }
+    if (!(zagl < kMaxWindHeightFt)) {
+      zagl = kMaxWindHeightFt;
     }
     const double kS =
-        std::min(std::log(zagl / ctx.wind_roughness_ft) /
-                     std::log(kWindReferenceHeightFt / ctx.wind_roughness_ft),
-                 kMaxWindScaleFactor);
+        std::pow(zagl / kWindReferenceHeightFt, ctx.wind_shear_exponent);
     wx *= kS;
     wy *= kS;
     wz *= kS;
