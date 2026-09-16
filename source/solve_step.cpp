@@ -119,10 +119,10 @@ CartesianT<FpsT> GetWind(const LobContext& ctx,
   const LobWindNode* wind_nodes = &ctx.wind_nodes[0];
   auto count = std::min(static_cast<size_t>(ctx.wind_count),
                         static_cast<size_t>(LOB_WIND_POINTS));
-  // Node components widen explicitly once here; all math below is double.
-  auto wx = static_cast<double>(wind_nodes[0].x_fps);
-  auto wy = static_cast<double>(wind_nodes[0].y_fps);
-  auto wz = static_cast<double>(wind_nodes[0].z_fps);
+  // Node components load directly; all math below is double.
+  double wx = wind_nodes[0].x_fps;
+  double wy = wind_nodes[0].y_fps;
+  double wz = wind_nodes[0].z_fps;
   const double kX = s.P().X().Value();
   if (count > 1 && kX > 0.0) {
     double px = wind_nodes[0].range_ft;
@@ -132,9 +132,9 @@ CartesianT<FpsT> GetWind(const LobContext& ctx,
     bool found = false;
     for (size_t i = 1; i < count; ++i) {
       const double kRange = wind_nodes[i].range_ft;
-      const auto kNx = static_cast<double>(wind_nodes[i].x_fps);
-      const auto kNy = static_cast<double>(wind_nodes[i].y_fps);
-      const auto kNz = static_cast<double>(wind_nodes[i].z_fps);
+      const double kNx = wind_nodes[i].x_fps;
+      const double kNy = wind_nodes[i].y_fps;
+      const double kNz = wind_nodes[i].z_fps;
       if (kX <= kRange) {
         const double kDen = kRange - px;
         const double kT = kDen > 0.0 ? (kX - px) / kDen : 0.0;

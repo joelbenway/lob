@@ -142,12 +142,11 @@ TEST(LobCAPITest, WindProfileCapacityConstant) {
 }
 
 TEST(LobCAPITest, WindNodeLayout) {
-  EXPECT_EQ(sizeof(LobWindNode), (sizeof(uint32_t) + (3 * sizeof(float))));
+  EXPECT_EQ(sizeof(LobWindNode), 4 * sizeof(double));
   EXPECT_EQ(offsetof(LobWindNode, range_ft), 0U);
-  EXPECT_EQ(offsetof(LobWindNode, x_fps), sizeof(uint32_t));
-  EXPECT_EQ(offsetof(LobWindNode, y_fps), (sizeof(uint32_t) + sizeof(float)));
-  EXPECT_EQ(offsetof(LobWindNode, z_fps),
-            (sizeof(uint32_t) + (2 * sizeof(float))));
+  EXPECT_EQ(offsetof(LobWindNode, x_fps), sizeof(double));
+  EXPECT_EQ(offsetof(LobWindNode, y_fps), 2 * sizeof(double));
+  EXPECT_EQ(offsetof(LobWindNode, z_fps), 3 * sizeof(double));
 }
 
 TEST(LobCAPITest, WindContextPacksWithoutWaste) {
