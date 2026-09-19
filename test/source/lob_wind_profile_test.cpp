@@ -141,14 +141,15 @@ TEST_F(WindProfileBuildFixture, LastWindCallWinsBothDirections) {
 
 TEST_F(WindProfileBuildFixture, NormalizesHighMeasurementToReference) {
   // The drone reading at 50 ft AGL reduces to the 1-ft reference by
-  // the power-law factor under test (default shear exponent).
+  // the power-law factor under test (explicit shear exponent).
   const double kF = std::pow(lob::kWindReferenceHeightFt / 50.0,
-                             lob::kDefaultWindShearExponent);  // ≈ 0.5716
+                             kTestShearExponent);  // ≈ 0.3761
   const std::array<lob::WindPoint, 2> kPts = {{
       {0.0, 0.0, kMuzzleWindFps, 1.0},
       {1500.0, 0.0, 14.66, 50.0},
   }};
-  const lob::Context kCtx = builder.WindProfile(kPts).Build();
+  const lob::Context kCtx =
+      builder.WindProfile(kPts).WindShearExponent(kTestShearExponent).Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
   EXPECT_NEAR(kCtx.wind_nodes.at(1).z_fps, 14.66 * kF, 1E-9);
   EXPECT_EQ(kCtx.wind_nodes.at(1).range_ft, 1500U);
@@ -165,6 +166,16 @@ TEST_F(WindProfileBuildFixture, ZeroShearExponentStoresVerbatim) {
       builder.WindProfile(kPts).WindShearExponent(0.0).Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
   EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(1).z_fps, 14.66);
+}
+
+TEST_F(WindProfileBuildFixture, DefaultShearExponentDisablesScaling) {
+  // Scaling is opt-in: without an explicit exponent the stored value is 0,
+  // which the solver treats as unscaled wind.
+  const lob::Context kCtx = builder.WindHeading(lob::ClockAngleT::kIII)
+                                .WindSpeedMph(kLightWindSpeedMph)
+                                .Build();
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+  EXPECT_DOUBLE_EQ(kCtx.wind_shear_exponent, 0.0);
 }
 
 TEST_F(WindProfileBuildFixture, RejectsBadShearConfig) {

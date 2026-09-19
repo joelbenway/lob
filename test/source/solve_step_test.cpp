@@ -24,6 +24,7 @@ namespace {
 constexpr double kTestBC = 0.436;
 constexpr uint16_t kTestMuzzleVelocity = 3100U;
 constexpr double kTestZeroAngle = 6.11;
+constexpr double kTestShearExponent = 0.25;
 constexpr double kWindSpeedMph = 10.0;
 constexpr double kInclineDeg = 15.0;
 constexpr double kQueryWindZFps = 10.0;
@@ -199,23 +200,23 @@ TEST(WindProfileQuery, LerpsMidpointAndClampsEnds) {
 
 TEST(WindProfileQuery, AltitudeScalesAboutGroundReference) {
   // Unit reference (prone muzzle height): at the reference the wind holds
-  // (S = 1); at z = 246 ft, S = 246^0.143 ≈ 2.20; past the 300-ft
-  // surface-layer cap the factor pins at 300^0.143 ≈ 2.26.
+  // (S = 1); at z = 16 ft, S = 16^0.25 = 2 exactly; past the 300-ft
+  // surface-layer cap the factor pins at 300^0.25 ≈ 4.16.
   LobContext ctx = MakeWindQueryCtx();
-  ctx.wind_shear_exponent = lob::kDefaultWindShearExponent;
+  ctx.wind_shear_exponent = kTestShearExponent;
   const CartesianT<FpsT> kAtMuzzle = lob::GetWind(ctx, MakeStateAt(0.0, 0.0));
   EXPECT_NEAR(kAtMuzzle.Z().Value(), 10.0, 1E-9);  // S = 1 at reference
-  const CartesianT<FpsT> kHigh = lob::GetWind(ctx, MakeStateAt(0.0, 245.0));
-  EXPECT_NEAR(kHigh.Z().Value(), 21.97, 1e-2);  // hand-computed ≈ 21.973
+  const CartesianT<FpsT> kHigh = lob::GetWind(ctx, MakeStateAt(0.0, 15.0));
+  EXPECT_NEAR(kHigh.Z().Value(), 20.0, 1E-9);
   const CartesianT<FpsT> kCapped = lob::GetWind(ctx, MakeStateAt(0.0, 1000.0));
-  EXPECT_NEAR(kCapped.Z().Value(), 22.61, 1e-2);  // hand-computed ≈ 22.606
+  EXPECT_NEAR(kCapped.Z().Value(), 41.62, 1e-2);  // hand-computed ≈ 41.618
 }
 
 TEST(WindProfileQuery, BelowMinHeightClampsToOneFoot) {
   // Below the 1-ft evaluation floor the height clamps to the reference
   // itself, so the factor is exactly 1 (never attenuates, never NaNs).
   LobContext ctx = MakeWindQueryCtx();
-  ctx.wind_shear_exponent = lob::kDefaultWindShearExponent;
+  ctx.wind_shear_exponent = kTestShearExponent;
   const CartesianT<FpsT> kW = lob::GetWind(ctx, MakeStateAt(2500.0, -40.0));
   EXPECT_TRUE(std::isfinite(kW.X().Value()));
   EXPECT_TRUE(std::isfinite(kW.Y().Value()));
@@ -247,16 +248,16 @@ TEST(WindProfileQuery, InclinedScalingUsesTrueVertical) {
   // Regression: altitude scaling must resolve height through the gravity
   // vector, never frame-Y. At 15° incline and state (500, 0), frame-Y plus
   // the reference offset says S = 1 while true height x*sin(15°) ≈ 129 ft
-  // (S ≈ 1.60).
-  const LobContext kCtx = BuildUniformWindCtx(kWindSpeedMph, kInclineDeg,
-                                              lob::kDefaultWindShearExponent);
+  // (S ≈ 3.38 at explicit shear).
+  const LobContext kCtx =
+      BuildUniformWindCtx(kWindSpeedMph, kInclineDeg, kTestShearExponent);
   const CartesianT<FpsT> kW = lob::GetWind(kCtx, MakeStateAt(500.0, 0.0));
   const double kG = std::sqrt((kCtx.gravity.x * kCtx.gravity.x) +
                               (kCtx.gravity.y * kCtx.gravity.y));
   const double kH = -((500.0 * kCtx.gravity.x) / kG);
   const double kS =
       std::pow((kH + lob::kWindReferenceHeightFt) / lob::kWindReferenceHeightFt,
-               lob::kDefaultWindShearExponent);
+               kTestShearExponent);
   // Guard against a vacuous test: the gravity-vector answer must differ
   // decisively from the frame-Y answer (S = 1).
   EXPECT_GT(std::abs(kS - 1.0), 0.5);
