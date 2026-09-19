@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 
@@ -182,6 +183,12 @@ constexpr PmsiT CalculateSectionalDensity(InchT bullet_diameter,
                  (bullet_diameter.Value() * bullet_diameter.Value()));
   }
   return PmsiT(0);
+}
+
+// https://en.wikipedia.org/wiki/Wind_profile_power_law
+inline double CalculatePowerLawWindFactor(FeetT height, FeetT reference_height,
+                                          double alpha) {
+  return std::pow(height.Value() / reference_height.Value(), alpha);
 }
 
 }  // namespace lob
