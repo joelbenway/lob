@@ -32,6 +32,11 @@ enum class DragTableMode : uint8_t {
   kStandard,
 };
 
+enum class WindTableMode : uint8_t {
+  kProfile,
+  kStandard,
+};
+
 }  // namespace
 
 class Impl {
@@ -69,7 +74,7 @@ class Impl {
 
   const LobWindPoint* wind_profile_points{nullptr};
   size_t wind_profile_count{0};
-  bool wind_use_profile{false};
+  WindTableMode wind_table_mode{WindTableMode::kStandard};
   double wind_shear_exponent{kDefaultWindShearExponent};
 
   size_t table_count{0};
@@ -246,8 +251,7 @@ LobErrorT ValidateWindProfile(Impl* pimpl) {
     const LobWindPoint& point = pimpl->wind_profile_points[i];
     if (!std::isfinite(point.range_ft) || !std::isfinite(point.x_fps) ||
         !std::isfinite(point.z_fps) ||
-        (!std::isnan(point.height_ft_agl) &&
-         !std::isfinite(point.height_ft_agl))) {
+        (!std::isnan(point.height_ft) && !std::isfinite(point.height_ft))) {
       return kLobErrorWindProfileInvalid;
     }
     if (i == 0) {
@@ -485,7 +489,7 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
   // pro-bounds-constant-array-index (the count is runtime-validated).
   LobWindNode* wind_nodes = &pout->wind_nodes[0];
 
-  if (pimpl->wind_use_profile) {
+  if (pimpl->wind_table_mode == WindTableMode::kProfile) {
     const LobErrorT kErr = ValidateWindProfile(pimpl);
     if (kErr != kLobErrorNone) {
       pout->error = kErr;
@@ -495,17 +499,17 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
       const LobWindPoint& point = pimpl->wind_profile_points[i];
       // Explicit heights must clear the power-law domain (NaN means the
       // reference itself and needs no check).
-      if (!std::isnan(point.height_ft_agl) && !(point.height_ft_agl > 0.0)) {
+      if (!std::isnan(point.height_ft) && !(point.height_ft > 0.0)) {
         pout->error = kLobErrorWindProfileInvalid;
         return;
       }
       // NaN heights mean measurement at the reference itself, so the
       // factor is exactly 1: the power law evaluated at its own reference.
       const double kHeightFactor =
-          std::isnan(point.height_ft_agl)
+          std::isnan(point.height_ft)
               ? 1.0
               : CalculatePowerLawWindFactor(FeetT(kWindReferenceHeightFt),
-                                            FeetT(point.height_ft_agl),
+                                            FeetT(point.height_ft),
                                             pimpl->wind_shear_exponent);
       const double kHx = point.x_fps * kHeightFactor;
       const double kHz = point.z_fps * kHeightFactor;
@@ -1181,7 +1185,7 @@ LobBuilder* LobBuilderWindHeading(LobBuilder* pbuilder, LobClockAngleT value) {
     pimpl->wind_heading_rad =
         kDegreesPerClockNumber * kPosition + kDegreesPerTurn;
   }
-  pimpl->wind_use_profile = false;
+  pimpl->wind_table_mode = WindTableMode::kStandard;
   return pbuilder;
 }
 
@@ -1201,7 +1205,7 @@ LobBuilder* LobBuilderWindHeadingDeg(LobBuilder* pbuilder, double value) {
   }
 
   pimpl->wind_heading_rad = angle;
-  pimpl->wind_use_profile = false;
+  pimpl->wind_table_mode = WindTableMode::kStandard;
   return pbuilder;
 }
 
@@ -1211,7 +1215,7 @@ LobBuilder* LobBuilderWindSpeedFps(LobBuilder* pbuilder, double value) {
   }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->wind_speed_fps = FpsT(value);
-  pimpl->wind_use_profile = false;
+  pimpl->wind_table_mode = WindTableMode::kStandard;
   return pbuilder;
 }
 
@@ -1221,7 +1225,7 @@ LobBuilder* LobBuilderWindSpeedMph(LobBuilder* pbuilder, double value) {
   }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->wind_speed_fps = MphT(value);
-  pimpl->wind_use_profile = false;
+  pimpl->wind_table_mode = WindTableMode::kStandard;
   return pbuilder;
 }
 
@@ -1233,7 +1237,7 @@ LobBuilder* LobBuilderWindProfile(LobBuilder* pbuilder,
   auto* pimpl = Pimpl(pbuilder);
   pimpl->wind_profile_points = ppoints;
   pimpl->wind_profile_count = count;
-  pimpl->wind_use_profile = true;
+  pimpl->wind_table_mode = WindTableMode::kProfile;
   return pbuilder;
 }
 
