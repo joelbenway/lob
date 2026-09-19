@@ -19,8 +19,9 @@ constexpr double kWindReferenceHeightFt = 1.0;
 // the power law is a surface-layer model and is not extrapolated past it.
 constexpr double kMinWindHeightFt = 1.0;
 constexpr double kMaxWindHeightFt = 300.0;
-// Default Hellmann shear exponent (open terrain); scaling is always active.
-constexpr double kDefaultWindShearExponent = 0.143;
+// Default Hellmann shear exponent: 0 disables scaling, so wind behaves
+// uniformly unless the caller opts in with WindShearExponent.
+constexpr double kDefaultWindShearExponent = 0.0;
 // Accepted shear exponents (0 disables scaling exactly; negatives model
 // inversions and are out of scope).
 constexpr double kMinWindShearExponent = 0.0;

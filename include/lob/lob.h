@@ -544,9 +544,10 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindProfile(
 /**
  * @brief Sets the Hellmann shear exponent for wind profile height scaling.
  * @details Wind shear follows the power law with this exponent; scaling is
- * always active and 0 disables it exactly. Defaults to 0.143 (open
- * terrain) when unset. Typical values: open water 0.10, open grassland
- * 0.143, farmland/crops 0.20, suburban 0.25, forest/urban 0.30.
+ * off unless opted in with a nonzero value (0 disables it exactly).
+ * Defaults to 0 when unset. Typical values when enabling: open water 0.10,
+ * open grassland 0.143, farmland/crops 0.20, suburban 0.25, forest/urban
+ * 0.30.
  * @param pbuilder Pointer to the builder.
  * @param value The shear exponent in [0, 1].
  * @return Pointer to the builder, or nullptr if pbuilder is null.
