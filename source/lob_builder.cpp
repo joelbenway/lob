@@ -271,15 +271,6 @@ LobErrorT ValidateWindProfile(Impl* pimpl) {
   return kLobErrorNone;
 }
 
-double WindHeightFactor(double height_agl, double alpha) {
-  // Missing heights are head-height measurements: the fixed reference
-  // itself, so the factor is exactly 1 (pow(1, alpha) == 1).
-  if (std::isnan(height_agl)) {
-    return 1.0;
-  }
-  return std::pow(kWindReferenceHeightFt / height_agl, alpha);
-}
-
 LobErrorT ValidateCustomTable(Impl* pimpl) {
   if (pimpl->table_count < 2) {
     return kLobErrorMachDragTableTooShort;
@@ -508,8 +499,14 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
         pout->error = kLobErrorWindProfileInvalid;
         return;
       }
+      // NaN heights mean measurement at the reference itself, so the
+      // factor is exactly 1: the power law evaluated at its own reference.
       const double kHeightFactor =
-          WindHeightFactor(point.height_ft_agl, pimpl->wind_shear_exponent);
+          std::isnan(point.height_ft_agl)
+              ? 1.0
+              : CalculatePowerLawWindFactor(FeetT(kWindReferenceHeightFt),
+                                            FeetT(point.height_ft_agl),
+                                            pimpl->wind_shear_exponent);
       const double kHx = point.x_fps * kHeightFactor;
       const double kHz = point.z_fps * kHeightFactor;
       wind_nodes[i].range_ft = static_cast<uint32_t>(point.range_ft);

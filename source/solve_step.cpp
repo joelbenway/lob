@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstddef>
 
+#include "calc.hpp"
 #include "cartesian.hpp"
 #include "constants.hpp"
 #include "eng_units.hpp"
@@ -174,8 +175,8 @@ CartesianT<FpsT> GetWind(const LobContext& ctx,
     if (!(zagl < kMaxWindHeightFt)) {
       zagl = kMaxWindHeightFt;
     }
-    const double kS =
-        std::pow(zagl / kWindReferenceHeightFt, ctx.wind_shear_exponent);
+    const double kS = CalculatePowerLawWindFactor(
+        FeetT(zagl), FeetT(kWindReferenceHeightFt), ctx.wind_shear_exponent);
     wx *= kS;
     wy *= kS;
     wz *= kS;
