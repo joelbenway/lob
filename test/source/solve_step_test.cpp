@@ -244,24 +244,34 @@ TEST(WindProfileQuery, CrosswindResolvesIdenticallyWithIncline) {
   }
 }
 
-TEST(WindProfileQuery, InclinedScalingUsesTrueVertical) {
-  // Regression: altitude scaling must resolve height through the gravity
-  // vector, never frame-Y. At 15° incline and state (500, 0), frame-Y plus
-  // the reference offset says S = 1 while true height x*sin(15°) ≈ 129 ft
-  // (S ≈ 3.38 at explicit shear).
+TEST(WindProfileQuery, InclinedScalingUsesTiltedPlane) {
+  // Regression: altitude scaling resolves height above the shot-parallel
+  // ground plane, never true vertical above muzzle level. On the sight
+  // line (Y = 0) the height is the reference at any incline, so S = 1;
+  // above it the height is Y/cosθ, which the flat formula (X·sinθ + Y·cosθ)
+  // misstates badly downhill (129 ft vs 52 ft here).
   const LobContext kCtx =
       BuildUniformWindCtx(kWindSpeedMph, kInclineDeg, kTestShearExponent);
-  const CartesianT<FpsT> kW = lob::GetWind(kCtx, MakeStateAt(500.0, 0.0));
-  const double kG = std::sqrt((kCtx.gravity.x * kCtx.gravity.x) +
-                              (kCtx.gravity.y * kCtx.gravity.y));
-  const double kH = -((500.0 * kCtx.gravity.x) / kG);
-  const double kS =
-      std::pow((kH + lob::kWindReferenceHeightFt) / lob::kWindReferenceHeightFt,
+  const CartesianT<FpsT> kOnSightLine =
+      lob::GetWind(kCtx, MakeStateAt(500.0, 0.0));
+  EXPECT_DOUBLE_EQ(kOnSightLine.Z().Value(), kCtx.wind_nodes[0].z_fps);
+  const double kCosT =
+      std::cos(lob::RadiansT(lob::DegreesT(kInclineDeg)).Value());
+  const double kHFlat =
+      (500.0 * std::sin(lob::RadiansT(lob::DegreesT(kInclineDeg)).Value())) +
+      (50.0 * kCosT);
+  const double kSFlat = std::pow(
+      (kHFlat + lob::kWindReferenceHeightFt) / lob::kWindReferenceHeightFt,
+      kTestShearExponent);
+  const double kSTilted =
+      std::pow(((50.0 / kCosT) + lob::kWindReferenceHeightFt) /
+                   lob::kWindReferenceHeightFt,
                kTestShearExponent);
-  // Guard against a vacuous test: the gravity-vector answer must differ
-  // decisively from the frame-Y answer (S = 1).
-  EXPECT_GT(std::abs(kS - 1.0), 0.5);
-  EXPECT_NEAR(kW.Z().Value(), kCtx.wind_nodes[0].z_fps * kS, 1e-9);
+  // Guard against a vacuous test: the tilted answer must differ decisively
+  // from the flat answer (≈ 2.70 vs ≈ 3.66).
+  EXPECT_GT(std::abs(kSTilted - kSFlat), 0.5);
+  const CartesianT<FpsT> kW = lob::GetWind(kCtx, MakeStateAt(500.0, 50.0));
+  EXPECT_NEAR(kW.Z().Value(), kCtx.wind_nodes[0].z_fps * kSTilted, 1e-9);
 }
 
 }  // namespace tests

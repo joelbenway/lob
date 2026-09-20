@@ -156,19 +156,16 @@ CartesianT<FpsT> GetWind(const LobContext& ctx,
       wz = phz;
     }
   }
-  // 3. Altitude scale about true vertical (flat-terrain assumption).
-  // Heights resolve against the fixed head-height reference; evaluated
-  // heights clamp to the surface-layer band, and alpha 0 disables scaling
-  // exactly via pow(x, 0) == 1.
+  // 3. Altitude scale above the shot-parallel ground plane. The plane
+  // through the muzzle parallel to the shot passes through every ground
+  // target's footing, so S = 1 at both ends; height above it is frame-Y
+  // over cos(range angle), recovered from gravity (strictly positive
+  // since ±90° is rejected at Build). Identical to frame-Y at θ = 0.
   if (ctx.wind_shear_exponent > 0.0 || ctx.wind_shear_exponent < 0.0) {
-    const double kGx = ctx.gravity.x;
     const double kGy = ctx.gravity.y;
-    const double kG = std::sqrt((kGx * kGx) + (kGy * kGy));
-    const double kH =
-        kG > 0.0
-            ? -(((s.P().X().Value() * kGx) + (s.P().Y().Value() * kGy)) / kG)
-            : 0.0;
-    double zagl = kH + kWindReferenceHeightFt;
+    const double kG = std::sqrt((ctx.gravity.x * ctx.gravity.x) + (kGy * kGy));
+    const double kCosT = (kG > 0.0 && -kGy > 0.0) ? -kGy / kG : 1.0;
+    double zagl = (s.P().Y().Value() / kCosT) + kWindReferenceHeightFt;
     if (!(zagl > kMinWindHeightFt)) {
       zagl = kMinWindHeightFt;
     }
