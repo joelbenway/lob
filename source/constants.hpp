@@ -10,22 +10,6 @@ namespace lob {
 constexpr double kPi = 3.14159265358979323846;
 constexpr int32_t kDegreesPerTurn = 360;
 constexpr double kStandardGravityFtPerSecSq = 32.17405;
-// Fixed reference height (feet above ground) for power-law wind scaling:
-// all winds normalize here, and the altitude factor is 1 here by
-// construction. Set at prone muzzle height so S >= 1 everywhere and scaled
-// drift never comes in under plain drift.
-constexpr double kWindReferenceHeightFt = 1.0;
-// Evaluated trajectory heights clamp to this band (feet above ground);
-// the power law is a surface-layer model and is not extrapolated past it.
-constexpr double kMinWindHeightFt = 1.0;
-constexpr double kMaxWindHeightFt = 300.0;
-// Default Hellmann shear exponent: 0 disables scaling, so wind behaves
-// uniformly unless the caller opts in with WindShearExponent.
-constexpr double kDefaultWindShearExponent = 0.0;
-// Accepted shear exponents (0 disables scaling exactly; negatives model
-// inversions and are out of scope).
-constexpr double kMinWindShearExponent = 0.0;
-constexpr double kMaxWindShearExponent = 1.0;
 
 namespace isa {
 constexpr double kSeaLevelDegF = 59.0;
