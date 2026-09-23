@@ -34,7 +34,7 @@ enum class DragTableMode : uint8_t {
 
 enum class WindTableMode : uint8_t {
   kProfile,
-  kStandard,
+  kUniform,
 };
 
 }  // namespace
@@ -74,7 +74,7 @@ class Impl {
 
   const LobWindPoint* wind_profile_points{nullptr};
   size_t wind_profile_count{0};
-  WindTableMode wind_table_mode{WindTableMode::kStandard};
+  WindTableMode wind_table_mode{WindTableMode::kUniform};
   double wind_shear_exponent{kDefaultWindShearExponent};
 
   size_t table_count{0};
@@ -1185,7 +1185,7 @@ LobBuilder* LobBuilderWindHeading(LobBuilder* pbuilder, LobClockAngleT value) {
     pimpl->wind_heading_rad =
         kDegreesPerClockNumber * kPosition + kDegreesPerTurn;
   }
-  pimpl->wind_table_mode = WindTableMode::kStandard;
+  pimpl->wind_table_mode = WindTableMode::kUniform;
   return pbuilder;
 }
 
@@ -1205,7 +1205,7 @@ LobBuilder* LobBuilderWindHeadingDeg(LobBuilder* pbuilder, double value) {
   }
 
   pimpl->wind_heading_rad = angle;
-  pimpl->wind_table_mode = WindTableMode::kStandard;
+  pimpl->wind_table_mode = WindTableMode::kUniform;
   return pbuilder;
 }
 
@@ -1215,7 +1215,7 @@ LobBuilder* LobBuilderWindSpeedFps(LobBuilder* pbuilder, double value) {
   }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->wind_speed_fps = FpsT(value);
-  pimpl->wind_table_mode = WindTableMode::kStandard;
+  pimpl->wind_table_mode = WindTableMode::kUniform;
   return pbuilder;
 }
 
@@ -1225,7 +1225,7 @@ LobBuilder* LobBuilderWindSpeedMph(LobBuilder* pbuilder, double value) {
   }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->wind_speed_fps = MphT(value);
-  pimpl->wind_table_mode = WindTableMode::kStandard;
+  pimpl->wind_table_mode = WindTableMode::kUniform;
   return pbuilder;
 }
 
