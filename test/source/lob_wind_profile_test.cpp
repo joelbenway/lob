@@ -26,8 +26,6 @@ constexpr double kMuzzleWindFps = 7.33;
 constexpr double kWindSpeedMph = 10.0;
 constexpr double kLightWindSpeedMph = 5.0;
 constexpr double kTestShearExponent = 0.25;
-// Fixed 1-ft wind reference height, mirroring the implementation's local
-// policy for hand-computed expectations.
 constexpr double kWindReferenceHeightFt = 1.0;
 constexpr double kInclineDeg = 15.0;
 
@@ -51,8 +49,6 @@ const std::array<lob::WindPoint, 2> kTwoPoint = {{
 
 namespace {
 
-// Solves both contexts over shared ranges and expects identical
-// deflection/elevation: the oracle for wind-plumbing identities.
 void ExpectSameSolution(const lob::Context& a, const lob::Context& b) {
   const std::array<uint32_t, 3> kRanges = {900, 1800, 2700};
   std::array<lob::Output, 3> a_outs{};
@@ -71,7 +67,6 @@ TEST_F(WindProfileBuildFixture, CopiesProfileAndSetsCount) {
   const lob::Context kCtx = builder.WindProfile(kTwoPoint).Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
   EXPECT_EQ(kCtx.wind_count, 2U);
-  // Flat fire with no scaling stores inputs verbatim.
   EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(0).x_fps, 0.0);
   EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(0).z_fps, kMuzzleWindFps);
   EXPECT_EQ(kCtx.wind_nodes.at(1).range_ft, 1500U);
@@ -95,8 +90,7 @@ TEST_F(WindProfileBuildFixture, SinglePointEqualsUniform) {
       .WindHeading(lob::ClockAngleT::kIII)
       .WindSpeedFps(kMuzzleWindFps);
   const lob::Context kUniform = plain.Build();
-  // ponytail: kIII heading is 2π rad; libm sin leaves ~1.8e-15 residue,
-  // identical through the shared node storage on both sides.
+  // ponytail: kIII is 2π; libm sin leaves ~1.8e-15 residue in x.
   EXPECT_NEAR(kProfile.wind_nodes.at(0).x_fps, kUniform.wind_nodes.at(0).x_fps,
               1e-12);
   EXPECT_DOUBLE_EQ(kProfile.wind_nodes.at(0).z_fps,
@@ -162,10 +156,8 @@ TEST_F(WindProfileBuildFixture, LastWindCallWinsBothDirections) {
 }
 
 TEST_F(WindProfileBuildFixture, NormalizesHighMeasurementToReference) {
-  // The drone reading at 50 ft AGL reduces to the 1-ft reference by
-  // the power-law factor under test (explicit shear exponent).
-  const double kF = std::pow(kWindReferenceHeightFt / 50.0,
-                             kTestShearExponent);  // ≈ 0.3761
+  const double kHeightFactor =
+      std::pow(kWindReferenceHeightFt / 50.0, kTestShearExponent);
   const std::array<lob::WindPoint, 2> kPts = {{
       {0.0, 0.0, kMuzzleWindFps, 1.0},
       {1500.0, 0.0, 14.66, 50.0},
@@ -173,13 +165,11 @@ TEST_F(WindProfileBuildFixture, NormalizesHighMeasurementToReference) {
   const lob::Context kCtx =
       builder.WindProfile(kPts).WindShearExponent(kTestShearExponent).Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
-  EXPECT_NEAR(kCtx.wind_nodes.at(1).z_fps, 14.66 * kF, 1E-9);
+  EXPECT_NEAR(kCtx.wind_nodes.at(1).z_fps, 14.66 * kHeightFactor, 1E-9);
   EXPECT_EQ(kCtx.wind_nodes.at(1).range_ft, 1500U);
 }
 
 TEST_F(WindProfileBuildFixture, ZeroShearExponentStoresVerbatim) {
-  // Shear exponent 0 disables scaling exactly: explicit heights pass
-  // through untouched, pinning the off switch.
   const std::array<lob::WindPoint, 2> kPts = {{
       {0.0, 0.0, kMuzzleWindFps, 50.0},
       {1500.0, 0.0, 14.66, 50.0},
@@ -191,8 +181,6 @@ TEST_F(WindProfileBuildFixture, ZeroShearExponentStoresVerbatim) {
 }
 
 TEST_F(WindProfileBuildFixture, DefaultShearExponentDisablesScaling) {
-  // Scaling is opt-in: without an explicit exponent the stored value is 0,
-  // which the solver treats as unscaled wind.
   const lob::Context kCtx = builder.WindHeading(lob::ClockAngleT::kIII)
                                 .WindSpeedMph(kLightWindSpeedMph)
                                 .Build();
@@ -201,7 +189,6 @@ TEST_F(WindProfileBuildFixture, DefaultShearExponentDisablesScaling) {
 }
 
 TEST_F(WindProfileBuildFixture, RejectsBadShearConfig) {
-  // Non-finite, negative, or above-range exponents.
   EXPECT_EQ(builder.WindShearExponent(-0.5).Build().error,
             lob::ErrorT::kWindProfileInvalid);
   EXPECT_EQ(builder.WindShearExponent(1.5).Build().error,
@@ -210,7 +197,6 @@ TEST_F(WindProfileBuildFixture, RejectsBadShearConfig) {
                 .Build()
                 .error,
             lob::ErrorT::kWindProfileInvalid);
-  // Measurement heights at or below zero have no power-law domain.
   const std::array<lob::WindPoint, 2> kLow = {{
       {0.0, 0.0, kMuzzleWindFps, 1.0},
       {1500.0, 0.0, 14.66, 0.0},
@@ -228,9 +214,6 @@ TEST_F(WindProfileBuildFixture, RejectsBadShearConfig) {
 }
 
 TEST_F(WindProfileBuildFixture, MissingHeightsStoreVerbatim) {
-  // NaN heights mean reference-height measurements (1 ft): the fixed reference
-  // so normalization is identity and stored winds equal entered winds —
-  // identically for profile and uniform inputs.
   const lob::Context kProfileCtx = builder.WindProfile(kTwoPoint).Build();
   ASSERT_EQ(kProfileCtx.error, lob::ErrorT::kNone);
   EXPECT_DOUBLE_EQ(kProfileCtx.wind_nodes.at(0).z_fps, kMuzzleWindFps);
@@ -253,9 +236,6 @@ TEST_F(WindProfileBuildFixture, MissingHeightsStoreVerbatim) {
 }
 
 TEST_F(WindProfileBuildFixture, RejectsUnstorableValues) {
-  // Node ranges are whole-foot uint32; values that cannot round-trip are
-  // rejected instead of silently quantized. (Winds are doubles and always
-  // representable once finite.)
   const std::array<lob::WindPoint, 2> kFractional = {{
       {0.0, 0.0, kMuzzleWindFps, std::numeric_limits<double>::quiet_NaN()},
       {1500.5, 0.0, kMuzzleWindFps, std::numeric_limits<double>::quiet_NaN()},
@@ -271,8 +251,6 @@ TEST_F(WindProfileBuildFixture, RejectsUnstorableValues) {
 }
 
 TEST_F(WindProfileBuildFixture, InclineBakesPitchIntoNodes) {
-  // Frame pitch resolves once at Build: an uphill tailwind tips downward in
-  // frame coordinates while lateral wind is untouched.
   const std::array<lob::WindPoint, 2> kTailwind = {{
       {0.0, kMuzzleWindFps, 0.0, std::numeric_limits<double>::quiet_NaN()},
       {1500.0, kMuzzleWindFps, 0.0, std::numeric_limits<double>::quiet_NaN()},
@@ -292,9 +270,6 @@ TEST_F(WindProfileBuildFixture, InclineBakesPitchIntoNodes) {
 }
 
 TEST_F(WindProfileBuildFixture, ProfileRefinementMatchesCoarseSolve) {
-  // A midpoint node lying exactly on the lerp line must not change the
-  // field: the refined profile reproduces the coarse solve. Catches
-  // segment-selection errors, which read inches off here.
   const std::array<lob::WindPoint, 2> kCoarse = {{
       {0.0, 0.0, 10.0, std::numeric_limits<double>::quiet_NaN()},
       {2000.0, 0.0, 30.0, std::numeric_limits<double>::quiet_NaN()},
@@ -325,9 +300,7 @@ TEST_F(WindProfileBuildFixture, ProfileRefinementMatchesCoarseSolve) {
 }
 
 TEST_F(WindProfileBuildFixture, ClampedTailMatchesExplicitExtension) {
-  // Past the final node the field clamps to it: extending the profile with
-  // constant nodes reproduces the clamped solve bit-for-bit (the extension
-  // adds kT * 0.0 terms of the same value).
+  // Exact: the extension adds kT * 0.0 terms of the same value.
   const std::array<lob::WindPoint, 2> kShort = {{
       {0.0, 0.0, 10.0, std::numeric_limits<double>::quiet_NaN()},
       {1500.0, 0.0, 30.0, std::numeric_limits<double>::quiet_NaN()},
@@ -360,8 +333,6 @@ TEST_F(WindProfileBuildFixture, ClampedTailMatchesExplicitExtension) {
 }
 
 TEST_F(WindProfileBuildFixture, PiecewiseWindForwardSolution) {
-  // Non-constant 3-point profile pins lerp, clamp, and node storage
-  // end to end against these regression values.
   const std::array<lob::WindPoint, 3> kPts = {{
       {0.0, 5.0, 7.33, std::numeric_limits<double>::quiet_NaN()},
       {1500.0, -8.0, 11.0, std::numeric_limits<double>::quiet_NaN()},
@@ -399,7 +370,6 @@ TEST_F(WindProfileBuildFixture, PiecewiseWindForwardSolution) {
 }
 
 TEST_F(WindProfileBuildFixture, PiecewiseWindScaledForwardSolution) {
-  // Same profile with explicit shear: pins the scaled integration path.
   const std::array<lob::WindPoint, 3> kPts = {{
       {0.0, 5.0, 7.33, std::numeric_limits<double>::quiet_NaN()},
       {1500.0, -8.0, 11.0, std::numeric_limits<double>::quiet_NaN()},
@@ -438,8 +408,6 @@ TEST_F(WindProfileBuildFixture, PiecewiseWindScaledForwardSolution) {
 }
 
 TEST_F(WindProfileBuildFixture, InclinedScaledGrowsDrift) {
-  // Scaling composes with incline: with shear on, drift grows at every
-  // range versus the identical unscaled profile under the same incline.
   const std::array<lob::WindPoint, 2> kPts = {{
       {0.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
       {3000.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
@@ -477,8 +445,6 @@ TEST_F(WindProfileBuildFixture, InclinedScaledGrowsDrift) {
 }
 
 TEST_F(WindProfileBuildFixture, DownhillScaledSolveCompletes) {
-  // Steep downhill long solve with scaling: the floor keeps every query
-  // finite, so the solve completes with the wind's sign.
   const std::array<uint32_t, 3> kRanges = {900, 1800, 3000};
   std::array<lob::Output, 3> outs{};
   lob::Builder db;
@@ -502,9 +468,7 @@ TEST_F(WindProfileBuildFixture, DownhillScaledSolveCompletes) {
 }
 
 TEST_F(WindProfileBuildFixture, TwoPointFlatProfileMatchesUniformSolve) {
-  // Constant-valued 2-point profile must reproduce the uniform solution.
-  // Convert through the strong types so the test shares the library's own
-  // mph->fps factor instead of hand-spelling one.
+  // Share the library's own mph->fps factor instead of hand-spelling one.
   const double kFps = lob::FpsT(lob::MphT(kWindSpeedMph)).Value();
   const std::array<lob::WindPoint, 2> kFlat = {{
       {0.0, 0.0, kFps, std::numeric_limits<double>::quiet_NaN()},
@@ -536,8 +500,6 @@ TEST_F(WindProfileBuildFixture, TwoPointFlatProfileMatchesUniformSolve) {
 }
 
 TEST_F(WindProfileBuildFixture, CrosswindBlindToInclineAtSolve) {
-  // Solve-level with scaling disabled: gravity pitches on incline so TOF
-  // differs slightly, isolating the gravity effect from altitude scaling.
   const std::array<uint32_t, 3> kRanges = {900, 1800, 2700};
   std::array<lob::Output, 3> flat_outs{};
   std::array<lob::Output, 3> hill_outs{};
@@ -568,10 +530,6 @@ TEST_F(WindProfileBuildFixture, CrosswindBlindToInclineAtSolve) {
 }
 
 TEST_F(WindProfileBuildFixture, AltitudeScalingGrowsApexDrift) {
-  // A high-arc trajectory (30-MOA zero) spends most of its flight above the
-  // 1-ft reference, so explicit shear grows drift at every range versus the
-  // identical unscaled (alpha 0) profile. Verified by probe: GT holds with
-  // growing margins (0.9/6.7/19.0 in at 900/1800/3000 ft).
   constexpr double kHighArcZeroMoa = 30.0;
   const std::array<lob::WindPoint, 2> kPts = {{
       {0.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
@@ -605,8 +563,6 @@ TEST_F(WindProfileBuildFixture, AltitudeScalingGrowsApexDrift) {
 }
 
 TEST_F(WindProfileBuildFixture, ZeroWindCountSolvesAsCalm) {
-  // A context reporting zero wind nodes solves as calm air instead of
-  // reading node storage. Pinned through Solve: the query itself is private.
   lob::Builder wb;
   wb.BallisticCoefficientPsi(kTestBcPsi)
       .BCDragFunction(lob::DragFunctionT::kG1)

@@ -37,8 +37,6 @@ enum class WindTableMode : uint8_t {
   kUniform,
 };
 
-// Default Hellmann shear exponent: 0 disables scaling, so wind behaves
-// uniformly unless the caller opts in with WindShearExponent.
 constexpr double kDefaultWindShearExponent = 0.0;
 
 }  // namespace
@@ -266,9 +264,7 @@ LobErrorT ValidateWindProfile(Impl* pimpl) {
     } else if (!(point.range_ft > pimpl->wind_profile_points[i - 1].range_ft)) {
       return kLobErrorWindProfileNotMonotonic;
     }
-    // Storage representability: whole feet within uint32.
-    // (Monotonicity from 0 already guarantees non-negativity.)
-    // Exact-equality via ordered comparisons (avoids -Werror=float-equal).
+    // Whole feet within uint32 storage (monotonicity rules out negatives).
     const double kTruncatedRange = std::floor(point.range_ft);
     if (point.range_ft > kTruncatedRange || point.range_ft < kTruncatedRange ||
         !(point.range_ft <=
@@ -474,8 +470,6 @@ void BuildCoefficients(Impl* pimpl, LobContext* pout) {
 void BuildWind(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
-  // Shear exponent: scaling is always active, with 0 disabling it exactly
-  // via pow(x, 0) == 1. Valid range is [0, 1].
   constexpr double kMinWindShearExponent = 0.0;
   constexpr double kMaxWindShearExponent = 1.0;
   if (!std::isfinite(pimpl->wind_shear_exponent) ||
@@ -486,13 +480,10 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
   }
   pout->wind_shear_exponent = pimpl->wind_shear_exponent;
 
-  // Frame pitch resolved once here; stored nodes are frame components, so the
-  // solver never executes wind-direction trigonometry.
   const double kCos = std::cos(pimpl->range_angle_rad.Value());
   const double kSin = std::sin(pimpl->range_angle_rad.Value());
 
-  // Pointer past the output array so the loops below index without tripping
-  // pro-bounds-constant-array-index (the count is runtime-validated).
+  // Raw pointer: count is runtime-validated (pro-bounds-constant-array-index).
   LobWindNode* wind_nodes = &pout->wind_nodes[0];
 
   if (pimpl->wind_table_mode == WindTableMode::kProfile) {
@@ -503,16 +494,10 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
     }
     for (size_t i = 0; i < pimpl->wind_profile_count; i++) {
       const LobWindPoint& point = pimpl->wind_profile_points[i];
-      // Explicit heights must clear the power-law domain (NaN means the
-      // reference itself and needs no check).
       if (!std::isnan(point.height_ft) && !(point.height_ft > 0.0)) {
         pout->error = kLobErrorWindProfileInvalid;
         return;
       }
-      // NaN heights mean measurement at the reference itself, so the
-      // factor is exactly 1: the power law evaluated at its own reference.
-      // Fixed 1-ft reference (prone muzzle height): S = 1 there by
-      // construction, and scaled drift never undercuts plain drift.
       constexpr double kWindReferenceHeightFt = 1.0;
       const double kHeightFactor =
           std::isnan(point.height_ft)
@@ -554,8 +539,7 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
                         std::cos(pimpl->wind_heading_rad.Value()))
                        .Value();
     }
-    // No height normalization: uniform inputs are head-height measurements,
-    // the fixed reference itself, so the factor is exactly 1.
+    // Uniform inputs are reference-height measurements: no normalization.
     wind_nodes[0].range_ft = 0U;
     wind_nodes[0].x_fps = wind_x_fps * kCos;
     wind_nodes[0].y_fps = -wind_x_fps * kSin;
@@ -563,8 +547,7 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
     pout->wind_count = 1;
   }
 
-  // Zero the unused tail so identically-built contexts compare equal
-  // regardless of caller stack garbage (nothing reads past wind_count).
+  // Zero the unused tail so equal builds compare equal.
   for (size_t i = pout->wind_count; i < LOB_WIND_POINTS; i++) {
     wind_nodes[i] = LobWindNode{};
   }
@@ -803,8 +786,6 @@ void BuildLitzAerodynamicJump(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  // Lateral muzzle wind; pitch preserves the lateral axis, so the stored
-  // frame component equals the horizontal crosswind.
   const double kMuzzleCrosswindFps = pout->wind_nodes[0].z_fps;
 
   if (AreEqual(kMuzzleCrosswindFps, 0.0)) {

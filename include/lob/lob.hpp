@@ -738,7 +738,7 @@ class Builder {
    * builder copies no data; the pointer is referenced during Build().
    * @param ppoints Pointer to an array of wind profile points. First range
    * must be 0 with strictly increasing whole-foot ranges; x/z speeds finite,
-   * heights finite or NaN.
+   * heights positive or NaN.
    * @param count The number of points. Must be 1..LOB_WIND_POINTS.
    * @return A reference to the Builder object.
    */
