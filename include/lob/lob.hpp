@@ -91,13 +91,13 @@ enum class ErrorT : LobErrorT {
   kSplineCoefsInvalid = ::kLobErrorSplineCoefsInvalid,
   kTailLengthOOR = ::kLobErrorTailLengthOOR,
   kWindHeadingOOR = ::kLobErrorWindHeadingOOR,
+  kWindProfileInvalid = ::kLobErrorWindProfileInvalid,
+  kWindProfileNotMonotonic = ::kLobErrorWindProfileNotMonotonic,
+  kWindProfileTooLong = ::kLobErrorWindProfileTooLong,
   kZeroAngleOOR = ::kLobErrorZeroAngleOOR,
   kZeroDataRequired = ::kLobErrorZeroDataRequired,
   kZeroDistanceOOR = ::kLobErrorZeroDistanceOOR,
   kZeroUnreachable = ::kLobErrorZeroUnreachable,
-  kWindProfileTooLong = ::kLobErrorWindProfileTooLong,
-  kWindProfileNotMonotonic = ::kLobErrorWindProfileNotMonotonic,
-  kWindProfileInvalid = ::kLobErrorWindProfileInvalid,
 };
 
 /** @brief Gravity vector. See @c LobGravity for member details. */

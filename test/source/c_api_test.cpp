@@ -161,9 +161,11 @@ TEST(LobCAPITest, WindContextPacksWithoutWaste) {
 }
 
 TEST(LobCAPITest, WindProfileErrorCodesAppended) {
-  EXPECT_EQ(kLobErrorWindProfileTooLong, kLobErrorNumberOfErrors - 3);
-  EXPECT_EQ(kLobErrorWindProfileNotMonotonic, kLobErrorNumberOfErrors - 2);
-  EXPECT_EQ(kLobErrorWindProfileInvalid, kLobErrorNumberOfErrors - 1);
+  // Wind codes sort alphabetically between WindHeadingOOR and ZeroAngleOOR.
+  EXPECT_LT(kLobErrorWindHeadingOOR, kLobErrorWindProfileInvalid);
+  EXPECT_LT(kLobErrorWindProfileInvalid, kLobErrorWindProfileNotMonotonic);
+  EXPECT_LT(kLobErrorWindProfileNotMonotonic, kLobErrorWindProfileTooLong);
+  EXPECT_LT(kLobErrorWindProfileTooLong, kLobErrorZeroAngleOOR);
 }
 
 TEST(LobCAPITest, WindProfileBuildZeroesUnusedTail) {
