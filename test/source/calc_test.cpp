@@ -378,27 +378,22 @@ TEST(CalcTests, CalculateSectionalDensity) {
 
 TEST(CalcTests, CalculatePowerLawWindFactor) {
   // https://en.wikipedia.org/wiki/Wind_profile_power_law
-  // The reference height always yields exactly 1, for any exponent.
   EXPECT_DOUBLE_EQ(
       CalculatePowerLawWindFactor(lob::FeetT(5.0), lob::FeetT(5.0), 0.25), 1.0);
   EXPECT_DOUBLE_EQ(
       CalculatePowerLawWindFactor(lob::FeetT(5.0), lob::FeetT(5.0), 0.0), 1.0);
-  // Exponent 0 disables scaling exactly.
   EXPECT_DOUBLE_EQ(
       CalculatePowerLawWindFactor(lob::FeetT(250.0), lob::FeetT(1.0), 0.0),
       1.0);
-  // Exact power: 16^0.25 == 2.
   EXPECT_NEAR(
       CalculatePowerLawWindFactor(lob::FeetT(16.0), lob::FeetT(1.0), 0.25), 2.0,
       1e-12);
-  // Attenuation below the reference, growth above it ( quarter power).
   EXPECT_NEAR(
       CalculatePowerLawWindFactor(lob::FeetT(1.0), lob::FeetT(50.0), 0.25),
       0.3761, 1e-4);
   EXPECT_NEAR(
       CalculatePowerLawWindFactor(lob::FeetT(250.0), lob::FeetT(1.0), 0.25),
       3.9763, 1e-3);
-  // Open-terrain alpha: (50/5)^0.143.
   EXPECT_NEAR(
       CalculatePowerLawWindFactor(lob::FeetT(50.0), lob::FeetT(5.0), 0.143),
       1.3899, 1e-4);

@@ -21,16 +21,12 @@ namespace lob {
 namespace {
 inline CartesianT<FpsT> GetWind(const LobContext& ctx,
                                 const TrajectoryStateT& s) noexcept {
-  // Stored nodes are frame-resolved at Build (pitch baked in), so the query
-  // is pure downrange lerp plus optional altitude scaling: no trigonometry,
-  // no direction conversion. A single-point profile falls out naturally.
   const LobWindNode* wind_nodes = &ctx.wind_nodes[0];
   auto count = std::min(static_cast<size_t>(ctx.wind_count),
                         static_cast<size_t>(LOB_WIND_POINTS));
-  if (count == 0) {  // hand-packed context with no nodes: calm, not garbage
+  if (count == 0) {
     return {FpsT(0.0), FpsT(0.0), FpsT(0.0)};
   }
-  // Node components load directly; all math below is double.
   double wx = wind_nodes[0].x_fps;
   double wy = wind_nodes[0].y_fps;
   double wz = wind_nodes[0].z_fps;
@@ -60,36 +56,33 @@ inline CartesianT<FpsT> GetWind(const LobContext& ctx,
       phy = kNy;
       phz = kNz;
     }
-    if (!found && kX > px) {  // clamp above the final point
+    if (!found && kX > px) {
       wx = phx;
       wy = phy;
       wz = phz;
     }
   }
-  // Altitude scale above the shot-parallel ground plane. The plane
-  // through the muzzle parallel to the shot passes through every ground
-  // target's footing, so S = 1 at both ends; height above it is frame-Y
-  // over cos(range angle), recovered from gravity (strictly positive
-  // since ±90° is rejected at Build). Identical to frame-Y at θ = 0.
+  // Height above the shot-parallel ground plane (S = 1 at both ends):
+  // frame-Y over cos(range angle), recovered from gravity.
   if (ctx.wind_shear_exponent > 0.0 || ctx.wind_shear_exponent < 0.0) {
-    // Fixed 1-ft reference (prone muzzle height): S = 1 there by
-    // construction. Evaluated heights clamp to the surface-layer band;
-    // the power law is not extrapolated past it.
+    // Surface-layer model: never extrapolate past the height band.
     constexpr double kWindReferenceHeightFt = 1.0;
     constexpr double kMinWindHeightFt = 1.0;
     constexpr double kMaxWindHeightFt = 300.0;
     const double kGy = ctx.gravity.y;
     const double kG = std::sqrt((ctx.gravity.x * ctx.gravity.x) + (kGy * kGy));
     const double kCosT = (kG > 0.0 && -kGy > 0.0) ? -kGy / kG : 1.0;
-    double zagl = (s.P().Y().Value() / kCosT) + kWindReferenceHeightFt;
-    if (!(zagl > kMinWindHeightFt)) {
-      zagl = kMinWindHeightFt;
+    double height_above_shot_plane =
+        (s.P().Y().Value() / kCosT) + kWindReferenceHeightFt;
+    if (!(height_above_shot_plane > kMinWindHeightFt)) {
+      height_above_shot_plane = kMinWindHeightFt;
     }
-    if (!(zagl < kMaxWindHeightFt)) {
-      zagl = kMaxWindHeightFt;
+    if (!(height_above_shot_plane < kMaxWindHeightFt)) {
+      height_above_shot_plane = kMaxWindHeightFt;
     }
     const double kS = CalculatePowerLawWindFactor(
-        FeetT(zagl), FeetT(kWindReferenceHeightFt), ctx.wind_shear_exponent);
+        FeetT(height_above_shot_plane), FeetT(kWindReferenceHeightFt),
+        ctx.wind_shear_exponent);
     wx *= kS;
     wy *= kS;
     wz *= kS;

@@ -150,8 +150,6 @@ TEST(LobCAPITest, WindNodeLayout) {
 }
 
 TEST(LobCAPITest, WindContextPacksWithoutWaste) {
-  // Wind nodes sit right after the drag table; the small-integer tail packs
-  // last. Each boundary is exact, so no padding byte exists anywhere.
   EXPECT_EQ(offsetof(LobContext, wind_nodes),
             offsetof(LobContext, drags) + sizeof(LobContext::drags));
   EXPECT_EQ(offsetof(LobContext, velocity),
@@ -161,7 +159,6 @@ TEST(LobCAPITest, WindContextPacksWithoutWaste) {
 }
 
 TEST(LobCAPITest, WindProfileErrorCodesAppended) {
-  // Wind codes sort alphabetically between WindHeadingOOR and ZeroAngleOOR.
   EXPECT_LT(kLobErrorWindHeadingOOR, kLobErrorWindProfileInvalid);
   EXPECT_LT(kLobErrorWindProfileInvalid, kLobErrorWindProfileNotMonotonic);
   EXPECT_LT(kLobErrorWindProfileNotMonotonic, kLobErrorWindProfileTooLong);
@@ -169,9 +166,6 @@ TEST(LobCAPITest, WindProfileErrorCodesAppended) {
 }
 
 TEST(LobCAPITest, WindProfileBuildZeroesUnusedTail) {
-  // Build writes only wind_nodes[0..count-1]; the rest must be zeroed so
-  // identically-built contexts compare equal. Fill the output with garbage
-  // first to prove it.
   const double kBcPsi = 0.372;
   const uint16_t kVelocityFps = 2720U;
   const double kZeroAngleMoa = 4.78;
