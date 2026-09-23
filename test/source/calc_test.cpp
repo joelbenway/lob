@@ -402,6 +402,13 @@ TEST(CalcTests, CalculatePowerLawWindFactor) {
   EXPECT_NEAR(
       CalculatePowerLawWindFactor(lob::FeetT(50.0), lob::FeetT(5.0), 0.143),
       1.3899, 1e-4);
+  // Degenerate reference heights yield zero, never inf or NaN.
+  EXPECT_DOUBLE_EQ(
+      CalculatePowerLawWindFactor(lob::FeetT(10.0), lob::FeetT(0.0), 0.25),
+      0.0);
+  EXPECT_DOUBLE_EQ(
+      CalculatePowerLawWindFactor(lob::FeetT(10.0), lob::FeetT(-5.0), 0.25),
+      0.0);
 }
 
 }  // namespace tests

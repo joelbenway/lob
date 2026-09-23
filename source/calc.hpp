@@ -188,6 +188,9 @@ constexpr PmsiT CalculateSectionalDensity(InchT bullet_diameter,
 // https://en.wikipedia.org/wiki/Wind_profile_power_law
 inline double CalculatePowerLawWindFactor(FeetT height, FeetT reference_height,
                                           double alpha) {
+  if (!(reference_height.Value() > 0.0)) {
+    return 0.0;
+  }
   return std::pow(height.Value() / reference_height.Value(), alpha);
 }
 
