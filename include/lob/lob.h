@@ -113,7 +113,7 @@ typedef struct {
   double range_ft;  ///< @brief Downrange position in feet.
   double x_fps;  ///< @brief Wind in fps, along-track horizontal (tailwind +).
   double z_fps;  ///< @brief Wind in fps, lateral.
-  double height_ft_agl;  ///< @brief Measurement height above ground in feet.
+  double height_ft;  ///< @brief Measurement height above ground in feet.
 } LobWindPoint;
 
 /** @brief Solver-ready wind profile node with frame-resolved components. */
