@@ -92,13 +92,13 @@ enum {
   kLobErrorSplineCoefsInvalid,
   kLobErrorTailLengthOOR,
   kLobErrorWindHeadingOOR,
+  kLobErrorWindProfileInvalid,
+  kLobErrorWindProfileNotMonotonic,
+  kLobErrorWindProfileTooLong,
   kLobErrorZeroAngleOOR,
   kLobErrorZeroDataRequired,
   kLobErrorZeroDistanceOOR,
   kLobErrorZeroUnreachable,
-  kLobErrorWindProfileTooLong,
-  kLobErrorWindProfileNotMonotonic,
-  kLobErrorWindProfileInvalid,
   kLobErrorNumberOfErrors  ///< @note Total number of enumerated Errors
 };
 
