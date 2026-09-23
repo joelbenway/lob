@@ -118,6 +118,7 @@
         extraDevPackages = with pkgs;
           [
             # Extra Development Tools
+            act
             bloaty
             cmake-format
             mold-wrapped
