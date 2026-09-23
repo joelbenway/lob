@@ -24,11 +24,6 @@ namespace {
 constexpr double kTestBC = 0.436;
 constexpr uint16_t kTestMuzzleVelocity = 3100U;
 constexpr double kTestZeroAngle = 6.11;
-constexpr double kTestShearExponent = 0.25;
-constexpr double kWindSpeedMph = 10.0;
-constexpr double kInclineDeg = 15.0;
-constexpr double kQueryWindZFps = 10.0;
-constexpr double kQuerySpeedFps = 2000.0;
 
 LobContext BuildContext(uint16_t step_size_in) {
   LobBuilder builder{};
@@ -62,52 +57,6 @@ size_t CountStepsTo(const LobContext& ctx, lob::FeetT target) {
   }
   return steps;
 }
-
-using lob::CartesianT;
-using lob::FeetT;
-using lob::FpsT;
-using lob::TrajectoryStateT;
-
-LobContext MakeWindQueryCtx() {
-  LobContext ctx{};
-  ctx.gravity.x = 0.0;
-  ctx.gravity.y = -lob::kStandardGravityFtPerSecSq;
-  ctx.wind_nodes[0].range_ft = 0U;
-  ctx.wind_nodes[0].x_fps = 0.0;
-  ctx.wind_nodes[0].y_fps = 0.0;
-  ctx.wind_nodes[0].z_fps = kQueryWindZFps;
-  ctx.wind_count = 1;
-  ctx.wind_shear_exponent = 0.0;
-  return ctx;
-}
-
-TrajectoryStateT MakeStateAt(double x_ft, double y_ft) {
-  return {CartesianT<FeetT>(FeetT(x_ft), FeetT(y_ft), FeetT(0.0)),
-          CartesianT<FpsT>(FpsT(kQuerySpeedFps), FpsT(0.0), FpsT(0.0))};
-}
-
-// Builds a uniform-wind LobContext through the C API, so query tests can
-// hold the C type directly instead of casting out of lob::Context. Shear
-// exponent 0 (the default here) disables scaling exactly (identity path).
-LobContext BuildUniformWindCtx(double speed_mph, double range_angle_deg,
-                               double alpha = 0.0) {
-  LobBuilder builder;
-  LobBuilderInit(&builder);
-  LobBuilderBallisticCoefficientPsi(&builder, kTestBC);
-  LobBuilderInitialVelocityFps(&builder, kTestMuzzleVelocity);
-  LobBuilderZeroAngleMOA(&builder, kTestZeroAngle);
-  LobBuilderWindHeading(&builder, kLobClockAngleIII);
-  LobBuilderWindSpeedMph(&builder, speed_mph);
-  LobBuilderRangeAngleDeg(&builder, range_angle_deg);
-  LobBuilderWindShearExponent(&builder, alpha);
-  LobContext ctx{};
-  LobBuilderBuild(&builder, &ctx);
-  LobBuilderDestroy(&builder);
-  return ctx;
-}
-
-const LobWindNode kLerpLow{1000U, 0.0, 0.0, 10.0};
-const LobWindNode kLerpHigh{2000U, 0.0, 0.0, 30.0};
 }  // namespace
 
 TEST(SolveStepTests, TwelveInchStepOneYardSolveTakesThreeSteps) {
@@ -173,105 +122,6 @@ TEST(SolveStepTests, SolveStepClampsNegativeVx) {
   EXPECT_EQ(s.V().X().Value(), 0.0);
   EXPECT_EQ(s.V().Y().Value(), 0.0);
   EXPECT_EQ(s.V().Z().Value(), 0.0);
-}
-
-TEST(WindProfileQuery, UniformFlatIsHistoricalPath) {
-  const LobContext kCtx = MakeWindQueryCtx();
-  const CartesianT<FpsT> kW = lob::GetWind(kCtx, MakeStateAt(500.0, 0.0));
-  EXPECT_DOUBLE_EQ(kW.X().Value(), 0.0);
-  EXPECT_DOUBLE_EQ(kW.Y().Value(), 0.0);
-  EXPECT_DOUBLE_EQ(kW.Z().Value(), 10.0);
-}
-
-TEST(WindProfileQuery, LerpsMidpointAndClampsEnds) {
-  LobContext ctx = MakeWindQueryCtx();  // nodes[0] is the muzzle node
-  ctx.wind_count = 3;
-  ctx.wind_nodes[1] = kLerpLow;
-  ctx.wind_nodes[2] = kLerpHigh;
-  EXPECT_DOUBLE_EQ(lob::GetWind(ctx, MakeStateAt(1500.0, 0.0)).Z().Value(),
-                   20.0);
-  EXPECT_DOUBLE_EQ(lob::GetWind(ctx, MakeStateAt(1000.0, 0.0)).Z().Value(),
-                   10.0);
-  EXPECT_DOUBLE_EQ(lob::GetWind(ctx, MakeStateAt(5000.0, 0.0)).Z().Value(),
-                   30.0);
-  EXPECT_DOUBLE_EQ(lob::GetWind(ctx, MakeStateAt(-10.0, 0.0)).Z().Value(),
-                   10.0);
-}
-
-TEST(WindProfileQuery, AltitudeScalesAboutGroundReference) {
-  // Unit reference (prone muzzle height): at the reference the wind holds
-  // (S = 1); at z = 16 ft, S = 16^0.25 = 2 exactly; past the 300-ft
-  // surface-layer cap the factor pins at 300^0.25 ≈ 4.16.
-  LobContext ctx = MakeWindQueryCtx();
-  ctx.wind_shear_exponent = kTestShearExponent;
-  const CartesianT<FpsT> kAtMuzzle = lob::GetWind(ctx, MakeStateAt(0.0, 0.0));
-  EXPECT_NEAR(kAtMuzzle.Z().Value(), 10.0, 1E-9);  // S = 1 at reference
-  const CartesianT<FpsT> kHigh = lob::GetWind(ctx, MakeStateAt(0.0, 15.0));
-  EXPECT_NEAR(kHigh.Z().Value(), 20.0, 1E-9);
-  const CartesianT<FpsT> kCapped = lob::GetWind(ctx, MakeStateAt(0.0, 1000.0));
-  EXPECT_NEAR(kCapped.Z().Value(), 41.62, 1e-2);  // hand-computed ≈ 41.618
-}
-
-TEST(WindProfileQuery, BelowMinHeightClampsToOneFoot) {
-  // Below the 1-ft evaluation floor the height clamps to the reference
-  // itself, so the factor is exactly 1 (never attenuates, never NaNs).
-  LobContext ctx = MakeWindQueryCtx();
-  ctx.wind_shear_exponent = kTestShearExponent;
-  const CartesianT<FpsT> kW = lob::GetWind(ctx, MakeStateAt(2500.0, -40.0));
-  EXPECT_TRUE(std::isfinite(kW.X().Value()));
-  EXPECT_TRUE(std::isfinite(kW.Y().Value()));
-  EXPECT_TRUE(std::isfinite(kW.Z().Value()));
-  EXPECT_DOUBLE_EQ(kW.Z().Value(), 10.0);
-}
-
-TEST(WindProfileQuery, CrosswindResolvesIdenticallyWithIncline) {
-  // Spec section 9: the wind query resolves pure crosswind identically;
-  // pitch cannot touch pure-crosswind output.
-  const LobContext kFlatCtx = BuildUniformWindCtx(kWindSpeedMph, 0.0);
-  const LobContext kHillCtx = BuildUniformWindCtx(kWindSpeedMph, kInclineDeg);
-  const std::array<double, 3> kXs = {100.0, 900.0, 2700.0};
-  for (const double kX : kXs) {
-    const CartesianT<FpsT> kFlatW =
-        lob::GetWind(kFlatCtx, MakeStateAt(kX, 0.0));
-    const CartesianT<FpsT> kHillW =
-        lob::GetWind(kHillCtx, MakeStateAt(kX, 0.0));
-    // ponytail: kIII heading is 2π rad; libm sin leaves ~3.6e-15 in
-    // wind.x which pitch then scales — same 1e-12 tolerance as
-    // SinglePointEqualsUniform. The crosswind (Z) component is bit-identical.
-    EXPECT_NEAR(kFlatW.X().Value(), kHillW.X().Value(), 1e-12);
-    EXPECT_NEAR(kFlatW.Y().Value(), kHillW.Y().Value(), 1e-12);
-    EXPECT_DOUBLE_EQ(kFlatW.Z().Value(), kHillW.Z().Value());
-  }
-}
-
-TEST(WindProfileQuery, InclinedScalingUsesTiltedPlane) {
-  // Regression: altitude scaling resolves height above the shot-parallel
-  // ground plane, never true vertical above muzzle level. On the sight
-  // line (Y = 0) the height is the reference at any incline, so S = 1;
-  // above it the height is Y/cosθ, which the flat formula (X·sinθ + Y·cosθ)
-  // misstates badly downhill (129 ft vs 52 ft here).
-  const LobContext kCtx =
-      BuildUniformWindCtx(kWindSpeedMph, kInclineDeg, kTestShearExponent);
-  const CartesianT<FpsT> kOnSightLine =
-      lob::GetWind(kCtx, MakeStateAt(500.0, 0.0));
-  EXPECT_DOUBLE_EQ(kOnSightLine.Z().Value(), kCtx.wind_nodes[0].z_fps);
-  const double kCosT =
-      std::cos(lob::RadiansT(lob::DegreesT(kInclineDeg)).Value());
-  const double kHFlat =
-      (500.0 * std::sin(lob::RadiansT(lob::DegreesT(kInclineDeg)).Value())) +
-      (50.0 * kCosT);
-  const double kSFlat = std::pow(
-      (kHFlat + lob::kWindReferenceHeightFt) / lob::kWindReferenceHeightFt,
-      kTestShearExponent);
-  const double kSTilted =
-      std::pow(((50.0 / kCosT) + lob::kWindReferenceHeightFt) /
-                   lob::kWindReferenceHeightFt,
-               kTestShearExponent);
-  // Guard against a vacuous test: the tilted answer must differ decisively
-  // from the flat answer (≈ 2.70 vs ≈ 3.66).
-  EXPECT_GT(std::abs(kSTilted - kSFlat), 0.5);
-  const CartesianT<FpsT> kW = lob::GetWind(kCtx, MakeStateAt(500.0, 50.0));
-  EXPECT_NEAR(kW.Z().Value(), kCtx.wind_nodes[0].z_fps * kSTilted, 1e-9);
 }
 
 }  // namespace tests

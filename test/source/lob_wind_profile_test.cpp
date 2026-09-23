@@ -8,10 +8,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <vector>
 
-#include "constants.hpp"
 #include "eng_units.hpp"
 #include "lob/lob.hpp"
+#include "testing.hpp"
 
 namespace tests {
 
@@ -25,6 +26,9 @@ constexpr double kMuzzleWindFps = 7.33;
 constexpr double kWindSpeedMph = 10.0;
 constexpr double kLightWindSpeedMph = 5.0;
 constexpr double kTestShearExponent = 0.25;
+// Fixed 1-ft wind reference height, mirroring the implementation's local
+// policy for hand-computed expectations.
+constexpr double kWindReferenceHeightFt = 1.0;
 constexpr double kInclineDeg = 15.0;
 
 struct WindProfileBuildFixture : public testing::Test {
@@ -142,7 +146,7 @@ TEST_F(WindProfileBuildFixture, LastWindCallWinsBothDirections) {
 TEST_F(WindProfileBuildFixture, NormalizesHighMeasurementToReference) {
   // The drone reading at 50 ft AGL reduces to the 1-ft reference by
   // the power-law factor under test (explicit shear exponent).
-  const double kF = std::pow(lob::kWindReferenceHeightFt / 50.0,
+  const double kF = std::pow(kWindReferenceHeightFt / 50.0,
                              kTestShearExponent);  // ≈ 0.3761
   const std::array<lob::WindPoint, 2> kPts = {{
       {0.0, 0.0, kMuzzleWindFps, 1.0},
@@ -267,6 +271,216 @@ TEST_F(WindProfileBuildFixture, InclineBakesPitchIntoNodes) {
   // Guard against a vacuous test: the pitched values must differ decisively
   // from the unpitched inputs.
   EXPECT_GT(std::abs(kCtx.wind_nodes.at(0).y_fps), 1.0);
+}
+
+TEST_F(WindProfileBuildFixture, ProfileRefinementMatchesCoarseSolve) {
+  // A midpoint node lying exactly on the lerp line must not change the
+  // field: the refined profile reproduces the coarse solve. Catches
+  // segment-selection errors, which read inches off here.
+  const std::array<lob::WindPoint, 2> kCoarse = {{
+      {0.0, 0.0, 10.0, std::numeric_limits<double>::quiet_NaN()},
+      {2000.0, 0.0, 30.0, std::numeric_limits<double>::quiet_NaN()},
+  }};
+  const std::array<lob::WindPoint, 3> kFine = {{
+      {0.0, 0.0, 10.0, std::numeric_limits<double>::quiet_NaN()},
+      {1000.0, 0.0, 20.0, std::numeric_limits<double>::quiet_NaN()},
+      {2000.0, 0.0, 30.0, std::numeric_limits<double>::quiet_NaN()},
+  }};
+  const std::array<uint32_t, 4> kRanges = {500, 1000, 1500, 2000};
+  std::array<lob::Output, 4> coarse_outs{};
+  std::array<lob::Output, 4> fine_outs{};
+  lob::Solve(builder.WindProfile(kCoarse).Build(), kRanges, &coarse_outs);
+  lob::Builder fb;
+  fb.BallisticCoefficientPsi(kTestBcPsi)
+      .BCDragFunction(lob::DragFunctionT::kG1)
+      .DiameterInch(kTestDiameterIn)
+      .MassGrains(kTestMassGrains)
+      .InitialVelocityFps(kTestVelocityFps)
+      .ZeroAngleMOA(kTestZeroAngleMoa)
+      .OpticHeightInches(kTestOpticHeightIn)
+      .WindProfile(kFine);
+  lob::Solve(fb.Build(), kRanges, &fine_outs);
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_NEAR(fine_outs.at(i).deflection, coarse_outs.at(i).deflection, 1e-6);
+    EXPECT_NEAR(fine_outs.at(i).elevation, coarse_outs.at(i).elevation, 1e-6);
+  }
+}
+
+TEST_F(WindProfileBuildFixture, ClampedTailMatchesExplicitExtension) {
+  // Past the final node the field clamps to it: extending the profile with
+  // constant nodes reproduces the clamped solve bit-for-bit (the extension
+  // adds kT * 0.0 terms of the same value).
+  const std::array<lob::WindPoint, 2> kShort = {{
+      {0.0, 0.0, 10.0, std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, 0.0, 30.0, std::numeric_limits<double>::quiet_NaN()},
+  }};
+  const std::array<lob::WindPoint, 3> kLong = {{
+      {0.0, 0.0, 10.0, std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, 0.0, 30.0, std::numeric_limits<double>::quiet_NaN()},
+      {3000.0, 0.0, 30.0, std::numeric_limits<double>::quiet_NaN()},
+  }};
+  constexpr size_t kSolutionLength = 6;
+  const std::array<uint32_t, kSolutionLength> kRanges = {500,  1000, 1500,
+                                                         2000, 2500, 3000};
+  std::array<lob::Output, kSolutionLength> short_outs{};
+  std::array<lob::Output, kSolutionLength> long_outs{};
+  lob::Solve(builder.WindProfile(kShort).Build(), kRanges, &short_outs);
+  lob::Builder lb;
+  lb.BallisticCoefficientPsi(kTestBcPsi)
+      .BCDragFunction(lob::DragFunctionT::kG1)
+      .DiameterInch(kTestDiameterIn)
+      .MassGrains(kTestMassGrains)
+      .InitialVelocityFps(kTestVelocityFps)
+      .ZeroAngleMOA(kTestZeroAngleMoa)
+      .OpticHeightInches(kTestOpticHeightIn)
+      .WindProfile(kLong);
+  lob::Solve(lb.Build(), kRanges, &long_outs);
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_DOUBLE_EQ(long_outs.at(i).deflection, short_outs.at(i).deflection);
+    EXPECT_DOUBLE_EQ(long_outs.at(i).elevation, short_outs.at(i).elevation);
+  }
+}
+
+TEST_F(WindProfileBuildFixture, PiecewiseWindForwardSolution) {
+  // Non-constant 3-point profile pins lerp, clamp, and node storage
+  // end to end against these regression values.
+  const std::array<lob::WindPoint, 3> kPts = {{
+      {0.0, 5.0, 7.33, std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, -8.0, 11.0, std::numeric_limits<double>::quiet_NaN()},
+      {3000.0, 12.0, 8.0, std::numeric_limits<double>::quiet_NaN()},
+  }};
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
+  constexpr size_t kSolutionLength = 12;
+  const auto kContext = builder.WindProfile(kPts).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1265, -2.50, 0.00, 0.000},
+      {150, 2595, 1151, -0.60, 0.12, 0.056},
+      {300, 2474, 1046, 0.00, 0.49, 0.116},
+      {600, 2241, 858, -3.19, 2.12, 0.243},
+      {900, 2019, 697, -13.34, 5.19, 0.384},
+      {1200, 1811, 561, -32.05, 10.08, 0.541},
+      {1500, 1618, 448, -61.42, 17.23, 0.716},
+      {1800, 1444, 356, -104.13, 27.11, 0.913},
+      {2100, 1293, 286, -163.61, 39.91, 1.133},
+      {2400, 1170, 234, -243.92, 55.59, 1.377},
+      {2700, 1078, 199, -349.62, 73.87, 1.645},
+      {3000, 1010, 174, -485.17, 94.25, 1.933}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
+  VerifySolutions(solutions, kExpected,
+                  {kVelocityError, kEnergyError, kMoaError, kInchError,
+                   kTimeOfFlightError});
+}
+
+TEST_F(WindProfileBuildFixture, PiecewiseWindScaledForwardSolution) {
+  // Same profile with explicit shear: pins the scaled integration path.
+  const std::array<lob::WindPoint, 3> kPts = {{
+      {0.0, 5.0, 7.33, std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, -8.0, 11.0, std::numeric_limits<double>::quiet_NaN()},
+      {3000.0, 12.0, 8.0, std::numeric_limits<double>::quiet_NaN()},
+  }};
+  constexpr lob::FpsT kVelocityError{1};
+  constexpr lob::FtLbsT kEnergyError{5};
+  constexpr lob::MoaT kMoaError{0.1};
+  constexpr lob::InchT kInchError{0.1};
+  constexpr lob::SecT kTimeOfFlightError{0.01};
+  constexpr size_t kSolutionLength = 12;
+  const auto kContext =
+      builder.WindProfile(kPts).WindShearExponent(kTestShearExponent).Build();
+  const std::array<uint32_t, kSolutionLength> kRanges = {
+      0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
+  const std::vector<lob::Output> kExpected = {
+      {0, 2720, 1265, -2.50, 0.00, 0.000},
+      {150, 2595, 1151, -0.60, 0.12, 0.056},
+      {300, 2474, 1046, 0.00, 0.50, 0.116},
+      {600, 2241, 858, -3.19, 2.19, 0.243},
+      {900, 2019, 697, -13.34, 5.33, 0.384},
+      {1200, 1811, 561, -32.05, 10.29, 0.541},
+      {1500, 1618, 448, -61.42, 17.51, 0.716},
+      {1800, 1444, 356, -104.13, 27.46, 0.913},
+      {2100, 1293, 286, -163.60, 40.33, 1.133},
+      {2400, 1170, 234, -243.92, 56.08, 1.377},
+      {2700, 1078, 199, -349.61, 74.43, 1.645},
+      {3000, 1010, 174, -485.16, 94.88, 1.933}};
+
+  std::array<lob::Output, kSolutionLength> solutions = {};
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
+  EXPECT_EQ(kSize, kSolutionLength);
+  VerifySolutions(solutions, kExpected,
+                  {kVelocityError, kEnergyError, kMoaError, kInchError,
+                   kTimeOfFlightError});
+}
+
+TEST_F(WindProfileBuildFixture, InclinedScaledGrowsDrift) {
+  // Scaling composes with incline: with shear on, drift grows at every
+  // range versus the identical unscaled profile under the same incline.
+  const std::array<lob::WindPoint, 2> kPts = {{
+      {0.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
+      {3000.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
+  }};
+  const std::array<uint32_t, 3> kRanges = {900, 1800, 3000};
+  std::array<lob::Output, 3> plain_outs{};
+  std::array<lob::Output, 3> scaled_outs{};
+  lob::Builder pb;
+  pb.BallisticCoefficientPsi(kTestBcPsi)
+      .BCDragFunction(lob::DragFunctionT::kG1)
+      .DiameterInch(kTestDiameterIn)
+      .MassGrains(kTestMassGrains)
+      .InitialVelocityFps(kTestVelocityFps)
+      .ZeroAngleMOA(kTestZeroAngleMoa)
+      .OpticHeightInches(kTestOpticHeightIn)
+      .WindProfile(kPts)
+      .WindShearExponent(0.0)
+      .RangeAngleDeg(kInclineDeg);
+  lob::Solve(pb.Build(), kRanges, &plain_outs);
+  lob::Builder sb;
+  sb.BallisticCoefficientPsi(kTestBcPsi)
+      .BCDragFunction(lob::DragFunctionT::kG1)
+      .DiameterInch(kTestDiameterIn)
+      .MassGrains(kTestMassGrains)
+      .InitialVelocityFps(kTestVelocityFps)
+      .ZeroAngleMOA(kTestZeroAngleMoa)
+      .OpticHeightInches(kTestOpticHeightIn)
+      .WindProfile(kPts)
+      .WindShearExponent(kTestShearExponent)
+      .RangeAngleDeg(kInclineDeg);
+  lob::Solve(sb.Build(), kRanges, &scaled_outs);
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_GT(scaled_outs.at(i).deflection, plain_outs.at(i).deflection);
+  }
+}
+
+TEST_F(WindProfileBuildFixture, DownhillScaledSolveCompletes) {
+  // Steep downhill long solve with scaling: the floor keeps every query
+  // finite, so the solve completes with the wind's sign.
+  const std::array<uint32_t, 3> kRanges = {900, 1800, 3000};
+  std::array<lob::Output, 3> outs{};
+  lob::Builder db;
+  db.BallisticCoefficientPsi(kTestBcPsi)
+      .BCDragFunction(lob::DragFunctionT::kG1)
+      .DiameterInch(kTestDiameterIn)
+      .MassGrains(kTestMassGrains)
+      .InitialVelocityFps(kTestVelocityFps)
+      .ZeroAngleMOA(kTestZeroAngleMoa)
+      .OpticHeightInches(kTestOpticHeightIn)
+      .WindHeading(lob::ClockAngleT::kIII)
+      .WindSpeedMph(kLightWindSpeedMph)
+      .WindShearExponent(kTestShearExponent)
+      .RangeAngleDeg(-kInclineDeg);
+  const size_t kSolved = lob::Solve(db.Build(), kRanges, &outs);
+  EXPECT_EQ(kSolved, kRanges.size());
+  for (size_t i = 0; i < kSolved; ++i) {
+    EXPECT_TRUE(std::isfinite(outs.at(i).deflection));
+    EXPECT_GT(outs.at(i).deflection, 0.0);
+  }
 }
 
 TEST_F(WindProfileBuildFixture, TwoPointFlatProfileMatchesUniformSolve) {
