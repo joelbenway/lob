@@ -90,7 +90,6 @@ TEST_F(WindProfileBuildFixture, SinglePointEqualsUniform) {
       .WindHeading(lob::ClockAngleT::kIII)
       .WindSpeedFps(kMuzzleWindFps);
   const lob::Context kUniform = plain.Build();
-  // ponytail: kIII is 2π; libm sin leaves ~1.8e-15 residue in x.
   EXPECT_NEAR(kProfile.wind_nodes.at(0).x_fps, kUniform.wind_nodes.at(0).x_fps,
               1e-12);
   EXPECT_DOUBLE_EQ(kProfile.wind_nodes.at(0).z_fps,
