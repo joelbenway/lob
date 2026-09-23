@@ -49,6 +49,24 @@ const std::array<lob::WindPoint, 2> kTwoPoint = {{
     {1500.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
 }};
 
+namespace {
+
+// Solves both contexts over shared ranges and expects identical
+// deflection/elevation: the oracle for wind-plumbing identities.
+void ExpectSameSolution(const lob::Context& a, const lob::Context& b) {
+  const std::array<uint32_t, 3> kRanges = {900, 1800, 2700};
+  std::array<lob::Output, 3> a_outs{};
+  std::array<lob::Output, 3> b_outs{};
+  ASSERT_EQ(lob::Solve(a, kRanges, &a_outs), kRanges.size());
+  ASSERT_EQ(lob::Solve(b, kRanges, &b_outs), kRanges.size());
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_DOUBLE_EQ(a_outs.at(i).deflection, b_outs.at(i).deflection);
+    EXPECT_DOUBLE_EQ(a_outs.at(i).elevation, b_outs.at(i).elevation);
+  }
+}
+
+}  // namespace
+
 TEST_F(WindProfileBuildFixture, CopiesProfileAndSetsCount) {
   const lob::Context kCtx = builder.WindProfile(kTwoPoint).Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
@@ -584,6 +602,25 @@ TEST_F(WindProfileBuildFixture, AltitudeScalingGrowsApexDrift) {
   for (size_t i = 0; i < kRanges.size(); ++i) {
     EXPECT_GT(scaled_outs.at(i).deflection, plain_outs.at(i).deflection);
   }
+}
+
+TEST_F(WindProfileBuildFixture, ZeroWindCountSolvesAsCalm) {
+  // A context reporting zero wind nodes solves as calm air instead of
+  // reading node storage. Pinned through Solve: the query itself is private.
+  lob::Builder wb;
+  wb.BallisticCoefficientPsi(kTestBcPsi)
+      .BCDragFunction(lob::DragFunctionT::kG1)
+      .DiameterInch(kTestDiameterIn)
+      .MassGrains(kTestMassGrains)
+      .InitialVelocityFps(kTestVelocityFps)
+      .ZeroAngleMOA(kTestZeroAngleMoa)
+      .OpticHeightInches(kTestOpticHeightIn)
+      .WindHeading(lob::ClockAngleT::kIII)
+      .WindSpeedMph(kWindSpeedMph);
+  lob::Context zeroed = wb.Build();
+  ASSERT_EQ(zeroed.error, lob::ErrorT::kNone);
+  zeroed.wind_count = 0;  // hand-packed: nodes still hold wind, count says none
+  ExpectSameSolution(zeroed, builder.Build());
 }
 
 }  // namespace tests

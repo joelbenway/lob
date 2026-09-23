@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 
 #include "calc.hpp"
 #include "cartesian.hpp"
@@ -26,6 +27,9 @@ inline CartesianT<FpsT> GetWind(const LobContext& ctx,
   const LobWindNode* wind_nodes = &ctx.wind_nodes[0];
   auto count = std::min(static_cast<size_t>(ctx.wind_count),
                         static_cast<size_t>(LOB_WIND_POINTS));
+  if (count == 0) {  // hand-packed context with no nodes: calm, not garbage
+    return {FpsT(0.0), FpsT(0.0), FpsT(0.0)};
+  }
   // Node components load directly; all math below is double.
   double wx = wind_nodes[0].x_fps;
   double wy = wind_nodes[0].y_fps;
@@ -62,7 +66,7 @@ inline CartesianT<FpsT> GetWind(const LobContext& ctx,
       wz = phz;
     }
   }
-  // 3. Altitude scale above the shot-parallel ground plane. The plane
+  // Altitude scale above the shot-parallel ground plane. The plane
   // through the muzzle parallel to the shot passes through every ground
   // target's footing, so S = 1 at both ends; height above it is frame-Y
   // over cos(range angle), recovered from gravity (strictly positive
