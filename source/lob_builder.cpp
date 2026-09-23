@@ -37,6 +37,10 @@ enum class WindTableMode : uint8_t {
   kUniform,
 };
 
+// Default Hellmann shear exponent: 0 disables scaling, so wind behaves
+// uniformly unless the caller opts in with WindShearExponent.
+constexpr double kDefaultWindShearExponent = 0.0;
+
 }  // namespace
 
 class Impl {
@@ -472,6 +476,8 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
 
   // Shear exponent: scaling is always active, with 0 disabling it exactly
   // via pow(x, 0) == 1. Valid range is [0, 1].
+  constexpr double kMinWindShearExponent = 0.0;
+  constexpr double kMaxWindShearExponent = 1.0;
   if (!std::isfinite(pimpl->wind_shear_exponent) ||
       pimpl->wind_shear_exponent < kMinWindShearExponent ||
       pimpl->wind_shear_exponent > kMaxWindShearExponent) {
@@ -505,6 +511,9 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
       }
       // NaN heights mean measurement at the reference itself, so the
       // factor is exactly 1: the power law evaluated at its own reference.
+      // Fixed 1-ft reference (prone muzzle height): S = 1 there by
+      // construction, and scaled drift never undercuts plain drift.
+      constexpr double kWindReferenceHeightFt = 1.0;
       const double kHeightFactor =
           std::isnan(point.height_ft)
               ? 1.0
