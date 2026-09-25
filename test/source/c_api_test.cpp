@@ -176,8 +176,8 @@ TEST(LobCAPITest, WindProfileBuildZeroesUnusedTail) {
   LobBuilderInitialVelocityFps(&builder, kVelocityFps);
   LobBuilderZeroAngleMOA(&builder, kZeroAngleMoa);
   const std::array<LobWindPoint, 2> kPts = {{
-      {0.0, 0.0, 7.0, std::numeric_limits<double>::quiet_NaN()},
-      {1500.0, 0.0, 8.0, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, 90.0, 5.0, std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, 90.0, 6.0, std::numeric_limits<double>::quiet_NaN()},
   }};
   LobBuilderWindProfile(&builder, kPts.data(), kPts.size());
   LobContext ctx;
