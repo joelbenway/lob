@@ -8,7 +8,7 @@ Both are spin-induced corrections that lob models with two fidelity levels — *
 
 Lateral deflection from gyroscopic precession (yaw of repose), applied post-solve to `deflection`.
 
-**Boatright** (`source/lob_builder.cpp`, `source/boatright.hpp`) when diameter, meplat, base, length, nose, tail, `ogiveRtR`, velocity, `c`, mass, twist, `stability_factor`, BC and `wind.z` are known:
+**Boatright** (`source/lob_builder.cpp`, `source/boatright.hpp`) when diameter, meplat, base, length, nose, tail, `ogiveRtR`, velocity, `c`, mass, twist, `stability_factor`, BC and muzzle crosswind (`wind_nodes[0].z_fps`) are known:
 1. Computes ogive geometry `RT`, `LFN`, aspect ratio, Mach, `Q`, `S`, `CL`, `CDa`, `ρ` via `CalculateAverageDensity` (ogive volume via `IntegrateGaussLegendre` `kG8` in `source/boatright.hpp`), `Iy/Ix`, `P`, `R`, `N`, `F1+F2`, `F2`, `Tn`.
 2. Short-integrates `∫_{1.2c}^{v0} dv/(v²·Cd·drag_coeff)` with `IntegrateGaussLegendre<8>` (`source/gauss_legendre.hpp`) to get supersonic `TOF` to `v = Mach 1.2·c`.
 3. Forms `KV=log(1.2c/v0)`, `Kω`, `QTS`, `β(R,Ω)`, boattail-adjusted `CL`, `CL(T)` → `spindrift_factor = 0.388132·QTS·β·CL(T)/mass` stored in `ctx.spindrift_factor`. At solve time (`source/lob_solve.cpp`): `deflection += spindrift_factor · |elevation|` gated on `elevation < −optic_height` (bore-line check).

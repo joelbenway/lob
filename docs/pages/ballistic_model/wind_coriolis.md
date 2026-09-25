@@ -33,11 +33,11 @@ Speed is `WindSpeedFps` or `WindSpeedMph` (`MphT → FpsT`). Default 0 fps. Vali
 
 @section model-wind-usage Usage in the solver
 
-`DsDx` forms `v − w` as `CartesianT<FpsT>(ctx.wind.x, 0, ctx.wind.z)` and uses `|v−w|` to scale drag (`source/solve_step.cpp`). No vertical wind; uniform and constant. Jump consumes only `w_z` via `CalculateCrosswindAngleGamma(MphT(w_z), v)` and the Litz/Boatright formulas (@ref model_spin).
+`DsDx` forms `v − w` with the frame-resolved wind from the profile query (`GetWind` in `source/solve_step.cpp`) — downrange-lerped nodes with optional power-law altitude scaling — and uses `|v−w|` to scale drag. No vertical wind input; uniform wind is the single-point case. Jump consumes only `w_z` via `CalculateCrosswindAngleGamma(MphT(w_z), v)` and the Litz/Boatright formulas (@ref model_spin).
 
 @section model-wind-limitations Limitations
 
-- No gradient with altitude/range, no vertical wind.
+- No vertical wind input; altitude/range gradients are opt-in (profiles plus shear exponent).
 - Headwind/tailwind scales `|v−w|`; crosswind affects drag only via Boatright's `CDa` (`source/lob_builder.cpp`).
 
 @section model-coriolis Coriolis
