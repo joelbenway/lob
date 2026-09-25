@@ -12,7 +12,6 @@
 #include <cstdint>
 
 #include "cartesian.hpp"
-#include "constants.hpp"
 #include "eng_units.hpp"
 #include "lob/lob.h"
 #include "ode.hpp"
