@@ -47,9 +47,9 @@ inline CartesianT<FpsT> GetWind(const LobContext& ctx,
             kSegment > FeetT(0.0)
                 ? ((kDownrange - previous_range) / kSegment).Value()
                 : 0.0;
-        wind_x = previous_x + (kNodeX - previous_x) * kT;
-        wind_y = previous_y + (kNodeY - previous_y) * kT;
-        wind_z = previous_z + (kNodeZ - previous_z) * kT;
+        wind_x = Lerp(previous_x, kNodeX, kT);
+        wind_y = Lerp(previous_y, kNodeY, kT);
+        wind_z = Lerp(previous_z, kNodeZ, kT);
         interpolated = true;
         break;
       }

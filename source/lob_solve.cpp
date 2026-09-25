@@ -38,11 +38,9 @@ LobOutput OutputAtState(const TrajectoryStateT& s, const LobContext& ctx) {
 LobOutput LerpOutput(const TrajectoryStateT& s_prev,
                      const TrajectoryStateT& s_now, double alpha,
                      const LobContext& ctx) {
-  const CartesianT<FeetT> kP =
-      s_prev.P() + (s_now.P() - s_prev.P()) * FeetT(alpha);
-  const CartesianT<FpsT> kV =
-      (s_prev.V() + (s_now.V() - s_prev.V()) * FpsT(alpha));
-  const SecT kTof = s_prev.TOF() + (s_now.TOF() - s_prev.TOF()) * SecT(alpha);
+  const CartesianT<FeetT> kP = Lerp(s_prev.P(), s_now.P(), alpha);
+  const CartesianT<FpsT> kV = Lerp(s_prev.V(), s_now.V(), alpha);
+  const SecT kTof = Lerp(s_prev.TOF(), s_now.TOF(), alpha);
   const FpsT kVelocity = kV.Magnitude();
   const FtLbsT kEnergy =
       CalculateKineticEnergy(kVelocity, SlugT(LbsT(ctx.mass)));
