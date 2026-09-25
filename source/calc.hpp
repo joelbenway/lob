@@ -194,6 +194,11 @@ inline double CalculatePowerLawWindFactor(FeetT height, FeetT reference_height,
   return std::pow(height.Value() / reference_height.Value(), alpha);
 }
 
+template <typename T>
+constexpr T Lerp(const T& a, const T& b, double t) {
+  return a + ((b - a) * t);
+}
+
 }  // namespace lob
 
 // This file is part of lob.

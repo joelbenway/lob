@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <cstring>
 
+#include "calc.hpp"
 #include "eng_units.hpp"
 
 namespace lob {
@@ -153,7 +154,7 @@ constexpr double LobLerp(const T* x_lut, const T* y_lut, const size_t size,
   const auto kDx = kX1 - kX0;
   assert(kDx > 0.0 && "x values must be increasing");
   const double kT = (x_in - kX0) / kDx;
-  return kY0 + (kT * (kY1 - kY0));
+  return Lerp(kY0, kY1, kT);
 }
 
 template <typename T, size_t N>
