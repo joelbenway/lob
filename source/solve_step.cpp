@@ -21,27 +21,27 @@ namespace lob {
 namespace {
 inline CartesianT<FpsT> GetWind(const LobContext& ctx,
                                 const TrajectoryStateT& s) noexcept {
-  const LobWindNode* wind_nodes = &ctx.wind_nodes[0];
+  const LobWindNode* pnodes = &ctx.wind_nodes[0];
   auto count = std::min(static_cast<size_t>(ctx.wind_count),
                         static_cast<size_t>(LOB_WIND_POINTS));
   if (count == 0) {
     return {FpsT(0.0), FpsT(0.0), FpsT(0.0)};
   }
-  double wx = wind_nodes[0].x_fps;
-  double wy = wind_nodes[0].y_fps;
-  double wz = wind_nodes[0].z_fps;
+  double wx = pnodes[0].x_fps;
+  double wy = pnodes[0].y_fps;
+  double wz = pnodes[0].z_fps;
   const double kX = s.P().X().Value();
   if (count > 1 && kX > 0.0) {
-    double px = wind_nodes[0].range_ft;
+    double px = pnodes[0].range_ft;
     double phx = wx;
     double phy = wy;
     double phz = wz;
     bool found = false;
     for (size_t i = 1; i < count; ++i) {
-      const double kRange = wind_nodes[i].range_ft;
-      const double kNx = wind_nodes[i].x_fps;
-      const double kNy = wind_nodes[i].y_fps;
-      const double kNz = wind_nodes[i].z_fps;
+      const double kRange = pnodes[i].range_ft;
+      const double kNx = pnodes[i].x_fps;
+      const double kNy = pnodes[i].y_fps;
+      const double kNz = pnodes[i].z_fps;
       if (kX <= kRange) {
         const double kDen = kRange - px;
         const double kT = kDen > 0.0 ? (kX - px) / kDen : 0.0;
@@ -62,10 +62,8 @@ inline CartesianT<FpsT> GetWind(const LobContext& ctx,
       wz = phz;
     }
   }
-  // Height above the shot-parallel ground plane (S = 1 at both ends):
-  // frame-Y over cos(range angle), recovered from gravity.
+
   if (ctx.wind_shear_exponent > 0.0 || ctx.wind_shear_exponent < 0.0) {
-    // Surface-layer model: never extrapolate past the height band.
     constexpr double kWindReferenceHeightFt = 1.0;
     constexpr double kMinWindHeightFt = 1.0;
     constexpr double kMaxWindHeightFt = 300.0;
