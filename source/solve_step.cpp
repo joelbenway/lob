@@ -26,64 +26,70 @@ inline CartesianT<FpsT> GetWind(const LobContext& ctx,
   if (kCount == 0) {
     return {FpsT(0.0), FpsT(0.0), FpsT(0.0)};
   }
-  double wx = pnodes[0].x_fps;
-  double wy = pnodes[0].y_fps;
-  double wz = pnodes[0].z_fps;
-  const double kX = s.P().X().Value();
-  if (kCount > 1 && kX > 0.0) {
-    double px = pnodes[0].range_ft;
-    double phx = wx;
-    double phy = wy;
-    double phz = wz;
-    bool found = false;
+  FpsT wind_x(pnodes[0].x_fps);
+  FpsT wind_y(pnodes[0].y_fps);
+  FpsT wind_z(pnodes[0].z_fps);
+  const FeetT kDownrange = s.P().X();
+  if (kCount > 1 && kDownrange > FeetT(0.0)) {
+    FeetT previous_range(pnodes[0].range_ft);
+    FpsT previous_x = wind_x;
+    FpsT previous_y = wind_y;
+    FpsT previous_z = wind_z;
+    bool interpolated = false;
     for (size_t i = 1; i < kCount; ++i) {
-      const double kRange = pnodes[i].range_ft;
-      const double kNx = pnodes[i].x_fps;
-      const double kNy = pnodes[i].y_fps;
-      const double kNz = pnodes[i].z_fps;
-      if (kX <= kRange) {
-        const double kDen = kRange - px;
-        const double kT = kDen > 0.0 ? (kX - px) / kDen : 0.0;
-        wx = phx + kT * (kNx - phx);
-        wy = phy + kT * (kNy - phy);
-        wz = phz + kT * (kNz - phz);
-        found = true;
+      const FeetT kNodeRange(pnodes[i].range_ft);
+      const FpsT kNodeX(pnodes[i].x_fps);
+      const FpsT kNodeY(pnodes[i].y_fps);
+      const FpsT kNodeZ(pnodes[i].z_fps);
+      if (kDownrange <= kNodeRange) {
+        const FeetT kSegment = kNodeRange - previous_range;
+        const double kT =
+            kSegment > FeetT(0.0)
+                ? ((kDownrange - previous_range) / kSegment).Value()
+                : 0.0;
+        wind_x = previous_x + (kNodeX - previous_x) * kT;
+        wind_y = previous_y + (kNodeY - previous_y) * kT;
+        wind_z = previous_z + (kNodeZ - previous_z) * kT;
+        interpolated = true;
         break;
       }
-      px = kRange;
-      phx = kNx;
-      phy = kNy;
-      phz = kNz;
+      previous_range = kNodeRange;
+      previous_x = kNodeX;
+      previous_y = kNodeY;
+      previous_z = kNodeZ;
     }
-    if (!found && kX > px) {
-      wx = phx;
-      wy = phy;
-      wz = phz;
+    if (!interpolated && kDownrange > previous_range) {
+      wind_x = previous_x;
+      wind_y = previous_y;
+      wind_z = previous_z;
     }
   }
 
   if (ctx.wind_shear_exponent > 0.0 || ctx.wind_shear_exponent < 0.0) {
-    constexpr double kMinWindHeightFt = 1.0;
-    constexpr double kMaxWindHeightFt = 300.0;
-    const double kGy = ctx.gravity.y;
-    const double kG = std::sqrt((ctx.gravity.x * ctx.gravity.x) + (kGy * kGy));
-    const double kCosT = (kG > 0.0 && -kGy > 0.0) ? -kGy / kG : 1.0;
-    double height_above_shot_plane =
-        (s.P().Y().Value() / kCosT) + kWindReferenceHeightFt;
+    constexpr FeetT kMinWindHeightFt(1.0);
+    constexpr FeetT kMaxWindHeightFt(300.0);
+    const double kGravityY = ctx.gravity.y;
+    const double kGravityMagnitude =
+        std::sqrt((ctx.gravity.x * ctx.gravity.x) + (kGravityY * kGravityY));
+    const double kCosRangeAngle = (kGravityMagnitude > 0.0 && -kGravityY > 0.0)
+                                      ? -kGravityY / kGravityMagnitude
+                                      : 1.0;
+    FeetT height_above_shot_plane =
+        FeetT(s.P().Y().Value() / kCosRangeAngle) + kWindReferenceHeightFt;
     if (!(height_above_shot_plane > kMinWindHeightFt)) {
       height_above_shot_plane = kMinWindHeightFt;
     }
     if (!(height_above_shot_plane < kMaxWindHeightFt)) {
       height_above_shot_plane = kMaxWindHeightFt;
     }
-    const double kS = CalculatePowerLawWindFactor(
-        FeetT(height_above_shot_plane), FeetT(kWindReferenceHeightFt),
+    const double kHeightFactor = CalculatePowerLawWindFactor(
+        height_above_shot_plane, FeetT(kWindReferenceHeightFt),
         ctx.wind_shear_exponent);
-    wx *= kS;
-    wy *= kS;
-    wz *= kS;
+    wind_x *= kHeightFactor;
+    wind_y *= kHeightFactor;
+    wind_z *= kHeightFactor;
   }
-  return {FpsT(wx), FpsT(wy), FpsT(wz)};
+  return {wind_x, wind_y, wind_z};
 }
 
 inline double GetDimensionlessAltitude(const LobContext& ctx,
