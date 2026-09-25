@@ -240,8 +240,6 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   BuildDynamicDensity(temperature_at_firing_site, pout);
 }
 
-// Shared with the setter: identical operations keep profile/uniform
-// bit-identical.
 RadiansT HeadingDegToRad(double value) {
   const DegreesT kFullTurn(kDegreesPerTurn);
   const DegreesT kQuarterTurn(kFullTurn / 4);
@@ -284,6 +282,9 @@ LobErrorT ValidateWindProfile(Impl* pimpl) {
     if (point.range_ft > kTruncatedRange || point.range_ft < kTruncatedRange ||
         !(point.range_ft <=
           static_cast<double>(std::numeric_limits<uint32_t>::max()))) {
+      return kLobErrorWindProfileInvalid;
+    }
+    if (!std::isnan(point.height_ft) && !(point.height_ft > 0.0)) {
       return kLobErrorWindProfileInvalid;
     }
   }
@@ -483,7 +484,85 @@ void BuildCoefficients(Impl* pimpl, LobContext* pout) {
       CalculateCdCoefficient(LbsPerCuFtT(1), PmsiT(1));
   pout->drag_coeff = pimpl->air_density_lbs_per_cu_ft.Value() * kDragScale;
 }
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+void BuildProfileWind(Impl* pimpl, LobContext* pout) {
+  assert(pimpl != nullptr && pout != nullptr);
+
+  const LobErrorT kErr = ValidateWindProfile(pimpl);
+  if (kErr != kLobErrorNone) {
+    pout->error = kErr;
+    return;
+  }
+
+  const double kCos = std::cos(pimpl->range_angle_rad.Value());
+  const double kSin = std::sin(pimpl->range_angle_rad.Value());
+
+  // Raw pointer: count is runtime-validated (pro-bounds-constant-array-index).
+  LobWindNode* wind_nodes = &pout->wind_nodes[0];
+
+  for (size_t i = 0; i < pimpl->wind_profile_count; i++) {
+    const LobWindPoint& point = pimpl->wind_profile_points[i];
+    const double kHeightFactor =
+        std::isnan(point.height_ft)
+            ? 1.0
+            : CalculatePowerLawWindFactor(FeetT(kWindReferenceHeightFt),
+                                          FeetT(point.height_ft),
+                                          pimpl->wind_shear_exponent);
+    const double kSpeedFps = FpsT(MphT(point.speed_mph)).Value();
+    double hx = 0.0;
+    double hz = 0.0;
+    if (kSpeedFps > 0.0 || kSpeedFps < 0.0) {
+      const double kHeadingRad = HeadingDegToRad(point.heading_deg).Value();
+      hx = FpsT(kSpeedFps * std::sin(kHeadingRad)).Value() * kHeightFactor;
+      hz = FpsT(kSpeedFps * std::cos(kHeadingRad)).Value() * kHeightFactor;
+    }
+    wind_nodes[i].range_ft = static_cast<uint32_t>(point.range_ft);
+    wind_nodes[i].x_fps = hx * kCos;
+    wind_nodes[i].y_fps = -hx * kSin;
+    wind_nodes[i].z_fps = hz;
+  }
+  pout->wind_count = static_cast<uint8_t>(pimpl->wind_profile_count);
+}
+
+void BuildUniformWind(Impl* pimpl, LobContext* pout) {
+  assert(pimpl != nullptr && pout != nullptr);
+
+  if (std::isnan(pimpl->wind_heading_rad)) {
+    pimpl->wind_heading_rad = DegreesT(0);
+  }
+
+  const DegreesT kFullTurn(kDegreesPerTurn);
+  if (pimpl->wind_heading_rad > kFullTurn ||
+      pimpl->wind_heading_rad < kFullTurn * -1) {
+    pout->error = kLobErrorWindHeadingOOR;
+    return;
+  }
+
+  if (std::isnan(pimpl->wind_speed_fps)) {
+    pimpl->wind_speed_fps = FpsT(0);
+  }
+
+  const double kCos = std::cos(pimpl->range_angle_rad.Value());
+  const double kSin = std::sin(pimpl->range_angle_rad.Value());
+
+  LobWindNode* wind_nodes = &pout->wind_nodes[0];
+
+  double wind_x_fps = 0.0;
+  double wind_z_fps = 0.0;
+  if (pimpl->wind_speed_fps > FpsT(0) || pimpl->wind_speed_fps < FpsT(0)) {
+    wind_x_fps =
+        FpsT(pimpl->wind_speed_fps * std::sin(pimpl->wind_heading_rad.Value()))
+            .Value();
+    wind_z_fps =
+        FpsT(pimpl->wind_speed_fps * std::cos(pimpl->wind_heading_rad.Value()))
+            .Value();
+  }
+  wind_nodes[0].range_ft = 0U;
+  wind_nodes[0].x_fps = wind_x_fps * kCos;
+  wind_nodes[0].y_fps = -wind_x_fps * kSin;
+  wind_nodes[0].z_fps = wind_z_fps;
+  pout->wind_count = 1;
+}
+
 void BuildWind(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
@@ -497,77 +576,16 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
   }
   pout->wind_shear_exponent = pimpl->wind_shear_exponent;
 
-  const double kCos = std::cos(pimpl->range_angle_rad.Value());
-  const double kSin = std::sin(pimpl->range_angle_rad.Value());
-
-  LobWindNode* wind_nodes = &pout->wind_nodes[0];
-
   if (pimpl->wind_table_mode == WindTableMode::kProfile) {
-    const LobErrorT kErr = ValidateWindProfile(pimpl);
-    if (kErr != kLobErrorNone) {
-      pout->error = kErr;
-      return;
-    }
-    for (size_t i = 0; i < pimpl->wind_profile_count; i++) {
-      const LobWindPoint& point = pimpl->wind_profile_points[i];
-      if (!std::isnan(point.height_ft) && !(point.height_ft > 0.0)) {
-        pout->error = kLobErrorWindProfileInvalid;
-        return;
-      }
-      constexpr double kWindReferenceHeightFt = 1.0;
-      const double kHeightFactor =
-          std::isnan(point.height_ft)
-              ? 1.0
-              : CalculatePowerLawWindFactor(FeetT(kWindReferenceHeightFt),
-                                            FeetT(point.height_ft),
-                                            pimpl->wind_shear_exponent);
-      const double kSpeedFps = FpsT(MphT(point.speed_mph)).Value();
-      double hx = 0.0;
-      double hz = 0.0;
-      if (kSpeedFps > 0.0 || kSpeedFps < 0.0) {
-        const double kHeadingRad = HeadingDegToRad(point.heading_deg).Value();
-        hx = FpsT(kSpeedFps * std::sin(kHeadingRad)).Value() * kHeightFactor;
-        hz = FpsT(kSpeedFps * std::cos(kHeadingRad)).Value() * kHeightFactor;
-      }
-      wind_nodes[i].range_ft = static_cast<uint32_t>(point.range_ft);
-      wind_nodes[i].x_fps = hx * kCos;
-      wind_nodes[i].y_fps = -hx * kSin;
-      wind_nodes[i].z_fps = hz;
-    }
-    pout->wind_count = static_cast<uint8_t>(pimpl->wind_profile_count);
+    BuildProfileWind(pimpl, pout);
   } else {
-    if (std::isnan(pimpl->wind_heading_rad)) {
-      pimpl->wind_heading_rad = DegreesT(0);
-    }
-
-    const DegreesT kFullTurn(kDegreesPerTurn);
-    if (pimpl->wind_heading_rad > kFullTurn ||
-        pimpl->wind_heading_rad < kFullTurn * -1) {
-      pout->error = kLobErrorWindHeadingOOR;
-      return;
-    }
-
-    if (std::isnan(pimpl->wind_speed_fps)) {
-      pimpl->wind_speed_fps = FpsT(0);
-    }
-
-    double wind_x_fps = 0.0;
-    double wind_z_fps = 0.0;
-    if (pimpl->wind_speed_fps > FpsT(0) || pimpl->wind_speed_fps < FpsT(0)) {
-      wind_x_fps = FpsT(pimpl->wind_speed_fps *
-                        std::sin(pimpl->wind_heading_rad.Value()))
-                       .Value();
-      wind_z_fps = FpsT(pimpl->wind_speed_fps *
-                        std::cos(pimpl->wind_heading_rad.Value()))
-                       .Value();
-    }
-    wind_nodes[0].range_ft = 0U;
-    wind_nodes[0].x_fps = wind_x_fps * kCos;
-    wind_nodes[0].y_fps = -wind_x_fps * kSin;
-    wind_nodes[0].z_fps = wind_z_fps;
-    pout->wind_count = 1;
+    BuildUniformWind(pimpl, pout);
+  }
+  if (pout->error != kLobErrorNotFormed) {
+    return;
   }
 
+  LobWindNode* wind_nodes = &pout->wind_nodes[0];
   for (size_t i = pout->wind_count; i < LOB_WIND_POINTS; i++) {
     wind_nodes[i] = LobWindNode{};
   }
@@ -1245,7 +1263,8 @@ LobBuilder* LobBuilderWindShearExponent(LobBuilder* pbuilder, double value) {
   if (pbuilder == nullptr) {
     return nullptr;
   }
-  Pimpl(pbuilder)->wind_shear_exponent = value;
+  auto* pimpl = Pimpl(pbuilder);
+  pimpl->wind_shear_exponent = value;
   return pbuilder;
 }
 
