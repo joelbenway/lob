@@ -33,15 +33,18 @@ constexpr double kInclineDeg = 15.0;
 
 struct WindProfileBuildFixture : public testing::Test {
   lob::Builder builder;
-  void SetUp() override {
-    builder.BallisticCoefficientPsi(kTestBcPsi)
+  static lob::Builder ConfiguredBuilder() {
+    lob::Builder configured;
+    configured.BallisticCoefficientPsi(kTestBcPsi)
         .BCDragFunction(lob::DragFunctionT::kG1)
         .DiameterInch(kTestDiameterIn)
         .MassGrains(kTestMassGrains)
         .InitialVelocityFps(kTestVelocityFps)
         .ZeroAngleMOA(kTestZeroAngleMoa)
         .OpticHeightInches(kTestOpticHeightIn);
+    return configured;
   }
+  void SetUp() override { builder = ConfiguredBuilder(); }
 };
 
 const std::array<lob::WindPoint, 2> kTwoPoint = {{
@@ -86,16 +89,8 @@ TEST_F(WindProfileBuildFixture, SinglePointEqualsUniform) {
        std::numeric_limits<double>::quiet_NaN()},
   }};
   const lob::Context kProfile = builder.WindProfile(kOne).Build();
-  lob::Builder plain;
-  plain.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
-      .WindHeadingDeg(kCrosswindHeadingDeg)
-      .WindSpeedMph(kMuzzleWindMph);
+  lob::Builder plain = ConfiguredBuilder();
+  plain.WindHeadingDeg(kCrosswindHeadingDeg).WindSpeedMph(kMuzzleWindMph);
   const lob::Context kUniform = plain.Build();
   EXPECT_DOUBLE_EQ(kProfile.wind_nodes.at(0).x_fps,
                    kUniform.wind_nodes.at(0).x_fps);
@@ -150,15 +145,8 @@ TEST_F(WindProfileBuildFixture, LastWindCallWinsBothDirections) {
                                         .WindProfile(kTwoPoint)
                                         .Build();
   EXPECT_EQ(kProfileLast.wind_count, 2U);
-  lob::Builder other;
-  other.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
-      .WindProfile(kTwoPoint)
+  lob::Builder other = ConfiguredBuilder();
+  other.WindProfile(kTwoPoint)
       .WindHeading(lob::ClockAngleT::kIII)
       .WindSpeedMph(kLightWindSpeedMph);
   const lob::Context kUniformLast = other.Build();
@@ -214,15 +202,8 @@ TEST_F(WindProfileBuildFixture, RejectsBadShearConfig) {
       {0.0, kCrosswindHeadingDeg, kMuzzleWindMph, 1.0},
       {1500.0, kCrosswindHeadingDeg, 10.0, 0.0},
   }};
-  lob::Builder b3;
-  b3.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
-      .WindProfile(kLow);
+  lob::Builder b3 = ConfiguredBuilder();
+  b3.WindProfile(kLow);
   EXPECT_EQ(b3.Build().error, lob::ErrorT::kWindProfileInvalid);
 }
 
@@ -231,16 +212,8 @@ TEST_F(WindProfileBuildFixture, MissingHeightsStoreVerbatim) {
   ASSERT_EQ(kProfileCtx.error, lob::ErrorT::kNone);
   EXPECT_DOUBLE_EQ(kProfileCtx.wind_nodes.at(0).z_fps,
                    lob::FpsT(lob::MphT(kMuzzleWindMph)).Value());
-  lob::Builder uniform;
-  uniform.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
-      .WindHeadingDeg(kCrosswindHeadingDeg)
-      .WindSpeedMph(kMuzzleWindMph);
+  lob::Builder uniform = ConfiguredBuilder();
+  uniform.WindHeadingDeg(kCrosswindHeadingDeg).WindSpeedMph(kMuzzleWindMph);
   const lob::Context kUniformCtx = uniform.Build();
   ASSERT_EQ(kUniformCtx.error, lob::ErrorT::kNone);
   EXPECT_DOUBLE_EQ(kProfileCtx.wind_nodes.at(0).x_fps,
@@ -307,15 +280,8 @@ TEST_F(WindProfileBuildFixture, ProfileRefinementMatchesCoarseSolve) {
   std::array<lob::Output, 4> coarse_outs{};
   std::array<lob::Output, 4> fine_outs{};
   lob::Solve(builder.WindProfile(kCoarse).Build(), kRanges, &coarse_outs);
-  lob::Builder fb;
-  fb.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
-      .WindProfile(kFine);
+  lob::Builder fb = ConfiguredBuilder();
+  fb.WindProfile(kFine);
   lob::Solve(fb.Build(), kRanges, &fine_outs);
   for (size_t i = 0; i < kRanges.size(); ++i) {
     EXPECT_NEAR(fine_outs.at(i).deflection, coarse_outs.at(i).deflection, 1e-6);
@@ -345,15 +311,8 @@ TEST_F(WindProfileBuildFixture, ClampedTailMatchesExplicitExtension) {
   std::array<lob::Output, kSolutionLength> short_outs{};
   std::array<lob::Output, kSolutionLength> long_outs{};
   lob::Solve(builder.WindProfile(kShort).Build(), kRanges, &short_outs);
-  lob::Builder lb;
-  lb.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
-      .WindProfile(kLong);
+  lob::Builder lb = ConfiguredBuilder();
+  lb.WindProfile(kLong);
   lob::Solve(lb.Build(), kRanges, &long_outs);
   for (size_t i = 0; i < kRanges.size(); ++i) {
     EXPECT_DOUBLE_EQ(long_outs.at(i).deflection, short_outs.at(i).deflection);
@@ -446,27 +405,11 @@ TEST_F(WindProfileBuildFixture, InclinedScaledGrowsDrift) {
   const std::array<uint32_t, 3> kRanges = {900, 1800, 3000};
   std::array<lob::Output, 3> plain_outs{};
   std::array<lob::Output, 3> scaled_outs{};
-  lob::Builder pb;
-  pb.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
-      .WindProfile(kPts)
-      .WindShearExponent(0.0)
-      .RangeAngleDeg(kInclineDeg);
+  lob::Builder pb = ConfiguredBuilder();
+  pb.WindProfile(kPts).WindShearExponent(0.0).RangeAngleDeg(kInclineDeg);
   lob::Solve(pb.Build(), kRanges, &plain_outs);
-  lob::Builder sb;
-  sb.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
-      .WindProfile(kPts)
+  lob::Builder sb = ConfiguredBuilder();
+  sb.WindProfile(kPts)
       .WindShearExponent(kTestShearExponent)
       .RangeAngleDeg(kInclineDeg);
   lob::Solve(sb.Build(), kRanges, &scaled_outs);
@@ -478,15 +421,8 @@ TEST_F(WindProfileBuildFixture, InclinedScaledGrowsDrift) {
 TEST_F(WindProfileBuildFixture, DownhillScaledSolveCompletes) {
   const std::array<uint32_t, 3> kRanges = {900, 1800, 3000};
   std::array<lob::Output, 3> outs{};
-  lob::Builder db;
-  db.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
-      .WindHeading(lob::ClockAngleT::kIII)
+  lob::Builder db = ConfiguredBuilder();
+  db.WindHeading(lob::ClockAngleT::kIII)
       .WindSpeedMph(kLightWindSpeedMph)
       .WindShearExponent(kTestShearExponent)
       .RangeAngleDeg(-kInclineDeg);
@@ -510,16 +446,8 @@ TEST_F(WindProfileBuildFixture, TwoPointFlatProfileMatchesUniformSolve) {
   std::array<lob::Output, 4> uniform_outs{};
   const size_t kNProfile =
       lob::Solve(builder.WindProfile(kFlat).Build(), kRanges, &profile_outs);
-  lob::Builder ub;
-  ub.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
-      .WindHeadingDeg(kCrosswindHeadingDeg)
-      .WindSpeedMph(kWindSpeedMph);
+  lob::Builder ub = ConfiguredBuilder();
+  ub.WindHeadingDeg(kCrosswindHeadingDeg).WindSpeedMph(kWindSpeedMph);
   const size_t kNUniform = lob::Solve(ub.Build(), kRanges, &uniform_outs);
   EXPECT_EQ(kNProfile, kNUniform);
   for (size_t i = 0; i < kNProfile; ++i) {
@@ -539,15 +467,8 @@ TEST_F(WindProfileBuildFixture, CrosswindBlindToInclineAtSolve) {
                                        .WindShearExponent(0.0)
                                        .Build(),
                                    kRanges, &flat_outs);
-  lob::Builder hb;
-  hb.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
-      .WindHeading(lob::ClockAngleT::kIII)
+  lob::Builder hb = ConfiguredBuilder();
+  hb.WindHeading(lob::ClockAngleT::kIII)
       .WindSpeedMph(kWindSpeedMph)
       .WindShearExponent(0.0)
       .RangeAngleDeg(kInclineDeg);
@@ -576,14 +497,8 @@ TEST_F(WindProfileBuildFixture, AltitudeScalingGrowsApexDrift) {
                                      .WindShearExponent(0.0)
                                      .Build();
   ASSERT_EQ(kPlainCtx.error, lob::ErrorT::kNone);
-  lob::Builder sb;
-  sb.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kHighArcZeroMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
+  lob::Builder sb = ConfiguredBuilder();
+  sb.ZeroAngleMOA(kHighArcZeroMoa)
       .WindProfile(kPts)
       .WindShearExponent(kTestShearExponent);
   const lob::Context kScaledCtx = sb.Build();
@@ -596,16 +511,8 @@ TEST_F(WindProfileBuildFixture, AltitudeScalingGrowsApexDrift) {
 }
 
 TEST_F(WindProfileBuildFixture, ZeroWindCountSolvesAsCalm) {
-  lob::Builder wb;
-  wb.BallisticCoefficientPsi(kTestBcPsi)
-      .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(kTestDiameterIn)
-      .MassGrains(kTestMassGrains)
-      .InitialVelocityFps(kTestVelocityFps)
-      .ZeroAngleMOA(kTestZeroAngleMoa)
-      .OpticHeightInches(kTestOpticHeightIn)
-      .WindHeading(lob::ClockAngleT::kIII)
-      .WindSpeedMph(kWindSpeedMph);
+  lob::Builder wb = ConfiguredBuilder();
+  wb.WindHeading(lob::ClockAngleT::kIII).WindSpeedMph(kWindSpeedMph);
   lob::Context zeroed = wb.Build();
   ASSERT_EQ(zeroed.error, lob::ErrorT::kNone);
   zeroed.wind_count = 0;  // hand-packed: nodes still hold wind, count says none
