@@ -207,6 +207,39 @@ TEST_F(WindProfileBuildFixture, RejectsBadShearConfig) {
   EXPECT_EQ(b3.Build().error, lob::ErrorT::kWindProfileInvalid);
 }
 
+TEST_F(WindProfileBuildFixture, RejectsNonFiniteProfileValues) {
+  const double kNaN = std::numeric_limits<double>::quiet_NaN();
+  const double kInf = std::numeric_limits<double>::infinity();
+  const std::array<lob::WindPoint, 1> kNanRange = {
+      {{kNaN, kCrosswindHeadingDeg, kMuzzleWindMph, kNaN}}};
+  const std::array<lob::WindPoint, 1> kInfRange = {
+      {{kInf, kCrosswindHeadingDeg, kMuzzleWindMph, kNaN}}};
+  const std::array<lob::WindPoint, 1> kNanHeading = {
+      {{0.0, kNaN, kMuzzleWindMph, kNaN}}};
+  const std::array<lob::WindPoint, 1> kInfHeading = {
+      {{0.0, kInf, kMuzzleWindMph, kNaN}}};
+  const std::array<lob::WindPoint, 1> kNanSpeed = {
+      {{0.0, kCrosswindHeadingDeg, kNaN, kNaN}}};
+  const std::array<lob::WindPoint, 1> kInfSpeed = {
+      {{0.0, kCrosswindHeadingDeg, kInf, kNaN}}};
+  const std::array<lob::WindPoint, 1> kInfHeight = {
+      {{0.0, kCrosswindHeadingDeg, kMuzzleWindMph, kInf}}};
+  EXPECT_EQ(builder.WindProfile(kNanRange).Build().error,
+            lob::ErrorT::kWindProfileInvalid);
+  EXPECT_EQ(builder.WindProfile(kInfRange).Build().error,
+            lob::ErrorT::kWindProfileInvalid);
+  EXPECT_EQ(builder.WindProfile(kNanHeading).Build().error,
+            lob::ErrorT::kWindProfileInvalid);
+  EXPECT_EQ(builder.WindProfile(kInfHeading).Build().error,
+            lob::ErrorT::kWindProfileInvalid);
+  EXPECT_EQ(builder.WindProfile(kNanSpeed).Build().error,
+            lob::ErrorT::kWindProfileInvalid);
+  EXPECT_EQ(builder.WindProfile(kInfSpeed).Build().error,
+            lob::ErrorT::kWindProfileInvalid);
+  EXPECT_EQ(builder.WindProfile(kInfHeight).Build().error,
+            lob::ErrorT::kWindProfileInvalid);
+}
+
 TEST_F(WindProfileBuildFixture, MissingHeightsStoreVerbatim) {
   const lob::Context kProfileCtx = builder.WindProfile(kTwoPoint).Build();
   ASSERT_EQ(kProfileCtx.error, lob::ErrorT::kNone);
@@ -427,6 +460,32 @@ TEST_F(WindProfileBuildFixture, DownhillScaledSolveCompletes) {
       .WindShearExponent(kTestShearExponent)
       .RangeAngleDeg(-kInclineDeg);
   const size_t kSolved = lob::Solve(db.Build(), kRanges, &outs);
+  EXPECT_EQ(kSolved, kRanges.size());
+  for (size_t i = 0; i < kSolved; ++i) {
+    EXPECT_TRUE(std::isfinite(outs.at(i).deflection));
+    EXPECT_GT(outs.at(i).deflection, 0.0);
+  }
+}
+
+TEST_F(WindProfileBuildFixture, CeilingClampCompletesHighArcSolve) {
+  // Mortar-arc trajectory with scaling: queries above the 300-ft band clamp
+  // to it, so the solve completes finite with the wind's sign.
+  constexpr double kMortarZeroMoa = 500.0;
+  const std::array<lob::WindPoint, 2> kPts = {{
+      {0.0, kCrosswindHeadingDeg, 10.0,
+       std::numeric_limits<double>::quiet_NaN()},
+      {3000.0, kCrosswindHeadingDeg, 10.0,
+       std::numeric_limits<double>::quiet_NaN()},
+  }};
+  const std::array<uint32_t, 3> kRanges = {900, 1800, 3000};
+  std::array<lob::Output, 3> outs{};
+  lob::Builder mb = ConfiguredBuilder();
+  mb.ZeroAngleMOA(kMortarZeroMoa)
+      .WindProfile(kPts)
+      .WindShearExponent(kTestShearExponent);
+  const lob::Context kCtx = mb.Build();
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+  const size_t kSolved = lob::Solve(kCtx, kRanges, &outs);
   EXPECT_EQ(kSolved, kRanges.size());
   for (size_t i = 0; i < kSolved; ++i) {
     EXPECT_TRUE(std::isfinite(outs.at(i).deflection));
