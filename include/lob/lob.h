@@ -111,8 +111,8 @@ typedef struct {
 /** @brief Downrange wind profile point (horizontal-plane wind). */
 typedef struct {
   double range_ft;  ///< @brief Downrange position in feet.
-  double x_fps;  ///< @brief Wind in fps, along-track horizontal (tailwind +).
-  double z_fps;  ///< @brief Wind in fps, lateral.
+  double heading_deg;  ///< @brief Wind heading in degrees (0 tailwind, 180 headwind); wraps mod 360.
+  double speed_mph;  ///< @brief Wind speed in miles per hour.
   double height_ft;  ///< @brief Measurement height above ground in feet.
 } LobWindPoint;
 

@@ -22,7 +22,9 @@ constexpr double kTestMassGrains = 77.0;
 constexpr uint16_t kTestVelocityFps = 2720;
 constexpr double kTestZeroAngleMoa = 4.78;
 constexpr double kTestOpticHeightIn = 2.5;
-constexpr double kMuzzleWindFps = 7.33;
+constexpr double kMuzzleWindMph = 5.0;
+constexpr double kCrosswindHeadingDeg = 90.0;
+constexpr double kTailwindHeadingDeg = 0.0;
 constexpr double kWindSpeedMph = 10.0;
 constexpr double kLightWindSpeedMph = 5.0;
 constexpr double kTestShearExponent = 0.25;
@@ -43,8 +45,10 @@ struct WindProfileBuildFixture : public testing::Test {
 };
 
 const std::array<lob::WindPoint, 2> kTwoPoint = {{
-    {0.0, 0.0, kMuzzleWindFps, std::numeric_limits<double>::quiet_NaN()},
-    {1500.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
+    {0.0, kCrosswindHeadingDeg, kMuzzleWindMph,
+     std::numeric_limits<double>::quiet_NaN()},
+    {1500.0, kCrosswindHeadingDeg, 10.0,
+     std::numeric_limits<double>::quiet_NaN()},
 }};
 
 namespace {
@@ -68,15 +72,18 @@ TEST_F(WindProfileBuildFixture, CopiesProfileAndSetsCount) {
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
   EXPECT_EQ(kCtx.wind_count, 2U);
   EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(0).x_fps, 0.0);
-  EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(0).z_fps, kMuzzleWindFps);
+  EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(0).z_fps,
+                   lob::FpsT(lob::MphT(kMuzzleWindMph)).Value());
   EXPECT_EQ(kCtx.wind_nodes.at(1).range_ft, 1500U);
-  EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(1).z_fps, 14.66);
+  EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(1).z_fps,
+                   lob::FpsT(lob::MphT(10.0)).Value());
   EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(0).y_fps, 0.0);
 }
 
 TEST_F(WindProfileBuildFixture, SinglePointEqualsUniform) {
   const std::array<lob::WindPoint, 1> kOne = {{
-      {0.0, 0.0, kMuzzleWindFps, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, kCrosswindHeadingDeg, kMuzzleWindMph,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   const lob::Context kProfile = builder.WindProfile(kOne).Build();
   lob::Builder plain;
@@ -87,11 +94,11 @@ TEST_F(WindProfileBuildFixture, SinglePointEqualsUniform) {
       .InitialVelocityFps(kTestVelocityFps)
       .ZeroAngleMOA(kTestZeroAngleMoa)
       .OpticHeightInches(kTestOpticHeightIn)
-      .WindHeading(lob::ClockAngleT::kIII)
-      .WindSpeedFps(kMuzzleWindFps);
+      .WindHeadingDeg(kCrosswindHeadingDeg)
+      .WindSpeedMph(kMuzzleWindMph);
   const lob::Context kUniform = plain.Build();
-  EXPECT_NEAR(kProfile.wind_nodes.at(0).x_fps, kUniform.wind_nodes.at(0).x_fps,
-              1e-12);
+  EXPECT_DOUBLE_EQ(kProfile.wind_nodes.at(0).x_fps,
+                   kUniform.wind_nodes.at(0).x_fps);
   EXPECT_DOUBLE_EQ(kProfile.wind_nodes.at(0).z_fps,
                    kUniform.wind_nodes.at(0).z_fps);
   EXPECT_EQ(kProfile.wind_count, 1U);
@@ -102,7 +109,7 @@ TEST_F(WindProfileBuildFixture, RejectsTooLong) {
   many.at(0).range_ft = 0.0;
   for (size_t i = 1; i <= lob::kLobWindPoints; ++i) {
     many.at(i).range_ft = 100.0 * static_cast<double>(i);
-    many.at(i).z_fps = 1.0;
+    many.at(i).speed_mph = 1.0;
   }
   EXPECT_EQ(builder.WindProfile(many).Build().error,
             lob::ErrorT::kWindProfileTooLong);
@@ -110,9 +117,12 @@ TEST_F(WindProfileBuildFixture, RejectsTooLong) {
 
 TEST_F(WindProfileBuildFixture, RejectsNonMonotonic) {
   const std::array<lob::WindPoint, 3> kBad = {{
-      {0.0, 0.0, 1.0, std::numeric_limits<double>::quiet_NaN()},
-      {1500.0, 0.0, 2.0, std::numeric_limits<double>::quiet_NaN()},
-      {1500.0, 0.0, 3.0, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, kCrosswindHeadingDeg, 1.0,
+       std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, kCrosswindHeadingDeg, 2.0,
+       std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, kCrosswindHeadingDeg, 3.0,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   EXPECT_EQ(builder.WindProfile(kBad).Build().error,
             lob::ErrorT::kWindProfileNotMonotonic);
@@ -120,8 +130,10 @@ TEST_F(WindProfileBuildFixture, RejectsNonMonotonic) {
 
 TEST_F(WindProfileBuildFixture, RejectsNonzeroFirstRange) {
   const std::array<lob::WindPoint, 2> kBad = {{
-      {100.0, 0.0, 1.0, std::numeric_limits<double>::quiet_NaN()},
-      {1500.0, 0.0, 2.0, std::numeric_limits<double>::quiet_NaN()},
+      {100.0, kCrosswindHeadingDeg, 1.0,
+       std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, kCrosswindHeadingDeg, 2.0,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   EXPECT_EQ(builder.WindProfile(kBad).Build().error,
             lob::ErrorT::kWindProfileNotMonotonic);
@@ -158,25 +170,27 @@ TEST_F(WindProfileBuildFixture, NormalizesHighMeasurementToReference) {
   const double kHeightFactor =
       std::pow(kWindReferenceHeightFt / 50.0, kTestShearExponent);
   const std::array<lob::WindPoint, 2> kPts = {{
-      {0.0, 0.0, kMuzzleWindFps, 1.0},
-      {1500.0, 0.0, 14.66, 50.0},
+      {0.0, kCrosswindHeadingDeg, kMuzzleWindMph, 1.0},
+      {1500.0, kCrosswindHeadingDeg, 10.0, 50.0},
   }};
   const lob::Context kCtx =
       builder.WindProfile(kPts).WindShearExponent(kTestShearExponent).Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
-  EXPECT_NEAR(kCtx.wind_nodes.at(1).z_fps, 14.66 * kHeightFactor, 1E-9);
+  EXPECT_NEAR(kCtx.wind_nodes.at(1).z_fps,
+              lob::FpsT(lob::MphT(10.0)).Value() * kHeightFactor, 1E-9);
   EXPECT_EQ(kCtx.wind_nodes.at(1).range_ft, 1500U);
 }
 
 TEST_F(WindProfileBuildFixture, ZeroShearExponentStoresVerbatim) {
   const std::array<lob::WindPoint, 2> kPts = {{
-      {0.0, 0.0, kMuzzleWindFps, 50.0},
-      {1500.0, 0.0, 14.66, 50.0},
+      {0.0, kCrosswindHeadingDeg, kMuzzleWindMph, 50.0},
+      {1500.0, kCrosswindHeadingDeg, 10.0, 50.0},
   }};
   const lob::Context kCtx =
       builder.WindProfile(kPts).WindShearExponent(0.0).Build();
   EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
-  EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(1).z_fps, 14.66);
+  EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(1).z_fps,
+                   lob::FpsT(lob::MphT(10.0)).Value());
 }
 
 TEST_F(WindProfileBuildFixture, DefaultShearExponentDisablesScaling) {
@@ -197,8 +211,8 @@ TEST_F(WindProfileBuildFixture, RejectsBadShearConfig) {
                 .error,
             lob::ErrorT::kWindProfileInvalid);
   const std::array<lob::WindPoint, 2> kLow = {{
-      {0.0, 0.0, kMuzzleWindFps, 1.0},
-      {1500.0, 0.0, 14.66, 0.0},
+      {0.0, kCrosswindHeadingDeg, kMuzzleWindMph, 1.0},
+      {1500.0, kCrosswindHeadingDeg, 10.0, 0.0},
   }};
   lob::Builder b3;
   b3.BallisticCoefficientPsi(kTestBcPsi)
@@ -215,7 +229,8 @@ TEST_F(WindProfileBuildFixture, RejectsBadShearConfig) {
 TEST_F(WindProfileBuildFixture, MissingHeightsStoreVerbatim) {
   const lob::Context kProfileCtx = builder.WindProfile(kTwoPoint).Build();
   ASSERT_EQ(kProfileCtx.error, lob::ErrorT::kNone);
-  EXPECT_DOUBLE_EQ(kProfileCtx.wind_nodes.at(0).z_fps, kMuzzleWindFps);
+  EXPECT_DOUBLE_EQ(kProfileCtx.wind_nodes.at(0).z_fps,
+                   lob::FpsT(lob::MphT(kMuzzleWindMph)).Value());
   lob::Builder uniform;
   uniform.BallisticCoefficientPsi(kTestBcPsi)
       .BCDragFunction(lob::DragFunctionT::kG1)
@@ -224,26 +239,30 @@ TEST_F(WindProfileBuildFixture, MissingHeightsStoreVerbatim) {
       .InitialVelocityFps(kTestVelocityFps)
       .ZeroAngleMOA(kTestZeroAngleMoa)
       .OpticHeightInches(kTestOpticHeightIn)
-      .WindHeading(lob::ClockAngleT::kIII)
-      .WindSpeedFps(kMuzzleWindFps);
+      .WindHeadingDeg(kCrosswindHeadingDeg)
+      .WindSpeedMph(kMuzzleWindMph);
   const lob::Context kUniformCtx = uniform.Build();
   ASSERT_EQ(kUniformCtx.error, lob::ErrorT::kNone);
-  EXPECT_NEAR(kProfileCtx.wind_nodes.at(0).x_fps,
-              kUniformCtx.wind_nodes.at(0).x_fps, 1e-12);
+  EXPECT_DOUBLE_EQ(kProfileCtx.wind_nodes.at(0).x_fps,
+                   kUniformCtx.wind_nodes.at(0).x_fps);
   EXPECT_DOUBLE_EQ(kProfileCtx.wind_nodes.at(0).z_fps,
                    kUniformCtx.wind_nodes.at(0).z_fps);
 }
 
 TEST_F(WindProfileBuildFixture, RejectsUnstorableValues) {
   const std::array<lob::WindPoint, 2> kFractional = {{
-      {0.0, 0.0, kMuzzleWindFps, std::numeric_limits<double>::quiet_NaN()},
-      {1500.5, 0.0, kMuzzleWindFps, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, kCrosswindHeadingDeg, kMuzzleWindMph,
+       std::numeric_limits<double>::quiet_NaN()},
+      {1500.5, kCrosswindHeadingDeg, kMuzzleWindMph,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   EXPECT_EQ(builder.WindProfile(kFractional).Build().error,
             lob::ErrorT::kWindProfileInvalid);
   const std::array<lob::WindPoint, 2> kHugeRange = {{
-      {0.0, 0.0, kMuzzleWindFps, std::numeric_limits<double>::quiet_NaN()},
-      {1e300, 0.0, kMuzzleWindFps, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, kCrosswindHeadingDeg, kMuzzleWindMph,
+       std::numeric_limits<double>::quiet_NaN()},
+      {1e300, kCrosswindHeadingDeg, kMuzzleWindMph,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   EXPECT_EQ(builder.WindProfile(kHugeRange).Build().error,
             lob::ErrorT::kWindProfileInvalid);
@@ -251,18 +270,19 @@ TEST_F(WindProfileBuildFixture, RejectsUnstorableValues) {
 
 TEST_F(WindProfileBuildFixture, InclineBakesPitchIntoNodes) {
   const std::array<lob::WindPoint, 2> kTailwind = {{
-      {0.0, kMuzzleWindFps, 0.0, std::numeric_limits<double>::quiet_NaN()},
-      {1500.0, kMuzzleWindFps, 0.0, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, kTailwindHeadingDeg, kMuzzleWindMph,
+       std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, kTailwindHeadingDeg, kMuzzleWindMph,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   const double kTheta = lob::RadiansT(lob::DegreesT(kInclineDeg)).Value();
+  const double kTailFps = lob::FpsT(lob::MphT(kMuzzleWindMph)).Value();
   const lob::Context kCtx =
       builder.WindProfile(kTailwind).RangeAngleDeg(kInclineDeg).Build();
   ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
-  EXPECT_NEAR(kCtx.wind_nodes.at(0).x_fps, kMuzzleWindFps * std::cos(kTheta),
-              1E-9);
-  EXPECT_NEAR(kCtx.wind_nodes.at(0).y_fps, -kMuzzleWindFps * std::sin(kTheta),
-              1E-9);
-  EXPECT_DOUBLE_EQ(kCtx.wind_nodes.at(0).z_fps, 0.0);
+  EXPECT_NEAR(kCtx.wind_nodes.at(0).x_fps, kTailFps * std::cos(kTheta), 1E-9);
+  EXPECT_NEAR(kCtx.wind_nodes.at(0).y_fps, -kTailFps * std::sin(kTheta), 1E-9);
+  EXPECT_NEAR(kCtx.wind_nodes.at(0).z_fps, 0.0, 1E-9);
   // Guard against a vacuous test: the pitched values must differ decisively
   // from the unpitched inputs.
   EXPECT_GT(std::abs(kCtx.wind_nodes.at(0).y_fps), 1.0);
@@ -270,13 +290,18 @@ TEST_F(WindProfileBuildFixture, InclineBakesPitchIntoNodes) {
 
 TEST_F(WindProfileBuildFixture, ProfileRefinementMatchesCoarseSolve) {
   const std::array<lob::WindPoint, 2> kCoarse = {{
-      {0.0, 0.0, 10.0, std::numeric_limits<double>::quiet_NaN()},
-      {2000.0, 0.0, 30.0, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, kCrosswindHeadingDeg, 7.0,
+       std::numeric_limits<double>::quiet_NaN()},
+      {2000.0, kCrosswindHeadingDeg, 20.0,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   const std::array<lob::WindPoint, 3> kFine = {{
-      {0.0, 0.0, 10.0, std::numeric_limits<double>::quiet_NaN()},
-      {1000.0, 0.0, 20.0, std::numeric_limits<double>::quiet_NaN()},
-      {2000.0, 0.0, 30.0, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, kCrosswindHeadingDeg, 7.0,
+       std::numeric_limits<double>::quiet_NaN()},
+      {1000.0, kCrosswindHeadingDeg, 13.5,
+       std::numeric_limits<double>::quiet_NaN()},
+      {2000.0, kCrosswindHeadingDeg, 20.0,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   const std::array<uint32_t, 4> kRanges = {500, 1000, 1500, 2000};
   std::array<lob::Output, 4> coarse_outs{};
@@ -301,13 +326,18 @@ TEST_F(WindProfileBuildFixture, ProfileRefinementMatchesCoarseSolve) {
 TEST_F(WindProfileBuildFixture, ClampedTailMatchesExplicitExtension) {
   // Exact: the extension adds kT * 0.0 terms of the same value.
   const std::array<lob::WindPoint, 2> kShort = {{
-      {0.0, 0.0, 10.0, std::numeric_limits<double>::quiet_NaN()},
-      {1500.0, 0.0, 30.0, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, kCrosswindHeadingDeg, 7.0,
+       std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, kCrosswindHeadingDeg, 20.0,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   const std::array<lob::WindPoint, 3> kLong = {{
-      {0.0, 0.0, 10.0, std::numeric_limits<double>::quiet_NaN()},
-      {1500.0, 0.0, 30.0, std::numeric_limits<double>::quiet_NaN()},
-      {3000.0, 0.0, 30.0, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, kCrosswindHeadingDeg, 7.0,
+       std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, kCrosswindHeadingDeg, 20.0,
+       std::numeric_limits<double>::quiet_NaN()},
+      {3000.0, kCrosswindHeadingDeg, 20.0,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   constexpr size_t kSolutionLength = 6;
   const std::array<uint32_t, kSolutionLength> kRanges = {500,  1000, 1500,
@@ -333,9 +363,9 @@ TEST_F(WindProfileBuildFixture, ClampedTailMatchesExplicitExtension) {
 
 TEST_F(WindProfileBuildFixture, PiecewiseWindForwardSolution) {
   const std::array<lob::WindPoint, 3> kPts = {{
-      {0.0, 5.0, 7.33, std::numeric_limits<double>::quiet_NaN()},
-      {1500.0, -8.0, 11.0, std::numeric_limits<double>::quiet_NaN()},
-      {3000.0, 12.0, 8.0, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, 90.0, 10.0, std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, 45.0, 15.0, std::numeric_limits<double>::quiet_NaN()},
+      {3000.0, 135.0, 5.0, std::numeric_limits<double>::quiet_NaN()},
   }};
   constexpr lob::FpsT kVelocityError{1};
   constexpr lob::FtLbsT kEnergyError{5};
@@ -348,17 +378,17 @@ TEST_F(WindProfileBuildFixture, PiecewiseWindForwardSolution) {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
       {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2595, 1151, -0.60, 0.12, 0.056},
-      {300, 2474, 1046, 0.00, 0.49, 0.116},
-      {600, 2241, 858, -3.19, 2.12, 0.243},
-      {900, 2019, 697, -13.34, 5.19, 0.384},
-      {1200, 1811, 561, -32.05, 10.08, 0.541},
-      {1500, 1618, 448, -61.42, 17.23, 0.716},
-      {1800, 1444, 356, -104.13, 27.11, 0.913},
-      {2100, 1293, 286, -163.61, 39.91, 1.133},
-      {2400, 1170, 234, -243.92, 55.59, 1.377},
-      {2700, 1078, 199, -349.62, 73.87, 1.645},
-      {3000, 1010, 174, -485.17, 94.25, 1.933}};
+      {150, 2595, 1151, -0.60, 0.23, 0.056},
+      {300, 2473, 1046, 0.00, 0.95, 0.116},
+      {600, 2241, 858, -3.20, 4.00, 0.243},
+      {900, 2022, 699, -13.34, 9.49, 0.384},
+      {1200, 1816, 564, -32.02, 17.85, 0.541},
+      {1500, 1627, 453, -61.26, 29.54, 0.715},
+      {1800, 1456, 362, -103.64, 44.97, 0.910},
+      {2100, 1305, 291, -162.44, 64.10, 1.128},
+      {2400, 1180, 238, -241.66, 86.56, 1.370},
+      {2700, 1085, 201, -345.82, 111.67, 1.636},
+      {3000, 1014, 176, -479.52, 138.62, 1.923}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -370,9 +400,9 @@ TEST_F(WindProfileBuildFixture, PiecewiseWindForwardSolution) {
 
 TEST_F(WindProfileBuildFixture, PiecewiseWindScaledForwardSolution) {
   const std::array<lob::WindPoint, 3> kPts = {{
-      {0.0, 5.0, 7.33, std::numeric_limits<double>::quiet_NaN()},
-      {1500.0, -8.0, 11.0, std::numeric_limits<double>::quiet_NaN()},
-      {3000.0, 12.0, 8.0, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, 90.0, 10.0, 5.0},
+      {1500.0, 45.0, 15.0, 50.0},
+      {3000.0, 135.0, 5.0, 20.0},
   }};
   constexpr lob::FpsT kVelocityError{1};
   constexpr lob::FtLbsT kEnergyError{5};
@@ -386,17 +416,17 @@ TEST_F(WindProfileBuildFixture, PiecewiseWindScaledForwardSolution) {
       0, 150, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000};
   const std::vector<lob::Output> kExpected = {
       {0, 2720, 1265, -2.50, 0.00, 0.000},
-      {150, 2595, 1151, -0.60, 0.12, 0.056},
-      {300, 2474, 1046, 0.00, 0.50, 0.116},
-      {600, 2241, 858, -3.19, 2.19, 0.243},
-      {900, 2019, 697, -13.34, 5.33, 0.384},
-      {1200, 1811, 561, -32.05, 10.29, 0.541},
-      {1500, 1618, 448, -61.42, 17.51, 0.716},
-      {1800, 1444, 356, -104.13, 27.46, 0.913},
-      {2100, 1293, 286, -163.60, 40.33, 1.133},
-      {2400, 1170, 234, -243.92, 56.08, 1.377},
-      {2700, 1078, 199, -349.61, 74.43, 1.645},
-      {3000, 1010, 174, -485.16, 94.88, 1.933}};
+      {150, 2595, 1151, -0.60, 0.15, 0.056},
+      {300, 2473, 1046, 0.00, 0.63, 0.116},
+      {600, 2240, 858, -3.20, 2.59, 0.243},
+      {900, 2020, 697, -13.35, 5.89, 0.384},
+      {1200, 1813, 562, -32.05, 10.60, 0.541},
+      {1500, 1623, 450, -61.37, 16.75, 0.716},
+      {1800, 1450, 359, -103.92, 24.37, 0.912},
+      {2100, 1299, 288, -163.06, 33.42, 1.130},
+      {2400, 1175, 236, -242.82, 43.78, 1.374},
+      {2700, 1080, 200, -347.78, 55.23, 1.641},
+      {3000, 1011, 175, -482.50, 67.46, 1.928}};
 
   std::array<lob::Output, kSolutionLength> solutions = {};
   const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
@@ -408,8 +438,10 @@ TEST_F(WindProfileBuildFixture, PiecewiseWindScaledForwardSolution) {
 
 TEST_F(WindProfileBuildFixture, InclinedScaledGrowsDrift) {
   const std::array<lob::WindPoint, 2> kPts = {{
-      {0.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
-      {3000.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, kCrosswindHeadingDeg, 10.0,
+       std::numeric_limits<double>::quiet_NaN()},
+      {3000.0, kCrosswindHeadingDeg, 10.0,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   const std::array<uint32_t, 3> kRanges = {900, 1800, 3000};
   std::array<lob::Output, 3> plain_outs{};
@@ -467,11 +499,11 @@ TEST_F(WindProfileBuildFixture, DownhillScaledSolveCompletes) {
 }
 
 TEST_F(WindProfileBuildFixture, TwoPointFlatProfileMatchesUniformSolve) {
-  // Share the library's own mph->fps factor instead of hand-spelling one.
-  const double kFps = lob::FpsT(lob::MphT(kWindSpeedMph)).Value();
   const std::array<lob::WindPoint, 2> kFlat = {{
-      {0.0, 0.0, kFps, std::numeric_limits<double>::quiet_NaN()},
-      {3000.0, 0.0, kFps, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, kCrosswindHeadingDeg, kWindSpeedMph,
+       std::numeric_limits<double>::quiet_NaN()},
+      {3000.0, kCrosswindHeadingDeg, kWindSpeedMph,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   const std::array<uint32_t, 4> kRanges = {300, 900, 1800, 3000};
   std::array<lob::Output, 4> profile_outs{};
@@ -486,8 +518,8 @@ TEST_F(WindProfileBuildFixture, TwoPointFlatProfileMatchesUniformSolve) {
       .InitialVelocityFps(kTestVelocityFps)
       .ZeroAngleMOA(kTestZeroAngleMoa)
       .OpticHeightInches(kTestOpticHeightIn)
-      .WindHeading(lob::ClockAngleT::kIII)
-      .WindSpeedFps(kFps);
+      .WindHeadingDeg(kCrosswindHeadingDeg)
+      .WindSpeedMph(kWindSpeedMph);
   const size_t kNUniform = lob::Solve(ub.Build(), kRanges, &uniform_outs);
   EXPECT_EQ(kNProfile, kNUniform);
   for (size_t i = 0; i < kNProfile; ++i) {
@@ -531,8 +563,10 @@ TEST_F(WindProfileBuildFixture, CrosswindBlindToInclineAtSolve) {
 TEST_F(WindProfileBuildFixture, AltitudeScalingGrowsApexDrift) {
   constexpr double kHighArcZeroMoa = 30.0;
   const std::array<lob::WindPoint, 2> kPts = {{
-      {0.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
-      {3000.0, 0.0, 14.66, std::numeric_limits<double>::quiet_NaN()},
+      {0.0, kCrosswindHeadingDeg, 10.0,
+       std::numeric_limits<double>::quiet_NaN()},
+      {3000.0, kCrosswindHeadingDeg, 10.0,
+       std::numeric_limits<double>::quiet_NaN()},
   }};
   const std::array<uint32_t, 3> kRanges = {900, 1800, 3000};
   std::array<lob::Output, 3> plain_outs{};

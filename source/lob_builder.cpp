@@ -240,6 +240,22 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   BuildDynamicDensity(temperature_at_firing_site, pout);
 }
 
+// Shared with the setter: identical operations keep profile/uniform
+// bit-identical.
+RadiansT HeadingDegToRad(double value) {
+  const DegreesT kFullTurn(kDegreesPerTurn);
+  const DegreesT kQuarterTurn(kFullTurn / 4);
+  DegreesT angle(value);
+
+  angle = angle * -1 + kQuarterTurn;
+
+  if (angle < DegreesT(0)) {
+    angle += kFullTurn;
+  }
+
+  return RadiansT(angle);
+}
+
 LobErrorT ValidateWindProfile(Impl* pimpl) {
   assert(pimpl != nullptr);
   if (pimpl->wind_profile_points == nullptr || pimpl->wind_profile_count == 0 ||
@@ -250,8 +266,8 @@ LobErrorT ValidateWindProfile(Impl* pimpl) {
   }
   for (size_t i = 0; i < pimpl->wind_profile_count; i++) {
     const LobWindPoint& point = pimpl->wind_profile_points[i];
-    if (!std::isfinite(point.range_ft) || !std::isfinite(point.x_fps) ||
-        !std::isfinite(point.z_fps) ||
+    if (!std::isfinite(point.range_ft) || !std::isfinite(point.heading_deg) ||
+        !std::isfinite(point.speed_mph) ||
         (!std::isnan(point.height_ft) && !std::isfinite(point.height_ft))) {
       return kLobErrorWindProfileInvalid;
     }
@@ -505,12 +521,18 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
               : CalculatePowerLawWindFactor(FeetT(kWindReferenceHeightFt),
                                             FeetT(point.height_ft),
                                             pimpl->wind_shear_exponent);
-      const double kHx = point.x_fps * kHeightFactor;
-      const double kHz = point.z_fps * kHeightFactor;
+      const double kSpeedFps = FpsT(MphT(point.speed_mph)).Value();
+      double hx = 0.0;
+      double hz = 0.0;
+      if (kSpeedFps > 0.0 || kSpeedFps < 0.0) {
+        const double kHeadingRad = HeadingDegToRad(point.heading_deg).Value();
+        hx = FpsT(kSpeedFps * std::sin(kHeadingRad)).Value() * kHeightFactor;
+        hz = FpsT(kSpeedFps * std::cos(kHeadingRad)).Value() * kHeightFactor;
+      }
       wind_nodes[i].range_ft = static_cast<uint32_t>(point.range_ft);
-      wind_nodes[i].x_fps = kHx * kCos;
-      wind_nodes[i].y_fps = -kHx * kSin;
-      wind_nodes[i].z_fps = kHz;
+      wind_nodes[i].x_fps = hx * kCos;
+      wind_nodes[i].y_fps = -hx * kSin;
+      wind_nodes[i].z_fps = hz;
     }
     pout->wind_count = static_cast<uint8_t>(pimpl->wind_profile_count);
   } else {
@@ -1182,17 +1204,7 @@ LobBuilder* LobBuilderWindHeadingDeg(LobBuilder* pbuilder, double value) {
     return nullptr;
   }
   auto* pimpl = Pimpl(pbuilder);
-  const DegreesT kFullTurn(kDegreesPerTurn);
-  const DegreesT kQuarterTurn(kFullTurn / 4);
-  DegreesT angle(value);
-
-  angle = angle * -1 + kQuarterTurn;
-
-  if (angle < DegreesT(0)) {
-    angle += kFullTurn;
-  }
-
-  pimpl->wind_heading_rad = angle;
+  pimpl->wind_heading_rad = HeadingDegToRad(value);
   pimpl->wind_table_mode = WindTableMode::kUniform;
   return pbuilder;
 }
