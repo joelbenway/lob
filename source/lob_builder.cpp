@@ -37,8 +37,6 @@ enum class WindTableMode : uint8_t {
   kUniform,
 };
 
-constexpr double kDefaultWindShearExponent = 0.0;
-
 }  // namespace
 
 class Impl {
@@ -77,7 +75,7 @@ class Impl {
   const LobWindPoint* wind_profile_points{nullptr};
   size_t wind_profile_count{0};
   WindTableMode wind_table_mode{WindTableMode::kUniform};
-  double wind_shear_exponent{kDefaultWindShearExponent};
+  double wind_shear_exponent{0.0};
 
   size_t table_count{0};
   const float* table_xs{nullptr};
@@ -243,6 +241,7 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
 }
 
 LobErrorT ValidateWindProfile(Impl* pimpl) {
+  assert(pimpl != nullptr);
   if (pimpl->wind_profile_points == nullptr || pimpl->wind_profile_count == 0 ||
       pimpl->wind_profile_count > LOB_WIND_POINTS) {
     return pimpl->wind_profile_count > LOB_WIND_POINTS
@@ -276,6 +275,7 @@ LobErrorT ValidateWindProfile(Impl* pimpl) {
 }
 
 LobErrorT ValidateCustomTable(Impl* pimpl) {
+  assert(pimpl != nullptr);
   if (pimpl->table_count < 2) {
     return kLobErrorMachDragTableTooShort;
   }
@@ -318,6 +318,7 @@ LobErrorT BuildCustomTableSpline(Impl* pimpl, LobContext* pout) {
 }
 
 LobErrorT ValidateBcBands(Impl* pimpl) {
+  assert(pimpl != nullptr);
   if (pimpl->table_count < 2) {
     return kLobErrorBcBandsTooShort;
   }
@@ -483,7 +484,6 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
   const double kCos = std::cos(pimpl->range_angle_rad.Value());
   const double kSin = std::sin(pimpl->range_angle_rad.Value());
 
-  // Raw pointer: count is runtime-validated (pro-bounds-constant-array-index).
   LobWindNode* wind_nodes = &pout->wind_nodes[0];
 
   if (pimpl->wind_table_mode == WindTableMode::kProfile) {
@@ -539,7 +539,6 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
                         std::cos(pimpl->wind_heading_rad.Value()))
                        .Value();
     }
-    // Uniform inputs are reference-height measurements: no normalization.
     wind_nodes[0].range_ft = 0U;
     wind_nodes[0].x_fps = wind_x_fps * kCos;
     wind_nodes[0].y_fps = -wind_x_fps * kSin;
@@ -547,7 +546,6 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
     pout->wind_count = 1;
   }
 
-  // Zero the unused tail so equal builds compare equal.
   for (size_t i = pout->wind_count; i < LOB_WIND_POINTS; i++) {
     wind_nodes[i] = LobWindNode{};
   }
