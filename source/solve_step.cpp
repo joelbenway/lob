@@ -22,22 +22,21 @@ namespace {
 inline CartesianT<FpsT> GetWind(const LobContext& ctx,
                                 const TrajectoryStateT& s) noexcept {
   const LobWindNode* pnodes = &ctx.wind_nodes[0];
-  auto count = std::min(static_cast<size_t>(ctx.wind_count),
-                        static_cast<size_t>(LOB_WIND_POINTS));
-  if (count == 0) {
+  const size_t kCount = std::min<size_t>(ctx.wind_count, LOB_WIND_POINTS);
+  if (kCount == 0) {
     return {FpsT(0.0), FpsT(0.0), FpsT(0.0)};
   }
   double wx = pnodes[0].x_fps;
   double wy = pnodes[0].y_fps;
   double wz = pnodes[0].z_fps;
   const double kX = s.P().X().Value();
-  if (count > 1 && kX > 0.0) {
+  if (kCount > 1 && kX > 0.0) {
     double px = pnodes[0].range_ft;
     double phx = wx;
     double phy = wy;
     double phz = wz;
     bool found = false;
-    for (size_t i = 1; i < count; ++i) {
+    for (size_t i = 1; i < kCount; ++i) {
       const double kRange = pnodes[i].range_ft;
       const double kNx = pnodes[i].x_fps;
       const double kNy = pnodes[i].y_fps;
@@ -64,7 +63,6 @@ inline CartesianT<FpsT> GetWind(const LobContext& ctx,
   }
 
   if (ctx.wind_shear_exponent > 0.0 || ctx.wind_shear_exponent < 0.0) {
-    constexpr double kWindReferenceHeightFt = 1.0;
     constexpr double kMinWindHeightFt = 1.0;
     constexpr double kMaxWindHeightFt = 300.0;
     const double kGy = ctx.gravity.y;
