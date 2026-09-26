@@ -1,0 +1,52 @@
+// Copyright (c) 2025  Joel Benway
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Please see end of file for extended copyright information
+
+#pragma once
+
+#include <algorithm>
+#include <cstddef>
+
+#include "cartesian.hpp"
+#include "eng_units.hpp"
+#include "lob/lob.h"
+#include "ode.hpp"
+
+namespace lob {
+
+// Cold path (lerp + shear scaling) in wind.cpp: a separate TU keeps
+// DsDxCore inlinable; inlining here regressed uniform solves ~40%.
+CartesianT<FpsT> GetWindSlow(const LobContext& ctx, const TrajectoryStateT& s,
+                             size_t count) noexcept;
+
+inline CartesianT<FpsT> GetWind(const LobContext& ctx,
+                                const TrajectoryStateT& s) noexcept {
+  const LobWindNode* pnodes = &ctx.wind_nodes[0];
+  const size_t kCount = std::min<size_t>(ctx.wind_count, LOB_WIND_POINTS);
+  if (kCount == 0) {
+    return {FpsT(0.0), FpsT(0.0), FpsT(0.0)};
+  }
+  const bool kShear =
+      ctx.wind_shear_exponent > 0.0 || ctx.wind_shear_exponent < 0.0;
+  if (kCount == 1 && !kShear) {
+    return {FpsT(pnodes[0].x_fps), FpsT(pnodes[0].y_fps),
+            FpsT(pnodes[0].z_fps)};
+  }
+  return GetWindSlow(ctx, s, kCount);
+}
+
+}  // namespace lob
+
+// This file is part of lob.
+//
+// lob is free software: you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the Free Software
+// Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// lob is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with
+// lob. If not, see <https://www.gnu.org/licenses/>.

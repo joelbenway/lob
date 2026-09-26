@@ -27,7 +27,8 @@ add_library(lob_lob
   source/lob_builder.cpp
   source/lob_convert.cpp
   source/lob_solve.cpp
-  source/solve_step.cpp)
+  source/solve_step.cpp
+  source/wind.cpp)
 # cmake-format: on
 add_library(lob::lob ALIAS lob_lob)
 

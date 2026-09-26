@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <cstddef>
-
-#include "cartesian.hpp"
 #include "eng_units.hpp"
 #include "helpers.hpp"
 #include "lob/lob.h"
@@ -15,8 +12,6 @@
 
 namespace lob {
 
-CartesianT<FpsT> GetWindSlow(const LobContext& ctx, const TrajectoryStateT& s,
-                             size_t count) noexcept;
 void FastSolveStep(const LobContext& ctx, TrajectoryStateT* ps,
                    spline::CurveView* pcurve, FeetT target_x = FeetT(NaN()));
 void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
