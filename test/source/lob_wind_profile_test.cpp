@@ -209,21 +209,21 @@ TEST_F(WindProfileBuildFixture, RejectsBadShearConfig) {
 
 TEST_F(WindProfileBuildFixture, RejectsNonFiniteProfileValues) {
   const double kNaN = std::numeric_limits<double>::quiet_NaN();
-  const double kInf = std::numeric_limits<double>::infinity();
+  const double kInfinity = std::numeric_limits<double>::infinity();
   const std::array<lob::WindPoint, 1> kNanRange = {
       {{kNaN, kCrosswindHeadingDeg, kMuzzleWindMph, kNaN}}};
   const std::array<lob::WindPoint, 1> kInfRange = {
-      {{kInf, kCrosswindHeadingDeg, kMuzzleWindMph, kNaN}}};
+      {{kInfinity, kCrosswindHeadingDeg, kMuzzleWindMph, kNaN}}};
   const std::array<lob::WindPoint, 1> kNanHeading = {
       {{0.0, kNaN, kMuzzleWindMph, kNaN}}};
   const std::array<lob::WindPoint, 1> kInfHeading = {
-      {{0.0, kInf, kMuzzleWindMph, kNaN}}};
+      {{0.0, kInfinity, kMuzzleWindMph, kNaN}}};
   const std::array<lob::WindPoint, 1> kNanSpeed = {
       {{0.0, kCrosswindHeadingDeg, kNaN, kNaN}}};
   const std::array<lob::WindPoint, 1> kInfSpeed = {
-      {{0.0, kCrosswindHeadingDeg, kInf, kNaN}}};
+      {{0.0, kCrosswindHeadingDeg, kInfinity, kNaN}}};
   const std::array<lob::WindPoint, 1> kInfHeight = {
-      {{0.0, kCrosswindHeadingDeg, kMuzzleWindMph, kInf}}};
+      {{0.0, kCrosswindHeadingDeg, kMuzzleWindMph, kInfinity}}};
   EXPECT_EQ(builder.WindProfile(kNanRange).Build().error,
             lob::ErrorT::kWindProfileInvalid);
   EXPECT_EQ(builder.WindProfile(kInfRange).Build().error,
