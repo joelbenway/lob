@@ -19,24 +19,30 @@
 
 namespace lob {
 namespace {
-inline CartesianT<FpsT> GetWind(const LobContext& ctx,
-                                const TrajectoryStateT& s) noexcept {
+
+// Out-of-line by design: folding this cold path into GetWind blows
+// DsDxCore's inline budget and regresses uniform solves ~40% (measured).
+#if defined(_MSC_VER)
+#define LOB_NOINLINE __declspec(noinline)
+#else
+#define LOB_NOINLINE __attribute__((noinline))
+#endif
+
+LOB_NOINLINE CartesianT<FpsT> GetWindSlow(const LobContext& ctx,
+                                          const TrajectoryStateT& s,
+                                          size_t count) noexcept {
   const LobWindNode* pnodes = &ctx.wind_nodes[0];
-  const size_t kCount = std::min<size_t>(ctx.wind_count, LOB_WIND_POINTS);
-  if (kCount == 0) {
-    return {FpsT(0.0), FpsT(0.0), FpsT(0.0)};
-  }
   FpsT wind_x(pnodes[0].x_fps);
   FpsT wind_y(pnodes[0].y_fps);
   FpsT wind_z(pnodes[0].z_fps);
   const FeetT kDownrange = s.P().X();
-  if (kCount > 1 && kDownrange > FeetT(0.0)) {
+  if (count > 1 && kDownrange > FeetT(0.0)) {
     FeetT previous_range(pnodes[0].range_ft);
     FpsT previous_x = wind_x;
     FpsT previous_y = wind_y;
     FpsT previous_z = wind_z;
     bool interpolated = false;
-    for (size_t i = 1; i < kCount; ++i) {
+    for (size_t i = 1; i < count; ++i) {
       const FeetT kNodeRange(pnodes[i].range_ft);
       const FpsT kNodeX(pnodes[i].x_fps);
       const FpsT kNodeY(pnodes[i].y_fps);
@@ -90,6 +96,24 @@ inline CartesianT<FpsT> GetWind(const LobContext& ctx,
     wind_z *= kHeightFactor;
   }
   return {wind_x, wind_y, wind_z};
+}
+
+#undef LOB_NOINLINE
+
+inline CartesianT<FpsT> GetWind(const LobContext& ctx,
+                                const TrajectoryStateT& s) noexcept {
+  const LobWindNode* pnodes = &ctx.wind_nodes[0];
+  const size_t kCount = std::min<size_t>(ctx.wind_count, LOB_WIND_POINTS);
+  if (kCount == 0) {
+    return {FpsT(0.0), FpsT(0.0), FpsT(0.0)};
+  }
+  const bool kShear =
+      ctx.wind_shear_exponent > 0.0 || ctx.wind_shear_exponent < 0.0;
+  if (kCount == 1 && !kShear) {
+    return {FpsT(pnodes[0].x_fps), FpsT(pnodes[0].y_fps),
+            FpsT(pnodes[0].z_fps)};
+  }
+  return GetWindSlow(ctx, s, kCount);
 }
 
 inline double GetDimensionlessAltitude(const LobContext& ctx,
