@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <cstddef>
 
 #include "cartesian.hpp"
 #include "constants.hpp"
@@ -15,25 +14,10 @@
 #include "lob/lob.h"
 #include "ode.hpp"
 #include "splines.hpp"
+#include "wind.hpp"
 
 namespace lob {
 namespace {
-inline CartesianT<FpsT> GetWind(const LobContext& ctx,
-                                const TrajectoryStateT& s) noexcept {
-  const LobWindNode* pnodes = &ctx.wind_nodes[0];
-  const size_t kCount = std::min<size_t>(ctx.wind_count, LOB_WIND_POINTS);
-  if (kCount == 0) {
-    return {FpsT(0.0), FpsT(0.0), FpsT(0.0)};
-  }
-  const bool kShear =
-      ctx.wind_shear_exponent > 0.0 || ctx.wind_shear_exponent < 0.0;
-  if (kCount == 1 && !kShear) {
-    return {FpsT(pnodes[0].x_fps), FpsT(pnodes[0].y_fps),
-            FpsT(pnodes[0].z_fps)};
-  }
-  return GetWindSlow(ctx, s, kCount);
-}
-
 inline double GetDimensionlessAltitude(const LobContext& ctx,
                                        const TrajectoryStateT& s) noexcept {
   const double kGDotR =
