@@ -60,6 +60,13 @@ ranking in `test/validation/baselines/pareto.json`. CI smokes
 C1 × velocity/wind with Pareto-share checks; full C1/C5/C8 Pareto runs
 offline behind `LOB_FULL_PARETO=1`. Semi-elasticities await Phase 4 input
 uncertainties; the artifact schema reserves the field.
+Reference trajectories live in `test/validation/cases/reference_*.json`
+(transcribed from `test/source/lob_env_test.cpp` with provenance and
+envelope tags, per `docs/specs/NUMERICAL_VALIDATION_SPEC.md` §10). CI
+round-trips the loader and decomposes C1-ICAO residuals against measured
+numerical floors; the full six-case matrix with coverage runs offline
+behind `LOB_FULL_MATRIX=1`. All cells are provisional: reference
+uncertainties are unstated and no field data exists yet.
 
 @section validation-invariants Invariants
 
