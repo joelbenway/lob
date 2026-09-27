@@ -89,11 +89,12 @@ TEST(ValidationIo, JsonEscapeQuotesStrings) {
 namespace {
 // Measured 2026-09-27, dev preset, x86_64-linux, C1-ICAO, ranges
 // {300,900,1800,3000} ft. Ceilings = worst observed 18→9 delta × ~2 margin,
-// rounded up to one significant figure. Source of truth mirrored in
-// test/validation/baselines/floors.json (C1-ICAO cell).
+// rounded up to one significant figure, except deflection (worst 0.0 observed
+// 2026-09-27; epsilon guard for cross-platform noise). Source of truth
+// mirrored in test/validation/baselines/floors.json (C1-ICAO cell).
 constexpr double kCeilElevIn_18_9 = 9e-05;    // worst 4.15814e-05 @3000ft x~2
 constexpr double kCeilElevMoa_18_9 = 8e-06;   // worst 3.97148e-06 @3000ft x~2
-constexpr double kCeilDeflMoa_18_9 = 0.0;     // worst 0 (calm C1, exact symmetry)
+constexpr double kCeilDeflMoa_18_9 = 1e-12;   // worst 0.0 observed 2026-09-27; epsilon guard for cross-platform noise
 constexpr double kCeilTof_18_9 = 2e-07;       // worst 6.12488e-08 @3000ft x~2
 }  // namespace
 
