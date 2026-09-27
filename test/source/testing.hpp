@@ -11,6 +11,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -184,6 +185,64 @@ template <size_t N>
 size_t SolveN(const lob::Context& ctx, const std::array<uint32_t, N>& ranges,
               std::array<lob::Output, N>* pouts) {
   return lob::Solve(ctx, ranges, pouts);
+}
+
+// ---- Validation convergence math (Phase 1) ----
+constexpr double kElevFloorIn = 0.01;    // spec §8.2 floor_y
+constexpr double kMoaFloor = 0.01;       // angle-tolerance granularity
+constexpr double kVelFloorFps = 1.0;     // 1 LSB of U16 truncation
+constexpr double kEnergyFloorFtLbs = 1.0;  // 1 LSB of U32 truncation
+constexpr double kTofFloorSec = 1e-9;    // double channel, epsilon only
+
+inline double ElevInDiff(const lob::Output& a, const lob::Output& b) {
+  return std::fabs(a.elevation - b.elevation);
+}
+
+inline double ElevMoaDiff(const lob::Output& a, const lob::Output& b) {
+  return std::fabs(lob::InchToMoa(a.elevation, static_cast<double>(a.range)) -
+                   lob::InchToMoa(b.elevation, static_cast<double>(b.range)));
+}
+
+inline double DeflMoaDiff(const lob::Output& a, const lob::Output& b) {
+  return std::fabs(lob::InchToMoa(a.deflection, static_cast<double>(a.range)) -
+                   lob::InchToMoa(b.deflection, static_cast<double>(b.range)));
+}
+
+inline double VelDiff(const lob::Output& a, const lob::Output& b) {
+  return std::fabs(static_cast<double>(a.velocity) -
+                   static_cast<double>(b.velocity));
+}
+
+inline double EnergyDiff(const lob::Output& a, const lob::Output& b) {
+  return std::fabs(static_cast<double>(a.energy) -
+                   static_cast<double>(b.energy));
+}
+
+inline double TofDiff(const lob::Output& a, const lob::Output& b) {
+  return std::fabs(a.time_of_flight - b.time_of_flight);
+}
+
+inline bool IsAtFloor(double delta, double floor) { return delta <= floor; }
+
+// Passes when the finer rung does not regress: strictly decreases, or both
+// rungs sit at/below the reporting floor (quantization chatter allowance).
+inline bool DecreasesOrAtFloor(double coarse_delta, double fine_delta,
+                               double floor) {
+  if (IsAtFloor(coarse_delta, floor) && IsAtFloor(fine_delta, floor)) {
+    return true;
+  }
+  return fine_delta < coarse_delta;
+}
+
+// Observed order p ≈ log2(|Δh| / |Δh/2|); NaN when the finer delta is zero.
+inline double ObservedOrder(double coarse_delta, double fine_delta) {
+  if (!(fine_delta > 0.0) || !(coarse_delta >= 0.0)) {
+    return std::numeric_limits<double>::quiet_NaN();
+  }
+  if (!(coarse_delta > 0.0)) {
+    return std::numeric_limits<double>::quiet_NaN();
+  }
+  return std::log2(coarse_delta / fine_delta);
 }
 
 }  // namespace tests
