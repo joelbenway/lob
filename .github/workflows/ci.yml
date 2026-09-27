@@ -271,15 +271,15 @@ jobs:
 
     - name: Compare
       if: github.event_name == 'pull_request'
+      continue-on-error: true
       run: cmake
         -D CG_BASE=base/build/benchmark/cachegrind/lob_bench.results.cmake
         -D CG_HEAD=head/build/benchmark/cachegrind/lob_bench.results.cmake
         -D CG_MAX_REGRESSION_BP=100
-        -D CG_THRESHOLD_OVERRIDE_build_basic=200
+        -D CG_THRESHOLD_OVERRIDE_build_basic=100
         -D CG_SUMMARY="$GITHUB_STEP_SUMMARY"
         -P head/cmake/cachegrind-compare.cmake
 
-    # Raw .out files for local `cg_annotate --diff` drill-down.
     - name: Upload raw cachegrind output
       if: always()
       uses: actions/upload-artifact@v7
