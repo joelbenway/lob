@@ -68,6 +68,38 @@ else()
   message(STATUS "Found GTest: ${GTest_DIR}")
 endif()
 
+find_package(nlohmann_json CONFIG)
+
+if(NOT nlohmann_json_FOUND)
+  message(STATUS "nlohmann/json not found, FetchContent instead...")
+  set(DEV_WARNINGS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_WARNINGS}")
+  set(DEV_ERRORS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_ERRORS}")
+  set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
+      ON
+      CACHE INTERNAL "Suppress third-party CMake warnings" FORCE)
+  set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
+      ON
+      CACHE INTERNAL "Suppress third-party CMake errors" FORCE)
+
+  include(FetchContent)
+  FetchContent_Declare(
+    json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG v3.12.0)
+  FetchContent_MakeAvailable(json)
+
+  set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
+      ${DEV_WARNINGS_RECOVER_STATE}
+      CACHE INTERNAL "Restore original setting" FORCE)
+  set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
+      ${DEV_ERRORS_RECOVER_STATE}
+      CACHE INTERNAL "Restore original setting" FORCE)
+  unset(DEV_WARNINGS_RECOVER_STATE)
+  unset(DEV_ERRORS_RECOVER_STATE)
+else()
+  message(STATUS "Found nlohmann/json: ${nlohmann_json_DIR}")
+endif()
+
 # ---- Tests ----
 # cmake-format: off
 set(LOB_TEST_SOURCES
@@ -83,6 +115,7 @@ set(LOB_TEST_SOURCES
     source/lob_wind_test.cpp
     source/lob_wind_profile_test.cpp
     source/validation_convergence_test.cpp
+    source/validation_reference_test.cpp
     source/validation_sensitivity_test.cpp
     )
 
@@ -113,7 +146,7 @@ target_include_directories(lob_test
 
 target_compile_features(lob_test PRIVATE cxx_std_14)
 
-target_link_libraries(lob_test PRIVATE lob::lob GTest::gmock GTest::gtest GTest::gtest_main)
+target_link_libraries(lob_test PRIVATE lob::lob nlohmann_json::nlohmann_json GTest::gmock GTest::gtest GTest::gtest_main)
 
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/validation")
 execute_process(COMMAND git rev-parse --short=12 HEAD
@@ -124,6 +157,7 @@ if(NOT LOB_GIT_SHA)
 endif()
 target_compile_definitions(lob_test PRIVATE
   LOB_VALIDATION_DIR="${CMAKE_BINARY_DIR}/validation"
+  LOB_VALIDATION_CASES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/validation/cases"
   LOB_GIT_SHA="${LOB_GIT_SHA}")
 
 include(GoogleTest)
