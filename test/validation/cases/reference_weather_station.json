@@ -1,0 +1,175 @@
+{
+  "artifact_schema": 1,
+  "id": "ref-weather-station",
+  "provenance": {
+    "source": "McCoy, Modern Exterior Ballistics (ISA treatment, pp. 166-168); Huang saturation-pressure formula (J. Appl. Meteor. Climatol.); lob test corpus test/source/lob_env_test.cpp",
+    "lob_version": "0.13.0",
+    "transcribed_utc": "2026-09-27",
+    "transcribed_from_commit": "4fb97db586e3",
+    "transcribed_from": "test/source/lob_env_test.cpp:272-284 (SolveWithWeatherStationData kExpected)"
+  },
+  "builder": {
+    "note": "verbatim setter list with units; mirror the fixture",
+    "ballistic_coefficient_psi": 0.232,
+    "bc_drag_function": "G7",
+    "bc_atmosphere": "ICAO",
+    "diameter_in": 0.308,
+    "mass_grains": 155.0,
+    "initial_velocity_fps": 2800,
+    "zero_angle_moa": 3.66,
+    "optic_height_in": 1.5,
+    "altitude_of_firing_site_ft": 5280,
+    "air_pressure_inhg": 30,
+    "altitude_of_barometer_ft": 0,
+    "temperature_degf": 65,
+    "altitude_of_thermometer_ft": 3598
+  },
+  "solver_config": {
+    "step_in": 36,
+    "angle_tol_moa": 0.01,
+    "density_path": "fast"
+  },
+  "ranges_ft": [
+    0,
+    150,
+    300,
+    600,
+    900,
+    1200,
+    1500,
+    1800,
+    2100,
+    2400,
+    2700,
+    3000
+  ],
+  "reporting_granularity": {
+    "velocity_fps": 1.0,
+    "energy_ft_lbf": 5.0,
+    "elevation_moa": 0.1,
+    "time_of_flight_s": 0.01
+  },
+  "expected": [
+    {
+      "range_ft": 0,
+      "velocity_fps": 2800,
+      "energy_ft_lbf": 2696,
+      "elevation_in": -1.5,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.0,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 150,
+      "velocity_fps": 2716,
+      "energy_ft_lbf": 2537,
+      "elevation_in": -0.15,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.054,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 300,
+      "velocity_fps": 2634,
+      "energy_ft_lbf": 2385,
+      "elevation_in": 0.02,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.11,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 600,
+      "velocity_fps": 2472,
+      "energy_ft_lbf": 2102,
+      "elevation_in": -3.47,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.228,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 900,
+      "velocity_fps": 2317,
+      "energy_ft_lbf": 1846,
+      "elevation_in": -12.66,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.353,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 1200,
+      "velocity_fps": 2168,
+      "energy_ft_lbf": 1615,
+      "elevation_in": -28.33,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.487,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 1500,
+      "velocity_fps": 2024,
+      "energy_ft_lbf": 1408,
+      "elevation_in": -51.41,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.63,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 1800,
+      "velocity_fps": 1885,
+      "energy_ft_lbf": 1222,
+      "elevation_in": -83.0,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.784,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 2100,
+      "velocity_fps": 1752,
+      "energy_ft_lbf": 1055,
+      "elevation_in": -124.38,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.949,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 2400,
+      "velocity_fps": 1622,
+      "energy_ft_lbf": 905,
+      "elevation_in": -177.12,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 1.127,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 2700,
+      "velocity_fps": 1497,
+      "energy_ft_lbf": 770,
+      "elevation_in": -243.08,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 1.32,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 3000,
+      "velocity_fps": 1376,
+      "energy_ft_lbf": 651,
+      "elevation_in": -324.63,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 1.529,
+      "u_ref": "unknown"
+    }
+  ],
+  "envelope_tags": [
+    "range-0-300yd",
+    "range-300-1000yd",
+    "regime-supersonic",
+    "regime-transonic-tail",
+    "wind-calm",
+    "spin-off",
+    "density-fast",
+    "drag-g7-single-bc",
+    "atm-weather-station"
+  ],
+  "status": "provisional",
+  "supersedes": null
+}

@@ -1,0 +1,170 @@
+{
+  "artifact_schema": 1,
+  "id": "ref-icao",
+  "provenance": {
+    "source": "McCoy, Modern Exterior Ballistics (ISA treatment, pp. 166-168); Huang saturation-pressure formula (J. Appl. Meteor. Climatol.); lob test corpus test/source/lob_env_test.cpp",
+    "lob_version": "0.13.0",
+    "transcribed_utc": "2026-09-27",
+    "transcribed_from_commit": "4fb97db586e3",
+    "transcribed_from": "test/source/lob_env_test.cpp:83-95 (SolveAtICAOAtmosphere kExpected)"
+  },
+  "builder": {
+    "note": "verbatim setter list with units; mirror the fixture",
+    "ballistic_coefficient_psi": 0.232,
+    "bc_drag_function": "G7",
+    "bc_atmosphere": "ICAO",
+    "diameter_in": 0.308,
+    "mass_grains": 155.0,
+    "initial_velocity_fps": 2800,
+    "zero_angle_moa": 3.66,
+    "optic_height_in": 1.5
+  },
+  "solver_config": {
+    "step_in": 36,
+    "angle_tol_moa": 0.01,
+    "density_path": "fast"
+  },
+  "ranges_ft": [
+    0,
+    150,
+    300,
+    600,
+    900,
+    1200,
+    1500,
+    1800,
+    2100,
+    2400,
+    2700,
+    3000
+  ],
+  "reporting_granularity": {
+    "velocity_fps": 1.0,
+    "energy_ft_lbf": 5.0,
+    "elevation_moa": 0.1,
+    "time_of_flight_s": 0.01
+  },
+  "expected": [
+    {
+      "range_ft": 0,
+      "velocity_fps": 2800,
+      "energy_ft_lbf": 2696,
+      "elevation_in": -1.5,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.0,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 150,
+      "velocity_fps": 2699,
+      "energy_ft_lbf": 2505,
+      "elevation_in": -0.15,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.055,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 300,
+      "velocity_fps": 2600,
+      "energy_ft_lbf": 2325,
+      "elevation_in": 0.0,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.111,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 600,
+      "velocity_fps": 2409,
+      "energy_ft_lbf": 1995,
+      "elevation_in": -3.64,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.231,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 900,
+      "velocity_fps": 2225,
+      "energy_ft_lbf": 1703,
+      "elevation_in": -13.3,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.361,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 1200,
+      "velocity_fps": 2051,
+      "energy_ft_lbf": 1446,
+      "elevation_in": -29.98,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.501,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 1500,
+      "velocity_fps": 1883,
+      "energy_ft_lbf": 1220,
+      "elevation_in": -54.96,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.654,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 1800,
+      "velocity_fps": 1723,
+      "energy_ft_lbf": 1021,
+      "elevation_in": -89.76,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.82,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 2100,
+      "velocity_fps": 1569,
+      "energy_ft_lbf": 846,
+      "elevation_in": -136.31,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 1.003,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 2400,
+      "velocity_fps": 1421,
+      "energy_ft_lbf": 694,
+      "elevation_in": -197.03,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 1.204,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 2700,
+      "velocity_fps": 1280,
+      "energy_ft_lbf": 564,
+      "elevation_in": -275.05,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 1.426,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 3000,
+      "velocity_fps": 1149,
+      "energy_ft_lbf": 454,
+      "elevation_in": -374.36,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 1.674,
+      "u_ref": "unknown"
+    }
+  ],
+  "envelope_tags": [
+    "range-0-300yd",
+    "range-300-1000yd",
+    "regime-supersonic",
+    "regime-transonic-tail",
+    "wind-calm",
+    "spin-off",
+    "density-fast",
+    "drag-g7-single-bc",
+    "atm-isa"
+  ],
+  "status": "provisional",
+  "supersedes": null
+}
