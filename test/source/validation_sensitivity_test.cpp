@@ -1,6 +1,8 @@
 // Copyright (c) 2026  Joel Benway
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "validation_sensitivity.hpp"
+
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -19,7 +21,6 @@
 
 #include "testing.hpp"
 #include "validation_io.hpp"
-#include "validation_sensitivity.hpp"
 
 namespace tests {
 
@@ -97,11 +98,11 @@ TEST(SensitivityPlumbing, VelocityApplierBuildsCleanContexts) {
   lob::Builder base = MakeC1IcaoBuilder();
   for (const double kDv : {-10.0, 0.0, 10.0}) {
     lob::Builder p = base;
-    p.InitialVelocityFps(
-        static_cast<uint16_t>(std::llround(2800.0 + kDv)));
+    p.InitialVelocityFps(static_cast<uint16_t>(std::llround(2800.0 + kDv)));
     const lob::Context kCtx = p.Build();
     ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
-    EXPECT_EQ(kCtx.velocity, static_cast<uint16_t>(2800 + static_cast<int>(kDv)));
+    EXPECT_EQ(kCtx.velocity,
+              static_cast<uint16_t>(2800 + static_cast<int>(kDv)));
   }
   const lob::Context kBase = base.Build();
   const double kE0 = SolveChannelAt(kBase, kRanges, 1).elevation;
@@ -201,12 +202,13 @@ TEST(SensitivityIo, ArtifactRoundTripsSyntheticRows) {
   artifact.solver_config = "step_in=36,angle_tol_moa=0.01,density_path=fast";
   artifact.AddRow("velocity_fps", 1800U, "elevation_in", 10.0, 2.31, 23.1,
                   false, "genuine");
-  artifact.AddRow("wind_speed_mph", 1800U, "elevation_in", 1.0, 0.0, 0.0,
-                  false, "below_floor");
+  artifact.AddRow("wind_speed_mph", 1800U, "elevation_in", 1.0, 0.0, 0.0, false,
+                  "below_floor");
   const std::string kJson = artifact.ToJson();
   EXPECT_NE(kJson.find("\"input\":\"velocity_fps\""), std::string::npos);
   EXPECT_NE(kJson.find("\"status\":\"below_floor\""), std::string::npos);
-  EXPECT_NE(kJson.find("\"sensitivity_coefficient_S\":null"), std::string::npos);
+  EXPECT_NE(kJson.find("\"sensitivity_coefficient_S\":null"),
+            std::string::npos);
   const std::string kCsv = artifact.ToCsv();
   EXPECT_NE(kCsv.find("input,range_ft,output,h_accepted,raw_deriv,"),
             std::string::npos);
@@ -427,8 +429,8 @@ inline void ParetoApplyProfile(lob::Builder* b,
 inline bool ParetoEval(lob::Builder base, ParetoKind kind, double v,
                        bool zero_wind,
                        const std::array<lob::WindPoint, 2>& profile,
-                       const std::vector<uint32_t>& ranges,
-                       bool inverse, std::vector<lob::Output>* outs) {
+                       const std::vector<uint32_t>& ranges, bool inverse,
+                       std::vector<lob::Output>* outs) {
   // WindProfile borrows the station array: the tweaked copy lives in this
   // scope through Build().
   std::array<lob::WindPoint, 2> pts = profile;
@@ -498,12 +500,13 @@ struct ParetoInteraction {
 // top-3 interaction pairs per channel with corner residues, artifact +
 // interactions file writes. Caches solves by absolute input value so the
 // per-(channel, range) SelectH calls share the 6 rung evaluations.
-inline void RunParetoCase(
-    const char* cell, const std::vector<uint32_t>& ranges,
-    lob::Builder base, const std::vector<ParetoInput>& inputs,
-    const ParetoFloors& floors, const char* stem, const char* solver_config,
-    bool zero_wind, const std::array<lob::WindPoint, 2>& profile,
-    const std::vector<uint32_t>& inverse_ranges) {
+inline void RunParetoCase(const char* cell, const std::vector<uint32_t>& ranges,
+                          lob::Builder base,
+                          const std::vector<ParetoInput>& inputs,
+                          const ParetoFloors& floors, const char* stem,
+                          const char* solver_config, bool zero_wind,
+                          const std::array<lob::WindPoint, 2>& profile,
+                          const std::vector<uint32_t>& inverse_ranges) {
   SensitivityArtifact artifact;
   artifact.provenance_lob_version = lob::Version();
   artifact.provenance_git_sha = LOB_GIT_SHA;
@@ -514,9 +517,9 @@ inline void RunParetoCase(
     const lob::Context kBaseCtx = base.Build();
     ASSERT_EQ(kBaseCtx.error, lob::ErrorT::kNone);
     base_outs.assign(ranges.size(), lob::Output());
-    ASSERT_EQ(lob::Solve(kBaseCtx, ranges.data(), base_outs.data(),
-                         base_outs.size()),
-              base_outs.size());
+    ASSERT_EQ(
+        lob::Solve(kBaseCtx, ranges.data(), base_outs.data(), base_outs.size()),
+        base_outs.size());
   }
 
   std::vector<lob::Output> base_inv;
@@ -534,8 +537,8 @@ inline void RunParetoCase(
     const lob::Context kBaseCtx = base.Build();
     ASSERT_EQ(kBaseCtx.error, lob::ErrorT::kNone);
     base_inv.assign(inverse_ranges.size(), lob::Output());
-    ASSERT_EQ(lob::SolveInverse(kBaseCtx, inverse_ranges.data(), base_inv.data(),
-                                base_inv.size()),
+    ASSERT_EQ(lob::SolveInverse(kBaseCtx, inverse_ranges.data(),
+                                base_inv.data(), base_inv.size()),
               base_inv.size());
   }
 
@@ -553,8 +556,7 @@ inline void RunParetoCase(
   // canned[input][channel_slot][range_slot], h_used[input] (accepted h at the
   // longest range, representative for the interaction corners).
   std::vector<std::vector<std::vector<double> > > canned(
-      inputs.size(),
-      std::vector<std::vector<double> >(channels.size()));
+      inputs.size(), std::vector<std::vector<double> >(channels.size()));
   std::vector<double> h_used(inputs.size(), 0.0);
   // per-input solve caches survive into the interaction pass (single-perturb
   // +h values + joint-corner reuse of the same appliers).
@@ -576,15 +578,16 @@ inline void RunParetoCase(
       // Memoized scalar field: SelectH's 6 rung evaluations are solved once
       // per input value and shared across all channels/ranges.
       auto eval_vec = [&](double v) -> const std::vector<lob::Output>& {
-        const typename std::map<double, std::vector<lob::Output> >::const_iterator
-            kIt = cache.find(v);
+        const typename std::map<double,
+                                std::vector<lob::Output> >::const_iterator kIt =
+            cache.find(v);
         if (kIt != cache.end()) {
           return kIt->second;
         }
         std::vector<lob::Output> outs;
-        const bool kOk =
-            ParetoEval(base, kIn.kind, v, zero_wind && kIn.kind == kParetoWindSpeed,
-                       profile, kRanges, kInv, &outs);
+        const bool kOk = ParetoEval(base, kIn.kind, v,
+                                    zero_wind && kIn.kind == kParetoWindSpeed,
+                                    profile, kRanges, kInv, &outs);
         EXPECT_TRUE(kOk) << cell << " input=" << kIn.name << " v=" << v;
         if (!kOk) {
           outs.assign(kRanges.size(), lob::Output());
@@ -653,11 +656,11 @@ inline void RunParetoCase(
         if (r + 1 == kRanges.size()) {
           h_used[n] = kHacc;
         }
-        std::printf("PARETO %s %s range=%u input=%s h=%.10g canned=%.10g "
-                    "status=%s nonlinear=%d\n",
-                    cell, ParetoChannelName(kCh), kRanges[r], kIn.name, kHacc,
-                    kCanned, kGenuine ? "genuine" : "below_floor",
-                    kNonlinear ? 1 : 0);
+        std::printf(
+            "PARETO %s %s range=%u input=%s h=%.10g canned=%.10g "
+            "status=%s nonlinear=%d\n",
+            cell, ParetoChannelName(kCh), kRanges[r], kIn.name, kHacc, kCanned,
+            kGenuine ? "genuine" : "below_floor", kNonlinear ? 1 : 0);
       }
     }
   }
@@ -749,10 +752,8 @@ inline void RunParetoCase(
       ASSERT_TRUE(kCacheB.find(kVB) != kCacheB.end());
       for (size_t r = 0; r < kRanges.size(); ++r) {
         const double kFpp = ParetoExtract(corners[0][r], kCh);
-        const double kFp =
-            ParetoExtract(kCacheA.find(kVA)->second[r], kCh);
-        const double kFz =
-            ParetoExtract(kCacheB.find(kVB)->second[r], kCh);
+        const double kFp = ParetoExtract(kCacheA.find(kVA)->second[r], kCh);
+        const double kFz = ParetoExtract(kCacheB.find(kVB)->second[r], kCh);
         const double kF0 = ParetoExtract(kBase[r], kCh);
         const double kRes = kFpp - kFp - kFz + kF0;
         EXPECT_TRUE(std::isfinite(kRes));
@@ -782,8 +783,8 @@ inline void RunParetoCase(
       }
       const ParetoInteraction& kRec = interactions[i];
       os << "{\"pair\":[\"" << JsonEscape(kRec.a) << "\",\""
-         << JsonEscape(kRec.b) << "\"],\"output\":\""
-         << JsonEscape(kRec.output) << "\",\"residues\":[";
+         << JsonEscape(kRec.b) << "\"],\"output\":\"" << JsonEscape(kRec.output)
+         << "\",\"residues\":[";
       for (size_t r = 0; r < kRec.ranges.size(); ++r) {
         if (r > 0) {
           os << ",";
@@ -859,7 +860,8 @@ TEST(SensitivityFullPareto, C5) {
   // Floors mirror floors.json cell "C5-uniform" floors_18_9; velocity floor
   // 1.0 = "1 LSB (U16 truncation)".
   const ParetoFloors kFloors = {5.342835971e-05, 5.669994664e-06,
-                                7.577461467e-07, 1.0, 8.11391121e-08, 0.0};
+                                7.577461467e-07, 1.0,
+                                8.11391121e-08,  0.0};
   const std::vector<uint32_t> kRanges = {900U, 1800U, 2700U};
   lob::Builder base = ParetoWindBaseBuilder();
   base.WindHeading(lob::ClockAngleT::kIII).WindSpeedMph(5.0);
@@ -893,7 +895,8 @@ TEST(SensitivityFullPareto, C8) {
   // Floors mirror floors.json cell "C8-Litz" floors_18_9; velocity floor
   // 1.0 = "1 LSB (U16 truncation)".
   const ParetoFloors kFloors = {2.799664696e-05, 2.971096993e-06,
-                                9.767386047e-07, 1.0, 4.926922315e-08, 0.0};
+                                9.767386047e-07, 1.0,
+                                4.926922315e-08, 0.0};
   const std::vector<uint32_t> kRanges = {900U, 1800U, 2700U};
   const std::vector<ParetoInput> kInputs = {
       {"velocity_fps", kParetoVelocity, 3100.0, 10.0, 1.0, false},
@@ -929,7 +932,8 @@ TEST(SensitivityFullPareto, C6Shear) {
   // else per the section 9.1 inert-at-alpha-0 rule; only station-2 height
   // is perturbed here. Floors mirror floors.json cell "C6-scaled".
   const ParetoFloors kFloors = {5.361285491e-05, 5.689573904e-06,
-                                1.477174983e-06, 1.0, 8.137269125e-08, 0.0};
+                                1.477174983e-06, 1.0,
+                                8.137269125e-08, 0.0};
   const std::vector<uint32_t> kRanges = {900U, 1800U, 2700U};
   const std::array<lob::WindPoint, 2> kTwoPoint = {{
       {0.0, 90.0, 5.0, std::numeric_limits<double>::quiet_NaN()},
@@ -941,14 +945,14 @@ TEST(SensitivityFullPareto, C6Shear) {
       {"shear_exponent", kParetoShear, 0.25, 0.02, 0.0, true},
       {"height_ft", kParetoHeight2, 6.0, 1.0, 0.0, false},
   };
-  RunParetoCase("C6-shear", kRanges, base, kInputs, kFloors,
-                "sensitivity_C6shear",
-                "step_in=36,angle_tol_moa=0.01,density_path=fast,"
-                "wind_shear_exponent=0.25,ranges_ft=900,1800,2700,canned=|f(x+h)"
-                "-f(x-h)| full symmetric swing at accepted h; one-sided "
-                "|f(x+h)-f(x)| for shear_exponent; base is the exact "
-                "C6-scaled survey builder",
-                false, kTwoPoint, std::vector<uint32_t>());
+  RunParetoCase(
+      "C6-shear", kRanges, base, kInputs, kFloors, "sensitivity_C6shear",
+      "step_in=36,angle_tol_moa=0.01,density_path=fast,"
+      "wind_shear_exponent=0.25,ranges_ft=900,1800,2700,canned=|f(x+h)"
+      "-f(x-h)| full symmetric swing at accepted h; one-sided "
+      "|f(x+h)-f(x)| for shear_exponent; base is the exact "
+      "C6-scaled survey builder",
+      false, kTwoPoint, std::vector<uint32_t>());
 }
 
 }  // namespace tests

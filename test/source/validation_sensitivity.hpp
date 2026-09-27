@@ -62,8 +62,8 @@ HSelection SelectH(F f, double x, double h_seed, double quantum) {
   for (int i = 0; i < 8; ++i) {
     const double kH2 = SnapH(2.0 * h, quantum);
     const double kHh = SnapH(0.5 * h, quantum);
-    const bool kDistinct =
-        (kH2 > h || h > kH2) && (h > kHh || kHh > h) && (kH2 > kHh || kHh > kH2);
+    const bool kDistinct = (kH2 > h || h > kH2) && (h > kHh || kHh > h) &&
+                           (kH2 > kHh || kHh > kH2);
     if (kDistinct) {
       const double kD1 = CentralDifference(f, x, h).deriv;
       const double kD2 = CentralDifference(f, x, kH2).deriv;
@@ -102,7 +102,8 @@ struct CannedInput {
 
 constexpr CannedInput kCannedTable[] = {
     {"velocity_fps", 10.0, 1.0},
-    {"bc_psi", 0.00425, 0.0},  // ±1% of the C1 0.425-scale BC; per-case BC scaling is applied by callers, see Task 3
+    {"bc_psi", 0.00425, 0.0},  // ±1% of the C1 0.425-scale BC; per-case BC
+                               // scaling is applied by callers, see Task 3
     {"zero_angle_moa", 0.05, 0.0},
     {"optic_height_in", 0.1, 0.0},
     {"pressure_inhg", 0.1, 0.0},

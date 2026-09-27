@@ -135,7 +135,8 @@ struct SensitivityArtifact {
 
   void AddRow(const std::string& input, uint32_t range_ft,
               const std::string& output, double h_accepted, double raw_deriv,
-              double canned_response, bool nonlinear, const std::string& status) {
+              double canned_response, bool nonlinear,
+              const std::string& status) {
     SensitivityRow row;
     row.input = input;
     row.range_ft = range_ft;
@@ -158,13 +159,15 @@ struct SensitivityArtifact {
       if (i > 0) {
         os << ",";
       }
-      os << "{\"input\":\"" << JsonEscape(rows[i].input) << "\",\"range_ft\":"
-         << rows[i].range_ft << ",\"output\":\"" << JsonEscape(rows[i].output)
+      os << "{\"input\":\"" << JsonEscape(rows[i].input)
+         << "\",\"range_ft\":" << rows[i].range_ft << ",\"output\":\""
+         << JsonEscape(rows[i].output)
          << "\",\"h_accepted\":" << JsonDouble(rows[i].h_accepted)
          << ",\"raw_deriv\":" << JsonDouble(rows[i].raw_deriv)
          << ",\"canned_response\":" << JsonDouble(rows[i].canned_response)
          << ",\"nonlinear\":" << (rows[i].nonlinear ? "true" : "false")
-         << ",\"status\":\"" << JsonEscape(rows[i].status) << "\""
+         << ",\"status\":\"" << JsonEscape(rows[i].status)
+         << "\""
          // S reserved for Phase 4 (spec §9.3/§11): semi-elasticity needs
          // u(x) values that do not exist yet; JSON carries the null
          // placeholder while CSV omits the column until Phase 4 fills it.
