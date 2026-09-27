@@ -83,6 +83,11 @@ inline nlohmann::json LoadReferenceCase(const std::string& dir,
     root.at("envelope_tags");
     root.at("status");
     root.at("supersedes");
+    // Typed probes so wrong-typed values throw type_error with path context.
+    (void)root.at("builder").at("ballistic_coefficient_psi").get<double>();
+    (void)root.at("solver_config").at("step_in").get<double>();
+    (void)root.at("id").get<std::string>();
+    (void)root.at("expected").at(0).at("velocity_fps").get<double>();
     return root;
   } catch (const nlohmann::json::parse_error& e) {
     throw std::runtime_error("parse error in " + kPath + ": " + e.what());
@@ -127,17 +132,26 @@ TEST(ReferenceDecomposition, C1Icao) {
   EXPECT_DOUBLE_EQ(kBuilder.at("optic_height_in").get<double>(), 1.5);
 
   const nlohmann::json kSolver = root.at("solver_config");
+  EXPECT_TRUE(kSolver.at("step_in").is_number());
   EXPECT_DOUBLE_EQ(kSolver.at("step_in").get<double>(), 36.0);
+  EXPECT_TRUE(kSolver.at("angle_tol_moa").is_number());
   EXPECT_DOUBLE_EQ(kSolver.at("angle_tol_moa").get<double>(), 0.01);
+  EXPECT_TRUE(kSolver.at("density_path").is_string());
   EXPECT_EQ(kSolver.at("density_path").get<std::string>(), "fast");
 
   const nlohmann::json kGran = root.at("reporting_granularity");
+  EXPECT_TRUE(kGran.at("velocity_fps").is_number());
   EXPECT_DOUBLE_EQ(kGran.at("velocity_fps").get<double>(), 1.0);
+  EXPECT_TRUE(kGran.at("energy_ft_lbf").is_number());
   EXPECT_DOUBLE_EQ(kGran.at("energy_ft_lbf").get<double>(), 5.0);
+  EXPECT_TRUE(kGran.at("elevation_moa").is_number());
   EXPECT_DOUBLE_EQ(kGran.at("elevation_moa").get<double>(), 0.1);
+  EXPECT_TRUE(kGran.at("time_of_flight_s").is_number());
   EXPECT_DOUBLE_EQ(kGran.at("time_of_flight_s").get<double>(), 0.01);
 
+  EXPECT_TRUE(root.at("id").is_string());
   EXPECT_EQ(root.at("id").get<std::string>(), "ref-icao");
+  EXPECT_TRUE(root.at("status").is_string());
   EXPECT_EQ(root.at("status").get<std::string>(), "provisional");
   EXPECT_TRUE(root.at("supersedes").is_null());
 
@@ -146,8 +160,10 @@ TEST(ReferenceDecomposition, C1Icao) {
       "regime-transonic-tail", "wind-calm", "spin-off", "density-fast",
       "drag-g7-single-bc", "atm-isa"};
   const nlohmann::json kTags = root.at("envelope_tags");
+  EXPECT_TRUE(kTags.is_array());
   ASSERT_EQ(kTags.size(), kExpectedTags.size());
   for (size_t i = 0; i < kExpectedTags.size(); ++i) {
+    EXPECT_TRUE(kTags.at(i).is_string());
     EXPECT_EQ(kTags.at(i).get<std::string>(), kExpectedTags[i]) << "tag " << i;
   }
 
@@ -156,29 +172,39 @@ TEST(ReferenceDecomposition, C1Icao) {
       0U, 150U, 300U, 600U, 900U, 1200U, 1500U, 1800U, 2100U, 2400U, 2700U,
       3000U};
   const nlohmann::json kRangesJson = root.at("ranges_ft");
+  EXPECT_TRUE(kRangesJson.is_array());
   ASSERT_EQ(kRangesJson.size(), kRanges.size());
   for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_TRUE(kRangesJson.at(i).is_number());
     EXPECT_DOUBLE_EQ(kRangesJson.at(i).get<double>(),
-                     static_cast<double>(kRanges.at(i)))
+                      static_cast<double>(kRanges.at(i)))
         << "range " << i;
   }
 
   // Range-0 muzzle row compared like any other row below.
   const nlohmann::json kRows = root.at("expected");
+  EXPECT_TRUE(kRows.is_array());
   ASSERT_EQ(kRows.size(), kRanges.size());
   std::vector<lob::Output> refs;
   refs.reserve(kRanges.size());
   for (size_t i = 0; i < kRanges.size(); ++i) {
     const nlohmann::json& kRow = kRows.at(i);
+    EXPECT_TRUE(kRow.at("u_ref").is_string());
     EXPECT_EQ(kRow.at("u_ref").get<std::string>(), "unknown") << "row " << i;
     lob::Output out{};
+    EXPECT_TRUE(kRow.at("range_ft").is_number());
     out.range = static_cast<uint32_t>(kRow.at("range_ft").get<double>());
     EXPECT_EQ(out.range, kRanges.at(i)) << "row " << i;
+    EXPECT_TRUE(kRow.at("velocity_fps").is_number());
     out.velocity =
         static_cast<uint16_t>(kRow.at("velocity_fps").get<double>());
+    EXPECT_TRUE(kRow.at("energy_ft_lbf").is_number());
     out.energy = static_cast<uint32_t>(kRow.at("energy_ft_lbf").get<double>());
+    EXPECT_TRUE(kRow.at("elevation_in").is_number());
     out.elevation = kRow.at("elevation_in").get<double>();
+    EXPECT_TRUE(kRow.at("deflection_in").is_number());
     out.deflection = kRow.at("deflection_in").get<double>();
+    EXPECT_TRUE(kRow.at("time_of_flight_s").is_number());
     out.time_of_flight = kRow.at("time_of_flight_s").get<double>();
     refs.push_back(out);
   }
@@ -189,6 +215,10 @@ TEST(ReferenceDecomposition, C1Icao) {
   EXPECT_EQ(SolveN(kCtx, kRanges, &solutions), kRanges.size());
 
   // Loader round-trip: JSON numbers reproduce the C++-literal outcome.
+  EXPECT_TRUE(kGran.at("velocity_fps").is_number());
+  EXPECT_TRUE(kGran.at("energy_ft_lbf").is_number());
+  EXPECT_TRUE(kGran.at("elevation_moa").is_number());
+  EXPECT_TRUE(kGran.at("time_of_flight_s").is_number());
   VerifySolutions(solutions, refs,
                   {lob::FpsT(kGran.at("velocity_fps").get<double>()),
                    lob::FtLbsT(kGran.at("energy_ft_lbf").get<double>()),
@@ -199,6 +229,7 @@ TEST(ReferenceDecomposition, C1Icao) {
   // Decomposition on elevation: r vs the C1 18->9 floor
   // (test/validation/baselines/floors.json cell C1-ICAO floors_18_9).
   constexpr double kC1ElevFloorIn = 4.15814e-05;
+  EXPECT_TRUE(kGran.at("elevation_moa").is_number());
   const double kMoaGran = kGran.at("elevation_moa").get<double>();
   for (size_t i = 0; i < kRanges.size(); ++i) {
     SCOPED_TRACE(testing::Message() << "range_ft=" << kRanges.at(i));
@@ -212,7 +243,7 @@ TEST(ReferenceDecomposition, C1Icao) {
     EXPECT_LE(kMoaRes, kMoaGran);
     const double kDelta = kRIn - kC1ElevFloorIn;
     if (!(kDelta >= 0.0)) {
-      SCOPED_TRACE("consistent within numerical resolution");
+      SCOPED_TRACE("consistent-within-resolution");
     } else {
       SCOPED_TRACE("residual-is-model-or-reference");
     }
