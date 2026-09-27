@@ -161,4 +161,29 @@ inline void SetupTestBuilder(lob::Builder& b) {
       .ZeroAngleMOA(kTestZeroAngle);
 }
 
+// ---- Validation convergence helpers (Phase 1) ----
+inline lob::Builder MakeC1IcaoBuilder() {
+  lob::Builder b;
+  b.BallisticCoefficientPsi(0.232)
+      .BCDragFunction(lob::DragFunctionT::kG7)
+      .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
+      .DiameterInch(0.308)
+      .MassGrains(155.0)
+      .InitialVelocityFps(2800)
+      .ZeroAngleMOA(3.66)
+      .OpticHeightInches(1.5);
+  return b;
+}
+
+inline lob::Context BuildAtStep(lob::Builder builder, uint16_t step_in) {
+  builder.StepSize(step_in);
+  return builder.Build();
+}
+
+template <size_t N>
+size_t SolveN(const lob::Context& ctx, const std::array<uint32_t, N>& ranges,
+              std::array<lob::Output, N>* pouts) {
+  return lob::Solve(ctx, ranges, pouts);
+}
+
 }  // namespace tests
