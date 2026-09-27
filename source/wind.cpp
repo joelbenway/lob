@@ -4,6 +4,7 @@
 
 #include "wind.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 
@@ -18,6 +19,7 @@ namespace lob {
 
 CartesianT<FpsT> GetWind(const LobContext& ctx, const TrajectoryStateT& s,
                          size_t count) noexcept {
+  count = std::min<size_t>(count, LOB_WIND_POINTS);
   const LobWindNode* pnodes = &ctx.wind_nodes[0];
   FpsT wind_x(pnodes[0].x_fps);
   FpsT wind_y(pnodes[0].y_fps);
