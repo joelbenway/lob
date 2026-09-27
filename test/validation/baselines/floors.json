@@ -23,7 +23,7 @@
       "ceilings_18_9": {
         "elevation_in": 9e-05,
         "elevation_moa": 8e-06,
-        "deflection_moa": 0.0,
+        "deflection_moa": 1e-12,
         "time_of_flight_s": 2e-07
       }
     }
