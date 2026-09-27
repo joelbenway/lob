@@ -14,10 +14,8 @@
 
 namespace lob {
 
-// Cold path (lerp + shear scaling) in wind.cpp: a separate TU keeps
-// DsDxCore inlinable; inlining here regressed uniform solves ~40%.
-CartesianT<FpsT> GetWindSlow(const LobContext& ctx, const TrajectoryStateT& s,
-                             size_t count) noexcept;
+CartesianT<FpsT> GetWind(const LobContext& ctx, const TrajectoryStateT& s,
+                         size_t count) noexcept;
 
 inline CartesianT<FpsT> GetWind(const LobContext& ctx,
                                 const TrajectoryStateT& s) noexcept {
@@ -32,7 +30,7 @@ inline CartesianT<FpsT> GetWind(const LobContext& ctx,
     return {FpsT(pnodes[0].x_fps), FpsT(pnodes[0].y_fps),
             FpsT(pnodes[0].z_fps)};
   }
-  return GetWindSlow(ctx, s, kCount);
+  return GetWind(ctx, s, kCount);
 }
 
 }  // namespace lob
