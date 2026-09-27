@@ -16,8 +16,8 @@
 
 namespace lob {
 
-CartesianT<FpsT> GetWindSlow(const LobContext& ctx, const TrajectoryStateT& s,
-                             size_t count) noexcept {
+CartesianT<FpsT> GetWind(const LobContext& ctx, const TrajectoryStateT& s,
+                         size_t count) noexcept {
   const LobWindNode* pnodes = &ctx.wind_nodes[0];
   FpsT wind_x(pnodes[0].x_fps);
   FpsT wind_y(pnodes[0].y_fps);
