@@ -53,6 +53,14 @@ run offline behind `LOB_FULL_LADDER=1` and write `build/validation/`
 artifacts. No universal accuracy claim is made — floors are per envelope
 cell, per output, with config.
 
+Sensitivity methodology and driver ranking live in
+`docs/specs/NUMERICAL_VALIDATION_SPEC.md` (§9) with the harness in
+`test/source/validation_sensitivity_test.cpp` (public API) and curated
+ranking in `test/validation/baselines/pareto.json`. CI smokes
+C1 × velocity/wind with Pareto-share checks; full C1/C5/C8 Pareto runs
+offline behind `LOB_FULL_PARETO=1`. Semi-elasticities await Phase 4 input
+uncertainties; the artifact schema reserves the field.
+
 @section validation-invariants Invariants
 
 - `CurveView` clamps below `0` and above `5` Mach to the edge drag
