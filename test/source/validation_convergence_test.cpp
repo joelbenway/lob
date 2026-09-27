@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <limits>
 #include <string>
@@ -280,6 +281,283 @@ TEST(ValidationFullLadder, C1StepLadderToOneInchWritesArtifact) {
     artifact.AddRung(kRungs[r], ladders[r][3].elevation, kDelta);
   }
   ASSERT_TRUE(artifact.WriteFiles(LOB_VALIDATION_DIR, "convergence_C1"));
+}
+
+// Documented re-measurement procedure for test/validation/baselines/floors.json
+// cells C5-uniform, C6-scaled, C8-Litz, C9-dynamic-tail. Hermetic: prints
+// machine-readable SURVEY lines to stdout, no file I/O. Transcription into
+// floors.json is by hand. Offline only: set LOB_FLOOR_SURVEY=1.
+TEST(ValidationFloorSurvey, SurveyCells) {
+  const char* kGate = std::getenv("LOB_FLOOR_SURVEY");
+  if (kGate == nullptr || std::string(kGate) != "1") {
+    GTEST_SKIP() << "offline only: set LOB_FLOOR_SURVEY=1";
+  }
+
+  // C5-uniform: wind-base builder + kIII 5 mph, ranges {900, 1800, 2700} ft.
+  {
+    const std::array<uint32_t, 3> kRanges = {900U, 1800U, 2700U};
+    std::array<lob::Output, 3> outs36{};
+    std::array<lob::Output, 3> outs18{};
+    std::array<lob::Output, 3> outs9{};
+    auto build_uniform = [](uint16_t step) {
+      lob::Builder b = MakeWindBaseBuilder();
+      b.WindHeading(lob::ClockAngleT::kIII).WindSpeedMph(5.0);
+      return BuildAtStep(b, step);
+    };
+    ASSERT_EQ(SolveN(build_uniform(36U), kRanges, &outs36), kRanges.size());
+    ASSERT_EQ(SolveN(build_uniform(18U), kRanges, &outs18), kRanges.size());
+    ASSERT_EQ(SolveN(build_uniform(9U), kRanges, &outs9), kRanges.size());
+    double w_elev_in = 0.0;
+    double w_elev_moa = 0.0;
+    double w_defl_moa = 0.0;
+    double w_tof = 0.0;
+    double w_vel = 0.0;
+    double w_energy = 0.0;
+    for (size_t i = 0; i < kRanges.size(); ++i) {
+      const double kElevIn = ElevInDiff(outs18[i], outs9[i]);
+      if (kElevIn > w_elev_in) {
+        w_elev_in = kElevIn;
+      }
+      const double kElevMoa = ElevMoaDiff(outs18[i], outs9[i]);
+      if (kElevMoa > w_elev_moa) {
+        w_elev_moa = kElevMoa;
+      }
+      const double kDeflMoa = DeflMoaDiff(outs18[i], outs9[i]);
+      if (kDeflMoa > w_defl_moa) {
+        w_defl_moa = kDeflMoa;
+      }
+      const double kTof = TofDiff(outs18[i], outs9[i]);
+      if (kTof > w_tof) {
+        w_tof = kTof;
+      }
+      const double kVel = VelDiff(outs18[i], outs9[i]);
+      if (kVel > w_vel) {
+        w_vel = kVel;
+      }
+      const double kEnergy = EnergyDiff(outs18[i], outs9[i]);
+      if (kEnergy > w_energy) {
+        w_energy = kEnergy;
+      }
+    }
+    std::printf("SURVEY C5-uniform elevation_in worst18_9=%.10g\n", w_elev_in);
+    std::printf("SURVEY C5-uniform elevation_moa worst18_9=%.10g\n",
+                w_elev_moa);
+    std::printf("SURVEY C5-uniform deflection_moa worst18_9=%.10g\n",
+                w_defl_moa);
+    std::printf("SURVEY C5-uniform time_of_flight_s worst18_9=%.10g\n", w_tof);
+    std::printf("SURVEY C5-uniform velocity_fps worst18_9=%.10g\n", w_vel);
+    std::printf("SURVEY C5-uniform energy_ft_lbf worst18_9=%.10g\n", w_energy);
+  }
+
+  // C6-scaled: wind-base + two-point 90-degree profile with shear 0.25.
+  {
+    const std::array<lob::WindPoint, 2> kTwoPoint = {{
+        {0.0, 90.0, 5.0, std::numeric_limits<double>::quiet_NaN()},
+        {1500.0, 90.0, 10.0, 6.0},
+    }};
+    const std::array<uint32_t, 3> kRanges = {900U, 1800U, 2700U};
+    std::array<lob::Output, 3> outs36{};
+    std::array<lob::Output, 3> outs18{};
+    std::array<lob::Output, 3> outs9{};
+    auto build_profile = [&kTwoPoint](uint16_t step) {
+      lob::Builder b = MakeWindBaseBuilder();
+      b.WindProfile(kTwoPoint).WindShearExponent(0.25);
+      return BuildAtStep(b, step);
+    };
+    const lob::Context kProbe = build_profile(36U);
+    ASSERT_EQ(kProbe.error, lob::ErrorT::kNone);
+    ASSERT_EQ(kProbe.wind_count, 2U);
+    ASSERT_EQ(SolveN(build_profile(36U), kRanges, &outs36), kRanges.size());
+    ASSERT_EQ(SolveN(build_profile(18U), kRanges, &outs18), kRanges.size());
+    ASSERT_EQ(SolveN(build_profile(9U), kRanges, &outs9), kRanges.size());
+    double w_elev_in = 0.0;
+    double w_elev_moa = 0.0;
+    double w_defl_moa = 0.0;
+    double w_tof = 0.0;
+    double w_vel = 0.0;
+    double w_energy = 0.0;
+    for (size_t i = 0; i < kRanges.size(); ++i) {
+      const double kElevIn = ElevInDiff(outs18[i], outs9[i]);
+      if (kElevIn > w_elev_in) {
+        w_elev_in = kElevIn;
+      }
+      const double kElevMoa = ElevMoaDiff(outs18[i], outs9[i]);
+      if (kElevMoa > w_elev_moa) {
+        w_elev_moa = kElevMoa;
+      }
+      const double kDeflMoa = DeflMoaDiff(outs18[i], outs9[i]);
+      if (kDeflMoa > w_defl_moa) {
+        w_defl_moa = kDeflMoa;
+      }
+      const double kTof = TofDiff(outs18[i], outs9[i]);
+      if (kTof > w_tof) {
+        w_tof = kTof;
+      }
+      const double kVel = VelDiff(outs18[i], outs9[i]);
+      if (kVel > w_vel) {
+        w_vel = kVel;
+      }
+      const double kEnergy = EnergyDiff(outs18[i], outs9[i]);
+      if (kEnergy > w_energy) {
+        w_energy = kEnergy;
+      }
+    }
+    std::printf("SURVEY C6-scaled elevation_in worst18_9=%.10g\n", w_elev_in);
+    std::printf("SURVEY C6-scaled elevation_moa worst18_9=%.10g\n", w_elev_moa);
+    std::printf("SURVEY C6-scaled deflection_moa worst18_9=%.10g\n",
+                w_defl_moa);
+    std::printf("SURVEY C6-scaled time_of_flight_s worst18_9=%.10g\n", w_tof);
+    std::printf("SURVEY C6-scaled velocity_fps worst18_9=%.10g\n", w_vel);
+    std::printf("SURVEY C6-scaled energy_ft_lbf worst18_9=%.10g\n", w_energy);
+  }
+
+  // C8-Litz: spin inputs taking the Litz (not Boatright) path. Mirrors the
+  // jump context in test/source/lob_inverse_test.cpp
+  // SolveInverseMatchesFastInverseWithJump.
+  {
+    const std::array<uint32_t, 3> kRanges = {900U, 1800U, 2700U};
+    std::array<lob::Output, 3> outs36{};
+    std::array<lob::Output, 3> outs18{};
+    std::array<lob::Output, 3> outs9{};
+    auto build_litz = [](uint16_t step) {
+      lob::Builder b;
+      b.BallisticCoefficientPsi(0.436)
+          .InitialVelocityFps(3100U)
+          .ZeroAngleMOA(6.11)
+          .DiameterInch(0.308)
+          .LengthInch(1.215)
+          .MassGrains(168.0)
+          .TwistInchesPerTurn(10.0)
+          .WindHeading(lob::ClockAngleT::kIII)
+          .WindSpeedMph(10.0);
+      return BuildAtStep(b, step);
+    };
+    const lob::Context kProbe = build_litz(36U);
+    ASSERT_EQ(kProbe.error, lob::ErrorT::kNone);
+    // Litz path is active when Boatright leaves spindrift_factor NaN while
+    // Miller stability is finite and the crosswind jump is nonzero.
+    EXPECT_TRUE(std::isnan(kProbe.spindrift_factor));
+    EXPECT_TRUE(std::isfinite(kProbe.stability_factor));
+    EXPECT_TRUE(std::fabs(kProbe.stability_factor) > 0.0);
+    EXPECT_TRUE(std::fabs(kProbe.aerodynamic_jump) > 0.0);
+    std::printf(
+        "SURVEY C8-Litz branch spindrift_isnan=%d stability=%.10g "
+        "jump_moa=%.10g\n",
+        std::isnan(kProbe.spindrift_factor) ? 1 : 0, kProbe.stability_factor,
+        kProbe.aerodynamic_jump);
+    ASSERT_EQ(SolveN(build_litz(36U), kRanges, &outs36), kRanges.size());
+    ASSERT_EQ(SolveN(build_litz(18U), kRanges, &outs18), kRanges.size());
+    ASSERT_EQ(SolveN(build_litz(9U), kRanges, &outs9), kRanges.size());
+    double w_elev_in = 0.0;
+    double w_elev_moa = 0.0;
+    double w_defl_moa = 0.0;
+    double w_tof = 0.0;
+    double w_vel = 0.0;
+    double w_energy = 0.0;
+    for (size_t i = 0; i < kRanges.size(); ++i) {
+      const double kElevIn = ElevInDiff(outs18[i], outs9[i]);
+      if (kElevIn > w_elev_in) {
+        w_elev_in = kElevIn;
+      }
+      const double kElevMoa = ElevMoaDiff(outs18[i], outs9[i]);
+      if (kElevMoa > w_elev_moa) {
+        w_elev_moa = kElevMoa;
+      }
+      const double kDeflMoa = DeflMoaDiff(outs18[i], outs9[i]);
+      if (kDeflMoa > w_defl_moa) {
+        w_defl_moa = kDeflMoa;
+      }
+      const double kTof = TofDiff(outs18[i], outs9[i]);
+      if (kTof > w_tof) {
+        w_tof = kTof;
+      }
+      const double kVel = VelDiff(outs18[i], outs9[i]);
+      if (kVel > w_vel) {
+        w_vel = kVel;
+      }
+      const double kEnergy = EnergyDiff(outs18[i], outs9[i]);
+      if (kEnergy > w_energy) {
+        w_energy = kEnergy;
+      }
+    }
+    std::printf("SURVEY C8-Litz elevation_in worst18_9=%.10g\n", w_elev_in);
+    std::printf("SURVEY C8-Litz elevation_moa worst18_9=%.10g\n", w_elev_moa);
+    std::printf("SURVEY C8-Litz deflection_moa worst18_9=%.10g\n", w_defl_moa);
+    std::printf("SURVEY C8-Litz time_of_flight_s worst18_9=%.10g\n", w_tof);
+    std::printf("SURVEY C8-Litz velocity_fps worst18_9=%.10g\n", w_vel);
+    std::printf("SURVEY C8-Litz energy_ft_lbf worst18_9=%.10g\n", w_energy);
+  }
+
+  // C9-dynamic-tail: lapse-scaled SolveAngle path via SolveInverse at
+  // {6000, 7500, 9000} ft. Precedent: solve_angle_test.cpp BC 0.436,
+  // 3100 fps, zero 6.11 MOA. Fail loud unless forward drop < -1200 in.
+  {
+    const std::array<uint32_t, 3> kRanges = {6000U, 7500U, 9000U};
+    auto build_tail = [](uint16_t step) {
+      lob::Builder b;
+      b.BallisticCoefficientPsi(0.436).InitialVelocityFps(3100U).ZeroAngleMOA(
+          6.11);
+      return BuildAtStep(b, step);
+    };
+    std::array<lob::Output, 3> fwd{};
+    ASSERT_EQ(SolveN(build_tail(36U), kRanges, &fwd), kRanges.size());
+    for (size_t i = 0; i < kRanges.size(); ++i) {
+      std::printf(
+          "SURVEY C9-dynamic-tail branch range_ft=%u forward_drop_in=%.10g\n",
+          kRanges[i], fwd[i].elevation);
+      EXPECT_LT(fwd[i].elevation, -1200.0) << "range=" << kRanges[i];
+    }
+    std::array<lob::Output, 3> outs36{};
+    std::array<lob::Output, 3> outs18{};
+    std::array<lob::Output, 3> outs9{};
+    ASSERT_EQ(lob::SolveInverse(build_tail(36U), kRanges, &outs36),
+              kRanges.size());
+    ASSERT_EQ(lob::SolveInverse(build_tail(18U), kRanges, &outs18),
+              kRanges.size());
+    ASSERT_EQ(lob::SolveInverse(build_tail(9U), kRanges, &outs9),
+              kRanges.size());
+    double w_elev_moa = 0.0;
+    double w_defl_moa = 0.0;
+    double w_tof = 0.0;
+    double w_vel = 0.0;
+    double w_energy = 0.0;
+    for (size_t i = 0; i < kRanges.size(); ++i) {
+      EXPECT_TRUE(std::isfinite(outs36[i].elevation));
+      EXPECT_TRUE(std::isfinite(outs18[i].elevation));
+      EXPECT_TRUE(std::isfinite(outs9[i].elevation));
+      const double kElevMoa =
+          std::fabs(outs18[i].elevation - outs9[i].elevation);
+      if (kElevMoa > w_elev_moa) {
+        w_elev_moa = kElevMoa;
+      }
+      const double kDeflMoa =
+          std::fabs(outs18[i].deflection - outs9[i].deflection);
+      if (kDeflMoa > w_defl_moa) {
+        w_defl_moa = kDeflMoa;
+      }
+      const double kTof = TofDiff(outs18[i], outs9[i]);
+      if (kTof > w_tof) {
+        w_tof = kTof;
+      }
+      const double kVel = VelDiff(outs18[i], outs9[i]);
+      if (kVel > w_vel) {
+        w_vel = kVel;
+      }
+      const double kEnergy = EnergyDiff(outs18[i], outs9[i]);
+      if (kEnergy > w_energy) {
+        w_energy = kEnergy;
+      }
+    }
+    std::printf("SURVEY C9-dynamic-tail elevation_moa worst18_9=%.10g\n",
+                w_elev_moa);
+    std::printf("SURVEY C9-dynamic-tail deflection_moa worst18_9=%.10g\n",
+                w_defl_moa);
+    std::printf("SURVEY C9-dynamic-tail time_of_flight_s worst18_9=%.10g\n",
+                w_tof);
+    std::printf("SURVEY C9-dynamic-tail velocity_fps worst18_9=%.10g\n", w_vel);
+    std::printf("SURVEY C9-dynamic-tail energy_ft_lbf worst18_9=%.10g\n",
+                w_energy);
+  }
 }
 
 }  // namespace tests
