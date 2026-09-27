@@ -83,6 +83,7 @@ set(LOB_TEST_SOURCES
     source/lob_wind_test.cpp
     source/lob_wind_profile_test.cpp
     source/validation_convergence_test.cpp
+    source/validation_sensitivity_test.cpp
     )
 
 set(HELPER_TEST_SOURCES

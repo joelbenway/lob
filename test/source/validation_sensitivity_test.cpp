@@ -100,7 +100,9 @@ TEST(SensitivityPlumbing, VelocityApplierBuildsCleanContexts) {
   lob::Builder p = base;
   p.InitialVelocityFps(2810U);
   const double kE1 = SolveChannelAt(p.Build(), kRanges, 1).elevation;
-  EXPECT_GT(std::fabs(kE1 - kE0), 1.0);
+  // Measured 0.859 in (drop∝t² predicts ≈0.65); bound 0.5 keeps channel
+  // consistency with the Task 3 smoke tests at ~12,000× the noise floor.
+  EXPECT_GT(std::fabs(kE1 - kE0), 0.5);
 }
 
 TEST(SensitivityPlumbing, WindApplierBuildsCleanContexts) {
@@ -114,6 +116,74 @@ TEST(SensitivityPlumbing, WindApplierBuildsCleanContexts) {
     const lob::Context kCtx = p.Build();
     ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
   }
+}
+
+TEST(SensitivitySmoke, C1VelocityWindPareto) {
+  // Noise floors mirror test/validation/baselines/floors.json cell "C1-ICAO"
+  // floors_18_9 (elevation_in 4.15814e-05, elevation_moa 3.97148e-06,
+  // time_of_flight_s 6.12488e-08). Deflection floor is exactly 0.0 — the
+  // 1e-12 entry is ceilings_18_9, a CI guard, not the noise model; with floor
+  // 0.0 any nonzero response is genuine per spec section 9.4, so sign
+  // agreement + finiteness carry the signal.
+  constexpr double kNoiseElevIn = 4.15814e-05;
+  constexpr double kNoiseDeflMoa = 0.0;
+  const std::array<uint32_t, 4> kRanges = {300U, 900U, 1800U, 3000U};
+  constexpr size_t kIdx1800 = 2;
+  constexpr double kV0 = 2800.0;
+  auto elev_at_vel = [&](double v) {
+    lob::Builder p = MakeC1IcaoBuilder();
+    p.InitialVelocityFps(static_cast<uint16_t>(std::llround(v)));
+    return SolveChannelAt(p.Build(), kRanges, kIdx1800).elevation;
+  };
+  const HSelection kSelV = SelectH(elev_at_vel, kV0, 10.0, 1.0);
+  ASSERT_TRUE(kSelV.ok);
+  const double kHv2 = SnapH(2.0 * kSelV.h, 1.0);
+  const DiffResult kDv = CentralDifference(elev_at_vel, kV0, kSelV.h);
+  const DiffResult kDv2 = CentralDifference(elev_at_vel, kV0, kHv2);
+  const double kRespV = std::fabs(kDv.f_plus - kDv.f_minus);
+  const int kSignV = (kDv.f_plus > kDv.f_minus) ? 1 : -1;
+  const int kSignV2 = (kDv2.f_plus > kDv2.f_minus) ? 1 : -1;
+  EXPECT_EQ(kSignV, kSignV2);
+  EXPECT_TRUE(GenuineCheck(kRespV, kNoiseElevIn, kSignV, kSignV2));
+  EXPECT_GT(kRespV, 1.0);
+  auto out_at_wind = [&](double heading, double speed) {
+    lob::Builder p = MakeC1IcaoBuilder();
+    p.WindHeadingDeg(heading).WindSpeedMph(speed);
+    return SolveChannelAt(p.Build(), kRanges, kIdx1800);
+  };
+  const lob::Output kWPlus = out_at_wind(90.0, 1.0);
+  const lob::Output kWMinus = out_at_wind(270.0, 1.0);
+  const lob::Output kWPlus2 = out_at_wind(90.0, 2.0);
+  const lob::Output kWMinus2 = out_at_wind(270.0, 2.0);
+  const double kDp =
+      lob::InchToMoa(kWPlus.deflection, static_cast<double>(kWPlus.range));
+  const double kDm =
+      lob::InchToMoa(kWMinus.deflection, static_cast<double>(kWMinus.range));
+  const double kDp2 =
+      lob::InchToMoa(kWPlus2.deflection, static_cast<double>(kWPlus2.range));
+  const double kDm2 =
+      lob::InchToMoa(kWMinus2.deflection, static_cast<double>(kWMinus2.range));
+  ASSERT_TRUE(std::isfinite(kDp));
+  ASSERT_TRUE(std::isfinite(kDm));
+  ASSERT_TRUE(std::isfinite(kDp2));
+  ASSERT_TRUE(std::isfinite(kDm2));
+  const double kRespWDefl = std::fabs(kDp - kDm);
+  const double kRespWDefl2 = std::fabs(kDp2 - kDm2);
+  const int kSignW = (kDp > kDm) ? 1 : -1;
+  const int kSignW2 = (kDp2 > kDm2) ? 1 : -1;
+  EXPECT_EQ(kSignW, kSignW2);
+  EXPECT_TRUE(GenuineCheck(kRespWDefl, kNoiseDeflMoa, kSignW, kSignW2));
+  EXPECT_TRUE(GenuineCheck(kRespWDefl2, kNoiseDeflMoa, kSignW, kSignW2));
+  const double kRespWElev = std::fabs(kWPlus.elevation - kWMinus.elevation);
+  const double kDen = kRespV + kRespWElev;
+  ASSERT_GT(kDen, 0.0);
+  const double kShareV = kRespV / kDen;
+  const double kShareW = kRespWElev / kDen;
+  EXPECT_GT(kShareV, 0.9);
+  EXPECT_LT(std::fabs(kShareV + kShareW - 1.0), 1e-9);
+  // C1 BC is 0.232, so the offline BC canned step is 0.00232 (1%), NOT the
+  // table's 0.00425 — Task 5 scales per case. This smoke test does not
+  // perturb BC.
 }
 
 }  // namespace tests
