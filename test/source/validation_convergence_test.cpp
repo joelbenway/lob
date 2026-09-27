@@ -140,4 +140,35 @@ TEST(ValidationConvergenceC1, StepLadderDecreasesWithoutRegression) {
   }
 }
 
+TEST(ValidationConvergenceC1, InverseLadderDecreasesWithoutRegression) {
+  const std::array<uint32_t, 2> kRanges = {900U, 1800U};
+  std::array<lob::Output, 2> outs36{};
+  std::array<lob::Output, 2> outs18{};
+  std::array<lob::Output, 2> outs9{};
+  const lob::Context kCtx36 = BuildAtStep(MakeC1IcaoBuilder(), 36U);
+  const lob::Context kCtx18 = BuildAtStep(MakeC1IcaoBuilder(), 18U);
+  const lob::Context kCtx9 = BuildAtStep(MakeC1IcaoBuilder(), 9U);
+  ASSERT_EQ(kCtx36.error, lob::ErrorT::kNone);
+  ASSERT_EQ(lob::SolveInverse(kCtx36, kRanges, &outs36), kRanges.size());
+  ASSERT_EQ(lob::SolveInverse(kCtx18, kRanges, &outs18), kRanges.size());
+  ASSERT_EQ(lob::SolveInverse(kCtx9, kRanges, &outs9), kRanges.size());
+  // Fast-branch precondition: forward drop must stay above the 1200-in
+  // dynamic-branch switch or this test measures the wrong path.
+  std::array<lob::Output, 2> fwd{};
+  ASSERT_EQ(SolveN(kCtx36, kRanges, &fwd), kRanges.size());
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_GT(fwd[i].elevation, -1200.0) << "range=" << kRanges[i];
+  }
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    // Inverse outputs are MOA adjustments; forward drop must stay above the
+    // 1200-in dynamic-branch switch or this test measures the wrong path.
+    EXPECT_TRUE(std::isfinite(outs36[i].elevation));
+    const double kCoarse = std::fabs(outs36[i].elevation - outs18[i].elevation);
+    const double kFine = std::fabs(outs18[i].elevation - outs9[i].elevation);
+    EXPECT_TRUE(DecreasesOrAtFloor(kCoarse, kFine, kMoaFloor))
+        << "range=" << kRanges[i];
+    EXPECT_LE(kFine, 0.1) << "range=" << kRanges[i];
+  }
+}
+
 }  // namespace tests
