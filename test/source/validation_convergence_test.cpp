@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <limits>
 #include <string>
 
@@ -232,6 +233,54 @@ TEST(ValidationConvergenceWind, ScaledProfileLadderDecreasesWithoutRegression) {
                                    DeflMoaDiff(outs18[i], outs9[i]), kMoaFloor))
         << "range=" << kRanges[i];
   }
+}
+
+TEST(ValidationFullLadder, C1StepLadderToOneInchWritesArtifact) {
+  const char* kGate = std::getenv("LOB_FULL_LADDER");
+  if (kGate == nullptr || std::string(kGate) != "1") {
+    GTEST_SKIP() << "offline only: set LOB_FULL_LADDER=1";
+  }
+  // 1000-ft station is off-grid at the 36-in rung (1000 % 3 != 0), covering
+  // the clamp path CI ranges (all multiples of 3 ft) never exercise.
+  const std::array<uint32_t, 5> kRanges = {300U, 900U, 1000U, 1800U, 3000U};
+  const std::array<uint16_t, 6> kRungs = {36U, 18U, 9U, 4U, 2U, 1U};
+  std::array<std::array<lob::Output, 5>, 6> ladders{};
+  for (size_t r = 0; r < kRungs.size(); ++r) {
+    ASSERT_EQ(SolveN(BuildAtStep(MakeC1IcaoBuilder(), kRungs[r]), kRanges,
+                     &ladders[r]),
+              kRanges.size())
+        << "rung=" << kRungs[r];
+  }
+  // Monotone + observed-order plausibility (Heun theory: p ≈ 2; allow
+  // [1, 3] for knot/wind-joint degradation) on the 1800-ft elevation
+  // channel, finest two pairs.
+  const double kD1 =
+      ElevInDiff(ladders[1][3], ladders[2][3]);  // 18->9
+  const double kD2 =
+      ElevInDiff(ladders[2][3], ladders[3][3]);  // 9->4
+  const double kD3 =
+      ElevInDiff(ladders[3][3], ladders[4][3]);  // 4->2
+  const double kD4 =
+      ElevInDiff(ladders[4][3], ladders[5][3]);  // 2->1
+  EXPECT_TRUE(DecreasesOrAtFloor(kD1, kD2, kElevFloorIn));
+  EXPECT_TRUE(DecreasesOrAtFloor(kD2, kD3, kElevFloorIn));
+  EXPECT_TRUE(DecreasesOrAtFloor(kD3, kD4, kElevFloorIn));
+  const double kOrder = ObservedOrder(kD3, kD4);
+  if (!IsAtFloor(kD3, kElevFloorIn) && !IsAtFloor(kD4, kElevFloorIn)) {
+    EXPECT_GE(kOrder, 1.0);
+    EXPECT_LE(kOrder, 3.0);
+  }
+  ConvergenceArtifact artifact;
+  artifact.provenance_lob_version = lob::Version();
+  artifact.provenance_git_sha = LOB_GIT_SHA;
+  artifact.solver_config = "step_ladder_in=36,18,9,4,2,1,angle_tol_moa=0.01,"
+                           "density_path=fast,ranges_ft=300,900,1000,1800,3000";
+  for (size_t r = 0; r < kRungs.size(); ++r) {
+    const double kDelta =
+        (r == 0) ? 0.0 : ElevInDiff(ladders[r - 1][3], ladders[r][3]);
+    artifact.AddRung(kRungs[r], ladders[r][3].elevation, kDelta);
+  }
+  ASSERT_TRUE(artifact.WriteFiles(LOB_VALIDATION_DIR, "convergence_C1"));
 }
 
 }  // namespace tests

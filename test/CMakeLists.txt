@@ -114,6 +114,17 @@ target_compile_features(lob_test PRIVATE cxx_std_14)
 
 target_link_libraries(lob_test PRIVATE lob::lob GTest::gmock GTest::gtest GTest::gtest_main)
 
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/validation")
+execute_process(COMMAND git rev-parse --short=12 HEAD
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}" OUTPUT_VARIABLE LOB_GIT_SHA
+  OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+if(NOT LOB_GIT_SHA)
+  set(LOB_GIT_SHA "unknown")
+endif()
+target_compile_definitions(lob_test PRIVATE
+  LOB_VALIDATION_DIR="${CMAKE_BINARY_DIR}/validation"
+  LOB_GIT_SHA="${LOB_GIT_SHA}")
+
 include(GoogleTest)
 
 gtest_discover_tests(lob_test)
