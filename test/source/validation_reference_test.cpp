@@ -3,8 +3,6 @@
 
 #include <gtest/gtest.h>
 
-#include <nlohmann/json.hpp>
-
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -12,6 +10,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <map>
+#include <nlohmann/json.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -28,13 +27,15 @@ namespace tests {
 
 TEST(ReferenceJson, ParsesFlatCaseShape) {
   const nlohmann::json kRoot = nlohmann::json::parse(
-      "{\"id\":\"ref-icao\",\"ranges_ft\":[0,150],\"expected\":[{\"range_ft\":0,"
-      "\"velocity_fps\":2800,\"u_ref\":\"unknown\"}],\"status\":\"provisional\","
+      "{\"id\":\"ref-icao\",\"ranges_ft\":[0,150],\"expected\":[{\"range_ft\":"
+      "0,"
+      "\"velocity_fps\":2800,\"u_ref\":\"unknown\"}],\"status\":"
+      "\"provisional\","
       "\"supersedes\":null}");
   EXPECT_EQ(kRoot.at("id").get<std::string>(), "ref-icao");
   EXPECT_DOUBLE_EQ(kRoot.at("ranges_ft").at(1).get<double>(), 150.0);
-  EXPECT_DOUBLE_EQ(
-      kRoot.at("expected").at(0).at("velocity_fps").get<double>(), 2800.0);
+  EXPECT_DOUBLE_EQ(kRoot.at("expected").at(0).at("velocity_fps").get<double>(),
+                   2800.0);
   EXPECT_EQ(kRoot.at("expected").at(0).at("u_ref").get<std::string>(),
             "unknown");
   EXPECT_TRUE(kRoot.at("supersedes").is_null());
@@ -42,8 +43,8 @@ TEST(ReferenceJson, ParsesFlatCaseShape) {
 }
 
 TEST(ReferenceJson, RejectsMalformedDocuments) {
-  for (const char* kBad : {"{\"a\":1,}", "{\"a\":", "{\"a\" 1}", "[1,2",
-                           "{\"a\":01}", ""}) {
+  for (const char* kBad :
+       {"{\"a\":1,}", "{\"a\":", "{\"a\" 1}", "[1,2", "{\"a\":01}", ""}) {
     EXPECT_THROW(nlohmann::json::parse(kBad), nlohmann::json::parse_error)
         << "accepted: " << kBad;
   }
@@ -98,8 +99,7 @@ inline nlohmann::json LoadReferenceCase(const std::string& dir,
     throw std::runtime_error("schema key missing in " + kPath + ": " +
                              e.what());
   } catch (const nlohmann::json::type_error& e) {
-    throw std::runtime_error("schema type error in " + kPath + ": " +
-                             e.what());
+    throw std::runtime_error("schema type error in " + kPath + ": " + e.what());
   }
 }
 
@@ -159,9 +159,9 @@ TEST(ReferenceDecomposition, C1Icao) {
   EXPECT_TRUE(root.at("supersedes").is_null());
 
   const std::vector<std::string> kExpectedTags = {
-      "range-0-300yd", "range-300-1000yd", "regime-supersonic",
-      "regime-transonic-tail", "wind-calm", "spin-off", "density-fast",
-      "drag-g7-single-bc", "atm-isa"};
+      "range-0-300yd",         "range-300-1000yd",  "regime-supersonic",
+      "regime-transonic-tail", "wind-calm",         "spin-off",
+      "density-fast",          "drag-g7-single-bc", "atm-isa"};
   const nlohmann::json kTags = root.at("envelope_tags");
   EXPECT_TRUE(kTags.is_array());
   ASSERT_EQ(kTags.size(), kExpectedTags.size());
@@ -171,16 +171,16 @@ TEST(ReferenceDecomposition, C1Icao) {
   }
 
   constexpr size_t kNumRanges = 12;
-  const std::array<uint32_t, kNumRanges> kRanges = {
-      0U, 150U, 300U, 600U, 900U, 1200U, 1500U, 1800U, 2100U, 2400U, 2700U,
-      3000U};
+  const std::array<uint32_t, kNumRanges> kRanges = {0U,    150U,  300U,  600U,
+                                                    900U,  1200U, 1500U, 1800U,
+                                                    2100U, 2400U, 2700U, 3000U};
   const nlohmann::json kRangesJson = root.at("ranges_ft");
   EXPECT_TRUE(kRangesJson.is_array());
   ASSERT_EQ(kRangesJson.size(), kRanges.size());
   for (size_t i = 0; i < kRanges.size(); ++i) {
     EXPECT_TRUE(kRangesJson.at(i).is_number());
     EXPECT_DOUBLE_EQ(kRangesJson.at(i).get<double>(),
-                      static_cast<double>(kRanges.at(i)))
+                     static_cast<double>(kRanges.at(i)))
         << "range " << i;
   }
 
@@ -199,8 +199,7 @@ TEST(ReferenceDecomposition, C1Icao) {
     out.range = static_cast<uint32_t>(kRow.at("range_ft").get<double>());
     EXPECT_EQ(out.range, kRanges.at(i)) << "row " << i;
     EXPECT_TRUE(kRow.at("velocity_fps").is_number());
-    out.velocity =
-        static_cast<uint16_t>(kRow.at("velocity_fps").get<double>());
+    out.velocity = static_cast<uint16_t>(kRow.at("velocity_fps").get<double>());
     EXPECT_TRUE(kRow.at("energy_ft_lbf").is_number());
     out.energy = static_cast<uint32_t>(kRow.at("energy_ft_lbf").get<double>());
     EXPECT_TRUE(kRow.at("elevation_in").is_number());
@@ -238,11 +237,11 @@ TEST(ReferenceDecomposition, C1Icao) {
     SCOPED_TRACE(testing::Message() << "range_ft=" << kRanges.at(i));
     const double kRIn =
         std::fabs(solutions.at(i).elevation - refs.at(i).elevation);
-    const double kMoaRes = std::fabs(
-        lob::InchToMoa(solutions.at(i).elevation,
-                       static_cast<double>(kRanges.at(i))) -
-        lob::InchToMoa(refs.at(i).elevation,
-                       static_cast<double>(kRanges.at(i))));
+    const double kMoaRes =
+        std::fabs(lob::InchToMoa(solutions.at(i).elevation,
+                                 static_cast<double>(kRanges.at(i))) -
+                  lob::InchToMoa(refs.at(i).elevation,
+                                 static_cast<double>(kRanges.at(i))));
     EXPECT_LE(kMoaRes, kMoaGran);
     const double kDelta = kRIn - kC1ElevFloorIn;
     if (!(kDelta >= 0.0)) {
@@ -268,7 +267,7 @@ constexpr double kEpsElevIn = 4.15814e-05;
 constexpr double kEpsElevMoa = 3.97148e-06;
 constexpr double kEpsDeflMoa = 0.0;
 constexpr double kEpsTofSec = 6.12488e-08;
-constexpr double kEpsVelFps = 1.0;      // 1 LSB of U16 truncation
+constexpr double kEpsVelFps = 1.0;       // 1 LSB of U16 truncation
 constexpr double kEpsEnergyFtLbs = 1.0;  // 1 LSB of U32 truncation
 
 inline double ReqDouble(const nlohmann::json& obj, const char* key) {
@@ -412,8 +411,7 @@ TEST(ReferenceMatrix, FullMatrix) {
     std::array<uint32_t, kNumRanges> ranges = {};
     for (size_t i = 0; i < kNumRanges; ++i) {
       ASSERT_TRUE(kRangesJson.at(i).is_number());
-      ranges.at(i) =
-          static_cast<uint32_t>(kRangesJson.at(i).get<double>());
+      ranges.at(i) = static_cast<uint32_t>(kRangesJson.at(i).get<double>());
     }
 
     const nlohmann::json kRows = root.at("expected");
@@ -423,8 +421,7 @@ TEST(ReferenceMatrix, FullMatrix) {
     const double kVelGran = reference_matrix::ReqDouble(kGran, "velocity_fps");
     const double kEnergyGran =
         reference_matrix::ReqDouble(kGran, "energy_ft_lbf");
-    const double kMoaGran =
-        reference_matrix::ReqDouble(kGran, "elevation_moa");
+    const double kMoaGran = reference_matrix::ReqDouble(kGran, "elevation_moa");
     const double kTofGran =
         reference_matrix::ReqDouble(kGran, "time_of_flight_s");
     std::vector<lob::Output> refs;
@@ -433,8 +430,8 @@ TEST(ReferenceMatrix, FullMatrix) {
       const nlohmann::json& kRow = kRows.at(i);
       EXPECT_EQ(reference_matrix::ReqString(kRow, "u_ref"), "unknown");
       lob::Output out{};
-      out.range = static_cast<uint32_t>(
-          reference_matrix::ReqDouble(kRow, "range_ft"));
+      out.range =
+          static_cast<uint32_t>(reference_matrix::ReqDouble(kRow, "range_ft"));
       EXPECT_EQ(out.range, ranges.at(i));
       out.velocity = static_cast<uint16_t>(
           reference_matrix::ReqDouble(kRow, "velocity_fps"));
@@ -467,18 +464,16 @@ TEST(ReferenceMatrix, FullMatrix) {
       if (kD1 > ladder_36_18) ladder_36_18 = kD1;
       if (kD2 > ladder_18_9) ladder_18_9 = kD2;
     }
-    RecordProperty(
-        std::string("ladder.") + kCases[c].stem + ".elev_in_36_18",
-        ladder_36_18);
-    RecordProperty(
-        std::string("ladder.") + kCases[c].stem + ".elev_in_18_9",
-        ladder_18_9);
+    RecordProperty(std::string("ladder.") + kCases[c].stem + ".elev_in_36_18",
+                   ladder_36_18);
+    RecordProperty(std::string("ladder.") + kCases[c].stem + ".elev_in_18_9",
+                   ladder_18_9);
 
     // Loader round-trip: JSON numbers reproduce the C++-literal outcome.
-    VerifySolutions(outs36, refs,
-                    {lob::FpsT(kVelGran), lob::FtLbsT(kEnergyGran),
-                     lob::MoaT(kMoaGran), lob::InchT(lob::NaN()),
-                     lob::SecT(kTofGran)});
+    VerifySolutions(
+        outs36, refs,
+        {lob::FpsT(kVelGran), lob::FtLbsT(kEnergyGran), lob::MoaT(kMoaGran),
+         lob::InchT(lob::NaN()), lob::SecT(kTofGran)});
 
     // Decomposition at the 36-in rung vs expected, C1 floors as eps_num.
     reference_matrix::Worst worst;
@@ -488,19 +483,20 @@ TEST(ReferenceMatrix, FullMatrix) {
       const double kRange = static_cast<double>(ranges.at(i));
       const double kRElevIn =
           std::fabs(outs36.at(i).elevation - refs.at(i).elevation);
-      const double kRElevMoa = std::fabs(
-          lob::InchToMoa(outs36.at(i).elevation, kRange) -
-          lob::InchToMoa(refs.at(i).elevation, kRange));
-      const double kRDeflMoa = std::fabs(
-          lob::InchToMoa(outs36.at(i).deflection, kRange) -
-          lob::InchToMoa(refs.at(i).deflection, kRange));
-      const double kRVel = std::fabs(static_cast<double>(outs36.at(i).velocity) -
-                                     static_cast<double>(refs.at(i).velocity));
-      const double kREnergy = std::fabs(
-          static_cast<double>(outs36.at(i).energy) -
-          static_cast<double>(refs.at(i).energy));
-      const double kRTof = std::fabs(outs36.at(i).time_of_flight -
-                                     refs.at(i).time_of_flight);
+      const double kRElevMoa =
+          std::fabs(lob::InchToMoa(outs36.at(i).elevation, kRange) -
+                    lob::InchToMoa(refs.at(i).elevation, kRange));
+      const double kRDeflMoa =
+          std::fabs(lob::InchToMoa(outs36.at(i).deflection, kRange) -
+                    lob::InchToMoa(refs.at(i).deflection, kRange));
+      const double kRVel =
+          std::fabs(static_cast<double>(outs36.at(i).velocity) -
+                    static_cast<double>(refs.at(i).velocity));
+      const double kREnergy =
+          std::fabs(static_cast<double>(outs36.at(i).energy) -
+                    static_cast<double>(refs.at(i).energy));
+      const double kRTof =
+          std::fabs(outs36.at(i).time_of_flight - refs.at(i).time_of_flight);
       EXPECT_LE(kRElevMoa, kMoaGran);
       EXPECT_LE(kRDeflMoa, kMoaGran);
       EXPECT_LE(kRVel, kVelGran);
@@ -542,12 +538,10 @@ TEST(ReferenceMatrix, FullMatrix) {
     case_ids.push_back(kCases[c].id);
     case_tags.push_back(tags);
     case_worst.push_back(worst);
-    RecordProperty(
-        std::string("delta.") + kCases[c].stem + ".elev_in_worst",
-        worst_delta.elev_in);
-    RecordProperty(
-        std::string("delta.") + kCases[c].stem + ".elev_moa_worst",
-        worst_delta.elev_moa);
+    RecordProperty(std::string("delta.") + kCases[c].stem + ".elev_in_worst",
+                   worst_delta.elev_in);
+    RecordProperty(std::string("delta.") + kCases[c].stem + ".elev_moa_worst",
+                   worst_delta.elev_moa);
     RecordProperty(std::string("delta.") + kCases[c].stem + ".tof_worst",
                    worst_delta.tof);
   }
@@ -563,8 +557,7 @@ TEST(ReferenceMatrix, FullMatrix) {
   std::array<uint32_t, kNumRanges> icao_ranges = {};
   for (size_t i = 0; i < kNumRanges; ++i) {
     ASSERT_TRUE(kIcaoRanges.at(i).is_number());
-    icao_ranges.at(i) =
-        static_cast<uint32_t>(kIcaoRanges.at(i).get<double>());
+    icao_ranges.at(i) = static_cast<uint32_t>(kIcaoRanges.at(i).get<double>());
   }
   lob::Builder g1_builder = BuildIcaoCase();
   g1_builder.BCDragFunction(lob::DragFunctionT::kG1);
@@ -580,9 +573,9 @@ TEST(ReferenceMatrix, FullMatrix) {
     const double kRange = static_cast<double>(icao_ranges.at(i));
     const double kDIn =
         std::fabs(g7_outs.at(i).elevation - g1_outs.at(i).elevation);
-    const double kDMoa = std::fabs(
-        lob::InchToMoa(g7_outs.at(i).elevation, kRange) -
-        lob::InchToMoa(g1_outs.at(i).elevation, kRange));
+    const double kDMoa =
+        std::fabs(lob::InchToMoa(g7_outs.at(i).elevation, kRange) -
+                  lob::InchToMoa(g1_outs.at(i).elevation, kRange));
     if (kDIn > struct_in) struct_in = kDIn;
     if (kDMoa > struct_moa) struct_moa = kDMoa;
   }
@@ -677,8 +670,8 @@ TEST(ReferenceMatrix, FullMatrix) {
                           {"gate", "LOB_FULL_MATRIX=1"},
                           {"step_ladder_in", {36, 18, 9}}};
   report["cells"] = cells;
-  report["unclaimed"] = {"range-1000yd-plus", "wind-profile*", "spin-*",
-                         "density-lapse-tail", "drag-bands", "drag-custom",
+  report["unclaimed"] = {"range-1000yd-plus",  "wind-profile*", "spin-*",
+                         "density-lapse-tail", "drag-bands",    "drag-custom",
                          "field-radar"};
   report["structural"] = structural;
 
