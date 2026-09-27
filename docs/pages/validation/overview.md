@@ -41,7 +41,17 @@ accuracy promise is made.
 - Inverse vs forward consistency: iterative `SolveInverse` matches
   `FastInverse` within `0.1 MOA` on the cross-check trajectories
   (`test/source/lob_inverse_test.cpp`).  Forward vs inverse sign flip is
-  asserted (`test/source/lob_inverse_test.cpp`).
+   asserted (`test/source/lob_inverse_test.cpp`).
+
+Convergence methodology and measured error floors live in
+`docs/specs/NUMERICAL_VALIDATION_SPEC.md` (§8) with the ladder harness in
+`test/source/validation_convergence_test.cpp` (public API) and
+`test/source/validation_convergence_angle_test.cpp` (static-only angle
+tolerances) and curated floors in `test/validation/baselines/floors.json`.
+CI asserts monotone refinement plus checked-in ceilings; full 36→1 ladders
+run offline behind `LOB_FULL_LADDER=1` and write `build/validation/`
+artifacts. No universal accuracy claim is made — floors are per envelope
+cell, per output, with config.
 
 @section validation-invariants Invariants
 
