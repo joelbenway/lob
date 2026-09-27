@@ -71,8 +71,9 @@ struct ConvergenceArtifact {
       if (i > 0) {
         os << ",";
       }
-      os << "{\"step_in\":" << rungs[i].step_in << ",\"elevation_in\":"
-         << JsonDouble(rungs[i].elevation_in) << ",\"elevation_delta_in\":"
+      os << "{\"step_in\":" << rungs[i].step_in
+         << ",\"elevation_in\":" << JsonDouble(rungs[i].elevation_in)
+         << ",\"elevation_delta_in\":"
          << JsonDouble(rungs[i].elevation_delta_in) << "}";
     }
     os << "]}";

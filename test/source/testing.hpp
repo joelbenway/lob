@@ -188,11 +188,11 @@ size_t SolveN(const lob::Context& ctx, const std::array<uint32_t, N>& ranges,
 }
 
 // ---- Validation convergence math (Phase 1) ----
-constexpr double kElevFloorIn = 0.01;    // spec §8.2 floor_y
-constexpr double kMoaFloor = 0.01;       // angle-tolerance granularity
-constexpr double kVelFloorFps = 1.0;     // 1 LSB of U16 truncation
+constexpr double kElevFloorIn = 0.01;      // spec §8.2 floor_y
+constexpr double kMoaFloor = 0.01;         // angle-tolerance granularity
+constexpr double kVelFloorFps = 1.0;       // 1 LSB of U16 truncation
 constexpr double kEnergyFloorFtLbs = 1.0;  // 1 LSB of U32 truncation
-constexpr double kTofFloorSec = 1e-9;    // double channel, epsilon only
+constexpr double kTofFloorSec = 1e-9;      // double channel, epsilon only
 
 inline double ElevInDiff(const lob::Output& a, const lob::Output& b) {
   return std::fabs(a.elevation - b.elevation);
