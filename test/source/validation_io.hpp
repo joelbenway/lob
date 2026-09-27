@@ -116,4 +116,105 @@ struct ConvergenceArtifact {
   }
 };
 
+struct SensitivityRow {
+  std::string input;
+  uint32_t range_ft = 0;
+  std::string output;
+  double h_accepted = 0.0;
+  double raw_deriv = 0.0;
+  double canned_response = 0.0;
+  bool nonlinear = false;
+  std::string status;
+};
+
+struct SensitivityArtifact {
+  std::string provenance_lob_version;
+  std::string provenance_git_sha;
+  std::string solver_config;
+  std::vector<SensitivityRow> rows;
+
+  void AddRow(const std::string& input, uint32_t range_ft,
+              const std::string& output, double h_accepted, double raw_deriv,
+              double canned_response, bool nonlinear, const std::string& status) {
+    SensitivityRow row;
+    row.input = input;
+    row.range_ft = range_ft;
+    row.output = output;
+    row.h_accepted = h_accepted;
+    row.raw_deriv = raw_deriv;
+    row.canned_response = canned_response;
+    row.nonlinear = nonlinear;
+    row.status = status;
+    rows.push_back(row);
+  }
+
+  std::string ToJson() const {
+    std::ostringstream os;
+    os << "{\"provenance\":{\"lob_version\":\""
+       << JsonEscape(provenance_lob_version) << "\",\"git_sha\":\""
+       << JsonEscape(provenance_git_sha) << "\"},\"solver_config\":\""
+       << JsonEscape(solver_config) << "\",\"rows\":[";
+    for (size_t i = 0; i < rows.size(); ++i) {
+      if (i > 0) {
+        os << ",";
+      }
+      os << "{\"input\":\"" << JsonEscape(rows[i].input) << "\",\"range_ft\":"
+         << rows[i].range_ft << ",\"output\":\"" << JsonEscape(rows[i].output)
+         << "\",\"h_accepted\":" << JsonDouble(rows[i].h_accepted)
+         << ",\"raw_deriv\":" << JsonDouble(rows[i].raw_deriv)
+         << ",\"canned_response\":" << JsonDouble(rows[i].canned_response)
+         << ",\"nonlinear\":" << (rows[i].nonlinear ? "true" : "false")
+         << ",\"status\":\"" << JsonEscape(rows[i].status) << "\""
+         // S reserved for Phase 4 (spec §9.3/§11): semi-elasticity needs
+         // u(x) values that do not exist yet; JSON carries the null
+         // placeholder while CSV omits the column until Phase 4 fills it.
+         << ",\"sensitivity_coefficient_S\":null}";
+    }
+    os << "]}";
+    return os.str();
+  }
+
+  std::string ToCsv() const {
+    std::ostringstream os;
+    os << "input,range_ft,output,h_accepted,raw_deriv,canned_response,"
+          "nonlinear,status\n";
+    for (size_t i = 0; i < rows.size(); ++i) {
+      os << JsonEscape(rows[i].input) << "," << rows[i].range_ft << ","
+         << JsonEscape(rows[i].output) << ",";
+      if (std::isfinite(rows[i].h_accepted)) {
+        os << JsonDouble(rows[i].h_accepted);
+      }
+      os << ",";
+      if (std::isfinite(rows[i].raw_deriv)) {
+        os << JsonDouble(rows[i].raw_deriv);
+      }
+      os << ",";
+      if (std::isfinite(rows[i].canned_response)) {
+        os << JsonDouble(rows[i].canned_response);
+      }
+      os << "," << (rows[i].nonlinear ? "true" : "false") << ","
+         << JsonEscape(rows[i].status) << "\n";
+    }
+    return os.str();
+  }
+
+  bool WriteFiles(const std::string& dir, const std::string& stem) const {
+    const std::string kJsonPath = dir + "/" + stem + ".json";
+    const std::string kCsvPath = dir + "/" + stem + ".csv";
+    std::ofstream json_out(kJsonPath.c_str());
+    if (!json_out.is_open()) {
+      return false;
+    }
+    json_out << ToJson();
+    json_out.close();
+    std::ofstream csv_out(kCsvPath.c_str());
+    if (!csv_out.is_open()) {
+      return false;
+    }
+    csv_out << ToCsv();
+    csv_out.close();
+    return true;
+  }
+};
+
 }  // namespace tests

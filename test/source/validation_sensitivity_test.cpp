@@ -11,6 +11,7 @@
 #include <string>
 
 #include "testing.hpp"
+#include "validation_io.hpp"
 #include "validation_sensitivity.hpp"
 
 namespace tests {
@@ -184,6 +185,24 @@ TEST(SensitivitySmoke, C1VelocityWindPareto) {
   // C1 BC is 0.232, so the offline BC canned step is 0.00232 (1%), NOT the
   // table's 0.00425 — Task 5 scales per case. This smoke test does not
   // perturb BC.
+}
+
+TEST(SensitivityIo, ArtifactRoundTripsSyntheticRows) {
+  SensitivityArtifact artifact;
+  artifact.provenance_lob_version = "0.13.0-test";
+  artifact.provenance_git_sha = "deadbee";
+  artifact.solver_config = "step_in=36,angle_tol_moa=0.01,density_path=fast";
+  artifact.AddRow("velocity_fps", 1800U, "elevation_in", 10.0, 2.31, 23.1,
+                  false, "genuine");
+  artifact.AddRow("wind_speed_mph", 1800U, "elevation_in", 1.0, 0.0, 0.0,
+                  false, "below_floor");
+  const std::string kJson = artifact.ToJson();
+  EXPECT_NE(kJson.find("\"input\":\"velocity_fps\""), std::string::npos);
+  EXPECT_NE(kJson.find("\"status\":\"below_floor\""), std::string::npos);
+  EXPECT_NE(kJson.find("\"sensitivity_coefficient_S\":null"), std::string::npos);
+  const std::string kCsv = artifact.ToCsv();
+  EXPECT_NE(kCsv.find("input,range_ft,output,h_accepted,raw_deriv,"),
+            std::string::npos);
 }
 
 }  // namespace tests
