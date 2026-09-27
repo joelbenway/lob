@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -96,6 +96,7 @@ $(function() { codefold.init(0); });
       <li><a href="#index_d"><span>d</span></a></li>
       <li><a href="#index_e"><span>e</span></a></li>
       <li><a href="#index_g"><span>g</span></a></li>
+      <li><a href="#index_h"><span>h</span></a></li>
       <li><a href="#index_i"><span>i</span></a></li>
       <li><a href="#index_k"><span>k</span></a></li>
       <li><a href="#index_l"><span>l</span></a></li>
@@ -172,7 +173,7 @@ $(function(){initNavTree('functions.html',''); initResizable(true); });
 <li>BCAtmosphere()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#a9317f76f7e5269e26992d8e964349aac">lob::Builder</a></li>
 <li>BCDragFunction()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#ab05bc635e647fe972048a77990a7f018">lob::Builder</a></li>
 <li>BCVelocityBands()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#a960f31fd350b46ef9d48fbe1ad28d671">lob::Builder</a></li>
-<li>buffer&#160;:&#160;<a class="el" href="structLobBuilder.html#ac5d4068e622556b4b05b5a483cf5a999">LobBuilder</a></li>
+<li>buffer&#160;:&#160;<a class="el" href="structLobBuilder.html#af8a1e32ac083f3c8c9e2ebf6b4bcc196">LobBuilder</a></li>
 <li>Build()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#a026a493100562d3f29a29daf1c1e78f9">lob::Builder</a></li>
 <li>Builder()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#a9a6f54d138c3056e38ae2616069ac0d3">lob::Builder</a></li>
 </ul>
@@ -202,6 +203,12 @@ $(function(){initNavTree('functions.html',''); initResizable(true); });
 
 <h3><a id="index_g" name="index_g"></a>- g -</h3><ul>
 <li>gravity&#160;:&#160;<a class="el" href="structlob_1_1Context.html#a6fac645ee61e14d3f4fafacae68ce4b6">lob::Context</a>, <a class="el" href="structLobContext.html#a958dbdacdb002c6d2e2f34ae78194212">LobContext</a></li>
+</ul>
+
+
+<h3><a id="index_h" name="index_h"></a>- h -</h3><ul>
+<li>heading_deg&#160;:&#160;<a class="el" href="structLobWindPoint.html#a05c71bac7fa152f1b71150397577b18d">LobWindPoint</a></li>
+<li>height_ft&#160;:&#160;<a class="el" href="structLobWindPoint.html#ac74f50d92f32a23c897adace68b583c2">LobWindPoint</a></li>
 </ul>
 
 
@@ -249,6 +256,7 @@ $(function(){initNavTree('functions.html',''); initResizable(true); });
 
 <h3><a id="index_r" name="index_r"></a>- r -</h3><ul>
 <li>range&#160;:&#160;<a class="el" href="structLobOutput.html#a91903279584126678be5acbe99ce023c">LobOutput</a></li>
+<li>range_ft&#160;:&#160;<a class="el" href="structLobWindNode.html#aa53ac814a995e543f40d938207291b04">LobWindNode</a>, <a class="el" href="structLobWindPoint.html#a1b8ea0fad84d6cb66a10fc46698f0d10">LobWindPoint</a></li>
 <li>RangeAngleDeg()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#aa4cd1eed7abc570cf882063ed95f8f05">lob::Builder</a></li>
 <li>RelativeHumidityPercent()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#af6d9b61a429c8c61e53f62da17d85fe3">lob::Builder</a></li>
 <li>Reset()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#a983a5d1d5208c71807cc2119f55a9b7a">lob::Builder</a></li>
@@ -257,6 +265,7 @@ $(function(){initNavTree('functions.html',''); initResizable(true); });
 
 <h3><a id="index_s" name="index_s"></a>- s -</h3><ul>
 <li>sin_l&#160;:&#160;<a class="el" href="structLobCoriolis.html#acfad570c9040d20148620d765be9de5f">LobCoriolis</a></li>
+<li>speed_mph&#160;:&#160;<a class="el" href="structLobWindPoint.html#ac981fecc0bf82efae7aa5c29eb437ebb">LobWindPoint</a></li>
 <li>speed_of_sound&#160;:&#160;<a class="el" href="structlob_1_1Context.html#a034dba0e58d07c987c7fda04fe67dc1c">lob::Context</a>, <a class="el" href="structLobContext.html#a4a308d5e7d07f6c43c866e62c55e6e34">LobContext</a></li>
 <li>spindrift_factor&#160;:&#160;<a class="el" href="structlob_1_1Context.html#a1c42f08aa8f7e5e237d059395711e6b0">lob::Context</a>, <a class="el" href="structLobContext.html#ad2aa539f05b9bd9216938cc703786f87">LobContext</a></li>
 <li>SplineCoefficients()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#a46b7f76f550b39d77d77cf688f92be6d">lob::Builder</a></li>
@@ -280,26 +289,32 @@ $(function(){initNavTree('functions.html',''); initResizable(true); });
 
 
 <h3><a id="index_w" name="index_w"></a>- w -</h3><ul>
-<li>wind&#160;:&#160;<a class="el" href="structlob_1_1Context.html#a7793550422bb33056273841aec16c1e8">lob::Context</a>, <a class="el" href="structLobContext.html#a3ca42a9a9608074874a750d4852407d0">LobContext</a></li>
+<li>wind_count&#160;:&#160;<a class="el" href="structlob_1_1Context.html#aed3a7f5a6361cbd5f61f9d34bf8f6ddb">lob::Context</a>, <a class="el" href="structLobContext.html#a5bc4ffb762fe33addaf672956cf9f271">LobContext</a></li>
+<li>wind_nodes&#160;:&#160;<a class="el" href="structlob_1_1Context.html#aadadd6bd0f9c283c0a653d3a14978040">lob::Context</a>, <a class="el" href="structLobContext.html#a46bd3ecacba7eaa7486dc4ac022907e8">LobContext</a></li>
+<li>wind_shear_exponent&#160;:&#160;<a class="el" href="structlob_1_1Context.html#a9fbf7d6a74adc7b3974173ec74816bdd">lob::Context</a>, <a class="el" href="structLobContext.html#a2c8f11953d413dd8167075dff1fa161b">LobContext</a></li>
 <li>WindHeading()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#a7ec2f83fdff7019e1650fae564f97f6a">lob::Builder</a></li>
 <li>WindHeadingDeg()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#a0469385d520cb566993f90f71670ea3b">lob::Builder</a></li>
+<li>WindProfile()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#a69ec0fe779be9f143e203324f29ce9b2">lob::Builder</a></li>
+<li>WindShearExponent()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#a9deed347d553694b1f086f12d5cc6978">lob::Builder</a></li>
 <li>WindSpeedFps()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#ae43859a5274611dc13ae73220e309fbe">lob::Builder</a></li>
 <li>WindSpeedMph()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#aaaf1878d0e9d13246f8da0a8ff4d10f2">lob::Builder</a></li>
 </ul>
 
 
 <h3><a id="index_x" name="index_x"></a>- x -</h3><ul>
-<li>x&#160;:&#160;<a class="el" href="structLobGravity.html#ab1d55cb5133de4c40338689fda975a2f">LobGravity</a>, <a class="el" href="structLobWind.html#a360bf0863dbe35b7432a5129fa44c05e">LobWind</a></li>
+<li>x&#160;:&#160;<a class="el" href="structLobGravity.html#ab1d55cb5133de4c40338689fda975a2f">LobGravity</a></li>
+<li>x_fps&#160;:&#160;<a class="el" href="structLobWindNode.html#af06a1a010b02b12bfdbe5cd0685e07a4">LobWindNode</a></li>
 </ul>
 
 
 <h3><a id="index_y" name="index_y"></a>- y -</h3><ul>
 <li>y&#160;:&#160;<a class="el" href="structLobGravity.html#ae20a511c07934e08ceec59cf293e9bb1">LobGravity</a></li>
+<li>y_fps&#160;:&#160;<a class="el" href="structLobWindNode.html#a36a25afa6ba3b2dfa7df3add196ad191">LobWindNode</a></li>
 </ul>
 
 
 <h3><a id="index_z" name="index_z"></a>- z -</h3><ul>
-<li>z&#160;:&#160;<a class="el" href="structLobWind.html#a56fde2fd5e4cc8487569aa20d4d32356">LobWind</a></li>
+<li>z_fps&#160;:&#160;<a class="el" href="structLobWindNode.html#a72a7e160910c1a3ad8e1f313e15780bd">LobWindNode</a></li>
 <li>zero_angle&#160;:&#160;<a class="el" href="structlob_1_1Context.html#a13c4a8bc06a1a1ce23cda7c9770c892e">lob::Context</a>, <a class="el" href="structLobContext.html#a9ca54c01a93bc026ab39daf548cdcade">LobContext</a></li>
 <li>ZeroAngleMOA()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#a0ee43fe5c9cdae49a0e1f63826618425">lob::Builder</a></li>
 <li>ZeroDistanceYds()&#160;:&#160;<a class="el" href="classlob_1_1Builder.html#a987f8630ca3411d3c4b3b5a20b7a31a8">lob::Builder</a></li>

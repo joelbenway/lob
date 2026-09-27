@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -132,7 +132,8 @@ Method</h1>
 </div><!-- fragment --><p><code>Δx</code> is one yard (36 in) by default or <code>ctx.step_size</code> inches if the caller set it (<code>source/solve_step.cpp</code>). The last step to a requested target <code>R</code> is clamped: <code>Δx = min(R − x_n, step)</code>.</p>
 <p><code>DsDx</code> / <code>FastDsDx</code> (<code>source/solve_step.cpp</code>) evaluates <code>f</code> via <code>DsDxCore</code> helpers (<code>GetDtDx</code>/<code>GetWind</code>/<code>GetMach</code>/<code>GetCd</code>/<code>GetDpDt</code>/<code>GetDvDt</code>):</p>
 <div class="fragment"><div class="line">kDtDx = 1/vx                    (guarded: if vx ≤ 0 → zero derivative)</div>
-<div class="line">wind  = (ctx.wind.x, 0, ctx.wind.z)</div>
+<div class="line">wind  = lerp(wind_nodes)        (frame-resolved at Build; optional power-law</div>
+<div class="line">                                 altitude scale when shear is nonzero)</div>
 <div class="line">u     = −k_lapse·P·G            (only DsDx; FastDsDx skips)</div>
 <div class="line">drag  = drag_coeff·(1−u(1−αu))   (only DsDx; FastDsDx = drag_coeff)</div>
 <div class="line">c     = c·(1−βu)                (only DsDx; FastDsDx = c)</div>

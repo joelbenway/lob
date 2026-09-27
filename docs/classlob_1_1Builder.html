@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -280,6 +280,19 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aaaf1878d0e9d13246f8da0a8ff4d10f2" id="r_aaaf1878d0e9d13246f8da0a8ff4d10f2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aaaf1878d0e9d13246f8da0a8ff4d10f2">WindSpeedMph</a> (double value)</td></tr>
 <tr class="memdesc:aaaf1878d0e9d13246f8da0a8ff4d10f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the wind speed in miles per hour.  <br /></td></tr>
 <tr class="separator:aaaf1878d0e9d13246f8da0a8ff4d10f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69ec0fe779be9f143e203324f29ce9b2" id="r_a69ec0fe779be9f143e203324f29ce9b2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a69ec0fe779be9f143e203324f29ce9b2">WindProfile</a> (const <a class="el" href="structLobWindPoint.html">LobWindPoint</a> *ppoints, size_t count)</td></tr>
+<tr class="memdesc:a69ec0fe779be9f143e203324f29ce9b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads a downrange wind profile for the projectile.  <br /></td></tr>
+<tr class="separator:a69ec0fe779be9f143e203324f29ce9b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aefe27de5383c2cba8f24c3f428c586e3" id="r_aefe27de5383c2cba8f24c3f428c586e3"><td class="memTemplParams" colspan="2">template&lt;size_t N&gt; </td></tr>
+<tr class="memitem:aefe27de5383c2cba8f24c3f428c586e3"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aefe27de5383c2cba8f24c3f428c586e3">WindProfile</a> (const std::array&lt; <a class="el" href="structLobWindPoint.html">LobWindPoint</a>, N &gt; &amp;points)</td></tr>
+<tr class="memdesc:aefe27de5383c2cba8f24c3f428c586e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads a downrange wind profile for the projectile.  <br /></td></tr>
+<tr class="separator:aefe27de5383c2cba8f24c3f428c586e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5304e11e23ba36df84c220ca0d5c1fb8" id="r_a5304e11e23ba36df84c220ca0d5c1fb8"><td class="memTemplParams" colspan="2">template&lt;size_t N&gt; </td></tr>
+<tr class="memitem:a5304e11e23ba36df84c220ca0d5c1fb8"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a5304e11e23ba36df84c220ca0d5c1fb8">WindProfile</a> (const std::array&lt; <a class="el" href="structLobWindPoint.html">LobWindPoint</a>, N &gt; &amp;&amp;points)=delete</td></tr>
+<tr class="separator:a5304e11e23ba36df84c220ca0d5c1fb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9deed347d553694b1f086f12d5cc6978" id="r_a9deed347d553694b1f086f12d5cc6978"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9deed347d553694b1f086f12d5cc6978">WindShearExponent</a> (double value)</td></tr>
+<tr class="memdesc:a9deed347d553694b1f086f12d5cc6978"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the Hellmann shear exponent for wind profile height scaling.  <br /></td></tr>
+<tr class="separator:a9deed347d553694b1f086f12d5cc6978"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2cda522b77f4d6b7b480423127a2bfdf" id="r_a2cda522b77f4d6b7b480423127a2bfdf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2cda522b77f4d6b7b480423127a2bfdf">AzimuthDeg</a> (double value)</td></tr>
 <tr class="memdesc:a2cda522b77f4d6b7b480423127a2bfdf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the azimuth (bearing) of the target in degrees.  <br /></td></tr>
 <tr class="separator:a2cda522b77f4d6b7b480423127a2bfdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2095,6 +2108,150 @@ template&lt;size_t N&gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">value</td><td>The wind heading in degrees. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the <a class="el" href="classlob_1_1Builder.html" title="Builder class for constructing Context objects with a friendly interface.">Builder</a> object. </dd></dl>
+
+</div>
+</div>
+<a id="a69ec0fe779be9f143e203324f29ce9b2" name="a69ec0fe779be9f143e203324f29ce9b2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a69ec0fe779be9f143e203324f29ce9b2">&#9670;&#160;</a></span>WindProfile() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp; lob::Builder::WindProfile </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structLobWindPoint.html">LobWindPoint</a> *</td>          <td class="paramname"><span class="paramname"><em>ppoints</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>count</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Loads a downrange wind profile for the projectile. </p>
+<p>Point 0 sets the muzzle wind; all points are validated, normalized to the fixed 1-ft reference, resolved into the shooting frame, and stored as solver-ready nodes. A NaN measurement height assumes measurement at the 1-ft reference. The last wind-setting call wins: this overrides any uniform wind heading/speed, and those override this. </p><dl class="section warning"><dt>Warning</dt><dd>The caller must keep ppoints valid until Build is called. The builder copies no data; the pointer is referenced during <a class="el" href="#a026a493100562d3f29a29daf1c1e78f9" title="Builds the Context object with the configured parameters.">Build()</a>. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ppoints</td><td>Pointer to an array of wind profile points. First range must be 0 with strictly increasing whole-foot ranges; headings finite degrees, speeds finite mph, heights positive or NaN. </td></tr>
+    <tr><td class="paramname">count</td><td>The number of points. Must be 1..LOB_WIND_POINTS. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the <a class="el" href="classlob_1_1Builder.html" title="Builder class for constructing Context objects with a friendly interface.">Builder</a> object. </dd></dl>
+
+</div>
+</div>
+<a id="a5304e11e23ba36df84c220ca0d5c1fb8" name="a5304e11e23ba36df84c220ca0d5c1fb8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5304e11e23ba36df84c220ca0d5c1fb8">&#9670;&#160;</a></span>WindProfile() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;size_t N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp; lob::Builder::WindProfile </td>
+          <td>(</td>
+          <td class="paramtype">const std::array&lt; <a class="el" href="structLobWindPoint.html">LobWindPoint</a>, N &gt; &amp;&amp;</td>          <td class="paramname"><span class="paramname"><em>points</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel delete">delete</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aefe27de5383c2cba8f24c3f428c586e3" name="aefe27de5383c2cba8f24c3f428c586e3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aefe27de5383c2cba8f24c3f428c586e3">&#9670;&#160;</a></span>WindProfile() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;size_t N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp; lob::Builder::WindProfile </td>
+          <td>(</td>
+          <td class="paramtype">const std::array&lt; <a class="el" href="structLobWindPoint.html">LobWindPoint</a>, N &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>points</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Loads a downrange wind profile for the projectile. </p>
+<p>Point 0 sets the muzzle wind; all points are validated, normalized to the fixed 1-ft reference, resolved into the shooting frame, and stored as solver-ready nodes. A NaN measurement height assumes measurement at the 1-ft reference. The last wind-setting call wins: this overrides any uniform wind heading/speed, and those override this. </p><dl class="section warning"><dt>Warning</dt><dd>The array must remain valid until Build is called; the builder copies no data and references it during <a class="el" href="#a026a493100562d3f29a29daf1c1e78f9" title="Builds the Context object with the configured parameters.">Build()</a>. Temporaries are rejected at compile time. </dd></dl>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">N</td><td>The number of wind profile points. Must be 1..LOB_WIND_POINTS. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">points</td><td>Reference to an array of wind profile points. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the <a class="el" href="classlob_1_1Builder.html" title="Builder class for constructing Context objects with a friendly interface.">Builder</a> object. </dd></dl>
+
+</div>
+</div>
+<a id="a9deed347d553694b1f086f12d5cc6978" name="a9deed347d553694b1f086f12d5cc6978"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9deed347d553694b1f086f12d5cc6978">&#9670;&#160;</a></span>WindShearExponent()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp; lob::Builder::WindShearExponent </td>
+          <td>(</td>
+          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the Hellmann shear exponent for wind profile height scaling. </p>
+<p>Wind shear follows the power law with this exponent; scaling is off unless opted in with a nonzero value (0 disables it exactly). Defaults to 0 when unset. Typical values when enabling: open water 0.10, open grassland 0.143, farmland/crops 0.20, suburban 0.25, forest/urban 0.30. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">value</td><td>The shear exponent in [0, 1]. </td></tr>
   </table>
   </dd>
 </dl>

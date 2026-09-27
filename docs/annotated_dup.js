@@ -9,5 +9,6 @@ var annotated_dup =
     [ "LobCoriolis", "structLobCoriolis.html", "structLobCoriolis" ],
     [ "LobGravity", "structLobGravity.html", "structLobGravity" ],
     [ "LobOutput", "structLobOutput.html", "structLobOutput" ],
-    [ "LobWind", "structLobWind.html", "structLobWind" ]
+    [ "LobWindNode", "structLobWindNode.html", "structLobWindNode" ],
+    [ "LobWindPoint", "structLobWindPoint.html", "structLobWindPoint" ]
 ];

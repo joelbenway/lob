@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.13.2"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>lob: LobGravity Struct Reference</title>
+<title>lob: LobWindPoint Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -94,7 +94,7 @@ $(function() { codefold.init(0); });
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(function(){initNavTree('structLobGravity.html',''); initResizable(true); });
+$(function(){initNavTree('structLobWindPoint.html',''); initResizable(true); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -122,57 +122,95 @@ $(function(){initNavTree('structLobGravity.html',''); initResizable(true); });
 <div class="header">
   <div class="summary">
 <a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="structLobGravity-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">LobGravity Struct Reference</div></div>
+<a href="structLobWindPoint-members.html">List of all members</a>  </div>
+  <div class="headertitle"><div class="title">LobWindPoint Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Gravity vector.  
+<p>Downrange wind profile point (horizontal-plane wind).  
  <a href="#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="lob_8h_source.html">lob.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:ab1d55cb5133de4c40338689fda975a2f" id="r_ab1d55cb5133de4c40338689fda975a2f"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab1d55cb5133de4c40338689fda975a2f">x</a></td></tr>
-<tr class="memdesc:ab1d55cb5133de4c40338689fda975a2f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acceleration ft/s/s in the x-direction.  <br /></td></tr>
-<tr class="separator:ab1d55cb5133de4c40338689fda975a2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae20a511c07934e08ceec59cf293e9bb1" id="r_ae20a511c07934e08ceec59cf293e9bb1"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae20a511c07934e08ceec59cf293e9bb1">y</a></td></tr>
-<tr class="memdesc:ae20a511c07934e08ceec59cf293e9bb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Acceleration ft/s/s in the y-direction.  <br /></td></tr>
-<tr class="separator:ae20a511c07934e08ceec59cf293e9bb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b8ea0fad84d6cb66a10fc46698f0d10" id="r_a1b8ea0fad84d6cb66a10fc46698f0d10"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1b8ea0fad84d6cb66a10fc46698f0d10">range_ft</a></td></tr>
+<tr class="memdesc:a1b8ea0fad84d6cb66a10fc46698f0d10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Downrange position in feet.  <br /></td></tr>
+<tr class="separator:a1b8ea0fad84d6cb66a10fc46698f0d10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05c71bac7fa152f1b71150397577b18d" id="r_a05c71bac7fa152f1b71150397577b18d"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a05c71bac7fa152f1b71150397577b18d">heading_deg</a></td></tr>
+<tr class="memdesc:a05c71bac7fa152f1b71150397577b18d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wind heading in degrees (0 tailwind, 180 headwind); wraps mod 360.  <br /></td></tr>
+<tr class="separator:a05c71bac7fa152f1b71150397577b18d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac981fecc0bf82efae7aa5c29eb437ebb" id="r_ac981fecc0bf82efae7aa5c29eb437ebb"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac981fecc0bf82efae7aa5c29eb437ebb">speed_mph</a></td></tr>
+<tr class="memdesc:ac981fecc0bf82efae7aa5c29eb437ebb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wind speed in miles per hour.  <br /></td></tr>
+<tr class="separator:ac981fecc0bf82efae7aa5c29eb437ebb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac74f50d92f32a23c897adace68b583c2" id="r_ac74f50d92f32a23c897adace68b583c2"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac74f50d92f32a23c897adace68b583c2">height_ft</a></td></tr>
+<tr class="memdesc:ac74f50d92f32a23c897adace68b583c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Measurement height above ground in feet.  <br /></td></tr>
+<tr class="separator:ac74f50d92f32a23c897adace68b583c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Gravity vector. </p>
+<div class="textblock"><p>Downrange wind profile point (horizontal-plane wind). </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
-<a id="ab1d55cb5133de4c40338689fda975a2f" name="ab1d55cb5133de4c40338689fda975a2f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab1d55cb5133de4c40338689fda975a2f">&#9670;&#160;</a></span>x</h2>
+<a id="a05c71bac7fa152f1b71150397577b18d" name="a05c71bac7fa152f1b71150397577b18d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a05c71bac7fa152f1b71150397577b18d">&#9670;&#160;</a></span>heading_deg</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double LobGravity::x</td>
+          <td class="memname">double LobWindPoint::heading_deg</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Acceleration ft/s/s in the x-direction. </p>
+<p>Wind heading in degrees (0 tailwind, 180 headwind); wraps mod 360. </p>
 
 </div>
 </div>
-<a id="ae20a511c07934e08ceec59cf293e9bb1" name="ae20a511c07934e08ceec59cf293e9bb1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae20a511c07934e08ceec59cf293e9bb1">&#9670;&#160;</a></span>y</h2>
+<a id="ac74f50d92f32a23c897adace68b583c2" name="ac74f50d92f32a23c897adace68b583c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac74f50d92f32a23c897adace68b583c2">&#9670;&#160;</a></span>height_ft</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double LobGravity::y</td>
+          <td class="memname">double LobWindPoint::height_ft</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Acceleration ft/s/s in the y-direction. </p>
+<p>Measurement height above ground in feet. </p>
+
+</div>
+</div>
+<a id="a1b8ea0fad84d6cb66a10fc46698f0d10" name="a1b8ea0fad84d6cb66a10fc46698f0d10"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b8ea0fad84d6cb66a10fc46698f0d10">&#9670;&#160;</a></span>range_ft</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double LobWindPoint::range_ft</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Downrange position in feet. </p>
+
+</div>
+</div>
+<a id="ac981fecc0bf82efae7aa5c29eb437ebb" name="ac981fecc0bf82efae7aa5c29eb437ebb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac981fecc0bf82efae7aa5c29eb437ebb">&#9670;&#160;</a></span>speed_mph</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double LobWindPoint::speed_mph</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Wind speed in miles per hour. </p>
 
 </div>
 </div>
@@ -184,7 +222,7 @@ Public Attributes</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="structLobGravity.html">LobGravity</a></li>
+    <li class="navelem"><a class="el" href="structLobWindPoint.html">LobWindPoint</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
   </ul>
 </div>

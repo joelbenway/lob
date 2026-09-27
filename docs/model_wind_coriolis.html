@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -132,11 +132,11 @@ Wind vector</h1>
 <p>Both satisfy "12 or 0 is tailwind, 6 or 180 is headwind" (<code><a class="el" href="lob_8h.html">include/lob/lob.h</a></code>). Speed is <code>WindSpeedFps</code> or <code>WindSpeedMph</code> (<code>MphT → FpsT</code>). Default 0 fps. Validation: internal radian value checked against <code>±360°</code> → <code>kLobErrorWindHeadingOOR</code>.</p>
 <h1><a class="anchor" id="model-wind-usage"></a>
 Usage in the solver</h1>
-<p><code>DsDx</code> forms <code>v − w</code> as <code>CartesianT&lt;FpsT&gt;(ctx.wind.x, 0, ctx.wind.z)</code> and uses <code>|v−w|</code> to scale drag (<code>source/solve_step.cpp</code>). No vertical wind; uniform and constant. Jump consumes only <code>w_z</code> via <code>CalculateCrosswindAngleGamma(MphT(w_z), v)</code> and the Litz/Boatright formulas (<a class="el" href="model_spin.html">Spin Drift and Aerodynamic Jump</a>).</p>
+<p><code>DsDx</code> forms <code>v − w</code> with the frame-resolved wind from the profile query (<code>GetWind</code> in <code>source/solve_step.cpp</code>) — downrange-lerped nodes with optional power-law altitude scaling — and uses <code>|v−w|</code> to scale drag. No vertical wind input; uniform wind is the single-point case. Jump consumes only <code>w_z</code> via <code>CalculateCrosswindAngleGamma(MphT(w_z), v)</code> and the Litz/Boatright formulas (<a class="el" href="model_spin.html">Spin Drift and Aerodynamic Jump</a>).</p>
 <h1><a class="anchor" id="model-wind-limitations"></a>
 Limitations</h1>
 <ul>
-<li>No gradient with altitude/range, no vertical wind.</li>
+<li>No vertical wind input; altitude/range gradients are opt-in (profiles plus shear exponent).</li>
 <li>Headwind/tailwind scales <code>|v−w|</code>; crosswind affects drag only via Boatright's <code>CDa</code> (<code>source/lob_builder.cpp</code>).</li>
 </ul>
 <h1><a class="anchor" id="model-coriolis"></a>

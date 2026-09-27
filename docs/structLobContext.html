@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.12.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -149,9 +149,6 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a958dbdacdb002c6d2e2f34ae78194212" id="r_a958dbdacdb002c6d2e2f34ae78194212"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structLobGravity.html">LobGravity</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a958dbdacdb002c6d2e2f34ae78194212">gravity</a></td></tr>
 <tr class="memdesc:a958dbdacdb002c6d2e2f34ae78194212"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gravity vector.  <br /></td></tr>
 <tr class="separator:a958dbdacdb002c6d2e2f34ae78194212"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3ca42a9a9608074874a750d4852407d0" id="r_a3ca42a9a9608074874a750d4852407d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structLobWind.html">LobWind</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3ca42a9a9608074874a750d4852407d0">wind</a></td></tr>
-<tr class="memdesc:a3ca42a9a9608074874a750d4852407d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wind vector.  <br /></td></tr>
-<tr class="separator:a3ca42a9a9608074874a750d4852407d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20833ae08bb886f62f208d647286a1a2" id="r_a20833ae08bb886f62f208d647286a1a2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structLobCoriolis.html">LobCoriolis</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a20833ae08bb886f62f208d647286a1a2">coriolis</a></td></tr>
 <tr class="memdesc:a20833ae08bb886f62f208d647286a1a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coriolis effect parameters.  <br /></td></tr>
 <tr class="separator:a20833ae08bb886f62f208d647286a1a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -176,6 +173,12 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a09075a661d42db50cbfa01711e044509" id="r_a09075a661d42db50cbfa01711e044509"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a09075a661d42db50cbfa01711e044509">drags</a> [15 *4]</td></tr>
 <tr class="memdesc:a09075a661d42db50cbfa01711e044509"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drag curve coefficients.  <br /></td></tr>
 <tr class="separator:a09075a661d42db50cbfa01711e044509"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a46bd3ecacba7eaa7486dc4ac022907e8" id="r_a46bd3ecacba7eaa7486dc4ac022907e8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structLobWindNode.html">LobWindNode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a46bd3ecacba7eaa7486dc4ac022907e8">wind_nodes</a> [8]</td></tr>
+<tr class="memdesc:a46bd3ecacba7eaa7486dc4ac022907e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frame-resolved profile.  <br /></td></tr>
+<tr class="separator:a46bd3ecacba7eaa7486dc4ac022907e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c8f11953d413dd8167075dff1fa161b" id="r_a2c8f11953d413dd8167075dff1fa161b"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2c8f11953d413dd8167075dff1fa161b">wind_shear_exponent</a></td></tr>
+<tr class="memdesc:a2c8f11953d413dd8167075dff1fa161b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hellmann exponent alpha; scaling.  <br /></td></tr>
+<tr class="separator:a2c8f11953d413dd8167075dff1fa161b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace6de55e31e93338ed1b8fb266b2ccc4" id="r_ace6de55e31e93338ed1b8fb266b2ccc4"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ace6de55e31e93338ed1b8fb266b2ccc4">velocity</a></td></tr>
 <tr class="memdesc:ace6de55e31e93338ed1b8fb266b2ccc4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initial velocity of projectile in Fps.  <br /></td></tr>
 <tr class="separator:ace6de55e31e93338ed1b8fb266b2ccc4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -188,6 +191,9 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a7dc861e86fed013a6e71799d52da3a23" id="r_a7dc861e86fed013a6e71799d52da3a23"><td class="memItemLeft" align="right" valign="top"><a class="el" href="lob_8h.html#aa69b9c6df9e548a70d321783e8ed4c7b">LobErrorT</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7dc861e86fed013a6e71799d52da3a23">error</a></td></tr>
 <tr class="memdesc:a7dc861e86fed013a6e71799d52da3a23"><td class="mdescLeft">&#160;</td><td class="mdescRight">Error status after build.  <br /></td></tr>
 <tr class="separator:a7dc861e86fed013a6e71799d52da3a23"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5bc4ffb762fe33addaf672956cf9f271" id="r_a5bc4ffb762fe33addaf672956cf9f271"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5bc4ffb762fe33addaf672956cf9f271">wind_count</a></td></tr>
+<tr class="memdesc:a5bc4ffb762fe33addaf672956cf9f271"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total wind points, 1..LOB_WIND_POINTS.  <br /></td></tr>
+<tr class="separator:a5bc4ffb762fe33addaf672956cf9f271"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Structure of parameters consumed by the solver. </p>
@@ -449,19 +455,53 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a3ca42a9a9608074874a750d4852407d0" name="a3ca42a9a9608074874a750d4852407d0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3ca42a9a9608074874a750d4852407d0">&#9670;&#160;</a></span>wind</h2>
+<a id="a5bc4ffb762fe33addaf672956cf9f271" name="a5bc4ffb762fe33addaf672956cf9f271"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5bc4ffb762fe33addaf672956cf9f271">&#9670;&#160;</a></span>wind_count</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structLobWind.html">LobWind</a> LobContext::wind</td>
+          <td class="memname">uint8_t LobContext::wind_count</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Wind vector. </p>
+<p>Total wind points, 1..LOB_WIND_POINTS. </p>
+
+</div>
+</div>
+<a id="a46bd3ecacba7eaa7486dc4ac022907e8" name="a46bd3ecacba7eaa7486dc4ac022907e8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a46bd3ecacba7eaa7486dc4ac022907e8">&#9670;&#160;</a></span>wind_nodes</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structLobWindNode.html">LobWindNode</a> LobContext::wind_nodes[8]</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Frame-resolved profile. </p>
+<p>nodes; [0] is the muzzle. </p>
+
+</div>
+</div>
+<a id="a2c8f11953d413dd8167075dff1fa161b" name="a2c8f11953d413dd8167075dff1fa161b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c8f11953d413dd8167075dff1fa161b">&#9670;&#160;</a></span>wind_shear_exponent</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double LobContext::wind_shear_exponent</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Hellmann exponent alpha; scaling. </p>
+<p>is always active, 0 disables it exactly. </p>
 
 </div>
 </div>

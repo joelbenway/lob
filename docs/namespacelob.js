@@ -5,7 +5,8 @@ var namespacelob =
     [ "Coriolis", "namespacelob.html#a3984a90f665a01ad833457a78f9f5668", null ],
     [ "Gravity", "namespacelob.html#a678840e09a95b34161f4463dfe73c046", null ],
     [ "Output", "namespacelob.html#a56d6ad7c0448becc9ec3b7667d49d843", null ],
-    [ "Wind", "namespacelob.html#aea37262a50685243b79f7e17ce2f3153", null ],
+    [ "WindNode", "namespacelob.html#a0cc486d7b069a3d0ee7089b8edf121ca", null ],
+    [ "WindPoint", "namespacelob.html#ad3c777eeb6b68b2bf4dd4476bd59bf7c", null ],
     [ "AtmosphereReferenceT", "namespacelob.html#a2e7ff94aacf70d3b766e7b21975616e2", [
       [ "kArmyStandardMetro", "namespacelob.html#a2e7ff94aacf70d3b766e7b21975616e2ab3ffc631dc1fc6eacbf3290df3e5e0a7", null ],
       [ "kIcao", "namespacelob.html#a2e7ff94aacf70d3b766e7b21975616e2ada4c2f65235e8e914d278ed812f822c6", null ]
@@ -64,6 +65,9 @@ var namespacelob =
       [ "kSplineCoefsInvalid", "namespacelob.html#a7da6daf158000ec72c4f3099a205705faf094f2cb3869bc59bef67236b832b625", null ],
       [ "kTailLengthOOR", "namespacelob.html#a7da6daf158000ec72c4f3099a205705fa36001292798f032098c3f1f33afd218b", null ],
       [ "kWindHeadingOOR", "namespacelob.html#a7da6daf158000ec72c4f3099a205705fa5a8523f8de39c95f7f988fc701ee6e2a", null ],
+      [ "kWindProfileInvalid", "namespacelob.html#a7da6daf158000ec72c4f3099a205705faf0c0ac8a838b89d2ad553999a899b118", null ],
+      [ "kWindProfileNotMonotonic", "namespacelob.html#a7da6daf158000ec72c4f3099a205705fa7d92ba4a0563d263137f9be59e4b4911", null ],
+      [ "kWindProfileTooLong", "namespacelob.html#a7da6daf158000ec72c4f3099a205705fa891aedb9a85800c0f289c5e4a4b05f46", null ],
       [ "kZeroAngleOOR", "namespacelob.html#a7da6daf158000ec72c4f3099a205705facb105ae0499561b3b516f24329b7ff6f", null ],
       [ "kZeroDataRequired", "namespacelob.html#a7da6daf158000ec72c4f3099a205705fab709bbebe2fa363ead1d855e9a16d15d", null ],
       [ "kZeroDistanceOOR", "namespacelob.html#a7da6daf158000ec72c4f3099a205705fa1f7dbc19857b2e20a43a87a254e5104c", null ],
@@ -127,5 +131,6 @@ var namespacelob =
     [ "YdToFt", "namespacelob.html#a1169d0c0c0805c1e2fb41c7d5d1a4c5e", null ],
     [ "YdToM", "namespacelob.html#ab8e3ebf6eb29680475637802ab71265e", null ],
     [ "kLobBuilderBufferSize", "namespacelob.html#ae27c9902195169c9f5d06347d46ffdf5", null ],
-    [ "kLobCoeffsSize", "namespacelob.html#adc3c3c663752f07a27b84cd3462d570e", null ]
+    [ "kLobCoeffsSize", "namespacelob.html#adc3c3c663752f07a27b84cd3462d570e", null ],
+    [ "kLobWindPoints", "namespacelob.html#a09169f920ca4002ca1ea181de29e2254", null ]
 ];

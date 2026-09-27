@@ -16,6 +16,8 @@ var structlob_1_1Context =
     [ "stability_factor", "structlob_1_1Context.html#a034dcdf5cf4a619c644f4a66e1866793", null ],
     [ "step_size", "structlob_1_1Context.html#a75c03f87ef42a3f674a13ba80e0e1416", null ],
     [ "velocity", "structlob_1_1Context.html#a4c399ad13d02393a602a72c5827e1e51", null ],
-    [ "wind", "structlob_1_1Context.html#a7793550422bb33056273841aec16c1e8", null ],
+    [ "wind_count", "structlob_1_1Context.html#aed3a7f5a6361cbd5f61f9d34bf8f6ddb", null ],
+    [ "wind_nodes", "structlob_1_1Context.html#aadadd6bd0f9c283c0a653d3a14978040", null ],
+    [ "wind_shear_exponent", "structlob_1_1Context.html#a9fbf7d6a74adc7b3974173ec74816bdd", null ],
     [ "zero_angle", "structlob_1_1Context.html#a13c4a8bc06a1a1ce23cda7c9770c892e", null ]
 ];
