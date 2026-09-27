@@ -1,8 +1,7 @@
 // Copyright (c) 2026  Joel Benway
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Static-only: includes internal solver headers (never add to LOB_TEST_SOURCES).
-
-#include "solve_angle.hpp"
+// Static-only: includes internal solver headers (never add to
+// LOB_TEST_SOURCES).
 
 #include <gtest/gtest.h>
 
@@ -13,6 +12,7 @@
 #include "eng_units.hpp"
 #include "lob/lob.h"
 #include "ode.hpp"
+#include "solve_angle.hpp"
 #include "solve_step.hpp"
 #include "splines.hpp"
 
@@ -61,11 +61,11 @@ TEST(ValidationAngleConvergence, TighteningNeverRegressesResidual) {
   const LobContext kCtx = BuildC1CContext();
   ASSERT_EQ(kCtx.error, kLobErrorNone);
   const lob::FeetT kRange(900.0);
-  const lob::MoaT kDefault = lob::FastSolveAngle(
-      kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
-  const lob::MoaT kTight = lob::FastSolveAngle(
-      kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0),
-      lob::RadiansT(lob::MoaT(0.001)));
+  const lob::MoaT kDefault =
+      lob::FastSolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
+  const lob::MoaT kTight =
+      lob::FastSolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0),
+                          lob::RadiansT(lob::MoaT(0.001)));
   ASSERT_FALSE(kDefault.IsNaN());
   ASSERT_FALSE(kTight.IsNaN());
   // Tighter tolerance lands within one default-tolerance of the default

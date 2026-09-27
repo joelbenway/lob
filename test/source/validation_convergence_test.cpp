@@ -93,10 +93,12 @@ namespace {
 // rounded up to one significant figure, except deflection (worst 0.0 observed
 // 2026-09-27; epsilon guard for cross-platform noise). Source of truth
 // mirrored in test/validation/baselines/floors.json (C1-ICAO cell).
-constexpr double kCeilElevIn_18_9 = 9e-05;    // worst 4.15814e-05 @3000ft x~2
-constexpr double kCeilElevMoa_18_9 = 8e-06;   // worst 3.97148e-06 @3000ft x~2
-constexpr double kCeilDeflMoa_18_9 = 1e-12;   // worst 0.0 observed 2026-09-27; epsilon guard for cross-platform noise
-constexpr double kCeilTof_18_9 = 2e-07;       // worst 6.12488e-08 @3000ft x~2
+constexpr double kCeilElevIn_18_9 = 9e-05;   // worst 4.15814e-05 @3000ft x~2
+constexpr double kCeilElevMoa_18_9 = 8e-06;  // worst 3.97148e-06 @3000ft x~2
+constexpr double kCeilDeflMoa_18_9 =
+    1e-12;  // worst 0.0 observed 2026-09-27; epsilon guard for cross-platform
+            // noise
+constexpr double kCeilTof_18_9 = 2e-07;  // worst 6.12488e-08 @3000ft x~2
 }  // namespace
 
 TEST(ValidationConvergenceC1, StepLadderDecreasesWithoutRegression) {
@@ -129,9 +131,9 @@ TEST(ValidationConvergenceC1, StepLadderDecreasesWithoutRegression) {
     EXPECT_TRUE(DecreasesOrAtFloor(VelDiff(outs36[i], outs18[i]),
                                    VelDiff(outs18[i], outs9[i]), kVelFloorFps))
         << "range=" << kRanges[i];
-    EXPECT_TRUE(DecreasesOrAtFloor(
-        EnergyDiff(outs36[i], outs18[i]), EnergyDiff(outs18[i], outs9[i]),
-        kEnergyFloorFtLbs))
+    EXPECT_TRUE(DecreasesOrAtFloor(EnergyDiff(outs36[i], outs18[i]),
+                                   EnergyDiff(outs18[i], outs9[i]),
+                                   kEnergyFloorFtLbs))
         << "range=" << kRanges[i];
     const double kTofCoarse = TofDiff(outs36[i], outs18[i]);
     const double kTofFine = TofDiff(outs18[i], outs9[i]);
@@ -254,14 +256,10 @@ TEST(ValidationFullLadder, C1StepLadderToOneInchWritesArtifact) {
   // Monotone + observed-order plausibility (Heun theory: p ≈ 2; allow
   // [1, 3] for knot/wind-joint degradation) on the 1800-ft elevation
   // channel, finest two pairs.
-  const double kD1 =
-      ElevInDiff(ladders[1][3], ladders[2][3]);  // 18->9
-  const double kD2 =
-      ElevInDiff(ladders[2][3], ladders[3][3]);  // 9->4
-  const double kD3 =
-      ElevInDiff(ladders[3][3], ladders[4][3]);  // 4->2
-  const double kD4 =
-      ElevInDiff(ladders[4][3], ladders[5][3]);  // 2->1
+  const double kD1 = ElevInDiff(ladders[1][3], ladders[2][3]);  // 18->9
+  const double kD2 = ElevInDiff(ladders[2][3], ladders[3][3]);  // 9->4
+  const double kD3 = ElevInDiff(ladders[3][3], ladders[4][3]);  // 4->2
+  const double kD4 = ElevInDiff(ladders[4][3], ladders[5][3]);  // 2->1
   EXPECT_TRUE(DecreasesOrAtFloor(kD1, kD2, kElevFloorIn));
   EXPECT_TRUE(DecreasesOrAtFloor(kD2, kD3, kElevFloorIn));
   EXPECT_TRUE(DecreasesOrAtFloor(kD3, kD4, kElevFloorIn));
@@ -273,8 +271,9 @@ TEST(ValidationFullLadder, C1StepLadderToOneInchWritesArtifact) {
   ConvergenceArtifact artifact;
   artifact.provenance_lob_version = lob::Version();
   artifact.provenance_git_sha = LOB_GIT_SHA;
-  artifact.solver_config = "step_ladder_in=36,18,9,4,2,1,angle_tol_moa=0.01,"
-                           "density_path=fast,ranges_ft=300,900,1000,1800,3000";
+  artifact.solver_config =
+      "step_ladder_in=36,18,9,4,2,1,angle_tol_moa=0.01,"
+      "density_path=fast,ranges_ft=300,900,1000,1800,3000";
   for (size_t r = 0; r < kRungs.size(); ++r) {
     const double kDelta =
         (r == 0) ? 0.0 : ElevInDiff(ladders[r - 1][3], ladders[r][3]);
