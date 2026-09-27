@@ -97,6 +97,7 @@ set(HELPER_TEST_SOURCES
     source/solve_angle_test.cpp
     source/solve_step_test.cpp
     source/splines_test.cpp
+    source/validation_convergence_angle_test.cpp # static-only: internal solver headers
     )
 # cmake-format: on
 
