@@ -86,4 +86,57 @@ TEST(ValidationIo, JsonEscapeQuotesStrings) {
   EXPECT_EQ(JsonEscape("a\"b\\c"), "a\\\"b\\\\c");
 }
 
+namespace {
+// Measured 2026-09-27, dev preset, x86_64-linux, C1-ICAO, ranges
+// {300,900,1800,3000} ft. Ceilings = worst observed 18→9 delta × ~2 margin,
+// rounded up to one significant figure. Source of truth mirrored in
+// test/validation/baselines/floors.json (C1-ICAO cell).
+constexpr double kCeilElevIn_18_9 = 9e-05;    // worst 4.15814e-05 @3000ft x~2
+constexpr double kCeilElevMoa_18_9 = 8e-06;   // worst 3.97148e-06 @3000ft x~2
+constexpr double kCeilDeflMoa_18_9 = 0.0;     // worst 0 (calm C1, exact symmetry)
+constexpr double kCeilTof_18_9 = 2e-07;       // worst 6.12488e-08 @3000ft x~2
+}  // namespace
+
+TEST(ValidationConvergenceC1, StepLadderDecreasesWithoutRegression) {
+  const std::array<uint32_t, 4> kRanges = {300U, 900U, 1800U, 3000U};
+  std::array<lob::Output, 4> outs36{};
+  std::array<lob::Output, 4> outs18{};
+  std::array<lob::Output, 4> outs9{};
+  ASSERT_EQ(SolveN(BuildAtStep(MakeC1IcaoBuilder(), 36U), kRanges, &outs36),
+            kRanges.size());
+  ASSERT_EQ(SolveN(BuildAtStep(MakeC1IcaoBuilder(), 18U), kRanges, &outs18),
+            kRanges.size());
+  ASSERT_EQ(SolveN(BuildAtStep(MakeC1IcaoBuilder(), 9U), kRanges, &outs9),
+            kRanges.size());
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    const double kElevCoarse = ElevInDiff(outs36[i], outs18[i]);
+    const double kElevFine = ElevInDiff(outs18[i], outs9[i]);
+    EXPECT_TRUE(DecreasesOrAtFloor(kElevCoarse, kElevFine, kElevFloorIn))
+        << "range=" << kRanges[i];
+    EXPECT_LE(kElevFine, kCeilElevIn_18_9) << "range=" << kRanges[i];
+    const double kMoaCoarse = ElevMoaDiff(outs36[i], outs18[i]);
+    const double kMoaFine = ElevMoaDiff(outs18[i], outs9[i]);
+    EXPECT_TRUE(DecreasesOrAtFloor(kMoaCoarse, kMoaFine, kMoaFloor))
+        << "range=" << kRanges[i];
+    EXPECT_LE(kMoaFine, kCeilElevMoa_18_9) << "range=" << kRanges[i];
+    const double kDeflCoarse = DeflMoaDiff(outs36[i], outs18[i]);
+    const double kDeflFine = DeflMoaDiff(outs18[i], outs9[i]);
+    EXPECT_TRUE(DecreasesOrAtFloor(kDeflCoarse, kDeflFine, kMoaFloor))
+        << "range=" << kRanges[i];
+    EXPECT_LE(kDeflFine, kCeilDeflMoa_18_9) << "range=" << kRanges[i];
+    EXPECT_TRUE(DecreasesOrAtFloor(VelDiff(outs36[i], outs18[i]),
+                                   VelDiff(outs18[i], outs9[i]), kVelFloorFps))
+        << "range=" << kRanges[i];
+    EXPECT_TRUE(DecreasesOrAtFloor(
+        EnergyDiff(outs36[i], outs18[i]), EnergyDiff(outs18[i], outs9[i]),
+        kEnergyFloorFtLbs))
+        << "range=" << kRanges[i];
+    const double kTofCoarse = TofDiff(outs36[i], outs18[i]);
+    const double kTofFine = TofDiff(outs18[i], outs9[i]);
+    EXPECT_TRUE(DecreasesOrAtFloor(kTofCoarse, kTofFine, kTofFloorSec))
+        << "range=" << kRanges[i];
+    EXPECT_LE(kTofFine, kCeilTof_18_9) << "range=" << kRanges[i];
+  }
+}
+
 }  // namespace tests

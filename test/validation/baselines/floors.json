@@ -1,0 +1,31 @@
+{
+  "artifact_schema": 1,
+  "provenance": {
+    "lob_version": "0.13.0",
+    "git_sha": "5e3904234dd6",
+    "platform": "x86_64-linux",
+    "created_utc": "2026-09-27",
+    "derived_from": "ValidationConvergenceC1.StepLadderDecreasesWithoutRegression"
+  },
+  "cells": [
+    {
+      "cell": "C1-ICAO",
+      "solver_config": {"step_ladder_in": [36, 18, 9], "angle_tol_moa": 0.01, "density_path": "fast"},
+      "ranges_ft": [300, 900, 1800, 3000],
+      "floors_18_9": {
+        "elevation_in": 4.15814e-05,
+        "elevation_moa": 3.97148e-06,
+        "deflection_moa": 0.0,
+        "time_of_flight_s": 6.12488e-08,
+        "velocity_fps": "1 LSB (U16 truncation)",
+        "energy_ft_lbf": "1 LSB (U32 truncation)"
+      },
+      "ceilings_18_9": {
+        "elevation_in": 9e-05,
+        "elevation_moa": 8e-06,
+        "deflection_moa": 0.0,
+        "time_of_flight_s": 2e-07
+      }
+    }
+  ]
+}
