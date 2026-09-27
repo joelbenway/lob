@@ -171,4 +171,67 @@ TEST(ValidationConvergenceC1, InverseLadderDecreasesWithoutRegression) {
   }
 }
 
+namespace {
+inline lob::Builder MakeWindBaseBuilder() {
+  // Mirrors WindProfileBuildFixture::ConfiguredBuilder in
+  // test/source/lob_wind_profile_test.cpp — keep in sync by review.
+  lob::Builder b;
+  b.BallisticCoefficientPsi(0.372)
+      .BCDragFunction(lob::DragFunctionT::kG1)
+      .DiameterInch(0.224)
+      .MassGrains(77.0)
+      .InitialVelocityFps(2720)
+      .ZeroAngleMOA(4.78)
+      .OpticHeightInches(2.5);
+  return b;
+}
+}  // namespace
+
+TEST(ValidationConvergenceWind, UniformLadderDecreasesWithoutRegression) {
+  const std::array<uint32_t, 3> kRanges = {900U, 1800U, 2700U};
+  std::array<lob::Output, 3> outs36{};
+  std::array<lob::Output, 3> outs18{};
+  std::array<lob::Output, 3> outs9{};
+  auto build_uniform = [](uint16_t step) {
+    lob::Builder b = MakeWindBaseBuilder();
+    b.WindHeading(lob::ClockAngleT::kIII).WindSpeedMph(5.0);
+    return BuildAtStep(b, step);
+  };
+  ASSERT_EQ(SolveN(build_uniform(36U), kRanges, &outs36), kRanges.size());
+  ASSERT_EQ(SolveN(build_uniform(18U), kRanges, &outs18), kRanges.size());
+  ASSERT_EQ(SolveN(build_uniform(9U), kRanges, &outs9), kRanges.size());
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_TRUE(DecreasesOrAtFloor(DeflMoaDiff(outs36[i], outs18[i]),
+                                   DeflMoaDiff(outs18[i], outs9[i]), kMoaFloor))
+        << "range=" << kRanges[i];
+  }
+}
+
+TEST(ValidationConvergenceWind, ScaledProfileLadderDecreasesWithoutRegression) {
+  const std::array<lob::WindPoint, 2> kTwoPoint = {{
+      {0.0, 90.0, 5.0, std::numeric_limits<double>::quiet_NaN()},
+      {1500.0, 90.0, 10.0, 6.0},
+  }};
+  const std::array<uint32_t, 3> kRanges = {900U, 1800U, 2700U};
+  std::array<lob::Output, 3> outs36{};
+  std::array<lob::Output, 3> outs18{};
+  std::array<lob::Output, 3> outs9{};
+  auto build_profile = [&kTwoPoint](uint16_t step) {
+    lob::Builder b = MakeWindBaseBuilder();
+    b.WindProfile(kTwoPoint).WindShearExponent(0.25);
+    return BuildAtStep(b, step);
+  };
+  const lob::Context kProbe = build_profile(36U);
+  ASSERT_EQ(kProbe.error, lob::ErrorT::kNone);
+  ASSERT_EQ(kProbe.wind_count, 2U);
+  ASSERT_EQ(SolveN(build_profile(36U), kRanges, &outs36), kRanges.size());
+  ASSERT_EQ(SolveN(build_profile(18U), kRanges, &outs18), kRanges.size());
+  ASSERT_EQ(SolveN(build_profile(9U), kRanges, &outs9), kRanges.size());
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_TRUE(DecreasesOrAtFloor(DeflMoaDiff(outs36[i], outs18[i]),
+                                   DeflMoaDiff(outs18[i], outs9[i]), kMoaFloor))
+        << "range=" << kRanges[i];
+  }
+}
+
 }  // namespace tests
