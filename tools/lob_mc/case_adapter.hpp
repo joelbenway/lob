@@ -35,6 +35,9 @@ constexpr const char* kCorrelationIndependent = "independent";
 
 constexpr std::uint16_t kDefaultStepIn = 36U;
 constexpr const char* kDefaultDensityPath = "fast";
+constexpr const char* kDensityFast = "fast";
+constexpr const char* kDensityLapseScaledInverseTail =
+    "lapse-scaled-inverse-tail";
 
 struct WindStation {
   double range_ft = 0.0;
@@ -103,11 +106,13 @@ struct BranchFlags {
   bool build_failed = false;
   bool reached_all = false;
   std::size_t fall_short_index = 0U;
-  bool tumble_hit = false;
+  // Analytic Miller-rule flag (0<|Sg|<1), not solver-reported: the solver's
+  // own stop surfaces via reached_all/fall_short_index.
+  bool miller_unstable = false;
   bool angle_cap_hit = false;
-  // Configured solver path, recorded per sample (the SolveAngle dynamic-tail
+  // Manifest echo, not solver observation (the SolveAngle dynamic-tail
   // switch inside SolveInverse has no public per-sample signal to record).
-  std::string density_path = kDefaultDensityPath;
+  std::string configured_density_path = kDefaultDensityPath;
 };
 
 struct TrajectorySample {
@@ -132,7 +137,7 @@ struct RunPlan {
   const std::vector<Scenario>* scenarios = nullptr;
   const std::vector<std::uint32_t>* ranges = nullptr;
   std::uint16_t step_in = kDefaultStepIn;
-  const std::string* density_path = nullptr;
+  const std::string* configured_density_path = nullptr;
   std::size_t draw_width = 0U;
 };
 
@@ -779,6 +784,15 @@ inline bool ParseManifest(const nlohmann::json& root, RunManifest* out,
       return false;
     }
     out->solver.density_path = solver.at("density_path").get<std::string>();
+    // Opaque label, closed set: fail loudly on typos, never free-text.
+    if ((out->solver.density_path != kDensityFast) &&
+        (out->solver.density_path != kDensityLapseScaledInverseTail)) {
+      *error =
+          "manifest: solver_config 'density_path' must be 'fast' or "
+          "'lapse-scaled-inverse-tail', got '" +
+          out->solver.density_path + "'";
+      return false;
+    }
   }
   if (!root.contains("dimensions") || !root.at("dimensions").is_array()) {
     *error = "manifest: needs a 'dimensions' array";
@@ -948,10 +962,10 @@ inline void PadDraws(TrajectorySample* sample, std::size_t width) {
   }
 }
 
-// Branch counters from one built context: forward reach, Miller-stability
-// tumble (Sg < 1), and the SolveAngle-NaN angle cap, which surfaces publicly
-// as an inverse prefix-short (SolveInverse stops at the first uncapped
-// range, so inverse < forward is the cap branch).
+// Branch counters from one built context: forward reach, analytic
+// miller_unstable (Sg < 1, not solver-reported), and the SolveAngle-NaN angle
+// cap, which surfaces publicly as an inverse prefix-short (SolveInverse stops
+// at the first uncapped range, so inverse < forward is the cap branch).
 inline void SolveBranches(const lob::Context& ctx,
                           const std::vector<std::uint32_t>& ranges,
                           TrajectorySample* sample) {
@@ -965,10 +979,10 @@ inline void SolveBranches(const lob::Context& ctx,
       ctx, ranges.data(), sample->inverse.data(), ranges.size());
   sample->flags.reached_all = (sample->forward_count == ranges.size());
   sample->flags.fall_short_index = sample->forward_count;
-  // Miller-stability tumble: 0.0 means "not computed" (the solver's own
-  // fabs > 0 activity test), so only a computed Sg below 1.0 tumbles.
+  // Miller-stability flag: 0.0 means "not computed" (the solver's own
+  // fabs > 0 activity test), so only a computed Sg below 1.0 flags.
   const double kSg = ctx.stability_factor;
-  sample->flags.tumble_hit =
+  sample->flags.miller_unstable =
       (std::fabs(kSg) > 0.0) && (std::fabs(kSg) < kTumbleSg);
   sample->flags.angle_cap_hit = (sample->inverse_count < sample->forward_count);
 }
@@ -1046,7 +1060,7 @@ inline bool ApplyDimension(std::mt19937_64& engine, const Dimension& dim,
 inline TrajectorySample RunSample(const RunPlan& plan, std::size_t index) {
   TrajectorySample sample;
   sample.index = index;
-  sample.flags.density_path = *plan.density_path;
+  sample.flags.configured_density_path = *plan.configured_density_path;
   std::mt19937_64 engine(Subseed(plan.seed, static_cast<std::uint64_t>(index)));
   lob::Builder builder = *plan.base;
   builder.StepSize(plan.step_in);
