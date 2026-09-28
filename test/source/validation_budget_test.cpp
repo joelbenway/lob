@@ -361,4 +361,34 @@ TEST(BudgetManifest, CellAliasMapsC6ShearToFloorsCell) {
   EXPECT_TRUE(found);
 }
 
+// ---- Task 3: CI smoke (hermetic read-only, no solver, deterministic) ----
+#ifndef LOB_VALIDATION_CASES_DIR
+#define LOB_VALIDATION_CASES_DIR "test/validation/cases"
+#endif
+
+TEST(BudgetSmoke, TemplateIsIncompleteAndMathHolds) {
+  // Manifests resolve under the same LOB_VALIDATION_CASES_DIR tree.
+  const std::string kManifestsDir =
+      std::string(LOB_VALIDATION_CASES_DIR) + "/../manifests";
+  const ManifestLoad kLoad = LoadBudgetManifest(kManifestsDir);
+  ASSERT_TRUE(kLoad.ok) << kLoad.error;
+  const ManifestAssessment kA = AssessManifest(kLoad.cells);
+  EXPECT_EQ(kA.complete_cells, 0);
+
+  const std::vector<BudgetRow> kRows = {{2.0, 3.0, true, false, 0.0},
+                                        {1.0, 4.0, true, false, 0.0}};
+  const BudgetResult kR = CombineBudget(kRows);
+  ASSERT_TRUE(kR.complete);
+  EXPECT_NEAR(kR.u_c, std::sqrt(52.0), 1e-12);
+
+  std::ifstream in((kManifestsDir + "/budget_template.json").c_str());
+  ASSERT_TRUE(static_cast<bool>(in));
+  std::ostringstream raw;
+  raw << in.rdbuf();
+  const nlohmann::json kRoot = nlohmann::json::parse(raw.str());
+  const std::string kInstructions = ReqManifestString(kRoot, "instructions");
+  EXPECT_FALSE(kInstructions.empty());
+  EXPECT_NE(kInstructions.find("human"), std::string::npos);
+}
+
 }  // namespace tests
