@@ -289,12 +289,12 @@ void WriteSampleRow(std::ostream& out, const mc::TrajectorySample& sample,
         << kTof;
   }
   const std::uint64_t kReached = sample.flags.reached_all ? 1U : 0U;
-  const std::uint64_t kTumble = sample.flags.tumble_hit ? 1U : 0U;
+  const std::uint64_t kMiller = sample.flags.miller_unstable ? 1U : 0U;
   const std::uint64_t kCap = sample.flags.angle_cap_hit ? 1U : 0U;
   const std::uint64_t kFailed = sample.flags.build_failed ? 1U : 0U;
   out << ',' << kReached << ',' << sample.flags.fall_short_index << ','
-      << kTumble << ',' << kCap << ',' << kFailed << ','
-      << sample.flags.density_path << '\n';
+      << kMiller << ',' << sample.stability << ',' << kCap << ',' << kFailed
+      << ',' << sample.flags.configured_density_path << '\n';
 }
 
 // samples.csv is the determinism artifact: fixed header, full-precision
@@ -317,8 +317,11 @@ bool WriteSamplesCsv(const std::string& path,
     csv << ",elev_in_" << kRange << ",defl_in_" << kRange << ",vel_fps_"
         << kRange << ",energy_ftlbs_" << kRange << ",tof_s_" << kRange;
   }
-  csv << ",reached,fall_short_index,tumble_hit,angle_cap_hit,build_failed,"
-         "density_path\n";
+  // CSV v2: v1 columns renamed (tumble_hit -> miller_unstable, density_path
+  // -> configured_density_path) and stability added; column order otherwise
+  // fixed, no schema break beyond the rename.
+  csv << ",reached,fall_short_index,miller_unstable,stability,angle_cap_hit,"
+         "build_failed,configured_density_path\n";
   for (const mc::TrajectorySample& sample : samples) {
     WriteSampleRow(csv, sample, ranges);
   }
@@ -332,7 +335,7 @@ int PrintRunSummary(const mc::RunManifest& manifest, const std::string& cell,
                     const std::vector<mc::TrajectorySample>& samples) {
   std::uint64_t build_failed = 0U;
   std::uint64_t reached_all = 0U;
-  std::uint64_t tumble_hit = 0U;
+  std::uint64_t miller_unstable = 0U;
   std::uint64_t angle_cap_hit = 0U;
   for (const mc::TrajectorySample& sample : samples) {
     if (sample.flags.build_failed) {
@@ -341,8 +344,8 @@ int PrintRunSummary(const mc::RunManifest& manifest, const std::string& cell,
     if (sample.flags.reached_all) {
       ++reached_all;
     }
-    if (sample.flags.tumble_hit) {
-      ++tumble_hit;
+    if (sample.flags.miller_unstable) {
+      ++miller_unstable;
     }
     if (sample.flags.angle_cap_hit) {
       ++angle_cap_hit;
@@ -358,7 +361,7 @@ int PrintRunSummary(const mc::RunManifest& manifest, const std::string& cell,
   summary["synthetic_illustrative_only"] = manifest.synthetic_illustrative_only;
   summary["build_failed"] = build_failed;
   summary["reached_all"] = reached_all;
-  summary["tumble_hit"] = tumble_hit;
+  summary["miller_unstable"] = miller_unstable;
   summary["angle_cap_hit"] = angle_cap_hit;
   summary["lob_version"] = lob::Version();
   summary["git_sha"] = LOB_GIT_SHA;
@@ -424,7 +427,7 @@ int RunFromManifest(const Config& config) {
   plan.scenarios = scenarios;
   plan.ranges = &manifest.solver.ranges;
   plan.step_in = manifest.solver.step_in;
-  plan.density_path = &manifest.solver.density_path;
+  plan.configured_density_path = &manifest.solver.density_path;
   plan.draw_width = kDrawNames.size();
   const auto kNumSamples = static_cast<std::size_t>(kSamples);
   const auto kNumWorkers = static_cast<std::size_t>(kWorkers);
