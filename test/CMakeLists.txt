@@ -160,6 +160,7 @@ endif()
 target_compile_definitions(lob_test PRIVATE
   LOB_VALIDATION_DIR="${CMAKE_BINARY_DIR}/validation"
   LOB_VALIDATION_CASES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/validation/cases"
+  LOB_MANIFESTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/validation/manifests"
   LOB_GIT_SHA="${LOB_GIT_SHA}")
 
 include(GoogleTest)
