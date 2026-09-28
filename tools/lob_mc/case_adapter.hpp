@@ -33,6 +33,9 @@ constexpr const char* kFamilyProfile = "profile";
 // that doesn't exist, so any other flag fails the manifest loudly.
 constexpr const char* kCorrelationIndependent = "independent";
 
+constexpr const char* kInputShearExponent = "shear_exponent";
+constexpr const char* kInputWindProfile = "wind_profile";
+
 constexpr std::uint16_t kDefaultStepIn = 36U;
 constexpr const char* kDefaultDensityPath = "fast";
 constexpr const char* kDensityFast = "fast";
@@ -678,6 +681,28 @@ inline bool ParseScenario(const nlohmann::json& node, Scenario* out,
   return true;
 }
 
+// Profile heights draw only when the shear exponent drawn so far is
+// nonzero, so a wind_profile dimension needs a shear_exponent dimension
+// earlier in the same dimension list; otherwise the run would silently fall
+// back to baseline heights with identical seeds and CSV shape.
+inline bool CheckDimensionOrder(const std::vector<Dimension>& dimensions,
+                                std::string* error) {
+  bool seen_shear = false;
+  for (const Dimension& dim : dimensions) {
+    if (dim.input == kInputShearExponent) {
+      seen_shear = true;
+    } else if (dim.input == kInputWindProfile) {
+      if (!seen_shear) {
+        *error =
+            "manifest: wind_profile requires shear_exponent earlier in "
+            "dimensions";
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 inline bool ParseCellSet(const nlohmann::json& node, CellSet* out,
                          std::string* error) {
   if (!node.is_object()) {
@@ -694,6 +719,9 @@ inline bool ParseCellSet(const nlohmann::json& node, CellSet* out,
       return false;
     }
     out->dimensions.push_back(dim);
+  }
+  if (!CheckDimensionOrder(out->dimensions, error)) {
+    return false;
   }
   if (node.contains("scenarios")) {
     if (!node.at("scenarios").is_array()) {
@@ -804,6 +832,9 @@ inline bool ParseManifest(const nlohmann::json& root, RunManifest* out,
       return false;
     }
     out->dimensions.push_back(dim);
+  }
+  if (!CheckDimensionOrder(out->dimensions, error)) {
+    return false;
   }
   if (root.contains("scenarios")) {
     if (!root.at("scenarios").is_array()) {
