@@ -20,5 +20,5 @@
     {"name": "G1-own", "drag_function": "G1", "weight": 1.0}
   ],
   "synthetic_illustrative_only": true,
-  "synthetic_comment": "All distributions are SYNTHETIC illustrative defaults; mirrors the Phase 1 C6-scaled cell (wind-base + two-point 90-degree profile, shear 0.25) to cover the wind_profile/shear_exponent path. N=8 smoke only; shear_exponent is listed before wind_profile so per-station heights are drawn."
+  "synthetic_comment": "All distributions are SYNTHETIC illustrative defaults; real sensor u(x) await spec section 21 item 7 human-supplied values with provenance. Mirrors the Phase 1 C6-scaled cell (wind-base + two-point 90-degree profile, shear 0.25) to cover the wind_profile/shear_exponent path. N=8 smoke only; shear_exponent is listed before wind_profile so per-station heights are drawn."
 }
