@@ -77,6 +77,13 @@ CI proves the math and the fail-closed template; full assembly runs offline
 behind `LOB_FULL_BUDGET=1`. No combined uncertainty is claimed anywhere yet:
 every input uncertainty awaits human-supplied evidence.
 
+Monte Carlo propagation samples input distributions through the unchanged
+deterministic solver (`docs/specs/NUMERICAL_VALIDATION_SPEC.md` §12); the
+desktop-only runner lives in `tools/lob_mc/` (never the embedded core) with
+a fixed-seed integrity smoke in `test/source/validation_mc_smoke_test.cpp`.
+Full runs are offline, threaded, and reproducible by seed; distributions are
+synthetic until human-supplied sensor evidence arrives.
+
 @section validation-invariants Invariants
 
 - `CurveView` clamps below `0` and above `5` Mach to the edge drag
