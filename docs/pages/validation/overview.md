@@ -69,6 +69,14 @@ numerical floors; the full six-case matrix with coverage runs offline
 behind `LOB_FULL_MATRIX=1`. All cells are provisional: reference
 uncertainties are unstated and no field data exists yet.
 
+Uncertainty budgets combine sensitivities, numerical floors, and reference
+residuals per `docs/specs/NUMERICAL_VALIDATION_SPEC.md` §11; the combiner
+and manifest schema live in `test/source/validation_budget_test.cpp` with
+the elicitation template at `test/validation/manifests/budget_template.json`.
+CI proves the math and the fail-closed template; full assembly runs offline
+behind `LOB_FULL_BUDGET=1`. No combined uncertainty is claimed anywhere yet:
+every input uncertainty awaits human-supplied evidence.
+
 @section validation-invariants Invariants
 
 - `CurveView` clamps below `0` and above `5` Mach to the edge drag
