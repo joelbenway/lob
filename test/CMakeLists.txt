@@ -115,6 +115,7 @@ set(LOB_TEST_SOURCES
     source/lob_wind_test.cpp
     source/lob_wind_profile_test.cpp
     source/validation_convergence_test.cpp
+    source/validation_mc_smoke_test.cpp
     source/validation_reference_test.cpp
     source/validation_sensitivity_test.cpp
     source/validation_budget_test.cpp
