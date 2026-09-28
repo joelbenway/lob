@@ -8,8 +8,10 @@
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <limits>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -18,28 +20,31 @@
 namespace tests {
 
 struct BudgetRow {
-  double c;
-  double u;
-  bool u_known;
-  bool nonlinear;
-  double floor_value;
+  double c = 0.0;
+  double u = 0.0;
+  bool u_known = false;
+  bool nonlinear = false;
+  double floor_value = 0.0;
 };
 
 struct BudgetCovariance {
-  std::size_t i;
-  std::size_t j;
-  double cov;
+  std::size_t i = 0;
+  std::size_t j = 0;
+  double cov = 0.0;
 };
 
 struct BudgetResult {
-  bool complete;
-  double u_c;
+  bool complete = false;
+  double u_c = 0.0;
   std::string status;
 };
+
+namespace {
 
 inline BudgetResult CombineBudget(const std::vector<BudgetRow>& rows,
                                   const std::vector<BudgetCovariance>& covs =
                                       std::vector<BudgetCovariance>()) {
+  constexpr double kCovarianceWeight = 2.0;
   for (const BudgetRow& r : rows) {
     if (r.nonlinear) {
       const BudgetResult kOut = {
@@ -60,12 +65,14 @@ inline BudgetResult CombineBudget(const std::vector<BudgetRow>& rows,
     const double kTerm = r.c * r.u;
     sum += kTerm * kTerm;
   }
-  for (const BudgetCovariance& kCov : covs) {
-    sum += 2.0 * kCov.cov;
+  for (const BudgetCovariance& cov : covs) {
+    sum += kCovarianceWeight * cov.cov;
   }
   const BudgetResult kOut = {true, std::sqrt(sum), "complete"};
   return kOut;
 }
+
+}  // namespace
 
 TEST(BudgetMath, TwoRowCombinationMatchesHandComputation) {
   const std::vector<BudgetRow> kRows = {{2.0, 3.0, true, false, 0.0},
@@ -82,7 +89,7 @@ TEST(BudgetMath, SingleRowCombinationIsExact) {
   EXPECT_DOUBLE_EQ(kR.u_c, 1.0);
 }
 
-TEST(BudgetMath, UnknownU_FailsClosedWithNaN) {
+TEST(BudgetMath, UnknownUFailsClosedWithNaN) {
   const std::vector<BudgetRow> kRows = {{2.0, 3.0, true, false, 0.0},
                                         {1.0, 0.0, false, false, 0.0}};
   const BudgetResult kR = CombineBudget(kRows);
@@ -108,156 +115,163 @@ TEST(BudgetMath, CovariancePairAddsTwiceCovInsideRoot) {
 
 // ---- Task 2: manifest loader + template tests (fail-closed) ----
 
-// TBD marker: the only honest u(x) until a human supplies evidence (§11.3).
-inline const char* BudgetTbdLiteral() {
-  return "TBD \u2014 human input required";
-}
-
 struct ManifestRow {
   std::string input;
-  double c;
-  bool u_known;
+  double c = 0.0;
+  bool u_known = false;
   std::string status;
 };
 
 struct ManifestCell {
   std::string cell;
   std::string channel;
-  int range_ft;
+  int range_ft = 0;
   std::vector<ManifestRow> rows;
 };
 
 struct ManifestLoad {
-  bool ok;
+  bool ok = false;
   std::vector<ManifestCell> cells;
   std::string error;
 };
 
 struct ManifestAssessment {
-  int complete_cells;
-  int incomplete_cells;
+  int complete_cells = 0;
+  int incomplete_cells = 0;
   std::vector<std::string> missing_rows;
 };
 
+namespace {
+
+// TBD marker: the only honest u(x) until a human supplies evidence (§11.3).
+inline const char* BudgetTbdLiteral() {
+  return "TBD \u2014 human input required";
+}
+
 inline std::string ReqManifestString(const nlohmann::json& obj,
                                      const char* key) {
-  const nlohmann::json& kVal = obj.at(key);
-  if (!kVal.is_string()) {
+  const nlohmann::json& val = obj.at(key);
+  if (!val.is_string()) {
     throw std::runtime_error(std::string("manifest key not a string: ") + key);
   }
-  return kVal.get<std::string>();
+  return val.get<std::string>();
+}
+
+// Throws std::runtime_error on schema violation; the caller fails closed.
+void FillManifestRow(const nlohmann::json& row_node, ManifestRow* row) {
+  row->input = ReqManifestString(row_node, "input");
+  if (!row_node.at("sensitivity_c").is_number()) {
+    throw std::runtime_error("manifest sensitivity_c must be numeric");
+  }
+  row->c = row_node.at("sensitivity_c").get<double>();
+  (void)ReqManifestString(row_node, "sensitivity_source");
+  const nlohmann::json& u = row_node.at("u");
+  // ponytail: string-or-number branch; any non-numeric u fails closed.
+  row->u_known = u.is_number();
+  (void)ReqManifestString(row_node, "u_provenance");
+  (void)ReqManifestString(row_node, "distribution");
+  (void)ReqManifestString(row_node, "correlation");
+  if (!row_node.at("contribution").is_null()) {
+    throw std::runtime_error("manifest contribution must be null");
+  }
+  row->status = ReqManifestString(row_node, "status");
+  if (row->status != "complete" && row->status != "incomplete-missing-u" &&
+      row->status != "nonlinear-route-to-mc" &&
+      row->status != "below-floor-excluded") {
+    throw std::runtime_error("manifest row has unknown status");
+  }
+}
+
+// Throws std::runtime_error on schema violation; the caller fails closed.
+void FillManifestCell(const nlohmann::json& cell_node, ManifestCell* entry) {
+  entry->cell = ReqManifestString(cell_node, "cell");
+  entry->channel = ReqManifestString(cell_node, "channel");
+  entry->range_ft = cell_node.at("range_ft").get<int>();
+  (void)cell_node.at("epsilon_num").at("value").get<double>();
+  (void)ReqManifestString(cell_node.at("epsilon_num"), "source");
+  (void)cell_node.at("delta_ref").at("value");
+  (void)ReqManifestString(cell_node.at("delta_ref"), "source");
+  if (ReqManifestString(cell_node, "eta_ref") != "unknown") {
+    throw std::runtime_error("manifest eta_ref must be \"unknown\"");
+  }
+  const nlohmann::json& rows = cell_node.at("rows");
+  if (!rows.is_array()) {
+    throw std::runtime_error("manifest rows must be an array");
+  }
+  for (const auto& row_node : rows) {
+    ManifestRow manifest{};
+    FillManifestRow(row_node, &manifest);
+    entry->rows.push_back(manifest);
+  }
+  const nlohmann::json& excluded = cell_node.at("excluded_with_floor");
+  if (!excluded.is_array()) {
+    throw std::runtime_error("manifest excluded_with_floor must be array");
+  }
+  for (const auto& excluded_node : excluded) {
+    (void)ReqManifestString(excluded_node, "input");
+    (void)excluded_node.at("floor").get<double>();
+  }
+  const nlohmann::json& nonlinear = cell_node.at("nonlinear_route_to_mc");
+  if (!nonlinear.is_array()) {
+    throw std::runtime_error("manifest nonlinear_route_to_mc must be array");
+  }
+  for (const auto& nonlinear_node : nonlinear) {
+    (void)ReqManifestString(nonlinear_node, "input");
+    (void)ReqManifestString(nonlinear_node, "reason");
+  }
 }
 
 // Reads <dir>/budget_template.json and validates the row schema with at()
 // discipline. Never throws: schema violations return {ok=false, error}.
 inline ManifestLoad LoadBudgetManifest(const std::string& dir) {
   const std::string kPath = dir + "/budget_template.json";
-  std::ifstream in(kPath.c_str());
-  if (!in) {
-    ManifestLoad kOut;
-    kOut.ok = false;
-    kOut.error = "budget manifest file not found: " + kPath;
-    return kOut;
+  const std::ifstream kIn(kPath.c_str());
+  if (!kIn) {
+    ManifestLoad out;
+    out.ok = false;
+    out.error = "budget manifest file not found: " + kPath;
+    return out;
   }
   std::ostringstream raw;
-  raw << in.rdbuf();
+  raw << kIn.rdbuf();
   try {
     const nlohmann::json kRoot = nlohmann::json::parse(raw.str());
     (void)kRoot.at("artifact_schema").get<int>();
     if (ReqManifestString(kRoot, "instructions").empty()) {
       throw std::runtime_error("manifest instructions string is empty");
     }
-    const nlohmann::json& kCells = kRoot.at("cells");
-    if (!kCells.is_array() || kCells.empty()) {
+    const nlohmann::json& cells = kRoot.at("cells");
+    if (!cells.is_array() || cells.empty()) {
       throw std::runtime_error("manifest cells must be a non-empty array");
     }
-    ManifestLoad kOut;
-    kOut.ok = true;
-    for (std::size_t ci = 0; ci < kCells.size(); ++ci) {
-      const nlohmann::json& kCell = kCells.at(ci);
-      ManifestCell kEntry;
-      kEntry.cell = ReqManifestString(kCell, "cell");
-      kEntry.channel = ReqManifestString(kCell, "channel");
-      kEntry.range_ft = kCell.at("range_ft").get<int>();
-      (void)kCell.at("epsilon_num").at("value").get<double>();
-      (void)ReqManifestString(kCell.at("epsilon_num"), "source");
-      (void)kCell.at("delta_ref").at("value");
-      (void)ReqManifestString(kCell.at("delta_ref"), "source");
-      if (ReqManifestString(kCell, "eta_ref") != "unknown") {
-        throw std::runtime_error("manifest eta_ref must be \"unknown\"");
-      }
-      const nlohmann::json& kRows = kCell.at("rows");
-      if (!kRows.is_array()) {
-        throw std::runtime_error("manifest rows must be an array");
-      }
-      for (std::size_t ri = 0; ri < kRows.size(); ++ri) {
-        const nlohmann::json& kRow = kRows.at(ri);
-        ManifestRow kManifest;
-        kManifest.input = ReqManifestString(kRow, "input");
-        if (!kRow.at("sensitivity_c").is_number()) {
-          throw std::runtime_error("manifest sensitivity_c must be numeric");
-        }
-        kManifest.c = kRow.at("sensitivity_c").get<double>();
-        (void)ReqManifestString(kRow, "sensitivity_source");
-        const nlohmann::json& kU = kRow.at("u");
-        // ponytail: string-or-number branch; any non-numeric u fails closed.
-        kManifest.u_known = kU.is_number();
-        (void)ReqManifestString(kRow, "u_provenance");
-        (void)ReqManifestString(kRow, "distribution");
-        (void)ReqManifestString(kRow, "correlation");
-        if (!kRow.at("contribution").is_null()) {
-          throw std::runtime_error("manifest contribution must be null");
-        }
-        kManifest.status = ReqManifestString(kRow, "status");
-        if (kManifest.status != "complete" &&
-            kManifest.status != "incomplete-missing-u" &&
-            kManifest.status != "nonlinear-route-to-mc" &&
-            kManifest.status != "below-floor-excluded") {
-          throw std::runtime_error("manifest row has unknown status");
-        }
-        kEntry.rows.push_back(kManifest);
-      }
-      const nlohmann::json& kExcluded = kCell.at("excluded_with_floor");
-      if (!kExcluded.is_array()) {
-        throw std::runtime_error("manifest excluded_with_floor must be array");
-      }
-      for (std::size_t ei = 0; ei < kExcluded.size(); ++ei) {
-        (void)ReqManifestString(kExcluded.at(ei), "input");
-        (void)kExcluded.at(ei).at("floor").get<double>();
-      }
-      const nlohmann::json& kNonlinear = kCell.at("nonlinear_route_to_mc");
-      if (!kNonlinear.is_array()) {
-        throw std::runtime_error(
-            "manifest nonlinear_route_to_mc must be array");
-      }
-      for (std::size_t ni = 0; ni < kNonlinear.size(); ++ni) {
-        (void)ReqManifestString(kNonlinear.at(ni), "input");
-        (void)ReqManifestString(kNonlinear.at(ni), "reason");
-      }
-      kOut.cells.push_back(kEntry);
+    ManifestLoad out;
+    out.ok = true;
+    for (const auto& cell_node : cells) {
+      ManifestCell entry{};
+      FillManifestCell(cell_node, &entry);
+      out.cells.push_back(entry);
     }
-    return kOut;
+    return out;
   } catch (const nlohmann::json::parse_error& e) {
-    ManifestLoad kOut;
-    kOut.ok = false;
-    kOut.error = std::string("parse error in ") + kPath + ": " + e.what();
-    return kOut;
+    ManifestLoad out;
+    out.ok = false;
+    out.error = std::string("parse error in ") + kPath + ": " + e.what();
+    return out;
   } catch (const nlohmann::json::out_of_range& e) {
-    ManifestLoad kOut;
-    kOut.ok = false;
-    kOut.error =
-        std::string("schema key missing in ") + kPath + ": " + e.what();
-    return kOut;
+    ManifestLoad out;
+    out.ok = false;
+    out.error = std::string("schema key missing in ") + kPath + ": " + e.what();
+    return out;
   } catch (const nlohmann::json::type_error& e) {
-    ManifestLoad kOut;
-    kOut.ok = false;
-    kOut.error = std::string("schema type error in ") + kPath + ": " + e.what();
-    return kOut;
+    ManifestLoad out;
+    out.ok = false;
+    out.error = std::string("schema type error in ") + kPath + ": " + e.what();
+    return out;
   } catch (const std::runtime_error& e) {
-    ManifestLoad kOut;
-    kOut.ok = false;
-    kOut.error = std::string("manifest invalid: ") + e.what();
-    return kOut;
+    ManifestLoad out;
+    out.ok = false;
+    out.error = std::string("manifest invalid: ") + e.what();
+    return out;
   }
 }
 
@@ -265,32 +279,32 @@ inline ManifestLoad LoadBudgetManifest(const std::string& dir) {
 // blocks a combined number is named with its reason.
 inline ManifestAssessment AssessManifest(
     const std::vector<ManifestCell>& cells) {
-  ManifestAssessment kOut;
-  kOut.complete_cells = 0;
-  kOut.incomplete_cells = 0;
-  for (std::size_t ci = 0; ci < cells.size(); ++ci) {
-    const ManifestCell& kCell = cells[ci];
-    bool complete = !kCell.rows.empty();
-    for (std::size_t ri = 0; ri < kCell.rows.size(); ++ri) {
-      const ManifestRow& kRow = kCell.rows[ri];
+  ManifestAssessment out;
+  out.complete_cells = 0;
+  out.incomplete_cells = 0;
+  for (const auto& cell : cells) {
+    bool complete = !cell.rows.empty();
+    for (const auto& row : cell.rows) {
       const std::string kWhere =
-          kCell.cell + "/" + kCell.channel + "/" + kRow.input;
-      if (!kRow.u_known) {
+          cell.cell + "/" + cell.channel + "/" + row.input;
+      if (!row.u_known) {
         complete = false;
-        kOut.missing_rows.push_back(kWhere + ": missing-u (TBD)");
-      } else if (kRow.status != "complete") {
+        out.missing_rows.push_back(kWhere + ": missing-u (TBD)");
+      } else if (row.status != "complete") {
         complete = false;
-        kOut.missing_rows.push_back(kWhere + ": status=" + kRow.status);
+        out.missing_rows.push_back(kWhere + ": status=" + row.status);
       }
     }
     if (complete) {
-      ++kOut.complete_cells;
+      ++out.complete_cells;
     } else {
-      ++kOut.incomplete_cells;
+      ++out.incomplete_cells;
     }
   }
-  return kOut;
+  return out;
 }
+
+}  // namespace
 
 #ifndef LOB_MANIFESTS_DIR
 #define LOB_MANIFESTS_DIR "test/validation/manifests"
@@ -317,25 +331,27 @@ TEST(BudgetManifest, TemplateIsFullyIncomplete) {
   EXPECT_EQ(static_cast<int>(kA.missing_rows.size()), kExpectedIncompleteRows);
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(BudgetManifest, EveryRowUFailsClosedAsTbdLiteral) {
   const ManifestLoad kLoad = LoadBudgetManifest(LOB_MANIFESTS_DIR);
   ASSERT_TRUE(kLoad.ok) << kLoad.error;
   const std::string kTbd = BudgetTbdLiteral();
   // Grep-level tripwire on the raw document: no row may carry a numeric u.
-  std::ifstream in(std::string(LOB_MANIFESTS_DIR) + "/budget_template.json");
-  ASSERT_TRUE(static_cast<bool>(in));
+  const std::ifstream kIn(std::string(LOB_MANIFESTS_DIR) +
+                          "/budget_template.json");
+  ASSERT_TRUE(static_cast<bool>(kIn));
   std::ostringstream raw;
-  raw << in.rdbuf();
+  raw << kIn.rdbuf();
   const nlohmann::json kRoot = nlohmann::json::parse(raw.str());
   int tbd_rows = 0;
-  const nlohmann::json& kCells = kRoot.at("cells");
-  for (std::size_t ci = 0; ci < kCells.size(); ++ci) {
-    const nlohmann::json& kRows = kCells.at(ci).at("rows");
-    for (std::size_t ri = 0; ri < kRows.size(); ++ri) {
-      const nlohmann::json& kU = kRows.at(ri).at("u");
-      ASSERT_TRUE(kU.is_string())
+  const nlohmann::json& cells = kRoot.at("cells");
+  for (std::size_t ci = 0; ci < cells.size(); ++ci) {
+    const nlohmann::json& rows = cells.at(ci).at("rows");
+    for (std::size_t ri = 0; ri < rows.size(); ++ri) {
+      const nlohmann::json& u = rows.at(ri).at("u");
+      ASSERT_TRUE(u.is_string())
           << "numeric u invented at cell " << ci << " row " << ri;
-      EXPECT_EQ(kU.get<std::string>(), kTbd);
+      EXPECT_EQ(u.get<std::string>(), kTbd);
       ++tbd_rows;
     }
   }
@@ -343,19 +359,20 @@ TEST(BudgetManifest, EveryRowUFailsClosedAsTbdLiteral) {
 }
 
 TEST(BudgetManifest, CellAliasMapsC6ShearToFloorsCell) {
-  std::ifstream in(std::string(LOB_MANIFESTS_DIR) + "/budget_template.json");
-  ASSERT_TRUE(static_cast<bool>(in));
+  const std::ifstream kIn(std::string(LOB_MANIFESTS_DIR) +
+                          "/budget_template.json");
+  ASSERT_TRUE(static_cast<bool>(kIn));
   std::ostringstream raw;
-  raw << in.rdbuf();
+  raw << kIn.rdbuf();
   const nlohmann::json kRoot = nlohmann::json::parse(raw.str());
   const std::string kFloors =
       ReqManifestString(kRoot.at("cell_aliases").at("C6-shear"), "floors_cell");
   EXPECT_EQ(kFloors, "C6-scaled");
   bool found = false;
-  const nlohmann::json& kCells = kRoot.at("cells");
-  for (std::size_t ci = 0; ci < kCells.size(); ++ci) {
+  const nlohmann::json& cells = kRoot.at("cells");
+  for (const auto& cell_node : cells) {
     const std::string kSource =
-        ReqManifestString(kCells.at(ci).at("epsilon_num"), "source");
+        ReqManifestString(cell_node.at("epsilon_num"), "source");
     if (kSource.find(kFloors) != std::string::npos) {
       found = true;
       break;
@@ -384,10 +401,10 @@ TEST(BudgetSmoke, TemplateIsIncompleteAndMathHolds) {
   ASSERT_TRUE(kR.complete);
   EXPECT_NEAR(kR.u_c, std::sqrt(52.0), 1e-12);
 
-  std::ifstream in((kManifestsDir + "/budget_template.json").c_str());
-  ASSERT_TRUE(static_cast<bool>(in));
+  const std::ifstream kIn((kManifestsDir + "/budget_template.json").c_str());
+  ASSERT_TRUE(static_cast<bool>(kIn));
   std::ostringstream raw;
-  raw << in.rdbuf();
+  raw << kIn.rdbuf();
   const nlohmann::json kRoot = nlohmann::json::parse(raw.str());
   const std::string kInstructions = ReqManifestString(kRoot, "instructions");
   EXPECT_FALSE(kInstructions.empty());
@@ -402,21 +419,25 @@ TEST(BudgetSmoke, TemplateIsIncompleteAndMathHolds) {
 #error "LOB_GIT_SHA must be defined by CMake"
 #endif
 
+namespace {
+
 inline bool BudgetAssembleGated() {
-  const char* kGate = std::getenv("LOB_FULL_BUDGET");
-  return kGate != nullptr && std::string(kGate) == "1";
+  // single-threaded gtest; env gates select offline drivers
+  // NOLINTNEXTLINE(concurrency-mt-unsafe)
+  const char* gate = std::getenv("LOB_FULL_BUDGET");
+  return gate != nullptr && std::string(gate) == "1";
 }
 
 // Reads a JSON artifact file with try/catch parse; never throws.
 inline bool BudgetReadJson(const std::string& path, nlohmann::json* out,
                            std::string* error) {
-  std::ifstream in(path.c_str());
-  if (!in) {
+  const std::ifstream kIn(path.c_str());
+  if (!kIn) {
     *error = "artifact file not found: " + path;
     return false;
   }
   std::ostringstream raw;
-  raw << in.rdbuf();
+  raw << kIn.rdbuf();
   try {
     *out = nlohmann::json::parse(raw.str());
   } catch (const nlohmann::json::exception& e) {
@@ -434,6 +455,47 @@ inline std::string BudgetFloorKey(const std::string& channel) {
   return channel;
 }
 
+// raw_deriv lookup for a single driver list. False when the input is absent
+// or non-numeric — the caller FAILs loudly (template drift breaks).
+bool BudgetDriverDeriv(const nlohmann::json& drivers, const std::string& input,
+                       double* deriv) {
+  for (const auto& driver : drivers) {
+    if (driver.at("input").get<std::string>() != input) {
+      continue;
+    }
+    const nlohmann::json& raw = driver.at("raw_deriv");
+    if (!raw.is_number()) {
+      return false;
+    }
+    *deriv = raw.get<double>();
+    return true;
+  }
+  return false;
+}
+
+bool BudgetRangeDeriv(const nlohmann::json& ranges, int range_ft,
+                      const std::string& input, double* deriv) {
+  for (const auto& range : ranges) {
+    if (range.at("range_ft").get<int>() != range_ft) {
+      continue;
+    }
+    return BudgetDriverDeriv(range.at("drivers"), input, deriv);
+  }
+  return false;
+}
+
+bool BudgetChannelDeriv(const nlohmann::json& channels,
+                        const std::string& channel, int range_ft,
+                        const std::string& input, double* deriv) {
+  for (const auto& channel_node : channels) {
+    if (channel_node.at("output").get<std::string>() != channel) {
+      continue;
+    }
+    return BudgetRangeDeriv(channel_node.at("ranges"), range_ft, input, deriv);
+  }
+  return false;
+}
+
 // raw_deriv lookup for cell/channel@range/input in pareto.json. False when
 // absent or non-numeric — the caller FAILs loudly (template drift breaks).
 inline bool BudgetParetoDeriv(const nlohmann::json& pareto,
@@ -441,41 +503,16 @@ inline bool BudgetParetoDeriv(const nlohmann::json& pareto,
                               const std::string& channel, int range_ft,
                               const std::string& input, double* deriv) {
   try {
-    const nlohmann::json& kCells = pareto.at("cells");
-    if (!kCells.is_array()) {
+    const nlohmann::json& cells = pareto.at("cells");
+    if (!cells.is_array()) {
       return false;
     }
-    for (std::size_t ci = 0; ci < kCells.size(); ++ci) {
-      if (kCells.at(ci).at("cell").get<std::string>() != cell) {
+    for (const auto& cell_node : cells) {
+      if (cell_node.at("cell").get<std::string>() != cell) {
         continue;
       }
-      const nlohmann::json& kChannels = kCells.at(ci).at("channels");
-      for (std::size_t hi = 0; hi < kChannels.size(); ++hi) {
-        if (kChannels.at(hi).at("output").get<std::string>() != channel) {
-          continue;
-        }
-        const nlohmann::json& kRanges = kChannels.at(hi).at("ranges");
-        for (std::size_t ri = 0; ri < kRanges.size(); ++ri) {
-          if (kRanges.at(ri).at("range_ft").get<int>() != range_ft) {
-            continue;
-          }
-          const nlohmann::json& kDrivers = kRanges.at(ri).at("drivers");
-          for (std::size_t di = 0; di < kDrivers.size(); ++di) {
-            if (kDrivers.at(di).at("input").get<std::string>() != input) {
-              continue;
-            }
-            const nlohmann::json& kRaw = kDrivers.at(di).at("raw_deriv");
-            if (!kRaw.is_number()) {
-              return false;
-            }
-            *deriv = kRaw.get<double>();
-            return true;
-          }
-          return false;
-        }
-        return false;
-      }
-      return false;
+      return BudgetChannelDeriv(cell_node.at("channels"), channel, range_ft,
+                                input, deriv);
     }
   } catch (const nlohmann::json::exception&) {
     return false;
@@ -488,20 +525,20 @@ inline bool BudgetFloorValue(const nlohmann::json& floors,
                              const std::string& floors_cell,
                              const std::string& channel, double* value) {
   try {
-    const nlohmann::json& kCells = floors.at("cells");
-    if (!kCells.is_array()) {
+    const nlohmann::json& cells = floors.at("cells");
+    if (!cells.is_array()) {
       return false;
     }
-    for (std::size_t ci = 0; ci < kCells.size(); ++ci) {
-      if (kCells.at(ci).at("cell").get<std::string>() != floors_cell) {
+    for (const auto& cell_node : cells) {
+      if (cell_node.at("cell").get<std::string>() != floors_cell) {
         continue;
       }
-      const nlohmann::json& kF =
-          kCells.at(ci).at("floors_18_9").at(BudgetFloorKey(channel));
-      if (!kF.is_number()) {
+      const nlohmann::json& floor_value =
+          cell_node.at("floors_18_9").at(BudgetFloorKey(channel));
+      if (!floor_value.is_number()) {
         return false;
       }
-      *value = kF.get<double>();
+      *value = floor_value.get<double>();
       return true;
     }
   } catch (const nlohmann::json::exception&) {
@@ -516,18 +553,19 @@ inline bool BudgetEnvelopeWorst(const nlohmann::json& envelope,
                                 const std::string& channel, double* worst) {
   try {
     const std::string kKey = BudgetFloorKey(channel);
-    const nlohmann::json& kCells = envelope.at("cells");
-    if (!kCells.is_array() || kCells.empty()) {
+    const nlohmann::json& cells = envelope.at("cells");
+    if (!cells.is_array() || cells.empty()) {
       return false;
     }
     bool seen = false;
     double peak = 0.0;
-    for (std::size_t ci = 0; ci < kCells.size(); ++ci) {
-      const nlohmann::json& kW = kCells.at(ci).at("worst_residual").at(kKey);
-      if (!kW.is_number()) {
+    for (const auto& cell_node : cells) {
+      const nlohmann::json& worst_node =
+          cell_node.at("worst_residual").at(kKey);
+      if (!worst_node.is_number()) {
         return false;
       }
-      const double kV = kW.get<double>();
+      const double kV = worst_node.get<double>();
       if (!seen || kV > peak) {
         peak = kV;
         seen = true;
@@ -540,7 +578,12 @@ inline bool BudgetEnvelopeWorst(const nlohmann::json& envelope,
   }
 }
 
+}  // namespace
+
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(BudgetAssemble, OfflineDocuments) {
+  constexpr int kJsonPrecisionDigits = 17;
+  constexpr std::size_t kTrailingAssumptionCount = 3;
   if (!BudgetAssembleGated()) {
     GTEST_SKIP() << "offline only: set LOB_FULL_BUDGET=1";
   }
@@ -554,26 +597,26 @@ TEST(BudgetAssemble, OfflineDocuments) {
   EXPECT_EQ(kA.complete_cells, 0);
   EXPECT_EQ(kA.incomplete_cells, kExpectedManifestCells);
 
-  nlohmann::json kTemplate;
-  std::string kError;
-  ASSERT_TRUE(BudgetReadJson(kManifestsDir + "/budget_template.json",
-                             &kTemplate, &kError))
-      << kError;
-  nlohmann::json kPareto;
-  ASSERT_TRUE(BudgetReadJson(kBaselinesDir + "/pareto.json", &kPareto, &kError))
-      << kError;
-  nlohmann::json kFloors;
-  ASSERT_TRUE(BudgetReadJson(kBaselinesDir + "/floors.json", &kFloors, &kError))
-      << kError;
-  nlohmann::json kEnvelope;
+  nlohmann::json tmpl;
+  std::string error;
+  ASSERT_TRUE(
+      BudgetReadJson(kManifestsDir + "/budget_template.json", &tmpl, &error))
+      << error;
+  nlohmann::json pareto;
+  ASSERT_TRUE(BudgetReadJson(kBaselinesDir + "/pareto.json", &pareto, &error))
+      << error;
+  nlohmann::json floors;
+  ASSERT_TRUE(BudgetReadJson(kBaselinesDir + "/floors.json", &floors, &error))
+      << error;
+  nlohmann::json envelope;
   ASSERT_TRUE(
       BudgetReadJson(std::string(LOB_VALIDATION_DIR) + "/envelope_report.json",
-                     &kEnvelope, &kError))
-      << kError << " (run ReferenceMatrix.FullMatrix first: LOB_FULL_MATRIX=1)";
+                     &envelope, &error))
+      << error << " (run ReferenceMatrix.FullMatrix first: LOB_FULL_MATRIX=1)";
   // Freshness gate: a stale envelope (solver changed, matrix not re-run)
   // is consumed silently without this — fail closed, never assume fresh.
   try {
-    ASSERT_EQ(kEnvelope.at("provenance").at("git_sha").get<std::string>(),
+    ASSERT_EQ(envelope.at("provenance").at("git_sha").get<std::string>(),
               std::string(LOB_GIT_SHA))
         << "stale envelope_report.json — re-run with LOB_FULL_MATRIX=1";
   } catch (const nlohmann::json::exception& e) {
@@ -583,64 +626,63 @@ TEST(BudgetAssemble, OfflineDocuments) {
 
   int docs = 0;
   int emitted_uc = 0;
-  const nlohmann::json& kCells = kTemplate.at("cells");
-  ASSERT_EQ(kCells.size(), kLoad.cells.size());
-  for (std::size_t ci = 0; ci < kCells.size(); ++ci) {
-    const nlohmann::json& kCell = kCells.at(ci);
-    const std::string kName = ReqManifestString(kCell, "cell");
-    const std::string kChannel = ReqManifestString(kCell, "channel");
-    const int kRange = kCell.at("range_ft").get<int>();
-    ASSERT_EQ(kName, kLoad.cells[ci].cell);
-    ASSERT_EQ(kChannel, kLoad.cells[ci].channel);
+  const nlohmann::json& cells = tmpl.at("cells");
+  ASSERT_EQ(cells.size(), kLoad.cells.size());
+  for (std::size_t ci = 0; ci < cells.size(); ++ci) {
+    const nlohmann::json& cell = cells.at(ci);
+    const std::string kName = ReqManifestString(cell, "cell");
+    const std::string kChannel = ReqManifestString(cell, "channel");
+    const int kRange = cell.at("range_ft").get<int>();
+    ASSERT_EQ(kName, kLoad.cells.at(ci).cell);
+    ASSERT_EQ(kChannel, kLoad.cells.at(ci).channel);
 
     // Floors alias: C6-shear owns no floors cell; it reuses C6-scaled.
-    std::string kFloorsCell = kName;
-    if (kTemplate.at("cell_aliases").count(kName) > 0) {
-      kFloorsCell = ReqManifestString(kTemplate.at("cell_aliases").at(kName),
-                                      "floors_cell");
+    std::string floors_cell = kName;
+    if (tmpl.at("cell_aliases").count(kName) > 0) {
+      floors_cell =
+          ReqManifestString(tmpl.at("cell_aliases").at(kName), "floors_cell");
     }
 
     const double kEpsTemplate =
-        kCell.at("epsilon_num").at("value").get<double>();
-    double kEpsLive = 0.0;
-    ASSERT_TRUE(BudgetFloorValue(kFloors, kFloorsCell, kChannel, &kEpsLive))
-        << "floors.json has no " << kFloorsCell << "/" << kChannel;
-    ASSERT_DOUBLE_EQ(kEpsTemplate, kEpsLive)
+        cell.at("epsilon_num").at("value").get<double>();
+    double eps_live = 0.0;
+    ASSERT_TRUE(BudgetFloorValue(floors, floors_cell, kChannel, &eps_live))
+        << "floors.json has no " << floors_cell << "/" << kChannel;
+    ASSERT_DOUBLE_EQ(kEpsTemplate, eps_live)
         << "epsilon drift: " << kName << "/" << kChannel;
     const double kDeltaTemplate =
-        kCell.at("delta_ref").at("value").get<double>();
-    double kDeltaLive = 0.0;
-    ASSERT_TRUE(BudgetEnvelopeWorst(kEnvelope, kChannel, &kDeltaLive))
+        cell.at("delta_ref").at("value").get<double>();
+    double delta_live = 0.0;
+    ASSERT_TRUE(BudgetEnvelopeWorst(envelope, kChannel, &delta_live))
         << "envelope_report.json has no " << kChannel;
-    ASSERT_DOUBLE_EQ(kDeltaTemplate, kDeltaLive)
+    ASSERT_DOUBLE_EQ(kDeltaTemplate, delta_live)
         << "delta drift: " << kName << "/" << kChannel;
 
     // Sensitivity cross-check: every template c must equal the live
     // pareto.json raw_deriv. Mismatch FAILs loudly — drift breaks.
-    const nlohmann::json& kRows = kCell.at("rows");
-    std::vector<BudgetRow> kBudgetRows;
-    for (std::size_t ri = 0; ri < kRows.size(); ++ri) {
-      const nlohmann::json& kRow = kRows.at(ri);
-      const std::string kInput = ReqManifestString(kRow, "input");
-      ASSERT_TRUE(kRow.at("sensitivity_c").is_number())
+    const nlohmann::json& rows = cell.at("rows");
+    std::vector<BudgetRow> budget_rows;
+    for (const auto& row_node : rows) {
+      const std::string kInput = ReqManifestString(row_node, "input");
+      ASSERT_TRUE(row_node.at("sensitivity_c").is_number())
           << "non-numeric sensitivity_c: " << kName << "/" << kChannel << "/"
           << kInput;
-      const double kC = kRow.at("sensitivity_c").get<double>();
-      double kLive = 0.0;
+      const double kC = row_node.at("sensitivity_c").get<double>();
+      double live = 0.0;
       ASSERT_TRUE(
-          BudgetParetoDeriv(kPareto, kName, kChannel, kRange, kInput, &kLive))
+          BudgetParetoDeriv(pareto, kName, kChannel, kRange, kInput, &live))
           << "pareto.json has no driver " << kName << "/" << kChannel << "@"
           << kRange << "/" << kInput;
-      ASSERT_DOUBLE_EQ(kC, kLive)
+      ASSERT_DOUBLE_EQ(kC, live)
           << "template drift: " << kName << "/" << kChannel << "/" << kInput;
-      BudgetRow kB;
-      kB.c = kC;
-      kB.u = 0.0;
-      kB.u_known = kRow.at("u").is_number();
-      kB.nonlinear =
-          ReqManifestString(kRow, "status") == "nonlinear-route-to-mc";
-      kB.floor_value = 0.0;
-      kBudgetRows.push_back(kB);
+      BudgetRow b{};
+      b.c = kC;
+      b.u = 0.0;
+      b.u_known = row_node.at("u").is_number();
+      b.nonlinear =
+          ReqManifestString(row_node, "status") == "nonlinear-route-to-mc";
+      b.floor_value = 0.0;
+      budget_rows.push_back(b);
     }
 
     // (a) BudgetCovariance i,j are unchecked indices by design; this
@@ -648,110 +690,118 @@ TEST(BudgetAssemble, OfflineDocuments) {
     // in Phase 4 — every row is assumed-independent), so there is no i,j
     // indexing to bounds-check. CombineBudget runs on the empty cov list.
     // Empty row vectors would combine to u_c=0 — fail closed instead.
-    BudgetResult kRes;
-    if (kBudgetRows.empty()) {
-      kRes.complete = false;
-      kRes.u_c = std::numeric_limits<double>::quiet_NaN();
-      kRes.status = "incomplete-no-genuine-drivers";
+    BudgetResult res;
+    if (budget_rows.empty()) {
+      res.complete = false;
+      res.u_c = std::numeric_limits<double>::quiet_NaN();
+      res.status = "incomplete-no-genuine-drivers";
     } else {
-      kRes = CombineBudget(kBudgetRows);
+      res = CombineBudget(budget_rows);
     }
 
     // (b) Zero-row cells (C6 elev/tof) name themselves here so the offline
     // deliverable names every blocked cell, not just blocked rows.
-    std::vector<std::string> kMissing;
-    if (kBudgetRows.empty()) {
-      kMissing.push_back(kName + "/" + kChannel + ": no-genuine-drivers");
+    std::vector<std::string> missing;
+    if (budget_rows.empty()) {
+      std::ostringstream where;
+      where << kName << "/" << kChannel << ": no-genuine-drivers";
+      missing.push_back(where.str());
     } else {
-      for (std::size_t ri = 0; ri < kRows.size(); ++ri) {
-        const std::string kWhere = kName + "/" + kChannel + "/" +
-                                   ReqManifestString(kRows.at(ri), "input");
-        if (!kBudgetRows[ri].u_known) {
-          kMissing.push_back(kWhere + ": missing-u (TBD)");
-        } else if (ReqManifestString(kRows.at(ri), "status") != "complete") {
-          kMissing.push_back(
-              kWhere + ": status=" + ReqManifestString(kRows.at(ri), "status"));
+      for (std::size_t ri = 0; ri < rows.size(); ++ri) {
+        std::ostringstream where;
+        where << kName << "/" << kChannel << "/"
+              << ReqManifestString(rows.at(ri), "input");
+        const std::string kWhere = where.str();
+        if (!budget_rows.at(ri).u_known) {
+          missing.push_back(kWhere + ": missing-u (TBD)");
+        } else if (ReqManifestString(rows.at(ri), "status") != "complete") {
+          missing.push_back(
+              kWhere + ": status=" + ReqManifestString(rows.at(ri), "status"));
         }
       }
     }
-    ASSERT_FALSE(kMissing.empty())
+    ASSERT_FALSE(missing.empty())
         << "manifest completed without human review — see §21 item 7: " << kName
         << "/" << kChannel;
 
-    std::vector<std::string> kAssumptions;
-    for (std::size_t ri = 0; ri < kRows.size(); ++ri) {
-      kAssumptions.push_back(
-          ReqManifestString(kRows.at(ri), "input") +
-          ": correlation=" + ReqManifestString(kRows.at(ri), "correlation") +
-          "; distribution=" + ReqManifestString(kRows.at(ri), "distribution") +
+    std::vector<std::string> assumptions;
+    assumptions.reserve(rows.size() + kTrailingAssumptionCount);
+    for (const auto& row_node : rows) {
+      assumptions.push_back(
+          ReqManifestString(row_node, "input") +
+          ": correlation=" + ReqManifestString(row_node, "correlation") +
+          "; distribution=" + ReqManifestString(row_node, "distribution") +
           " (template default per §12.1, human must confirm); u unknown");
     }
     {
       std::ostringstream os;
-      os << "epsilon_num reused from floors.json " << kFloorsCell
+      os << "epsilon_num reused from floors.json " << floors_cell
          << " floors_18_9 " << BudgetFloorKey(kChannel) << "="
-         << std::setprecision(17) << kEpsLive;
-      kAssumptions.push_back(os.str());
+         << std::setprecision(kJsonPrecisionDigits) << eps_live;
+      assumptions.push_back(os.str());
     }
     {
       std::ostringstream os;
       os << "delta_ref reused from envelope_report.json worst_residual "
-         << BudgetFloorKey(kChannel) << "=" << std::setprecision(17)
-         << kDeltaLive << " (max across FullMatrix cells)";
-      kAssumptions.push_back(os.str());
+         << BudgetFloorKey(kChannel) << "="
+         << std::setprecision(kJsonPrecisionDigits) << delta_live
+         << " (max across FullMatrix cells)";
+      assumptions.push_back(os.str());
     }
-    kAssumptions.push_back("eta_ref unknown: no eta evidence in Phase 4");
+    assumptions.emplace_back("eta_ref unknown: no eta evidence in Phase 4");
 
-    nlohmann::json kDoc;
-    kDoc["provenance"] = {{"git_sha", LOB_GIT_SHA},
-                          {"generator", "BudgetAssemble.OfflineDocuments"},
-                          {"gate", "LOB_FULL_BUDGET=1"},
-                          {"cell", kName},
-                          {"channel", kChannel},
-                          {"range_ft", kRange}};
-    kDoc["cell"] = kName;
-    kDoc["channel"] = kChannel;
-    kDoc["range_ft"] = kRange;
-    kDoc["rows"] = nlohmann::json::array();
-    for (std::size_t ri = 0; ri < kRows.size(); ++ri) {
-      nlohmann::json kEntry;
-      kEntry["input"] = ReqManifestString(kRows.at(ri), "input");
-      kEntry["sensitivity_c"] = kRows.at(ri).at("sensitivity_c");
-      kEntry["sensitivity_source"] =
-          ReqManifestString(kRows.at(ri), "sensitivity_source");
-      kEntry["u"] = nullptr;
-      kEntry["u_provenance"] = ReqManifestString(kRows.at(ri), "u_provenance");
-      kEntry["distribution"] = ReqManifestString(kRows.at(ri), "distribution");
-      kEntry["correlation"] = ReqManifestString(kRows.at(ri), "correlation");
-      kEntry["contribution"] = nullptr;
-      kEntry["status"] = ReqManifestString(kRows.at(ri), "status");
-      kDoc["rows"].push_back(kEntry);
+    nlohmann::json doc;
+    doc["provenance"] = {{"git_sha", LOB_GIT_SHA},
+                         {"generator", "BudgetAssemble.OfflineDocuments"},
+                         {"gate", "LOB_FULL_BUDGET=1"},
+                         {"cell", kName},
+                         {"channel", kChannel},
+                         {"range_ft", kRange}};
+    doc["cell"] = kName;
+    doc["channel"] = kChannel;
+    doc["range_ft"] = kRange;
+    doc["rows"] = nlohmann::json::array();
+    for (const auto& row_node : rows) {
+      nlohmann::json entry;
+      entry["input"] = ReqManifestString(row_node, "input");
+      entry["sensitivity_c"] = row_node.at("sensitivity_c");
+      entry["sensitivity_source"] =
+          ReqManifestString(row_node, "sensitivity_source");
+      entry["u"] = nullptr;
+      entry["u_provenance"] = ReqManifestString(row_node, "u_provenance");
+      entry["distribution"] = ReqManifestString(row_node, "distribution");
+      entry["correlation"] = ReqManifestString(row_node, "correlation");
+      entry["contribution"] = nullptr;
+      entry["status"] = ReqManifestString(row_node, "status");
+      doc["rows"].push_back(entry);
     }
-    kDoc["excluded_with_floor"] = kCell.at("excluded_with_floor");
-    kDoc["nonlinear_route_to_mc"] = kCell.at("nonlinear_route_to_mc");
-    kDoc["epsilon_num"] = kCell.at("epsilon_num");
-    kDoc["delta_ref"] = kCell.at("delta_ref");
-    kDoc["eta_ref"] = "unknown";
-    kDoc["missing_u"] = kMissing;
-    kDoc["assumptions"] = kAssumptions;
-    kDoc["verdict"] = kRes.status;
-    if (kRes.complete) {
-      kDoc["u_c_or_absent"] = kRes.u_c;
+    doc["excluded_with_floor"] = cell.at("excluded_with_floor");
+    doc["nonlinear_route_to_mc"] = cell.at("nonlinear_route_to_mc");
+    doc["epsilon_num"] = cell.at("epsilon_num");
+    doc["delta_ref"] = cell.at("delta_ref");
+    doc["eta_ref"] = "unknown";
+    doc["missing_u"] = missing;
+    doc["assumptions"] = assumptions;
+    doc["verdict"] = res.status;
+    if (res.complete) {
+      doc["u_c_or_absent"] = res.u_c;
       ++emitted_uc;
     } else {
-      kDoc["u_c_or_absent"] = nullptr;
+      doc["u_c_or_absent"] = nullptr;
     }
 
-    const std::string kPath = std::string(LOB_VALIDATION_DIR) + "/budget_" +
-                              kName + "_" + kChannel + ".json";
-    std::ofstream kOut(kPath.c_str());
-    ASSERT_TRUE(kOut.good()) << "cannot open " << kPath;
-    kOut << kDoc.dump(2) << "\n";
-    kOut.close();
+    std::ostringstream path;
+    path << LOB_VALIDATION_DIR << "/budget_" << kName << "_" << kChannel
+         << ".json";
+    const std::string kPath = path.str();
+    std::ofstream out(kPath.c_str());
+    ASSERT_TRUE(out.good()) << "cannot open " << kPath;
+    out << doc.dump(2) << "\n";
+    out.close();
     ++docs;
-    std::printf("BUDGET %s %s rows=%u missing=%u verdict=%s\n", kName.c_str(),
-                kChannel.c_str(), static_cast<unsigned>(kRows.size()),
-                static_cast<unsigned>(kMissing.size()), kRes.status.c_str());
+    std::cout << "BUDGET " << kName << " " << kChannel
+              << " rows=" << rows.size() << " missing=" << missing.size()
+              << " verdict=" << res.status << "\n";
   }
   EXPECT_EQ(docs, kExpectedManifestCells);
   ASSERT_EQ(emitted_uc, 0);
