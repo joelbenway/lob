@@ -12,6 +12,9 @@
 #include <limits>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <algorithm>
+#include <chrono>
+#include <cmath>
 #include <random>
 #include <string>
 #include <thread>
@@ -37,7 +40,21 @@ constexpr const char* kSamplesOpt = "--samples=";
 constexpr const char* kWorkersOpt = "--workers=";
 constexpr const char* kOutDirOpt = "--out-dir=";
 constexpr const char* kCellOpt = "--cell=";
+constexpr const char* kAutoScaleFlag = "--auto-scale";
+constexpr const char* kZOpt = "--z=";
+constexpr const char* kERelOpt = "--e-rel=";
 constexpr const char* kDefaultOutDir = "build/validation";
+// Pilot-then-scale sizing (plan Task 4): pilot N=1024 estimates sigma per
+// primary output; N_mean >= (z*sigma/E)^2 with z=2 (~95%) and E=0.1*sigma
+// (E_target) defaults, i.e. N~=400 minimum for means; P5/P95 percentiles
+// need N>=10^4 for stability. Wall cap 30 min single-threaded, then cap at
+// N=10^4 with the cap recorded (widths widen honestly, never silently).
+constexpr double kDefaultZ = 2.0;
+constexpr double kDefaultERel = 0.1;
+constexpr std::uint64_t kPilotSamples = 1024U;
+constexpr std::uint64_t kPercentileStableSamples = 10000U;
+constexpr double kWallCapSeconds = 1800.0;
+constexpr double kMicrosPerSecond = 1000000.0;
 
 constexpr std::uint64_t kSelfcheckSeed = 0x9E3779B9ULL;
 constexpr std::size_t kSelfcheckSamples = 1024U;
@@ -61,12 +78,17 @@ struct Config {
   bool has_workers = false;
   bool has_out_dir = false;
   bool has_cell = false;
+  bool auto_scale = false;
+  bool has_z = false;
+  bool has_e_rel = false;
   std::string manifest_path;
   std::string out_dir = kDefaultOutDir;
   std::string cell;
   std::uint64_t seed = 0U;
   std::uint64_t samples = 0U;
   std::uint64_t workers = 0U;
+  double z = kDefaultZ;
+  double e_rel = kDefaultERel;
 };
 
 bool ParseUint64(const std::string& text, std::uint64_t* out) {
@@ -87,6 +109,32 @@ void ParseUintOption(const std::string& arg, const char* opt,
                      std::uint64_t* value, bool* has, Config* config) {
   const std::string kText = arg.substr(std::strlen(opt));
   if (!ParseUint64(kText, value)) {
+    std::cerr << "lob_mc: bad " << opt << " value " << kText << '\n';
+    config->parse_error = true;
+    return;
+  }
+  *has = true;
+}
+
+bool ParseDouble(const std::string& text, double* out) {
+  if ((out == nullptr) || text.empty()) {
+    return false;
+  }
+  errno = 0;
+  char* end = nullptr;
+  const double kValue = std::strtod(text.c_str(), &end);
+  if ((end == nullptr) || (*end != '\0') || (errno == ERANGE) ||
+      !std::isfinite(kValue) || !(kValue > 0.0)) {
+    return false;
+  }
+  *out = kValue;
+  return true;
+}
+
+void ParseDoubleOption(const std::string& arg, const char* opt, double* value,
+                       bool* has, Config* config) {
+  const std::string kText = arg.substr(std::strlen(opt));
+  if (!ParseDouble(kText, value)) {
     std::cerr << "lob_mc: bad " << opt << " value " << kText << '\n';
     config->parse_error = true;
     return;
@@ -119,6 +167,13 @@ Config ParseArgs(int argc, char** argv) {
     } else if (kArg.compare(0, std::strlen(kCellOpt), kCellOpt) == 0) {
       config.has_cell = true;
       config.cell = kArg.substr(std::strlen(kCellOpt));
+    } else if (kArg == kAutoScaleFlag) {
+      config.auto_scale = true;
+    } else if (kArg.compare(0, std::strlen(kZOpt), kZOpt) == 0) {
+      ParseDoubleOption(kArg, kZOpt, &config.z, &config.has_z, &config);
+    } else if (kArg.compare(0, std::strlen(kERelOpt), kERelOpt) == 0) {
+      ParseDoubleOption(kArg, kERelOpt, &config.e_rel, &config.has_e_rel,
+                        &config);
     } else {
       std::cerr << "lob_mc: unknown option " << kArg << '\n';
       config.parse_error = true;
@@ -130,17 +185,24 @@ Config ParseArgs(int argc, char** argv) {
 void PrintUsage(std::ostream& out) {
   out << "Usage: lob_mc --manifest=FILE [--seed=N] [--samples=N] "
          "[--workers=N] [--out-dir=DIR] [--cell=CELL]\n"
-      << "       lob_mc --selfcheck\n"
-      << "       lob_mc --help\n"
-      << "Monte Carlo runner: samples the manifest dimensions through the\n"
-      << "unchanged deterministic solver (one Build + Solve + SolveInverse\n"
-      << "per sample) and writes samples.csv with per-sample branch flags\n"
-      << "plus mc_run_{id}.json with convergence-checked summaries.\n"
-      << "--cell selects a dimension set from the manifest (default: the\n"
-      << "manifest cell). Results assemble by sample index, so 1-vs-N\n"
-      << "workers are byte-identical. Exit codes: 0 ok, 2 usage or bad\n"
-      << "manifest, 3 every sample failed to build.\n"
-      << "lob " << lob::Version() << " " << LOB_GIT_SHA << '\n';
+       << "               [--auto-scale [--z=Z] [--e-rel=E]]\n"
+       << "       lob_mc --selfcheck\n"
+       << "       lob_mc --help\n"
+       << "Monte Carlo runner: samples the manifest dimensions through the\n"
+       << "unchanged deterministic solver (one Build + Solve + SolveInverse\n"
+       << "per sample) and writes samples.csv with per-sample branch flags\n"
+       << "plus mc_run_{id}.json with convergence-checked summaries.\n"
+       << "--cell selects a dimension set from the manifest (default: the\n"
+       << "manifest cell). Results assemble by sample index, so 1-vs-N\n"
+       << "workers are byte-identical. Every run prints the recommended N\n"
+       << "per primary output (N >= (z*sd/E)^2, E = e_rel*sd, floor 10^4\n"
+       << "for P5/P95 stability) and reports cost_single (us/solve, timed\n"
+       << "around the solve loop) plus wall seconds. --auto-scale runs a\n"
+       << "1024-sample pilot first (or --samples=N as the pilot size), then\n"
+       << "runs the recommended N; a 30-min single-threaded estimate caps\n"
+       << "N at 10^4 with the cap recorded. Exit codes: 0 ok, 2 usage or\n"
+       << "bad manifest, 3 every sample failed to build.\n"
+       << "lob " << lob::Version() << " " << LOB_GIT_SHA << '\n';
 }
 
 // Draws the owned stream range into out by sample index. Sample i always
@@ -268,31 +330,144 @@ std::vector<mc::TrajectorySample> RunAllSamples(const mc::RunPlan& plan,
   return samples;
 }
 
+struct TimedRun {
+  std::vector<mc::TrajectorySample> samples;
+  double wall_s = 0.0;
+  double cost_single_us = 0.0;
+};
+
+// steady_clock around the solve loop only: cost_single is wall/N per sample
+// (Build + Solve + SolveInverse through the public API), reported per run.
+TimedRun RunTimed(const mc::RunPlan& plan, std::size_t num_samples,
+                  std::size_t num_workers) {
+  TimedRun run;
+  const auto kStart = std::chrono::steady_clock::now();
+  run.samples = RunAllSamples(plan, num_samples, num_workers);
+  const auto kEnd = std::chrono::steady_clock::now();
+  run.wall_s =
+      std::chrono::duration<double>(kEnd - kStart).count();
+  if (num_samples > 0U) {
+    run.cost_single_us = (run.wall_s * kMicrosPerSecond) /
+                         static_cast<double>(num_samples);
+  }
+  return run;
+}
+
+// Per-output sizing from a pilot: N_mean = ceil((z*sd/E)^2) with E=e_rel*sd
+// (sd cancels, so this is ceil((z/e_rel)^2) whenever sd is positive-finite;
+// NaN/zero sd leaves n_mean null and the percentile floor still applies),
+// then N_rec = max(N_mean, 10^4) for P5/P95 stability. Recommended N is the
+// max over primary outputs (pooled elev/defl per range).
+nlohmann::json SizingJson(const std::vector<mc::TrajectorySample>& samples,
+                          const std::vector<std::uint32_t>& ranges, double z,
+                          double e_rel, std::uint64_t* recommended) {
+  const double kRatio = z / e_rel;
+  const auto kNeedMean =
+      static_cast<std::uint64_t>(std::ceil(kRatio * kRatio));
+  nlohmann::json per = nlohmann::json::object();
+  std::uint64_t best = 0U;
+  for (std::size_t pos = 0U; pos < ranges.size(); ++pos) {
+    for (int channel = 0; channel < 2; ++channel) {
+      const bool kElev = (channel == 0);
+      const std::string kName =
+          kElev ? mc::ElevKey(ranges.at(pos)) : mc::DeflKey(ranges.at(pos));
+      const std::vector<double> kValues =
+          mc::ChannelValues(samples, pos, kElev);
+      double mean = 0.0;
+      double sd = 0.0;
+      mc::WelfordMeanSd(kValues, &mean, &sd);
+      nlohmann::json node = nlohmann::json::object();
+      node["sd"] = mc::FiniteOrNull(sd);
+      std::uint64_t need = kPercentileStableSamples;
+      if (std::isfinite(sd) && (sd > 0.0)) {
+        node["n_mean"] = kNeedMean;
+        need = std::max(need, kNeedMean);
+      }
+      node["n_rec"] = need;
+      per[kName] = node;
+      best = std::max(best, need);
+    }
+  }
+  if (best == 0U) {
+    best = kPercentileStableSamples;
+  }
+  *recommended = best;
+  nlohmann::json sizing = nlohmann::json::object();
+  sizing["z"] = z;
+  sizing["e_rel"] = e_rel;
+  sizing["per_output"] = per;
+  sizing["recommended_n"] = best;
+  return sizing;
+}
+
+// 30-min single-threaded wall estimate caps N at 10^4 with the cap recorded.
+std::uint64_t ApplyWallCap(std::uint64_t recommended, double cost_single_us,
+                           bool* capped, std::string* reason) {
+  const double kEstimateS =
+      (cost_single_us * static_cast<double>(recommended)) / 1000000.0;
+  if (kEstimateS <= kWallCapSeconds) {
+    *capped = false;
+    return recommended;
+  }
+  *capped = true;
+  *reason =
+      "single-threaded estimate exceeds 30 min; capped at N=10^4 (percentile "
+      "widths widen honestly)";
+  return (recommended > kPercentileStableSamples) ? kPercentileStableSamples
+                                                  : recommended;
+}
+
 int PrintRunSummary(const mc::RunManifest& manifest, const std::string& cell,
                     std::uint64_t seed, std::uint64_t total_samples,
                     std::uint64_t workers, const std::string& out_dir,
                     const std::string& csv_path,
                     const std::vector<std::string>& draw_names,
                     const std::vector<std::uint32_t>& ranges,
-                    const std::vector<mc::TrajectorySample>& samples) {
-  const nlohmann::json kSummary = mc::BuildRunJson(
+                    const TimedRun& run, double z, double e_rel,
+                    std::uint64_t pilot_n, bool capped,
+                    const std::string& cap_reason, bool auto_scaled) {
+  nlohmann::json summary = mc::BuildRunJson(
       manifest, cell, seed, total_samples, workers, csv_path, lob::Version(),
-      LOB_GIT_SHA, LOB_COMPILER, LOB_PLATFORM, draw_names, ranges, samples);
+      LOB_GIT_SHA, LOB_COMPILER, LOB_PLATFORM, draw_names, ranges,
+      run.samples);
+  summary["cost_single_us"] = run.cost_single_us;
+  summary["wall_s"] = run.wall_s;
+  std::uint64_t recommended = 0U;
+  nlohmann::json sizing = SizingJson(run.samples, ranges, z, e_rel,
+                                     &recommended);
+  sizing["pilot_n"] = pilot_n;
+  sizing["run_n"] = total_samples;
+  sizing["capped"] = capped;
+  if (capped) {
+    sizing["cap_reason"] = cap_reason;
+  }
+  if (!auto_scaled && (total_samples < recommended)) {
+    sizing["below_recommended"] = true;
+  }
+  summary["sizing"] = sizing;
   std::string json_path = out_dir;
   if (!json_path.empty() && (json_path.back() != '/')) {
     json_path += '/';
   }
   json_path += "mc_run_" + manifest.run_id + ".json";
-  if (!mc::WriteJsonFile(json_path, kSummary)) {
+  if (!mc::WriteJsonFile(json_path, summary)) {
     std::cerr << "lob_mc: cannot write " << json_path << '\n';
     return kExitUsage;
   }
-  std::cout << kSummary.dump(kJsonIndent) << '\n';
+  std::cout << summary.dump(kJsonIndent) << '\n';
+  std::cout << "autoscale: recommended N=" << recommended << " (z=" << z
+            << " e_rel=" << e_rel << ") run N=" << total_samples
+            << " cost_single_us=" << run.cost_single_us << " wall_s="
+            << run.wall_s;
+  if (capped) {
+    std::cout << " CAPPED";
+  }
+  std::cout << '\n';
   if (total_samples >= mc::kGzipSuggestSamples) {
     std::cerr << "lob_mc: N >= 10^4; consider: gzip -k " << csv_path << '\n';
   }
   std::uint64_t build_failed = 0U;
-  for (const mc::TrajectorySample& sample : samples) {
+  for (const mc::TrajectorySample& sample : run.samples) {
     if (sample.flags.build_failed) {
       ++build_failed;
     }
@@ -360,23 +535,47 @@ int RunFromManifest(const Config& config) {
   plan.step_in = manifest.solver.step_in;
   plan.configured_density_path = &manifest.solver.density_path;
   plan.draw_width = kDrawNames.size();
-  const auto kNumSamples = static_cast<std::size_t>(kSamples);
   const auto kNumWorkers = static_cast<std::size_t>(kWorkers);
-  const std::vector<mc::TrajectorySample> kSamplesOut =
-      RunAllSamples(plan, kNumSamples, kNumWorkers);
+  std::uint64_t pilot_n = kSamples;
+  if (config.auto_scale && !config.has_samples) {
+    pilot_n = kPilotSamples;
+  }
+  const auto kNumPilot = static_cast<std::size_t>(pilot_n);
+  TimedRun pilot = RunTimed(plan, kNumPilot, kNumWorkers);
+  std::uint64_t recommended = 0U;
+  SizingJson(pilot.samples, manifest.solver.ranges, config.z, config.e_rel,
+             &recommended);
+  bool capped = false;
+  std::string cap_reason;
+  const std::uint64_t kFullN =
+      ApplyWallCap(recommended, pilot.cost_single_us, &capped, &cap_reason);
+  std::uint64_t run_n = kSamples;
+  TimedRun* run = &pilot;
+  TimedRun full;
+  std::uint64_t pilot_record = 0U;
+  if (config.auto_scale) {
+    std::cout << "autoscale: pilot N=" << pilot_n
+              << " cost_single_us=" << pilot.cost_single_us << " wall_s="
+              << pilot.wall_s << " recommended N=" << recommended << '\n';
+    run_n = kFullN;
+    pilot_record = pilot_n;
+    full = RunTimed(plan, static_cast<std::size_t>(kFullN), kNumWorkers);
+    run = &full;
+  }
   std::string csv_path = out_dir;
   if (!csv_path.empty() && (csv_path.back() != '/')) {
     csv_path += '/';
   }
   csv_path += "samples.csv";
   if (!mc::WriteSamplesCsv(csv_path, kDrawNames, manifest.solver.ranges,
-                           kSamplesOut)) {
+                           run->samples)) {
     std::cerr << "lob_mc: cannot write " << csv_path << '\n';
     return kExitUsage;
   }
-  return PrintRunSummary(manifest, kCell, kSeed, kSamples, kWorkers, out_dir,
-                         csv_path, kDrawNames, manifest.solver.ranges,
-                         kSamplesOut);
+  return PrintRunSummary(manifest, kCell, kSeed, run_n, kWorkers, out_dir,
+                         csv_path, kDrawNames, manifest.solver.ranges, *run,
+                         config.z, config.e_rel, pilot_record, capped,
+                         cap_reason, config.auto_scale);
 }
 
 }  // namespace
@@ -393,7 +592,8 @@ int main(int argc, char** argv) {
   }
   if (kConfig.selfcheck) {
     if (kConfig.has_manifest || kConfig.has_seed || kConfig.has_samples ||
-        kConfig.has_workers || kConfig.has_out_dir || kConfig.has_cell) {
+        kConfig.has_workers || kConfig.has_out_dir || kConfig.has_cell ||
+        kConfig.auto_scale || kConfig.has_z || kConfig.has_e_rel) {
       std::cerr << "lob_mc: --selfcheck takes no other options\n";
       return kExitUsage;
     }
