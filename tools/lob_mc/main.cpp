@@ -8,7 +8,6 @@
 #include <cstring>
 #include <exception>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <nlohmann/json.hpp>
@@ -21,6 +20,7 @@
 #include "case_adapter.hpp"
 #include "lob/lob.hpp"
 #include "sampler.hpp"
+#include "summary.hpp"
 
 namespace {
 
@@ -134,7 +134,8 @@ void PrintUsage(std::ostream& out) {
       << "       lob_mc --help\n"
       << "Monte Carlo runner: samples the manifest dimensions through the\n"
       << "unchanged deterministic solver (one Build + Solve + SolveInverse\n"
-      << "per sample) and writes samples.csv with per-sample branch flags.\n"
+      << "per sample) and writes samples.csv with per-sample branch flags\n"
+      << "plus mc_run_{id}.json with convergence-checked summaries.\n"
       << "--cell selects a dimension set from the manifest (default: the\n"
       << "manifest cell). Results assemble by sample index, so 1-vs-N\n"
       << "workers are byte-identical. Exit codes: 0 ok, 2 usage or bad\n"
@@ -267,105 +268,35 @@ std::vector<mc::TrajectorySample> RunAllSamples(const mc::RunPlan& plan,
   return samples;
 }
 
-void WriteSampleRow(std::ostream& out, const mc::TrajectorySample& sample,
-                    const std::vector<std::uint32_t>& ranges) {
-  const double kMissing = std::numeric_limits<double>::quiet_NaN();
-  constexpr std::uint32_t kMissingInt = 0U;
-  out << sample.index;
-  for (const double kDraw : sample.draws) {
-    out << ',' << kDraw;
-  }
-  for (std::size_t pos = 0U; pos < ranges.size(); ++pos) {
-    const bool kHit =
-        (pos < sample.forward_count) && (pos < sample.forward.size());
-    const double kElev = kHit ? sample.forward.at(pos).elevation : kMissing;
-    const double kDefl = kHit ? sample.forward.at(pos).deflection : kMissing;
-    const std::uint32_t kVel =
-        kHit ? sample.forward.at(pos).velocity : kMissingInt;
-    const std::uint32_t kEnergy =
-        kHit ? sample.forward.at(pos).energy : kMissingInt;
-    const double kTof = kHit ? sample.forward.at(pos).time_of_flight : kMissing;
-    out << ',' << kElev << ',' << kDefl << ',' << kVel << ',' << kEnergy << ','
-        << kTof;
-  }
-  const std::uint64_t kReached = sample.flags.reached_all ? 1U : 0U;
-  const std::uint64_t kMiller = sample.flags.miller_unstable ? 1U : 0U;
-  const std::uint64_t kCap = sample.flags.angle_cap_hit ? 1U : 0U;
-  const std::uint64_t kFailed = sample.flags.build_failed ? 1U : 0U;
-  out << ',' << kReached << ',' << sample.flags.fall_short_index << ','
-      << kMiller << ',' << sample.stability << ',' << kCap << ',' << kFailed
-      << ',' << sample.flags.configured_density_path << '\n';
-}
-
-// samples.csv is the determinism artifact: fixed header, full-precision
-// doubles, per-sample rows in index order, no timestamps or pooled stats.
-bool WriteSamplesCsv(const std::string& path,
-                     const std::vector<std::string>& draw_names,
-                     const std::vector<std::uint32_t>& ranges,
-                     const std::vector<mc::TrajectorySample>& samples) {
-  constexpr int kFullPrecision = 17;
-  std::ofstream csv(path);
-  if (!csv.is_open()) {
-    return false;
-  }
-  csv << std::setprecision(kFullPrecision);
-  csv << "index";
-  for (const std::string& name : draw_names) {
-    csv << ',' << name;
-  }
-  for (const std::uint32_t kRange : ranges) {
-    csv << ",elev_in_" << kRange << ",defl_in_" << kRange << ",vel_fps_"
-        << kRange << ",energy_ftlbs_" << kRange << ",tof_s_" << kRange;
-  }
-  // CSV v2: v1 columns renamed (tumble_hit -> miller_unstable, density_path
-  // -> configured_density_path) and stability added; column order otherwise
-  // fixed, no schema break beyond the rename.
-  csv << ",reached,fall_short_index,miller_unstable,stability,angle_cap_hit,"
-         "build_failed,configured_density_path\n";
-  for (const mc::TrajectorySample& sample : samples) {
-    WriteSampleRow(csv, sample, ranges);
-  }
-  csv.flush();
-  return static_cast<bool>(csv);
-}
-
 int PrintRunSummary(const mc::RunManifest& manifest, const std::string& cell,
                     std::uint64_t seed, std::uint64_t total_samples,
-                    std::uint64_t workers, const std::string& csv_path,
+                    std::uint64_t workers, const std::string& out_dir,
+                    const std::string& csv_path,
+                    const std::vector<std::string>& draw_names,
+                    const std::vector<std::uint32_t>& ranges,
                     const std::vector<mc::TrajectorySample>& samples) {
+  const nlohmann::json kSummary = mc::BuildRunJson(
+      manifest, cell, seed, total_samples, workers, csv_path, lob::Version(),
+      LOB_GIT_SHA, draw_names, ranges, samples);
+  std::string json_path = out_dir;
+  if (!json_path.empty() && (json_path.back() != '/')) {
+    json_path += '/';
+  }
+  json_path += "mc_run_" + manifest.run_id + ".json";
+  if (!mc::WriteJsonFile(json_path, kSummary)) {
+    std::cerr << "lob_mc: cannot write " << json_path << '\n';
+    return kExitUsage;
+  }
+  std::cout << kSummary.dump(kJsonIndent) << '\n';
+  if (total_samples >= mc::kGzipSuggestSamples) {
+    std::cerr << "lob_mc: N >= 10^4; consider: gzip -k " << csv_path << '\n';
+  }
   std::uint64_t build_failed = 0U;
-  std::uint64_t reached_all = 0U;
-  std::uint64_t miller_unstable = 0U;
-  std::uint64_t angle_cap_hit = 0U;
   for (const mc::TrajectorySample& sample : samples) {
     if (sample.flags.build_failed) {
       ++build_failed;
     }
-    if (sample.flags.reached_all) {
-      ++reached_all;
-    }
-    if (sample.flags.miller_unstable) {
-      ++miller_unstable;
-    }
-    if (sample.flags.angle_cap_hit) {
-      ++angle_cap_hit;
-    }
   }
-  nlohmann::json summary;
-  summary["run_id"] = manifest.run_id;
-  summary["cell"] = cell;
-  summary["seed"] = seed;
-  summary["samples"] = total_samples;
-  summary["workers"] = workers;
-  summary["out_csv"] = csv_path;
-  summary["synthetic_illustrative_only"] = manifest.synthetic_illustrative_only;
-  summary["build_failed"] = build_failed;
-  summary["reached_all"] = reached_all;
-  summary["miller_unstable"] = miller_unstable;
-  summary["angle_cap_hit"] = angle_cap_hit;
-  summary["lob_version"] = lob::Version();
-  summary["git_sha"] = LOB_GIT_SHA;
-  std::cout << summary.dump(kJsonIndent) << '\n';
   if (build_failed == total_samples) {
     return kExitBroken;
   }
@@ -438,12 +369,13 @@ int RunFromManifest(const Config& config) {
     csv_path += '/';
   }
   csv_path += "samples.csv";
-  if (!WriteSamplesCsv(csv_path, kDrawNames, manifest.solver.ranges,
-                       kSamplesOut)) {
+  if (!mc::WriteSamplesCsv(csv_path, kDrawNames, manifest.solver.ranges,
+                           kSamplesOut)) {
     std::cerr << "lob_mc: cannot write " << csv_path << '\n';
     return kExitUsage;
   }
-  return PrintRunSummary(manifest, kCell, kSeed, kSamples, kWorkers, csv_path,
+  return PrintRunSummary(manifest, kCell, kSeed, kSamples, kWorkers, out_dir,
+                         csv_path, kDrawNames, manifest.solver.ranges,
                          kSamplesOut);
 }
 
