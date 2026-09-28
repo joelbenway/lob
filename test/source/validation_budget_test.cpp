@@ -572,6 +572,16 @@ TEST(BudgetAssemble, OfflineDocuments) {
       std::string(LOB_VALIDATION_DIR) + "/envelope_report.json", &kEnvelope,
       &kError))
       << kError << " (run ReferenceMatrix.FullMatrix first: LOB_FULL_MATRIX=1)";
+  // Freshness gate: a stale envelope (solver changed, matrix not re-run)
+  // is consumed silently without this — fail closed, never assume fresh.
+  try {
+    ASSERT_EQ(kEnvelope.at("provenance").at("git_sha").get<std::string>(),
+              std::string(LOB_GIT_SHA))
+        << "stale envelope_report.json — re-run with LOB_FULL_MATRIX=1";
+  } catch (const nlohmann::json::exception& e) {
+    FAIL() << "stale envelope_report.json — re-run with LOB_FULL_MATRIX=1"
+           << " (missing provenance/git_sha: " << e.what() << ")";
+  }
 
   int docs = 0;
   int emitted_uc = 0;
@@ -596,13 +606,13 @@ TEST(BudgetAssemble, OfflineDocuments) {
     double kEpsLive = 0.0;
     ASSERT_TRUE(BudgetFloorValue(kFloors, kFloorsCell, kChannel, &kEpsLive))
         << "floors.json has no " << kFloorsCell << "/" << kChannel;
-    EXPECT_DOUBLE_EQ(kEpsTemplate, kEpsLive)
+    ASSERT_DOUBLE_EQ(kEpsTemplate, kEpsLive)
         << "epsilon drift: " << kName << "/" << kChannel;
     const double kDeltaTemplate = kCell.at("delta_ref").at("value").get<double>();
     double kDeltaLive = 0.0;
     ASSERT_TRUE(BudgetEnvelopeWorst(kEnvelope, kChannel, &kDeltaLive))
         << "envelope_report.json has no " << kChannel;
-    EXPECT_DOUBLE_EQ(kDeltaTemplate, kDeltaLive)
+    ASSERT_DOUBLE_EQ(kDeltaTemplate, kDeltaLive)
         << "delta drift: " << kName << "/" << kChannel;
 
     // Sensitivity cross-check: every template c must equal the live
@@ -746,7 +756,7 @@ TEST(BudgetAssemble, OfflineDocuments) {
                 static_cast<unsigned>(kMissing.size()), kRes.status.c_str());
   }
   EXPECT_EQ(docs, kExpectedManifestCells);
-  EXPECT_EQ(emitted_uc, 0);
+  ASSERT_EQ(emitted_uc, 0);
 }
 
 }  // namespace tests
