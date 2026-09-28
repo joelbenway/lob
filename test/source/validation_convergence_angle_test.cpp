@@ -22,16 +22,22 @@ namespace {
 LobContext BuildC1CContext() {
   // Same C1-ICAO point as MakeC1IcaoBuilder() (testing.hpp), via the C API
   // used by test/source/solve_angle_test.cpp — no C++ wrapper casts.
+  constexpr double kBcPsi = 0.232;
+  constexpr double kDiameterInch = 0.308;
+  constexpr double kMassGrains = 155.0;
+  constexpr uint16_t kMuzzleVelocityFps = 2800U;
+  constexpr double kZeroAngleMoa = 3.66;
+  constexpr double kOpticHeightInches = 1.5;
   LobBuilder builder{};
   LobBuilderInit(&builder);
-  LobBuilderBallisticCoefficientPsi(&builder, 0.232);
+  LobBuilderBallisticCoefficientPsi(&builder, kBcPsi);
   LobBuilderBCDragFunction(&builder, kLobDragFunctionG7);
   LobBuilderBCAtmosphere(&builder, kLobAtmosphereReferenceIcao);
-  LobBuilderDiameterInch(&builder, 0.308);
-  LobBuilderMassGrains(&builder, 155.0);
-  LobBuilderInitialVelocityFps(&builder, 2800U);
-  LobBuilderZeroAngleMOA(&builder, 3.66);
-  LobBuilderOpticHeightInches(&builder, 1.5);
+  LobBuilderDiameterInch(&builder, kDiameterInch);
+  LobBuilderMassGrains(&builder, kMassGrains);
+  LobBuilderInitialVelocityFps(&builder, kMuzzleVelocityFps);
+  LobBuilderZeroAngleMOA(&builder, kZeroAngleMoa);
+  LobBuilderOpticHeightInches(&builder, kOpticHeightInches);
   LobContext ctx{};
   LobBuilderBuild(&builder, &ctx);
   LobBuilderDestroy(&builder);
