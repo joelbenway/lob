@@ -1,0 +1,28 @@
+{
+  "run_id": "c1_smoke",
+  "cell": "C1-ICAO",
+  "seed": 12651681,
+  "samples": 256,
+  "workers": 4,
+  "out_dir": "build/validation",
+  "solver_config": {
+    "step_in": 36,
+    "density_path": "fast",
+    "ranges_ft": [900, 1800]
+  },
+  "dimensions": [
+    {"input": "velocity_fps", "family": "normal", "params": {"mean": 2800.0, "sigma": 10.0}, "baseline": 2800.0},
+    {"input": "bc_psi", "family": "normal", "params": {"mean": 0.232, "sigma": 0.00232}, "truncation": {"lo": 0.0, "hi": 1.0}, "baseline": 0.232},
+    {"input": "zero_angle_moa", "family": "normal", "params": {"mean": 3.66, "sigma": 0.05}, "baseline": 3.66},
+    {"input": "pressure_inhg", "family": "normal", "params": {"mean": 29.92, "sigma": 0.1}, "truncation": {"lo": 0.0, "hi": 40.0}, "baseline": 29.92},
+    {"input": "temperature_degf", "family": "normal", "params": {"mean": 59.0, "sigma": 2.0}, "baseline": 59.0},
+    {"input": "optic_height_in", "family": "uniform", "params": {"lo": 1.4, "hi": 1.6}, "baseline": 1.5},
+    {"input": "humidity_pp", "family": "normal", "params": {"mean": 50.0, "sigma": 5.0}, "truncation": {"lo": 0.0, "hi": 100.0}, "baseline": 50.0},
+    {"input": "wind_speed_mph", "family": "wind_pair", "params": {"speed_mean": 0.0, "speed_sigma": 2.0, "heading_mean": 90.0, "heading_sigma": 30.0}, "truncation": {"lo": 0.0, "hi": 60.0}, "baseline": 0.0}
+  ],
+  "scenarios": [
+    {"name": "G7-own", "drag_function": "G7", "weight": 1.0}
+  ],
+  "synthetic_illustrative_only": true,
+  "synthetic_comment": "All distributions are SYNTHETIC illustrative defaults (template TBD rows); real sensor u(x) await spec section 21 item 7 human-supplied values with provenance. Seed 0xC10CA1 pins the run; pilot c1_pilot.json reuses it so its first 256 streams extend this smoke."
+}
