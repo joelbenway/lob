@@ -6,7 +6,9 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <nlohmann/json.hpp>
@@ -16,6 +18,7 @@
 #include <thread>
 #include <vector>
 
+#include "case_adapter.hpp"
 #include "lob/lob.hpp"
 #include "sampler.hpp"
 
@@ -33,6 +36,7 @@ constexpr const char* kSeedOpt = "--seed=";
 constexpr const char* kSamplesOpt = "--samples=";
 constexpr const char* kWorkersOpt = "--workers=";
 constexpr const char* kOutDirOpt = "--out-dir=";
+constexpr const char* kCellOpt = "--cell=";
 constexpr const char* kDefaultOutDir = "build/validation";
 
 constexpr std::uint64_t kSelfcheckSeed = 0x9E3779B9ULL;
@@ -56,8 +60,10 @@ struct Config {
   bool has_samples = false;
   bool has_workers = false;
   bool has_out_dir = false;
+  bool has_cell = false;
   std::string manifest_path;
   std::string out_dir = kDefaultOutDir;
+  std::string cell;
   std::uint64_t seed = 0U;
   std::uint64_t samples = 0U;
   std::uint64_t workers = 0U;
@@ -110,6 +116,9 @@ Config ParseArgs(int argc, char** argv) {
     } else if (kArg.compare(0, std::strlen(kOutDirOpt), kOutDirOpt) == 0) {
       config.has_out_dir = true;
       config.out_dir = kArg.substr(std::strlen(kOutDirOpt));
+    } else if (kArg.compare(0, std::strlen(kCellOpt), kCellOpt) == 0) {
+      config.has_cell = true;
+      config.cell = kArg.substr(std::strlen(kCellOpt));
     } else {
       std::cerr << "lob_mc: unknown option " << kArg << '\n';
       config.parse_error = true;
@@ -120,13 +129,16 @@ Config ParseArgs(int argc, char** argv) {
 
 void PrintUsage(std::ostream& out) {
   out << "Usage: lob_mc --manifest=FILE [--seed=N] [--samples=N] "
-         "[--workers=N] [--out-dir=DIR]\n"
+         "[--workers=N] [--out-dir=DIR] [--cell=CELL]\n"
       << "       lob_mc --selfcheck\n"
       << "       lob_mc --help\n"
-      << "Monte Carlo runner skeleton: reads the run-manifest stub (seed +\n"
-      << "samples + workers) and echoes the effective configuration with\n"
-      << "lob_version and git_sha. Sampling runs arrive in Task 2.\n"
-      << "Exit codes: 0 ok, 2 usage, 3 broken selfcheck chain.\n"
+      << "Monte Carlo runner: samples the manifest dimensions through the\n"
+      << "unchanged deterministic solver (one Build + Solve + SolveInverse\n"
+      << "per sample) and writes samples.csv with per-sample branch flags.\n"
+      << "--cell selects a dimension set from the manifest (default: the\n"
+      << "manifest cell). Results assemble by sample index, so 1-vs-N\n"
+      << "workers are byte-identical. Exit codes: 0 ok, 2 usage or bad\n"
+      << "manifest, 3 every sample failed to build.\n"
       << "lob " << lob::Version() << " " << LOB_GIT_SHA << '\n';
 }
 
@@ -218,52 +230,218 @@ int RunSelfcheck() {
   return kExitOk;
 }
 
-int RunStub(const Config& config) {
-  std::uint64_t seed = config.seed;
-  std::uint64_t samples = config.samples;
-  std::uint64_t workers = config.workers;
-  std::string out_dir = config.out_dir;
-  if (config.has_manifest) {
-    std::ifstream input(config.manifest_path);
-    if (!input.is_open()) {
-      std::cerr << "lob_mc: cannot open manifest " << config.manifest_path
-                << '\n';
-      return kExitUsage;
+// Draws the owned stream range into out by sample index. Stream count always
+// equals sample count, so sample i comes from stream (i % S) with a
+// per-stream Subseed(seed, stream) engine — the selfcheck scheme verbatim.
+void RunWorkerSamples(const mc::RunPlan& plan, std::size_t first_stream,
+                      std::size_t num_owned,
+                      std::vector<mc::TrajectorySample>* out) {
+  for (std::size_t stream = first_stream; stream < (first_stream + num_owned);
+       ++stream) {
+    out->at(stream) = mc::RunSample(plan, stream);
+  }
+}
+
+// Precondition: num_workers >= 1. Threads partition the fixed logical
+// streams; results assemble by sample index, never completion order.
+std::vector<mc::TrajectorySample> RunAllSamples(const mc::RunPlan& plan,
+                                                std::size_t num_samples,
+                                                std::size_t num_workers) {
+  constexpr std::size_t kOne = 1U;
+  std::vector<mc::TrajectorySample> samples(num_samples);
+  const std::size_t kBase = num_samples / num_workers;
+  const std::size_t kRem = num_samples % num_workers;
+  std::vector<std::thread> threads;
+  std::size_t first = 0U;
+  for (std::size_t slot = 0U; slot < num_workers; ++slot) {
+    std::size_t count = kBase;
+    if (slot < kRem) {
+      count += kOne;
     }
-    try {
-      nlohmann::json manifest = nlohmann::json::object();
-      input >> manifest;
-      if (manifest.contains("seed") && !config.has_seed) {
-        seed = manifest.at("seed").get<std::uint64_t>();
-      }
-      if (manifest.contains("samples") && !config.has_samples) {
-        samples = manifest.at("samples").get<std::uint64_t>();
-      }
-      if (manifest.contains("workers") && !config.has_workers) {
-        workers = manifest.at("workers").get<std::uint64_t>();
-      }
-      if (manifest.contains("out_dir") && !config.has_out_dir) {
-        out_dir = manifest.at("out_dir").get<std::string>();
-      }
-    } catch (const nlohmann::json::exception& e) {
-      std::cerr << "lob_mc: bad manifest JSON: " << e.what() << '\n';
-      return kExitUsage;
+    threads.emplace_back(RunWorkerSamples, plan, first, count, &samples);
+    first += count;
+  }
+  for (auto& worker : threads) {
+    worker.join();
+  }
+  return samples;
+}
+
+void WriteSampleRow(std::ostream& out, const mc::TrajectorySample& sample,
+                    const std::vector<std::uint32_t>& ranges) {
+  const double kMissing = std::numeric_limits<double>::quiet_NaN();
+  constexpr std::uint32_t kMissingInt = 0U;
+  out << sample.index;
+  for (const double kDraw : sample.draws) {
+    out << ',' << kDraw;
+  }
+  for (std::size_t pos = 0U; pos < ranges.size(); ++pos) {
+    const bool kHit =
+        (pos < sample.forward_count) && (pos < sample.forward.size());
+    const double kElev = kHit ? sample.forward.at(pos).elevation : kMissing;
+    const double kDefl = kHit ? sample.forward.at(pos).deflection : kMissing;
+    const std::uint32_t kVel =
+        kHit ? sample.forward.at(pos).velocity : kMissingInt;
+    const std::uint32_t kEnergy =
+        kHit ? sample.forward.at(pos).energy : kMissingInt;
+    const double kTof = kHit ? sample.forward.at(pos).time_of_flight : kMissing;
+    out << ',' << kElev << ',' << kDefl << ',' << kVel << ',' << kEnergy << ','
+        << kTof;
+  }
+  const std::uint64_t kReached = sample.flags.reached_all ? 1U : 0U;
+  const std::uint64_t kTumble = sample.flags.tumble_hit ? 1U : 0U;
+  const std::uint64_t kCap = sample.flags.angle_cap_hit ? 1U : 0U;
+  const std::uint64_t kFailed = sample.flags.build_failed ? 1U : 0U;
+  out << ',' << kReached << ',' << sample.flags.fall_short_index << ','
+      << kTumble << ',' << kCap << ',' << kFailed << ','
+      << sample.flags.density_path << '\n';
+}
+
+// samples.csv is the determinism artifact: fixed header, full-precision
+// doubles, per-sample rows in index order, no timestamps or pooled stats.
+bool WriteSamplesCsv(const std::string& path,
+                     const std::vector<std::string>& draw_names,
+                     const std::vector<std::uint32_t>& ranges,
+                     const std::vector<mc::TrajectorySample>& samples) {
+  constexpr int kFullPrecision = 17;
+  std::ofstream csv(path);
+  if (!csv.is_open()) {
+    return false;
+  }
+  csv << std::setprecision(kFullPrecision);
+  csv << "index";
+  for (const std::string& name : draw_names) {
+    csv << ',' << name;
+  }
+  for (const std::uint32_t kRange : ranges) {
+    csv << ",elev_in_" << kRange << ",defl_in_" << kRange << ",vel_fps_"
+        << kRange << ",energy_ftlbs_" << kRange << ",tof_s_" << kRange;
+  }
+  csv << ",reached,fall_short_index,tumble_hit,angle_cap_hit,build_failed,"
+         "density_path\n";
+  for (const mc::TrajectorySample& sample : samples) {
+    WriteSampleRow(csv, sample, ranges);
+  }
+  csv.flush();
+  return static_cast<bool>(csv);
+}
+
+int PrintRunSummary(const mc::RunManifest& manifest, const std::string& cell,
+                    std::uint64_t seed, std::uint64_t total_samples,
+                    std::uint64_t workers, const std::string& csv_path,
+                    const std::vector<mc::TrajectorySample>& samples) {
+  std::uint64_t build_failed = 0U;
+  std::uint64_t reached_all = 0U;
+  std::uint64_t tumble_hit = 0U;
+  std::uint64_t angle_cap_hit = 0U;
+  for (const mc::TrajectorySample& sample : samples) {
+    if (sample.flags.build_failed) {
+      ++build_failed;
+    }
+    if (sample.flags.reached_all) {
+      ++reached_all;
+    }
+    if (sample.flags.tumble_hit) {
+      ++tumble_hit;
+    }
+    if (sample.flags.angle_cap_hit) {
+      ++angle_cap_hit;
     }
   }
-  if ((samples == 0U) || (workers == 0U)) {
-    std::cerr << "lob_mc: need --manifest or --seed/--samples/--workers\n";
+  nlohmann::json summary;
+  summary["run_id"] = manifest.run_id;
+  summary["cell"] = cell;
+  summary["seed"] = seed;
+  summary["samples"] = total_samples;
+  summary["workers"] = workers;
+  summary["out_csv"] = csv_path;
+  summary["synthetic_illustrative_only"] = manifest.synthetic_illustrative_only;
+  summary["build_failed"] = build_failed;
+  summary["reached_all"] = reached_all;
+  summary["tumble_hit"] = tumble_hit;
+  summary["angle_cap_hit"] = angle_cap_hit;
+  summary["lob_version"] = lob::Version();
+  summary["git_sha"] = LOB_GIT_SHA;
+  std::cout << summary.dump(kJsonIndent) << '\n';
+  if (build_failed == total_samples) {
+    return kExitBroken;
+  }
+  return kExitOk;
+}
+
+int RunFromManifest(const Config& config) {
+  std::ifstream input(config.manifest_path);
+  if (!input.is_open()) {
+    std::cerr << "lob_mc: cannot open manifest " << config.manifest_path
+              << '\n';
     return kExitUsage;
   }
-  nlohmann::json echo;
-  echo["seed"] = seed;
-  echo["samples"] = samples;
-  echo["workers"] = workers;
-  echo["out_dir"] = out_dir;
-  echo["lob_version"] = lob::Version();
-  echo["git_sha"] = LOB_GIT_SHA;
-  echo["mode"] = "skeleton";
-  std::cout << echo.dump(kJsonIndent) << '\n';
-  return kExitOk;
+  nlohmann::json root = nlohmann::json::object();
+  try {
+    input >> root;
+  } catch (const nlohmann::json::exception& e) {
+    std::cerr << "lob_mc: bad manifest JSON: " << e.what() << '\n';
+    return kExitUsage;
+  }
+  mc::RunManifest manifest;
+  std::string error;
+  if (!mc::ParseManifest(root, &manifest, &error)) {
+    std::cerr << "lob_mc: " << error << '\n';
+    return kExitUsage;
+  }
+  const std::string kCell = config.has_cell ? config.cell : manifest.cell;
+  const std::uint64_t kSeed = config.has_seed ? config.seed : manifest.seed;
+  const std::uint64_t kSamples =
+      config.has_samples ? config.samples : manifest.samples;
+  const std::uint64_t kWorkers =
+      config.has_workers ? config.workers : manifest.workers;
+  if ((kSamples == 0U) || (kWorkers == 0U)) {
+    std::cerr << "lob_mc: samples and workers must be nonzero\n";
+    return kExitUsage;
+  }
+  std::string out_dir = config.out_dir;
+  if (!config.has_out_dir && root.contains("out_dir") &&
+      root.at("out_dir").is_string()) {
+    out_dir = root.at("out_dir").get<std::string>();
+  }
+  lob::Builder base;
+  if (!mc::BaseBuilderFor(kCell, &base, &error)) {
+    std::cerr << "lob_mc: " << error << '\n';
+    return kExitUsage;
+  }
+  const std::vector<mc::Dimension>* dimensions = nullptr;
+  const std::vector<mc::Scenario>* scenarios = nullptr;
+  if (!mc::SelectCell(manifest, kCell, &dimensions, &scenarios, &error)) {
+    std::cerr << "lob_mc: " << error << '\n';
+    return kExitUsage;
+  }
+  const std::vector<std::string> kDrawNames =
+      mc::DrawColumnNames(*scenarios, *dimensions);
+  mc::RunPlan plan;
+  plan.seed = kSeed;
+  plan.base = &base;
+  plan.dimensions = dimensions;
+  plan.scenarios = scenarios;
+  plan.ranges = &manifest.solver.ranges;
+  plan.step_in = manifest.solver.step_in;
+  plan.density_path = &manifest.solver.density_path;
+  plan.draw_width = kDrawNames.size();
+  const auto kNumSamples = static_cast<std::size_t>(kSamples);
+  const auto kNumWorkers = static_cast<std::size_t>(kWorkers);
+  const std::vector<mc::TrajectorySample> kSamplesOut =
+      RunAllSamples(plan, kNumSamples, kNumWorkers);
+  std::string csv_path = out_dir;
+  if (!csv_path.empty() && (csv_path.back() != '/')) {
+    csv_path += '/';
+  }
+  csv_path += "samples.csv";
+  if (!WriteSamplesCsv(csv_path, kDrawNames, manifest.solver.ranges,
+                       kSamplesOut)) {
+    std::cerr << "lob_mc: cannot write " << csv_path << '\n';
+    return kExitUsage;
+  }
+  return PrintRunSummary(manifest, kCell, kSeed, kSamples, kWorkers, csv_path,
+                         kSamplesOut);
 }
 
 }  // namespace
@@ -280,13 +458,23 @@ int main(int argc, char** argv) {
   }
   if (kConfig.selfcheck) {
     if (kConfig.has_manifest || kConfig.has_seed || kConfig.has_samples ||
-        kConfig.has_workers || kConfig.has_out_dir) {
+        kConfig.has_workers || kConfig.has_out_dir || kConfig.has_cell) {
       std::cerr << "lob_mc: --selfcheck takes no other options\n";
       return kExitUsage;
     }
     return RunSelfcheck();
   }
-  return RunStub(kConfig);
+  if (!kConfig.has_manifest) {
+    std::cerr << "lob_mc: need --manifest=FILE\n";
+    PrintUsage(std::cerr);
+    return kExitUsage;
+  }
+  try {
+    return RunFromManifest(kConfig);
+  } catch (const std::exception& e) {
+    std::cerr << "lob_mc: run failed: " << e.what() << '\n';
+    return kExitUsage;
+  }
 }
 
 // This file is part of lob.
