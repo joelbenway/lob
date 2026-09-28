@@ -33,6 +33,9 @@ constexpr std::uint64_t kTailResolveSamples = 100000U;
 constexpr int kArtifactSchema = 1;
 constexpr std::uint64_t kGzipSuggestSamples = 10000U;
 constexpr const char* kRngName = "mt19937_64";
+// SolveAngle library default (source/solve_angle.hpp): the runner never
+// overrides it, so provenance records it as the fixed per-run value.
+constexpr double kAngleTolMoa = 0.01;
 constexpr const char* kPooledWarning =
     "DO-NOT-USE for claims: pooled across branch discontinuities; use "
     "by_branch for claims, pooled for diagnostics only.";
@@ -471,7 +474,8 @@ inline nlohmann::json BuildRunJson(
     const RunManifest& manifest, const std::string& cell, std::uint64_t seed,
     std::uint64_t total_samples, std::uint64_t workers,
     const std::string& csv_path, const std::string& lob_version,
-    const std::string& git_sha, const std::vector<std::string>& draw_names,
+    const std::string& git_sha, const std::string& compiler,
+    const std::string& platform, const std::vector<std::string>& draw_names,
     const std::vector<std::uint32_t>& ranges,
     const std::vector<TrajectorySample>& samples) {
   std::uint64_t build_failed = 0U;
@@ -503,13 +507,19 @@ inline nlohmann::json BuildRunJson(
   nlohmann::json provenance = nlohmann::json::object();
   provenance["lob_version"] = lob_version;
   provenance["git_sha"] = git_sha;
+  provenance["compiler"] = compiler;
+  provenance["platform"] = platform;
   nlohmann::json solver = nlohmann::json::object();
   solver["step_in"] = manifest.solver.step_in;
+  solver["angle_tol_moa"] = kAngleTolMoa;
   solver["density_path"] = manifest.solver.density_path;
+  solver["ranges_ft"] = manifest.solver.ranges;
   provenance["solver_config"] = solver;
   provenance["seed"] = seed;
   provenance["rng"] = kRngName;
   provenance["artifact_schema"] = kArtifactSchema;
+  // No created_utc: timestamps break diff-clean reruns.
+  // No inputs_hash: deferred until canonical builder-JSON hashing lands.
   provenance["synthetic_illustrative_only"] =
       manifest.synthetic_illustrative_only;
   doc["provenance"] = provenance;

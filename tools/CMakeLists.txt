@@ -58,6 +58,9 @@ if(NOT LOB_GIT_SHA)
   set(LOB_GIT_SHA "unknown")
 endif()
 target_compile_definitions(lob_mc PRIVATE LOB_GIT_SHA="${LOB_GIT_SHA}")
+target_compile_definitions(
+  lob_mc PRIVATE LOB_COMPILER="${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}"
+                 LOB_PLATFORM="${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 
 add_folders(Tools)
 

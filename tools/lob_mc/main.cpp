@@ -277,7 +277,7 @@ int PrintRunSummary(const mc::RunManifest& manifest, const std::string& cell,
                     const std::vector<mc::TrajectorySample>& samples) {
   const nlohmann::json kSummary = mc::BuildRunJson(
       manifest, cell, seed, total_samples, workers, csv_path, lob::Version(),
-      LOB_GIT_SHA, draw_names, ranges, samples);
+      LOB_GIT_SHA, LOB_COMPILER, LOB_PLATFORM, draw_names, ranges, samples);
   std::string json_path = out_dir;
   if (!json_path.empty() && (json_path.back() != '/')) {
     json_path += '/';
