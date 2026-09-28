@@ -9,12 +9,11 @@
 #include <fstream>
 #include <iomanip>
 #include <limits>
+#include <nlohmann/json.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-#include <nlohmann/json.hpp>
 
 namespace tests {
 
@@ -38,14 +37,13 @@ struct BudgetResult {
   std::string status;
 };
 
-inline BudgetResult CombineBudget(
-    const std::vector<BudgetRow>& rows,
-    const std::vector<BudgetCovariance>& covs = std::vector<BudgetCovariance>()) {
+inline BudgetResult CombineBudget(const std::vector<BudgetRow>& rows,
+                                  const std::vector<BudgetCovariance>& covs =
+                                      std::vector<BudgetCovariance>()) {
   for (const BudgetRow& r : rows) {
     if (r.nonlinear) {
-      const BudgetResult kOut = {false,
-                                 std::numeric_limits<double>::quiet_NaN(),
-                                 "route_to_mc"};
+      const BudgetResult kOut = {
+          false, std::numeric_limits<double>::quiet_NaN(), "route_to_mc"};
       return kOut;
     }
   }
@@ -111,7 +109,9 @@ TEST(BudgetMath, CovariancePairAddsTwiceCovInsideRoot) {
 // ---- Task 2: manifest loader + template tests (fail-closed) ----
 
 // TBD marker: the only honest u(x) until a human supplies evidence (§11.3).
-inline const char* BudgetTbdLiteral() { return "TBD \u2014 human input required"; }
+inline const char* BudgetTbdLiteral() {
+  return "TBD \u2014 human input required";
+}
 
 struct ManifestRow {
   std::string input;
@@ -227,7 +227,8 @@ inline ManifestLoad LoadBudgetManifest(const std::string& dir) {
       }
       const nlohmann::json& kNonlinear = kCell.at("nonlinear_route_to_mc");
       if (!kNonlinear.is_array()) {
-        throw std::runtime_error("manifest nonlinear_route_to_mc must be array");
+        throw std::runtime_error(
+            "manifest nonlinear_route_to_mc must be array");
       }
       for (std::size_t ni = 0; ni < kNonlinear.size(); ++ni) {
         (void)ReqManifestString(kNonlinear.at(ni), "input");
@@ -244,7 +245,8 @@ inline ManifestLoad LoadBudgetManifest(const std::string& dir) {
   } catch (const nlohmann::json::out_of_range& e) {
     ManifestLoad kOut;
     kOut.ok = false;
-    kOut.error = std::string("schema key missing in ") + kPath + ": " + e.what();
+    kOut.error =
+        std::string("schema key missing in ") + kPath + ": " + e.what();
     return kOut;
   } catch (const nlohmann::json::type_error& e) {
     ManifestLoad kOut;
@@ -312,8 +314,7 @@ TEST(BudgetManifest, TemplateIsFullyIncomplete) {
   const ManifestAssessment kA = AssessManifest(kLoad.cells);
   EXPECT_EQ(kA.complete_cells, 0);
   EXPECT_EQ(kA.incomplete_cells, kExpectedManifestCells);
-  EXPECT_EQ(static_cast<int>(kA.missing_rows.size()),
-            kExpectedIncompleteRows);
+  EXPECT_EQ(static_cast<int>(kA.missing_rows.size()), kExpectedIncompleteRows);
 }
 
 TEST(BudgetManifest, EveryRowUFailsClosedAsTbdLiteral) {
@@ -522,8 +523,7 @@ inline bool BudgetEnvelopeWorst(const nlohmann::json& envelope,
     bool seen = false;
     double peak = 0.0;
     for (std::size_t ci = 0; ci < kCells.size(); ++ci) {
-      const nlohmann::json& kW =
-          kCells.at(ci).at("worst_residual").at(kKey);
+      const nlohmann::json& kW = kCells.at(ci).at("worst_residual").at(kKey);
       if (!kW.is_number()) {
         return false;
       }
@@ -560,17 +560,15 @@ TEST(BudgetAssemble, OfflineDocuments) {
                              &kTemplate, &kError))
       << kError;
   nlohmann::json kPareto;
-  ASSERT_TRUE(BudgetReadJson(kBaselinesDir + "/pareto.json", &kPareto,
-                             &kError))
+  ASSERT_TRUE(BudgetReadJson(kBaselinesDir + "/pareto.json", &kPareto, &kError))
       << kError;
   nlohmann::json kFloors;
-  ASSERT_TRUE(BudgetReadJson(kBaselinesDir + "/floors.json", &kFloors,
-                             &kError))
+  ASSERT_TRUE(BudgetReadJson(kBaselinesDir + "/floors.json", &kFloors, &kError))
       << kError;
   nlohmann::json kEnvelope;
-  ASSERT_TRUE(BudgetReadJson(
-      std::string(LOB_VALIDATION_DIR) + "/envelope_report.json", &kEnvelope,
-      &kError))
+  ASSERT_TRUE(
+      BudgetReadJson(std::string(LOB_VALIDATION_DIR) + "/envelope_report.json",
+                     &kEnvelope, &kError))
       << kError << " (run ReferenceMatrix.FullMatrix first: LOB_FULL_MATRIX=1)";
   // Freshness gate: a stale envelope (solver changed, matrix not re-run)
   // is consumed silently without this — fail closed, never assume fresh.
@@ -598,17 +596,19 @@ TEST(BudgetAssemble, OfflineDocuments) {
     // Floors alias: C6-shear owns no floors cell; it reuses C6-scaled.
     std::string kFloorsCell = kName;
     if (kTemplate.at("cell_aliases").count(kName) > 0) {
-      kFloorsCell = ReqManifestString(
-          kTemplate.at("cell_aliases").at(kName), "floors_cell");
+      kFloorsCell = ReqManifestString(kTemplate.at("cell_aliases").at(kName),
+                                      "floors_cell");
     }
 
-    const double kEpsTemplate = kCell.at("epsilon_num").at("value").get<double>();
+    const double kEpsTemplate =
+        kCell.at("epsilon_num").at("value").get<double>();
     double kEpsLive = 0.0;
     ASSERT_TRUE(BudgetFloorValue(kFloors, kFloorsCell, kChannel, &kEpsLive))
         << "floors.json has no " << kFloorsCell << "/" << kChannel;
     ASSERT_DOUBLE_EQ(kEpsTemplate, kEpsLive)
         << "epsilon drift: " << kName << "/" << kChannel;
-    const double kDeltaTemplate = kCell.at("delta_ref").at("value").get<double>();
+    const double kDeltaTemplate =
+        kCell.at("delta_ref").at("value").get<double>();
     double kDeltaLive = 0.0;
     ASSERT_TRUE(BudgetEnvelopeWorst(kEnvelope, kChannel, &kDeltaLive))
         << "envelope_report.json has no " << kChannel;
@@ -623,16 +623,16 @@ TEST(BudgetAssemble, OfflineDocuments) {
       const nlohmann::json& kRow = kRows.at(ri);
       const std::string kInput = ReqManifestString(kRow, "input");
       ASSERT_TRUE(kRow.at("sensitivity_c").is_number())
-          << "non-numeric sensitivity_c: " << kName << "/" << kChannel
-          << "/" << kInput;
+          << "non-numeric sensitivity_c: " << kName << "/" << kChannel << "/"
+          << kInput;
       const double kC = kRow.at("sensitivity_c").get<double>();
       double kLive = 0.0;
       ASSERT_TRUE(
           BudgetParetoDeriv(kPareto, kName, kChannel, kRange, kInput, &kLive))
-          << "pareto.json has no driver " << kName << "/" << kChannel
-          << "@" << kRange << "/" << kInput;
-      ASSERT_DOUBLE_EQ(kC, kLive) << "template drift: " << kName << "/"
-                                  << kChannel << "/" << kInput;
+          << "pareto.json has no driver " << kName << "/" << kChannel << "@"
+          << kRange << "/" << kInput;
+      ASSERT_DOUBLE_EQ(kC, kLive)
+          << "template drift: " << kName << "/" << kChannel << "/" << kInput;
       BudgetRow kB;
       kB.c = kC;
       kB.u = 0.0;
@@ -669,22 +669,21 @@ TEST(BudgetAssemble, OfflineDocuments) {
         if (!kBudgetRows[ri].u_known) {
           kMissing.push_back(kWhere + ": missing-u (TBD)");
         } else if (ReqManifestString(kRows.at(ri), "status") != "complete") {
-          kMissing.push_back(kWhere + ": status=" +
-                              ReqManifestString(kRows.at(ri), "status"));
+          kMissing.push_back(
+              kWhere + ": status=" + ReqManifestString(kRows.at(ri), "status"));
         }
       }
     }
     ASSERT_FALSE(kMissing.empty())
-        << "manifest completed without human review — see §21 item 7: "
-        << kName << "/" << kChannel;
+        << "manifest completed without human review — see §21 item 7: " << kName
+        << "/" << kChannel;
 
     std::vector<std::string> kAssumptions;
     for (std::size_t ri = 0; ri < kRows.size(); ++ri) {
       kAssumptions.push_back(
-          ReqManifestString(kRows.at(ri), "input") + ": correlation=" +
-          ReqManifestString(kRows.at(ri), "correlation") +
-          "; distribution=" +
-          ReqManifestString(kRows.at(ri), "distribution") +
+          ReqManifestString(kRows.at(ri), "input") +
+          ": correlation=" + ReqManifestString(kRows.at(ri), "correlation") +
+          "; distribution=" + ReqManifestString(kRows.at(ri), "distribution") +
           " (template default per §12.1, human must confirm); u unknown");
     }
     {
@@ -697,9 +696,8 @@ TEST(BudgetAssemble, OfflineDocuments) {
     {
       std::ostringstream os;
       os << "delta_ref reused from envelope_report.json worst_residual "
-         << BudgetFloorKey(kChannel) << "="
-         << std::setprecision(17) << kDeltaLive
-         << " (max across FullMatrix cells)";
+         << BudgetFloorKey(kChannel) << "=" << std::setprecision(17)
+         << kDeltaLive << " (max across FullMatrix cells)";
       kAssumptions.push_back(os.str());
     }
     kAssumptions.push_back("eta_ref unknown: no eta evidence in Phase 4");
