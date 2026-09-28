@@ -3,12 +3,14 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <cstdlib>
+#include <iomanip>
+#include <iostream>
 #include <limits>
 #include <string>
 
@@ -27,26 +29,32 @@ TEST(ValidationConvergenceScaffold, C1SolvesAtDefaultStep) {
 }
 
 TEST(ValidationMath, ElevMoaDiffUsesSameRange) {
+  constexpr uint32_t kRangeFt = 900U;
+  constexpr double kElevLowIn = 10.0;
+  constexpr double kElevHighIn = 13.0;
   lob::Output a{};
   lob::Output b{};
-  a.range = 900U;
-  b.range = 900U;
-  a.elevation = 10.0;
-  b.elevation = 13.0;
+  a.range = kRangeFt;
+  b.range = kRangeFt;
+  a.elevation = kElevLowIn;
+  b.elevation = kElevHighIn;
   EXPECT_DOUBLE_EQ(ElevInDiff(a, b), 3.0);
   EXPECT_DOUBLE_EQ(ElevMoaDiff(a, b),
                    lob::InchToMoa(13.0, 900.0) - lob::InchToMoa(10.0, 900.0));
 }
 
 TEST(ValidationMath, QuantizedChannelsFloorAtOneLsb) {
+  constexpr uint32_t kRangeFt = 900U;
+  constexpr uint16_t kVelocityFps = 2000U;
+  constexpr uint32_t kEnergyFtLbs = 1500U;
   lob::Output a{};
   lob::Output b{};
-  a.range = 900U;
-  b.range = 900U;
-  a.velocity = 2000U;
-  b.velocity = 2000U;
-  a.energy = 1500U;
-  b.energy = 1500U;
+  a.range = kRangeFt;
+  b.range = kRangeFt;
+  a.velocity = kVelocityFps;
+  b.velocity = kVelocityFps;
+  a.energy = kEnergyFtLbs;
+  b.energy = kEnergyFtLbs;
   EXPECT_TRUE(IsAtFloor(VelDiff(a, b), kVelFloorFps));
   EXPECT_TRUE(IsAtFloor(EnergyDiff(a, b), kEnergyFloorFtLbs));
 }
@@ -70,12 +78,18 @@ TEST(ValidationIo, JsonDoubleHandlesNanAndFormatsFinite) {
 }
 
 TEST(ValidationIo, ArtifactSerializesProvenanceAndRungs) {
+  constexpr uint32_t kStepCoarseIn = 36U;
+  constexpr uint32_t kStepFineIn = 18U;
+  constexpr double kElevCoarseIn = -374.0;
+  constexpr double kElevFineIn = -374.2;
+  constexpr double kDeltaCoarseIn = 0.5;
+  constexpr double kDeltaFineIn = 0.4;
   ConvergenceArtifact artifact;
   artifact.provenance_lob_version = "0.13.0-test";
   artifact.provenance_git_sha = "deadbee";
   artifact.solver_config = "step_in=36,angle_tol_moa=0.01,density_path=fast";
-  artifact.AddRung(36U, -374.0, 0.5);
-  artifact.AddRung(18U, -374.2, 0.4);
+  artifact.AddRung(kStepCoarseIn, kElevCoarseIn, kDeltaCoarseIn);
+  artifact.AddRung(kStepFineIn, kElevFineIn, kDeltaFineIn);
   const std::string kJson = artifact.ToJson();
   EXPECT_NE(kJson.find("\"lob_version\":\"0.13.0-test\""), std::string::npos);
   EXPECT_NE(kJson.find("\"step_in\":18"), std::string::npos);
@@ -94,14 +108,17 @@ namespace {
 // rounded up to one significant figure, except deflection (worst 0.0 observed
 // 2026-09-27; epsilon guard for cross-platform noise). Source of truth
 // mirrored in test/validation/baselines/floors.json (C1-ICAO cell).
-constexpr double kCeilElevIn_18_9 = 9e-05;   // worst 4.15814e-05 @3000ft x~2
-constexpr double kCeilElevMoa_18_9 = 8e-06;  // worst 3.97148e-06 @3000ft x~2
-constexpr double kCeilDeflMoa_18_9 =
+constexpr double kCeilElevIn18To9 = 9e-05;   // worst 4.15814e-05 @3000ft x~2
+constexpr double kCeilElevMoa18To9 = 8e-06;  // worst 3.97148e-06 @3000ft x~2
+constexpr double kCeilDeflMoa18To9 =
     1e-12;  // worst 0.0 observed 2026-09-27; epsilon guard for cross-platform
             // noise
-constexpr double kCeilTof_18_9 = 2e-07;  // worst 6.12488e-08 @3000ft x~2
+constexpr double kCeilTof18To9 = 2e-07;  // worst 6.12488e-08 @3000ft x~2
+// Print precision for machine-readable SURVEY lines: %.10g semantics.
+constexpr int kSurveyPrecisionDigits = 10;
 }  // namespace
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(ValidationConvergenceC1, StepLadderDecreasesWithoutRegression) {
   const std::array<uint32_t, 4> kRanges = {300U, 900U, 1800U, 3000U};
   std::array<lob::Output, 4> outs36{};
@@ -114,36 +131,38 @@ TEST(ValidationConvergenceC1, StepLadderDecreasesWithoutRegression) {
   ASSERT_EQ(SolveN(BuildAtStep(MakeC1IcaoBuilder(), 9U), kRanges, &outs9),
             kRanges.size());
   for (size_t i = 0; i < kRanges.size(); ++i) {
-    const double kElevCoarse = ElevInDiff(outs36[i], outs18[i]);
-    const double kElevFine = ElevInDiff(outs18[i], outs9[i]);
+    const double kElevCoarse = ElevInDiff(outs36.at(i), outs18.at(i));
+    const double kElevFine = ElevInDiff(outs18.at(i), outs9.at(i));
     EXPECT_TRUE(DecreasesOrAtFloor(kElevCoarse, kElevFine, kElevFloorIn))
-        << "range=" << kRanges[i];
-    EXPECT_LE(kElevFine, kCeilElevIn_18_9) << "range=" << kRanges[i];
-    const double kMoaCoarse = ElevMoaDiff(outs36[i], outs18[i]);
-    const double kMoaFine = ElevMoaDiff(outs18[i], outs9[i]);
+        << "range=" << kRanges.at(i);
+    EXPECT_LE(kElevFine, kCeilElevIn18To9) << "range=" << kRanges.at(i);
+    const double kMoaCoarse = ElevMoaDiff(outs36.at(i), outs18.at(i));
+    const double kMoaFine = ElevMoaDiff(outs18.at(i), outs9.at(i));
     EXPECT_TRUE(DecreasesOrAtFloor(kMoaCoarse, kMoaFine, kMoaFloor))
-        << "range=" << kRanges[i];
-    EXPECT_LE(kMoaFine, kCeilElevMoa_18_9) << "range=" << kRanges[i];
-    const double kDeflCoarse = DeflMoaDiff(outs36[i], outs18[i]);
-    const double kDeflFine = DeflMoaDiff(outs18[i], outs9[i]);
+        << "range=" << kRanges.at(i);
+    EXPECT_LE(kMoaFine, kCeilElevMoa18To9) << "range=" << kRanges.at(i);
+    const double kDeflCoarse = DeflMoaDiff(outs36.at(i), outs18.at(i));
+    const double kDeflFine = DeflMoaDiff(outs18.at(i), outs9.at(i));
     EXPECT_TRUE(DecreasesOrAtFloor(kDeflCoarse, kDeflFine, kMoaFloor))
-        << "range=" << kRanges[i];
-    EXPECT_LE(kDeflFine, kCeilDeflMoa_18_9) << "range=" << kRanges[i];
-    EXPECT_TRUE(DecreasesOrAtFloor(VelDiff(outs36[i], outs18[i]),
-                                   VelDiff(outs18[i], outs9[i]), kVelFloorFps))
-        << "range=" << kRanges[i];
-    EXPECT_TRUE(DecreasesOrAtFloor(EnergyDiff(outs36[i], outs18[i]),
-                                   EnergyDiff(outs18[i], outs9[i]),
+        << "range=" << kRanges.at(i);
+    EXPECT_LE(kDeflFine, kCeilDeflMoa18To9) << "range=" << kRanges.at(i);
+    EXPECT_TRUE(DecreasesOrAtFloor(VelDiff(outs36.at(i), outs18.at(i)),
+                                   VelDiff(outs18.at(i), outs9.at(i)),
+                                   kVelFloorFps))
+        << "range=" << kRanges.at(i);
+    EXPECT_TRUE(DecreasesOrAtFloor(EnergyDiff(outs36.at(i), outs18.at(i)),
+                                   EnergyDiff(outs18.at(i), outs9.at(i)),
                                    kEnergyFloorFtLbs))
-        << "range=" << kRanges[i];
-    const double kTofCoarse = TofDiff(outs36[i], outs18[i]);
-    const double kTofFine = TofDiff(outs18[i], outs9[i]);
+        << "range=" << kRanges.at(i);
+    const double kTofCoarse = TofDiff(outs36.at(i), outs18.at(i));
+    const double kTofFine = TofDiff(outs18.at(i), outs9.at(i));
     EXPECT_TRUE(DecreasesOrAtFloor(kTofCoarse, kTofFine, kTofFloorSec))
-        << "range=" << kRanges[i];
-    EXPECT_LE(kTofFine, kCeilTof_18_9) << "range=" << kRanges[i];
+        << "range=" << kRanges.at(i);
+    EXPECT_LE(kTofFine, kCeilTof18To9) << "range=" << kRanges.at(i);
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(ValidationConvergenceC1, InverseLadderDecreasesWithoutRegression) {
   const std::array<uint32_t, 2> kRanges = {900U, 1800U};
   std::array<lob::Output, 2> outs36{};
@@ -161,17 +180,19 @@ TEST(ValidationConvergenceC1, InverseLadderDecreasesWithoutRegression) {
   std::array<lob::Output, 2> fwd{};
   ASSERT_EQ(SolveN(kCtx36, kRanges, &fwd), kRanges.size());
   for (size_t i = 0; i < kRanges.size(); ++i) {
-    EXPECT_GT(fwd[i].elevation, -1200.0) << "range=" << kRanges[i];
+    EXPECT_GT(fwd.at(i).elevation, -1200.0) << "range=" << kRanges.at(i);
   }
   for (size_t i = 0; i < kRanges.size(); ++i) {
     // Inverse outputs are MOA adjustments; forward drop must stay above the
     // 1200-in dynamic-branch switch or this test measures the wrong path.
-    EXPECT_TRUE(std::isfinite(outs36[i].elevation));
-    const double kCoarse = std::fabs(outs36[i].elevation - outs18[i].elevation);
-    const double kFine = std::fabs(outs18[i].elevation - outs9[i].elevation);
+    EXPECT_TRUE(std::isfinite(outs36.at(i).elevation));
+    const double kCoarse =
+        std::fabs(outs36.at(i).elevation - outs18.at(i).elevation);
+    const double kFine =
+        std::fabs(outs18.at(i).elevation - outs9.at(i).elevation);
     EXPECT_TRUE(DecreasesOrAtFloor(kCoarse, kFine, kMoaFloor))
-        << "range=" << kRanges[i];
-    EXPECT_LE(kFine, 0.1) << "range=" << kRanges[i];
+        << "range=" << kRanges.at(i);
+    EXPECT_LE(kFine, 0.1) << "range=" << kRanges.at(i);
   }
 }
 
@@ -179,14 +200,20 @@ namespace {
 inline lob::Builder MakeWindBaseBuilder() {
   // Mirrors WindProfileBuildFixture::ConfiguredBuilder in
   // test/source/lob_wind_profile_test.cpp — keep in sync by review.
+  constexpr double kBcPsi = 0.372;
+  constexpr double kDiameterInch = 0.224;
+  constexpr double kMassGrains = 77.0;
+  constexpr int kVelocityFps = 2720;
+  constexpr double kZeroAngleMoa = 4.78;
+  constexpr double kOpticHeightIn = 2.5;
   lob::Builder b;
-  b.BallisticCoefficientPsi(0.372)
+  b.BallisticCoefficientPsi(kBcPsi)
       .BCDragFunction(lob::DragFunctionT::kG1)
-      .DiameterInch(0.224)
-      .MassGrains(77.0)
-      .InitialVelocityFps(2720)
-      .ZeroAngleMOA(4.78)
-      .OpticHeightInches(2.5);
+      .DiameterInch(kDiameterInch)
+      .MassGrains(kMassGrains)
+      .InitialVelocityFps(kVelocityFps)
+      .ZeroAngleMOA(kZeroAngleMoa)
+      .OpticHeightInches(kOpticHeightIn);
   return b;
 }
 }  // namespace
@@ -197,20 +224,23 @@ TEST(ValidationConvergenceWind, UniformLadderDecreasesWithoutRegression) {
   std::array<lob::Output, 3> outs18{};
   std::array<lob::Output, 3> outs9{};
   auto build_uniform = [](uint16_t step) {
+    constexpr double kWindSpeedMph = 5.0;
     lob::Builder b = MakeWindBaseBuilder();
-    b.WindHeading(lob::ClockAngleT::kIII).WindSpeedMph(5.0);
+    b.WindHeading(lob::ClockAngleT::kIII).WindSpeedMph(kWindSpeedMph);
     return BuildAtStep(b, step);
   };
   ASSERT_EQ(SolveN(build_uniform(36U), kRanges, &outs36), kRanges.size());
   ASSERT_EQ(SolveN(build_uniform(18U), kRanges, &outs18), kRanges.size());
   ASSERT_EQ(SolveN(build_uniform(9U), kRanges, &outs9), kRanges.size());
   for (size_t i = 0; i < kRanges.size(); ++i) {
-    EXPECT_TRUE(DecreasesOrAtFloor(DeflMoaDiff(outs36[i], outs18[i]),
-                                   DeflMoaDiff(outs18[i], outs9[i]), kMoaFloor))
-        << "range=" << kRanges[i];
+    EXPECT_TRUE(DecreasesOrAtFloor(DeflMoaDiff(outs36.at(i), outs18.at(i)),
+                                   DeflMoaDiff(outs18.at(i), outs9.at(i)),
+                                   kMoaFloor))
+        << "range=" << kRanges.at(i);
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(ValidationConvergenceWind, ScaledProfileLadderDecreasesWithoutRegression) {
   const std::array<lob::WindPoint, 2> kTwoPoint = {{
       {0.0, 90.0, 5.0, std::numeric_limits<double>::quiet_NaN()},
@@ -221,8 +251,9 @@ TEST(ValidationConvergenceWind, ScaledProfileLadderDecreasesWithoutRegression) {
   std::array<lob::Output, 3> outs18{};
   std::array<lob::Output, 3> outs9{};
   auto build_profile = [&kTwoPoint](uint16_t step) {
+    constexpr double kShearExponent = 0.25;
     lob::Builder b = MakeWindBaseBuilder();
-    b.WindProfile(kTwoPoint).WindShearExponent(0.25);
+    b.WindProfile(kTwoPoint).WindShearExponent(kShearExponent);
     return BuildAtStep(b, step);
   };
   const lob::Context kProbe = build_profile(36U);
@@ -232,27 +263,34 @@ TEST(ValidationConvergenceWind, ScaledProfileLadderDecreasesWithoutRegression) {
   ASSERT_EQ(SolveN(build_profile(18U), kRanges, &outs18), kRanges.size());
   ASSERT_EQ(SolveN(build_profile(9U), kRanges, &outs9), kRanges.size());
   for (size_t i = 0; i < kRanges.size(); ++i) {
-    EXPECT_TRUE(DecreasesOrAtFloor(DeflMoaDiff(outs36[i], outs18[i]),
-                                   DeflMoaDiff(outs18[i], outs9[i]), kMoaFloor))
-        << "range=" << kRanges[i];
+    EXPECT_TRUE(DecreasesOrAtFloor(DeflMoaDiff(outs36.at(i), outs18.at(i)),
+                                   DeflMoaDiff(outs18.at(i), outs9.at(i)),
+                                   kMoaFloor))
+        << "range=" << kRanges.at(i);
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(ValidationFullLadder, C1StepLadderToOneInchWritesArtifact) {
-  const char* kGate = std::getenv("LOB_FULL_LADDER");
-  if (kGate == nullptr || std::string(kGate) != "1") {
+  // single-threaded gtest; env gates select offline drivers
+  // NOLINTNEXTLINE(concurrency-mt-unsafe)
+  const char* gate = std::getenv("LOB_FULL_LADDER");
+  if (gate == nullptr || std::string(gate) != "1") {
     GTEST_SKIP() << "offline only: set LOB_FULL_LADDER=1";
   }
   // 1000-ft station is off-grid at the 36-in rung (1000 % 3 != 0), covering
   // the clamp path CI ranges (all multiples of 3 ft) never exercise.
-  const std::array<uint32_t, 5> kRanges = {300U, 900U, 1000U, 1800U, 3000U};
-  const std::array<uint16_t, 6> kRungs = {36U, 18U, 9U, 4U, 2U, 1U};
-  std::array<std::array<lob::Output, 5>, 6> ladders{};
-  for (size_t r = 0; r < kRungs.size(); ++r) {
-    ASSERT_EQ(SolveN(BuildAtStep(MakeC1IcaoBuilder(), kRungs[r]), kRanges,
-                     &ladders[r]),
+  constexpr size_t kNumRanges = 5;
+  constexpr size_t kNumRungs = 6;
+  const std::array<uint32_t, kNumRanges> kRanges = {300U, 900U, 1000U, 1800U,
+                                                    3000U};
+  const std::array<uint16_t, kNumRungs> kRungs = {36U, 18U, 9U, 4U, 2U, 1U};
+  std::array<std::array<lob::Output, kNumRanges>, kNumRungs> ladders{};
+  for (size_t ri = 0; ri < kRungs.size(); ++ri) {
+    ASSERT_EQ(SolveN(BuildAtStep(MakeC1IcaoBuilder(), kRungs.at(ri)), kRanges,
+                     &ladders.at(ri)),
               kRanges.size())
-        << "rung=" << kRungs[r];
+        << "rung=" << kRungs.at(ri);
   }
   // Monotone + observed-order plausibility (Heun theory: p ≈ 2; allow
   // [1, 3] for knot/wind-joint degradation) on the 1800-ft elevation
@@ -275,10 +313,11 @@ TEST(ValidationFullLadder, C1StepLadderToOneInchWritesArtifact) {
   artifact.solver_config =
       "step_ladder_in=36,18,9,4,2,1,angle_tol_moa=0.01,"
       "density_path=fast,ranges_ft=300,900,1000,1800,3000";
-  for (size_t r = 0; r < kRungs.size(); ++r) {
+  for (size_t ri = 0; ri < kRungs.size(); ++ri) {
     const double kDelta =
-        (r == 0) ? 0.0 : ElevInDiff(ladders[r - 1][3], ladders[r][3]);
-    artifact.AddRung(kRungs[r], ladders[r][3].elevation, kDelta);
+        (ri == 0) ? 0.0
+                  : ElevInDiff(ladders.at(ri - 1).at(3), ladders.at(ri).at(3));
+    artifact.AddRung(kRungs.at(ri), ladders.at(ri).at(3).elevation, kDelta);
   }
   ASSERT_TRUE(artifact.WriteFiles(LOB_VALIDATION_DIR, "convergence_C1"));
 }
@@ -287,9 +326,12 @@ TEST(ValidationFullLadder, C1StepLadderToOneInchWritesArtifact) {
 // cells C5-uniform, C6-scaled, C8-Litz, C9-dynamic-tail. Hermetic: prints
 // machine-readable SURVEY lines to stdout, no file I/O. Transcription into
 // floors.json is by hand. Offline only: set LOB_FLOOR_SURVEY=1.
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(ValidationFloorSurvey, SurveyCells) {
-  const char* kGate = std::getenv("LOB_FLOOR_SURVEY");
-  if (kGate == nullptr || std::string(kGate) != "1") {
+  // single-threaded gtest; env gates select offline drivers
+  // NOLINTNEXTLINE(concurrency-mt-unsafe)
+  const char* gate = std::getenv("LOB_FLOOR_SURVEY");
+  if (gate == nullptr || std::string(gate) != "1") {
     GTEST_SKIP() << "offline only: set LOB_FLOOR_SURVEY=1";
   }
 
@@ -300,8 +342,9 @@ TEST(ValidationFloorSurvey, SurveyCells) {
     std::array<lob::Output, 3> outs18{};
     std::array<lob::Output, 3> outs9{};
     auto build_uniform = [](uint16_t step) {
+      constexpr double kWindSpeedMph = 5.0;
       lob::Builder b = MakeWindBaseBuilder();
-      b.WindHeading(lob::ClockAngleT::kIII).WindSpeedMph(5.0);
+      b.WindHeading(lob::ClockAngleT::kIII).WindSpeedMph(kWindSpeedMph);
       return BuildAtStep(b, step);
     };
     ASSERT_EQ(SolveN(build_uniform(36U), kRanges, &outs36), kRanges.size());
@@ -314,39 +357,33 @@ TEST(ValidationFloorSurvey, SurveyCells) {
     double w_vel = 0.0;
     double w_energy = 0.0;
     for (size_t i = 0; i < kRanges.size(); ++i) {
-      const double kElevIn = ElevInDiff(outs18[i], outs9[i]);
-      if (kElevIn > w_elev_in) {
-        w_elev_in = kElevIn;
-      }
-      const double kElevMoa = ElevMoaDiff(outs18[i], outs9[i]);
-      if (kElevMoa > w_elev_moa) {
-        w_elev_moa = kElevMoa;
-      }
-      const double kDeflMoa = DeflMoaDiff(outs18[i], outs9[i]);
-      if (kDeflMoa > w_defl_moa) {
-        w_defl_moa = kDeflMoa;
-      }
-      const double kTof = TofDiff(outs18[i], outs9[i]);
-      if (kTof > w_tof) {
-        w_tof = kTof;
-      }
-      const double kVel = VelDiff(outs18[i], outs9[i]);
-      if (kVel > w_vel) {
-        w_vel = kVel;
-      }
-      const double kEnergy = EnergyDiff(outs18[i], outs9[i]);
-      if (kEnergy > w_energy) {
-        w_energy = kEnergy;
-      }
+      const double kElevIn = ElevInDiff(outs18.at(i), outs9.at(i));
+      w_elev_in = std::max(w_elev_in, kElevIn);
+      const double kElevMoa = ElevMoaDiff(outs18.at(i), outs9.at(i));
+      w_elev_moa = std::max(w_elev_moa, kElevMoa);
+      const double kDeflMoa = DeflMoaDiff(outs18.at(i), outs9.at(i));
+      w_defl_moa = std::max(w_defl_moa, kDeflMoa);
+      const double kTof = TofDiff(outs18.at(i), outs9.at(i));
+      w_tof = std::max(w_tof, kTof);
+      const double kVel = VelDiff(outs18.at(i), outs9.at(i));
+      w_vel = std::max(w_vel, kVel);
+      const double kEnergy = EnergyDiff(outs18.at(i), outs9.at(i));
+      w_energy = std::max(w_energy, kEnergy);
     }
-    std::printf("SURVEY C5-uniform elevation_in worst18_9=%.10g\n", w_elev_in);
-    std::printf("SURVEY C5-uniform elevation_moa worst18_9=%.10g\n",
-                w_elev_moa);
-    std::printf("SURVEY C5-uniform deflection_moa worst18_9=%.10g\n",
-                w_defl_moa);
-    std::printf("SURVEY C5-uniform time_of_flight_s worst18_9=%.10g\n", w_tof);
-    std::printf("SURVEY C5-uniform velocity_fps worst18_9=%.10g\n", w_vel);
-    std::printf("SURVEY C5-uniform energy_ft_lbf worst18_9=%.10g\n", w_energy);
+    std::cout << "SURVEY C5-uniform elevation_in worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_elev_in << "\n";
+    std::cout << "SURVEY C5-uniform elevation_moa worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_elev_moa
+              << "\n";
+    std::cout << "SURVEY C5-uniform deflection_moa worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_defl_moa
+              << "\n";
+    std::cout << "SURVEY C5-uniform time_of_flight_s worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_tof << "\n";
+    std::cout << "SURVEY C5-uniform velocity_fps worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_vel << "\n";
+    std::cout << "SURVEY C5-uniform energy_ft_lbf worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_energy << "\n";
   }
 
   // C6-scaled: wind-base + two-point 90-degree profile with shear 0.25.
@@ -360,8 +397,9 @@ TEST(ValidationFloorSurvey, SurveyCells) {
     std::array<lob::Output, 3> outs18{};
     std::array<lob::Output, 3> outs9{};
     auto build_profile = [&kTwoPoint](uint16_t step) {
+      constexpr double kShearExponent = 0.25;
       lob::Builder b = MakeWindBaseBuilder();
-      b.WindProfile(kTwoPoint).WindShearExponent(0.25);
+      b.WindProfile(kTwoPoint).WindShearExponent(kShearExponent);
       return BuildAtStep(b, step);
     };
     const lob::Context kProbe = build_profile(36U);
@@ -377,38 +415,33 @@ TEST(ValidationFloorSurvey, SurveyCells) {
     double w_vel = 0.0;
     double w_energy = 0.0;
     for (size_t i = 0; i < kRanges.size(); ++i) {
-      const double kElevIn = ElevInDiff(outs18[i], outs9[i]);
-      if (kElevIn > w_elev_in) {
-        w_elev_in = kElevIn;
-      }
-      const double kElevMoa = ElevMoaDiff(outs18[i], outs9[i]);
-      if (kElevMoa > w_elev_moa) {
-        w_elev_moa = kElevMoa;
-      }
-      const double kDeflMoa = DeflMoaDiff(outs18[i], outs9[i]);
-      if (kDeflMoa > w_defl_moa) {
-        w_defl_moa = kDeflMoa;
-      }
-      const double kTof = TofDiff(outs18[i], outs9[i]);
-      if (kTof > w_tof) {
-        w_tof = kTof;
-      }
-      const double kVel = VelDiff(outs18[i], outs9[i]);
-      if (kVel > w_vel) {
-        w_vel = kVel;
-      }
-      const double kEnergy = EnergyDiff(outs18[i], outs9[i]);
-      if (kEnergy > w_energy) {
-        w_energy = kEnergy;
-      }
+      const double kElevIn = ElevInDiff(outs18.at(i), outs9.at(i));
+      w_elev_in = std::max(w_elev_in, kElevIn);
+      const double kElevMoa = ElevMoaDiff(outs18.at(i), outs9.at(i));
+      w_elev_moa = std::max(w_elev_moa, kElevMoa);
+      const double kDeflMoa = DeflMoaDiff(outs18.at(i), outs9.at(i));
+      w_defl_moa = std::max(w_defl_moa, kDeflMoa);
+      const double kTof = TofDiff(outs18.at(i), outs9.at(i));
+      w_tof = std::max(w_tof, kTof);
+      const double kVel = VelDiff(outs18.at(i), outs9.at(i));
+      w_vel = std::max(w_vel, kVel);
+      const double kEnergy = EnergyDiff(outs18.at(i), outs9.at(i));
+      w_energy = std::max(w_energy, kEnergy);
     }
-    std::printf("SURVEY C6-scaled elevation_in worst18_9=%.10g\n", w_elev_in);
-    std::printf("SURVEY C6-scaled elevation_moa worst18_9=%.10g\n", w_elev_moa);
-    std::printf("SURVEY C6-scaled deflection_moa worst18_9=%.10g\n",
-                w_defl_moa);
-    std::printf("SURVEY C6-scaled time_of_flight_s worst18_9=%.10g\n", w_tof);
-    std::printf("SURVEY C6-scaled velocity_fps worst18_9=%.10g\n", w_vel);
-    std::printf("SURVEY C6-scaled energy_ft_lbf worst18_9=%.10g\n", w_energy);
+    std::cout << "SURVEY C6-scaled elevation_in worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_elev_in << "\n";
+    std::cout << "SURVEY C6-scaled elevation_moa worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_elev_moa
+              << "\n";
+    std::cout << "SURVEY C6-scaled deflection_moa worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_defl_moa
+              << "\n";
+    std::cout << "SURVEY C6-scaled time_of_flight_s worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_tof << "\n";
+    std::cout << "SURVEY C6-scaled velocity_fps worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_vel << "\n";
+    std::cout << "SURVEY C6-scaled energy_ft_lbf worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_energy << "\n";
   }
 
   // C8-Litz: spin inputs taking the Litz (not Boatright) path. Mirrors the
@@ -420,16 +453,24 @@ TEST(ValidationFloorSurvey, SurveyCells) {
     std::array<lob::Output, 3> outs18{};
     std::array<lob::Output, 3> outs9{};
     auto build_litz = [](uint16_t step) {
+      constexpr double kBcPsi = 0.436;
+      constexpr uint16_t kVelocityFps = 3100U;
+      constexpr double kZeroAngleMoa = 6.11;
+      constexpr double kDiameterInch = 0.308;
+      constexpr double kLengthInch = 1.215;
+      constexpr double kMassGrains = 168.0;
+      constexpr double kTwistIn = 10.0;
+      constexpr double kWindSpeedMph = 10.0;
       lob::Builder b;
-      b.BallisticCoefficientPsi(0.436)
-          .InitialVelocityFps(3100U)
-          .ZeroAngleMOA(6.11)
-          .DiameterInch(0.308)
-          .LengthInch(1.215)
-          .MassGrains(168.0)
-          .TwistInchesPerTurn(10.0)
+      b.BallisticCoefficientPsi(kBcPsi)
+          .InitialVelocityFps(kVelocityFps)
+          .ZeroAngleMOA(kZeroAngleMoa)
+          .DiameterInch(kDiameterInch)
+          .LengthInch(kLengthInch)
+          .MassGrains(kMassGrains)
+          .TwistInchesPerTurn(kTwistIn)
           .WindHeading(lob::ClockAngleT::kIII)
-          .WindSpeedMph(10.0);
+          .WindSpeedMph(kWindSpeedMph);
       return BuildAtStep(b, step);
     };
     const lob::Context kProbe = build_litz(36U);
@@ -440,11 +481,11 @@ TEST(ValidationFloorSurvey, SurveyCells) {
     EXPECT_TRUE(std::isfinite(kProbe.stability_factor));
     EXPECT_TRUE(std::fabs(kProbe.stability_factor) > 0.0);
     EXPECT_TRUE(std::fabs(kProbe.aerodynamic_jump) > 0.0);
-    std::printf(
-        "SURVEY C8-Litz branch spindrift_isnan=%d stability=%.10g "
-        "jump_moa=%.10g\n",
-        std::isnan(kProbe.spindrift_factor) ? 1 : 0, kProbe.stability_factor,
-        kProbe.aerodynamic_jump);
+    std::cout << "SURVEY C8-Litz branch spindrift_isnan="
+              << (std::isnan(kProbe.spindrift_factor) ? 1 : 0)
+              << " stability=" << std::setprecision(kSurveyPrecisionDigits)
+              << kProbe.stability_factor
+              << " jump_moa=" << kProbe.aerodynamic_jump << "\n";
     ASSERT_EQ(SolveN(build_litz(36U), kRanges, &outs36), kRanges.size());
     ASSERT_EQ(SolveN(build_litz(18U), kRanges, &outs18), kRanges.size());
     ASSERT_EQ(SolveN(build_litz(9U), kRanges, &outs9), kRanges.size());
@@ -455,37 +496,33 @@ TEST(ValidationFloorSurvey, SurveyCells) {
     double w_vel = 0.0;
     double w_energy = 0.0;
     for (size_t i = 0; i < kRanges.size(); ++i) {
-      const double kElevIn = ElevInDiff(outs18[i], outs9[i]);
-      if (kElevIn > w_elev_in) {
-        w_elev_in = kElevIn;
-      }
-      const double kElevMoa = ElevMoaDiff(outs18[i], outs9[i]);
-      if (kElevMoa > w_elev_moa) {
-        w_elev_moa = kElevMoa;
-      }
-      const double kDeflMoa = DeflMoaDiff(outs18[i], outs9[i]);
-      if (kDeflMoa > w_defl_moa) {
-        w_defl_moa = kDeflMoa;
-      }
-      const double kTof = TofDiff(outs18[i], outs9[i]);
-      if (kTof > w_tof) {
-        w_tof = kTof;
-      }
-      const double kVel = VelDiff(outs18[i], outs9[i]);
-      if (kVel > w_vel) {
-        w_vel = kVel;
-      }
-      const double kEnergy = EnergyDiff(outs18[i], outs9[i]);
-      if (kEnergy > w_energy) {
-        w_energy = kEnergy;
-      }
+      const double kElevIn = ElevInDiff(outs18.at(i), outs9.at(i));
+      w_elev_in = std::max(w_elev_in, kElevIn);
+      const double kElevMoa = ElevMoaDiff(outs18.at(i), outs9.at(i));
+      w_elev_moa = std::max(w_elev_moa, kElevMoa);
+      const double kDeflMoa = DeflMoaDiff(outs18.at(i), outs9.at(i));
+      w_defl_moa = std::max(w_defl_moa, kDeflMoa);
+      const double kTof = TofDiff(outs18.at(i), outs9.at(i));
+      w_tof = std::max(w_tof, kTof);
+      const double kVel = VelDiff(outs18.at(i), outs9.at(i));
+      w_vel = std::max(w_vel, kVel);
+      const double kEnergy = EnergyDiff(outs18.at(i), outs9.at(i));
+      w_energy = std::max(w_energy, kEnergy);
     }
-    std::printf("SURVEY C8-Litz elevation_in worst18_9=%.10g\n", w_elev_in);
-    std::printf("SURVEY C8-Litz elevation_moa worst18_9=%.10g\n", w_elev_moa);
-    std::printf("SURVEY C8-Litz deflection_moa worst18_9=%.10g\n", w_defl_moa);
-    std::printf("SURVEY C8-Litz time_of_flight_s worst18_9=%.10g\n", w_tof);
-    std::printf("SURVEY C8-Litz velocity_fps worst18_9=%.10g\n", w_vel);
-    std::printf("SURVEY C8-Litz energy_ft_lbf worst18_9=%.10g\n", w_energy);
+    std::cout << "SURVEY C8-Litz elevation_in worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_elev_in << "\n";
+    std::cout << "SURVEY C8-Litz elevation_moa worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_elev_moa
+              << "\n";
+    std::cout << "SURVEY C8-Litz deflection_moa worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_defl_moa
+              << "\n";
+    std::cout << "SURVEY C8-Litz time_of_flight_s worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_tof << "\n";
+    std::cout << "SURVEY C8-Litz velocity_fps worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_vel << "\n";
+    std::cout << "SURVEY C8-Litz energy_ft_lbf worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_energy << "\n";
   }
 
   // C9-dynamic-tail: lapse-scaled SolveAngle path via SolveInverse at
@@ -494,18 +531,23 @@ TEST(ValidationFloorSurvey, SurveyCells) {
   {
     const std::array<uint32_t, 3> kRanges = {6000U, 7500U, 9000U};
     auto build_tail = [](uint16_t step) {
+      constexpr double kBcPsi = 0.436;
+      constexpr uint16_t kVelocityFps = 3100U;
+      constexpr double kZeroAngleMoa = 6.11;
       lob::Builder b;
-      b.BallisticCoefficientPsi(0.436).InitialVelocityFps(3100U).ZeroAngleMOA(
-          6.11);
+      b.BallisticCoefficientPsi(kBcPsi)
+          .InitialVelocityFps(kVelocityFps)
+          .ZeroAngleMOA(kZeroAngleMoa);
       return BuildAtStep(b, step);
     };
     std::array<lob::Output, 3> fwd{};
     ASSERT_EQ(SolveN(build_tail(36U), kRanges, &fwd), kRanges.size());
     for (size_t i = 0; i < kRanges.size(); ++i) {
-      std::printf(
-          "SURVEY C9-dynamic-tail branch range_ft=%u forward_drop_in=%.10g\n",
-          kRanges[i], fwd[i].elevation);
-      EXPECT_LT(fwd[i].elevation, -1200.0) << "range=" << kRanges[i];
+      std::cout << "SURVEY C9-dynamic-tail branch range_ft=" << kRanges.at(i)
+                << " forward_drop_in="
+                << std::setprecision(kSurveyPrecisionDigits)
+                << fwd.at(i).elevation << "\n";
+      EXPECT_LT(fwd.at(i).elevation, -1200.0) << "range=" << kRanges.at(i);
     }
     std::array<lob::Output, 3> outs36{};
     std::array<lob::Output, 3> outs18{};
@@ -522,41 +564,34 @@ TEST(ValidationFloorSurvey, SurveyCells) {
     double w_vel = 0.0;
     double w_energy = 0.0;
     for (size_t i = 0; i < kRanges.size(); ++i) {
-      EXPECT_TRUE(std::isfinite(outs36[i].elevation));
-      EXPECT_TRUE(std::isfinite(outs18[i].elevation));
-      EXPECT_TRUE(std::isfinite(outs9[i].elevation));
+      EXPECT_TRUE(std::isfinite(outs36.at(i).elevation));
+      EXPECT_TRUE(std::isfinite(outs18.at(i).elevation));
+      EXPECT_TRUE(std::isfinite(outs9.at(i).elevation));
       const double kElevMoa =
-          std::fabs(outs18[i].elevation - outs9[i].elevation);
-      if (kElevMoa > w_elev_moa) {
-        w_elev_moa = kElevMoa;
-      }
+          std::fabs(outs18.at(i).elevation - outs9.at(i).elevation);
+      w_elev_moa = std::max(w_elev_moa, kElevMoa);
       const double kDeflMoa =
-          std::fabs(outs18[i].deflection - outs9[i].deflection);
-      if (kDeflMoa > w_defl_moa) {
-        w_defl_moa = kDeflMoa;
-      }
-      const double kTof = TofDiff(outs18[i], outs9[i]);
-      if (kTof > w_tof) {
-        w_tof = kTof;
-      }
-      const double kVel = VelDiff(outs18[i], outs9[i]);
-      if (kVel > w_vel) {
-        w_vel = kVel;
-      }
-      const double kEnergy = EnergyDiff(outs18[i], outs9[i]);
-      if (kEnergy > w_energy) {
-        w_energy = kEnergy;
-      }
+          std::fabs(outs18.at(i).deflection - outs9.at(i).deflection);
+      w_defl_moa = std::max(w_defl_moa, kDeflMoa);
+      const double kTof = TofDiff(outs18.at(i), outs9.at(i));
+      w_tof = std::max(w_tof, kTof);
+      const double kVel = VelDiff(outs18.at(i), outs9.at(i));
+      w_vel = std::max(w_vel, kVel);
+      const double kEnergy = EnergyDiff(outs18.at(i), outs9.at(i));
+      w_energy = std::max(w_energy, kEnergy);
     }
-    std::printf("SURVEY C9-dynamic-tail elevation_moa worst18_9=%.10g\n",
-                w_elev_moa);
-    std::printf("SURVEY C9-dynamic-tail deflection_moa worst18_9=%.10g\n",
-                w_defl_moa);
-    std::printf("SURVEY C9-dynamic-tail time_of_flight_s worst18_9=%.10g\n",
-                w_tof);
-    std::printf("SURVEY C9-dynamic-tail velocity_fps worst18_9=%.10g\n", w_vel);
-    std::printf("SURVEY C9-dynamic-tail energy_ft_lbf worst18_9=%.10g\n",
-                w_energy);
+    std::cout << "SURVEY C9-dynamic-tail elevation_moa worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_elev_moa
+              << "\n";
+    std::cout << "SURVEY C9-dynamic-tail deflection_moa worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_defl_moa
+              << "\n";
+    std::cout << "SURVEY C9-dynamic-tail time_of_flight_s worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_tof << "\n";
+    std::cout << "SURVEY C9-dynamic-tail velocity_fps worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_vel << "\n";
+    std::cout << "SURVEY C9-dynamic-tail energy_ft_lbf worst18_9="
+              << std::setprecision(kSurveyPrecisionDigits) << w_energy << "\n";
   }
 }
 
