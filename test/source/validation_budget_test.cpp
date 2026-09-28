@@ -227,6 +227,10 @@ inline ManifestLoad LoadBudgetManifest(const std::string& dir) {
       if (!kNonlinear.is_array()) {
         throw std::runtime_error("manifest nonlinear_route_to_mc must be array");
       }
+      for (std::size_t ni = 0; ni < kNonlinear.size(); ++ni) {
+        (void)ReqManifestString(kNonlinear.at(ni), "input");
+        (void)ReqManifestString(kNonlinear.at(ni), "reason");
+      }
       kOut.cells.push_back(kEntry);
     }
     return kOut;
@@ -333,6 +337,28 @@ TEST(BudgetManifest, EveryRowUFailsClosedAsTbdLiteral) {
     }
   }
   EXPECT_EQ(tbd_rows, kExpectedIncompleteRows);
+}
+
+TEST(BudgetManifest, CellAliasMapsC6ShearToFloorsCell) {
+  std::ifstream in(std::string(LOB_MANIFESTS_DIR) + "/budget_template.json");
+  ASSERT_TRUE(static_cast<bool>(in));
+  std::ostringstream raw;
+  raw << in.rdbuf();
+  const nlohmann::json kRoot = nlohmann::json::parse(raw.str());
+  const std::string kFloors =
+      ReqManifestString(kRoot.at("cell_aliases").at("C6-shear"), "floors_cell");
+  EXPECT_EQ(kFloors, "C6-scaled");
+  bool found = false;
+  const nlohmann::json& kCells = kRoot.at("cells");
+  for (std::size_t ci = 0; ci < kCells.size(); ++ci) {
+    const std::string kSource =
+        ReqManifestString(kCells.at(ci).at("epsilon_num"), "source");
+    if (kSource.find(kFloors) != std::string::npos) {
+      found = true;
+      break;
+    }
+  }
+  EXPECT_TRUE(found);
 }
 
 }  // namespace tests

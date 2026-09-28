@@ -5,6 +5,11 @@
     "created_utc": "2026-09-28",
     "distribution_defaults_note": "All row distributions are TEMPLATE DEFAULTS per spec \u00a712.1 (normal for sensors, uniform where only bounds are known) \u2014 the human must confirm or replace each one during elicitation."
   },
+  "cell_aliases": {
+    "C6-shear": {
+      "floors_cell": "C6-scaled"
+    }
+  },
   "instructions": "Human elicitation guide (spec \u00a721 item 7): each row whose u is the TBD literal needs a human-supplied standard uncertainty u(x) plus provenance before any combined uncertainty may be emitted \u2014 the loader fails closed (no u_c) while any row is TBD. Qualifying evidence per row: chronograph datasheet (velocity; give model, serial, calibration date); sensor datasheets/certs (pressure, temperature, humidity, wind-station meters); optic-height and range tolerances from the instrument spec; BC scatter from supplier sheets or firing records; wind-aloft vs station error from measurement campaigns. Where no measurement exists, a labeled engineering judgment is acceptable ONLY if recorded as judgment (author, date, rationale, and the distribution choice it supports) \u2014 judgment must never be silently treated as measured data. Distributions shown are TEMPLATE DEFAULTS per spec \u00a712.1 (normal for sensors, uniform where only bounds are known): the human must confirm or replace each one. Correlation stays 'assumed-independent \u2014 see risk' until a measurement campaign justifies covariances (pressure/temperature/altitude triples, band BCs, multi-station profiles). Nonlinear-flagged rows route to Monte Carlo (Phase 5), never into the linear combiner. Approval: a human reviewer approves this template and the sources of the first completed budget (\u00a721 item 7); silently filling a numeric u without review must fail the all-TBD test.",
   "cells": [
     {
