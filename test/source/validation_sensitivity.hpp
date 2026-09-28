@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <functional>
@@ -21,12 +22,13 @@ struct DiffResult {
 
 template <typename F>
 DiffResult CentralDifference(F f, double x, double h) {
+  constexpr double kTwo = 2.0;
   const double kFp = f(x + h);
   const double kFm = f(x - h);
   DiffResult r;
   r.f_plus = kFp;
   r.f_minus = kFm;
-  r.deriv = (kFp - kFm) / (2.0 * h);
+  r.deriv = (kFp - kFm) / (kTwo * h);
   return r;
 }
 
@@ -39,12 +41,14 @@ inline double SnapH(double h, double quantum) {
 }
 
 inline double WrapDelta180(double a, double b) {
+  constexpr double kHalfCircleDeg = 180.0;
+  constexpr double kFullCircleDeg = 360.0;
   double d = a - b;
-  while (d > 180.0) {
-    d -= 360.0;
+  while (d > kHalfCircleDeg) {
+    d -= kFullCircleDeg;
   }
-  while (d <= -180.0) {
-    d += 360.0;
+  while (d <= -kHalfCircleDeg) {
+    d += kFullCircleDeg;
   }
   return d;
 }
@@ -58,8 +62,11 @@ struct HSelection {
 
 template <typename F>
 HSelection SelectH(F f, double x, double h_seed, double quantum) {
+  constexpr int kMaxDoublings = 8;
+  constexpr double kTwo = 2.0;
+  constexpr double kMaxRelSpread = 0.2;
   double h = SnapH(h_seed, quantum);
-  for (int i = 0; i < 8; ++i) {
+  for (int i = 0; i < kMaxDoublings; ++i) {
     const double kH2 = SnapH(2.0 * h, quantum);
     const double kHh = SnapH(0.5 * h, quantum);
     const bool kDistinct = (kH2 > h || h > kH2) && (h > kHh || kHh > h) &&
@@ -80,17 +87,18 @@ HSelection SelectH(F f, double x, double h_seed, double quantum) {
       const double kS12 = std::fabs(kD2 - kD1) / std::fabs(kMean);
       const double kS13 = std::fabs(kD3 - kD1) / std::fabs(kMean);
       s.rel_spread = (kS12 > kS13) ? kS12 : kS13;
-      s.ok = s.rel_spread <= 0.2;
+      s.ok = s.rel_spread <= kMaxRelSpread;
       return s;
     }
-    h = 2.0 * h;
+    h = kTwo * h;
   }
-  return HSelection();
+  return {};
 }
 
 inline bool GenuineCheck(double response, double noise_floor, int sign_h,
                          int sign_2h) {
-  return (response > 10.0 * noise_floor) && (sign_h == sign_2h) &&
+  constexpr double kMinSignalToNoise = 10.0;
+  return (response > kMinSignalToNoise * noise_floor) && (sign_h == sign_2h) &&
          (response > 0.0);
 }
 
@@ -100,7 +108,7 @@ struct CannedInput {
   double quantum;
 };
 
-constexpr CannedInput kCannedTable[] = {
+constexpr std::array<CannedInput, 15> kCannedTable = {{
     {"velocity_fps", 10.0, 1.0},
     {"bc_psi", 0.00425, 0.0},  // ±1% of the C1 0.425-scale BC; per-case BC
                                // scaling is applied by callers, see Task 3
@@ -117,6 +125,6 @@ constexpr CannedInput kCannedTable[] = {
     {"diameter_in", 0.002, 0.0},
     {"length_in", 0.002, 0.0},
     {"twist_in_per_turn", 0.5, 0.0},
-};
+}};
 
 }  // namespace tests

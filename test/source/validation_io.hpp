@@ -8,7 +8,6 @@
 
 #include <cmath>
 #include <cstdint>
-#include <cstdio>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -20,24 +19,24 @@ namespace tests {
 inline std::string JsonEscape(const std::string& s) {
   std::string out;
   out.reserve(s.size());
-  for (size_t i = 0; i < s.size(); ++i) {
-    const char kC = s[i];
-    if (kC == '"' || kC == '\\') {
+  for (const char kCh : s) {
+    if (kCh == '"' || kCh == '\\') {
       out += '\\';
     }
-    out += kC;
+    out += kCh;
   }
   return out;
 }
 
 // NaN/non-finite -> null (CSV uses empty field instead, see ToCsv).
 inline std::string JsonDouble(double v) {
+  constexpr int kJsonPrecisionDigits = 10;
   if (!std::isfinite(v)) {
     return "null";
   }
-  char buf[32] = {};
-  std::snprintf(buf, sizeof(buf), "%.10g", v);
-  return std::string(buf);
+  std::ostringstream os;
+  os << std::setprecision(kJsonPrecisionDigits) << v;
+  return os.str();
 }
 
 struct ArtifactRung {
@@ -63,18 +62,19 @@ struct ConvergenceArtifact {
 
   std::string ToJson() const {
     std::ostringstream os;
-    os << "{\"provenance\":{\"lob_version\":\""
-       << JsonEscape(provenance_lob_version) << "\",\"git_sha\":\""
-       << JsonEscape(provenance_git_sha) << "\"},\"solver_config\":\""
-       << JsonEscape(solver_config) << "\",\"rungs\":[";
-    for (size_t i = 0; i < rungs.size(); ++i) {
-      if (i > 0) {
+    os << R"({"provenance":{"lob_version":")"
+       << JsonEscape(provenance_lob_version) << R"(","git_sha":")"
+       << JsonEscape(provenance_git_sha) << R"("},"solver_config":")"
+       << JsonEscape(solver_config) << R"(","rungs":[)";
+    bool first = true;
+    for (const auto& rung : rungs) {
+      if (!first) {
         os << ",";
       }
-      os << "{\"step_in\":" << rungs[i].step_in
-         << ",\"elevation_in\":" << JsonDouble(rungs[i].elevation_in)
-         << ",\"elevation_delta_in\":"
-         << JsonDouble(rungs[i].elevation_delta_in) << "}";
+      first = false;
+      os << R"({"step_in":)" << rung.step_in << R"(,"elevation_in":)"
+         << JsonDouble(rung.elevation_in) << R"(,"elevation_delta_in":)"
+         << JsonDouble(rung.elevation_delta_in) << "}";
     }
     os << "]}";
     return os.str();
@@ -83,14 +83,14 @@ struct ConvergenceArtifact {
   std::string ToCsv() const {
     std::ostringstream os;
     os << "step_in,elevation_in,elevation_delta_in\n";
-    for (size_t i = 0; i < rungs.size(); ++i) {
-      os << rungs[i].step_in << ",";
-      if (std::isfinite(rungs[i].elevation_in)) {
-        os << JsonDouble(rungs[i].elevation_in);
+    for (const auto& rung : rungs) {
+      os << rung.step_in << ",";
+      if (std::isfinite(rung.elevation_in)) {
+        os << JsonDouble(rung.elevation_in);
       }
       os << ",";
-      if (std::isfinite(rungs[i].elevation_delta_in)) {
-        os << JsonDouble(rungs[i].elevation_delta_in);
+      if (std::isfinite(rung.elevation_delta_in)) {
+        os << JsonDouble(rung.elevation_delta_in);
       }
       os << "\n";
     }
@@ -151,27 +151,28 @@ struct SensitivityArtifact {
 
   std::string ToJson() const {
     std::ostringstream os;
-    os << "{\"provenance\":{\"lob_version\":\""
-       << JsonEscape(provenance_lob_version) << "\",\"git_sha\":\""
-       << JsonEscape(provenance_git_sha) << "\"},\"solver_config\":\""
-       << JsonEscape(solver_config) << "\",\"rows\":[";
-    for (size_t i = 0; i < rows.size(); ++i) {
-      if (i > 0) {
+    os << R"({"provenance":{"lob_version":")"
+       << JsonEscape(provenance_lob_version) << R"(","git_sha":")"
+       << JsonEscape(provenance_git_sha) << R"("},"solver_config":")"
+       << JsonEscape(solver_config) << R"(","rows":[)";
+    bool first = true;
+    for (const auto& row : rows) {
+      if (!first) {
         os << ",";
       }
-      os << "{\"input\":\"" << JsonEscape(rows[i].input)
-         << "\",\"range_ft\":" << rows[i].range_ft << ",\"output\":\""
-         << JsonEscape(rows[i].output)
-         << "\",\"h_accepted\":" << JsonDouble(rows[i].h_accepted)
-         << ",\"raw_deriv\":" << JsonDouble(rows[i].raw_deriv)
-         << ",\"canned_response\":" << JsonDouble(rows[i].canned_response)
-         << ",\"nonlinear\":" << (rows[i].nonlinear ? "true" : "false")
-         << ",\"status\":\"" << JsonEscape(rows[i].status)
-         << "\""
+      first = false;
+      os << R"({"input":")" << JsonEscape(row.input) << R"(","range_ft":)"
+         << row.range_ft << R"(,"output":")" << JsonEscape(row.output)
+         << R"(,"h_accepted":)" << JsonDouble(row.h_accepted)
+         << R"(,"raw_deriv":)" << JsonDouble(row.raw_deriv)
+         << R"(,"canned_response":)" << JsonDouble(row.canned_response)
+         << R"(,"nonlinear":)" << (row.nonlinear ? "true" : "false")
+         << R"(,"status":")" << JsonEscape(row.status)
+         << R"(")"
          // S reserved for Phase 4 (spec §9.3/§11): semi-elasticity needs
          // u(x) values that do not exist yet; JSON carries the null
          // placeholder while CSV omits the column until Phase 4 fills it.
-         << ",\"sensitivity_coefficient_S\":null}";
+         << R"(,"sensitivity_coefficient_S":null})";
     }
     os << "]}";
     return os.str();
@@ -181,22 +182,22 @@ struct SensitivityArtifact {
     std::ostringstream os;
     os << "input,range_ft,output,h_accepted,raw_deriv,canned_response,"
           "nonlinear,status\n";
-    for (size_t i = 0; i < rows.size(); ++i) {
-      os << JsonEscape(rows[i].input) << "," << rows[i].range_ft << ","
-         << JsonEscape(rows[i].output) << ",";
-      if (std::isfinite(rows[i].h_accepted)) {
-        os << JsonDouble(rows[i].h_accepted);
+    for (const auto& row : rows) {
+      os << JsonEscape(row.input) << "," << row.range_ft << ","
+         << JsonEscape(row.output) << ",";
+      if (std::isfinite(row.h_accepted)) {
+        os << JsonDouble(row.h_accepted);
       }
       os << ",";
-      if (std::isfinite(rows[i].raw_deriv)) {
-        os << JsonDouble(rows[i].raw_deriv);
+      if (std::isfinite(row.raw_deriv)) {
+        os << JsonDouble(row.raw_deriv);
       }
       os << ",";
-      if (std::isfinite(rows[i].canned_response)) {
-        os << JsonDouble(rows[i].canned_response);
+      if (std::isfinite(row.canned_response)) {
+        os << JsonDouble(row.canned_response);
       }
-      os << "," << (rows[i].nonlinear ? "true" : "false") << ","
-         << JsonEscape(rows[i].status) << "\n";
+      os << "," << (row.nonlinear ? "true" : "false") << ","
+         << JsonEscape(row.status) << "\n";
     }
     return os.str();
   }

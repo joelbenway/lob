@@ -164,15 +164,21 @@ inline void SetupTestBuilder(lob::Builder& b) {
 
 // ---- Validation convergence helpers (Phase 1) ----
 inline lob::Builder MakeC1IcaoBuilder() {
+  constexpr double kC1BcPsi = 0.232;
+  constexpr double kC1DiameterInch = 0.308;
+  constexpr double kC1MassGrains = 155.0;
+  constexpr uint16_t kC1MuzzleVelocityFps = 2800U;
+  constexpr double kC1ZeroAngleMoa = 3.66;
+  constexpr double kC1OpticHeightInches = 1.5;
   lob::Builder b;
-  b.BallisticCoefficientPsi(0.232)
+  b.BallisticCoefficientPsi(kC1BcPsi)
       .BCDragFunction(lob::DragFunctionT::kG7)
       .BCAtmosphere(lob::AtmosphereReferenceT::kIcao)
-      .DiameterInch(0.308)
-      .MassGrains(155.0)
-      .InitialVelocityFps(2800)
-      .ZeroAngleMOA(3.66)
-      .OpticHeightInches(1.5);
+      .DiameterInch(kC1DiameterInch)
+      .MassGrains(kC1MassGrains)
+      .InitialVelocityFps(kC1MuzzleVelocityFps)
+      .ZeroAngleMOA(kC1ZeroAngleMoa)
+      .OpticHeightInches(kC1OpticHeightInches);
   return b;
 }
 
