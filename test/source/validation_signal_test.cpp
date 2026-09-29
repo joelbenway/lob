@@ -348,7 +348,7 @@ constexpr double kUNumC5DeflMoa = 7.577461467e-07;
 
 // MC sigmas live in an optional flat file the MC stage may drop next to the
 // other validation artifacts: {"elevation_in": s, "deflection_moa": s}.
-// Absent or unparseable -> every row honestly carries mc_sigma_absent; the
+// Absent or unparsable -> every row honestly carries mc_sigma_absent; the
 // driver never fails for missing MC.
 inline nlohmann::json LoadMcSigmas() {  nlohmann::json mc;
   const std::ifstream kIn(
