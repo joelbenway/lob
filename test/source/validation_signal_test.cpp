@@ -11,12 +11,11 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
 
 #include "lob/lob.hpp"
 #include "testing.hpp"
@@ -47,9 +46,9 @@ inline std::vector<double> EffectDelta(
   return delta;
 }
 
-inline double UTotal(double u_num, double granularity,
-                     double mc_sigma =
-                         std::numeric_limits<double>::quiet_NaN()) {
+inline double UTotal(
+    double u_num, double granularity,
+    double mc_sigma = std::numeric_limits<double>::quiet_NaN()) {
   double sum = (u_num * u_num) + (granularity * granularity);
   if (!std::isnan(mc_sigma)) {
     sum += mc_sigma * mc_sigma;
@@ -107,8 +106,7 @@ TEST(SignalMath, RSigGuardsZeroYardstick) {
 TEST(SignalMath, BandsAtTenAndTenth) {
   EXPECT_EQ(tests::ClassifySigBand(11.0), tests::SigBand::kDistinguishable);
   EXPECT_EQ(tests::ClassifySigBand(1.0), tests::SigBand::kMarginal);
-  EXPECT_EQ(tests::ClassifySigBand(0.01),
-            tests::SigBand::kIndistinguishable);
+  EXPECT_EQ(tests::ClassifySigBand(0.01), tests::SigBand::kIndistinguishable);
   EXPECT_EQ(tests::ClassifySigBand(10.0), tests::SigBand::kMarginal);
   EXPECT_EQ(tests::ClassifySigBand(0.1), tests::SigBand::kMarginal);
   EXPECT_EQ(tests::ClassifySigBand(std::numeric_limits<double>::quiet_NaN()),
@@ -350,7 +348,8 @@ constexpr double kUNumC5DeflMoa = 7.577461467e-07;
 // other validation artifacts: {"elevation_in": s, "deflection_moa": s}.
 // Absent or unparsable -> every row honestly carries mc_sigma_absent; the
 // driver never fails for missing MC.
-inline nlohmann::json LoadMcSigmas() {  nlohmann::json mc;
+inline nlohmann::json LoadMcSigmas() {
+  nlohmann::json mc;
   const std::ifstream kIn(
       (std::string(LOB_VALIDATION_DIR) + "/mc_sigma.json").c_str());
   if (!kIn) {
@@ -396,8 +395,7 @@ inline bool SignalMatrixGated() {
 // granularity [+ MC sigma where nonlinear and available]), never a full
 // prediction-uncertainty significance (u_c: null everywhere in Phase 6).
 inline nlohmann::json MakeSigRow(uint32_t range_ft, const std::string& channel,
-                                 double delta, double u_num,
-                                 double granularity,
+                                 double delta, double u_num, double granularity,
                                  const nlohmann::json& mc,
                                  const std::string& u_num_source) {
   double mc_sigma = std::numeric_limits<double>::quiet_NaN();
@@ -454,8 +452,7 @@ inline void WriteSignalDoc(const std::string& dir, const std::string& stem,
 }
 
 template <size_t N>
-inline std::vector<double> ElevInVec(
-    const std::array<lob::Output, N>& outs) {
+inline std::vector<double> ElevInVec(const std::array<lob::Output, N>& outs) {
   std::vector<double> vals;
   vals.reserve(N);
   for (size_t i = 0; i < N; ++i) {
@@ -465,8 +462,7 @@ inline std::vector<double> ElevInVec(
 }
 
 template <size_t N>
-inline std::vector<double> DeflMoaVec(
-    const std::array<lob::Output, N>& outs) {
+inline std::vector<double> DeflMoaVec(const std::array<lob::Output, N>& outs) {
   std::vector<double> vals;
   vals.reserve(N);
   for (size_t i = 0; i < N; ++i) {
@@ -508,8 +504,8 @@ constexpr float kSplineShiftCd = 5e-3F;      // §8.6 perturbation
 inline void SplineBaseTable(std::array<float, kSplineTableSize>* machs,
                             std::array<float, kSplineTableSize>* drags) {
   const std::array<float, kSplineTableSize> kMach = {
-      {0.0F, 0.5F, 0.8F, 0.925F, 1.0F, 1.1F, 1.2F, 1.5F, 2.0F, 2.5F, 3.0F,
-       3.7F, 5.0F}};
+      {0.0F, 0.5F, 0.8F, 0.925F, 1.0F, 1.1F, 1.2F, 1.5F, 2.0F, 2.5F, 3.0F, 3.7F,
+       5.0F}};
   const std::array<float, kSplineTableSize> kDrag = {
       {0.11980F, 0.11940F, 0.12420F, 0.16600F, 0.38030F, 0.40140F, 0.38840F,
        0.34400F, 0.29800F, 0.26700F, 0.24240F, 0.20600F, 0.16180F}};
@@ -738,18 +734,19 @@ TEST(SignalMatrix, OfflineEffectMatrix) {
     // testing.hpp kElevFloorIn/kMoaFloor.
     nlohmann::json rows = nlohmann::json::array();
     for (size_t i = 0; i < kRanges.size(); ++i) {
-      rows.push_back(MakeSigRow(kRanges.at(i), "elevation_in",
-                                kElevDelta.at(i), kUNumC1ElevIn,
-                                tests::kElevFloorIn, kMc,
-                                "floors.json C1-ICAO floors_18_9.elevation_in"));
+      rows.push_back(
+          MakeSigRow(kRanges.at(i), "elevation_in", kElevDelta.at(i),
+                     kUNumC1ElevIn, tests::kElevFloorIn, kMc,
+                     "floors.json C1-ICAO floors_18_9.elevation_in"));
       rows.push_back(MakeSigRow(kRanges.at(i), "deflection_moa",
-                                kDeflDelta.at(i), kUNumC1DeflMoa, tests::kMoaFloor, kMc,
+                                kDeflDelta.at(i), kUNumC1DeflMoa,
+                                tests::kMoaFloor, kMc,
                                 "floors.json C1-ICAO floors_18_9."
                                 "deflection_moa (=0.0 observed)"));
     }
     WriteSignalDoc(kDir, "signal_step-36-to-9_C1.json", "step-36-to-9", "C1",
-                   "ISOLATED", "R_sig << 1 everywhere (harness control)",
-                   rows, kNoExtra);
+                   "ISOLATED", "R_sig << 1 everywhere (harness control)", rows,
+                   kNoExtra);
   }
 
   // Effect 4 (ISOLATED): coriolis on/off, C7-style lat 45° x N/S/E/W.
@@ -880,10 +877,10 @@ TEST(SignalMatrix, OfflineEffectMatrix) {
         tests::EffectDelta(DeflMoaVec(windy), DeflMoaVec(calm));
     nlohmann::json rows = nlohmann::json::array();
     for (size_t i = 0; i < kRanges.size(); ++i) {
-      rows.push_back(MakeSigRow(kRanges.at(i), "elevation_in",
-                                kElevDelta.at(i), kUNumC8ElevIn,
-                                tests::kElevFloorIn, kMc,
-                                "floors.json C8-Litz floors_18_9.elevation_in"));
+      rows.push_back(
+          MakeSigRow(kRanges.at(i), "elevation_in", kElevDelta.at(i),
+                     kUNumC8ElevIn, tests::kElevFloorIn, kMc,
+                     "floors.json C8-Litz floors_18_9.elevation_in"));
       rows.push_back(MakeSigRow(kRanges.at(i), "deflection_moa",
                                 kDeflDelta.at(i), kUNumC8DeflMoa,
                                 tests::kMoaFloor, kMc,
@@ -913,13 +910,13 @@ TEST(SignalMatrix, OfflineEffectMatrix) {
         tests::EffectDelta(DeflMoaVec(bands), DeflMoaVec(single));
     nlohmann::json rows = nlohmann::json::array();
     for (size_t i = 0; i < kRanges.size(); ++i) {
-      rows.push_back(MakeSigRow(kRanges.at(i), "elevation_in",
-                                kElevDelta.at(i), kUNumC1ElevIn,
-                                tests::kElevFloorIn, kMc,
+      rows.push_back(MakeSigRow(kRanges.at(i), "elevation_in", kElevDelta.at(i),
+                                kUNumC1ElevIn, tests::kElevFloorIn, kMc,
                                 "floors.json C1-ICAO floors_18_9.elevation_in "
                                 "(same solver path as bands)"));
       rows.push_back(MakeSigRow(kRanges.at(i), "deflection_moa",
-                                kDeflDelta.at(i), kUNumC1DeflMoa, tests::kMoaFloor, kMc,
+                                kDeflDelta.at(i), kUNumC1DeflMoa,
+                                tests::kMoaFloor, kMc,
                                 "floors.json C1-ICAO floors_18_9."
                                 "deflection_moa (=0.0 observed)"));
     }
@@ -946,12 +943,13 @@ TEST(SignalMatrix, OfflineEffectMatrix) {
         tests::EffectDelta(DeflMoaVec(g1), DeflMoaVec(g7));
     nlohmann::json rows = nlohmann::json::array();
     for (size_t i = 0; i < kRanges.size(); ++i) {
-      rows.push_back(MakeSigRow(kRanges.at(i), "elevation_in",
-                                kElevDelta.at(i), kUNumC1ElevIn,
-                                tests::kElevFloorIn, kMc,
-                                "floors.json C1-ICAO floors_18_9.elevation_in"));
+      rows.push_back(
+          MakeSigRow(kRanges.at(i), "elevation_in", kElevDelta.at(i),
+                     kUNumC1ElevIn, tests::kElevFloorIn, kMc,
+                     "floors.json C1-ICAO floors_18_9.elevation_in"));
       rows.push_back(MakeSigRow(kRanges.at(i), "deflection_moa",
-                                kDeflDelta.at(i), kUNumC1DeflMoa, tests::kMoaFloor, kMc,
+                                kDeflDelta.at(i), kUNumC1DeflMoa,
+                                tests::kMoaFloor, kMc,
                                 "floors.json C1-ICAO floors_18_9."
                                 "deflection_moa (=0.0 observed)"));
     }
@@ -979,12 +977,13 @@ TEST(SignalMatrix, OfflineEffectMatrix) {
         tests::EffectDelta(DeflMoaVec(shifted), DeflMoaVec(base));
     nlohmann::json rows = nlohmann::json::array();
     for (size_t i = 0; i < kRanges.size(); ++i) {
-      rows.push_back(MakeSigRow(kRanges.at(i), "elevation_in",
-                                kElevDelta.at(i), kUNumC1ElevIn,
-                                tests::kElevFloorIn, kMc,
-                                "floors.json C1-ICAO floors_18_9.elevation_in"));
+      rows.push_back(
+          MakeSigRow(kRanges.at(i), "elevation_in", kElevDelta.at(i),
+                     kUNumC1ElevIn, tests::kElevFloorIn, kMc,
+                     "floors.json C1-ICAO floors_18_9.elevation_in"));
       rows.push_back(MakeSigRow(kRanges.at(i), "deflection_moa",
-                                kDeflDelta.at(i), kUNumC1DeflMoa, tests::kMoaFloor, kMc,
+                                kDeflDelta.at(i), kUNumC1DeflMoa,
+                                tests::kMoaFloor, kMc,
                                 "floors.json C1-ICAO floors_18_9."
                                 "deflection_moa (=0.0 observed)"));
     }
@@ -1096,9 +1095,8 @@ TEST(SignalMatrix, OfflineEffectMatrix) {
         tests::EffectDelta(DeflMoaVec(hill), DeflMoaVec(flat));
     nlohmann::json rows = nlohmann::json::array();
     for (size_t i = 0; i < kRanges.size(); ++i) {
-      rows.push_back(MakeSigRow(kRanges.at(i), "elevation_in",
-                                kElevDelta.at(i), kUNumC6ElevIn,
-                                tests::kElevFloorIn, kMc,
+      rows.push_back(MakeSigRow(kRanges.at(i), "elevation_in", kElevDelta.at(i),
+                                kUNumC6ElevIn, tests::kElevFloorIn, kMc,
                                 "floors.json C6-scaled floors_18_9."
                                 "elevation_in (bound yardstick)"));
       rows.push_back(MakeSigRow(kRanges.at(i), "deflection_moa",
@@ -1109,8 +1107,8 @@ TEST(SignalMatrix, OfflineEffectMatrix) {
     }
     WriteSignalDoc(kDir, "signal_tilted-vs-flat-datum_C6b.json",
                    "tilted-vs-flat-datum", "C6b", "BOUND",
-                   "UPPER BOUND on datum sensitivity (bound, not effect)",
-                   rows, kNoExtra);
+                   "UPPER BOUND on datum sensitivity (bound, not effect)", rows,
+                   kNoExtra);
   }
 
   // Effect 14 (BOUND): ceiling clamp on C6c — completion + sign oracle only
@@ -1164,9 +1162,8 @@ TEST(SignalMatrix, OfflineEffectMatrix) {
         tests::EffectDelta(DeflMoaVec(profile_outs), DeflMoaVec(uniform_outs));
     nlohmann::json rows = nlohmann::json::array();
     for (size_t i = 0; i < kRanges.size(); ++i) {
-      rows.push_back(MakeSigRow(kRanges.at(i), "elevation_in",
-                                kElevDelta.at(i), kUNumC5ElevIn,
-                                tests::kElevFloorIn, kMc,
+      rows.push_back(MakeSigRow(kRanges.at(i), "elevation_in", kElevDelta.at(i),
+                                kUNumC5ElevIn, tests::kElevFloorIn, kMc,
                                 "floors.json C5-uniform "
                                 "floors_18_9.elevation_in"));
       rows.push_back(MakeSigRow(kRanges.at(i), "deflection_moa",
