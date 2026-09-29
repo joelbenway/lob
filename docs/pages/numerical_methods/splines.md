@@ -77,7 +77,12 @@ Custom tables (`source/lob_builder.cpp`) produce coefficients via the same
 
 Validation: `test/source/splines_test.cpp` checks secants/tangents, Hermite
 endpoint/tangent preservation, binary-search `FindInterval`, monotonic seeks,
-derivative correctness and the `5e-3` baseline budget.
+derivative correctness and the `5e-3` baseline budget. The budget's
+trajectory meaning is measured, not assumed: a ±5e-3 Cd shift on the
+transonic band produces `R_sig` 0.0 (indistinguishable) on C1
+(`test/validation/claims/envelope_claims.json` `spline-pm-5e-3`,
+`build/validation/signal_spline-pm-5e-3_C1.json`), closing
+`docs/specs/NUMERICAL_VALIDATION_SPEC.md` §8.6.
 
 @section num-splines-alternatives Why not linear
 

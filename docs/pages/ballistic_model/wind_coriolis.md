@@ -11,25 +11,31 @@ the drag curve or atmosphere — they only add `v`-dependent accelerations in
 @section model-wind-vector Wind vector
 
 Wind enters the equations only as `v − w` in the drag term and as `w_z` in the
-jump models. `BuildWind` (`source/lob_builder.cpp`) produces
-`ctx.wind = {x,z}` in fps:
+jump models. `Build` stores the profile once as frame-resolved nodes
+`ctx.wind_nodes[]` (`LobWindNode`, `include/lob/lob.h`): each caller-supplied
+`LobWindPoint` gives direction (`heading_deg`) + magnitude (`speed_mph`) with
+a measurement height, resolved to horizontal fps at `Build` and pitched once
+into shooting-frame components. A single-point profile stores bit-identically
+with the uniform setters (`test/source/validation_signal_test.cpp`,
+`SinglePointEqualsUniform`).
 
-```
-w_x = |w|·sin(heading)
-w_z = |w|·cos(heading)
-```
+Heights normalize to the fixed 1-ft reference via the Hellmann power law at
+`Build`; per-query `GetWind` (`source/solve_step.cpp`) lerps nodes downrange
+and scales by the configured shear exponent (0 = uniform wind, the default —
+scaling is opt-in). Under inclined fire the height datum is the tilted
+shot-parallel plane, not flat muzzle level. Jump reads the lateral muzzle
+node `wind_nodes[0].z`, which incline cannot touch (lateral is the pitch
+axis).
 
-`heading` is the user angle (0° = tailwind) mapped to the internal math
-angle used in `BuildWind`:
+Heading convention (unchanged): 12 o'clock / 0° = tailwind, 6 o'clock / 180° =
+headwind, 3 o'clock = pure crosswind. Speed is `WindSpeedFps` or
+`WindSpeedMph` (`MphT → FpsT`); default 0 fps. Out-of-range headings are
+rejected (`kLobErrorWindHeadingOOR`); profile shape errors are
+`kLobErrorWindProfile*` (`include/lob/lob.h`).
 
-- `WindHeading(ClockAngleT)` — 12 o'clock = tailwind, 6 = headwind. Stored as
-  `(3 − clock)·30°` wrapped to `[0,360)` so internal 90° = tailwind.
-- `WindHeadingDeg(value)` — degrees with same 0°=tailwind convention. Stored as
-  `−value + 90°` wrapped to `[0,360)` (`source/lob_builder.cpp`), so internal
-  90° = tailwind, 270° = headwind.
-
-Both satisfy "12 or 0 is tailwind, 6 or 180 is headwind" (`include/lob/lob.h`).
-Speed is `WindSpeedFps` or `WindSpeedMph` (`MphT → FpsT`). Default 0 fps. Validation: internal radian value checked against `±360°` → `kLobErrorWindHeadingOOR`.
+Contract: `docs/superpowers/specs/WIND_INTERFACE_SPEC.md` (cited, not
+duplicated); profile behavior is pinned in
+`test/source/lob_wind_profile_test.cpp`.
 
 @section model-wind-usage Usage in the solver
 

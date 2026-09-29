@@ -84,6 +84,25 @@ a fixed-seed integrity smoke in `test/source/validation_mc_smoke_test.cpp`.
 Full runs are offline, threaded, and reproducible by seed; distributions are
 synthetic until human-supplied sensor evidence arrives.
 
+Signal-versus-noise comparisons divide paired effect deltas by the solver's
+own resolution yardstick (`docs/specs/NUMERICAL_VALIDATION_SPEC.md` §13);
+the harness lives in `test/source/validation_signal_test.cpp` with
+static-only probes in `test/source/validation_signal_probes_test.cpp` and
+per-effect artifacts `build/validation/signal_{effect}_{case}.json`.
+Verdicts are resolution-relative bands (`R_sig > 10` distinguishable /
+`0.1–10` marginal / `< 0.1` indistinguishable), never full prediction
+significance — no `u_c` exists anywhere yet. CI smokes
+lapse-consequence, jump-live, and the single-point-profile bit-identity
+oracle; the full 15-effect matrix runs offline behind `LOB_FULL_SIGNAL=1`.
+
+Envelope claims are curated per cell in
+`test/validation/claims/envelope_claims.json` (all `provisional`,
+`human_signoff: pending`): each row carries its effect finding, isolation
+level, and artifact link, with JOINT/BOUND rows labeled as such. The
+coverage matrix in `build/dev/validation/reference_matrix.csv` joins
+summaries to cells by existing ids; long-range and field cells stay
+unclaimed (§21 items 7, 11 open).
+
 @section validation-invariants Invariants
 
 - `CurveView` clamps below `0` and above `5` Mach to the edge drag

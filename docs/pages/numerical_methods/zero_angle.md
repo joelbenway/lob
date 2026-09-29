@@ -87,6 +87,9 @@ typical iterations to 2–4.
   against a direct `SolveAngle` call (`BuilderZeroAngleTest`), while
   `test/source/lob_api_test.cpp` verifies weak `BC=0.1, v=600 fps` at 2000 yd
   exhausts iterations and returns NaN via `kLobErrorZeroUnreachable`.
+- Tightening `0.01→0.001 MOA` changes nothing measurable on C1 at 900 ft
+  (bitwise `0.0 MOA` delta, `R_sig` 0.0 — `test/validation/claims/envelope_claims.json`
+  `angle-tol`, `build/validation/signal_angle-tol_C1.json`).
 
 @section num-zero-reuse Reuse
 

@@ -107,3 +107,9 @@ Validation in `test/source/lob_inverse_test.cpp`:
   reachable and want to avoid a second integration.  Spot-check a few ranges
   against `SolveInverse` to confirm `FastInverse` error is acceptable for your
   trajectory.
+
+The `Fast*` vs lapse-scaled branch cost is measured, not assumed:
+`FastSolveStep` vs `SolveStep` trajectories on C9 stay marginal
+(`R_sig` 0.40/1.44/4.76 at 6000/7500/9000 ft —
+`test/validation/claims/envelope_claims.json` `lapse-fast-vs-solve`,
+`build/validation/signal_lapse-fast-vs-solve_C9.json`).

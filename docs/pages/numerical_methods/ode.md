@@ -78,6 +78,11 @@ Exterior Ballistics — The Launch and Flight Dynamics of Symmetric Projectiles*
   method is run at its own `dt` to reach ~1 ft error vs an RK4 `dt=1e-5`
   reference — see `benchmark/ode.cpp`).
 - The `_solve_step_test` and `_calc_test` lock in per-step invariants.
+- Step-size sensitivity is systematized as a paired 36→9 in control
+  (`signal_step-36-to-9_C1.json`, worst `R_sig` 0.0207 at 3000 ft —
+  indistinguishable against the solver's own noise floor), with the ladder
+  procedure and per-cell floors in `test/source/validation_signal_test.cpp`
+  and `test/validation/baselines/floors.json` (`docs/specs/NUMERICAL_VALIDATION_SPEC.md` §8, §13).
 
 @section num-ode-limits Limitations
 
