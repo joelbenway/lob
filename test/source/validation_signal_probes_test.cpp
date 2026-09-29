@@ -13,12 +13,11 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
 
 #include "cartesian.hpp"
 #include "eng_units.hpp"
@@ -54,9 +53,9 @@ inline std::vector<double> EffectDelta(
   return delta;
 }
 
-inline double UTotal(double u_num, double granularity,
-                     double mc_sigma =
-                         std::numeric_limits<double>::quiet_NaN()) {
+inline double UTotal(
+    double u_num, double granularity,
+    double mc_sigma = std::numeric_limits<double>::quiet_NaN()) {
   double sum = (u_num * u_num) + (granularity * granularity);
   if (!std::isnan(mc_sigma)) {
     sum += mc_sigma * mc_sigma;
@@ -180,9 +179,9 @@ inline LobContext BuildProbeC6(double incline_deg) {
 inline lob::TrajectoryStateT ProbeState(double downrange_ft, double height_ft) {
   constexpr double kCruiseFps = 2500.0;
   return {lob::CartesianT<lob::FeetT>(lob::FeetT(downrange_ft),
-                                     lob::FeetT(height_ft), lob::FeetT(0.0)),
+                                      lob::FeetT(height_ft), lob::FeetT(0.0)),
           lob::CartesianT<lob::FpsT>(lob::FpsT(kCruiseFps), lob::FpsT(0.0),
-                                    lob::FpsT(0.0))};
+                                     lob::FpsT(0.0))};
 }
 
 // Wind-vector magnitude helper (crosswind lives on the lateral axis, so no
@@ -238,16 +237,18 @@ TEST(SignalProbes, AngleToleranceTightening) {
   // floors_18_9.elevation_moa; granularity is the 0.01 MOA angle tolerance.
   constexpr double kUNumMoa = 3.97148e-06;
   constexpr double kGranMoa = 0.01;
-  const double kSolveR = tests::RSig(
-      std::fabs((kSolveTight - kSolveDefault).Value()),
-      tests::UTotal(kUNumMoa, kGranMoa));
-  const double kFastR = tests::RSig(
-      std::fabs((kFastTight - kFastDefault).Value()),
-      tests::UTotal(kUNumMoa, kGranMoa));
-  std::cout << "PROBE angle-tol solve r_sig=" << kSolveR << " band="
-            << ProbeSigBandName(tests::ClassifySigBand(kSolveR)) << "\n";
-  std::cout << "PROBE angle-tol fast r_sig=" << kFastR << " band="
-            << ProbeSigBandName(tests::ClassifySigBand(kFastR)) << "\n";
+  const double kSolveR =
+      tests::RSig(std::fabs((kSolveTight - kSolveDefault).Value()),
+                  tests::UTotal(kUNumMoa, kGranMoa));
+  const double kFastR =
+      tests::RSig(std::fabs((kFastTight - kFastDefault).Value()),
+                  tests::UTotal(kUNumMoa, kGranMoa));
+  std::cout << "PROBE angle-tol solve r_sig=" << kSolveR
+            << " band=" << ProbeSigBandName(tests::ClassifySigBand(kSolveR))
+            << "\n";
+  std::cout << "PROBE angle-tol fast r_sig=" << kFastR
+            << " band=" << ProbeSigBandName(tests::ClassifySigBand(kFastR))
+            << "\n";
 }
 
 // Effect 3 (STATIC): FastSolveStep vs SolveStep trajectories from an
@@ -274,7 +275,8 @@ TEST(SignalProbes, LapseSteppingDivergence) {
     fast_resid.push_back(kFast.Value());
     solve_resid.push_back(kSolve.Value());
   }
-  const std::vector<double> kDelta = tests::EffectDelta(fast_resid, solve_resid);
+  const std::vector<double> kDelta =
+      tests::EffectDelta(fast_resid, solve_resid);
   ASSERT_EQ(kDelta.size(), kRanges.size());
   size_t range_idx = 0;
   for (const uint32_t kRangeFt : kRanges) {
@@ -294,8 +296,8 @@ TEST(SignalProbes, GetWindHeightResponse) {
   const LobContext kHill = BuildProbeC6(15.0);
   ASSERT_EQ(kHill.error, kLobErrorNone);
   const std::array<double, 2> kDownrange = {900.0, 1800.0};
-  const std::array<double, 6> kHeights = {1.0, 50.0, 150.0, 299.0, 500.0,
-                                          5000.0};
+  const std::array<double, 6> kHeights = {1.0,   50.0,  150.0,
+                                          299.0, 500.0, 5000.0};
   constexpr double kWindEpsFps = 1e-9;
   bool hill_differs = false;
   for (const double kDownrangeFt : kDownrange) {
@@ -310,8 +312,9 @@ TEST(SignalProbes, GetWindHeightResponse) {
       if (std::fabs(kHillMag - kFlatMag) > kWindEpsFps) {
         hill_differs = true;
       }
-      std::cout << "PROBE getwind x_ft=" << kDownrangeFt << " y_ft=" << kHeightFt
-                << " flat_fps=" << kFlatMag << " hill_fps=" << kHillMag << "\n";
+      std::cout << "PROBE getwind x_ft=" << kDownrangeFt
+                << " y_ft=" << kHeightFt << " flat_fps=" << kFlatMag
+                << " hill_fps=" << kHillMag << "\n";
     }
   }
   EXPECT_TRUE(hill_differs);
@@ -324,8 +327,8 @@ TEST(SignalProbes, CeilingClampHolds) {
   const LobContext kCtx = BuildProbeC6(0.0);
   ASSERT_EQ(kCtx.error, kLobErrorNone);
   constexpr double kDownrangeFt = 900.0;
-  const double kAt300 = ProbeWindMag(
-      lob::GetWind(kCtx, ProbeState(kDownrangeFt, 300.0)));
+  const double kAt300 =
+      ProbeWindMag(lob::GetWind(kCtx, ProbeState(kDownrangeFt, 300.0)));
   const std::array<double, 3> kAbove = {301.0, 1000.0, 5000.0};
   for (const double kHeightFt : kAbove) {
     const double kWind =
@@ -374,9 +377,10 @@ TEST(SignalProbesOffline, WritesStaticEffects) {
     constexpr double kGranMoa = 0.01;
     const double kUTotal = tests::UTotal(kUNumMoa, kGranMoa);
     nlohmann::json doc;
-    doc["provenance"] = {{"git_sha", LOB_GIT_SHA},
-                         {"generator", "SignalProbesOffline.WritesStaticEffects"},
-                         {"gate", "LOB_FULL_SIGNAL=1"}};
+    doc["provenance"] = {
+        {"git_sha", LOB_GIT_SHA},
+        {"generator", "SignalProbesOffline.WritesStaticEffects"},
+        {"gate", "LOB_FULL_SIGNAL=1"}};
     doc["effect"] = "angle-tol";
     doc["case"] = "C1";
     doc["isolation"] = "ISOLATED";
@@ -395,13 +399,12 @@ TEST(SignalProbesOffline, WritesStaticEffects) {
       row["delta"] = path.second;
       row["u_total"] = kUTotal;
       row["r_sig"] = kR;
-      row["band"] =
-          ProbeSigBandName(tests::ClassifySigBand(kR));
-      row["yardstick"] = {{"u_num_source",
-                           "floors.json C1-ICAO floors_18_9.elevation_moa"},
-                          {"granularity", kGranMoa},
-                          {"mc_sigma_or_absent", "mc_sigma_absent"},
-                          {"u_c", nullptr}};
+      row["band"] = ProbeSigBandName(tests::ClassifySigBand(kR));
+      row["yardstick"] = {
+          {"u_num_source", "floors.json C1-ICAO floors_18_9.elevation_moa"},
+          {"granularity", kGranMoa},
+          {"mc_sigma_or_absent", "mc_sigma_absent"},
+          {"u_c", nullptr}};
       doc["rows"].push_back(row);
     }
     std::ofstream out((kDir + "/signal_angle-tol_C1.json").c_str());
@@ -419,9 +422,10 @@ TEST(SignalProbesOffline, WritesStaticEffects) {
     constexpr double kGranMoa = 0.01;
     const double kUTotal = tests::UTotal(kUNumMoa, kGranMoa);
     nlohmann::json doc;
-    doc["provenance"] = {{"git_sha", LOB_GIT_SHA},
-                         {"generator", "SignalProbesOffline.WritesStaticEffects"},
-                         {"gate", "LOB_FULL_SIGNAL=1"}};
+    doc["provenance"] = {
+        {"git_sha", LOB_GIT_SHA},
+        {"generator", "SignalProbesOffline.WritesStaticEffects"},
+        {"gate", "LOB_FULL_SIGNAL=1"}};
     doc["effect"] = "lapse-fast-vs-solve";
     doc["case"] = "C9";
     doc["isolation"] = "ISOLATED";
@@ -448,8 +452,7 @@ TEST(SignalProbesOffline, WritesStaticEffects) {
       row["delta"] = kDeltaMoa;
       row["u_total"] = kUTotal;
       row["r_sig"] = kR;
-      row["band"] =
-          ProbeSigBandName(tests::ClassifySigBand(kR));
+      row["band"] = ProbeSigBandName(tests::ClassifySigBand(kR));
       row["yardstick"] = {{"u_num_source",
                            "floors.json C9-dynamic-tail "
                            "floors_18_9.elevation_moa"},
