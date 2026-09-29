@@ -57,6 +57,8 @@ Integration proceeds in down-range steps via `FastSolveStep`/`FastDsDx`
 `LobSolveInverse` reuses the same forward pass but may re-integrate each
 range with lapse-scaled `SolveStep`/`DsDx` when forward `drop>100ft`
 (`source/lob_solve.cpp` `kDynamicDropThreshold`, @ref model_atmosphere).
+The branch cost is measured on C9 (`R_sig` 0.40/1.44/4.76 at 6000/7500/9000 ft,
+all marginal — see @ref num_inverse).
 
 If the projectile cannot reach a requested range, `LobSolve` still produces an
 output at the fall-short distance (`max_time` and `minimum_speed` are linearly

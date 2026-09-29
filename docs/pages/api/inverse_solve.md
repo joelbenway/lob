@@ -51,7 +51,9 @@ forward trajectory at that `R`.
    the reachable prefix.  A `range==0` entry is counted with `0` MOA.
 
 Typical convergence: `≤ 10` iterations, `0.01` MOA tolerance, clamped to
-`±45°`.
+`±45°`. Tightening to `0.001` MOA is trajectory-indistinguishable on C1
+(see @ref num_zero_angle); the `Fast*` vs lapse branch cost is marginal on
+C9 (see @ref num_inverse).
 
 **`LobFastInverse` — one-step approximation.**
 

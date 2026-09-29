@@ -1,5 +1,6 @@
 {
   "artifact_schema": 1,
+  "_reading_note": "cutoff_90 is share-ranked regardless of genuine status; join with per-driver status before treating a cutoff driver as informative.",
   "provenance": {
     "lob_version": "0.13.0",
     "git_sha": "cf0d147",
