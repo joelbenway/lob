@@ -119,6 +119,7 @@ set(LOB_TEST_SOURCES
     source/validation_reference_test.cpp
     source/validation_sensitivity_test.cpp
     source/validation_budget_test.cpp
+    source/validation_signal_test.cpp
     )
 # Manifests resolve under the same LOB_VALIDATION_CASES_DIR tree (validation/manifests).
 
