@@ -28,8 +28,8 @@ enum class SigBand : std::uint8_t {
   kIndistinguishable
 };
 
-// tests:: API is plan-mandated for Tasks 2-3; single-TU use is by design.
-// NOLINTNEXTLINE(misc-use-internal-linkage)
+namespace {
+
 inline std::vector<double> EffectDelta(
     const std::vector<double>& with_effect,
     const std::vector<double>& without_effect) {
@@ -40,8 +40,6 @@ inline std::vector<double> EffectDelta(
   return delta;
 }
 
-// tests:: API is plan-mandated for Tasks 2-3; single-TU use is by design.
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 inline double UTotal(double u_num, double granularity,
                      double mc_sigma =
                          std::numeric_limits<double>::quiet_NaN()) {
@@ -52,8 +50,6 @@ inline double UTotal(double u_num, double granularity,
   return std::sqrt(sum);
 }
 
-// tests:: API is plan-mandated for Tasks 2-3; single-TU use is by design.
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 inline double RSig(double delta, double u_total) {
   if (!(u_total > 0.0)) {
     return std::numeric_limits<double>::quiet_NaN();
@@ -61,8 +57,6 @@ inline double RSig(double delta, double u_total) {
   return std::fabs(delta) / u_total;
 }
 
-// tests:: API is plan-mandated for Tasks 2-3; single-TU use is by design.
-// NOLINTNEXTLINE(misc-use-internal-linkage)
 inline SigBand ClassifySigBand(double r_sig) {
   if (r_sig > kSigClear) {
     return SigBand::kDistinguishable;
@@ -72,6 +66,8 @@ inline SigBand ClassifySigBand(double r_sig) {
   }
   return SigBand::kIndistinguishable;
 }
+
+}  // namespace
 
 }  // namespace tests
 
