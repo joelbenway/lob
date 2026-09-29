@@ -1,0 +1,196 @@
+{
+  "artifact_schema": 1,
+  "provenance": {
+    "lob_version": "0.13.0",
+    "git_sha": "1e0ac5016b97",
+    "platform": "x86_64-linux",
+    "created_utc": "2026-09-29",
+    "generator": "SignalMatrix.OfflineEffectMatrix + SignalProbesOffline.WritesStaticEffects",
+    "gate": "LOB_FULL_SIGNAL=1",
+    "status": "provisional"
+  },
+  "yardstick": {
+    "description": "Every R_sig denominator is u_total(R) = sqrt(u_num^2 + granularity^2) (+ MC sigma only where the channel is nonlinear-flagged AND an MC run exists). No u_c exists anywhere (Phase 4 all-incomplete), so every verdict below is resolution-relative: it reports whether an effect clears, is marginal against, or is buried under the solver's own noise floor. It is NEVER a full prediction-uncertainty significance claim.",
+    "u_num_source": "test/validation/baselines/floors.json floors_18_9, per effect row",
+    "granularity_source": "testing.hpp kElevFloorIn (0.01 in) / kMoaFloor (0.01 MOA)",
+    "mc_sigma": "mc_sigma_absent on every row (no mc_sigma.json present at run time; driver never fails for missing MC)",
+    "u_c": null
+  },
+  "bands": {
+    "note": "Order-of-magnitude reporting bands from spec §13.2's >>/approx/<< language; conventional-not-prescribed. No application decision may cite them without stating its own k.",
+    "distinguishable": "R_sig > 10.0",
+    "marginal": "0.1 <= R_sig <= 10.0",
+    "indistinguishable": "R_sig < 0.1"
+  },
+  "effects": [
+    {
+      "effect": "step-36-to-9",
+      "case": "C1",
+      "isolation": "ISOLATED",
+      "expectation": "R_sig << 1 everywhere (harness control)",
+      "finding": "MET: worst R_sig 0.0207 @3000ft elevation_in; all rows indistinguishable. The harness sees nothing correctly.",
+      "verdict": "provisional",
+      "artifact": "signal_step-36-to-9_C1.json"
+    },
+    {
+      "effect": "angle-tol",
+      "case": "C1",
+      "isolation": "ISOLATED",
+      "expectation": "R_sig << 1 (tolerance tightening below resolution)",
+      "finding": "MET: SolveAngle and FastSolveAngle 0.01->0.001 agree bitwise (delta 0.0 MOA @900ft); R_sig 0.0 both paths, indistinguishable.",
+      "verdict": "provisional",
+      "artifact": "signal_angle-tol_C1.json"
+    },
+    {
+      "effect": "lapse-fast-vs-solve",
+      "case": "C9",
+      "isolation": "ISOLATED",
+      "expectation": "small-but-nonzero per-range delta (path matters at range)",
+      "finding": "MET: elevation_moa delta grows 0.0040 @6000ft -> 0.0144 @7500ft -> 0.0476 @9000ft (R_sig 0.40/1.44/4.76, all marginal). The stepping path is visible at range but stays inside one order of the noise floor.",
+      "verdict": "provisional",
+      "artifact": "signal_lapse-fast-vs-solve_C9.json"
+    },
+    {
+      "effect": "coriolis-on-off",
+      "case": "C7",
+      "isolation": "ISOLATED",
+      "expectation": "R_sig >> 1 on deflection, ~1-or-below on elevation",
+      "finding": "PARTIAL: deflection distinguishable at range on all azimuths (R_sig up to 25.5 @3000ft). Elevation meets ~1-or-below firing N/S (R_sig <= 0.014) but NOT E/W: E/W elevation R_sig reaches 264.9 @3000ft (delta 2.65in) — vertical-component (Eotvos) sensitivity, recorded as a finding against the pre-registration.",
+      "verdict": "provisional",
+      "artifact": "signal_coriolis-on-off_C7.json"
+    },
+    {
+      "effect": "spin-litz-vs-off",
+      "case": "C8",
+      "isolation": "JOINT",
+      "expectation": "R_sig >> 1 on deflection (twist share genuine)",
+      "finding": "MET (as joint drift+jump): deflection R_sig 19.5/44.3/81.7 @900/1800/2700ft, all distinguishable; elevation likewise distinguishable (R_sig up to 244).",
+      "verdict": "provisional",
+      "artifact": "signal_spin-litz-vs-off_C8.json"
+    },
+    {
+      "effect": "spin-boatright-vs-litz",
+      "case": "C8",
+      "isolation": "JOINT",
+      "expectation": "none (first gap measurement — report only)",
+      "finding": "REPORTED: distinguishable on both channels at all ranges (elevation R_sig 28.1/56.1/84.2; deflection R_sig 17.5/26.1/39.0 @900/1800/2700ft). Boatright-vs-Litz gap is well above the noise floor; no direction was predicted and none is claimed.",
+      "verdict": "provisional",
+      "artifact": "signal_spin-boatright-vs-litz_C8.json"
+    },
+    {
+      "effect": "jump-on-off",
+      "case": "C8",
+      "isolation": "JOINT",
+      "expectation": "R_sig >> 1 on elevation (jump is live)",
+      "finding": "MET: elevation R_sig 152.2/304.4/456.8 @900/1800/2700ft (delta -1.52/-3.04/-4.57in), all distinguishable. Deflection jointly distinguishable (crosswind drift moves with the same toggle).",
+      "verdict": "provisional",
+      "artifact": "signal_jump-on-off_C8.json"
+    },
+    {
+      "effect": "single-bc-vs-bands",
+      "case": "C1",
+      "isolation": "ISOLATED",
+      "expectation": "R_sig >> 1 somewhere in 0-3000ft",
+      "finding": "MET: elevation R_sig 4.3/125.7/1027/4030 @300/900/1800/3000ft (delta 0.043/1.26/10.27/40.30in) — marginal at 300ft, distinguishable from 900ft out.",
+      "verdict": "provisional",
+      "artifact": "signal_single-bc-vs-bands_C1.json"
+    },
+    {
+      "effect": "g7-vs-g1",
+      "case": "C1",
+      "isolation": "ISOLATED",
+      "expectation": "R_sig >> 1 (screaming-signal control)",
+      "finding": "MET: elevation delta -0.12/-4.47/-58.99/-401.22in @300/900/1800/3000ft (R_sig up to 40121). The 3000ft delta reproduces the Phase 3 401in measurement through the harness — screaming-signal control re-derived, not re-measured.",
+      "verdict": "provisional",
+      "artifact": "signal_g7-vs-g1_C1.json"
+    },
+    {
+      "effect": "spline-pm-5e-3",
+      "case": "C1",
+      "isolation": "ISOLATED",
+      "expectation": "R_sig << 1 or ~1 (closes §8.6 spline mapping)",
+      "finding": "MET at <<1: +/-5e-3 Cd shift on the transonic band via the public MachVsDragTable route moves the solution 0.0in at 300/900/1800ft and 2.6e-09in @3000ft (R_sig 2.6e-07). Table resolution sits comfortably below granularity — closes the §8.6 deferral with no budget row earned.",
+      "verdict": "provisional",
+      "artifact": "signal_spline-pm-5e-3_C1.json",
+      "closes": "spec §8.6 (±5e-3 -> inches/MOA mapping)"
+    },
+    {
+      "effect": "profile-vs-uniform",
+      "case": "C6",
+      "isolation": "ISOLATED",
+      "expectation": "R_sig << 1 elevation, small-but-genuine deflection",
+      "finding": "PARTIAL: elevation meets <<1 (R_sig <= 0.23). Deflection is genuine AND distinguishable (R_sig 32.1/160.7/388.4 @900/1800/2700ft, delta 0.32/1.61/3.88 MOA) — stronger than the small-but-genuine wording; the 5->10mph station spread clears the noise floor decisively.",
+      "verdict": "provisional",
+      "artifact": "signal_profile-vs-uniform_C6.json"
+    },
+    {
+      "effect": "shear-off-on",
+      "case": "C6",
+      "isolation": "ISOLATED",
+      "expectation": "R_sig >> 1 deflection, << 1 elsewhere",
+      "finding": "MET with a footnote: deflection R_sig 18.8/110.7/274.8 (distinguishable). Elevation is indistinguishable at 900/1800ft but touches marginal at 2700ft (R_sig 0.177) — shear leaks into elevation at the top of the envelope.",
+      "verdict": "provisional",
+      "artifact": "signal_shear-off-on_C6.json"
+    },
+    {
+      "effect": "measured-vs-nan-heights",
+      "case": "C6",
+      "isolation": "ISOLATED",
+      "expectation": "quantify only (no direction predicted)",
+      "finding": "QUANTIFIED: deflection distinguishable at all ranges (R_sig 23.7/116.8/281.2 @900/1800/2700ft); elevation indistinguishable at 900/1800ft, marginal 0.18 @2700ft. Station-height bookkeeping moves deflection, not elevation.",
+      "verdict": "provisional",
+      "artifact": "signal_measured-vs-nan-heights_C6.json"
+    },
+    {
+      "effect": "tilted-vs-flat-datum",
+      "case": "C6b",
+      "isolation": "BOUND",
+      "expectation": "UPPER BOUND on datum sensitivity (bound, not effect)",
+      "finding": "REPORTED AS BOUND: flat-vs-15deg comparison gives elevation R_sig 85.7/405.6/1052 (gravity pitch dominates the bound, as expected) and deflection R_sig 0.55/1.66/3.66 (marginal). No flat-h solver path exists; read the deflection column as the datum-sensitivity upper bound, never as a measured effect.",
+      "verdict": "provisional",
+      "artifact": "signal_tilted-vs-flat-datum_C6b.json"
+    },
+    {
+      "effect": "ceiling-clamp",
+      "case": "C6c",
+      "isolation": "BOUND",
+      "expectation": "completion + sign oracle only",
+      "finding": "MET: mortar-arc solve completes at all ranges with positive deflection sign (23.9/135.6/392.0in @900/1800/2700ft). Static GetWind probe proves bitwise clamp above 300ft. No R_sig — a guardrail has no quantity.",
+      "verdict": "provisional",
+      "artifact": "signal_ceiling-clamp_C6c.json"
+    },
+    {
+      "effect": "single-point-vs-uniform",
+      "case": "C5",
+      "isolation": "ISOLATED",
+      "expectation": "BIT-IDENTITY (exact double equality)",
+      "finding": "MET: EXPECT_DOUBLE_EQ holds on elevation and deflection at all ranges (deltas exactly 0.0). Strongest oracle in the wind suite.",
+      "verdict": "provisional",
+      "artifact": "signal_single-point-vs-uniform_C5.json"
+    }
+  ],
+  "duplicate_check": {
+    "barometer_vs_weather_station_expected": "byte-identical (1711 bytes each, LOB_FULL_SIGNAL=1 run output DUPLICATE_CHECK equal=1)",
+    "action": "none — vectors untouched; flagged here only. No dedup performed (deferred since Phase 3)."
+  },
+  "unclaimed": [
+    "range-1000yd-plus",
+    "wind-profile*",
+    "spin-*",
+    "density-lapse-tail",
+    "drag-bands",
+    "drag-custom",
+    "field-radar"
+  ],
+  "limitations": [
+    "u_c is null on every row: Phase 4 produced no human uncertainty values (§21 item 7 open), so no verdict above is a full prediction-uncertainty significance claim — all are resolution-relative against the solver's own noise floor.",
+    "mc_sigma_or_absent is mc_sigma_absent on every row: no mc_sigma.json was present at run time. Re-run with the MC stage's sigma file in LOB_VALIDATION_DIR to promote nonlinear channels.",
+    "Barometer and weather-station reference vectors are byte-identical duplicates (see duplicate_check); both kept, neither deduplicated — lob_env_test.cpp dedup stays deferred since Phase 3.",
+    "Single platform only: x86_64-linux, dev preset. Cross-platform noise guards are the floors.json ceilings, not re-measured here.",
+    "JOINT rows (spin-litz-vs-off, spin-boatright-vs-litz, jump-on-off) move named confounds together by construction; never cite them as isolated effects.",
+    "BOUND rows (tilted-vs-flat-datum, ceiling-clamp) are upper-bound/completion characterizations; never cite them as measured effects.",
+    "Two pre-registered expectations came back as findings, not confirmations: coriolis E/W elevation (Eotvos vertical sensitivity, R_sig to 264.9) and profile-vs-uniform deflection strength (distinguishable, not merely small). Both are recorded above, not smoothed over.",
+    "Long-range/field cells stay unclaimed (§21 item 11 open); the unclaimed list above renders the gap as data."
+  ],
+  "human_signoff": "pending"
+}
