@@ -335,6 +335,25 @@ TEST(ValidationFloorSurvey, SurveyCells) {
     GTEST_SKIP() << "offline only: set LOB_FLOOR_SURVEY=1";
   }
 
+  // C1-ICAO: per-range 18→9 elevation_in deltas for E1 R-flatness
+  // (ranges {300, 900, 3000} ft; 1800 ft already covered by the
+  // ValidationFullLadder artifact — see the E1 report).
+  {
+    const std::array<uint32_t, 3> kRanges = {300U, 900U, 3000U};
+    std::array<lob::Output, 3> outs18{};
+    std::array<lob::Output, 3> outs9{};
+    ASSERT_EQ(SolveN(BuildAtStep(MakeC1IcaoBuilder(), 18U), kRanges, &outs18),
+              kRanges.size());
+    ASSERT_EQ(SolveN(BuildAtStep(MakeC1IcaoBuilder(), 9U), kRanges, &outs9),
+              kRanges.size());
+    for (size_t i = 0; i < kRanges.size(); ++i) {
+      const double kElevIn = ElevInDiff(outs18.at(i), outs9.at(i));
+      std::cout << "SURVEY C1-ICAO elevation_in range18_9=" << kRanges.at(i)
+                << " " << std::setprecision(kSurveyPrecisionDigits) << kElevIn
+                << "\n";
+    }
+  }
+
   // C5-uniform: wind-base builder + kIII 5 mph, ranges {900, 1800, 2700} ft.
   {
     const std::array<uint32_t, 3> kRanges = {900U, 1800U, 2700U};
@@ -359,6 +378,9 @@ TEST(ValidationFloorSurvey, SurveyCells) {
     for (size_t i = 0; i < kRanges.size(); ++i) {
       const double kElevIn = ElevInDiff(outs18.at(i), outs9.at(i));
       w_elev_in = std::max(w_elev_in, kElevIn);
+      std::cout << "SURVEY C5-uniform elevation_in range18_9=" << kRanges.at(i)
+                << " " << std::setprecision(kSurveyPrecisionDigits) << kElevIn
+                << "\n";
       const double kElevMoa = ElevMoaDiff(outs18.at(i), outs9.at(i));
       w_elev_moa = std::max(w_elev_moa, kElevMoa);
       const double kDeflMoa = DeflMoaDiff(outs18.at(i), outs9.at(i));
