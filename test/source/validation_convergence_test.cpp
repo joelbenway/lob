@@ -180,7 +180,7 @@ TEST(ValidationConvergenceC1, InverseLadderDecreasesWithoutRegression) {
   std::array<lob::Output, 2> fwd{};
   ASSERT_EQ(SolveN(kCtx36, kRanges, &fwd), kRanges.size());
   for (size_t i = 0; i < kRanges.size(); ++i) {
-    EXPECT_GT(fwd.at(i).elevation, -1200.0) << "range=" << kRanges.at(i);
+    ASSERT_GT(fwd.at(i).elevation, -1200.0) << "range=" << kRanges.at(i);
   }
   for (size_t i = 0; i < kRanges.size(); ++i) {
     // Inverse outputs are MOA adjustments; forward drop must stay above the
@@ -569,7 +569,7 @@ TEST(ValidationFloorSurvey, SurveyCells) {
                 << " forward_drop_in="
                 << std::setprecision(kSurveyPrecisionDigits)
                 << fwd.at(i).elevation << "\n";
-      EXPECT_LT(fwd.at(i).elevation, -1200.0) << "range=" << kRanges.at(i);
+      ASSERT_LT(fwd.at(i).elevation, -1200.0) << "range=" << kRanges.at(i);
     }
     std::array<lob::Output, 3> outs36{};
     std::array<lob::Output, 3> outs18{};

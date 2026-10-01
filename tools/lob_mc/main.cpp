@@ -402,9 +402,11 @@ nlohmann::json SizingJson(const std::vector<mc::TrajectorySample>& samples,
 
 // 30-min single-threaded wall estimate caps N at 10^4 with the cap recorded.
 std::uint64_t ApplyWallCap(std::uint64_t recommended, double cost_single_us,
-                           bool* capped, std::string* reason) {
-  const double kEstimateS =
-      (cost_single_us * static_cast<double>(recommended)) / 1000000.0;
+                           std::uint64_t workers, bool* capped,
+                           std::string* reason) {
+  const double kEstimateS = (cost_single_us * static_cast<double>(workers) *
+                             static_cast<double>(recommended)) /
+                            1000000.0;
   if (kEstimateS <= kWallCapSeconds) {
     *capped = false;
     return recommended;
@@ -413,8 +415,7 @@ std::uint64_t ApplyWallCap(std::uint64_t recommended, double cost_single_us,
   *reason =
       "single-threaded estimate exceeds 30 min; capped at N=10^4 (percentile "
       "widths widen honestly)";
-  return (recommended > kPercentileStableSamples) ? kPercentileStableSamples
-                                                  : recommended;
+  return std::min(recommended, kPercentileStableSamples);
 }
 
 int PrintRunSummary(const mc::RunManifest& manifest, const std::string& cell,
@@ -547,12 +548,12 @@ int RunFromManifest(const Config& config) {
              &recommended);
   bool capped = false;
   std::string cap_reason;
-  const std::uint64_t kFullN =
-      ApplyWallCap(recommended, pilot.cost_single_us, &capped, &cap_reason);
+  const std::uint64_t kFullN = ApplyWallCap(
+      recommended, pilot.cost_single_us, kWorkers, &capped, &cap_reason);
   std::uint64_t run_n = kSamples;
   TimedRun* run = &pilot;
   TimedRun full;
-  std::uint64_t pilot_record = 0U;
+  std::uint64_t pilot_record = run_n;
   if (config.auto_scale) {
     std::cout << "autoscale: pilot N=" << pilot_n
               << " cost_single_us=" << pilot.cost_single_us << " wall_s="
