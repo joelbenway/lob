@@ -617,4 +617,148 @@ TEST(ValidationFloorSurvey, SurveyCells) {
   }
 }
 
+// E3 coarse-step survey helper: one SURVEY line per primary channel for a
+// single (coarse vs 36-in baseline) pair at one range.
+namespace {
+inline void PrintCoarsePair(const char* cell, uint16_t coarse_step,
+                            const lob::Output& coarse, const lob::Output& base,
+                            uint32_t range_ft) {
+  std::cout << "SURVEY COARSE " << cell << " elevation_in range"
+            << coarse_step << "_vs_36=" << range_ft << " "
+            << std::setprecision(kSurveyPrecisionDigits)
+            << ElevInDiff(coarse, base) << "\n";
+  std::cout << "SURVEY COARSE " << cell << " elevation_moa range"
+            << coarse_step << "_vs_36=" << range_ft << " "
+            << std::setprecision(kSurveyPrecisionDigits)
+            << ElevMoaDiff(coarse, base) << "\n";
+  std::cout << "SURVEY COARSE " << cell << " deflection_moa range"
+            << coarse_step << "_vs_36=" << range_ft << " "
+            << std::setprecision(kSurveyPrecisionDigits)
+            << DeflMoaDiff(coarse, base) << "\n";
+  std::cout << "SURVEY COARSE " << cell << " velocity_fps range" << coarse_step
+            << "_vs_36=" << range_ft << " "
+            << std::setprecision(kSurveyPrecisionDigits)
+            << VelDiff(coarse, base) << "\n";
+  std::cout << "SURVEY COARSE " << cell << " energy_ft_lbf range" << coarse_step
+            << "_vs_36=" << range_ft << " "
+            << std::setprecision(kSurveyPrecisionDigits)
+            << EnergyDiff(coarse, base) << "\n";
+  std::cout << "SURVEY COARSE " << cell << " time_of_flight_s range"
+            << coarse_step << "_vs_36=" << range_ft << " "
+            << std::setprecision(kSurveyPrecisionDigits)
+            << TofDiff(coarse, base) << "\n";
+}
+}  // namespace
+
+// E3 upward ladder (Step 1). Same LOB_FLOOR_SURVEY gate as
+// ValidationFloorSurvey.SurveyCells — no new gate. Builders mirror the survey
+// blocks verbatim: C1 = MakeC1IcaoBuilder(); C5 = MakeWindBaseBuilder() +
+// kIII 5 mph uniform (cf. ValidationFloorSurvey C5-uniform block);
+// C8 = Litz spin builder (cf. ValidationFloorSurvey C8-Litz block; jump
+// context in lob_inverse_test.cpp SolveInverseMatchesFastInverseWithJump).
+// Fixed E3 ranges {300,900,1800,3000} ft for all cases. Hermetic: SURVEY
+// lines to stdout, no file I/O. Unreachable rungs fail loudly via ASSERT_EQ
+// (range, step in the message) — never silently dropped.
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+TEST(ValidationCoarseLadder, SurveyCoarse) {
+  // single-threaded gtest; env gates select offline drivers
+  // NOLINTNEXTLINE(concurrency-mt-unsafe)
+  const char* gate = std::getenv("LOB_FLOOR_SURVEY");
+  if (gate == nullptr || std::string(gate) != "1") {
+    GTEST_SKIP() << "offline only: set LOB_FLOOR_SURVEY=1";
+  }
+  constexpr size_t kNumCoarseRanges = 4;
+  constexpr size_t kNumCoarseRungs = 5;
+  const std::array<uint32_t, kNumCoarseRanges> kRanges = {300U, 900U, 1800U,
+                                                          3000U};
+  // 576 probed one-rung-at-a-time per E3 plan: 288 was clean on all primary
+  // channels of all cases (see exp-e3-report), so the extension is open.
+  const std::array<uint16_t, kNumCoarseRungs> kRungs = {36U, 72U, 144U, 288U,
+                                                        576U};
+
+  // C1-ICAO.
+  {
+    std::array<std::array<lob::Output, kNumCoarseRanges>, kNumCoarseRungs>
+        ladders{};
+    for (size_t ri = 0; ri < kRungs.size(); ++ri) {
+      ASSERT_EQ(SolveN(BuildAtStep(MakeC1IcaoBuilder(), kRungs.at(ri)), kRanges,
+                       &ladders.at(ri)),
+                kRanges.size())
+          << "cell=C1-ICAO rung=" << kRungs.at(ri);
+    }
+    for (size_t i = 0; i < kRanges.size(); ++i) {
+      for (size_t ri = 1; ri < kRungs.size(); ++ri) {
+        PrintCoarsePair("C1-ICAO", kRungs.at(ri), ladders.at(ri).at(i),
+                        ladders.at(0).at(i), kRanges.at(i));
+      }
+    }
+  }
+
+  // C5-uniform: wind-base builder + kIII 5 mph.
+  {
+    std::array<std::array<lob::Output, kNumCoarseRanges>, kNumCoarseRungs>
+        ladders{};
+    auto build_uniform = [](uint16_t step) {
+      constexpr double kWindSpeedMph = 5.0;
+      lob::Builder b = MakeWindBaseBuilder();
+      b.WindHeading(lob::ClockAngleT::kIII).WindSpeedMph(kWindSpeedMph);
+      return BuildAtStep(b, step);
+    };
+    for (size_t ri = 0; ri < kRungs.size(); ++ri) {
+      ASSERT_EQ(SolveN(build_uniform(kRungs.at(ri)), kRanges, &ladders.at(ri)),
+                kRanges.size())
+          << "cell=C5-uniform rung=" << kRungs.at(ri);
+    }
+    for (size_t i = 0; i < kRanges.size(); ++i) {
+      for (size_t ri = 1; ri < kRungs.size(); ++ri) {
+        PrintCoarsePair("C5-uniform", kRungs.at(ri), ladders.at(ri).at(i),
+                        ladders.at(0).at(i), kRanges.at(i));
+      }
+    }
+  }
+
+  // C8-Litz: spin inputs taking the Litz (not Boatright) path.
+  {
+    std::array<std::array<lob::Output, kNumCoarseRanges>, kNumCoarseRungs>
+        ladders{};
+    auto build_litz = [](uint16_t step) {
+      constexpr double kBcPsi = 0.436;
+      constexpr uint16_t kVelocityFps = 3100U;
+      constexpr double kZeroAngleMoa = 6.11;
+      constexpr double kDiameterInch = 0.308;
+      constexpr double kLengthInch = 1.215;
+      constexpr double kMassGrains = 168.0;
+      constexpr double kTwistIn = 10.0;
+      constexpr double kWindSpeedMph = 10.0;
+      lob::Builder b;
+      b.BallisticCoefficientPsi(kBcPsi)
+          .InitialVelocityFps(kVelocityFps)
+          .ZeroAngleMOA(kZeroAngleMoa)
+          .DiameterInch(kDiameterInch)
+          .LengthInch(kLengthInch)
+          .MassGrains(kMassGrains)
+          .TwistInchesPerTurn(kTwistIn)
+          .WindHeading(lob::ClockAngleT::kIII)
+          .WindSpeedMph(kWindSpeedMph);
+      return BuildAtStep(b, step);
+    };
+    const lob::Context kProbe = build_litz(36U);
+    ASSERT_EQ(kProbe.error, lob::ErrorT::kNone);
+    EXPECT_TRUE(std::isnan(kProbe.spindrift_factor));
+    EXPECT_TRUE(std::isfinite(kProbe.stability_factor));
+    EXPECT_TRUE(std::fabs(kProbe.aerodynamic_jump) > 0.0);
+    for (size_t ri = 0; ri < kRungs.size(); ++ri) {
+      ASSERT_EQ(SolveN(build_litz(kRungs.at(ri)), kRanges, &ladders.at(ri)),
+                kRanges.size())
+          << "cell=C8-Litz rung=" << kRungs.at(ri);
+    }
+    for (size_t i = 0; i < kRanges.size(); ++i) {
+      for (size_t ri = 1; ri < kRungs.size(); ++ri) {
+        PrintCoarsePair("C8-Litz", kRungs.at(ri), ladders.at(ri).at(i),
+                        ladders.at(0).at(i), kRanges.at(i));
+      }
+    }
+  }
+}
+
 }  // namespace tests
