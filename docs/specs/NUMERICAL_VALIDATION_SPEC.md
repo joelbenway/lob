@@ -1306,14 +1306,20 @@ floors/ceilings checked into `baselines/`):
 
 1. **Spec location:** accept `docs/specs/` (this file) vs move under
    `docs/superpowers/specs/`? Content is location-independent.
+   **Closed 2026-10-01:** `docs/specs/` as committed (spec + 6 phase plans +
+   remediation + experiments + step policy + closure plan).
 2. **`test/source/` vs new `test/validation/` dir:** default = extend
    `test/source/` until crowding forces the split. Confirm threshold.
    **Decided 2026-09-27:** tests in `test/source/`, baselines in
    `test/validation/baselines/` (Phase 1 plan as written).
 3. **MC runner home:** `tools/lob_mc/` (recommended) vs `validation/mc/` vs
    `benchmark/`-adjacent. Confirm before Phase 5.
+   **Closed 2026-10-01:** `tools/lob_mc/` as built (developer-mode-gated,
+   client of installed `lob::lob`).
 4. **Canonical MC defaults:** pilot `N=1024`, smoke `N=256`, `E_target=0.1σ`,
    `mt19937_64` + splitmix64 subseeds — approve or amend.
+   **Closed 2026-10-01:** locked as written (Phase 5 plan Global Constraints;
+   implemented + review-approved).
 5. **Step ladder exact rungs:** `36→18→9→4→2→1` in (9→4 inexact halving
    recorded) — approve; alternative `36→12→6→3→1` if exact thirds preferred.
    **Decided 2026-09-27:** `36→18→9→4→2→1` with actual `Δx` recorded per rung.
@@ -1323,11 +1329,20 @@ floors/ceilings checked into `baselines/`):
 7. **Input uncertainties `u(x_i)`:** no defaults shipped; approve the
    elicitation template and the first completed budget's sources (supplier
    sheets vs engineering judgment, each row labeled).
+   **OPEN 2026-10-01, owner: human.** Template shipped at
+   `test/validation/manifests/budget_template.json` (69 TBD rows, fail-closed
+   loader, review-approved); first real values await human-supplied evidence.
+   No combined `u_c` exists anywhere until then.
 8. **Reference transcription:** approve mechanical move of env-test vectors
    into `reference_*.json` (reviewer diffs each number) and the provenance
    text for McCoy/Huang/JBM/BRL/Litz/Boatright entries.
+   **Closed 2026-10-01:** transcribed + reviewer-verified 432/432 fields
+   against source; provenance strings as written.
 9. **Categorical treatment:** G-curve / drag-source / density-path as scenario
    weights — approve families and weights before any MC uses them.
+   **Closed 2026-10-01 as degenerate-default:** MC manifests weight 1.0 on
+   each case's own curve (no cross-curve weighting in use); non-degenerate
+   weights require a new review before any study uses them.
 10. **Output quantization:** keep `U16/U32` truncation (report LSB floors) vs
     expose double-precision validation accessors (test-only, static builds)?
     Default = keep ABI, document floors. Changing the ABI is out of scope
@@ -1335,8 +1350,12 @@ floors/ceilings checked into `baselines/`):
     **Decided 2026-09-27:** keep ABI, LSB floors.
 11. **Field/radar data:** pursue acquisition? Until yes, long-range cells stay
     provisional by policy — confirm.
+    **OPEN 2026-10-01, owner: human.** No acquisition pursued; unclaimed cells
+    stand as rendered in the envelope matrix + claims doc.
 12. **Significance `k`:** per-report stated, no global default — confirm no
     project-wide `R_sig` threshold is wanted.
+    **Closed 2026-10-01:** upheld by design (Phase 6 bands 10.0/0.1 are
+    conventional reporting bands, not a threshold; verdicts carry yardstick).
 13. **Wind envelope cells:** approve the split (uniform / profile-α0 /
     profile-scaled / incline×wind / ceiling-clamp) and the rule that scaled
     results never inherit unscaled floors (§10.3, §16.8).
@@ -1344,9 +1363,13 @@ floors/ceilings checked into `baselines/`):
 14. **Wind MC sampling:** approve input-space (speed, heading) sampling with
     wrapped headings and α-on-`[0,1]` (§12.1), plus the height-jitter-only-
     when-sheared rule.
+    **Closed 2026-10-01:** implemented per §12.1 in the runner (review-approved;
+    profile-path coverage proven by 1-vs-4 byte-identical `c6shear_smoke`).
 15. **Wind `u(x)` elicitation:** approve rows for station error, cross-station
     correlation, height error (shear path), and α uncertainty (§11.3) before
     the first wind budget is combined.
+    **OPEN 2026-10-01, same bucket as item 7** (human-owned sensor evidence;
+    template rows exist, values TBD).
 
 ---
 
