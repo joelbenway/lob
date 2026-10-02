@@ -41,7 +41,67 @@ accuracy promise is made.
 - Inverse vs forward consistency: iterative `SolveInverse` matches
   `FastInverse` within `0.1 MOA` on the cross-check trajectories
   (`test/source/lob_inverse_test.cpp`).  Forward vs inverse sign flip is
-  asserted (`test/source/lob_inverse_test.cpp`).
+   asserted (`test/source/lob_inverse_test.cpp`).
+
+Convergence methodology and measured error floors live in
+`docs/specs/NUMERICAL_VALIDATION_SPEC.md` (§8) with the ladder harness in
+`test/source/validation_convergence_test.cpp` (public API) and
+`test/source/validation_convergence_angle_test.cpp` (static-only angle
+tolerances) and curated floors in `test/validation/baselines/floors.json`.
+CI asserts monotone refinement plus checked-in ceilings; full 36→1 ladders
+run offline behind `LOB_FULL_LADDER=1` and write `build/validation/`
+artifacts. No universal accuracy claim is made — floors are per envelope
+cell, per output, with config.
+
+Sensitivity methodology and driver ranking live in
+`docs/specs/NUMERICAL_VALIDATION_SPEC.md` (§9) with the harness in
+`test/source/validation_sensitivity_test.cpp` (public API) and curated
+ranking in `test/validation/baselines/pareto.json`. CI smokes
+C1 × velocity/wind with Pareto-share checks; full C1/C5/C8 Pareto runs
+offline behind `LOB_FULL_PARETO=1`. Semi-elasticities await Phase 4 input
+uncertainties; the artifact schema reserves the field.
+
+Reference trajectories live in `test/validation/cases/reference_*.json`
+(transcribed from `test/source/lob_env_test.cpp` with provenance and
+envelope tags, per `docs/specs/NUMERICAL_VALIDATION_SPEC.md` §10). CI
+round-trips the loader and decomposes C1-ICAO residuals against measured
+numerical floors; the full six-case matrix with coverage runs offline
+behind `LOB_FULL_MATRIX=1`. All cells are provisional: reference
+uncertainties are unstated and no field data exists yet.
+
+Uncertainty budgets combine sensitivities, numerical floors, and reference
+residuals per `docs/specs/NUMERICAL_VALIDATION_SPEC.md` §11; the combiner
+and manifest schema live in `test/source/validation_budget_test.cpp` with
+the elicitation template at `test/validation/manifests/budget_template.json`.
+CI proves the math and the fail-closed template; full assembly runs offline
+behind `LOB_FULL_BUDGET=1`. No combined uncertainty is claimed anywhere yet:
+every input uncertainty awaits human-supplied evidence.
+
+Monte Carlo propagation samples input distributions through the unchanged
+deterministic solver (`docs/specs/NUMERICAL_VALIDATION_SPEC.md` §12); the
+desktop-only runner lives in `tools/lob_mc/` (never the embedded core) with
+a fixed-seed integrity smoke in `test/source/validation_mc_smoke_test.cpp`.
+Full runs are offline, threaded, and reproducible by seed; distributions are
+synthetic until human-supplied sensor evidence arrives.
+
+Signal-versus-noise comparisons divide paired effect deltas by the solver's
+own resolution yardstick (`docs/specs/NUMERICAL_VALIDATION_SPEC.md` §13);
+the harness lives in `test/source/validation_signal_test.cpp` with
+static-only probes in `test/source/validation_signal_probes_test.cpp` and
+per-effect artifacts `build/validation/signal_{effect}_{case}.json`.
+Verdicts are resolution-relative bands (`R_sig > 10` distinguishable /
+`0.1–10` marginal / `< 0.1` indistinguishable), never full prediction
+significance — no `u_c` exists anywhere yet. CI smokes
+lapse-consequence, jump-live, and the single-point-profile bit-identity
+oracle; the full 15-effect matrix runs offline behind `LOB_FULL_SIGNAL=1`.
+
+Envelope claims are curated per cell in
+`test/validation/claims/envelope_claims.json` (all `provisional`,
+`human_signoff: pending`): each row carries its effect finding, isolation
+level, and artifact link, with JOINT/BOUND rows labeled as such. The
+coverage matrix in `build/dev/validation/reference_matrix.csv` joins
+summaries to cells by existing ids; long-range and field cells stay
+unclaimed (§21 items 7, 11 open).
 
 @section validation-invariants Invariants
 

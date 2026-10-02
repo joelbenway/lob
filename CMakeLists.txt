@@ -93,6 +93,15 @@ if(PROJECT_IS_TOP_LEVEL)
   endif()
 endif()
 
+# ---- Tools ----
+
+if(PROJECT_IS_TOP_LEVEL)
+  option(BUILD_TOOLS "Build tools tree." "${LOB_DEVELOPER_MODE}")
+  if(BUILD_TOOLS)
+    add_subdirectory(tools)
+  endif()
+endif()
+
 # ---- Developer mode ----
 
 if(NOT LOB_DEVELOPER_MODE)

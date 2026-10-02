@@ -78,6 +78,11 @@ Exterior Ballistics — The Launch and Flight Dynamics of Symmetric Projectiles*
   method is run at its own `dt` to reach ~1 ft error vs an RK4 `dt=1e-5`
   reference — see `benchmark/ode.cpp`).
 - The `_solve_step_test` and `_calc_test` lock in per-step invariants.
+- Step-size sensitivity is systematized as a paired 36→9 in control
+  (`signal_step-36-to-9_C1.json`, worst `R_sig` 0.0207 at 3000 ft —
+  indistinguishable against the solver's own noise floor), with the ladder
+  procedure and per-cell floors in `test/source/validation_signal_test.cpp`
+  and `test/validation/baselines/floors.json` (`docs/specs/NUMERICAL_VALIDATION_SPEC.md` §8, §13).
 
 @section num-ode-limits Limitations
 
@@ -85,3 +90,9 @@ Exterior Ballistics — The Launch and Flight Dynamics of Symmetric Projectiles*
 - Per-step lapse is gated: `LobSolve`/`BuildBoatright`/`BuildZeroAngle` use `Fast*`
   (firing-site `ρ`/`c`); only `LobSolveInverse` ranges with forward `drop>100ft`
   (`elevation < −1200in`) use `DsDx`/`SolveStep`/`SolveAngle` lapse.
+
+What step to use: stay with the default unless there is a measured reason
+not to — within the validated envelope the policy is a static 288-inch
+step, outside it the 36-inch default, and an explicit
+`Builder::StepSize` always wins (`source/solve_step.cpp`,
+`docs/specs/STATIC_STEP_POLICY.md` for the envelope bounds and evidence).

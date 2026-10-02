@@ -27,6 +27,8 @@ user-supplied Mach vs Cd table.  Requirements (`source/lob_builder.cpp`):
 - `size ≥ 2`, Machs strictly increasing, Cd finite and `≥ 0`.
 
 The table is spline-fit onto the production knots (see @ref num_splines).
+A ±5e-3 Cd shift on the transonic band is trajectory-indistinguishable on C1
+(`R_sig` 0.0; see @ref num_splines for the measurement).
 If the table does not span Mach 0–5 the spline is cubically extrapolated (PCHIP
 Hermite using the outer interval's tangents); extrapolation that would yield
 negative Cd at 0 or 5 is rejected with `kLobErrorMachDragTableInvalid` — pad

@@ -1,0 +1,1387 @@
+{
+  "artifact_schema": 1,
+  "provenance": {
+    "template_version": 1,
+    "created_utc": "2026-09-28",
+    "distribution_defaults_note": "All row distributions are TEMPLATE DEFAULTS per spec \u00a712.1 (normal for sensors, uniform where only bounds are known) \u2014 the human must confirm or replace each one during elicitation."
+  },
+  "cell_aliases": {
+    "C6-shear": {
+      "floors_cell": "C6-scaled"
+    }
+  },
+  "instructions": "Human elicitation guide (spec \u00a721 item 7): each row whose u is the TBD literal needs a human-supplied standard uncertainty u(x) plus provenance before any combined uncertainty may be emitted \u2014 the loader fails closed (no u_c) while any row is TBD. Qualifying evidence per row: chronograph datasheet (velocity; give model, serial, calibration date); sensor datasheets/certs (pressure, temperature, humidity, wind-station meters); optic-height and range tolerances from the instrument spec; BC scatter from supplier sheets or firing records; wind-aloft vs station error from measurement campaigns. Where no measurement exists, a labeled engineering judgment is acceptable ONLY if recorded as judgment (author, date, rationale, and the distribution choice it supports) \u2014 judgment must never be silently treated as measured data. Distributions shown are TEMPLATE DEFAULTS per spec \u00a712.1 (normal for sensors, uniform where only bounds are known): the human must confirm or replace each one. Correlation stays 'assumed-independent \u2014 see risk' until a measurement campaign justifies covariances (pressure/temperature/altitude triples, band BCs, multi-station profiles). Nonlinear-flagged rows route to Monte Carlo (Phase 5), never into the linear combiner. Approval: a human reviewer approves this template and the sources of the first completed budget (\u00a721 item 7); silently filling a numeric u without review must fail the all-TBD test.",
+  "cells": [
+    {
+      "cell": "C1-ICAO",
+      "channel": "elevation_in",
+      "range_ft": 1800,
+      "rows": [
+        {
+          "input": "velocity_fps",
+          "cell": "C1-ICAO",
+          "channel": "elevation_in",
+          "sensitivity_c": 0.08641820558,
+          "sensitivity_source": "pareto.json C1-ICAO elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "bc_psi",
+          "cell": "C1-ICAO",
+          "channel": "elevation_in",
+          "sensitivity_c": 182.8389985,
+          "sensitivity_source": "pareto.json C1-ICAO elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "zero_angle_moa",
+          "cell": "C1-ICAO",
+          "channel": "elevation_in",
+          "sensitivity_c": 6.283128149,
+          "sensitivity_source": "pareto.json C1-ICAO elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "pressure_inhg",
+          "cell": "C1-ICAO",
+          "channel": "elevation_in",
+          "sensitivity_c": -1.417485241,
+          "sensitivity_source": "pareto.json C1-ICAO elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "temperature_degf",
+          "cell": "C1-ICAO",
+          "channel": "elevation_in",
+          "sensitivity_c": 0.06296756976,
+          "sensitivity_source": "pareto.json C1-ICAO elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "optic_height_in",
+          "cell": "C1-ICAO",
+          "channel": "elevation_in",
+          "sensitivity_c": -1,
+          "sensitivity_source": "pareto.json C1-ICAO elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "uniform",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "humidity_pp",
+          "cell": "C1-ICAO",
+          "channel": "elevation_in",
+          "sensitivity_c": 0.002239236596,
+          "sensitivity_source": "pareto.json C1-ICAO elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        }
+      ],
+      "excluded_with_floor": [
+        {
+          "input": "mass_grains",
+          "floor": 4.15814e-05,
+          "reason": "below_floor in pareto.json C1-ICAO elevation_in@1800"
+        },
+        {
+          "input": "diameter_in",
+          "floor": 4.15814e-05,
+          "reason": "below_floor in pareto.json C1-ICAO elevation_in@1800"
+        },
+        {
+          "input": "length_in",
+          "floor": 4.15814e-05,
+          "reason": "below_floor in pareto.json C1-ICAO elevation_in@1800"
+        },
+        {
+          "input": "wind_speed_mph",
+          "floor": 4.15814e-05,
+          "reason": "below_floor in pareto.json C1-ICAO elevation_in@1800"
+        },
+        {
+          "input": "wind_heading_deg",
+          "floor": 4.15814e-05,
+          "reason": "below_floor in pareto.json C1-ICAO elevation_in@1800"
+        }
+      ],
+      "nonlinear_route_to_mc": [],
+      "epsilon_num": {
+        "value": 4.15814e-05,
+        "source": "floors.json C1-ICAO floors_18_9 elevation_in"
+      },
+      "delta_ref": {
+        "value": 0.13508662353245882,
+        "source": "envelope_report.json worst_residual elevation_in (max across FullMatrix cells)"
+      },
+      "eta_ref": "unknown"
+    },
+    {
+      "cell": "C1-ICAO",
+      "channel": "deflection_moa",
+      "range_ft": 1800,
+      "rows": [
+        {
+          "input": "wind_speed_mph",
+          "cell": "C1-ICAO",
+          "channel": "deflection_moa",
+          "sensitivity_c": 0.4969336689,
+          "sensitivity_source": "pareto.json C1-ICAO deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        }
+      ],
+      "excluded_with_floor": [
+        {
+          "input": "velocity_fps",
+          "floor": 0.0,
+          "reason": "below_floor in pareto.json C1-ICAO deflection_moa@1800"
+        },
+        {
+          "input": "bc_psi",
+          "floor": 0.0,
+          "reason": "below_floor in pareto.json C1-ICAO deflection_moa@1800"
+        },
+        {
+          "input": "zero_angle_moa",
+          "floor": 0.0,
+          "reason": "below_floor in pareto.json C1-ICAO deflection_moa@1800"
+        },
+        {
+          "input": "optic_height_in",
+          "floor": 0.0,
+          "reason": "below_floor in pareto.json C1-ICAO deflection_moa@1800"
+        },
+        {
+          "input": "pressure_inhg",
+          "floor": 0.0,
+          "reason": "below_floor in pareto.json C1-ICAO deflection_moa@1800"
+        },
+        {
+          "input": "temperature_degf",
+          "floor": 0.0,
+          "reason": "below_floor in pareto.json C1-ICAO deflection_moa@1800"
+        },
+        {
+          "input": "humidity_pp",
+          "floor": 0.0,
+          "reason": "below_floor in pareto.json C1-ICAO deflection_moa@1800"
+        },
+        {
+          "input": "mass_grains",
+          "floor": 0.0,
+          "reason": "below_floor in pareto.json C1-ICAO deflection_moa@1800"
+        },
+        {
+          "input": "diameter_in",
+          "floor": 0.0,
+          "reason": "below_floor in pareto.json C1-ICAO deflection_moa@1800"
+        },
+        {
+          "input": "length_in",
+          "floor": 0.0,
+          "reason": "below_floor in pareto.json C1-ICAO deflection_moa@1800"
+        },
+        {
+          "input": "wind_heading_deg",
+          "floor": 0.0,
+          "reason": "below_floor in pareto.json C1-ICAO deflection_moa@1800"
+        }
+      ],
+      "nonlinear_route_to_mc": [],
+      "epsilon_num": {
+        "value": 0.0,
+        "source": "floors.json C1-ICAO floors_18_9 deflection_moa"
+      },
+      "delta_ref": {
+        "value": 0.0,
+        "source": "envelope_report.json worst_residual deflection_moa (max across FullMatrix cells)"
+      },
+      "eta_ref": "unknown"
+    },
+    {
+      "cell": "C1-ICAO",
+      "channel": "tof_s",
+      "range_ft": 1800,
+      "rows": [
+        {
+          "input": "velocity_fps",
+          "cell": "C1-ICAO",
+          "channel": "tof_s",
+          "sensitivity_c": -0.0003297579053,
+          "sensitivity_source": "pareto.json C1-ICAO tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "bc_psi",
+          "cell": "C1-ICAO",
+          "channel": "tof_s",
+          "sensitivity_c": -0.9677846249,
+          "sensitivity_source": "pareto.json C1-ICAO tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "pressure_inhg",
+          "cell": "C1-ICAO",
+          "channel": "tof_s",
+          "sensitivity_c": 0.007503011078,
+          "sensitivity_source": "pareto.json C1-ICAO tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "temperature_degf",
+          "cell": "C1-ICAO",
+          "channel": "tof_s",
+          "sensitivity_c": -0.00033345971,
+          "sensitivity_source": "pareto.json C1-ICAO tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "humidity_pp",
+          "cell": "C1-ICAO",
+          "channel": "tof_s",
+          "sensitivity_c": -1.185685655e-05,
+          "sensitivity_source": "pareto.json C1-ICAO tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        }
+      ],
+      "excluded_with_floor": [
+        {
+          "input": "zero_angle_moa",
+          "floor": 6.12488e-08,
+          "reason": "below_floor in pareto.json C1-ICAO tof_s@1800"
+        },
+        {
+          "input": "optic_height_in",
+          "floor": 6.12488e-08,
+          "reason": "below_floor in pareto.json C1-ICAO tof_s@1800"
+        },
+        {
+          "input": "mass_grains",
+          "floor": 6.12488e-08,
+          "reason": "below_floor in pareto.json C1-ICAO tof_s@1800"
+        },
+        {
+          "input": "diameter_in",
+          "floor": 6.12488e-08,
+          "reason": "below_floor in pareto.json C1-ICAO tof_s@1800"
+        },
+        {
+          "input": "length_in",
+          "floor": 6.12488e-08,
+          "reason": "below_floor in pareto.json C1-ICAO tof_s@1800"
+        },
+        {
+          "input": "wind_speed_mph",
+          "floor": 6.12488e-08,
+          "reason": "below_floor in pareto.json C1-ICAO tof_s@1800"
+        },
+        {
+          "input": "wind_heading_deg",
+          "floor": 6.12488e-08,
+          "reason": "below_floor in pareto.json C1-ICAO tof_s@1800"
+        }
+      ],
+      "nonlinear_route_to_mc": [],
+      "epsilon_num": {
+        "value": 6.12488e-08,
+        "source": "floors.json C1-ICAO floors_18_9 time_of_flight_s"
+      },
+      "delta_ref": {
+        "value": 0.0005501113520342549,
+        "source": "envelope_report.json worst_residual time_of_flight_s (max across FullMatrix cells)"
+      },
+      "eta_ref": "unknown"
+    },
+    {
+      "cell": "C5-uniform",
+      "channel": "elevation_in",
+      "range_ft": 1800,
+      "rows": [
+        {
+          "input": "velocity_fps",
+          "cell": "C5-uniform",
+          "channel": "elevation_in",
+          "sensitivity_c": 0.1071635745,
+          "sensitivity_source": "pareto.json C5-uniform elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "bc_psi",
+          "cell": "C5-uniform",
+          "channel": "elevation_in",
+          "sensitivity_c": 185.6072348,
+          "sensitivity_source": "pareto.json C5-uniform elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "zero_angle_moa",
+          "cell": "C5-uniform",
+          "channel": "elevation_in",
+          "sensitivity_c": 6.283100718,
+          "sensitivity_source": "pareto.json C5-uniform elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "pressure_inhg",
+          "cell": "C5-uniform",
+          "channel": "elevation_in",
+          "sensitivity_c": -2.307240081,
+          "sensitivity_source": "pareto.json C5-uniform elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "temperature_degf",
+          "cell": "C5-uniform",
+          "channel": "elevation_in",
+          "sensitivity_c": 0.1058988291,
+          "sensitivity_source": "pareto.json C5-uniform elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "optic_height_in",
+          "cell": "C5-uniform",
+          "channel": "elevation_in",
+          "sensitivity_c": -1,
+          "sensitivity_source": "pareto.json C5-uniform elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "uniform",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "wind_heading_deg",
+          "cell": "C5-uniform",
+          "channel": "elevation_in",
+          "sensitivity_c": -0.008873364734,
+          "sensitivity_source": "pareto.json C5-uniform elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "humidity_pp",
+          "cell": "C5-uniform",
+          "channel": "elevation_in",
+          "sensitivity_c": 0.003727847727,
+          "sensitivity_source": "pareto.json C5-uniform elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "length_in",
+          "cell": "C5-uniform",
+          "channel": "elevation_in",
+          "sensitivity_c": 0.3365954537,
+          "sensitivity_source": "pareto.json C5-uniform elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "uniform",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        }
+      ],
+      "excluded_with_floor": [
+        {
+          "input": "wind_speed_mph",
+          "floor": 5.342835971e-05,
+          "reason": "below_floor in pareto.json C5-uniform elevation_in@1800"
+        },
+        {
+          "input": "mass_grains",
+          "floor": 5.342835971e-05,
+          "reason": "below_floor in pareto.json C5-uniform elevation_in@1800"
+        },
+        {
+          "input": "diameter_in",
+          "floor": 5.342835971e-05,
+          "reason": "below_floor in pareto.json C5-uniform elevation_in@1800"
+        }
+      ],
+      "nonlinear_route_to_mc": [],
+      "epsilon_num": {
+        "value": 5.342835971e-05,
+        "source": "floors.json C5-uniform floors_18_9 elevation_in"
+      },
+      "delta_ref": {
+        "value": 0.13508662353245882,
+        "source": "envelope_report.json worst_residual elevation_in (max across FullMatrix cells)"
+      },
+      "eta_ref": "unknown"
+    },
+    {
+      "cell": "C5-uniform",
+      "channel": "deflection_moa",
+      "range_ft": 1800,
+      "rows": [
+        {
+          "input": "wind_speed_mph",
+          "cell": "C5-uniform",
+          "channel": "deflection_moa",
+          "sensitivity_c": 0.7023080364,
+          "sensitivity_source": "pareto.json C5-uniform deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "bc_psi",
+          "cell": "C5-uniform",
+          "channel": "deflection_moa",
+          "sensitivity_c": -12.5089067,
+          "sensitivity_source": "pareto.json C5-uniform deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "velocity_fps",
+          "cell": "C5-uniform",
+          "channel": "deflection_moa",
+          "sensitivity_c": -0.001952209227,
+          "sensitivity_source": "pareto.json C5-uniform deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "pressure_inhg",
+          "cell": "C5-uniform",
+          "channel": "deflection_moa",
+          "sensitivity_c": 0.1555021787,
+          "sensitivity_source": "pareto.json C5-uniform deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "temperature_degf",
+          "cell": "C5-uniform",
+          "channel": "deflection_moa",
+          "sensitivity_c": -0.007236871993,
+          "sensitivity_source": "pareto.json C5-uniform deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "wind_heading_deg",
+          "cell": "C5-uniform",
+          "channel": "deflection_moa",
+          "sensitivity_c": 0.0003821505397,
+          "sensitivity_source": "pareto.json C5-uniform deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "humidity_pp",
+          "cell": "C5-uniform",
+          "channel": "deflection_moa",
+          "sensitivity_c": -0.0002536912798,
+          "sensitivity_source": "pareto.json C5-uniform deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        }
+      ],
+      "excluded_with_floor": [
+        {
+          "input": "zero_angle_moa",
+          "floor": 7.577461467e-07,
+          "reason": "below_floor in pareto.json C5-uniform deflection_moa@1800"
+        },
+        {
+          "input": "length_in",
+          "floor": 7.577461467e-07,
+          "reason": "below_floor in pareto.json C5-uniform deflection_moa@1800"
+        },
+        {
+          "input": "optic_height_in",
+          "floor": 7.577461467e-07,
+          "reason": "below_floor in pareto.json C5-uniform deflection_moa@1800"
+        },
+        {
+          "input": "mass_grains",
+          "floor": 7.577461467e-07,
+          "reason": "below_floor in pareto.json C5-uniform deflection_moa@1800"
+        },
+        {
+          "input": "diameter_in",
+          "floor": 7.577461467e-07,
+          "reason": "below_floor in pareto.json C5-uniform deflection_moa@1800"
+        }
+      ],
+      "nonlinear_route_to_mc": [
+        {
+          "input": "length_in",
+          "reason": "nonlinear flag in pareto.json C5-uniform deflection_moa@1800 \u2014 route to MC"
+        }
+      ],
+      "epsilon_num": {
+        "value": 7.577461467e-07,
+        "source": "floors.json C5-uniform floors_18_9 deflection_moa"
+      },
+      "delta_ref": {
+        "value": 0.0,
+        "source": "envelope_report.json worst_residual deflection_moa (max across FullMatrix cells)"
+      },
+      "eta_ref": "unknown"
+    },
+    {
+      "cell": "C5-uniform",
+      "channel": "tof_s",
+      "range_ft": 1800,
+      "rows": [
+        {
+          "input": "velocity_fps",
+          "cell": "C5-uniform",
+          "channel": "tof_s",
+          "sensitivity_c": -0.0003826604889,
+          "sensitivity_source": "pareto.json C5-uniform tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "bc_psi",
+          "cell": "C5-uniform",
+          "channel": "tof_s",
+          "sensitivity_c": -0.8929653602,
+          "sensitivity_source": "pareto.json C5-uniform tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "pressure_inhg",
+          "cell": "C5-uniform",
+          "channel": "tof_s",
+          "sensitivity_c": 0.01110073505,
+          "sensitivity_source": "pareto.json C5-uniform tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "temperature_degf",
+          "cell": "C5-uniform",
+          "channel": "tof_s",
+          "sensitivity_c": -0.0005166139745,
+          "sensitivity_source": "pareto.json C5-uniform tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "wind_heading_deg",
+          "cell": "C5-uniform",
+          "channel": "tof_s",
+          "sensitivity_c": 3.909014452e-05,
+          "sensitivity_source": "pareto.json C5-uniform tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "humidity_pp",
+          "cell": "C5-uniform",
+          "channel": "tof_s",
+          "sensitivity_c": -1.811009791e-05,
+          "sensitivity_source": "pareto.json C5-uniform tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "wind_speed_mph",
+          "cell": "C5-uniform",
+          "channel": "tof_s",
+          "sensitivity_c": 4.696998389e-07,
+          "sensitivity_source": "pareto.json C5-uniform tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        }
+      ],
+      "excluded_with_floor": [
+        {
+          "input": "zero_angle_moa",
+          "floor": 8.11391121e-08,
+          "reason": "below_floor in pareto.json C5-uniform tof_s@1800"
+        },
+        {
+          "input": "length_in",
+          "floor": 8.11391121e-08,
+          "reason": "below_floor in pareto.json C5-uniform tof_s@1800"
+        },
+        {
+          "input": "optic_height_in",
+          "floor": 8.11391121e-08,
+          "reason": "below_floor in pareto.json C5-uniform tof_s@1800"
+        },
+        {
+          "input": "mass_grains",
+          "floor": 8.11391121e-08,
+          "reason": "below_floor in pareto.json C5-uniform tof_s@1800"
+        },
+        {
+          "input": "diameter_in",
+          "floor": 8.11391121e-08,
+          "reason": "below_floor in pareto.json C5-uniform tof_s@1800"
+        }
+      ],
+      "nonlinear_route_to_mc": [
+        {
+          "input": "length_in",
+          "reason": "nonlinear flag in pareto.json C5-uniform tof_s@1800 \u2014 route to MC"
+        }
+      ],
+      "epsilon_num": {
+        "value": 8.11391121e-08,
+        "source": "floors.json C5-uniform floors_18_9 time_of_flight_s"
+      },
+      "delta_ref": {
+        "value": 0.0005501113520342549,
+        "source": "envelope_report.json worst_residual time_of_flight_s (max across FullMatrix cells)"
+      },
+      "eta_ref": "unknown"
+    },
+    {
+      "cell": "C8-Litz",
+      "channel": "elevation_in",
+      "range_ft": 1800,
+      "rows": [
+        {
+          "input": "velocity_fps",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": 0.06350405376,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "bc_psi",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": 83.75894594,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "zero_angle_moa",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": 6.283109005,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "wind_speed_mph",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": -0.3044581001,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "twist_in_per_turn",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": 0.3272413798,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "uniform",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "pressure_inhg",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": -1.165919052,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "temperature_degf",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": 0.05435095362,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "optic_height_in",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": -1,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "uniform",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "diameter_in",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": -11.86471658,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "uniform",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "wind_heading_deg",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": -0.007600429952,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "mass_grains",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": -0.009690687166,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "uniform",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "length_in",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": 4.347650297,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "uniform",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "humidity_pp",
+          "cell": "C8-Litz",
+          "channel": "elevation_in",
+          "sensitivity_c": 0.001904228286,
+          "sensitivity_source": "pareto.json C8-Litz elevation_in@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        }
+      ],
+      "excluded_with_floor": [],
+      "nonlinear_route_to_mc": [],
+      "epsilon_num": {
+        "value": 2.799664696e-05,
+        "source": "floors.json C8-Litz floors_18_9 elevation_in"
+      },
+      "delta_ref": {
+        "value": 0.13508662353245882,
+        "source": "envelope_report.json worst_residual elevation_in (max across FullMatrix cells)"
+      },
+      "eta_ref": "unknown"
+    },
+    {
+      "cell": "C8-Litz",
+      "channel": "deflection_moa",
+      "range_ft": 1800,
+      "rows": [
+        {
+          "input": "wind_speed_mph",
+          "cell": "C8-Litz",
+          "channel": "deflection_moa",
+          "sensitivity_c": 0.4686143933,
+          "sensitivity_source": "pareto.json C8-Litz deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "bc_psi",
+          "cell": "C8-Litz",
+          "channel": "deflection_moa",
+          "sensitivity_c": -14.15315509,
+          "sensitivity_source": "pareto.json C8-Litz deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "twist_in_per_turn",
+          "cell": "C8-Litz",
+          "channel": "deflection_moa",
+          "sensitivity_c": -0.06090362674,
+          "sensitivity_source": "pareto.json C8-Litz deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "uniform",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "velocity_fps",
+          "cell": "C8-Litz",
+          "channel": "deflection_moa",
+          "sensitivity_c": -0.002498526381,
+          "sensitivity_source": "pareto.json C8-Litz deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "pressure_inhg",
+          "cell": "C8-Litz",
+          "channel": "deflection_moa",
+          "sensitivity_c": 0.1960829489,
+          "sensitivity_source": "pareto.json C8-Litz deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "temperature_degf",
+          "cell": "C8-Litz",
+          "channel": "deflection_moa",
+          "sensitivity_c": -0.009047159633,
+          "sensitivity_source": "pareto.json C8-Litz deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "diameter_in",
+          "cell": "C8-Litz",
+          "channel": "deflection_moa",
+          "sensitivity_c": 1.84870549,
+          "sensitivity_source": "pareto.json C8-Litz deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "uniform",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "mass_grains",
+          "cell": "C8-Litz",
+          "channel": "deflection_moa",
+          "sensitivity_c": 0.001803555679,
+          "sensitivity_source": "pareto.json C8-Litz deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "uniform",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "wind_heading_deg",
+          "cell": "C8-Litz",
+          "channel": "deflection_moa",
+          "sensitivity_c": 0.000827102372,
+          "sensitivity_source": "pareto.json C8-Litz deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "length_in",
+          "cell": "C8-Litz",
+          "channel": "deflection_moa",
+          "sensitivity_c": -0.7180315608,
+          "sensitivity_source": "pareto.json C8-Litz deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "uniform",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "humidity_pp",
+          "cell": "C8-Litz",
+          "channel": "deflection_moa",
+          "sensitivity_c": -0.0003179770099,
+          "sensitivity_source": "pareto.json C8-Litz deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        }
+      ],
+      "excluded_with_floor": [
+        {
+          "input": "zero_angle_moa",
+          "floor": 9.767386047e-07,
+          "reason": "below_floor in pareto.json C8-Litz deflection_moa@1800"
+        },
+        {
+          "input": "optic_height_in",
+          "floor": 9.767386047e-07,
+          "reason": "below_floor in pareto.json C8-Litz deflection_moa@1800"
+        }
+      ],
+      "nonlinear_route_to_mc": [],
+      "epsilon_num": {
+        "value": 9.767386047e-07,
+        "source": "floors.json C8-Litz floors_18_9 deflection_moa"
+      },
+      "delta_ref": {
+        "value": 0.0,
+        "source": "envelope_report.json worst_residual deflection_moa (max across FullMatrix cells)"
+      },
+      "eta_ref": "unknown"
+    },
+    {
+      "cell": "C8-Litz",
+      "channel": "tof_s",
+      "range_ft": 1800,
+      "rows": [
+        {
+          "input": "velocity_fps",
+          "cell": "C8-Litz",
+          "channel": "tof_s",
+          "sensitivity_c": -0.0002673010121,
+          "sensitivity_source": "pareto.json C8-Litz tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "bc_psi",
+          "cell": "C8-Litz",
+          "channel": "tof_s",
+          "sensitivity_c": -0.4863405883,
+          "sensitivity_source": "pareto.json C8-Litz tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "pressure_inhg",
+          "cell": "C8-Litz",
+          "channel": "tof_s",
+          "sensitivity_c": 0.007085940796,
+          "sensitivity_source": "pareto.json C8-Litz tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "temperature_degf",
+          "cell": "C8-Litz",
+          "channel": "tof_s",
+          "sensitivity_c": -0.0003309595305,
+          "sensitivity_source": "pareto.json C8-Litz tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "wind_heading_deg",
+          "cell": "C8-Litz",
+          "channel": "tof_s",
+          "sensitivity_c": 4.173171571e-05,
+          "sensitivity_source": "pareto.json C8-Litz tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "humidity_pp",
+          "cell": "C8-Litz",
+          "channel": "tof_s",
+          "sensitivity_c": -1.15892849e-05,
+          "sensitivity_source": "pareto.json C8-Litz tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "wind_speed_mph",
+          "cell": "C8-Litz",
+          "channel": "tof_s",
+          "sensitivity_c": 4.455023497e-07,
+          "sensitivity_source": "pareto.json C8-Litz tof_s@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        }
+      ],
+      "excluded_with_floor": [
+        {
+          "input": "zero_angle_moa",
+          "floor": 4.926922315e-08,
+          "reason": "below_floor in pareto.json C8-Litz tof_s@1800"
+        },
+        {
+          "input": "twist_in_per_turn",
+          "floor": 4.926922315e-08,
+          "reason": "below_floor in pareto.json C8-Litz tof_s@1800"
+        },
+        {
+          "input": "diameter_in",
+          "floor": 4.926922315e-08,
+          "reason": "below_floor in pareto.json C8-Litz tof_s@1800"
+        },
+        {
+          "input": "mass_grains",
+          "floor": 4.926922315e-08,
+          "reason": "below_floor in pareto.json C8-Litz tof_s@1800"
+        },
+        {
+          "input": "length_in",
+          "floor": 4.926922315e-08,
+          "reason": "below_floor in pareto.json C8-Litz tof_s@1800"
+        },
+        {
+          "input": "optic_height_in",
+          "floor": 4.926922315e-08,
+          "reason": "below_floor in pareto.json C8-Litz tof_s@1800"
+        }
+      ],
+      "nonlinear_route_to_mc": [],
+      "epsilon_num": {
+        "value": 4.926922315e-08,
+        "source": "floors.json C8-Litz floors_18_9 time_of_flight_s"
+      },
+      "delta_ref": {
+        "value": 0.0005501113520342549,
+        "source": "envelope_report.json worst_residual time_of_flight_s (max across FullMatrix cells)"
+      },
+      "eta_ref": "unknown"
+    },
+    {
+      "cell": "C6-shear",
+      "channel": "elevation_in",
+      "range_ft": 1800,
+      "rows": [],
+      "excluded_with_floor": [
+        {
+          "input": "height_ft",
+          "floor": 5.361285491e-05,
+          "reason": "below_floor in pareto.json C6-shear elevation_in@1800"
+        },
+        {
+          "input": "shear_exponent",
+          "floor": 5.361285491e-05,
+          "reason": "below_floor in pareto.json C6-shear elevation_in@1800"
+        }
+      ],
+      "nonlinear_route_to_mc": [],
+      "epsilon_num": {
+        "value": 5.361285491e-05,
+        "source": "floors.json C6-scaled floors_18_9 elevation_in"
+      },
+      "delta_ref": {
+        "value": 0.13508662353245882,
+        "source": "envelope_report.json worst_residual elevation_in (max across FullMatrix cells)"
+      },
+      "eta_ref": "unknown"
+    },
+    {
+      "cell": "C6-shear",
+      "channel": "deflection_moa",
+      "range_ft": 1800,
+      "rows": [
+        {
+          "input": "height_ft",
+          "cell": "C6-shear",
+          "channel": "deflection_moa",
+          "sensitivity_c": -0.08723073705,
+          "sensitivity_source": "pareto.json C6-shear deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        },
+        {
+          "input": "shear_exponent",
+          "cell": "C6-shear",
+          "channel": "deflection_moa",
+          "sensitivity_c": -3.419025669,
+          "sensitivity_source": "pareto.json C6-shear deflection_moa@1800 raw_deriv",
+          "u": "TBD \u2014 human input required",
+          "u_provenance": "TBD \u2014 human input required",
+          "distribution": "normal",
+          "correlation": "assumed-independent \u2014 see risk",
+          "contribution": null,
+          "status": "incomplete-missing-u"
+        }
+      ],
+      "excluded_with_floor": [],
+      "nonlinear_route_to_mc": [],
+      "epsilon_num": {
+        "value": 1.477174983e-06,
+        "source": "floors.json C6-scaled floors_18_9 deflection_moa"
+      },
+      "delta_ref": {
+        "value": 0.0,
+        "source": "envelope_report.json worst_residual deflection_moa (max across FullMatrix cells)"
+      },
+      "eta_ref": "unknown"
+    },
+    {
+      "cell": "C6-shear",
+      "channel": "tof_s",
+      "range_ft": 1800,
+      "rows": [],
+      "excluded_with_floor": [
+        {
+          "input": "height_ft",
+          "floor": 8.137269125e-08,
+          "reason": "below_floor in pareto.json C6-shear tof_s@1800"
+        },
+        {
+          "input": "shear_exponent",
+          "floor": 8.137269125e-08,
+          "reason": "below_floor in pareto.json C6-shear tof_s@1800"
+        }
+      ],
+      "nonlinear_route_to_mc": [],
+      "epsilon_num": {
+        "value": 8.137269125e-08,
+        "source": "floors.json C6-scaled floors_18_9 time_of_flight_s"
+      },
+      "delta_ref": {
+        "value": 0.0005501113520342549,
+        "source": "envelope_report.json worst_residual time_of_flight_s (max across FullMatrix cells)"
+      },
+      "eta_ref": "unknown"
+    }
+  ]
+}

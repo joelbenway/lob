@@ -1,0 +1,24 @@
+{
+  "run_id": "c6shear_smoke",
+  "cell": "C5-uniform",
+  "seed": 12651681,
+  "samples": 8,
+  "workers": 4,
+  "out_dir": "build/validation",
+  "solver_config": {
+    "step_in": 36,
+    "density_path": "fast",
+    "ranges_ft": [900, 1800]
+  },
+  "dimensions": [
+    {"input": "velocity_fps", "family": "normal", "params": {"mean": 2720.0, "sigma": 10.0}, "baseline": 2720.0},
+    {"input": "shear_exponent", "family": "fixed", "params": {"value": 0.25}, "baseline": 0.25},
+    {"input": "wind_profile", "family": "profile", "params": {"stations": [{"range_ft": 0.0, "speed_mph": 5.0, "speed_sigma": 1.0, "heading_deg": 90.0, "heading_sigma": 10.0, "height_ft": 0.0, "height_sigma": 2.0}, {"range_ft": 1500.0, "speed_mph": 10.0, "speed_sigma": 1.0, "heading_deg": 90.0, "heading_sigma": 10.0, "height_ft": 6.0, "height_sigma": 2.0}], "correlation": "independent"}},
+    {"input": "bc_psi", "family": "normal", "params": {"mean": 0.372, "sigma": 0.00372}, "truncation": {"lo": 0.0, "hi": 1.0}, "baseline": 0.372}
+  ],
+  "scenarios": [
+    {"name": "G1-own", "drag_function": "G1", "weight": 1.0}
+  ],
+  "synthetic_illustrative_only": true,
+  "synthetic_comment": "All distributions are SYNTHETIC illustrative defaults; real sensor u(x) await spec section 21 item 7 human-supplied values with provenance. Mirrors the Phase 1 C6-scaled cell (wind-base + two-point 90-degree profile, shear 0.25) to cover the wind_profile/shear_exponent path. N=8 smoke only; shear_exponent is listed before wind_profile so per-station heights are drawn."
+}

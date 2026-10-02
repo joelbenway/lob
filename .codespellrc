@@ -2,6 +2,6 @@
 builtin = clear,rare,en-GB_to_en-US,names,informal,code
 check-filenames =
 check-hidden =
-skip = */.git,*/build,*/prefix,*/.direnv,*/.opencode
+skip = */.git,*/build,*/prefix,*/.direnv,*/.opencode,*/.superpowers
 quiet-level = 2
-ignore-words-list = ws,cachegrind,valgrind,setarch,boatright,epicyclic,ir,cg,lets
+ignore-words-list = ws,cachegrind,valgrind,setarch,boatright,epicyclic,ir,cg,lets,iff

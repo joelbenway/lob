@@ -42,6 +42,10 @@ separate from this reference).
   - @ref design_shared_solver — the shared angle solver
 - **Validation**
   - @ref validation_overview — how correctness is established
+  - Numerical validation methodology (floor ladders, sensitivity Pareto,
+    budgets, Monte Carlo, signal/envelope claims):
+    `docs/specs/NUMERICAL_VALIDATION_SPEC.md` (linked, not included, so the
+    spec stays readable on GitHub without Doxygen processing)
 
 @section overview-reading Where to start
 

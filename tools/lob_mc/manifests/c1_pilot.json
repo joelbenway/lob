@@ -1,0 +1,62 @@
+{
+  "run_id": "c1_pilot",
+  "cell": "C1-ICAO",
+  "seed": 12651681,
+  "samples": 1024,
+  "workers": 4,
+  "out_dir": "build/validation",
+  "solver_config": {
+    "step_in": 36,
+    "density_path": "fast",
+    "ranges_ft": [900, 1800, 2700]
+  },
+  "dimensions": [
+    {"input": "velocity_fps", "family": "normal", "params": {"mean": 2800.0, "sigma": 10.0}, "baseline": 2800.0},
+    {"input": "bc_psi", "family": "normal", "params": {"mean": 0.232, "sigma": 0.00232}, "truncation": {"lo": 0.0, "hi": 1.0}, "baseline": 0.232},
+    {"input": "zero_angle_moa", "family": "normal", "params": {"mean": 3.66, "sigma": 0.05}, "baseline": 3.66},
+    {"input": "pressure_inhg", "family": "normal", "params": {"mean": 29.92, "sigma": 0.1}, "truncation": {"lo": 0.0, "hi": 40.0}, "baseline": 29.92},
+    {"input": "temperature_degf", "family": "normal", "params": {"mean": 59.0, "sigma": 2.0}, "baseline": 59.0},
+    {"input": "optic_height_in", "family": "uniform", "params": {"lo": 1.4, "hi": 1.6}, "baseline": 1.5},
+    {"input": "humidity_pp", "family": "normal", "params": {"mean": 50.0, "sigma": 5.0}, "truncation": {"lo": 0.0, "hi": 100.0}, "baseline": 50.0},
+    {"input": "wind_speed_mph", "family": "wind_pair", "params": {"speed_mean": 0.0, "speed_sigma": 2.0, "heading_mean": 90.0, "heading_sigma": 30.0}, "truncation": {"lo": 0.0, "hi": 60.0}, "baseline": 0.0}
+  ],
+  "scenarios": [
+    {"name": "G7-own", "drag_function": "G7", "weight": 1.0}
+  ],
+  "dimension_sets": {
+    "C5-uniform": {
+      "dimensions": [
+        {"input": "velocity_fps", "family": "normal", "params": {"mean": 2720.0, "sigma": 10.0}, "baseline": 2720.0},
+        {"input": "bc_psi", "family": "normal", "params": {"mean": 0.372, "sigma": 0.00372}, "truncation": {"lo": 0.0, "hi": 1.0}, "baseline": 0.372},
+        {"input": "zero_angle_moa", "family": "normal", "params": {"mean": 4.78, "sigma": 0.05}, "baseline": 4.78},
+        {"input": "pressure_inhg", "family": "normal", "params": {"mean": 29.92, "sigma": 0.1}, "truncation": {"lo": 0.0, "hi": 40.0}, "baseline": 29.92},
+        {"input": "temperature_degf", "family": "normal", "params": {"mean": 59.0, "sigma": 2.0}, "baseline": 59.0},
+        {"input": "optic_height_in", "family": "uniform", "params": {"lo": 2.4, "hi": 2.6}, "baseline": 2.5},
+        {"input": "humidity_pp", "family": "normal", "params": {"mean": 50.0, "sigma": 5.0}, "truncation": {"lo": 0.0, "hi": 100.0}, "baseline": 50.0},
+        {"input": "wind_speed_mph", "family": "wind_pair", "params": {"speed_mean": 0.0, "speed_sigma": 2.0, "heading_mean": 90.0, "heading_sigma": 30.0}, "truncation": {"lo": 0.0, "hi": 60.0}, "baseline": 0.0}
+      ],
+      "scenarios": [
+        {"name": "G1-own", "drag_function": "G1", "weight": 1.0}
+      ]
+    },
+    "C8-Litz": {
+      "dimensions": [
+        {"input": "velocity_fps", "family": "normal", "params": {"mean": 3100.0, "sigma": 10.0}, "baseline": 3100.0},
+        {"input": "bc_psi", "family": "normal", "params": {"mean": 0.436, "sigma": 0.00436}, "truncation": {"lo": 0.0, "hi": 1.0}, "baseline": 0.436},
+        {"input": "zero_angle_moa", "family": "normal", "params": {"mean": 6.11, "sigma": 0.05}, "baseline": 6.11},
+        {"input": "pressure_inhg", "family": "normal", "params": {"mean": 29.92, "sigma": 0.1}, "truncation": {"lo": 0.0, "hi": 40.0}, "baseline": 29.92},
+        {"input": "temperature_degf", "family": "normal", "params": {"mean": 59.0, "sigma": 2.0}, "baseline": 59.0},
+        {"input": "twist_in_per_turn", "family": "uniform", "params": {"lo": 9.5, "hi": 10.5}, "baseline": 10.0},
+        {"input": "length_in", "family": "uniform", "params": {"lo": 1.21, "hi": 1.22}, "baseline": 1.215},
+        {"input": "diameter_in", "family": "uniform", "params": {"lo": 0.307, "hi": 0.309}, "baseline": 0.308},
+        {"input": "mass_grains", "family": "uniform", "params": {"lo": 167.0, "hi": 169.0}, "baseline": 168.0},
+        {"input": "wind_speed_mph", "family": "wind_pair", "params": {"speed_mean": 10.0, "speed_sigma": 2.0, "heading_mean": 90.0, "heading_sigma": 15.0}, "truncation": {"lo": 0.0, "hi": 60.0}, "baseline": 10.0}
+      ],
+      "scenarios": [
+        {"name": "G1-own", "drag_function": "G1", "weight": 1.0}
+      ]
+    }
+  },
+  "synthetic_illustrative_only": true,
+  "synthetic_comment": "All distributions are SYNTHETIC illustrative defaults (template TBD rows); real sensor u(x) await spec section 21 item 7 human-supplied values with provenance. Same seed as c1_smoke.json so the C1 pilot extends the smoke streams; C5/C8 sets carry their own baselines for the Task 4 pilot runs via --cell."
+}

@@ -1,0 +1,172 @@
+{
+  "artifact_schema": 1,
+  "id": "ref-hot-lowp",
+  "provenance": {
+    "source": "McCoy, Modern Exterior Ballistics (ISA treatment, pp. 166-168); Huang saturation-pressure formula (J. Appl. Meteor. Climatol.); lob test corpus test/source/lob_env_test.cpp",
+    "lob_version": "0.13.0",
+    "transcribed_utc": "2026-09-27",
+    "transcribed_from_commit": "4fb97db586e3",
+    "transcribed_from": "test/source/lob_env_test.cpp:153-165 (SolveWithTempAndAirPressure kExpected)"
+  },
+  "builder": {
+    "note": "verbatim setter list with units; mirror the fixture",
+    "ballistic_coefficient_psi": 0.232,
+    "bc_drag_function": "G7",
+    "bc_atmosphere": "ICAO",
+    "diameter_in": 0.308,
+    "mass_grains": 155.0,
+    "initial_velocity_fps": 2800,
+    "zero_angle_moa": 3.66,
+    "optic_height_in": 1.5,
+    "temperature_degf": 100,
+    "air_pressure_inhg": 25
+  },
+  "solver_config": {
+    "step_in": 36,
+    "angle_tol_moa": 0.01,
+    "density_path": "fast"
+  },
+  "ranges_ft": [
+    0,
+    150,
+    300,
+    600,
+    900,
+    1200,
+    1500,
+    1800,
+    2100,
+    2400,
+    2700,
+    3000
+  ],
+  "reporting_granularity": {
+    "velocity_fps": 1.0,
+    "energy_ft_lbf": 5.0,
+    "elevation_moa": 0.1,
+    "time_of_flight_s": 0.01
+  },
+  "expected": [
+    {
+      "range_ft": 0,
+      "velocity_fps": 2800,
+      "energy_ft_lbf": 2696,
+      "elevation_in": -1.5,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.0,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 150,
+      "velocity_fps": 2720,
+      "energy_ft_lbf": 2544,
+      "elevation_in": -0.15,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.054,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 300,
+      "velocity_fps": 2642,
+      "energy_ft_lbf": 2400,
+      "elevation_in": 0.03,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.11,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 600,
+      "velocity_fps": 2489,
+      "energy_ft_lbf": 2130,
+      "elevation_in": -3.43,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.227,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 900,
+      "velocity_fps": 2341,
+      "energy_ft_lbf": 1885,
+      "elevation_in": -12.5,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.351,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 1200,
+      "velocity_fps": 2199,
+      "energy_ft_lbf": 1662,
+      "elevation_in": -27.94,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.484,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 1500,
+      "velocity_fps": 2061,
+      "energy_ft_lbf": 1461,
+      "elevation_in": -50.56,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.625,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 1800,
+      "velocity_fps": 1929,
+      "energy_ft_lbf": 1279,
+      "elevation_in": -81.36,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.775,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 2100,
+      "velocity_fps": 1800,
+      "energy_ft_lbf": 1114,
+      "elevation_in": -121.56,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 0.936,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 2400,
+      "velocity_fps": 1675,
+      "energy_ft_lbf": 965,
+      "elevation_in": -172.49,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 1.109,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 2700,
+      "velocity_fps": 1554,
+      "energy_ft_lbf": 830,
+      "elevation_in": -235.82,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 1.295,
+      "u_ref": "unknown"
+    },
+    {
+      "range_ft": 3000,
+      "velocity_fps": 1437,
+      "energy_ft_lbf": 710,
+      "elevation_in": -313.59,
+      "deflection_in": 0.0,
+      "time_of_flight_s": 1.496,
+      "u_ref": "unknown"
+    }
+  ],
+  "envelope_tags": [
+    "range-0-300yd",
+    "range-300-1000yd",
+    "regime-supersonic",
+    "regime-transonic-tail",
+    "wind-calm",
+    "spin-off",
+    "density-fast",
+    "drag-g7-single-bc",
+    "atm-hot-lowp"
+  ],
+  "status": "provisional",
+  "supersedes": null
+}
