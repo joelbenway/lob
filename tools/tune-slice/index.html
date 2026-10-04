@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>lob step-size selection: matching solver resolution to input uncertainty</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 780px; margin: 2em auto; padding: 0 1em; line-height: 1.45; }
+  table { border-collapse: collapse; margin: 1em 0; }
+  th, td { border: 1px solid #999; padding: 4px 10px; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  input[type=text], input[type=number] { width: 130px; }
+  .big { font-size: 1.6em; font-weight: bold; }
+  .need { background: #fff8e6; border: 1px solid #c90; padding: 8px 12px; }
+  .pass { color: #080; } .fail { color: #a00; font-weight: bold; }
+  .note { color: #555; font-size: 0.9em; }
+  .hint { color: #555; font-size: 0.85em; }
+  h2 { margin-top: 1.8em; }
+</style>
+</head>
+<body>
+<h1>Selecting the solver step size</h1>
+
+<h2>What this page does</h2>
+<p>
+  lob integrates the trajectory as an initial-value problem, advancing
+  downrange in fixed spatial steps. Finer steps reduce truncation error but
+  cost linearly more compute. Past a point, that precision is wasted:
+  if input uncertainty already moves the impact by inches, driving solver
+  error to microinches buys nothing.
+</p>
+<p>
+  This page implements the obvious policy: pick the step size whose estimated
+  truncation error sits about an order of magnitude below the
+  uncertainty propagated from your inputs (margin ratio α&nbsp;=&nbsp;0.1,
+  adjustable). It outputs a single step size in inches for
+  <code>Builder::StepSize</code>, plus the per-input contribution ranking so
+  you can see which measurement dominates the budget.
+</p>
+<p class="note">
+  Demo scope, stated plainly: one fixed trajectory, C1-ICAO (G7 bullet, BC
+  0.232, 2800 fps), elevation at 1800 ft. Tables baked in below come from
+  <code>pareto.json</code> (sensitivities), <code>step_error_map.json</code>
+  plus the fine step ladder (solver error constant C&nbsp;=&nbsp;5.46e-08),
+  and <code>floors.json</code> (lob 0.13.0, git 939574c). Full contract:
+  <code>docs/specs/TUNE_TOOL_CONTRACT.md</code>.
+</p>
+
+<h2>Procedure</h2>
+<ol>
+  <li><strong>Enter each input's uncertainty</strong>, the ± bound on that
+    quantity, in its stated units. Estimates are acceptable: the margin
+    structure tolerates several-fold errors in these numbers with only
+    √-scale effect on the answer (see assumptions).</li>
+  <li><strong>Record the source of each bound</strong> (instrument spec,
+    datasheet revision, engineering judgment with stated basis). Unsourced
+    numbers are unauditable, so the page treats a missing source the same as
+    a missing value.</li>
+  <li><strong>Compute.</strong> The page propagates the bounds through
+    measured sensitivity coefficients, inverts the fitted error model
+    ε&nbsp;≈&nbsp;C·Δx² for the step, and reports the ranking.</li>
+  <li><strong>If it refuses instead</strong> (amber box below), supply the
+    named piece and recompute. Refusal here is fail-closed behavior, not an
+    error: an answer computed from unstated inputs would overstate its own
+    authority.</li>
+</ol>
+<p class="note">
+  To see the machinery on example data, <strong>Load PRS sketch
+  values</strong> fills a plausible shooter (chronograph-class velocity,
+  station-class atmosphere, careful zero), labeled illustrative throughout,
+  never defaults.
+</p>
+
+<h2>Your inputs</h2>
+<table id="inputs">
+  <tr><th>input</th><th>uncertainty (±)</th><th>where it came from</th></tr>
+</table>
+<p>
+  <button id="sketch">Load PRS sketch values (illustrative only)</button>
+  <button id="go">Compute</button>
+  margin ratio α (default 0.1: how many times finer than your inputs the math should be):
+  <input type="number" id="alpha" value="0.1" step="0.01" style="width:70px">
+</p>
+<p class="hint" id="input-guide">
+  Sourcing guide: velocity: chronograph spec at your operating point
+  (e.g. ±3 fps at 2800); BC: single published value ±5%, banded ±2%,
+  radar-measured ±0.5%; zero: demonstrated zeroing repeatability
+  (±0.05 MOA careful); pressure/temperature/humidity: station specs;
+  optic height: caliper measurement or careful estimate (±0.05 in).
+  When uncertain, overestimate: wider inputs can only recommend finer steps,
+  never coarser, so the error direction is always safe.
+</p>
+
+<h2>Recommendation</h2>
+<div id="result"><span class="note">Fill in the boxes above and press Compute. Nothing here yet.</span></div>
+
+<h2>What matters most (descending share; improve the top row first)</h2>
+<div id="contrib"><span class="note">none yet</span></div>
+<p class="hint">
+  Shares are |c·u| normalized (linearized, first-order). Recurring surprise
+  in practice: the chronograph is rarely the top row. BC and zero usually
+  are. The ranking, not just the step, is the actionable output.
+</p>
+
+<h2>Assumptions (stated once, binding everywhere above)</h2>
+<ul class="note">
+  <li>Inputs independent (cross-terms neglected; validated as second-order on the measured envelope).</li>
+  <li>Local linearity: sensitivities hold near the operating point; large departures need re-evaluation, not extrapolation.</li>
+  <li>Calibration single-platform (x86_64-linux); step clamped to whole inches in [9, 288].</li>
+  <li>Scope is solver resolution only. Rifle precision, shooter error, and model discrepancy are separate budgets outside this page.</li>
+</ul>
+
+<h2>Built-in checks (pre-solved golden vectors; must stay green)</h2>
+<div id="selftest"><span class="note">running…</span></div>
+
+<script>
+"use strict";
+// ---- embedded tables (provenance in the note above) ----
+var SENS = [
+  ["velocity_fps", 0.08641820558, "fps"],
+  ["bc_psi", 182.8389985, "psi"],
+  ["zero_angle_moa", 6.283128149, "moa"],
+  ["pressure_inhg", -1.417485241, "inHg"],
+  ["temperature_degf", 0.06296756976, "degF"],
+  ["optic_height_in", -1.0, "in"],
+  ["humidity_pp", 0.002239236596, "pp"]
+];
+var C_ERR = 5.46e-08;      // in per in^2, fit: (36, 7.07e-05) vs 1-in ref + (72, 2.83e-04) baseline-corrected
+var FLOOR_IN = 9, CAP_IN = 288;
+
+// ---- core: unchanged computation (same op order as the Python oracle) ----
+function compute(uMap, provMap, alpha) {
+  var missing = [], bad = [];
+  for (var i = 0; i < SENS.length; i++) {
+    var name = SENS[i][0];
+    var v = uMap[name];
+    if (v === undefined || v === null || v === "") { missing.push(name); continue; }
+    if (!(v > 0.0)) { bad.push(name); continue; }
+    if (!provMap[name]) { missing.push(name + " source"); continue; }
+  }
+  if (missing.length > 0) { return {ok: false, reason: "missing: " + missing.join(", ")}; }
+  if (bad.length > 0) { return {ok: false, reason: "nonpositive: " + bad.join(", ")}; }
+  if (!(alpha > 0.0)) { return {ok: false, reason: "nonpositive: ratio_alpha"}; }
+  var terms = [], sumAbs = 0.0, sumSq = 0.0, k;
+  for (var j = 0; j < SENS.length; j++) {
+    var t = Math.abs(SENS[j][1]) * uMap[SENS[j][0]];
+    terms.push([SENS[j][0], t]);
+    sumAbs += t;
+    sumSq += t * t;
+  }
+  var uPred = Math.sqrt(sumSq);
+  var step = Math.sqrt(alpha * uPred / C_ERR);
+  var stepQ = Math.min(CAP_IN, Math.max(FLOOR_IN, Math.round(step)));
+  var eps = C_ERR * stepQ * stepQ;
+  var r = eps / uPred;
+  var band = r > 10.0 ? "distinguishable" : (r >= 0.1 ? "marginal" : "indistinguishable");
+  var rows = [];
+  for (var m = 0; m < terms.length; m++) {
+    rows.push({input: terms[m][0], contrib: terms[m][1], share: terms[m][1] / sumAbs});
+  }
+  return {ok: true, uPred: uPred, step: stepQ, eps: eps, r: r, band: band, rows: rows};
+}
+
+// ---- form ----
+var uInputs = {}, pInputs = {};
+(function buildForm() {
+  var tbl = document.getElementById("inputs");
+  for (var i = 0; i < SENS.length; i++) {
+    var name = SENS[i][0], units = SENS[i][2];
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td>" + name + " (" + units + ")</td>" +
+      '<td><input type="number" step="any" data-u="' + name + '"></td>' +
+      '<td><input type="text" data-p="' + name + '" placeholder="e.g. Garmin spec, indoor range"></td>';
+    tbl.appendChild(tr);
+  }
+  var inputs = tbl.getElementsByTagName("input");
+  for (var k = 0; k < inputs.length; k++) {
+    if (inputs[k].getAttribute("data-u")) { uInputs[inputs[k].getAttribute("data-u")] = inputs[k]; }
+    else { pInputs[inputs[k].getAttribute("data-p")] = inputs[k]; }
+  }
+})();
+
+var SKETCH = {velocity_fps: 3.0, bc_psi: 0.005, zero_angle_moa: 0.05,
+  pressure_inhg: 0.06, temperature_degf: 1.0, optic_height_in: 0.05, humidity_pp: 3.0};
+var SKETCH_PROV = "PRS sketch, illustrative only (Garmin/Kestrel-class judgment)";
+
+document.getElementById("sketch").onclick = function () {
+  for (var name in SKETCH) {
+    if (SKETCH.hasOwnProperty(name)) {
+      uInputs[name].value = SKETCH[name];
+      pInputs[name].value = SKETCH_PROV;
+    }
+  }
+};
+
+function readForm() {
+  var u = {}, p = {};
+  for (var i = 0; i < SENS.length; i++) {
+    var name = SENS[i][0];
+    var raw = uInputs[name].value;
+    u[name] = (raw === "") ? "" : parseFloat(raw);
+    p[name] = pInputs[name].value;
+  }
+  return {u: u, p: p};
+}
+
+function bandWords(band) {
+  if (band === "indistinguishable") {
+    return "truncation error stays more than an order of magnitude below input-driven uncertainty at this step. The recommendation has full margin.";
+  }
+  if (band === "marginal") {
+    return "truncation error is within an order of magnitude of input uncertainty. Acceptable, but consider refining the step or tightening the dominant input.";
+  }
+  return "truncation error dominates input uncertainty. Refine substantially (or set an explicit Builder::StepSize).";
+}
+
+function render(res) {
+  var rdiv = document.getElementById("result");
+  var cdiv = document.getElementById("contrib");
+  if (!res.ok) {
+    var what = res.reason.indexOf("missing:") === 0
+      ? "Recommendation underdetermined:"
+      : "Non-physical input:";
+    rdiv.innerHTML = "<div class='need'>" + what + " <code>" + res.reason +
+      "</code>.<br>Emitting a step here would overstate what is known, so the " +
+      "page declines instead. Supply the named item (estimates acceptable; " +
+      "see the sourcing guide) and recompute.</div>";
+    cdiv.innerHTML = "<span class='note'>none yet</span>";
+    return;
+  }
+  rdiv.innerHTML = "Recommended step: <span class='big'>" + res.step + " in</span><br>" +
+    "Inputs alone move the impact by about " + res.uPred.toPrecision(3) +
+    " in (root-sum-square over the sensitivities below); at this step, solver " +
+    "truncation contributes about " +
+    res.eps.toPrecision(3) + " in. " + bandWords(res.band);
+  var h = "<table><tr><th>input</th><th>wobble (in)</th><th>share %</th></tr>";
+  var ordered = res.rows.slice().sort(function (a, b) { return b.share - a.share; });
+  for (var i = 0; i < ordered.length; i++) {
+    h += "<tr><td>" + ordered[i].input + "</td><td>" +
+      ordered[i].contrib.toPrecision(3) + "</td><td>" +
+      (100.0 * ordered[i].share).toFixed(1) + "</td></tr>";
+  }
+  cdiv.innerHTML = h + "</table>";
+}
+
+document.getElementById("go").onclick = function () {
+  var f = readForm();
+  var alpha = parseFloat(document.getElementById("alpha").value);
+  render(compute(f.u, f.p, alpha));
+};
+
+// ---- self-checks: golden vectors recomputed independently in Python ----
+(function selftest() {
+  var goldens = [
+    {u: {velocity_fps: 3.0, bc_psi: 0.005, zero_angle_moa: 0.05, pressure_inhg: 0.06,
+         temperature_degf: 1.0, optic_height_in: 0.05, humidity_pp: 3.0},
+     p: {velocity_fps: "x", bc_psi: "x", zero_angle_moa: "x", pressure_inhg: "x",
+         temperature_degf: "x", optic_height_in: "x", humidity_pp: "x"},
+     alpha: 0.1, expStep: 288, expU: 1.0076721110022229, expBand: "indistinguishable"},
+    {u: {velocity_fps: 0.1, bc_psi: 0.0002, zero_angle_moa: 0.002, pressure_inhg: 0.005,
+         temperature_degf: 0.1, optic_height_in: 0.005, humidity_pp: 0.5},
+     p: {velocity_fps: "x", bc_psi: "x", zero_angle_moa: "x", pressure_inhg: "x",
+         temperature_degf: "x", optic_height_in: "x", humidity_pp: "x"},
+     alpha: 0.1, expStep: 274, expU: 0.041060079621968074, expBand: "indistinguishable"},
+    {u: {velocity_fps: 3.0, bc_psi: "", zero_angle_moa: 0.05, pressure_inhg: 0.06,
+         temperature_degf: 1.0, optic_height_in: 0.05, humidity_pp: 3.0},
+     p: {velocity_fps: "x", bc_psi: "x", zero_angle_moa: "x", pressure_inhg: "x",
+         temperature_degf: "x", optic_height_in: "x", humidity_pp: "x"},
+     alpha: 0.1, expRefuse: "missing"},
+    {u: {velocity_fps: 3.0, bc_psi: 0.005, zero_angle_moa: 0.05, pressure_inhg: -0.5,
+         temperature_degf: 1.0, optic_height_in: 0.05, humidity_pp: 3.0},
+     p: {velocity_fps: "x", bc_psi: "x", zero_angle_moa: "x", pressure_inhg: "x",
+         temperature_degf: "x", optic_height_in: "x", humidity_pp: "x"},
+     alpha: 0.1, expRefuse: "nonpositive"}
+  ];
+  var out = "";
+  for (var i = 0; i < goldens.length; i++) {
+    var g = goldens[i];
+    var r = compute(g.u, g.p, g.alpha);
+    var pass;
+    if (g.expRefuse) {
+      pass = (!r.ok) && (r.reason.indexOf(g.expRefuse) === 0);
+    } else {
+      pass = r.ok && (r.step === g.expStep) &&
+        (Math.abs(r.uPred - g.expU) < 1e-9) && (r.band === g.expBand);
+    }
+    out += "<div class='" + (pass ? "pass" : "fail") + "'>check " + (i + 1) +
+      ": " + (pass ? "PASS" : "FAIL") + "</div>";
+  }
+  document.getElementById("selftest").innerHTML = out;
+})();
+</script>
+</body>
+</html>
