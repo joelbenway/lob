@@ -623,12 +623,12 @@ namespace {
 inline void PrintCoarsePair(const char* cell, uint16_t coarse_step,
                             const lob::Output& coarse, const lob::Output& base,
                             uint32_t range_ft) {
-  std::cout << "SURVEY COARSE " << cell << " elevation_in range"
-            << coarse_step << "_vs_36=" << range_ft << " "
+  std::cout << "SURVEY COARSE " << cell << " elevation_in range" << coarse_step
+            << "_vs_36=" << range_ft << " "
             << std::setprecision(kSurveyPrecisionDigits)
             << ElevInDiff(coarse, base) << "\n";
-  std::cout << "SURVEY COARSE " << cell << " elevation_moa range"
-            << coarse_step << "_vs_36=" << range_ft << " "
+  std::cout << "SURVEY COARSE " << cell << " elevation_moa range" << coarse_step
+            << "_vs_36=" << range_ft << " "
             << std::setprecision(kSurveyPrecisionDigits)
             << ElevMoaDiff(coarse, base) << "\n";
   std::cout << "SURVEY COARSE " << cell << " deflection_moa range"
