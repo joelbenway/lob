@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <exception>
 #include <fstream>
 #include <iomanip>
@@ -21,6 +22,12 @@
 
 #include "lob/lob.hpp"
 #include "testing.hpp"
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 #ifndef LOB_VALIDATION_CASES_DIR
 #error "LOB_VALIDATION_CASES_DIR must be defined by CMake"
@@ -644,11 +651,30 @@ TEST(ReferenceMatrix, FullMatrix) {
   report["structural"] = structural;
 
   const std::string kDir = LOB_VALIDATION_DIR;
+  const std::string kTarget = kDir + "/envelope_report.json";
+  // Atomic publish (temp+rename): readers either see the old or the new
+  // file, never a torn write. Tmp suffix is pid-unique; only this test
+  // writes, so no writer-writer collision.
+#ifdef _WIN32
+  const std::string kTmp =
+      kTarget + ".tmp" + std::to_string(::GetCurrentProcessId());
+#else
+  const std::string kTmp = kTarget + ".tmp" + std::to_string(::getpid());
+#endif
   {
-    std::ofstream out((kDir + "/envelope_report.json").c_str());
-    ASSERT_TRUE(out.good());
+    std::ofstream out(kTmp.c_str());
+    ASSERT_TRUE(out.good()) << "cannot open " << kTmp;
     out << report.dump(2) << "\n";
+    out.close();
+    ASSERT_TRUE(out.good()) << "write failed " << kTmp;
   }
+#ifdef _WIN32
+  ASSERT_TRUE(::MoveFileExA(kTmp.c_str(), kTarget.c_str(),
+                            MOVEFILE_REPLACE_EXISTING) != 0)
+      << "rename " << kTmp;
+#else
+  ASSERT_EQ(std::rename(kTmp.c_str(), kTarget.c_str()), 0) << "rename " << kTmp;
+#endif
   {
     std::ofstream out((kDir + "/reference_matrix.csv").c_str());
     ASSERT_TRUE(out.good());

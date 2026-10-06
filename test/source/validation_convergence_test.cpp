@@ -318,7 +318,7 @@ TEST(ValidationFullLadder, C1StepLadderToOneInchWritesArtifact) {
 // Documented re-measurement procedure for test/validation/baselines/floors.json
 // cells C5-uniform, C6-scaled, C8-Litz, C9-dynamic-tail. Hermetic: prints
 // machine-readable SURVEY lines to stdout, no file I/O. Transcription into
-// floors.json is by hand. Offline only: set LOB_FLOOR_SURVEY=1.
+// floors.json is by hand. Always runs.
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(ValidationFloorSurvey, SurveyCells) {
   // C1-ICAO: per-range 18→9 elevation_in deltas for E1 R-flatness
@@ -636,8 +636,8 @@ inline void PrintCoarsePair(const char* cell, uint16_t coarse_step,
 }
 }  // namespace
 
-// E3 upward ladder (Step 1). Same LOB_FLOOR_SURVEY gate as
-// ValidationFloorSurvey.SurveyCells — no new gate. Builders mirror the survey
+// E3 upward ladder (Step 1). Always runs, like
+// ValidationFloorSurvey.SurveyCells. Builders mirror the survey
 // blocks verbatim: C1 = MakeC1IcaoBuilder(); C5 = MakeWindBaseBuilder() +
 // kIII 5 mph uniform (cf. ValidationFloorSurvey C5-uniform block);
 // C8 = Litz spin builder (cf. ValidationFloorSurvey C8-Litz block; jump

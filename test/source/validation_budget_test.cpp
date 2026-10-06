@@ -613,8 +613,9 @@ TEST(BudgetAssemble, OfflineDocuments) {
     }
   }
   if (!envelope_fresh) {
-    // Tests share code, never files: concurrent runs cannot observe partial
-    // state because no test reads a file another test writes.
+    // Read-with-regenerate-fallback: the fast path above may hit a missing,
+    // torn, or stale file (the writer publishes atomically, but a read can
+    // still land mid-replace); recompute the identical values in-process.
     EnvelopeWorst worst{};
     ASSERT_TRUE(TryComputeEnvelopeWorst(std::string(LOB_VALIDATION_CASES_DIR),
                                         &worst, &error))

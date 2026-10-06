@@ -318,7 +318,7 @@ TEST(SignalSmoke, SinglePointEqualsUniform) {
   ASSERT_EQ(lob::Solve(kUniform, kRanges, &uniform_outs), kRanges.size());
   ExpectIdentityAtAllRanges(profile_outs, uniform_outs);
 }
-// ---- Task 3: offline effect-matrix driver (env-gated, LOB_FULL_SIGNAL=1) ----
+// ---- Task 3: offline effect-matrix driver (always run) ----
 #ifndef LOB_VALIDATION_DIR
 #error "LOB_VALIDATION_DIR must be defined by CMake"
 #endif

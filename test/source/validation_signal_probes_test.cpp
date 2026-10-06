@@ -335,9 +335,8 @@ TEST(SignalProbes, CeilingClampHolds) {
 }
 
 // Offline writer for the two STATIC effects (no public knob exists, so the
-// LOB driver cannot produce them). Env-gated: LOB_FULL_SIGNAL=1 writes
-// signal_angle-tol_C1.json + signal_lapse-fast-vs-solve_C9.json; CI path
-// performs no file I/O.
+// LOB driver cannot produce them). Writes
+// signal_angle-tol_C1.json + signal_lapse-fast-vs-solve_C9.json.
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(SignalProbesOffline, WritesStaticEffects) {
   const std::string kDir = LOB_VALIDATION_DIR;

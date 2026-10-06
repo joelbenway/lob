@@ -231,7 +231,7 @@ TEST(SensitivityIo, ArtifactRoundTripsSyntheticRows) {
 }
 
 namespace {
-// ---- Phase 2 Task 5: offline full-Pareto driver (env-gated) ----
+// ---- Phase 2 Task 5: offline full-Pareto driver (always run) ----
 // Survey builders mirrored exactly from ValidationFloorSurvey.SurveyCells in
 // test/source/validation_convergence_test.cpp:
 // - C5-uniform: wind-base builder + WindHeading(kIII) + 5 mph.
@@ -240,8 +240,8 @@ namespace {
 //   mass 168 gr / twist 10.0 + kIII 10 mph.
 // Canned response definition: |f(x+h) - f(x-h)|, the full symmetric swing
 // at the accepted h; one-sided |f(x+h) - f(x)| for boundary inputs
-// (humidity_pp at the 0% boundary, shear_exponent per brief). LOB_FULL_PARETO
-// gates everything; no file I/O unless gated.
+// (humidity_pp at the 0% boundary, shear_exponent per brief). Always runs;
+// writes artifacts.
 
 enum ParetoKind : std::uint8_t {
   kParetoVelocity,
