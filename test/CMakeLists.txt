@@ -68,37 +68,7 @@ else()
   message(STATUS "Found GTest: ${GTest_DIR}")
 endif()
 
-find_package(nlohmann_json CONFIG)
-
-if(NOT nlohmann_json_FOUND)
-  message(STATUS "nlohmann/json not found, FetchContent instead...")
-  set(DEV_WARNINGS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_WARNINGS}")
-  set(DEV_ERRORS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_ERRORS}")
-  set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
-      ON
-      CACHE INTERNAL "Suppress third-party CMake warnings" FORCE)
-  set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
-      ON
-      CACHE INTERNAL "Suppress third-party CMake errors" FORCE)
-
-  include(FetchContent)
-  FetchContent_Declare(
-    json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.12.0)
-  FetchContent_MakeAvailable(json)
-
-  set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
-      ${DEV_WARNINGS_RECOVER_STATE}
-      CACHE INTERNAL "Restore original setting" FORCE)
-  set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
-      ${DEV_ERRORS_RECOVER_STATE}
-      CACHE INTERNAL "Restore original setting" FORCE)
-  unset(DEV_WARNINGS_RECOVER_STATE)
-  unset(DEV_ERRORS_RECOVER_STATE)
-else()
-  message(STATUS "Found nlohmann/json: ${nlohmann_json_DIR}")
-endif()
+include(../cmake/nlohmann-json.cmake)
 
 # ---- Tests ----
 # cmake-format: off
