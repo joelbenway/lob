@@ -48,8 +48,8 @@ Convergence methodology and measured error floors live in
 `test/source/validation_convergence_test.cpp` (public API) and
 `test/source/validation_convergence_angle_test.cpp` (static-only angle
 tolerances) and curated floors in `test/validation/baselines/floors.json`.
-CI asserts monotone refinement plus checked-in ceilings; full 36→1 ladders
-run offline behind `LOB_FULL_LADDER=1` and write `build/validation/`
+CI asserts monotone refinement plus checked-in ceilings; the 36→1 ladders
+run in the suite and write `build/validation/`
 artifacts. No universal accuracy claim is made — floors are per envelope
 cell, per output, with config.
 
@@ -57,24 +57,24 @@ Sensitivity methodology and driver ranking live in
 `docs/specs/NUMERICAL_VALIDATION_SPEC.md` (§9) with the harness in
 `test/source/validation_sensitivity_test.cpp` (public API) and curated
 ranking in `test/validation/baselines/pareto.json`. CI smokes
-C1 × velocity/wind with Pareto-share checks; full C1/C5/C8 Pareto runs
-offline behind `LOB_FULL_PARETO=1`. Semi-elasticities await Phase 4 input
+C1 × velocity/wind with Pareto-share checks; the C1/C5/C8 Pareto runs
+execute in the suite. Semi-elasticities await Phase 4 input
 uncertainties; the artifact schema reserves the field.
 
 Reference trajectories live in `test/validation/cases/reference_*.json`
 (transcribed from `test/source/lob_env_test.cpp` with provenance and
 envelope tags, per `docs/specs/NUMERICAL_VALIDATION_SPEC.md` §10). CI
 round-trips the loader and decomposes C1-ICAO residuals against measured
-numerical floors; the full six-case matrix with coverage runs offline
-behind `LOB_FULL_MATRIX=1`. All cells are provisional: reference
+numerical floors; the six-case matrix with coverage runs in the suite.
+All cells are provisional: reference
 uncertainties are unstated and no field data exists yet.
 
 Uncertainty budgets combine sensitivities, numerical floors, and reference
 residuals per `docs/specs/NUMERICAL_VALIDATION_SPEC.md` §11; the combiner
 and manifest schema live in `test/source/validation_budget_test.cpp` with
 the elicitation template at `test/validation/manifests/budget_template.json`.
-CI proves the math and the fail-closed template; full assembly runs offline
-behind `LOB_FULL_BUDGET=1`. No combined uncertainty is claimed anywhere yet:
+CI proves the math and the fail-closed template; the full assembly runs
+in the suite. No combined uncertainty is claimed anywhere yet:
 every input uncertainty awaits human-supplied evidence.
 
 Monte Carlo propagation samples input distributions through the unchanged
@@ -93,7 +93,7 @@ Verdicts are resolution-relative bands (`R_sig > 10` distinguishable /
 `0.1–10` marginal / `< 0.1` indistinguishable), never full prediction
 significance — no `u_c` exists anywhere yet. CI smokes
 lapse-consequence, jump-live, and the single-point-profile bit-identity
-oracle; the full 15-effect matrix runs offline behind `LOB_FULL_SIGNAL=1`.
+oracle; the 15-effect matrix runs in the suite.
 
 Envelope claims are curated per cell in
 `test/validation/claims/envelope_claims.json` (all `provisional`,

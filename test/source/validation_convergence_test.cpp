@@ -8,7 +8,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -272,12 +271,6 @@ TEST(ValidationConvergenceWind, ScaledProfileLadderDecreasesWithoutRegression) {
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(ValidationFullLadder, C1StepLadderToOneInchWritesArtifact) {
-  // single-threaded gtest; env gates select offline drivers
-  // NOLINTNEXTLINE(concurrency-mt-unsafe)
-  const char* gate = std::getenv("LOB_FULL_LADDER");
-  if (gate == nullptr || std::string(gate) != "1") {
-    GTEST_SKIP() << "offline only: set LOB_FULL_LADDER=1";
-  }
   // 1000-ft station is off-grid at the 36-in rung (1000 % 3 != 0), covering
   // the clamp path CI ranges (all multiples of 3 ft) never exercise.
   constexpr size_t kNumRanges = 5;
@@ -328,13 +321,6 @@ TEST(ValidationFullLadder, C1StepLadderToOneInchWritesArtifact) {
 // floors.json is by hand. Offline only: set LOB_FLOOR_SURVEY=1.
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(ValidationFloorSurvey, SurveyCells) {
-  // single-threaded gtest; env gates select offline drivers
-  // NOLINTNEXTLINE(concurrency-mt-unsafe)
-  const char* gate = std::getenv("LOB_FLOOR_SURVEY");
-  if (gate == nullptr || std::string(gate) != "1") {
-    GTEST_SKIP() << "offline only: set LOB_FLOOR_SURVEY=1";
-  }
-
   // C1-ICAO: per-range 18→9 elevation_in deltas for E1 R-flatness
   // (ranges {300, 900, 3000} ft; 1800 ft already covered by the
   // ValidationFullLadder artifact — see the E1 report).
@@ -661,12 +647,6 @@ inline void PrintCoarsePair(const char* cell, uint16_t coarse_step,
 // (range, step in the message) — never silently dropped.
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(ValidationCoarseLadder, SurveyCoarse) {
-  // single-threaded gtest; env gates select offline drivers
-  // NOLINTNEXTLINE(concurrency-mt-unsafe)
-  const char* gate = std::getenv("LOB_FLOOR_SURVEY");
-  if (gate == nullptr || std::string(gate) != "1") {
-    GTEST_SKIP() << "offline only: set LOB_FLOOR_SURVEY=1";
-  }
   constexpr size_t kNumCoarseRanges = 4;
   constexpr size_t kNumCoarseRungs = 5;
   const std::array<uint32_t, kNumCoarseRanges> kRanges = {300U, 900U, 1800U,

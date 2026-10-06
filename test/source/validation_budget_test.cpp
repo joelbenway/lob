@@ -5,7 +5,6 @@
 
 #include <cmath>
 #include <cstddef>
-#include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -16,6 +15,8 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include "testing.hpp"
 
 namespace tests {
 
@@ -411,7 +412,7 @@ TEST(BudgetSmoke, TemplateIsIncompleteAndMathHolds) {
   EXPECT_NE(kInstructions.find("human"), std::string::npos);
 }
 
-// ---- Task 4: offline assembler (env-gated, LOB_FULL_BUDGET=1) ----
+// ---- Task 4: assembler (always runs; envelope recomputed when stale) ----
 #ifndef LOB_VALIDATION_DIR
 #error "LOB_VALIDATION_DIR must be defined by CMake"
 #endif
@@ -420,13 +421,6 @@ TEST(BudgetSmoke, TemplateIsIncompleteAndMathHolds) {
 #endif
 
 namespace {
-
-inline bool BudgetAssembleGated() {
-  // single-threaded gtest; env gates select offline drivers
-  // NOLINTNEXTLINE(concurrency-mt-unsafe)
-  const char* gate = std::getenv("LOB_FULL_BUDGET");
-  return gate != nullptr && std::string(gate) == "1";
-}
 
 // Reads a JSON artifact file with try/catch parse; never throws.
 inline bool BudgetReadJson(const std::string& path, nlohmann::json* out,
@@ -584,9 +578,6 @@ inline bool BudgetEnvelopeWorst(const nlohmann::json& envelope,
 TEST(BudgetAssemble, OfflineDocuments) {
   constexpr int kJsonPrecisionDigits = 17;
   constexpr std::size_t kTrailingAssumptionCount = 3;
-  if (!BudgetAssembleGated()) {
-    GTEST_SKIP() << "offline only: set LOB_FULL_BUDGET=1";
-  }
   const std::string kManifestsDir =
       std::string(LOB_VALIDATION_CASES_DIR) + "/../manifests";
   const std::string kBaselinesDir =
@@ -609,19 +600,37 @@ TEST(BudgetAssemble, OfflineDocuments) {
   ASSERT_TRUE(BudgetReadJson(kBaselinesDir + "/floors.json", &floors, &error))
       << error;
   nlohmann::json envelope;
-  ASSERT_TRUE(
+  bool envelope_fresh =
       BudgetReadJson(std::string(LOB_VALIDATION_DIR) + "/envelope_report.json",
-                     &envelope, &error))
-      << error << " (run ReferenceMatrix.FullMatrix first: LOB_FULL_MATRIX=1)";
-  // Freshness gate: a stale envelope (solver changed, matrix not re-run)
-  // is consumed silently without this — fail closed, never assume fresh.
-  try {
-    ASSERT_EQ(envelope.at("provenance").at("git_sha").get<std::string>(),
-              std::string(LOB_GIT_SHA))
-        << "stale envelope_report.json — re-run with LOB_FULL_MATRIX=1";
-  } catch (const nlohmann::json::exception& e) {
-    FAIL() << "stale envelope_report.json — re-run with LOB_FULL_MATRIX=1"
-           << " (missing provenance/git_sha: " << e.what() << ")";
+                     &envelope, &error);
+  if (envelope_fresh) {
+    try {
+      envelope_fresh =
+          envelope.at("provenance").at("git_sha").get<std::string>() ==
+          std::string(LOB_GIT_SHA);
+    } catch (const nlohmann::json::exception&) {
+      envelope_fresh = false;
+    }
+  }
+  if (!envelope_fresh) {
+    // Tests share code, never files: concurrent runs cannot observe partial
+    // state because no test reads a file another test writes.
+    EnvelopeWorst worst{};
+    ASSERT_TRUE(TryComputeEnvelopeWorst(std::string(LOB_VALIDATION_CASES_DIR),
+                                        &worst, &error))
+        << error;
+    nlohmann::json residual;
+    residual["elevation_in"] = worst.elev_in;
+    residual["elevation_moa"] = worst.elev_moa;
+    residual["deflection_moa"] = worst.defl_moa;
+    residual["velocity_fps"] = worst.vel;
+    residual["energy_ft_lbf"] = worst.energy;
+    residual["time_of_flight_s"] = worst.tof;
+    nlohmann::json cell;
+    cell["worst_residual"] = residual;
+    envelope = nlohmann::json();
+    envelope["provenance"] = {{"git_sha", LOB_GIT_SHA}};
+    envelope["cells"] = nlohmann::json::array({cell});
   }
 
   int docs = 0;
