@@ -1,5 +1,7 @@
 // Copyright (c) 2026  Joel Benway
 // SPDX-License-Identifier: GPL-3.0-or-later
+// Please see end of file for extended copyright information
+
 // Test-only artifact writer (Phase 1). Hand-rolled: the project ships zero
 // dependencies, and only the writer side is needed until Phase 3 (which adds
 // the reference-data reader). C++14, no exceptions from this header itself.
@@ -222,3 +224,17 @@ struct SensitivityArtifact {
 };
 
 }  // namespace tests
+
+// This file is part of lob.
+//
+// lob is free software: you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the Free Software
+// Foundation, either version 3 of the License, or (at your option) any later
+// version.
+//
+// lob is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with
+// lob. If not, see <https://www.gnu.org/licenses/>.
