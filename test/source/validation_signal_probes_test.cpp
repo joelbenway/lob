@@ -9,7 +9,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -201,13 +200,6 @@ inline double ProbeInchToMoa(double inches, double range_ft) {
       .Value();
 }
 
-inline bool ProbesOfflineGated() {
-  // single-threaded gtest; env gates select offline drivers
-  // NOLINTNEXTLINE(concurrency-mt-unsafe)
-  const char* gate = std::getenv("LOB_FULL_SIGNAL");
-  return gate != nullptr && std::string(gate) == "1";
-}
-
 }  // namespace
 
 // Effect 2 (STATIC): SolveAngle/FastSolveAngle tolerance 0.01→0.001 on
@@ -348,9 +340,6 @@ TEST(SignalProbes, CeilingClampHolds) {
 // performs no file I/O.
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(SignalProbesOffline, WritesStaticEffects) {
-  if (!ProbesOfflineGated()) {
-    GTEST_SKIP() << "offline only: set LOB_FULL_SIGNAL=1";
-  }
   const std::string kDir = LOB_VALIDATION_DIR;
 
   // Effect 2: tolerance R_sig on the MOA channel.

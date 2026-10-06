@@ -8,8 +8,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -842,19 +842,9 @@ inline void RunParetoCase(const char* cell, const std::vector<uint32_t>& ranges,
   EXPECT_GT(artifact.rows.size(), 0U);
 }
 
-inline bool ParetoEnvGated() {
-  // single-threaded gtest; env gates select offline drivers
-  // NOLINTNEXTLINE(concurrency-mt-unsafe)
-  const char* gate = std::getenv("LOB_FULL_PARETO");
-  return gate != nullptr && std::string(gate) == "1";
-}
-
 }  // namespace
 
 TEST(SensitivityFullPareto, C1) {
-  if (!ParetoEnvGated()) {
-    GTEST_SKIP() << "offline only: set LOB_FULL_PARETO=1";
-  }
   // Noise floors mirror test/validation/baselines/floors.json cell "C1-ICAO"
   // floors_18_9. Deflection floor is exactly 0.0 (the 1e-12 entry is the
   // ceilings guard, not the noise model). velocity_fps floor is 1.0, the
@@ -894,9 +884,6 @@ TEST(SensitivityFullPareto, C1) {
 }
 
 TEST(SensitivityFullPareto, C5) {
-  if (!ParetoEnvGated()) {
-    GTEST_SKIP() << "offline only: set LOB_FULL_PARETO=1";
-  }
   // Floors mirror floors.json cell "C5-uniform" floors_18_9; velocity floor
   // 1.0 = "1 LSB (U16 truncation)".
   const ParetoFloors kFloors = {5.342835971e-05, 5.669994664e-06,
@@ -931,9 +918,6 @@ TEST(SensitivityFullPareto, C5) {
 }
 
 TEST(SensitivityFullPareto, C8) {
-  if (!ParetoEnvGated()) {
-    GTEST_SKIP() << "offline only: set LOB_FULL_PARETO=1";
-  }
   // Floors mirror floors.json cell "C8-Litz" floors_18_9; velocity floor
   // 1.0 = "1 LSB (U16 truncation)".
   const ParetoFloors kFloors = {2.799664696e-05, 2.971096993e-06,
@@ -967,9 +951,6 @@ TEST(SensitivityFullPareto, C8) {
 }
 
 TEST(SensitivityFullPareto, C6Shear) {
-  if (!ParetoEnvGated()) {
-    GTEST_SKIP() << "offline only: set LOB_FULL_PARETO=1";
-  }
   // Shear extension on the exact C6-scaled survey builder (wind-base +
   // two-point 90-degree profile + shear 0.25). Heights pruned everywhere
   // else per the section 9.1 inert-at-alpha-0 rule; only station-2 height

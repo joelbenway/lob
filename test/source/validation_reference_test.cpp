@@ -6,8 +6,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <exception>
 #include <fstream>
 #include <iomanip>
@@ -314,86 +314,13 @@ inline std::string Fmt(double value) {
 
 }  // namespace reference_matrix
 
-// Altitude case: base C1 setter list + firing-site/temperature diff.
-// Keep in sync with LobEnvTestFixture::SolveWithAltitude4500ft
-// (test/source/lob_env_test.cpp) and the builder block of
-// test/validation/cases/reference_altitude4500.json.
-inline lob::Builder BuildAltitude4500Case() {
-  constexpr double kSiteAltitudeFt = 4500.0;
-  constexpr double kTemperatureF = 59.0;
-  lob::Builder b = MakeC1IcaoBuilder();
-  b.AltitudeOfFiringSiteFt(kSiteAltitudeFt).TemperatureDegF(kTemperatureF);
-  return b;
-}
-
-// Hot / low-pressure case: base list + temperature/air-pressure diff.
-// Keep in sync with LobEnvTestFixture::SolveWithTempAndAirPressure and
-// test/validation/cases/reference_hot_lowp.json.
-inline lob::Builder BuildHotLowPCase() {
-  constexpr double kTemperatureF = 100.0;
-  constexpr double kPressureInHg = 25.0;
-  lob::Builder b = MakeC1IcaoBuilder();
-  b.TemperatureDegF(kTemperatureF).AirPressureInHg(kPressureInHg);
-  return b;
-}
-
-// Barometer-offset case: base list + firing-site/pressure/barometer diff.
-// Keep in sync with LobEnvTestFixture::SolveWithBarometricPressure and
-// test/validation/cases/reference_barometer.json.
-inline lob::Builder BuildBarometerCase() {
-  constexpr double kSiteAltitudeFt = 5280.0;
-  constexpr double kPressureInHg = 30.0;
-  constexpr double kTemperatureF = 59.0;
-  lob::Builder b = MakeC1IcaoBuilder();
-  b.AltitudeOfFiringSiteFt(kSiteAltitudeFt)
-      .AirPressureInHg(kPressureInHg)
-      .AltitudeOfBarometerFt(0)
-      .TemperatureDegF(kTemperatureF);
-  return b;
-}
-
-// Humid case: base list + pressure/temperature/humidity diff.
-// Keep in sync with LobEnvTestFixture::SolveWithPressureTempHumidity and
-// test/validation/cases/reference_humidity.json.
-inline lob::Builder BuildHumidCase() {
-  constexpr double kPressureInHg = 29.0;
-  constexpr double kTemperatureF = 75.0;
-  constexpr double kHumidityPct = 80.0;
-  lob::Builder b = MakeC1IcaoBuilder();
-  b.AirPressureInHg(kPressureInHg)
-      .TemperatureDegF(kTemperatureF)
-      .RelativeHumidityPercent(kHumidityPct);
-  return b;
-}
-
-// Weather-station case: base list + full station diff.
-// Keep in sync with LobEnvTestFixture::SolveWithWeatherStationData and
-// test/validation/cases/reference_weather_station.json.
-inline lob::Builder BuildWeatherStationCase() {
-  constexpr double kSiteAltitudeFt = 5280.0;
-  constexpr double kPressureInHg = 30.0;
-  constexpr double kTemperatureF = 65.0;
-  constexpr double kThermoAltitudeFt = 3598.0;
-  lob::Builder b = MakeC1IcaoBuilder();
-  b.AltitudeOfFiringSiteFt(kSiteAltitudeFt)
-      .AirPressureInHg(kPressureInHg)
-      .AltitudeOfBarometerFt(0)
-      .TemperatureDegF(kTemperatureF)
-      .AltitudeOfThermometerFt(kThermoAltitudeFt);
-  return b;
-}
+// Reference-case builders (BuildAltitude4500Case et al.) now live in
+// testing.hpp, shared with BudgetAssemble.OfflineDocuments.
 
 }  // namespace
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(ReferenceMatrix, FullMatrix) {
-  // single-threaded gtest; env gates select offline drivers
-  // NOLINTNEXTLINE(concurrency-mt-unsafe)
-  const char* gate = std::getenv("LOB_FULL_MATRIX");
-  if (gate == nullptr || std::string(gate) != "1") {
-    GTEST_SKIP() << "offline only: set LOB_FULL_MATRIX=1";
-  }
-
   struct MatrixCase {
     const char* stem;
     const char* id;

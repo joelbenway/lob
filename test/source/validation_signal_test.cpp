@@ -7,7 +7,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -384,13 +383,6 @@ inline bool McSigmaFor(const nlohmann::json& mc, const std::string& channel,
   }
 }
 
-inline bool SignalMatrixGated() {
-  // single-threaded gtest; env gates select offline drivers
-  // NOLINTNEXTLINE(concurrency-mt-unsafe)
-  const char* gate = std::getenv("LOB_FULL_SIGNAL");
-  return gate != nullptr && std::string(gate) == "1";
-}
-
 // One yardstick-carrying row: R_sig is resolution-relative (u_num +
 // granularity [+ MC sigma where nonlinear and available]), never a full
 // prediction-uncertainty significance (u_c: null everywhere in Phase 6).
@@ -710,9 +702,6 @@ inline bool DumpExpected(const std::string& path, std::string* dump) {
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST(SignalMatrix, OfflineEffectMatrix) {
-  if (!SignalMatrixGated()) {
-    GTEST_SKIP() << "offline only: set LOB_FULL_SIGNAL=1";
-  }
   const std::string kDir = LOB_VALIDATION_DIR;
   const nlohmann::json kMc = LoadMcSigmas();
   const nlohmann::json kNoExtra;

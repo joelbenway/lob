@@ -7,11 +7,17 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
+#include <fstream>
 #include <limits>
+#include <nlohmann/json.hpp>
+#include <sstream>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -249,6 +255,175 @@ inline double ObservedOrder(double coarse_delta, double fine_delta) {
     return std::numeric_limits<double>::quiet_NaN();
   }
   return std::log2(coarse_delta / fine_delta);
+}
+
+// ---- Validation envelope recomputation (Phases 3-4 shared) ----
+// Reference-case builders live here so ReferenceMatrix.FullMatrix and
+// BudgetAssemble.OfflineDocuments run the same 6 solves from one definition.
+// Keep in sync with test/source/lob_env_test.cpp and
+// test/validation/cases/reference_<stem>.json.
+inline lob::Builder BuildAltitude4500Case() {
+  constexpr double kSiteAltitudeFt = 4500.0;
+  constexpr double kTemperatureF = 59.0;
+  lob::Builder b = MakeC1IcaoBuilder();
+  b.AltitudeOfFiringSiteFt(kSiteAltitudeFt).TemperatureDegF(kTemperatureF);
+  return b;
+}
+
+inline lob::Builder BuildHotLowPCase() {
+  constexpr double kTemperatureF = 100.0;
+  constexpr double kPressureInHg = 25.0;
+  lob::Builder b = MakeC1IcaoBuilder();
+  b.TemperatureDegF(kTemperatureF).AirPressureInHg(kPressureInHg);
+  return b;
+}
+
+inline lob::Builder BuildBarometerCase() {
+  constexpr double kSiteAltitudeFt = 5280.0;
+  constexpr double kPressureInHg = 30.0;
+  constexpr double kTemperatureF = 59.0;
+  lob::Builder b = MakeC1IcaoBuilder();
+  b.AltitudeOfFiringSiteFt(kSiteAltitudeFt)
+      .AirPressureInHg(kPressureInHg)
+      .AltitudeOfBarometerFt(0)
+      .TemperatureDegF(kTemperatureF);
+  return b;
+}
+
+inline lob::Builder BuildHumidCase() {
+  constexpr double kPressureInHg = 29.0;
+  constexpr double kTemperatureF = 75.0;
+  constexpr double kHumidityPct = 80.0;
+  lob::Builder b = MakeC1IcaoBuilder();
+  b.AirPressureInHg(kPressureInHg)
+      .TemperatureDegF(kTemperatureF)
+      .RelativeHumidityPercent(kHumidityPct);
+  return b;
+}
+
+inline lob::Builder BuildWeatherStationCase() {
+  constexpr double kSiteAltitudeFt = 5280.0;
+  constexpr double kPressureInHg = 30.0;
+  constexpr double kTemperatureF = 65.0;
+  constexpr double kThermoAltitudeFt = 3598.0;
+  lob::Builder b = MakeC1IcaoBuilder();
+  b.AltitudeOfFiringSiteFt(kSiteAltitudeFt)
+      .AirPressureInHg(kPressureInHg)
+      .AltitudeOfBarometerFt(0)
+      .TemperatureDegF(kTemperatureF)
+      .AltitudeOfThermometerFt(kThermoAltitudeFt);
+  return b;
+}
+
+struct EnvelopeWorst {
+  double elev_in = 0.0;
+  double elev_moa = 0.0;
+  double defl_moa = 0.0;
+  double vel = 0.0;
+  double energy = 0.0;
+  double tof = 0.0;
+};
+
+namespace envelope_detail {
+
+inline void AccumulateWorst(const lob::Output& solved, const lob::Output& ref,
+                            EnvelopeWorst* worst) {
+  const double kRange = static_cast<double>(solved.range);
+  const double kRElevIn = std::fabs(solved.elevation - ref.elevation);
+  const double kRElevMoa = std::fabs(lob::InchToMoa(solved.elevation, kRange) -
+                                     lob::InchToMoa(ref.elevation, kRange));
+  const double kRDeflMoa = std::fabs(lob::InchToMoa(solved.deflection, kRange) -
+                                     lob::InchToMoa(ref.deflection, kRange));
+  const double kRVel = std::fabs(static_cast<double>(solved.velocity) -
+                                 static_cast<double>(ref.velocity));
+  const double kREnergy = std::fabs(static_cast<double>(solved.energy) -
+                                    static_cast<double>(ref.energy));
+  const double kRTof = std::fabs(solved.time_of_flight - ref.time_of_flight);
+  worst->elev_in = std::max(worst->elev_in, kRElevIn);
+  worst->elev_moa = std::max(worst->elev_moa, kRElevMoa);
+  worst->defl_moa = std::max(worst->defl_moa, kRDeflMoa);
+  worst->vel = std::max(worst->vel, kRVel);
+  worst->energy = std::max(worst->energy, kREnergy);
+  worst->tof = std::max(worst->tof, kRTof);
+}
+
+inline bool WorstForCase(const std::string& cases_dir, const char* stem,
+                         lob::Builder (*build)(), EnvelopeWorst* worst,
+                         std::string* error) {
+  constexpr std::size_t kNumRanges = 12;
+  const std::string kPath = cases_dir + "/reference_" + stem + ".json";
+  std::ifstream in(kPath.c_str());
+  if (!in) {
+    *error = "reference case file not found: " + kPath;
+    return false;
+  }
+  std::ostringstream raw;
+  raw << in.rdbuf();
+  try {
+    const nlohmann::json kRoot = nlohmann::json::parse(raw.str());
+    const nlohmann::json& kRangesJson = kRoot.at("ranges_ft");
+    const nlohmann::json& kRows = kRoot.at("expected");
+    if (!kRangesJson.is_array() || !kRows.is_array() ||
+        kRangesJson.size() != kNumRanges || kRows.size() != kNumRanges) {
+      *error = "bad range count in " + kPath;
+      return false;
+    }
+    std::array<uint32_t, kNumRanges> ranges = {};
+    for (std::size_t i = 0; i < kNumRanges; ++i) {
+      ranges.at(i) = static_cast<uint32_t>(kRangesJson.at(i).get<double>());
+    }
+    std::array<lob::Output, kNumRanges> outs = {};
+    if (SolveN(BuildAtStep(build(), 36U), ranges, &outs) != kNumRanges) {
+      *error = "solve failed for " + kPath;
+      return false;
+    }
+    for (std::size_t i = 0; i < kNumRanges; ++i) {
+      const nlohmann::json& kRow = kRows.at(i);
+      lob::Output ref{};
+      ref.range = ranges.at(i);
+      ref.velocity =
+          static_cast<uint16_t>(kRow.at("velocity_fps").get<double>());
+      ref.energy =
+          static_cast<uint32_t>(kRow.at("energy_ft_lbf").get<double>());
+      ref.elevation = kRow.at("elevation_in").get<double>();
+      ref.deflection = kRow.at("deflection_in").get<double>();
+      ref.time_of_flight = kRow.at("time_of_flight_s").get<double>();
+      AccumulateWorst(outs.at(i), ref, worst);
+    }
+  } catch (const std::exception& e) {
+    *error = "envelope recompute failed for " + kPath + ": " + e.what();
+    return false;
+  }
+  return true;
+}
+
+}  // namespace envelope_detail
+
+// Recomputes the envelope worst-residuals in-process (6 solves at the 36-in
+// rung vs the checked-in reference cases). Same inputs give same values as
+// the envelope_report.json artifact; the budget test uses this when that
+// file is missing or stale instead of reading a file another test writes.
+inline bool TryComputeEnvelopeWorst(const std::string& cases_dir,
+                                    EnvelopeWorst* out, std::string* error) {
+  *out = EnvelopeWorst();
+  struct CaseEntry {
+    const char* stem;
+    lob::Builder (*build)();
+  };
+  const std::array<CaseEntry, 6> kCases = {
+      {{"icao", MakeC1IcaoBuilder},
+       {"altitude4500", BuildAltitude4500Case},
+       {"hot_lowp", BuildHotLowPCase},
+       {"barometer", BuildBarometerCase},
+       {"humidity", BuildHumidCase},
+       {"weather_station", BuildWeatherStationCase}}};
+  for (const CaseEntry& entry : kCases) {
+    if (!envelope_detail::WorstForCase(cases_dir, entry.stem, entry.build, out,
+                                       error)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 }  // namespace tests
