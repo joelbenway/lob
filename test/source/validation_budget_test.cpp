@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <fstream>
@@ -573,6 +574,29 @@ inline bool BudgetEnvelopeWorst(const nlohmann::json& envelope,
   }
 }
 
+// DriftEq: combined absolute/relative check for live-recomputed values vs
+// checked-in template literals. |a-b| <= atol + 1e-6*max(|a|,|b|); the fixed
+// 1e-6 relative term admits ~1e-7 cross-platform libm noise with 10x margin
+// while genuine staleness moves values far beyond it. atol is the channel's
+// epsilon floor already in scope at the call site.
+inline ::testing::AssertionResult DriftEq(double actual, double expected,
+                                          double atol) {
+  constexpr double kRtol = 1e-6;
+  constexpr int kDoubleRoundTripDigits = 17;
+  const double kDiff = std::fabs(actual - expected);
+  const double kRtolTerm =
+      kRtol * std::max(std::fabs(actual), std::fabs(expected));
+  if (kDiff <= atol + kRtolTerm) {
+    return ::testing::AssertionSuccess();
+  }
+  std::ostringstream os;
+  os << "drift: actual=" << std::setprecision(kDoubleRoundTripDigits) << actual
+     << " expected=" << expected << " abs-diff=" << kDiff << " admitted by "
+     << (atol >= kRtolTerm ? "atol" : "rtol") << " term"
+     << " (atol=" << atol << " rtol-term=" << kRtolTerm << ")";
+  return ::testing::AssertionFailure() << os.str();
+}
+
 }  // namespace
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -666,7 +690,7 @@ TEST(BudgetAssemble, OfflineDocuments) {
     double delta_live = 0.0;
     ASSERT_TRUE(BudgetEnvelopeWorst(envelope, kChannel, &delta_live))
         << "envelope_report.json has no " << kChannel;
-    ASSERT_DOUBLE_EQ(kDeltaTemplate, delta_live)
+    ASSERT_TRUE(DriftEq(delta_live, kDeltaTemplate, eps_live))
         << "delta drift: " << kName << "/" << kChannel;
 
     // Sensitivity cross-check: every template c must equal the live
