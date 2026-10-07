@@ -625,39 +625,25 @@ TEST(BudgetAssemble, OfflineDocuments) {
   ASSERT_TRUE(BudgetReadJson(kBaselinesDir + "/floors.json", &floors, &error))
       << error;
   nlohmann::json envelope;
-  bool envelope_fresh =
-      BudgetReadJson(std::string(LOB_VALIDATION_DIR) + "/envelope_report.json",
-                     &envelope, &error);
-  if (envelope_fresh) {
-    try {
-      envelope_fresh =
-          envelope.at("provenance").at("git_sha").get<std::string>() ==
-          std::string(LOB_GIT_SHA);
-    } catch (const nlohmann::json::exception&) {
-      envelope_fresh = false;
-    }
-  }
-  if (!envelope_fresh) {
-    // Read-with-regenerate-fallback: the fast path above may hit a missing,
-    // torn, or stale file (the writer publishes atomically, but a read can
-    // still land mid-replace); recompute the identical values in-process.
-    EnvelopeWorst worst{};
-    ASSERT_TRUE(TryComputeEnvelopeWorst(std::string(LOB_VALIDATION_CASES_DIR),
-                                        &worst, &error))
-        << error;
-    nlohmann::json residual;
-    residual["elevation_in"] = worst.elev_in;
-    residual["elevation_moa"] = worst.elev_moa;
-    residual["deflection_moa"] = worst.defl_moa;
-    residual["velocity_fps"] = worst.vel;
-    residual["energy_ft_lbf"] = worst.energy;
-    residual["time_of_flight_s"] = worst.tof;
-    nlohmann::json cell;
-    cell["worst_residual"] = residual;
-    envelope = nlohmann::json();
-    envelope["provenance"] = {{"git_sha", LOB_GIT_SHA}};
-    envelope["cells"] = nlohmann::json::array({cell});
-  }
+  // Always recomputed in-process: no test reads another test's output
+  // file, so no cross-test ordering or torn-read window can exist. The
+  // matrix test's envelope_report.json remains as human-readable
+  // diagnostics only.
+  EnvelopeWorst worst{};
+  ASSERT_TRUE(TryComputeEnvelopeWorst(std::string(LOB_VALIDATION_CASES_DIR),
+                                      &worst, &error))
+      << error;
+  nlohmann::json residual;
+  residual["elevation_in"] = worst.elev_in;
+  residual["elevation_moa"] = worst.elev_moa;
+  residual["deflection_moa"] = worst.defl_moa;
+  residual["velocity_fps"] = worst.vel;
+  residual["energy_ft_lbf"] = worst.energy;
+  residual["time_of_flight_s"] = worst.tof;
+  nlohmann::json worst_cell;
+  worst_cell["worst_residual"] = residual;
+  envelope["provenance"] = {{"git_sha", LOB_GIT_SHA}};
+  envelope["cells"] = nlohmann::json::array({worst_cell});
 
   int docs = 0;
   int emitted_uc = 0;
@@ -689,7 +675,7 @@ TEST(BudgetAssemble, OfflineDocuments) {
         cell.at("delta_ref").at("value").get<double>();
     double delta_live = 0.0;
     ASSERT_TRUE(BudgetEnvelopeWorst(envelope, kChannel, &delta_live))
-        << "envelope_report.json has no " << kChannel;
+        << "recomputed envelope has no " << kChannel;
     ASSERT_TRUE(DriftEq(delta_live, kDeltaTemplate, eps_live))
         << "delta drift: " << kName << "/" << kChannel;
 
@@ -777,7 +763,7 @@ TEST(BudgetAssemble, OfflineDocuments) {
     }
     {
       std::ostringstream os;
-      os << "delta_ref reused from envelope_report.json worst_residual "
+      os << "delta_ref recomputed in-process (same FullMatrix computation) "
          << BudgetFloorKey(kChannel) << "="
          << std::setprecision(kJsonPrecisionDigits) << delta_live
          << " (max across FullMatrix cells)";
@@ -788,7 +774,7 @@ TEST(BudgetAssemble, OfflineDocuments) {
     nlohmann::json doc;
     doc["provenance"] = {{"git_sha", LOB_GIT_SHA},
                          {"generator", "BudgetAssemble.OfflineDocuments"},
-                         {"gate", "LOB_FULL_BUDGET=1"},
+                         {"gate", "none (always run)"},
                          {"cell", kName},
                          {"channel", kChannel},
                          {"range_ft", kRange}};

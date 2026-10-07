@@ -9,7 +9,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <exception>
 #include <fstream>
 #include <iomanip>
@@ -23,12 +22,6 @@
 
 #include "lob/lob.hpp"
 #include "testing.hpp"
-
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <unistd.h>
-#endif
 
 #ifndef LOB_VALIDATION_CASES_DIR
 #error "LOB_VALIDATION_CASES_DIR must be defined by CMake"
@@ -643,7 +636,7 @@ TEST(ReferenceMatrix, FullMatrix) {
       {"lob_version", lob::Version()},
       {"git_sha", LOB_GIT_SHA},
       {"generator", "ReferenceMatrix.FullMatrix"},
-      {"gate", "LOB_FULL_MATRIX=1"},
+      {"gate", "none (always run)"},
       {"step_ladder_in", {kStepCoarseIn, kStepMidIn, kStepFineIn}}};
   report["cells"] = cells;
   report["unclaimed"] = {"range-1000yd-plus",  "wind-profile*", "spin-*",
@@ -653,29 +646,16 @@ TEST(ReferenceMatrix, FullMatrix) {
 
   const std::string kDir = LOB_VALIDATION_DIR;
   const std::string kTarget = kDir + "/envelope_report.json";
-  // Atomic publish (temp+rename): readers either see the old or the new
-  // file, never a torn write. Tmp suffix is pid-unique; only this test
-  // writes, so no writer-writer collision.
-#ifdef _WIN32
-  const std::string kTmp =
-      kTarget + ".tmp" + std::to_string(::GetCurrentProcessId());
-#else
-  const std::string kTmp = kTarget + ".tmp" + std::to_string(::getpid());
-#endif
+  // Diagnostics artifact for human inspection only: no test reads this
+  // file (BudgetAssemble recomputes the same values in-process), so a
+  // plain write suffices — there is no concurrent reader to observe.
   {
-    std::ofstream out(kTmp.c_str());
-    ASSERT_TRUE(out.good()) << "cannot open " << kTmp;
+    std::ofstream out(kTarget.c_str());
+    ASSERT_TRUE(out.good()) << "cannot open " << kTarget;
     out << report.dump(2) << "\n";
     out.close();
-    ASSERT_TRUE(out.good()) << "write failed " << kTmp;
+    ASSERT_TRUE(out.good()) << "write failed " << kTarget;
   }
-#ifdef _WIN32
-  ASSERT_TRUE(::MoveFileExA(kTmp.c_str(), kTarget.c_str(),
-                            MOVEFILE_REPLACE_EXISTING) != 0)
-      << "rename " << kTmp;
-#else
-  ASSERT_EQ(std::rename(kTmp.c_str(), kTarget.c_str()), 0) << "rename " << kTmp;
-#endif
   {
     std::ofstream out((kDir + "/reference_matrix.csv").c_str());
     ASSERT_TRUE(out.good());
