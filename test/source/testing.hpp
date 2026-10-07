@@ -328,7 +328,7 @@ namespace envelope_detail {
 
 inline void AccumulateWorst(const lob::Output& solved, const lob::Output& ref,
                             EnvelopeWorst* worst) {
-  const double kRange = static_cast<double>(solved.range);
+  const auto kRange = static_cast<double>(solved.range);
   const double kRElevIn = std::fabs(solved.elevation - ref.elevation);
   const double kRElevMoa = std::fabs(lob::InchToMoa(solved.elevation, kRange) -
                                      lob::InchToMoa(ref.elevation, kRange));
@@ -351,43 +351,43 @@ inline bool WorstForCase(const std::string& cases_dir, const char* stem,
                          lob::Builder (*build)(), EnvelopeWorst* worst,
                          std::string* error) {
   constexpr std::size_t kNumRanges = 12;
+  constexpr uint16_t kStepIn = 36U;
   const std::string kPath = cases_dir + "/reference_" + stem + ".json";
-  std::ifstream in(kPath.c_str());
-  if (!in) {
+  const std::ifstream kIn(kPath.c_str());
+  if (!kIn) {
     *error = "reference case file not found: " + kPath;
     return false;
   }
   std::ostringstream raw;
-  raw << in.rdbuf();
+  raw << kIn.rdbuf();
   try {
     const nlohmann::json kRoot = nlohmann::json::parse(raw.str());
-    const nlohmann::json& kRangesJson = kRoot.at("ranges_ft");
-    const nlohmann::json& kRows = kRoot.at("expected");
-    if (!kRangesJson.is_array() || !kRows.is_array() ||
-        kRangesJson.size() != kNumRanges || kRows.size() != kNumRanges) {
+    const nlohmann::json& ranges_json = kRoot.at("ranges_ft");
+    const nlohmann::json& rows = kRoot.at("expected");
+    if (!ranges_json.is_array() || !rows.is_array() ||
+        ranges_json.size() != kNumRanges || rows.size() != kNumRanges) {
       *error = "bad range count in " + kPath;
       return false;
     }
     std::array<uint32_t, kNumRanges> ranges = {};
     for (std::size_t i = 0; i < kNumRanges; ++i) {
-      ranges.at(i) = static_cast<uint32_t>(kRangesJson.at(i).get<double>());
+      ranges.at(i) = static_cast<uint32_t>(ranges_json.at(i).get<double>());
     }
     std::array<lob::Output, kNumRanges> outs = {};
-    if (SolveN(BuildAtStep(build(), 36U), ranges, &outs) != kNumRanges) {
+    if (SolveN(BuildAtStep(build(), kStepIn), ranges, &outs) != kNumRanges) {
       *error = "solve failed for " + kPath;
       return false;
     }
     for (std::size_t i = 0; i < kNumRanges; ++i) {
-      const nlohmann::json& kRow = kRows.at(i);
+      const nlohmann::json& row = rows.at(i);
       lob::Output ref{};
       ref.range = ranges.at(i);
       ref.velocity =
-          static_cast<uint16_t>(kRow.at("velocity_fps").get<double>());
-      ref.energy =
-          static_cast<uint32_t>(kRow.at("energy_ft_lbf").get<double>());
-      ref.elevation = kRow.at("elevation_in").get<double>();
-      ref.deflection = kRow.at("deflection_in").get<double>();
-      ref.time_of_flight = kRow.at("time_of_flight_s").get<double>();
+          static_cast<uint16_t>(row.at("velocity_fps").get<double>());
+      ref.energy = static_cast<uint32_t>(row.at("energy_ft_lbf").get<double>());
+      ref.elevation = row.at("elevation_in").get<double>();
+      ref.deflection = row.at("deflection_in").get<double>();
+      ref.time_of_flight = row.at("time_of_flight_s").get<double>();
       AccumulateWorst(outs.at(i), ref, worst);
     }
   } catch (const std::exception& e) {
@@ -417,13 +417,10 @@ inline bool TryComputeEnvelopeWorst(const std::string& cases_dir,
        {"barometer", BuildBarometerCase},
        {"humidity", BuildHumidCase},
        {"weather_station", BuildWeatherStationCase}}};
-  for (const CaseEntry& entry : kCases) {
-    if (!envelope_detail::WorstForCase(cases_dir, entry.stem, entry.build, out,
-                                       error)) {
-      return false;
-    }
-  }
-  return true;
+  return std::all_of(kCases.begin(), kCases.end(), [&](const CaseEntry& entry) {
+    return envelope_detail::WorstForCase(cases_dir, entry.stem, entry.build,
+                                         out, error);
+  });
 }
 
 }  // namespace tests
