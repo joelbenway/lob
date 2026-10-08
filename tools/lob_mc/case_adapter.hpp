@@ -735,6 +735,16 @@ inline bool ParseCellSet(const nlohmann::json& node, CellSet* out,
       }
       out->scenarios.push_back(scenario);
     }
+    if (!out->scenarios.empty()) {
+      double total = 0.0;
+      for (const Scenario& scenario : out->scenarios) {
+        total += scenario.weight;
+      }
+      if (!(total > 0.0)) {
+        *error = "manifest: dimension set scenario weights must sum positive";
+        return false;
+      }
+    }
   }
   return true;
 }
@@ -847,6 +857,16 @@ inline bool ParseManifest(const nlohmann::json& root, RunManifest* out,
         return false;
       }
       out->scenarios.push_back(scenario);
+    }
+    if (!out->scenarios.empty()) {
+      double total = 0.0;
+      for (const Scenario& scenario : out->scenarios) {
+        total += scenario.weight;
+      }
+      if (!(total > 0.0)) {
+        *error = "manifest: scenario weights must sum positive";
+        return false;
+      }
     }
   }
   if (root.contains("dimension_sets")) {
