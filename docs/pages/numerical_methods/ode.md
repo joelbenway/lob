@@ -91,8 +91,9 @@ Exterior Ballistics — The Launch and Flight Dynamics of Symmetric Projectiles*
   (firing-site `ρ`/`c`); only `LobSolveInverse` ranges with forward `drop>100ft`
   (`elevation < −1200in`) use `DsDx`/`SolveStep`/`SolveAngle` lapse.
 
-What step to use: stay with the default unless there is a measured reason
-not to — within the validated envelope the policy is a static 288-inch
-step, outside it the 36-inch default, and an explicit
-`Builder::StepSize` always wins (`source/solve_step.cpp`,
-`docs/specs/STATIC_STEP_POLICY.md` for the envelope bounds and evidence).
+What step to use: the library default remains 36 inches (`step_size == 0`
+→ 1 yard in `source/solve_step.cpp`); the library never selects 288
+inches automatically. Within the measured envelope the recommendation is
+an explicit `Builder::StepSize(288)`, outside it the 36-inch default —
+an explicit `Builder::StepSize` always wins
+(`docs/specs/STATIC_STEP_POLICY.md` for the envelope bounds and evidence).
