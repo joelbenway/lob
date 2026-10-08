@@ -16,6 +16,8 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -222,6 +224,13 @@ TEST(SensitivityIo, ArtifactRoundTripsSyntheticRows) {
   artifact.AddRow("wind_speed_mph", kRowRangeFt, "elevation_in", kRowUnitH, 0.0,
                   0.0, kNotNonlinear, "below_floor");
   const std::string kJson = artifact.ToJson();
+  const nlohmann::json kParsed = nlohmann::json::parse(kJson);
+  ASSERT_TRUE(kParsed.contains("rows"));
+  ASSERT_EQ(kParsed.at("rows").size(), 2U);
+  EXPECT_EQ(kParsed.at("rows").at(0).at("output").get<std::string>(),
+            "elevation_in");
+  EXPECT_DOUBLE_EQ(kParsed.at("rows").at(0).at("h_accepted").get<double>(),
+                   kRowH);
   EXPECT_NE(kJson.find("\"input\":\"velocity_fps\""), std::string::npos);
   EXPECT_NE(kJson.find("\"status\":\"below_floor\""), std::string::npos);
   EXPECT_NE(kJson.find("\"sensitivity_coefficient_S\":null"),

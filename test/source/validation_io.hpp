@@ -165,7 +165,7 @@ struct SensitivityArtifact {
       first = false;
       os << R"({"input":")" << JsonEscape(row.input) << R"(","range_ft":)"
          << row.range_ft << R"(,"output":")" << JsonEscape(row.output)
-         << R"(,"h_accepted":)" << JsonDouble(row.h_accepted)
+         << R"(","h_accepted":)" << JsonDouble(row.h_accepted)
          << R"(,"raw_deriv":)" << JsonDouble(row.raw_deriv)
          << R"(,"canned_response":)" << JsonDouble(row.canned_response)
          << R"(,"nonlinear":)" << (row.nonlinear ? "true" : "false")
