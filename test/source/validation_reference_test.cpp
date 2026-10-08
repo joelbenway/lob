@@ -253,11 +253,9 @@ TEST(ReferenceDecomposition, C1Icao) {
                                  static_cast<double>(kRanges.at(i))));
     EXPECT_LE(kMoaRes, kMoaGran);
     const double kDelta = kRIn - kC1ElevFloorIn;
-    if (!(kDelta >= 0.0)) {
-      SCOPED_TRACE("consistent-within-resolution");
-    } else {
-      SCOPED_TRACE("residual-is-model-or-reference");
-    }
+    RecordProperty("verdict.range_" + std::to_string(kRanges.at(i)),
+                   (!(kDelta >= 0.0)) ? "consistent-within-resolution"
+                                      : "residual-is-model-or-reference");
   }
 }
 
@@ -471,9 +469,11 @@ TEST(ReferenceMatrix, FullMatrix) {
       const double kDEnergy = kREnergy - reference_matrix::kEpsEnergyFtLbs;
       const double kDTof = kRTof - reference_matrix::kEpsTofSec;
       if (!(kDElevIn >= 0.0)) {
-        SCOPED_TRACE("elev: consistent-within-resolution");
+        RecordProperty("verdict.elev_" + std::to_string(ranges.at(i)),
+                       "consistent-within-resolution");
       } else {
-        SCOPED_TRACE("elev: residual-is-model-or-reference");
+        RecordProperty("verdict.elev_" + std::to_string(ranges.at(i)),
+                       "residual-is-model-or-reference");
       }
       worst.elev_in = std::max(worst.elev_in, kRElevIn);
       worst.elev_moa = std::max(worst.elev_moa, kRElevMoa);

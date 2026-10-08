@@ -129,15 +129,18 @@ inline const char* SigBandName(tests::SigBand band) {
   }
 }
 
-// RECORD-don't-tripwire logger: formats Δ + R_sig + band as a SCOPED_TRACE
-// so the physics outcome is recorded without tripping the gate.
+// RECORD-don't-tripwire logger: formats Δ + R_sig + band as a test
+// property so the physics outcome persists in the report without tripping
+// the gate (SCOPED_TRACE here would die with this function and record
+// nothing).
 inline void RecordSignal(const char* label, uint32_t range_ft, double delta,
                          double u_num, double granularity) {
   const double kR = tests::RSig(delta, tests::UTotal(u_num, granularity));
   std::ostringstream msg;
   msg << label << " range_ft=" << range_ft << " delta=" << delta
       << " r_sig=" << kR << " band=" << SigBandName(tests::ClassifySigBand(kR));
-  SCOPED_TRACE(msg.str());
+  ::testing::Test::RecordProperty(
+      std::string(label) + "." + std::to_string(range_ft), msg.str());
 }
 
 // C9-tail-style context: mirrors the C9-dynamic-tail survey builder in
