@@ -28,7 +28,8 @@ is mechanical conformance to what's written here.
   "range_band_yd": [0, 1000],
   "drag_source": "G7-single-BC",
   "c_in_per_in2": 5.4e-09,
-  "fit_points": [{"step_in": 36, "err_in": 7.1e-05}],
+  "fit_points": [{"step_in": 36, "err_in": 7.1e-05},
+                {"step_in": 144, "err_in": 1.1e-03}],
   "provenance": {"lob_version": "0.13.0", "git_sha": "<12-hex>",
                  "artifact": "step_error_map.json"}
 }
@@ -145,4 +146,8 @@ expected outputs, incl. one refusal case per fail-closed rule:
 missing-u, unknown family, stale pin). Any shell — standalone page today,
 overhauled docs tomorrow, Python CLI if ever — passes the same vectors.
 A shell that can't consume this contract unchanged is non-conformant by
-definition, not "a different interpretation."
+definition, not "a different interpretation." The checked-in standalone
+page (`tools/tune-slice/index.html`) is currently non-conformant: fixed
+single-trajectory demo with baked-in tables (no table selection, no pin
+validation); its self-test covers only missing-u/nonpositive, not the
+unknown-family and stale-pin refusal vectors.
