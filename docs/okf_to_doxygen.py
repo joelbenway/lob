@@ -126,10 +126,80 @@ def generate(src_dir, out_dir):
     return written
 
 
+def _index_targets(src_dir):
+    """All .md link targets reachable from any index.md, as bundle rels."""
+    targets = set()
+    for index in sorted(src_dir.rglob("index.md")):
+        rel = index.relative_to(src_dir).as_posix()
+        text = index.read_text(encoding="utf-8")
+        if index != src_dir / "index.md":
+            if text.startswith("---"):
+                continue  # reported by check; skip link scan
+        base = index.parent
+        for m in MD_LINK_RE.finditer(text):
+            target = m.group(2)
+            if not target.endswith(".md"):
+                continue
+            if target.startswith(("http://", "https://", "#", "/")):
+                continue
+            try:
+                rel_target = (base / target).relative_to(src_dir).as_posix()
+            except ValueError:
+                continue  # escapes the bundle; rewrite pass reports it
+            parts = []
+            for seg in rel_target.split("/"):
+                if seg in ("", "."):
+                    continue
+                if seg == "..":
+                    if parts:
+                        parts.pop()
+                    continue
+                parts.append(seg)
+            targets.add("/".join(parts))
+    return targets
+
+
+def check_bundle(src_dir):
+    """Validate bundle; return error strings (warnings go to stderr)."""
+    src_dir = Path(src_dir)
+    errors = []
+    concepts = collect_concepts(src_dir)
+    for rel, path in sorted(concepts.items()):
+        try:
+            fm, _ = parse_frontmatter(
+                path.read_text(encoding="utf-8"))
+        except ValueError as exc:
+            errors.append("%s: %s" % (rel, exc))
+            continue
+        if fm.get("status") == "stable" and not fm.get("verified"):
+            print("warning: %s stable without verified" % rel,
+                  file=sys.stderr)
+    id_map = {rel: page_id_for(rel) for rel in concepts}
+    for rel, path in sorted(concepts.items()):
+        try:
+            _, body = parse_frontmatter(
+                path.read_text(encoding="utf-8"))
+            rewrite_links(body, rel, id_map)
+        except ValueError as exc:
+            errors.append("%s: %s" % (rel, exc))
+    for index in sorted(src_dir.rglob("index.md")):
+        rel = index.relative_to(src_dir).as_posix()
+        if index != src_dir / "index.md" and \
+                index.read_text(encoding="utf-8").startswith("---"):
+            errors.append("%s: non-root index.md must not have frontmatter"
+                          % rel)
+    for rel in sorted(concepts):
+        if rel not in _index_targets(src_dir):
+            errors.append("%s: not reachable from any index.md" % rel)
+    return errors
+
+
 def main(argv):
     if len(argv) == 2 and argv[0] == "--check":
-        print("check mode arrives in Task 3")
-        return 2
+        errors = check_bundle(Path(argv[1]))
+        for err in errors:
+            print("error: " + err)
+        return 1 if errors else 0
     if len(argv) == 2:
         for pid in generate(Path(argv[0]), Path(argv[1])):
             print("wrote " + pid)
