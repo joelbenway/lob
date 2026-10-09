@@ -45,9 +45,97 @@ def render_page(page_id, frontmatter, body):
     return "@page %s %s\n%s" % (page_id, title, body)
 
 
+MD_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)\"']+?)(?:\s+\"[^\"]*\")?\)")
+RESERVED = {"index.md", "log.md"}
+
+
+def _is_reserved(path):
+    return Path(path).name in RESERVED
+
+
+def rewrite_links(body, src_rel, id_map):
+    """Rewrite '[t](other.md)' -> '@ref <target-id> "t"'.
+
+    Leaves existing '@ref ...' text, external/absolute links, and links
+    to reserved files (index.md, log.md) untouched. Raises ValueError
+    on a relative .md target missing from id_map.
+    """
+    src_dir = Path(src_rel).parent
+
+    def sub(m):
+        text, target = m.group(1), m.group(2)
+        if not target.endswith(".md"):
+            return m.group(0)
+        if target.startswith(("http://", "https://", "#", "/")):
+            return m.group(0)
+        if _is_reserved(target):
+            return m.group(0)
+        norm = str((src_dir / target).as_posix())
+        # collapse './' and 'a/../' segments without touching the fs
+        parts = []
+        for seg in norm.split("/"):
+            if seg in ("", "."):
+                continue
+            if seg == "..":
+                if parts:
+                    parts.pop()
+                continue
+            parts.append(seg)
+        key = "/".join(parts)
+        if key not in id_map:
+            raise ValueError(
+                "dangling link %r in %s" % (target, src_rel))
+        return '@ref %s "%s"' % (id_map[key], text)
+
+    return MD_LINK_RE.sub(sub, body)
+
+
+def collect_concepts(src_dir):
+    """Return {bundle_rel: path} for non-reserved .md files, sorted."""
+    found = {}
+    for path in sorted(src_dir.rglob("*.md")):
+        rel = path.relative_to(src_dir).as_posix()
+        if _is_reserved(rel):
+            continue
+        found[rel] = path
+    return found
+
+
+def generate(src_dir, out_dir):
+    """Render every concept to '<page_id>.md' in out_dir; return IDs."""
+    src_dir, out_dir = Path(src_dir), Path(out_dir)
+    concepts = collect_concepts(src_dir)
+    id_map = {rel: page_id_for(rel) for rel in concepts}
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written = []
+    for rel in sorted(concepts):
+        fm, body = parse_frontmatter(
+            concepts[rel].read_text(encoding="utf-8"))
+        body = rewrite_links(body, rel, id_map)
+        pid = id_map[rel]
+        (out_dir / (pid + ".md")).write_text(
+            render_page(pid, fm, body), encoding="utf-8")
+        written.append(pid)
+    # root index.md becomes the @mainpage
+    root_index = src_dir / "index.md"
+    if root_index.exists():
+        text = root_index.read_text(encoding="utf-8")
+        text = rewrite_links(text, "index.md", id_map)
+        (out_dir / "okf_mainpage.md").write_text(
+            "@mainpage Overview\n" + text, encoding="utf-8")
+    return written
+
+
 def main(argv):
-    print("generate not yet implemented (Task 2)")
-    return 1
+    if len(argv) == 2 and argv[0] == "--check":
+        print("check mode arrives in Task 3")
+        return 2
+    if len(argv) == 2:
+        for pid in generate(Path(argv[0]), Path(argv[1])):
+            print("wrote " + pid)
+        return 0
+    print("usage: okf_to_doxygen.py [--check <src>] | [<src> <out>]")
+    return 2
 
 
 if __name__ == "__main__":
