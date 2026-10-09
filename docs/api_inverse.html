@@ -153,7 +153,7 @@ Two mechanisms</h1>
 <li>Seeds the iteration with <code>FastInverseAngle</code> applied to the forward residual, then iterates <a class="el" href="lob_8h.html#adb173353dce638bee8a34497b6159aab">LobSolveInverse</a> with the shared angle solver (<a class="el" href="num_zero_angle.html">Zero-Angle Solver</a>, <a class="el" href="design_shared_solver.html">Shared Angle Solver</a>).</li>
 <li>If any <code>R</code> is unreachable (<code>SolveAngle</code> returns NaN) solving <b>stops</b> at that index and the unreachable entry is not counted — the caller gets only the reachable prefix. A <code>range==0</code> entry is counted with <code>0</code> MOA.</li>
 </ol>
-<p>Typical convergence: <code>≤ 10</code> iterations, <code>0.01</code> MOA tolerance, clamped to <code>±45°</code>.</p>
+<p>Typical convergence: <code>≤ 10</code> iterations, <code>0.01</code> MOA tolerance, clamped to <code>±45°</code>. Tightening to <code>0.001</code> MOA is trajectory-indistinguishable on C1 (see <a class="el" href="num_zero_angle.html">Zero-Angle Solver</a>); the <code>Fast*</code> vs lapse branch cost is marginal on C9 (see <a class="el" href="num_inverse.html">Inverse Solver</a>).</p>
 <p><b><code>LobFastInverse</code> — one-step approximation.</b></p>
 <p>Converts already-computed forward outputs <b>in place</b>. For each <code>out</code>:</p>
 <div class="fragment"><div class="line">Δ = FastInverseAngle(θ₀, elevation_inches, range) − θ₀</div>

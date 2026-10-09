@@ -155,6 +155,7 @@ Validation</h1>
 <ul>
 <li><code>test/source/solve_angle_test.cpp</code> checks convergence from <code>0°, ±30°, 44°</code> seeds, round-trip with <code>±3 in</code> impact heights, very short range, tight <code>0.001 MOA</code> tolerance, and unreachable detection.</li>
 <li><code>test/source/solve_angle_test.cpp</code> cross-checks the builder's zero angle against a direct <code>SolveAngle</code> call (<code>BuilderZeroAngleTest</code>), while <code>test/source/lob_api_test.cpp</code> verifies weak <code>BC=0.1, v=600 fps</code> at 2000 yd exhausts iterations and returns NaN via <code>kLobErrorZeroUnreachable</code>.</li>
+<li>Tightening <code>0.01→0.001 MOA</code> changes nothing measurable on C1 at 900 ft (bitwise <code>0.0 MOA</code> delta, <code>R_sig</code> 0.0 — <code>test/validation/claims/envelope_claims.json</code> <code>angle-tol</code>, <code>build/validation/signal_angle-tol_C1.json</code>).</li>
 </ul>
 <h1><a class="anchor" id="num-zero-reuse"></a>
 Reuse</h1>

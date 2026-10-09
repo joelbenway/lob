@@ -154,13 +154,15 @@ optimum solutions of the point-mass trajectory problem." (McCoy, <em>Modern Exte
 <li><code>LobSolve</code> with the default 1-yard step reproduces the reference trajectories in <code>test/source/lob_env_test.cpp</code> within <code>±1 fps</code>, <code>±5 ft·lbf</code>, <code>±0.1 MOA</code>-equivalent and <code>±0.01 s</code> out to 1000 yd.</li>
 <li>Reducing the step via <code>Builder::StepSize</code> reduces error monotonically but with diminishing returns beyond ~6 in for the tested trajectories; the benchmark in <code>benchmark/ode.cpp</code> shows linear time cost in <code>1/Δx</code> (each method is run at its own <code>dt</code> to reach ~1 ft error vs an RK4 <code>dt=1e-5</code> reference — see <code>benchmark/ode.cpp</code>).</li>
 <li>The <code>_solve_step_test</code> and <code>_calc_test</code> lock in per-step invariants.</li>
+<li>Step-size sensitivity is systematized as a paired 36→9 in control (<code>signal_step-36-to-9_C1.json</code>, worst <code>R_sig</code> 0.0207 at 3000 ft — indistinguishable against the solver's own noise floor), with the ladder procedure and per-cell floors in <code>test/source/validation_signal_test.cpp</code> and <code>test/validation/baselines/floors.json</code> (<code>docs/specs/NUMERICAL_VALIDATION_SPEC.md</code> §8, §13).</li>
 </ul>
 <h1><a class="anchor" id="num-ode-limits"></a>
 Limitations</h1>
 <ul>
 <li>Fixed step size; no embedded error estimate or adaptive stepping.</li>
-<li>Per-step lapse is gated: <code>LobSolve</code>/<code>BuildBoatright</code>/<code>BuildZeroAngle</code> use <code>Fast*</code> (firing-site <code>ρ</code>/<code>c</code>); only <code>LobSolveInverse</code> ranges with forward <code>drop&gt;100ft</code> (<code>elevation &lt; −1200in</code>) use <code>DsDx</code>/<code>SolveStep</code>/<code>SolveAngle</code> lapse. </li>
+<li>Per-step lapse is gated: <code>LobSolve</code>/<code>BuildBoatright</code>/<code>BuildZeroAngle</code> use <code>Fast*</code> (firing-site <code>ρ</code>/<code>c</code>); only <code>LobSolveInverse</code> ranges with forward <code>drop&gt;100ft</code> (<code>elevation &lt; −1200in</code>) use <code>DsDx</code>/<code>SolveStep</code>/<code>SolveAngle</code> lapse.</li>
 </ul>
+<p>What step to use: the library default remains 36 inches (<code>step_size == 0</code> → 1 yard in <code>source/solve_step.cpp</code>); the library never selects 288 inches automatically. Within the measured envelope the recommendation is an explicit <code>Builder::StepSize(288)</code>, outside it the 36-inch default — an explicit <code>Builder::StepSize</code> always wins (<code>docs/specs/STATIC_STEP_POLICY.md</code> for the envelope bounds and evidence). </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->

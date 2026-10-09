@@ -173,8 +173,9 @@ Edges and guarantees</h1>
 Which to call</h1>
 <ul>
 <li>Use <code>SolveInverse</code> for published adjustment tables.</li>
-<li>Use <code>FastInverse</code> when you already have forward outputs and know they are reachable and want to avoid a second integration. Spot-check a few ranges against <code>SolveInverse</code> to confirm <code>FastInverse</code> error is acceptable for your trajectory. </li>
+<li>Use <code>FastInverse</code> when you already have forward outputs and know they are reachable and want to avoid a second integration. Spot-check a few ranges against <code>SolveInverse</code> to confirm <code>FastInverse</code> error is acceptable for your trajectory.</li>
 </ul>
+<p>The <code>Fast*</code> vs lapse-scaled branch cost is measured, not assumed: <code>FastSolveStep</code> vs <code>SolveStep</code> trajectories on C9 stay marginal (<code>R_sig</code> 0.40/1.44/4.76 at 6000/7500/9000 ft — <code>test/validation/claims/envelope_claims.json</code> <code>lapse-fast-vs-solve</code>, <code>build/validation/signal_lapse-fast-vs-solve_C9.json</code>). </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->

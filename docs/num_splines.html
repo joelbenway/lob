@@ -157,7 +157,7 @@ Evaluation</h1>
 </ul>
 <p>Both are <code>constexpr</code>-friendly and allocate nothing. The 60 floats are 240 bytes of contiguous storage.</p>
 <p>Custom tables (<code>source/lob_builder.cpp</code>) produce coefficients via the same <code>Build</code>; BC bands use <code>MakeRetardationCoefs</code> + <code>Merge</code> (see <a class="el" href="bc_transformation.html">BC/Velocity-Band Transformation</a>).</p>
-<p>Validation: <code>test/source/splines_test.cpp</code> checks secants/tangents, Hermite endpoint/tangent preservation, binary-search <code>FindInterval</code>, monotonic seeks, derivative correctness and the <code>5e-3</code> baseline budget.</p>
+<p>Validation: <code>test/source/splines_test.cpp</code> checks secants/tangents, Hermite endpoint/tangent preservation, binary-search <code>FindInterval</code>, monotonic seeks, derivative correctness and the <code>5e-3</code> baseline budget. The budget's trajectory meaning is measured, not assumed: a ±5e-3 Cd shift on the transonic band produces <code>R_sig</code> 0.0 (indistinguishable) on C1 (<code>test/validation/claims/envelope_claims.json</code> <code>spline-pm-5e-3</code>, <code>build/validation/signal_spline-pm-5e-3_C1.json</code>), closing <code>docs/specs/NUMERICAL_VALIDATION_SPEC.md</code> §8.6.</p>
 <h1><a class="anchor" id="num-splines-alternatives"></a>
 Why not linear</h1>
 <p>Linear interpolation (<code>dragtable::LobLerp</code> in <code>source/tables.hpp</code>) is kept for reference but is slower to validate for <code>Cd</code> integrals; the Hermite form evaluates with 7 FLOPs and preserves <code>C¹</code> continuity, which the benchmark <code>benchmark/loblerp.cpp</code> shows matters for tight loops. </p>

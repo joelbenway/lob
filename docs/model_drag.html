@@ -129,7 +129,7 @@ Custom tables</h1>
 <ul>
 <li><code>size ≥ 2</code>, Machs strictly increasing, Cd finite and <code>≥ 0</code>.</li>
 </ul>
-<p>The table is spline-fit onto the production knots (see <a class="el" href="num_splines.html">Cubic Hermite Splines</a>). If the table does not span Mach 0–5 the spline is cubically extrapolated (PCHIP Hermite using the outer interval's tangents); extrapolation that would yield negative Cd at 0 or 5 is rejected with <code>kLobErrorMachDragTableInvalid</code> — pad with explicit entries at 0 and/or 5 to define the edge behavior. Custom tables set the effective BC to 1 in the context (<code>source/lob_builder.cpp</code>).</p>
+<p>The table is spline-fit onto the production knots (see <a class="el" href="num_splines.html">Cubic Hermite Splines</a>). A ±5e-3 Cd shift on the transonic band is trajectory-indistinguishable on C1 (<code>R_sig</code> 0.0; see <a class="el" href="num_splines.html">Cubic Hermite Splines</a> for the measurement). If the table does not span Mach 0–5 the spline is cubically extrapolated (PCHIP Hermite using the outer interval's tangents); extrapolation that would yield negative Cd at 0 or 5 is rejected with <code>kLobErrorMachDragTableInvalid</code> — pad with explicit entries at 0 and/or 5 to define the edge behavior. Custom tables set the effective BC to 1 in the context (<code>source/lob_builder.cpp</code>).</p>
 <h1><a class="anchor" id="model-drag-bands"></a>
 BC/velocity bands</h1>
 <p><code>LobBuilderBCVelocityBands</code> / <code>Builder::BCVelocityBands</code> tailors the standard curve with BCs measured at several velocities (fps). See <a class="el" href="bc_transformation.html">BC/Velocity-Band Transformation</a> for the transformation.</p>
