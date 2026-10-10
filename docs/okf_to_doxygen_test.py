@@ -89,6 +89,23 @@ class GenerateTest(unittest.TestCase):
             self.assertTrue(rendered.startswith(
                 "@page okf_drag Drag Model\n"))
 
+    def test_root_index_frontmatter_stripped_from_mainpage(self):
+        with tempfile.TemporaryDirectory() as src, \
+                tempfile.TemporaryDirectory() as out:
+            srcp = Path(src)
+            (srcp / "index.md").write_text(
+                "---\nokf_version: \"0.2\"\n---\n"
+                "# Bundle\n- [Drag](drag.md)\n", encoding="utf-8")
+            (srcp / "drag.md").write_text(
+                "---\ntype: Concept\ntitle: Drag Model\n---\nBody\n",
+                encoding="utf-8")
+            generate(srcp, Path(out))
+            mainpage = (Path(out) / "okf_mainpage.md").read_text(
+                encoding="utf-8")
+            self.assertNotIn("---", mainpage)
+            self.assertNotIn("okf_version", mainpage)
+            self.assertIn("# Bundle", mainpage)
+
 
 class CheckTest(unittest.TestCase):
     def _bundle(self, tmp, files):
