@@ -7,6 +7,30 @@ import tempfile
 from okf_to_doxygen import rewrite_links, generate
 from pathlib import Path
 from okf_to_doxygen import check_bundle
+from okf_to_doxygen import main
+
+
+class MissingDirTest(unittest.TestCase):
+    def test_check_missing_src_dir(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = str(Path(tmp) / "nope")
+            self.assertEqual(
+                check_bundle(Path(missing)), [missing + ": not a directory"])
+
+    def test_generate_missing_src_dir_raises(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(FileNotFoundError):
+                generate(Path(tmp) / "nope", Path(tmp) / "out")
+
+    def test_main_check_missing_src_dir_exits_2(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(
+                main(["--check", str(Path(tmp) / "nope")]), 2)
+
+    def test_main_generate_missing_src_dir_exits_2(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(
+                main([str(Path(tmp) / "nope"), str(Path(tmp) / "out")]), 2)
 
 
 class ParseTest(unittest.TestCase):
@@ -22,6 +46,51 @@ class ParseTest(unittest.TestCase):
     def test_empty_type_raises(self):
         with self.assertRaises(ValueError):
             parse_frontmatter("---\ntype: \n---\nBody\n")
+
+
+class NestedFrontmatterTest(unittest.TestCase):
+    def test_block_style_round_trip(self):
+        text = ("---\ntype: Concept\ntitle: Drag\n"
+                "generated:\n  by: human:joel\n  at: 2026-10-09T00:00:00Z\n"
+                "verified:\n  - by: human:joel\n    at: 2026-10-09T00:00:00Z\n"
+                "  - by: agent:opencode\n    at: 2026-10-10T00:00:00Z\n"
+                "sources:\n  - path: docs/pages/drag.md\n    note: legacy page\n"
+                "tags:\n  - drag\n  - splines\n"
+                "---\nBody\n")
+        fm, body = parse_frontmatter(text)
+        self.assertEqual(fm, {
+            "type": "Concept", "title": "Drag",
+            "generated": {"by": "human:joel", "at": "2026-10-09T00:00:00Z"},
+            "verified": [
+                {"by": "human:joel", "at": "2026-10-09T00:00:00Z"},
+                {"by": "agent:opencode", "at": "2026-10-10T00:00:00Z"}],
+            "sources": [{"path": "docs/pages/drag.md",
+                         "note": "legacy page"}],
+            "tags": ["drag", "splines"]})
+        self.assertEqual(body, "Body\n")
+
+    def test_tab_indentation_raises(self):
+        with self.assertRaises(ValueError):
+            parse_frontmatter(
+                "---\ntype: Concept\ngenerated:\n\tby: x\n---\nB\n")
+
+    def test_flow_list_skill_md(self):
+        fm, _ = parse_frontmatter(
+            "---\ntype: Concept\nexclude: [SKILL.md]\n---\nB\n")
+        self.assertEqual(fm["exclude"], ["SKILL.md"])
+
+    def test_flow_map_inline(self):
+        fm, _ = parse_frontmatter(
+            "---\ntype: Concept\n"
+            "generated: {by: human:joel, at: 2026-10-09T00:00:00Z}\n"
+            "---\nB\n")
+        self.assertEqual(
+            fm["generated"],
+            {"by": "human:joel", "at": "2026-10-09T00:00:00Z"})
+
+    def test_top_level_dash_raises(self):
+        with self.assertRaises(ValueError):
+            parse_frontmatter("---\ntype: Concept\n- by: x\n---\nB\n")
 
 
 class PageIdTest(unittest.TestCase):
@@ -134,13 +203,17 @@ class CheckTest(unittest.TestCase):
                 "orphan.md": "---\ntype: Concept\n---\nNo index links me.\n",
             })
             errs = check_bundle(base)
-            # brief draft said 3; verbatim impl yields 6 true errors:
-            # bad.md x2 (frontmatter + rewrite passes) + lonely.md dangling
-            # + all three unreachable (root index links nothing).
-            self.assertEqual(len(errs), 6)
-            self.assertTrue(any("bad.md" in e for e in errs))
-            self.assertTrue(any("lonely.md" in e for e in errs))
-            self.assertTrue(any("orphan.md" in e for e in errs))
+            # single-pass: bad.md frontmatter reports once (rewrite
+            # reuses the parse); reachability is independent:
+            # bad.md unparseable x1 + unreachable x1, lonely.md
+            # dangling x1 + unreachable x1, orphan.md unreachable x1 = 5.
+            self.assertEqual(len(errs), 5)
+            self.assertEqual(
+                sum(1 for e in errs if e.startswith("bad.md")), 2)
+            self.assertEqual(
+                sum(1 for e in errs if e.startswith("lonely.md")), 2)
+            self.assertEqual(
+                sum(1 for e in errs if e.startswith("orphan.md")), 1)
 
     def test_subdir_index_with_frontmatter_reported(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -163,10 +236,24 @@ class CheckTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, \
                 tempfile.TemporaryDirectory() as out:
             base = self._bundle(tmp, {
-                "index.md": "# B\n- [A](a.md)\n",
+                "index.md": "---\nexclude: [SKILL.md]\n---\n"
+                            "# B\n- [A](a.md)\n",
                 "a.md": "---\ntype: Concept\ntitle: A\n---\nHi\n",
                 "SKILL.md": "# Skill\nNo frontmatter, unlinked.\n",
                 "sub/SKILL.md": "# Nested skill\n",
+            })
+            self.assertEqual(check_bundle(base), [])
+            self.assertEqual(generate(base, Path(out)), ["okf_a"])
+
+    def test_exclude_list_skips_custom_file(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                tempfile.TemporaryDirectory() as out:
+            base = self._bundle(tmp, {
+                "index.md": "---\nexclude: [scratch.md]\n---\n"
+                            "# B\n- [A](a.md)\n",
+                "a.md": "---\ntype: Concept\ntitle: A\n---\n"
+                        "Hi [s](scratch.md).\n",
+                "scratch.md": "No frontmatter, unlinked, excluded.\n",
             })
             self.assertEqual(check_bundle(base), [])
             self.assertEqual(generate(base, Path(out)), ["okf_a"])
