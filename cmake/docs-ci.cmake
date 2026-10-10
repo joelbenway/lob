@@ -101,6 +101,15 @@ set(doxyfile "${bin}/docs/Doxyfile")
 
 configure_file("${src}/docs/Doxyfile.in" "${doxyfile}" @ONLY)
 
+find_program(OKF_PYTHON NAMES python3 REQUIRED)
+execute_process(
+  COMMAND "${OKF_PYTHON}" "${src}/docs/okf_to_doxygen.py"
+          "${src}/docs/okf" "${bin}/generated/okf_pages"
+  RESULT_VARIABLE okf_result)
+if(NOT okf_result EQUAL "0")
+  message(FATAL_ERROR "OKF generation failed with ${okf_result}")
+endif()
+
 file(REMOVE_RECURSE "${out}/html")
 
 execute_process(

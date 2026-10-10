@@ -98,6 +98,7 @@
             gtest
             lcov
             nlohmann_json
+            python3
             valgrind
           ];
           shellHook = let
