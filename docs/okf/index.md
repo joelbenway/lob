@@ -1,5 +1,6 @@
 ---
 okf_version: "0.2"
+exclude: [SKILL.md]
 ---
 
 # lob Knowledge

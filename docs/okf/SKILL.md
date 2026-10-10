@@ -26,6 +26,7 @@ Recommended: `title`, `description`. Optional v0.2: `tags`, `resource`,
 - Bodies are high-level: no `source/` or `include/` paths. Link APIs via
   `@ref api_*` passthrough, concepts via `[text](relative/other.md)`.
 - `log.md` is optional; Git history is the source of truth.
+- Non-concept files (e.g. SKILL.md) go in root index.md `exclude`.
 
 ## Workflow
 

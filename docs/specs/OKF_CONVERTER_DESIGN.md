@@ -45,8 +45,10 @@ Same script, CI-usable, exit non-zero on:
   frontmatter, bad `YYYY-MM-DD` headings in `log.md`).
 - Dangling internal link or concept not reachable from any `index.md`.
 - `stable` without `verified` is a warning, not an error (v1).
-- `SKILL.md` (exact basename, any dir) is exempt from all checks, like
-  reserved files — it is agent tooling, not a concept.
+- Files in the root `index.md` frontmatter `exclude` list (exact
+  basenames or bundle-rel paths) are skipped everywhere — collect,
+  check, reachability, and link rewrites. (E.g. `SKILL.md`, which is
+  agent tooling, not a concept.)
 
 ## Docs build integration
 
