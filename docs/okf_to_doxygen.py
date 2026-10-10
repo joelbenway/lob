@@ -120,6 +120,9 @@ def generate(src_dir, out_dir):
     root_index = src_dir / "index.md"
     if root_index.exists():
         text = root_index.read_text(encoding="utf-8")
+        m = FRONTMATTER_RE.match(text)
+        if m:
+            text = text[m.end():]
         text = rewrite_links(text, "index.md", id_map)
         (out_dir / "okf_mainpage.md").write_text(
             "@mainpage Overview\n" + text, encoding="utf-8")
@@ -130,7 +133,6 @@ def _index_targets(src_dir):
     """All .md link targets reachable from any index.md, as bundle rels."""
     targets = set()
     for index in sorted(src_dir.rglob("index.md")):
-        rel = index.relative_to(src_dir).as_posix()
         text = index.read_text(encoding="utf-8")
         if index != src_dir / "index.md":
             if text.startswith("---"):

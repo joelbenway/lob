@@ -53,8 +53,8 @@ Same script, CI-usable, exit non-zero on:
 - `cmake/docs.cmake` + `cmake/docs-ci.cmake`: run
   `python3 docs/okf_to_doxygen.py docs/okf build/generated/okf_pages`
   before Doxygen.
-- `docs/Doxyfile.in`: `INPUT` changes from `include + docs/pages` to
-  `include + build/generated/okf_pages`.
+- `docs/Doxyfile.in`: `INPUT` adds `build/generated/okf_pages`
+  alongside legacy `include + docs/pages` during transition.
 - No Doxygen version bump; output still deployed to gh-pages `docs/`
   via existing `docs` CI job.
 
