@@ -8,7 +8,7 @@ PROJECT_NUMBER = "@PROJECT_VERSION@"
 
 # Add sources -- root docs (README, BUILDING, etc.) are intentionally excluded;
 # they stand alone on GitHub. Only the technical pages are part of the site.
-INPUT = "@PROJECT_SOURCE_DIR@/include" "@PROJECT_SOURCE_DIR@/docs/pages"
+INPUT = "@PROJECT_SOURCE_DIR@/include" "@PROJECT_SOURCE_DIR@/docs/pages" "@PROJECT_BINARY_DIR@/generated/okf_pages"
 FILE_PATTERNS = *.h *.hpp *.c *.cpp *.md *.dox
 EXTRACT_ALL = YES
 EXTRACT_PRIVATE = NO

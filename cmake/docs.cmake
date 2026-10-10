@@ -29,8 +29,14 @@ else()
   set(DOXYGEN_CMD "doxygen")
 endif()
 
+find_program(OKF_PYTHON NAMES python3 REQUIRED)
 add_custom_target(
   docs
+  COMMAND "${CMAKE_COMMAND}" -E make_directory
+          "${PROJECT_BINARY_DIR}/generated/okf_pages"
+  COMMAND "${OKF_PYTHON}" "${PROJECT_SOURCE_DIR}/docs/okf_to_doxygen.py"
+          "${PROJECT_SOURCE_DIR}/docs/okf"
+          "${PROJECT_BINARY_DIR}/generated/okf_pages"
   COMMAND "${CMAKE_COMMAND}" -E remove_directory
           "${DOXYGEN_OUTPUT_DIRECTORY}/html"
   COMMAND "${DOXYGEN_CMD}" "${working_dir}/Doxyfile"

@@ -28,6 +28,10 @@ jobs:
       run: nix develop --command bash -c
         "cmake -D FORMAT_COMMAND=clang-format -P cmake/lint.cmake"
 
+    - name: OKF check
+      run: nix develop --command bash -c
+        "python3 docs/okf_to_doxygen.py --check docs/okf"
+
     - name: Spell check
       if: always()
       run: nix develop --command bash -c
