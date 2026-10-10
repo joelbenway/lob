@@ -165,8 +165,10 @@ def parse_frontmatter(text):
 
     Flat 'key: value' plus one-level 2-space nesting (maps, '- item' /
     '- k: v' sequences) and '[a, b]'/'{k: v}' flow values, stdlib only;
-    raises ValueError on missing block, empty/missing 'type', tab
-    indentation, or foreign shapes (loud, never junk keys).
+    flow lists/dicts are flat strings-only (nested '[{...}]' stays a
+    string, truthiness-only use); raises ValueError on missing block,
+    empty/missing 'type', tab indentation, or foreign shapes (loud,
+    never junk keys).
     """
     m = FRONTMATTER_RE.match(text)
     if not m:
@@ -252,7 +254,7 @@ def rewrite_links(body, src_rel, id_map, exclude=()):
                 continue
             parts.append(seg)
         key = "/".join(parts)
-        if key in exclude or Path(target).name in exclude:
+        if _is_excluded(key, exclude):
             return m.group(0)
         if key not in id_map:
             raise ValueError(
