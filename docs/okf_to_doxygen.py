@@ -46,7 +46,7 @@ def render_page(page_id, frontmatter, body):
 
 
 MD_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)\"']+?)(?:\s+\"[^\"]*\")?\)")
-RESERVED = {"index.md", "log.md"}
+RESERVED = {"index.md", "log.md", "SKILL.md"}
 
 
 def _is_reserved(path):
@@ -57,7 +57,7 @@ def rewrite_links(body, src_rel, id_map):
     """Rewrite '[t](other.md)' -> '@ref <target-id> "t"'.
 
     Leaves existing '@ref ...' text, external/absolute links, and links
-    to reserved files (index.md, log.md) untouched. Raises ValueError
+    to reserved files (index.md, log.md, SKILL.md) untouched. Raises ValueError
     on a relative .md target missing from id_map.
     """
     src_dir = Path(src_rel).parent
