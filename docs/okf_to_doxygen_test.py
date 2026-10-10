@@ -142,6 +142,18 @@ class CheckTest(unittest.TestCase):
             })
             self.assertEqual(check_bundle(base), [])
 
+    def test_skill_md_ignored(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                tempfile.TemporaryDirectory() as out:
+            base = self._bundle(tmp, {
+                "index.md": "# B\n- [A](a.md)\n",
+                "a.md": "---\ntype: Concept\ntitle: A\n---\nHi\n",
+                "SKILL.md": "# Skill\nNo frontmatter, unlinked.\n",
+                "sub/SKILL.md": "# Nested skill\n",
+            })
+            self.assertEqual(check_bundle(base), [])
+            self.assertEqual(generate(base, Path(out)), ["okf_a"])
+
 
 if __name__ == "__main__":
     unittest.main()
