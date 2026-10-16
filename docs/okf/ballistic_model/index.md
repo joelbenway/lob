@@ -1,3 +1,3 @@
 # Ballistic Model
 
-- [Drag](drag.md) — how drag curves become splines.
+- [Drag](drag.md): how drag curves become splines.

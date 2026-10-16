@@ -11,7 +11,8 @@ status: stable
 # Heun Integration
 
 lob integrates the trajectory with Heun's method, a one-step
-second-order predictor-corrector, stepping in down-range distance with
+second-order method that predicts with an Euler step and corrects with
+the average of both slopes, stepping in down-range distance with
 a caller-configurable step around a coarse default. Time of flight
 rides along as an integrated component, not a post-step estimate.
 
@@ -22,6 +23,6 @@ second-order methods are, in the practical sense, optimum solutions of
 the point-mass trajectory problem." Higher-order methods cost roughly
 twice as much without earning back the step size; first-order methods
 need impractically fine steps to hold accuracy. Error falls as the step
-shrinks, at linear cost — callers with unusual regimes measure their
+shrinks, at linear cost. Callers with unusual regimes measure their
 own trajectories rather than trusting a global number. See @ref num_ode
 for accuracy notes.

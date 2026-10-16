@@ -1,17 +1,17 @@
 # lob OKF Skill
 
 Work on the lob knowledge bundle in `docs/okf/` (Open Knowledge Format
-v0.2 — spec at
+v0.2, spec at
 https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md).
 Use when the user mentions OKF, knowledge bundle, or editing technical
 reference content.
 
 ## Types (only these four)
 
-- `Guide` — install/use paths.
-- `Concept` — physics, numerics, features.
-- `DesignDecision` — why lob is shaped this way.
-- `Reference` — constants, tables.
+- `Guide`: install/use paths.
+- `Concept`: physics, numerics, features.
+- `DesignDecision`: why lob is shaped this way.
+- `Reference`: constants, tables.
 
 Every concept file needs YAML frontmatter with non-empty `type`.
 Recommended: `title`, `description`. Optional v0.2: `tags`, `resource`,

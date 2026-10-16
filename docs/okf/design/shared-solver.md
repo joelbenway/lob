@@ -11,8 +11,8 @@ status: stable
 # Shared Angle Solver
 
 Zero-finding at build time and adjustment-solving at inverse time are
-the same mathematical problem — find the launch angle whose trajectory
-meets the target — so lob solves both with one shared routine.
+the same mathematical problem: find the launch angle whose trajectory
+meets the target. So lob solves both with one shared routine.
 
 Sharing guarantees the zero a rifle is zeroed with and the adjustments
 that assume that zero are computed with identical tolerance, bounds,
