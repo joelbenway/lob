@@ -16,6 +16,6 @@ scoped enums. The implementation lives once, in C++; the wrapper
 forwards to it.
 
 The hourglass shape keeps the solver independent of language bindings:
-any language with a C FFI can call lob without a C++ toolchain or
-name-mangling concerns, while C++ callers get ergonomics back through
+any language with a C FFI can call lob without writing C++ or fighting
+name mangling, while C++ callers get ergonomics back through
 the wrapper. See @ref api_builder for the builder surface.
