@@ -19,4 +19,6 @@ heap, no exceptions, and no virtual calls.
 
 No universal speed claim is made here: the benchmark tree reproduces
 the comparisons locally, and per-trajectory measurement beats any
-published figure.
+published figure. Instruction counts from the benchmark suite are
+tracked in CI, so a change that costs the hot path shows up as a
+regression before it merges.
