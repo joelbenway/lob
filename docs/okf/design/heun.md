@@ -21,7 +21,9 @@ Ballistic Research Laboratory has shown that the one-step,
 second-order methods are, in the practical sense, optimum solutions of
 the point-mass trajectory problem." Higher-order methods cost roughly
 twice as much without earning back the step size; first-order methods
-need impractically fine steps to hold accuracy. Error falls as the step
+need impractically fine steps to hold accuracy. We did not take McCoy's
+word for it: the benchmark tree pits RK4 against Heun at matched
+accuracy, and Heun comes out faster. Error falls as the step
 shrinks, at linear cost. Callers with unusual regimes measure their
 own trajectories rather than trusting a global number. See @ref num_ode
 for accuracy notes.
