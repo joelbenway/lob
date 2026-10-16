@@ -13,7 +13,7 @@ status: stable
 Inside the solver, quantities carry their engineering units as types:
 lengths, speeds, and angles are distinct, and mixing categories fails
 to compile while same-category conversion is explicit. The motive is a
-class of bug with no test failure but a wrong trajectory — a unit
+class of bug with no test failure but a wrong trajectory: a unit
 mixup deep in the integrator, atmosphere, or spin corrections.
 
 The types cost nothing at runtime and stop at the ABI boundary, where
