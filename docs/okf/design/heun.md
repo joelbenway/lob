@@ -11,8 +11,7 @@ status: stable
 # Heun Integration
 
 lob integrates the trajectory with Heun's method, a one-step
-second-order method that predicts with an Euler step and corrects with
-the average of both slopes, stepping in down-range distance with
+second-order predictor-corrector, stepping in down-range distance with
 a caller-configurable step around a coarse default. Time of flight
 rides along as an integrated component, not a post-step estimate.
 
