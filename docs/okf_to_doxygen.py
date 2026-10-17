@@ -46,7 +46,7 @@ def _parse_scalar(value):
     s = value.strip()
     if s.startswith("["):
         if not s.endswith("]"):
-            raise ValueError("unparseable value: %r" % value)
+            raise ValueError("unparsable value: %r" % value)
         inner = s[1:-1].strip()
         if not inner:
             return []
@@ -54,16 +54,16 @@ def _parse_scalar(value):
                 if p.strip()]
     if s.startswith("{"):
         if not s.endswith("}"):
-            raise ValueError("unparseable value: %r" % value)
+            raise ValueError("unparsable value: %r" % value)
         inner = s[1:-1].strip()
         out = {}
         if inner:
             for part in _split_top_level(inner, ","):
                 if ":" not in part:
-                    raise ValueError("unparseable value: %r" % value)
+                    raise ValueError("unparsable value: %r" % value)
                 k, _, v = part.partition(":")
                 if not k.strip():
-                    raise ValueError("unparseable value: %r" % value)
+                    raise ValueError("unparsable value: %r" % value)
                 out[k.strip()] = _strip_quotes(v)
         return out
     return _strip_quotes(s)
@@ -76,11 +76,11 @@ def _parse_sequence(kids):
         if indent == 2 and content.startswith("-"):
             rest = content[1:].strip()
             if not rest:
-                raise ValueError("unparseable list entry: %r" % raw)
+                raise ValueError("unparsable list entry: %r" % raw)
             if ":" in rest and rest[0] not in ("'", '"'):
                 sk, _, sv = rest.partition(":")
                 if not sk.strip():
-                    raise ValueError("unparseable list entry: %r" % raw)
+                    raise ValueError("unparsable list entry: %r" % raw)
                 cur = {sk.strip(): _parse_scalar(sv)}
                 items.append(cur)
             else:
@@ -90,10 +90,10 @@ def _parse_sequence(kids):
                 and ":" in content and not content.startswith("-"):
             ck, _, cv = content.partition(":")
             if not ck.strip():
-                raise ValueError("unparseable list entry: %r" % raw)
+                raise ValueError("unparsable list entry: %r" % raw)
             cur[ck.strip()] = _parse_scalar(cv)
         else:
-            raise ValueError("unparseable frontmatter line: %r" % raw)
+            raise ValueError("unparsable frontmatter line: %r" % raw)
     return items
 
 
@@ -102,10 +102,10 @@ def _parse_nested_map(kids):
     sub = {}
     for indent, content, raw in kids:
         if indent != 2 or content.startswith("-") or ":" not in content:
-            raise ValueError("unparseable frontmatter line: %r" % raw)
+            raise ValueError("unparsable frontmatter line: %r" % raw)
         sk, _, sv = content.partition(":")
         if not sk.strip() or not sv.strip():
-            raise ValueError("unparseable frontmatter line: %r" % raw)
+            raise ValueError("unparsable frontmatter line: %r" % raw)
         sub[sk.strip()] = _parse_scalar(sv)
     return sub
 
@@ -126,10 +126,10 @@ def _parse_block(block):
             raise ValueError("unexpected indented line: %r" % line)
         content = line.strip()
         if content.startswith("-") or ":" not in content:
-            raise ValueError("unparseable frontmatter line: %r" % line)
+            raise ValueError("unparsable frontmatter line: %r" % line)
         key, _, value = content.partition(":")
         if not key.strip():
-            raise ValueError("unparseable frontmatter line: %r" % line)
+            raise ValueError("unparsable frontmatter line: %r" % line)
         key = key.strip()
         if value.strip():
             fm[key] = _parse_scalar(value)
@@ -202,7 +202,7 @@ def _is_reserved(path):
 
 
 def _exclude_list(src_dir):
-    """Root index.md frontmatter 'exclude' list; [] if absent/unparseable."""
+    """Root index.md frontmatter 'exclude' list; [] if absent/unparsable."""
     root = Path(src_dir) / "index.md"
     if not root.is_file():
         return []

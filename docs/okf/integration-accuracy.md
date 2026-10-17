@@ -61,7 +61,7 @@ caller's setting.
 What is given up is honest and worth naming: lob cannot tighten the step
 automatically where a trajectory happens to be hard and loosen it where
 the trajectory is easy. It spends the same effort on a flat subsonic
-descent as on a transonic climb. A caller who wants that behaviour has
+descent as on a transonic climb. A caller who wants that behavior has
 to ask for it by choosing the step.
 
 ## Where the guidance stops

@@ -22,7 +22,7 @@ out: build/generated/okf_pages/*.md
 
 Per concept:
 
-1. Parse frontmatter (fail on unparseable block or empty `type`).
+1. Parse frontmatter (fail on unparsable block or empty `type`).
 2. Page ID = `okf_` + path sanitize (`/`/`-`/`.` → `_`, strip `.md`).
    Example: `ballistic_model/drag.md` → `okf_ballistic_model_drag`.
    Prefix avoids collision with legacy `model_*`/`api_*` during

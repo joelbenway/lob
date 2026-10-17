@@ -205,7 +205,7 @@ class CheckTest(unittest.TestCase):
             errs = check_bundle(base)
             # single-pass: bad.md frontmatter reports once (rewrite
             # reuses the parse); reachability is independent:
-            # bad.md unparseable x1 + unreachable x1, lonely.md
+            # bad.md unparsable x1 + unreachable x1, lonely.md
             # dangling x1 + unreachable x1, orphan.md unreachable x1 = 5.
             self.assertEqual(len(errs), 5)
             self.assertEqual(
