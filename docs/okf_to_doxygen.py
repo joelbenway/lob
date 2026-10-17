@@ -304,8 +304,11 @@ def generate(src_dir, out_dir):
         if m:
             text = text[m.end():]
         text = rewrite_links(text, "index.md", id_map, exclude)
+        # Title from the index body's first heading, else a generic label.
+        heading = re.search(r"^#\s+(.+)$", text, re.MULTILINE)
+        title = heading.group(1).strip() if heading else "Technical Reference"
         (out_dir / "okf_mainpage.md").write_text(
-            "@mainpage Overview\n" + text, encoding="utf-8")
+            "@mainpage %s\n" % title + text, encoding="utf-8")
     return written
 
 

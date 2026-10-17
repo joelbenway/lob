@@ -1,14 +1,14 @@
 ---
 type: DesignDecision
-title: Shared Angle Solver
-description: Zero-finding and inverse-solving are one problem, solved once.
+title: Angle Solver Mechanics
+description: How the shared angle solver finds a launch angle, and what backs it.
 tags: [numerics, solver]
 generated: {by: human:joel, at: 2026-10-09T00:00:00Z}
 verified: [{by: human:joel, at: 2026-10-09T00:00:00Z}]
 status: stable
 ---
 
-# Shared Angle Solver
+# Angle Solver Mechanics
 
 lob has exactly one routine that answers "what launch angle makes this
 shot go there?". It serves both features that need that answer, and it
@@ -46,14 +46,47 @@ per call site, and the two drift subtly apart. That drift is the whole
 reason this is one routine: a rifle zeroed by one solver and adjusted by
 the other wears the difference between them as a bias.
 
+## The zero angle is a number, not a procedure
+
+The zero comes out of this solver and is stored on the context as a
+single angle in minutes of arc. That is the shape the whole design wants,
+and it is worth being explicit about why.
+
+A zero describes a gun, not a shot. Once you know the distance and the
+impact height, the mechanical angle that sends the bullet through the
+optic axis is a fixed property of the rifle, the ammunition, and the
+conditions. Nothing about a later forward solve or inverse solve changes
+it. So the search runs once, when the context is built, and what stays
+behind is the answer rather than the machinery that found it.
+
+Everything downstream then reads that number. A forward solve launches
+from it. An inverse solve reports adjustments relative to it. The angle
+solver uses it as the seed for every range in a table. None of them pays
+for the search again, which is why a context that has been built is
+cheap to keep solving against for as long as the caller likes.
+
+The number is also portable in the useful sense. It is an angle, so it
+does not care what units the shooter entered them in, and it does not
+depend on the range being asked about. A caller who zeroed in SI units,
+who queries in yards, and who hands the context to a colleague solving
+in meters is passing around one number that means the same thing to all
+of them.
+
+There is a second saving available. A caller who already knows their
+zero, from a dope book or a previous session, can state it directly. The
+build then bounds-checks it and returns, skipping the seed and the
+search altogether. For a shooter working from published data that is the
+normal path, and it makes the zero a pure input rather than a
+computation.
+
 ## How it works
 
 The solver alternates between two cheap steps until it settles.
 
 **Fire and measure.** Integrate a full trajectory from the candidate
 angle out to the range, and return the residual `f`. The
-[Heun](heun.md) integrator supplies the step, against the
-[drag curve](../ballistic_model/drag.md) the context already carries.
+[Heun](heun-integration.md) integrator supplies the step, against the
+[drag curve](drag-model.md) the context already carries.
 
 **One geometric step.** Correct the angle in closed form. If the shot
 at range `R` landed `f` too low, raise elevation by approximately
@@ -143,7 +176,7 @@ The solver tests pin the properties the design depends on:
 
 ## Related
 
-- [Heun Integration](heun.md): the integrator that fires each candidate
+- [Heun Integration](heun-integration.md): the integrator that fires each candidate
   trajectory.
-- [Drag Model](../ballistic_model/drag.md): the curve the integration
+- [Drag Model](drag-model.md): the curve the integration
   flies against.

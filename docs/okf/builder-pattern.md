@@ -19,4 +19,4 @@ defaults the rest, and validates the whole set before the solver runs.
 The two stages also let high-fidelity branches ask "is this geometry
 complete?" without penalizing minimal builds: a sparse caller gets a
 well-formed solution, a fully described projectile unlocks the demanding
-models. See @ref api_builder for the builder surface.
+models. See [Builder Pattern](builder-pattern.md) for the builder surface.
