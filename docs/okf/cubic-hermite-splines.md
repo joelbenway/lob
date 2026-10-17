@@ -61,7 +61,7 @@ decision tree is the whole design:
   curve flattens there instead of turning sharply.
 - Everywhere else, the tangent is a weighted average of the two
   neighboring slopes, taken as a harmonic mean and weighted toward the
-  closer neighbour.
+  closer neighbor.
 
 The result is that a curve passing through monotonic data stays
 monotonic, and a curve through a peak does not overshoot it. Every drag

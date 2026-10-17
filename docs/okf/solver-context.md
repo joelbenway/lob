@@ -23,7 +23,7 @@ validates them, derives the quantities that would otherwise be recomputed
 per shot, and produces the context. After that it is read-only.
 
 There are no mutators on a context and no way back to the builder. That
-single fact is what makes the rest of its behaviour predictable: a
+single fact is what makes the rest of its behavior predictable: a
 context does not change underneath you, so a result computed from it
 today describes the same configuration as a result computed from it
 next week.
