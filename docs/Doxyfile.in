@@ -7,8 +7,10 @@ PROJECT_NAME = "@PROJECT_NAME@"
 PROJECT_NUMBER = "@PROJECT_VERSION@"
 
 # Add sources -- root docs (README, BUILDING, etc.) are intentionally excluded;
-# they stand alone on GitHub. Only the technical pages are part of the site.
-INPUT = "@PROJECT_SOURCE_DIR@/include" "@PROJECT_SOURCE_DIR@/docs/pages" "@PROJECT_BINARY_DIR@/generated/okf_pages"
+# they stand alone on GitHub. The technical reference lives as an OKF bundle in
+# docs/okf/ and is translated into Doxygen pages at build time; the API reference
+# comes from the headers.
+INPUT = "@PROJECT_SOURCE_DIR@/include" "@PROJECT_BINARY_DIR@/generated/okf_pages"
 FILE_PATTERNS = *.h *.hpp *.c *.cpp *.md *.dox
 EXTRACT_ALL = YES
 EXTRACT_PRIVATE = NO

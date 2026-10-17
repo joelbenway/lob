@@ -25,5 +25,5 @@ need impractically fine steps to hold accuracy. We did not take McCoy's
 word for it: the benchmark tree pits RK4 against Heun at matched
 accuracy, and Heun comes out faster. Error falls as the step
 shrinks, at linear cost. Callers with unusual regimes measure their
-own trajectories rather than trusting a global number. See @ref num_ode
+own trajectories rather than trusting a global number. See [Integration Accuracy and Step Size](integration-accuracy.md)
 for accuracy notes.

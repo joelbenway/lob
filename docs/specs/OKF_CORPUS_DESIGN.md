@@ -24,44 +24,57 @@ Spec source: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/m
 
 ## Layout
 
+The bundle is flat. No subdirectories.
+
 ```text
 docs/okf/
   index.md                  # root, @mainpage source, okf_version frontmatter
-  getting_started.md
-  ballistic_model/index.md  # nav-only
-  ballistic_model/point_mass.md
-  ballistic_model/drag.md
-  ballistic_model/atmosphere.md
-  ballistic_model/wind_coriolis.md
-  ballistic_model/spin.md
-  numerical_methods/index.md
-  numerical_methods/ode.md
-  numerical_methods/splines.md
-  numerical_methods/zero_angle.md
-  numerical_methods/inverse.md
-  bc/index.md
-  bc/overview.md
-  bc/transformation.md
-  bc/worked_example.md
-  design/index.md
-  design/overview.md
-  design/shared_solver.md
-  validation/index.md
-  validation/overview.md
-  reference/index.md
-  reference/constants.md
+  SKILL.md                  # agent skill, listed in root index `exclude`
+  <concept>.md              # one file per concept, filename = slug of its title
   log.md                    # optional; Git history is source of truth
 ```
 
-Directory = chapter. File path minus `.md` = concept ID. Doxygen `@page`
-IDs derive from concept IDs via the converter spec (`okf_` prefix).
+Two rules make a flat bundle work, and both follow from OKF itself:
+the spec assigns no meaning to directory structure, so a file has to
+identify its subject unaided. Hence the second rule.
+
+**A filename is the kebab-case slug of the concept's `title`.** With no
+directory to supply context, `overview.md`, `transformation.md`, and
+`worked_example.md` are unmoored: each said nothing about which subject
+it belonged to, and the same three names would have collided again in
+the next topic. `bc-velocity-band-transformation.md` and
+`point-mass-model.md` cannot collide and cannot be misfiled.
+
+**The root `index.md` is the only index.** It carries the whole reading
+order, grouped into sections by topic (OKF §8 index format). Per-chapter
+`index.md` files are unnecessary in a flat bundle and would collide on
+name. Link order inside each section is the reading order for that
+topic.
+
+Concept ID = file path minus `.md`. Doxygen `@page` IDs derive from
+concept IDs via the converter spec (`okf_` prefix). Renaming a file
+therefore renames its page ID; since generated pages are not published
+until a release, mid-migration renames are cheap.
+
+## One file per Wikipedia page
+
+An OKF concept is a topic, not a section. Split a page only when each
+half would stand on its own as an encyclopedia article; do not split by
+heading, by paragraph, or by "someone might link to that bit". Sections
+inside a page may freely reference each other and assume the reader has
+the whole page in hand.
+
+Worked example: the angle solver was first split into four files
+(problem, iteration, seeds, evidence). None of the four would be a
+Wikipedia article, and each was unreadable alone. Folding them back into
+one page was correct. `heun.md`, `builder.md`, and `no-alloc.md` each
+would be, so they stay separate.
 
 ## Types (4 only)
 
 - `Guide` — getting started, install/use paths.
 - `Concept` — drag, atmosphere, point-mass, splines, ODE integration.
 - `DesignDecision` — hourglass C ABI, strong units, no-alloc, builder, Heun.
-- `Reference` — constants, tables.
 
 Frontmatter per concept:
 

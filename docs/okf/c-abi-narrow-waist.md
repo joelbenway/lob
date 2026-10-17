@@ -18,4 +18,4 @@ forwards to it.
 The hourglass shape keeps the solver independent of language bindings:
 any language with a C FFI can call lob without writing C++ or fighting
 name mangling, while C++ callers get ergonomics back through
-the wrapper. See @ref api_builder for the builder surface.
+the wrapper. See [Builder Pattern](builder-pattern.md) for the builder surface.
