@@ -19,6 +19,6 @@ that assume that zero are computed with identical tolerance, bounds,
 and jump handling; two implementations could drift subtly apart. It
 also halves maintenance: a fix to convergence behavior applies to both
 features at once, with a smaller diff than guarding every caller. See
-@ref design_shared_solver for the dedicated treatment, and
+[Shared Angle Solver](angle-solver.md) for the dedicated treatment, and
 [Drag](../ballistic_model/drag.md) for how the curves it flies were
 built.

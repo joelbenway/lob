@@ -8,3 +8,4 @@
 - [Heun Integration](heun.md): second-order steps, per BRL experience.
 - [Performance Posture](perf.md): speed from modeling.
 - [Shared Angle Solver](shared-solver.md): one routine serves zero and inverse.
+- [Angle Solver, in Depth](angle-solver.md): the problem, the iteration, the seeds, the evidence.
