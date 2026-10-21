@@ -33,6 +33,11 @@ jobs:
       run: nix develop --command bash -c
         "python3 docs/okf_to_doxygen.py --check docs/okf"
 
+    - name: OKF unit tests
+      if: always()
+      run: nix develop --command bash -c
+        "python3 -m unittest discover -s docs -p 'okf_to_doxygen_test.py'"
+
     - name: Spell check
       if: always()
       run: nix develop --command bash -c

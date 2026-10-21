@@ -6,7 +6,7 @@ https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md).
 Use when the user mentions OKF, knowledge bundle, or editing technical
 reference content.
 
-## Types (only these four)
+## Types
 
 - `Guide`: install/use paths.
 - `Concept`: physics, numerics, features.

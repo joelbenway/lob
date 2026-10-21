@@ -104,12 +104,12 @@ That happens when a lofted shot has passed its apex and is falling
 nearly straight down.
 
 The model handles it by declaring the trajectory finished rather than
-producing nonsense. When down-range velocity reaches zero the
-derivative contribution is zeroed and the component is held at zero,
-which is the correct behavior for something falling vertically. The
-integration terminates through its ordinary "cannot reach the target"
-path, so a shot that will not arrive is reported as unreachable rather
-than as an angle that misses.
+producing nonsense. When down-range velocity is nonpositive and cannot
+advance downrange, the derivative contribution is zeroed and the
+component is held at zero; distance-based integration stops rather than
+continuing the descent. The integration terminates through its ordinary
+"cannot reach the target" path, so a shot that will not arrive is
+reported as unreachable rather than as an angle that misses.
 
 ## Two step variants
 
@@ -129,9 +129,10 @@ correctly thinning air. It costs real work per step.
 
 Inverse solving picks between them per range, on the basis of how much
 climb that particular shot needs. Shots that stay low take the cheap
-path; the long ones pay. The two agree wherever both are valid, so the
-choice is about how hard the shot is, not about whether the answer is
-right.
+path; the long ones pay. The two are not guaranteed to agree when
+altitude-dependent drag or speed-of-sound corrections are nonzero, so
+the choice is about how hard the shot is and the tradeoff being made,
+not a correctness difference in all conditions.
 
 ## Assumptions
 

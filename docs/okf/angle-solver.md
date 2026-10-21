@@ -48,9 +48,11 @@ the other wears the difference between them as a bias.
 
 ## The zero angle is a number, not a procedure
 
-The zero comes out of this solver and is stored on the context as a
-single angle in minutes of arc. That is the shape the whole design wants,
-and it is worth being explicit about why.
+The zero comes out of this solver when the caller does not supply one, and
+is stored on the context as a single angle in minutes of arc. If the caller
+already knows the zero, the build bounds-checks it and returns, skipping
+the search entirely. That is the shape the whole design wants, and it is
+worth being explicit about why.
 
 A zero describes a gun, not a shot. Once you know the distance and the
 impact height, the mechanical angle that sends the bullet through the
@@ -126,10 +128,11 @@ Iteration needs a first guess, and each call site knows something
 better than "zero" about where the answer lies.
 
 - **Zero seeds from the vacuum parabola.** With no drag at all, the
-  launch angle that reaches a range is exactly `0.5 * g * R / v²`.
-  That is the closed-form answer to the simplest possible version of
-  the problem, so it is a principled place to start. It is clamped to
-  the search bounds before use.
+  small-angle approximation for a level launch is `0.5 * g * R / v²`
+  (the exact low-angle form is `½ asin(gR/v²)`). That approximation is
+  the closed-form answer to the simplest possible version of the problem,
+  so it is a principled place to start. It is clamped to the search bounds
+  before use.
 - **Inverse seeds from the forward solve.** A forward solve already
   reports how far the shot lands off at that range. Applying the same
   one geometric step to the zero angle with that error corrects the

@@ -28,17 +28,17 @@ coarser step, that is their call, and it is a call they can get wrong.
 
 Two details make the stepping behave. The final step is shortened to
 land exactly on the requested range instead of overshooting it and
-reporting a position past the target, so a solve for a range always
-terminates at that range. And a shot that stops making down-range
-progress ends the integration rather than dividing by a velocity that
-has gone to zero.
+reporting a position past the target. A shot that stops making down-range
+progress before reaching the requested range can leave the solver in a
+repeating state rather than terminating cleanly.
 
 ## What a smaller step buys
 
-Error falls as the step shrinks, and cost rises in proportion. The
-relationship is close to linear in both directions, which is the useful
-part: predicting what a given step will cost, and roughly what halving
-it will save, does not require measurement.
+For smooth trajectories, Heun's global integration error is typically
+proportional to the square of the step size, while work is roughly
+inversely proportional to step size. Halving the step typically reduces
+truncation error by about four times and doubles work, until an error
+floor or knot effects dominate.
 
 Returns diminish. Past some point the error is no longer dominated by
 the integration and shrinking the step buys nothing but time, and where
@@ -81,9 +81,11 @@ worse than a pointer to the constant that defines it.
 
 The accuracy claims are measured against registered reference
 trajectories rather than asserted. Those checks confirm that the
-default step reproduces the reference trajectories within published
-tolerances over the range they cover, and that reducing the step reduces
-error monotonically over that range.
+default step reproduces the reference trajectories within reporting
+granularity for the six registered cases and their listed ranges. The
+convergence checks require successive step-size differences to decrease
+or reach their numerical floor for the tested cases and channels; they
+do not measure error against the reference trajectories.
 
 The step-size question is settled by paired experiments rather than
 argument: the same trajectory solved at two step sizes, compared, so
