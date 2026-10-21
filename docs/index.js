@@ -1,7 +1,11 @@
 var index =
 [
-    [ "lob Technical Reference", "index.html#autotoc_md23", null ],
-    [ "How this documentation is organized", "index.html#overview-map", null ],
-    [ "Where to start", "index.html#overview-reading", null ],
-    [ "Where to find the code", "index.html#overview-code", null ]
+    [ "lob Knowledge", "index.html#autotoc_md75", [
+      [ "Start here", "index.html#autotoc_md76", null ],
+      [ "The ballistic model", "index.html#autotoc_md77", null ],
+      [ "Ballistic coefficients in depth", "index.html#autotoc_md78", null ],
+      [ "Numerical methods", "index.html#autotoc_md79", null ],
+      [ "Design decisions", "index.html#autotoc_md80", null ],
+      [ "Evidence", "index.html#autotoc_md81", null ]
+    ] ]
 ];

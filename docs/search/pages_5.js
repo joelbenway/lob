@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['forward_20solve_0',['Forward Solve',['../api_forward.html',1,'']]],
-  ['functions_1',['Drag Functions',['../model_drag.html',1,'']]]
+  ['getting_20started_0',['Getting Started',['../okf_getting_started.html',1,'']]]
 ];

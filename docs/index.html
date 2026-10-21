@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.13.2"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>lob: Technical Reference Overview</title>
+<title>lob: lob Knowledge</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -113,82 +113,64 @@ $(function(){initNavTree('index.html',''); initResizable(true); });
 </div>
 
 <div><div class="header">
-  <div class="headertitle"><div class="title">Technical Reference Overview </div></div>
+  <div class="headertitle"><div class="title">lob Knowledge </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="autotoc_md23"></a>
-lob Technical Reference</h1>
-<p>lob computes the point-mass trajectory of a symmetric projectile: drag, gravity, wind, atmosphere, Coriolis, spin drift and aerodynamic jump. This site documents how it works — the physics, the numerics, the design choices and the evidence behind them. For a quick start, see <a class="el" href="getting_started.html">Getting Started</a>; for installation and packaging, see the repository <code>README.md</code> (intentionally separate from this reference).</p>
-<h1><a class="anchor" id="overview-map"></a>
-How this documentation is organized</h1>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md75"></a>
+lob Knowledge</h1>
+<p>lob computes the point-mass trajectory of a symmetric projectile: drag, gravity, wind, atmosphere, Coriolis, spin drift and aerodynamic jump. This bundle documents how it works, why it is shaped the way it is, and where the design decisions came from. The API reference alongside this bundle documents what to call.</p>
+<h2><a class="anchor" id="autotoc_md76"></a>
+Start here</h2>
 <ul>
-<li><b>Getting Started</b> — <a class="el" href="getting_started.html">Getting Started</a> — build, install and minimal example. Start here if you have never built lob.</li>
-<li><b>API Reference</b><ul>
-<li><a class="el" href="api_builder.html">Builder</a> — constructing a <code><a class="el" href="structLobContext.html" title="Structure of parameters consumed by the solver.">LobContext</a></code> / <code><a class="el" href="structlob_1_1Context.html" title="Structure of parameters consumed by the solver.">lob::Context</a></code></li>
-<li><a class="el" href="api_forward.html">Forward Solve</a> — <code><a class="el" href="lob_8h.html#a0d291cea1a7fa38208d37eacebd5adb2" title="Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution.">LobSolve()</a></code> / <code><a class="el" href="namespacelob.html#a931309ce695a3cdf584ea5f04de2c613" title="Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution.">lob::Solve()</a></code></li>
-<li><a class="el" href="api_inverse.html">Inverse Solve</a> — <code><a class="el" href="lob_8h.html#adb173353dce638bee8a34497b6159aab" title="Solves the exterior ballistics problem for a given set of ranges. Results contain an inverse-solution...">LobSolveInverse()</a></code> / <code><a class="el" href="lob_8h.html#a4569caed854cbff9aa25e3d19ff506a8" title="Converts forward-solution output to inverse-solution adjustments.">LobFastInverse()</a></code></li>
-<li><a class="el" href="api_context.html">Context and Results</a> — <code><a class="el" href="structLobContext.html" title="Structure of parameters consumed by the solver.">LobContext</a></code>, <code><a class="el" href="structLobOutput.html" title="Structure holding the output results of a ballistic calculation.">LobOutput</a></code>, lifetime</li>
-<li><a class="el" href="api_errors.html">Errors</a> — full <code><a class="el" href="lob_8h.html#aa69b9c6df9e548a70d321783e8ed4c7b" title="Error codes returned by the builder.">LobErrorT</a></code> catalog</li>
-<li><a class="el" href="api_options.html">Solver Options</a> — <code>StepSize</code> / <code>MaximumTime</code> / <code>MinimumSpeed</code>/<code>MinimumEnergy</code></li>
-<li><a class="el" href="api_units.html">Units</a> — unit helpers and conversions</li>
-<li><a class="el" href="ref_constants.html">Physical Constants</a> — physical constants (ISA, McCoy, Huang)</li>
+<li><a class="el" href="okf_getting_started.html">Getting Started</a>: build a context and get your first solution.</li>
+<li><a class="el" href="okf_ballistic_coefficient.html">Ballistic Coefficient</a>: the one number that stands in for a bullet's drag, and why several of them are better than one.</li>
+<li><a class="el" href="okf_solver_context.html">Solver Context</a>: what a context promises about lifetime, reuse, threading, and failure.</li>
 </ul>
-</li>
-<li><b>Ballistic Model</b><ul>
-<li><a class="el" href="model_point_mass.html">Point-Mass Model</a> — equations of motion</li>
-<li><a class="el" href="model_drag.html">Drag Functions</a> — standard curves, custom tables, splines</li>
-<li><a class="el" href="model_atmosphere.html">Atmospheric Model</a> — ISA atmosphere, density, speed of sound</li>
-<li><a class="el" href="model_wind_coriolis.html">Wind and Coriolis</a> — wind and Coriolis</li>
-<li><a class="el" href="model_spin.html">Spin Drift and Aerodynamic Jump</a> — spin drift and aerodynamic jump (Litz and Boatright)</li>
-</ul>
-</li>
-<li><b>Numerical Methods</b><ul>
-<li><a class="el" href="num_ode.html">ODE Integration</a> — Heun integration in down-range</li>
-<li><a class="el" href="num_splines.html">Cubic Hermite Splines</a> — cubic Hermite PCHIP splines</li>
-<li><a class="el" href="num_zero_angle.html">Zero-Angle Solver</a> — zero-angle root finding</li>
-<li><a class="el" href="num_inverse.html">Inverse Solver</a> — inverse (adjustment) solving and its shared solver</li>
-</ul>
-</li>
-<li><b>Ballistic Coefficient</b><ul>
-<li><a class="el" href="bc_overview.html">Ballistic Coefficient Overview</a> — concepts</li>
-<li><a class="el" href="bc_transformation.html">BC/Velocity-Band Transformation</a> — BC/velocity-band transformation (math)</li>
-<li><a class="el" href="bc_worked_example.html">BC Bands Worked Example</a> — figure and trajectory (worked example)</li>
-</ul>
-</li>
-<li><b>Design Decisions</b><ul>
-<li><a class="el" href="design_overview.html">Design Decisions</a> — why the library is shaped this way</li>
-<li><a class="el" href="design_shared_solver.html">Shared Angle Solver</a> — the shared angle solver</li>
-</ul>
-</li>
-<li><b>Validation</b><ul>
-<li><a class="el" href="validation_overview.html">Validation</a> — how correctness is established</li>
-<li>Numerical validation methodology (floor ladders, sensitivity Pareto, budgets, Monte Carlo, signal/envelope claims): <code>docs/specs/NUMERICAL_VALIDATION_SPEC.md</code> (linked, not included, so the spec stays readable on GitHub without Doxygen processing)</li>
-</ul>
-</li>
-</ul>
-<h1><a class="anchor" id="overview-reading"></a>
-Where to start</h1>
+<h2><a class="anchor" id="autotoc_md77"></a>
+The ballistic model</h2>
+<p>What lob computes.</p>
 <ul>
-<li><b>New user</b> → <a class="el" href="getting_started.html">Getting Started</a> then <a class="el" href="api_builder.html">Builder</a>.</li>
-<li><b>Auditing the physics</b> → <a class="el" href="model_point_mass.html">Point-Mass Model</a> → <a class="el" href="model_drag.html">Drag Functions</a> → <a class="el" href="model_atmosphere.html">Atmospheric Model</a>.</li>
-<li><b>Auditing the numerics</b> → <a class="el" href="num_ode.html">ODE Integration</a> → <a class="el" href="num_splines.html">Cubic Hermite Splines</a> → <a class="el" href="num_zero_angle.html">Zero-Angle Solver</a>.</li>
-<li><b>Understanding BC bands</b> → <a class="el" href="bc_worked_example.html">BC Bands Worked Example</a> (the most complete worked example).</li>
+<li><a class="el" href="okf_point_mass_model.html">Point-Mass Model</a>: the equations it integrates, and why it steps by distance instead of time.</li>
+<li><a class="el" href="okf_atmospheric_model.html">Atmospheric Model</a>: density and speed of sound from imperfect weather data.</li>
+<li><a class="el" href="okf_drag_model.html">Drag Model</a>: how drag curves become splines.</li>
+<li><a class="el" href="okf_spin_drift_and_aerodynamic_jump.html">Spin Drift and Aerodynamic Jump</a>: two corrections for a spinning bullet in crosswind.</li>
+<li><a class="el" href="okf_wind_and_coriolis.html">Wind and Coriolis</a>: corrections that act on velocity rather than on geometry.</li>
 </ul>
-<h1><a class="anchor" id="overview-code"></a>
-Where to find the code</h1>
-<p>Implementation lives under <code>source/</code>; public headers under <code>include/lob/</code>:</p>
+<h2><a class="anchor" id="autotoc_md78"></a>
+Ballistic coefficients in depth</h2>
 <ul>
-<li>Builder and environment: <code><a class="el" href="structLobBuilder.html" title="Opaque builder type for constructing LobContext objects.">LobBuilder</a></code>, <code>source/lob_builder.cpp</code></li>
-<li>Forward/inverse solves: <code><a class="el" href="lob_8h.html#a0d291cea1a7fa38208d37eacebd5adb2" title="Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution.">LobSolve()</a></code>, <code><a class="el" href="lob_8h.html#adb173353dce638bee8a34497b6159aab" title="Solves the exterior ballistics problem for a given set of ranges. Results contain an inverse-solution...">LobSolveInverse()</a></code>, <code>source/lob_solve.cpp</code></li>
-<li>Single step: <code>source/solve_step.cpp</code>, <code>source/solve_step.hpp</code> (<code>FastDsDx</code>/<code>DsDx</code>, <code>k_lapse</code>)</li>
-<li>Angle solver: <code>source/solve_angle.hpp</code> (<code>FastSolveAngle</code>/<code>SolveAngle</code>, <code>IsTerminal</code>)</li>
-<li>Splines: <code>source/splines.hpp</code></li>
-<li>Drag tables: <code>source/tables.hpp</code></li>
-<li>Atmosphere/physics helpers: <code>source/calc.hpp</code>, <code>source/constants.hpp</code> (<code>isa::</code>, <code>kHydrostaticExponent</code>)</li>
-<li>Gauss-Legendre quadrature: <code>source/gauss_legendre.hpp</code></li>
-<li>Strong units: <code>source/eng_units.hpp</code></li>
+<li><a class="el" href="okf_ballistic_coefficient.html">Ballistic Coefficient</a>: how one number stands in for a bullet's entire drag curve.</li>
+<li><a class="el" href="okf_bc_velocity_band_transformation.html">BC/Velocity-Band Transformation</a>: turning several measured coefficients into one smooth curve.</li>
+<li><a class="el" href="okf_bc_bands_worked_example.html">BC Bands Worked Example</a>: bands to a trajectory, with copy-pasteable code.</li>
 </ul>
-<p>Tests under <code>test/source/</code> mirror each area and are cited from the technical pages as evidence rather than claims. </p>
+<h2><a class="anchor" id="autotoc_md79"></a>
+Numerical methods</h2>
+<p>How the trajectories are actually computed.</p>
+<ul>
+<li><a class="el" href="okf_cubic_hermite_splines.html">Cubic Hermite Splines</a>: the interpolation scheme every drag curve is stored as.</li>
+<li><a class="el" href="okf_integration_accuracy.html">Integration Accuracy and Step Size</a>: what the step size buys, costs, and stops guaranteeing.</li>
+<li><a class="el" href="okf_inverse_solving.html">Inverse Solving</a>: turning a range into sight adjustments.</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md80"></a>
+Design decisions</h2>
+<p>Why lob is shaped the way it is.</p>
+<ul>
+<li><a class="el" href="okf_design_decisions.html">Design Decisions</a>: survey of the decisions and what they cost.</li>
+<li><a class="el" href="okf_c_abi_narrow_waist.html">C ABI Narrow Waist</a>: one implementation, every language.</li>
+<li><a class="el" href="okf_strong_unit_types.html">Strong Unit Types</a>: wrong units fail to compile.</li>
+<li><a class="el" href="okf_no_dynamic_allocation.html">No Dynamic Allocation</a>: suit targets that forbid the heap.</li>
+<li><a class="el" href="okf_builder_pattern.html">Builder Pattern</a>: name what you know.</li>
+<li><a class="el" href="okf_heun_integration.html">Heun Integration</a>: second-order steps, per BRL experience.</li>
+<li><a class="el" href="okf_performance_posture.html">Performance Posture</a>: speed from modeling.</li>
+<li><a class="el" href="okf_shared_angle_solver.html">Shared Angle Solver</a>: one routine serves zero and inverse.</li>
+<li><a class="el" href="okf_angle_solver.html">Angle Solver Mechanics</a>: the problem, the iteration, the seeds, the evidence.</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md81"></a>
+Evidence</h2>
+<ul>
+<li><a class="el" href="okf_validation.html">Validation</a>: how correctness is established, and what is still unproven.</li>
+</ul>
+<p>For API reference, including every function signature, error code and constant, see the header documentation generated alongside this bundle. </p>
 </div></div><!-- PageDoc -->
 <a href="doxygen_crawl.html"></a>
 </div><!-- contents -->
