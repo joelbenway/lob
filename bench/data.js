@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791568007863,
+  "lastUpdate": 1792560145876,
   "repoUrl": "https://github.com/joelbenway/lob",
   "entries": {
     "lob instruction counts": [
@@ -490,6 +490,65 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/joelbenway/lob/commit/01f195ac54e38bea6db55349caf964785961c589"
         },
         "date": 1791568007099,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "lob_bench/build_basic",
+            "value": 801,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_full",
+            "value": 1894,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_custom_table",
+            "value": 7813.001,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_boatright",
+            "value": 3141.006,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_zero_search",
+            "value": 77101.005,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_basic",
+            "value": 251465.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse",
+            "value": 1046274.995,
+            "unit": "Ir/op"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "committer": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "distinct": true,
+          "id": "68ea8f164469a6373f1081a365975e7b0306e481",
+          "message": "docs: clarify stalled-progress handling in point-mass model",
+          "timestamp": "2026-10-21T04:56:33Z",
+          "tree_id": "f6a9c74c85fe095778413f5b04cb073c1c374132",
+          "url": "https://github.com/joelbenway/lob/commit/68ea8f164469a6373f1081a365975e7b0306e481"
+        },
+        "date": 1792560144971,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
