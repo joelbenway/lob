@@ -109,9 +109,10 @@ separate term in the trajectory.
 - Altitude and range variation in wind are opt-in. Supplying a profile
   gets you variation by range, and supplying a shear exponent gets you
   variation by altitude, but neither is inferred.
-- Crosswind reaches the trajectory through the spin corrections only.
-  A caller who omits the geometry those models need gets no jump from a
-  crosswind, even though the crosswind is present.
+- Crosswind affects relative-air drag regardless of spin corrections.
+  A caller who omits the geometry the spin models need gets no
+  aerodynamic jump from a crosswind, even though the lateral wind still
+  acts through drag.
 
 ## Related
 
