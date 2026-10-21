@@ -62,11 +62,12 @@ the geometry, the guess lands very close to the true answer, and the
 iteration normally converges in a step or two rather than searching
 from nothing.
 
-So the integration is not repeated per range from scratch. It happens
-once, and the per-range work is a short iteration seeded from data that
-was already computed. That is the whole reason asking for a table of
-dope is not dramatically more expensive than asking where one shot
-lands.
+The initial forward pass establishes misses and reachability once and
+seeds the solve. LobSolveInverse calls SolveAngle, which invokes
+FireToTarget during each range refinement, so additional per-range
+integrations are performed rather than repeating a full table integration
+from scratch. That is the whole reason asking for a table of dope is not
+dramatically more expensive than asking where one shot lands.
 
 ## An asymmetry that is deliberate
 
@@ -87,17 +88,19 @@ plausible wrong number is not.
 
 ## Edges the API handles for you
 
-A range of zero is not an error. It is the shooter's own position, and
-it is reported as zero adjustment rather than being dropped or
-producing a division by zero.
+A range of zero is not an error. It is the shooter's own position.
+LobSolveInverse counts zero-range entries and reports them as zero
+adjustment. LobFastInverse skips zero-range entries. Results that came
+back non-finite from the forward pass are skipped by LobFastInverse
+rather than converted, because there is nothing to convert. Iterative
+solving returns early when the angle is NaN.
 
-Results that came back non-finite from the forward pass are skipped
-rather than converted, because there is nothing to convert.
-
-Ordering matters for the table, and a table that is not in increasing
-order of range is rejected rather than silently reordered. Sorting a
-caller's data would hide a mistake instead of surfacing it, which is the
-same reasoning as not reordering velocity bands.
+Ordering matters for the table. LobSolveInverse validates increasing
+range order (via LobSolve) and rejects tables that are not in increasing
+order rather than silently reordering them. LobFastInverse converts
+supplied outputs without checking range order. Sorting a caller's data
+would hide a mistake instead of surfacing it, which is the same reasoning
+as not reordering velocity bands.
 
 ## Which to call
 

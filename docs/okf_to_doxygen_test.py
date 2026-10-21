@@ -140,6 +140,15 @@ class RewriteTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             rewrite_links("see [x](nope.md)", "a/b.md", {})
 
+    def test_anchored_md_link_becomes_ref(self):
+        out = rewrite_links(
+            "see [x](a.md#section)", "b.md", {"a.md": "okf_a"})
+        self.assertEqual(out, 'see @ref okf_a "x"')
+
+    def test_anchored_unknown_target_raises(self):
+        with self.assertRaises(ValueError):
+            rewrite_links("see [x](nope.md#section)", "a.md", {})
+
 
 class GenerateTest(unittest.TestCase):
     def test_end_to_end_two_files(self):
@@ -157,6 +166,26 @@ class GenerateTest(unittest.TestCase):
                 encoding="utf-8")
             self.assertTrue(rendered.startswith(
                 "@page okf_drag Drag Model\n"))
+
+    def test_stale_generated_pages_removed(self):
+        with tempfile.TemporaryDirectory() as src, \
+                tempfile.TemporaryDirectory() as out:
+            srcp = Path(src)
+            (srcp / "index.md").write_text(
+                "# Bundle\n- [A](a.md)\n- [B](b.md)\n", encoding="utf-8")
+            (srcp / "a.md").write_text(
+                "---\ntype: Concept\ntitle: A\n---\nA\n", encoding="utf-8")
+            (srcp / "b.md").write_text(
+                "---\ntype: Concept\ntitle: B\n---\nB\n", encoding="utf-8")
+            generate(srcp, Path(out))
+            (Path(out) / "keep.txt").write_text("keep", encoding="utf-8")
+            (srcp / "b.md").unlink()
+            (srcp / "index.md").write_text(
+                "# Bundle\n- [A](a.md)\n", encoding="utf-8")
+            generate(srcp, Path(out))
+            self.assertEqual(
+                sorted(p.name for p in Path(out).iterdir()),
+                ["keep.txt", "okf_a.md", "okf_mainpage.md"])
 
     def test_root_index_frontmatter_stripped_from_mainpage(self):
         with tempfile.TemporaryDirectory() as src, \

@@ -93,13 +93,15 @@ the index of the interval it last used. A new Mach number is resolved by
 moving that index, forward or backward, until the Mach number falls
 inside the interval it points at.
 
-This is worth a second look, because it is not a binary search. A
-projectile decelerates monotonically through its flight, so its Mach
-number only ever travels one direction along the curve. The cached index
-therefore walks the knots the same way the projectile does, and finding
-the right interval costs a single comparison in the overwhelming
-majority of steps. The rare search, such as the transonic hunt during
-angle finding, is where the index has to move more.
+This is worth a second look, because it is not a binary search. The
+projectile's position progresses along the curve in one direction, so
+the cached index walks the knots the same way the projectile does and
+finding the right interval costs a single comparison in the overwhelming
+majority of steps. Mach may vary during flight (not necessarily moving
+monotonically along the Mach axis in all phases), so movement along the
+curve is the relevant invariant for the cached index. The rare search,
+such as the transonic hunt during angle finding, is where the index has
+to move more.
 
 Once the interval is known, evaluating is a polynomial in local
 coordinates using that interval's four coefficients, and the derivative

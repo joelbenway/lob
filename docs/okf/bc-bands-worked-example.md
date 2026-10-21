@@ -17,8 +17,8 @@ that are also used by the test suite so the result is checkable.
 ## The measurements
 
 A bullet measured at three velocities, each with a G7-referenced
-coefficient that falls as the bullet speeds up, which is the usual
-direction: the bullet gets relatively slipperier as it accelerates.
+coefficient that rises as velocity increases (from 0.20 at 2000 fps
+to 0.40 at 3000 fps).
 
 ```text
  2000 fps  ->  BC 0.20

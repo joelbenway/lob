@@ -93,8 +93,9 @@ conditions. Relatedly, there are two variants of the step: one holds
 the density and speed of sound at the firing site, and the other
 recomputes both per step for shots that climb far enough to care.
 Which one the inverse solver picks is a speed-versus-fidelity
-tradeoff, not a correctness difference, since the two agree wherever
-both are valid.
+tradeoff; they are not guaranteed to agree when altitude-dependent drag
+or speed-of-sound corrections are nonzero, and any agreement claim is
+limited to conditions where those corrections do not affect the result.
 
 Evaluation happens outside the curve's defined Mach domain by holding
 the edge value. The standard curves are defined across a range that

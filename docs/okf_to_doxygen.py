@@ -236,13 +236,14 @@ def rewrite_links(body, src_rel, id_map, exclude=()):
 
     def sub(m):
         text, target = m.group(1), m.group(2)
-        if not target.endswith(".md"):
+        path_part = target.split("#", 1)[0]
+        if not path_part.endswith(".md"):
             return m.group(0)
         if target.startswith(("http://", "https://", "#", "/")):
             return m.group(0)
-        if _is_reserved(target):
+        if _is_reserved(path_part):
             return m.group(0)
-        norm = str((src_dir / target).as_posix())
+        norm = str((src_dir / path_part).as_posix())
         # collapse './' and 'a/../' segments without touching the fs
         parts = []
         for seg in norm.split("/"):
@@ -287,6 +288,8 @@ def generate(src_dir, out_dir):
     concepts = collect_concepts(src_dir)
     id_map = {rel: page_id_for(rel) for rel in concepts}
     out_dir.mkdir(parents=True, exist_ok=True)
+    for stale in out_dir.glob("okf_*.md"):
+        stale.unlink()
     written = []
     for rel in sorted(concepts):
         fm, body = parse_frontmatter(
@@ -323,12 +326,13 @@ def _index_targets(src_dir):
         base = index.parent
         for m in MD_LINK_RE.finditer(text):
             target = m.group(2)
-            if not target.endswith(".md"):
+            path_part = target.split("#", 1)[0]
+            if not path_part.endswith(".md"):
                 continue
             if target.startswith(("http://", "https://", "#", "/")):
                 continue
             try:
-                rel_target = (base / target).relative_to(src_dir).as_posix()
+                rel_target = (base / path_part).relative_to(src_dir).as_posix()
             except ValueError:
                 continue  # escapes the bundle; rewrite pass reports it
             parts = []

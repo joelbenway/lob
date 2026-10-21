@@ -32,7 +32,7 @@ Per concept:
 4. Rewrite `[text](relative/other.md)` → `@ref <target-id> "text"`.
    `@ref api_*` targets (from `include/`) pass through untouched.
 5. Root `docs/okf/index.md` → `@mainpage` page. Subdir `index.md`
-   link order → `@subpage` ordering in parent page.
+   link order is not converted to `@subpage` ordering in v1.
 
 No trust-table rendering in v1 (provenance stays in frontmatter only).
 

@@ -70,7 +70,7 @@ Wikipedia article, and each was unreadable alone. Folding them back into
 one page was correct. `heun.md`, `builder.md`, and `no-alloc.md` each
 would be, so they stay separate.
 
-## Types (4 only)
+## Types
 
 - `Guide` — getting started, install/use paths.
 - `Concept` — drag, atmosphere, point-mass, splines, ODE integration.
@@ -102,7 +102,7 @@ The map is:
    `index.md` becomes `@mainpage` (replaces `docs/pages/overview.md`).
 2. No separate `nav.yaml`. If agent disclosure order and human reading
    order ever diverge, add one then.
-3. Bodies use bundle-relative links: `[splines](../numerical_methods/splines.md)`.
+3. Bodies use bundle-relative links: `[Cubic Hermite Splines](cubic-hermite-splines.md)`.
    Converter rewrites to `@ref` (see converter spec).
 4. No code paths (`source/...`, `include/...`) in OKF bodies. Link to API
    concepts via reserved `api_*` IDs only.

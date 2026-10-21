@@ -90,8 +90,8 @@ empty arguments, values that are not finite, and a range table that is
 not in increasing order. Those refuse the request without setting an
 error code, because they are faults in the call rather than in the
 configuration. So the diagnostic order is: check the context's error
-first, and if it is clean, a zero return means the arguments were the
-problem.
+first, and if it is clean, a zero return can indicate either invalid
+arguments or an unreachable first range.
 
 The full catalog of what each error code means, and which stage raises
 it, is generated alongside the API reference. What is worth knowing here

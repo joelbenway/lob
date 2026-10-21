@@ -30,12 +30,13 @@ drag it suffers, and a tailwind decreases both. Neither is a force
 pushed on the bullet; both fall out of computing drag against the air
 rather than the ground.
 
-**Crosswind reaches the trajectory only through the spin models.** A
-lateral wind does not meaningfully change drag. What it does is pitch
-the spinning projectile at the muzzle, which is the aerodynamic jump
-covered in [Spin Drift and Aerodynamic Jump](spin-drift-and-aerodynamic-jump.md). That correction
-reads only the lateral component of the wind at the muzzle, and
-deliberately so: the lateral direction is perpendicular to the plane of
+**Crosswind affects drag through relative airspeed, and spin adds jump.**
+Lateral wind affects the trajectory through relative-air drag even
+without spin corrections (drag acts on velocity relative to the moving
+air). Spin effects add aerodynamic jump pitched at the muzzle, which is
+covered in [Spin Drift and Aerodynamic Jump](spin-drift-and-aerodynamic-jump.md).
+That correction reads only the lateral component of the wind at the muzzle,
+and deliberately so: the lateral direction is perpendicular to the plane of
 fire, so tilting the shot for an inclined range does not disturb it.
 
 The heading convention is the one shooters already use on a clock face.
