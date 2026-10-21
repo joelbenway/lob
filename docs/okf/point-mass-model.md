@@ -103,13 +103,18 @@ step through and dividing by its down-range velocity is undefined.
 That happens when a lofted shot has passed its apex and is falling
 nearly straight down.
 
-The model handles it by declaring the trajectory finished rather than
-producing nonsense. When down-range velocity is nonpositive and cannot
-advance downrange, the derivative contribution is zeroed and the
-component is held at zero; distance-based integration stops rather than
-continuing the descent. The integration terminates through its ordinary
-"cannot reach the target" path, so a shot that will not arrive is
-reported as unreachable rather than as an angle that misses.
+When down-range velocity becomes nonpositive, `DsDxCore` zeroes the
+derivative contribution and the step helpers hold velocity at zero;
+this prevents continued descent in the distance-based integration rather
+than producing a division by zero. The behavior differs by caller:
+the direct angle-solving helpers `FireToTarget` and `SolveAngle` treat
+a non-advancing state as unreachable and return "no answer". By
+contrast, `LobSolve` may repeat after `FastSolveStep` zeroes velocity
+before its terminal checks fire in some cases, so it does not
+guarantee termination for stalled progress; `LobSolveInverse` calls
+`LobSolve` first and therefore inherits that behavior. A shot that will
+not arrive is not always reported as unreachable through a single common
+path.
 
 ## Two step variants
 
