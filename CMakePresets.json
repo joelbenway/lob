@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 14,
@@ -177,6 +177,19 @@
       "name": "ci-build",
       "binaryDir": "${sourceDir}/build",
       "hidden": true
+    },
+    {
+      "name": "ci-wasm",
+      "binaryDir": "${sourceDir}/build-wasm",
+      "toolchainFile": "$env{EMSCRIPTEN}/share/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+      "inherits": ["ci-std"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_SHARED_LIBS": "OFF",
+        "BUILD_TESTING": "OFF",
+        "BUILD_EXAMPLES": "OFF",
+        "BUILD_TOOLS": "OFF"
+      }
     },
     {
       "name": "ci-macos",

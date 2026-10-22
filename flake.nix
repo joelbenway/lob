@@ -94,10 +94,12 @@
             codespell
             cppcheck
             doxygen
+            emscripten
             gbenchmark
             gtest
             lcov
             nlohmann_json
+            nodejs
             python3
             valgrind
           ];
@@ -110,6 +112,11 @@
             reset = "\\[$(tput sgr0)\\]";
           in ''
             export PS1="${white}[${reset}${blue}\w${reset}${white}] ${bold}${projectName} ${blue}${snowflake} ${reset}"
+            # The nix store copy of emscripten is read-only; its cache must be writable.
+            export EM_CACHE="''${TMPDIR:-/tmp}/lob-emscripten-cache"
+            mkdir -p "$EM_CACHE"
+            # Root of the emscripten install, for the wasm CMake toolchain file.
+            export EMSCRIPTEN="$(dirname "$(dirname "$(command -v emcc)")")"
           '';
         };
     in {

@@ -193,6 +193,35 @@ jobs:
       working-directory: build
       run: ctest --output-on-failure --no-tests=error -C Release -j 2
 
+  wasm:
+    needs: [lint]
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Configure
+      run: nix develop --command bash -c
+        "cmake --preset=ci-wasm"
+
+    - name: Build
+      run: nix develop --command bash -c
+        "cmake --build build-wasm -j 2"
+
+    - name: Check module
+      run: nix develop --command bash -c
+        "node --check build-wasm/wasm/lob_exhibits.mjs"
+
+    - name: Instantiate wasm
+      run: nix develop --command bash -c
+        "node wasm/smoke.mjs build-wasm/wasm/lob_exhibits.mjs"
+
   lobber:
     needs: [lint]
 

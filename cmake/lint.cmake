@@ -19,7 +19,8 @@ default(
   test/*.cpp
   test/*.hpp
   example/*.cpp
-  example/*.hpp)
+  example/*.hpp
+  wasm/*.cpp)
 default(FIX NO)
 
 set(flag --output-replacements-xml)
