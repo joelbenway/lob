@@ -68,6 +68,10 @@ target_include_directories(
 
 target_compile_features(lob_lob PUBLIC cxx_std_14)
 
+if(EMSCRIPTEN)
+  add_subdirectory(wasm)
+endif()
+
 # ---- Install rules ----
 
 if(NOT CMAKE_SKIP_INSTALL_RULES)

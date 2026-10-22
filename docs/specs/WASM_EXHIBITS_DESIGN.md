@@ -53,6 +53,19 @@ to a static figure/table when wasm fails to load.
   `node --check` smoke + wasm instantiation. No size/perf gate in v1.
 - **Local:** `cmake --preset=ci-wasm && cmake --build build-wasm`.
 
+### As built
+
+- The nix emscripten package keeps the toolchain file at
+  `$EMSCRIPTEN/share/emscripten/cmake/Modules/Platform/Emscripten.cmake`,
+  so the preset points there; `EMSCRIPTEN` and a writable `EM_CACHE` are
+  exported by the flake dev shell (the store copy of emscripten is
+  read-only).
+- The wasm build is its own CI job (`wasm`), not a `test` matrix entry:
+  it is ubuntu+nix-only, so it does not fit the OS matrix.
+- `wasm/wasm.cpp` holds the exported entry points (`LobExhibit*`),
+  `wasm/smoke.mjs` instantiates the module in Node and calls one
+  function, and `wasm/CMakeLists.txt` links it against `lob_lob`.
+
 ## JS wrapper
 
 One thin module, `lob-exhibits.mjs` (ES module: `import`/`export`,
