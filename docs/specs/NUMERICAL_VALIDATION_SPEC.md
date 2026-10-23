@@ -209,10 +209,12 @@ if code moves, the spec's logic still holds.)
 - `DsDxELR`: scales per step by `ρ/ρ0 = 1−u(1−αu)`, `c/c0 = 1−βu`,
   `u = −k_lapse·P·G`, `α = (e−1)/2e`, `β = 1/2e`, `e = kHydrostaticExponent`
   (`source/solve_step.cpp:96-102`, `source/constants.hpp:27-29`).
-- Routing: `LobSolve`/`LobSolveInverse` use `Fast*` throughout;
+- Routing: `LobSolve`/`LobSolveInverse` use the fast path (`DsDx`/
+  `SolveStep`, firing-site air) throughout;
   `LobSolveELR`/`LobSolveInverseELR` use `SolveStepELR`/`SolveAngleELR`
-  throughout. There is no drop threshold and no per-range switching:
-  the old 100-foot switch is gone. Builder zero search still uses
+  (lapse-scaled air) throughout. There is no drop threshold and no
+  per-range switching: the caller selects the path by choosing which
+  operation to call. Builder zero search still uses
   `SolveAngle`.
 - Implication: a convergence claim on `LobSolve` does **not** transfer to
   the lapse-scaled paths. §8 requires both paths.
@@ -416,7 +418,7 @@ is accurate to X"*.
 |---|---|---|---|
 | `StepSize` (public `Builder::StepSize`, `uint16_t` in) | Halving ladder at fixed everything else | `36 → 18 → 9 → 4 → 2 → 1` (`0` = 36 default; ladder uses explicit inches) | Integer-only; 9→4 breaks exact halving — record actual `Δx` per run; cost ∝ `1/Δx`, finest ≈ 36× default → offline only |
 | Angle tolerance (existing `SolveAngleELR`/`SolveAngle` param) | Tighten at fixed step | `0.01 → 0.003 → 0.001` MOA | Default path uses 0.01; 0.001 cross-checked to `±0.01 in` in existing tests |
-| Density path | Stratify, never mix | `Fast*` (forward/zero) vs `DsDxELR` (inverse tail) | Inverse studies split at `drop ≷ 100 ft`; report both branches |
+| Density path | Stratify, never mix | Fast path (`Solve`/`SolveInverse`/zero) vs lapse-scaled path (`SolveELR`/`SolveInverseELR`) | Report both paths per cell rather than splitting at a drop threshold |
 | Spline | Isolate, not part of step ladder | Perturb `drags[60]` within `5e-3` budget (§8.6) | Separates drag-table error from integrator error |
 
 Do **not** vary: physics inputs (that's §9), `kMaxIterations`/`±45°` bounds
@@ -471,7 +473,7 @@ Failure signatures (numerical, fix by config/envelope, not by physics debate):
 - Fall-short / tumble / `max_time` / `minimum_speed` interpolation engages at
   different ranges per rung (branch discontinuity — split the envelope at the
   branch, do not difference across it).
-- `Fast*` vs `DsDxELR` paths diverge on the same inputs beyond the floor (this is
+- Fast-path vs lapse-scaled-path results diverge on the same inputs beyond the floor (this is
   a **path discrepancy**, reported separately from step convergence; see §13
   for the lapse effect test).
 - Model disagreement looks different: ladder converges cleanly (monotone,
@@ -488,8 +490,8 @@ Failure signatures (numerical, fix by config/envelope, not by physics debate):
 - Last-step clamping (`ComputeStep`) means ranges that are exact multiples of
   the step show different local error than off-grid ranges — the canonical
   range set (§8.7) deliberately mixes on/off-grid ranges per rung.
-- `CurveView` Mach clamp at `[0, 5]`, wind-node joints, `vx ≤ 0` zeroing, and
-  the `drop>100 ft` path switch are all non-smooth points: expect local order
+- `CurveView` Mach clamp at `[0, 5]`, wind-node joints, and `vx ≤ 0` zeroing
+  are all non-smooth points: expect local order
   reduction; do not fit a global `p` across a branch switch.
 
 ### 8.6 Spline / drag-table resolution (separate from step ladder)
@@ -532,8 +534,9 @@ Reuse existing fixtures verbatim where possible (no new magic trajectories):
    geometry (meplat 0.065, base 0.242, nose 0.690, tail 0.140, RtR 0.90);
    non-zero jump required (`assert jump ≠ 0`).
 7. **C9 inverse pair** — C1/C5/C8 through `SolveInverse` at 300/600/1000 yd
-   (covers `SolveAngle` branch) + 2000–3000 yd tail (covers `SolveAngleELR`
-   `drop>100 ft` branch; assert branch taken via forward `elevation < −1200`).
+   (fast path) + 2000–3000 yd tail through `SolveInverseELR`
+   (lapse-scaled path; assert the tail sits deep in lapse regime via forward
+   `elevation < −1200`).
 8. **C10 BC-bands/custom** — bands `0.20@2000 / 0.30@2500 / 0.40@3000` fps
    (`bc_transformation.md` values) + G6 custom-table path.
 9. **C11 angle-stress** — zero-by-distance 100 yd + tight-tolerance rerun;
@@ -727,7 +730,7 @@ sensitivity Pareto.
   target), atmosphere branch (ISA / altitude / hot-low / humid), wind branch
   (calm / uniform / profile-unscaled-α0 / profile-scaled-α>0 + α value /
   incline×wind / ceiling-clamp exercised), spin path (off / Litz / Boatright),
-  density path (`Fast*` / lapse-scaled inverse tail), drag source (G* / bands /
+  density path (fast path / lapse-scaled ELR path), drag source (G* / bands /
   custom).
 - A validation claim names the **envelope cell**, the case IDs covering it,
   and the worst residual in the cell. Cells with one case are labeled
@@ -736,9 +739,10 @@ sensitivity Pareto.
   + incline combination is always its own cell (tilted datum + pitch bake
   change the field structurally); unscaled-profile results never cover it.
 - Forbidden: extrapolating a short-range ISA result to long-range humid, or a
-  `Fast*` forward result to the lapse-scaled inverse tail, or a G7 result to
-  G1, or an `α = 0` profile result to a sheared atmosphere. The `drop>100 ft`
-  path gate is an envelope boundary by construction.
+  fast-path forward result to a lapse-scaled ELR result, or a G7 result to
+  G1, or an `α = 0` profile result to a sheared atmosphere. The fast/lapse
+  path choice is an envelope dimension by construction: cells record which
+  operation produced each result.
 
 ### 10.4 Case record format (source-controlled, small)
 
@@ -754,7 +758,8 @@ no values are re-tuned in the transcription.
 ### 10.5 Model-form spot checks (planned discrepancies)
 
 - G7-vs-G1 mismatch run, single-BC vs BC-bands on the same bands, Litz vs
-  Boatright on full geometry, lapse on/off (`Fast*` vs `DsDxELR` same inputs),
+  Boatright on full geometry, lapse on/off (fast path vs lapse-scaled path,
+  same inputs),
   Coriolis/spin/jump on/off. These quantify **known structural choices** and
   feed §13 effect sizes; they are reported as `δ_structural`, never as
   `ε_num`.
@@ -766,8 +771,8 @@ no values are re-tuned in the transcription.
 - No field/radar data → long-range cells stay provisional regardless of
   residuals; the spec's gap statement in `validation/overview.md` remains
   until data arrives.
-- Per-step lapse gating stays visible: any cell whose ranges cross `drop =
-  100 ft` reports both sides of the gate.
+- Per-step lapse selection stays visible: cells report which operation
+  (fast or ELR) produced each result; long-range cells report both.
 
 ---
 
@@ -940,7 +945,7 @@ For fixed case + config, compute the paired difference:
 ```
 
 Candidate effects (minimum set): step refinement (36→9 in); angle tolerance
-(0.01→0.001 MOA); lapse path (`Fast*` vs `DsDxELR` on the inverse tail);
+(0.01→0.001 MOA); lapse path (fast `SolveInverse` vs `SolveInverseELR`);
 Coriolis on/off; spin off/Litz/Boatright; jump on/off; single-BC vs bands;
 G7 vs G1 (model-form reference); spline `±5e-3` nudge; single-point profile
 vs uniform (expect `R_sig ≪ 1` — bit-identity oracle, guards the storage
@@ -1414,7 +1419,7 @@ floors/ceilings checked into `baselines/`):
   mix flat/inclined wind claims (§10.3).
 - **Reference licensing** (JBM/BRL tables, paper excerpts): vendored tables
   already in-tree; new external data needs license check before check-in.
-- **Lapse-gate validity**: forward `Fast*` vs inverse-tail `DsDxELR` split means
+- **Path-selection validity**: fast-path vs ELR split means
   two truths per long-range case — the spec treats this as designed, visible,
   and envelope-defining, not as a bug to hide.
 
@@ -1435,7 +1440,7 @@ artifact IDs, keeps the evidence-before-synthesis policy):
 - `docs/pages/numerical_methods/splines.md` + `ballistic_model/drag.md` —
   link the `5e-3 → inches/MOA` trajectory mapping (§8.6).
 - `docs/pages/numerical_methods/zero_angle.md` + `inverse.md` + `api/*` —
-  link tolerance-tightening evidence and the `Fast*` vs lapse branch table.
+  link tolerance-tightening evidence and the fast-vs-ELR path comparison.
 - `docs/pages/ballistic_model/wind_coriolis.md` — the usage/limitations
   sections already describe the profile query, but the vector section still
   documents the removed `ctx.wind = {x,z}` storage and the internal-radian

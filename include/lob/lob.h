@@ -687,9 +687,10 @@ LOB_EXPORT extern size_t LobSolveInverse(const LobContext* pctx,
  * @brief Solves the exterior ballistics problem with lapse-scaled air.
  * Results contain an inverse-solution.
  * @note Starts from the cheap LobSolveInverse answer, then refines every
- * nonzero reached range with the lapse-scaled angle solver. Unlike the old
- * dynamic branch, there is no drop threshold: every nonzero range uses the
- * expensive path. Entries with zero range are counted and their adjustments
+ * nonzero reached range with the lapse-scaled angle solver: there is no
+ * drop threshold, every nonzero range uses the expensive path. Only
+ * elevation is re-solved; deflection retains the cheap geometric hold-off.
+ * Entries with zero range are counted and their adjustments
  * are zeroed; solving stops at the first unreachable or non-converging entry.
  * @param pctx Pointer to context parameters for the calculation.
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
