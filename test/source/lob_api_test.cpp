@@ -28,6 +28,79 @@ TEST(LobAPITest, Version) {
   EXPECT_EQ(2, dot_count) << version_string;
 }
 
+TEST(LobELRForwardTest, SolveELRRejectsInvalidArguments) {
+  const uint32_t kRangeFt = 300U;
+  LobOutput out{};
+  const LobContext kBad{};
+  EXPECT_EQ(LobSolveELR(nullptr, &kRangeFt, &out, 1U), 0U);
+  EXPECT_EQ(LobSolveELR(&kBad, nullptr, &out, 1U), 0U);
+  EXPECT_EQ(LobSolveELR(&kBad, &kRangeFt, nullptr, 1U), 0U);
+  EXPECT_EQ(LobSolveELR(&kBad, &kRangeFt, &out, 0U), 0U);
+}
+
+namespace {
+
+lob::Context BuildOrdinaryContext() {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  return lob::Builder()
+      .BallisticCoefficientPsi(kTestBC)
+      .InitialVelocityFps(kTestMuzzleVelocity)
+      .ZeroAngleMOA(kTestZeroAngle)
+      .Build();
+}
+
+}  // namespace
+
+TEST(LobELRForwardTest, OrdinaryTrajectoryCountVelocityMatchesFastSolve) {
+  const lob::Context kCtx = BuildOrdinaryContext();
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+  const std::array<uint32_t, 3> kRanges = {300U, 900U, 1800U};
+  std::array<lob::Output, 3> fast{};
+  std::array<lob::Output, 3> elr{};
+  ASSERT_EQ(lob::Solve(kCtx, kRanges, &fast), kRanges.size());
+  ASSERT_EQ(lob::SolveELR(kCtx, kRanges, &elr), kRanges.size());
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_EQ(fast.at(i).range, elr.at(i).range);
+    EXPECT_NEAR(fast.at(i).velocity, elr.at(i).velocity, 1.0);
+  }
+}
+
+TEST(LobELRForwardTest, OrdinaryTrajectoryAngleTimeMatchesFastSolve) {
+  const lob::Context kCtx = BuildOrdinaryContext();
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+  const std::array<uint32_t, 3> kRanges = {300U, 900U, 1800U};
+  std::array<lob::Output, 3> fast{};
+  std::array<lob::Output, 3> elr{};
+  ASSERT_EQ(lob::Solve(kCtx, kRanges, &fast), kRanges.size());
+  ASSERT_EQ(lob::SolveELR(kCtx, kRanges, &elr), kRanges.size());
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_NEAR(lob::InchToMoa(fast.at(i).elevation, fast.at(i).range),
+                lob::InchToMoa(elr.at(i).elevation, elr.at(i).range), 0.1);
+    EXPECT_NEAR(fast.at(i).time_of_flight, elr.at(i).time_of_flight, 0.01);
+  }
+}
+
+TEST(LobELRForwardTest, SolveELRWrappersLinkAndSolve) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  const lob::Context kCtx = lob::Builder()
+                                .BallisticCoefficientPsi(kTestBC)
+                                .InitialVelocityFps(kTestMuzzleVelocity)
+                                .ZeroAngleMOA(kTestZeroAngle)
+                                .Build();
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+  const std::array<uint32_t, 2> kRanges = {300U, 900U};
+  std::array<lob::Output, 2> array_outs{};
+  lob::Output pointer_out{};
+  lob::Output single_out{};
+  EXPECT_EQ(lob::SolveELR(kCtx, kRanges.data(), &pointer_out, 1U), 1U);
+  EXPECT_EQ(lob::SolveELR(kCtx, kRanges, &array_outs), kRanges.size());
+  EXPECT_EQ(lob::SolveELR(kCtx, kRanges.at(0), &single_out), 1U);
+}
+
 TEST(LobAPITest, SolverSkipsPoorlyFormedInput) {
   const lob::Context kA{};
   const uint32_t kB = 100U;

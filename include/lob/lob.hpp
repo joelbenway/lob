@@ -935,6 +935,55 @@ inline size_t Solve(const Context& ctx, uint32_t range, Output* pout) {
 }
 
 /**
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain a forward-solution.
+ * @note Air density and the speed of sound are recomputed along the flight.
+ * @param ctx Context parameters for the calculation.
+ * @param pranges Pointer to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @param size The number of ranges to solve for.
+ * @return The number of successful solutions.
+ */
+inline size_t SolveELR(const Context& ctx, const uint32_t* pranges,
+                       Output* pouts, size_t size) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobSolveELR(reinterpret_cast<const ::LobContext*>(&ctx), pranges,
+                       pouts, size);
+}
+
+/**
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain a forward-solution.
+ * @tparam N The number of ranges to solve for.
+ * @param ctx Context parameters for the calculation.
+ * @param ranges Reference to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @return The number of successful solutions.
+ */
+template <size_t N>
+inline size_t SolveELR(const Context& ctx,
+                       const std::array<uint32_t, N>& ranges,
+                       std::array<Output, N>* pouts) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobSolveELR(reinterpret_cast<const ::LobContext*>(&ctx),
+                       ranges.data(), pouts->data(), N);
+}
+
+/**
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain a forward-solution.
+ * @param ctx Context parameters for the calculation.
+ * @param range Ranges (in feet) to solve for.
+ * @param pout Pointer to an output where results will be stored.
+ * @return The number of successful solutions.
+ */
+inline size_t SolveELR(const Context& ctx, uint32_t range, Output* pout) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobSolveELR(reinterpret_cast<const ::LobContext*>(&ctx), &range,
+                       pout, 1);
+}
+
+/**
  * @brief Converts forward-solution output to inverse-solution adjustments.
  * @note A one-step approximation. Only convert outputs whose forward solution
  * reached the target range; fall-short trajectories yield meaningless results.
