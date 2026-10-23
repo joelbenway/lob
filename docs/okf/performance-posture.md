@@ -5,7 +5,7 @@ description: Speed from modeling choices, measured per trajectory.
 tags: [performance]
 generated: {by: human:joel, at: 2026-10-09T00:00:00Z}
 verified: [{by: human:joel, at: 2026-10-09T00:00:00Z}]
-status: stable
+status: draft
 ---
 
 # Performance Posture
@@ -21,4 +21,7 @@ No universal speed claim is made here: the benchmark tree reproduces
 the comparisons locally, and per-trajectory measurement beats any
 published figure. Instruction counts from the benchmark suite are
 tracked in CI, so a change that costs the hot path shows up as a
-regression before it merges.
+regression before it merges. The cachegrind suite measures all four
+solver operations — `solve_basic`, `solve_elr`, `solve_inverse`, and
+`solve_inverse_elr` — so the price of fidelity stays visible next to
+the price of speed.

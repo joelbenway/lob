@@ -5,7 +5,7 @@ description: Building lob and getting your first solution.
 tags: [guide, getting-started, quickstart]
 generated: {by: human:joel, at: 2026-10-09T00:00:00Z}
 verified: [{by: human:joel, at: 2026-10-09T00:00:00Z}]
-status: stable
+status: draft
 ---
 
 # Getting Started
@@ -93,7 +93,13 @@ const size_t solved = lob::SolveInverse(kContext, kRanges, &kResults);
 
 Same context, same ranges, different question. The elevation that came
 back in inches is now an adjustment in minutes of arc measured from the
-zero.
+zero. This is the cheap answer: one forward solve plus the closed-form
+geometric correction, no iteration.
+
+For the authoritative answer — a lapse-scaled iterative refinement of
+every range, for extreme shots and published tables — call
+`lob::SolveInverseELR` instead. It starts from the cheap answer above
+and iterates from there.
 
 Ranges must be in increasing order. A table that is not is rejected
 rather than quietly sorted, so that a mistake shows up as a mistake.

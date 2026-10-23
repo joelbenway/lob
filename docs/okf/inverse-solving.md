@@ -5,7 +5,7 @@ description: Turning a range into the sight adjustment that hits it.
 tags: [inverse, adjustments, solver, workflow]
 generated: {by: human:joel, at: 2026-10-09T00:00:00Z}
 verified: [{by: human:joel, at: 2026-10-09T00:00:00Z}]
-status: stable
+status: draft
 ---
 
 # Inverse Solving
@@ -32,56 +32,58 @@ That is a root-finding problem nested inside a numerical integration,
 and doing it naively means integrating repeatedly from scratch for
 every range in a table.
 
-## Two ways to ask
+## Four ways to ask
 
-lob offers two entry points, backed by the same angle solver, and they
-differ in how much they trust the geometry.
+lob offers four entry points: a cheap and an ELR variant for each of
+the forward and inverse questions. They differ in how much they trust
+the geometry — and in how much air they recompute.
 
-**The iterative solve** does the honest thing. It integrates, finds the
-launch angle that hits the target by iterating, and reports the
-adjustment. This is the authoritative answer, and the one to use for
-anything published or compared against.
+**The cheap inverse** (`SolveInverse`) does the honest cheap thing. It
+runs one forward solve, then applies the closed-form geometric
+correction — the same correction the angle solver uses to take one
+step — and reports that. No iteration happens. It is substantially
+cheaper than iterating, and it is only valid where the forward solve
+actually reached the range you are asking about, because a shot that
+fell short has no residual to correct.
 
-**The fast solve** skips the iteration entirely. It takes the forward
-solution you already have and warps it with the closed-form geometric
-correction, the same correction the angle solver uses to take one step.
-No integration happens. It is substantially cheaper, and it is only
-valid where the forward solve actually reached the range you are asking
-about, because a shot that fell short has no residual to correct.
+**The ELR inverse** (`SolveInverseELR`) does the expensive thing. It
+starts from the cheap answer, then iterates every nonzero range with
+the lapse-scaled angle solver — recomputing air density and the speed
+of sound along each candidate trajectory — until it converges. This is
+the authoritative answer, and the one to use for anything published,
+compared against, or fired past a mile.
+
+The same split applies to the forward question: `Solve` integrates
+with firing-site air throughout, while `SolveELR` recomputes the air
+along the flight. There is no automatic switching between them. Long
+shots do not upgrade themselves to the expensive path; short shots do
+not downgrade. The caller picks by calling.
 
 ## How the work is avoided
 
-The pipeline is what makes the iterative solve affordable across a
-whole table of ranges.
+The pipeline is what makes the ELR inverse affordable across a whole
+table of ranges.
 
-First, one forward pass establishes two things at once: how much the
-shot misses by at every range, and whether it can reach those ranges at
-all. Then, for each range, that miss is fed into the closed-form
+First, one cheap forward pass establishes two things at once: how much
+the shot misses by at every range, and whether it can reach those ranges
+at all. Then, for each range, that miss is fed into the closed-form
 correction as a starting guess. Because the correction is derived from
 the geometry, the guess lands very close to the true answer, and the
-iteration normally converges in a step or two rather than searching
-from nothing.
-
-The initial forward pass establishes misses and reachability once and
-seeds the solve. LobSolveInverse calls SolveAngle, which invokes
-FireToTarget during each range refinement, so additional per-range
-integrations are performed rather than repeating a full table integration
-from scratch. That is the whole reason asking for a table of dope is not
-dramatically more expensive than asking where one shot lands.
+ELR iteration normally converges in a step or two rather than searching
+from nothing. `SolveInverseELR` always pays for the lapse-scaled
+iteration; `SolveInverse` stops at the guess and reports it.
 
 ## An asymmetry that is deliberate
 
-The two entry points do not agree on what to do when a range cannot be
-reached, and the difference is intentional.
+The cheap and ELR operations do not agree on what to do when a range
+cannot be reached, and the difference is intentional.
 
-The iterative solve detects it: the angle search fails, so it stops and
-reports only the ranges it could solve, returning a shorter result. The
-caller sees exactly how far the solution got.
-
-The fast solve cannot detect it, because it never evaluates whether the
-shot reaches the range. It would happily produce a number. So it does not
-stop, and the burden of not misusing it is on the caller, which is
-exactly what the API documentation warns about.
+Both detect it: a fall-short forward row carries a range below the one
+asked for, so both stop and report only the ranges they could solve.
+The caller sees exactly how far the solution got. What neither does is
+silently produce a plausible wrong number for an unreachable range —
+that burden used to sit with callers of the old one-step conversion,
+which is gone.
 
 The design bet is that a short array is a recoverable result and a
 plausible wrong number is not.
@@ -89,44 +91,45 @@ plausible wrong number is not.
 ## Edges the API handles for you
 
 A range of zero is not an error. It is the shooter's own position.
-LobSolveInverse counts zero-range entries and reports them as zero
-adjustment. LobFastInverse skips zero-range entries. Results that came
-back non-finite from the forward pass are skipped by LobFastInverse
-rather than converted, because there is nothing to convert. Iterative
-solving returns early when the angle is NaN.
+Both `LobSolveInverse` and `LobSolveInverseELR` count zero-range entries
+and report them as zero adjustment. Results that came back short of the
+requested range stop both operations at the first such entry, because
+there is nothing to refine. Iterative solving returns early when the
+angle is NaN.
 
-Ordering matters for the table. LobSolveInverse validates increasing
-range order (via LobSolve) and rejects tables that are not in increasing
-order rather than silently reordering them. LobFastInverse converts
-supplied outputs without checking range order. Sorting a caller's data
-would hide a mistake instead of surfacing it, which is the same reasoning
-as not reordering velocity bands.
+Ordering matters for the table. Both inverse operations validate
+increasing range order (via the forward pass) and reject tables that are
+not in increasing order rather than silently reordering them. Sorting a
+caller's data would hide a mistake instead of surfacing it, which is the
+same reasoning as not reordering velocity bands.
 
 ## Which to call
 
-Use the iterative solve for published tables, for anything compared
-against another solution, and anywhere correctness matters more than
-time.
+Use the ELR operations for published tables, for anything compared
+against another solution, for extreme range, and anywhere correctness
+matters more than time.
 
-Use the fast solve when you already have the forward outputs, you know
-they reached their ranges, and you want to avoid a second integration
-sweep. Spot-check a few ranges against the iterative solve to confirm
-that its error is acceptable for the trajectories you care about. That
-check is cheap and it is the whole cost of using the fast path.
+Use the cheap operations when you already know the trajectory stays in
+roughly firing-site air, when you need an answer dozens of times per
+second, or when you want a seed to refine yourself. Spot-check a few
+ranges against the ELR answer to confirm that its extra work is
+negligible for the trajectories you care about. That check is cheap and
+it is the whole cost of using the cheap path.
 
 ## What backs it
 
 The inverse tests cover the sign conventions against the forward solve,
 confirm that adjustments grow monotonically with range, exercise the
-zero-range and unreachable cases, and check both the raw-pointer and
-array forms of the API agree.
+zero-range and unreachable cases, and check all three call shapes of the
+API agree.
 
-The one worth calling out is the cross-check between the two paths. They
-are run against each other with a nonzero aerodynamic jump, and they are
-required to agree. That is not merely a numeric consistency check: it is
-a test that both paths applied the muzzle jump the same way, which is
-the property that makes the adjustment meaningful relative to a rifle
-that was zeroed through a different code path.
+The one worth calling out is the cross-check between the cheap and ELR
+paths. They are run against each other with a nonzero aerodynamic jump,
+and they are required to agree where the lapse correction is small. That
+is not merely a numeric consistency check: it is a test that both paths
+applied the muzzle jump the same way, which is the property that makes
+the adjustment meaningful relative to a rifle that was zeroed through
+a different code path.
 
 ## Related
 

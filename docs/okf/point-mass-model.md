@@ -5,7 +5,7 @@ description: The equations lob integrates, and why it steps by distance instead 
 tags: [physics, equations-of-motion, integration]
 generated: {by: human:joel, at: 2026-10-09T00:00:00Z}
 verified: [{by: human:joel, at: 2026-10-09T00:00:00Z}]
-status: stable
+status: draft
 ---
 
 # Point-Mass Model
@@ -112,32 +112,37 @@ a non-advancing state as unreachable and return "no answer". By
 contrast, `LobSolve` may repeat after `FastSolveStep` zeroes velocity
 before its terminal checks fire in some cases, so it does not
 guarantee termination for stalled progress; `LobSolveInverse` calls
-`LobSolve` first and therefore inherits that behavior. A shot that will
-not arrive is not always reported as unreachable through a single common
-path.
+`LobSolve` first and therefore inherits that behavior, as does
+`LobSolveInverseELR`, which starts from the cheap inverse answer. A shot
+that will not arrive is not always reported as unreachable through a
+single common path.
 
 ## Two step variants
 
 The equations above admit two ways to treat the air, and lob ships both
-because they trade against each other.
+because they trade against each other. Which one runs is an explicit
+caller choice: the `Solve` family always uses one variant, the `SolveELR`
+family always uses the other. There is no automatic switching mid-solve.
 
 The **fast variant** assumes the air is the air at the firing site, for
 the whole flight. A bullet that stays in roughly one atmosphere sees
 almost no error from this, and the per-step cost drops to almost
 nothing because nothing about the air needs recomputing. This is the
-default for forward solves and for finding a zero.
+variant behind forward solves, zero searches, and `SolveInverse`.
 
 The **lapse variant** recomputes density and speed of sound each step,
 projecting the projectile's climb onto the standard lapse rate, so a
 long shot that gains thousands of feet of altitude flies through
-correctly thinning air. It costs real work per step.
+correctly thinning air. It costs real work per step. This is the variant
+behind `SolveELR` and `SolveInverseELR`.
 
-Inverse solving picks between them per range, on the basis of how much
-climb that particular shot needs. Shots that stay low take the cheap
-path; the long ones pay. The two are not guaranteed to agree when
-altitude-dependent drag or speed-of-sound corrections are nonzero, so
-the choice is about how hard the shot is and the tradeoff being made,
-not a correctness difference in all conditions.
+`SolveInverse` never uses the lapse variant, no matter how far the shot
+drops; `SolveInverseELR` always uses it, no matter how short the shot.
+The two are not guaranteed to agree when altitude-dependent drag or
+speed-of-sound corrections are nonzero, so the choice is about how hard
+the shot is and the tradeoff being made, not a correctness difference
+in all conditions. For world-record attempts and leave-nothing-on-the-table
+solving, call the ELR operations explicitly.
 
 ## Assumptions
 
