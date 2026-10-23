@@ -202,9 +202,14 @@ size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
     return 0;
   }
   const size_t kForwardSolves = LobSolve(pctx, pranges, pouts, size);
-  // Only reached ranges carry a residual worth converting. A fall-short row
-  // reports a range below its request, so stop there instead of converting a
-  // meaningless miss, mirroring the old iterative stop.
+  // Only reached ranges carry a residual worth converting. A reached row
+  // always reports out.range >= pranges[i]: the forward loop emits a
+  // non-terminal row only after s.P().X() >= target, and truncating a
+  // non-negative double to U32 preserves >= against an integer target
+  // (floor(X) >= N iff X >= N). Conversely, terminal, max-time,
+  // minimum-speed, and tumble rows stop short of their request, so the
+  // first below-request row marks the fall-short prefix. Stop there instead
+  // of converting a meaningless miss, mirroring the old iterative stop.
   size_t reached = 0;
   while (reached < kForwardSolves && pouts[reached].range >= pranges[reached]) {
     reached++;
