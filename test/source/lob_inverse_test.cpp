@@ -163,6 +163,36 @@ TEST(LobELRInverseTest, SolveInverseELRZeroRangeReturnsZeroAdjustment) {
   EXPECT_TRUE(std::isfinite(outs.at(1).elevation));
 }
 
+TEST(LobELRInverseTest, SolveInverseELRStopsWhenRefinementFails) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  LobBuilder builder{};
+  LobBuilderInit(&builder);
+  LobBuilderBallisticCoefficientPsi(&builder, kTestBC);
+  LobBuilderInitialVelocityFps(&builder, kTestMuzzleVelocity);
+  LobBuilderZeroAngleMOA(&builder, kTestZeroAngle);
+  LobContext ctx{};
+  LobBuilderBuild(&builder, &ctx);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  LobBuilderDestroy(&builder);
+  // Forward flight reaches all five, so the cheap answer converts all five
+  // while ELR refinement stops where the angle search fails.
+  constexpr size_t kNumRanges = 5;
+  constexpr size_t kNumRefined = 4;
+  const std::array<uint32_t, kNumRanges> kRanges = {3000U, 6000U, 9000U, 12000U,
+                                                    15000U};
+  std::array<LobOutput, kNumRanges> cheap{};
+  ASSERT_EQ(LobSolveInverse(&ctx, kRanges.data(), cheap.data(), cheap.size()),
+            cheap.size());
+  std::array<LobOutput, kNumRanges> elr{};
+  EXPECT_EQ(LobSolveInverseELR(&ctx, kRanges.data(), elr.data(), elr.size()),
+            kNumRefined);
+  for (size_t i = 0; i < kNumRefined; ++i) {
+    EXPECT_TRUE(std::isfinite(elr.at(i).elevation));
+  }
+}
+
 TEST(LobELRInverseTest, SolveInverseELRStopsAtUnreachableRange) {
   const double kWeakBC = 0.05;
   const uint16_t kWeakVelocityFps = 500U;
@@ -203,6 +233,22 @@ TEST(LobELRInverseTest, SolveInverseELRStopsAtFirstUnreachableInArray) {
   EXPECT_EQ(kSize, 2U);
   EXPECT_TRUE(std::isfinite(outs.at(0).elevation));
   EXPECT_TRUE(std::isfinite(outs.at(1).elevation));
+}
+
+TEST(LobELRInverseTest, SolveInverseELRWrappersLinkAndSolve) {
+  const lob::Context kCtx = lob::Builder()
+                                .BallisticCoefficientPsi(0.436)
+                                .InitialVelocityFps(3100U)
+                                .ZeroAngleMOA(6.11)
+                                .Build();
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+  const std::array<uint32_t, 2> kRanges = {900U, 1800U};
+  std::array<lob::Output, 2> array_outs{};
+  lob::Output pointer_out{};
+  lob::Output single_out{};
+  EXPECT_EQ(lob::SolveInverseELR(kCtx, kRanges.data(), &pointer_out, 1U), 1U);
+  EXPECT_EQ(lob::SolveInverseELR(kCtx, kRanges, &array_outs), kRanges.size());
+  EXPECT_EQ(lob::SolveInverseELR(kCtx, kRanges.at(0), &single_out), 1U);
 }
 
 TEST(LobELRInverseTest, SolveInverseELRStartsFromCheapInverseAndRefines) {

@@ -218,6 +218,20 @@ TEST(LobAPITest, NonMonotonicRangesRejected) {
   EXPECT_EQ(kSize, 0);
 }
 
+TEST(LobELRForwardTest, SolveELRRejectsNonMonotonicRanges) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  const lob::Context kResult = lob::Builder()
+                                   .BallisticCoefficientPsi(kTestBC)
+                                   .InitialVelocityFps(kTestMuzzleVelocity)
+                                   .ZeroAngleMOA(kTestZeroAngle)
+                                   .Build();
+  const std::array<uint32_t, 2> kRanges = {100U, 50U};
+  std::array<lob::Output, 2> out{};
+  EXPECT_EQ(lob::SolveELR(kResult, kRanges, &out), 0U);
+}
+
 TEST(LobAPITest, ZeroAngleSearchNegativeBracket) {
   const lob::Context kCtx = lob::Builder()
                                 .BallisticCoefficientPsi(0.436)

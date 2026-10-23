@@ -86,10 +86,11 @@ size_t ConvertForwardToInverse(const LobContext& ctx, LobOutput* pouts,
       pouts[i].deflection = 0.0;
       continue;
     }
-    if (!std::isfinite(pouts[i].elevation) ||
-        !std::isfinite(pouts[i].deflection)) {
-      return i;
-    }
+    // Reached rows come straight from the forward pass, whose outputs are
+    // finite by construction, so there is no fallible case to return here.
+    // The assert keeps that invariant loud if the forward pass ever changes.
+    assert(std::isfinite(pouts[i].elevation));
+    assert(std::isfinite(pouts[i].deflection));
     const FeetT kRange = FeetT(pouts[i].range);
     const FeetT kElevation = FeetT(InchT(pouts[i].elevation));
     pouts[i].elevation =
