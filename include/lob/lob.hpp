@@ -1041,7 +1041,8 @@ inline size_t SolveInverse(const Context& ctx, uint32_t range, Output* pout) {
  * @brief Solves the exterior ballistics problem with lapse-scaled air.
  * Results contain an inverse-solution.
  * @note Starts from the cheap SolveInverse answer, then refines every nonzero
- * reached range with the lapse-scaled angle solver.
+ * reached range with the lapse-scaled angle solver. Only elevation is
+ * re-solved; deflection retains the cheap geometric hold-off.
  * @param ctx Context parameters for the calculation.
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
  * @param pouts Pointer to an array where the output results will be stored.
