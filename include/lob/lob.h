@@ -683,6 +683,24 @@ LOB_EXPORT extern size_t LobSolveInverse(const LobContext* pctx,
                                          const uint32_t* pranges,
                                          LobOutput* pouts, size_t size);
 
+/**
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain an inverse-solution.
+ * @note Starts from the cheap LobSolveInverse answer, then refines every
+ * nonzero reached range with the lapse-scaled angle solver. Unlike the old
+ * dynamic branch, there is no drop threshold: every nonzero range uses the
+ * expensive path. Entries with zero range are counted and their adjustments
+ * are zeroed; solving stops at the first unreachable or non-converging entry.
+ * @param pctx Pointer to context parameters for the calculation.
+ * @param pranges Pointer to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @param size The number of ranges to solve for.
+ * @return The number of successful solutions.
+ */
+LOB_EXPORT extern size_t LobSolveInverseELR(const LobContext* pctx,
+                                            const uint32_t* pranges,
+                                            LobOutput* pouts, size_t size);
+
 /** @brief Converts minutes of angle (MOA) to milliradians (MIL).
  * @param value Angle in MOA.
  * @return Equivalent angle in MIL.

@@ -10,6 +10,7 @@
 #include <cstdint>
 
 #include "eng_units.hpp"
+#include "lob/lob.h"
 #include "lob/lob.hpp"
 #include "solve_angle.hpp"
 
@@ -128,6 +129,46 @@ TEST_F(LobInverseTest, SolveInverseCombinesForwardSolveAndOneStepCorrection) {
                 kTheta)
           .Value();
   EXPECT_DOUBLE_EQ(inverse.elevation, kExpected);
+}
+
+TEST(LobELRInverseTest, SolveInverseELRRejectsInvalidArguments) {
+  const uint32_t kRange = 300U;
+  LobOutput out{};
+  const LobContext kBad{};
+  EXPECT_EQ(LobSolveInverseELR(nullptr, &kRange, &out, 1U), 0U);
+  EXPECT_EQ(LobSolveInverseELR(&kBad, nullptr, &out, 1U), 0U);
+  EXPECT_EQ(LobSolveInverseELR(&kBad, &kRange, nullptr, 1U), 0U);
+  EXPECT_EQ(LobSolveInverseELR(&kBad, &kRange, &out, 0U), 0U);
+}
+
+TEST(LobELRInverseTest, SolveInverseELRStartsFromCheapInverseAndRefines) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  LobBuilder builder{};
+  LobBuilderInit(&builder);
+  LobBuilderBallisticCoefficientPsi(&builder, kTestBC);
+  LobBuilderInitialVelocityFps(&builder, kTestMuzzleVelocity);
+  LobBuilderZeroAngleMOA(&builder, kTestZeroAngle);
+  LobContext ctx{};
+  LobBuilderBuild(&builder, &ctx);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  LobBuilderDestroy(&builder);
+  const std::array<uint32_t, 2> kRanges = {900U, 1800U};
+  std::array<LobOutput, 2> cheap{};
+  std::array<LobOutput, 2> elr{};
+  ASSERT_EQ(LobSolveInverse(&ctx, kRanges.data(), cheap.data(), kRanges.size()),
+            kRanges.size());
+  ASSERT_EQ(
+      LobSolveInverseELR(&ctx, kRanges.data(), elr.data(), kRanges.size()),
+      kRanges.size());
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    const lob::MoaT kDirect = lob::SolveAngle(
+        ctx, lob::FeetT(kRanges.at(i)), lob::FeetT(0.0),
+        lob::RadiansT(lob::MoaT(ctx.zero_angle + cheap.at(i).elevation)));
+    ASSERT_FALSE(kDirect.IsNaN());
+    EXPECT_NEAR(kDirect.Value(), kTestZeroAngle + elr.at(i).elevation, 0.01);
+  }
 }
 
 TEST_F(LobInverseTest, SolveInverseIgnoresDropThreshold) {
