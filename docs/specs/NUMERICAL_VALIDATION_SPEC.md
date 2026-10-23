@@ -153,13 +153,16 @@ if code moves, the spec's logic still holds.)
 
 - C ABI waist: `include/lob/lob.h` — `LobBuilder` (opaque,
   `LOB_BUILDER_BUFFER_SIZE 320`), `LobContext`, `LobOutput`, `LobSolve`,
-  `LobSolveInverse`, `LobFastInverse`, `LobBuilderBuild`, unit conversions.
+  `LobSolveELR`, `LobSolveInverse`, `LobSolveInverseELR`, `LobBuilderBuild`,
+  unit conversions.
 - C++ wrapper: `include/lob/lob.hpp` — `lob::Builder`, `lob::Context`
-  (layout-identical, `static_assert`s), `lob::Solve/SolveInverse/FastInverse`,
-  `std::array` overloads. Header-only, inline, forwards to C.
+  (layout-identical, `static_assert`s),
+  `lob::Solve/SolveELR/SolveInverse/SolveInverseELR`, `std::array`
+  overloads. Header-only, inline, forwards to C.
 - Implementation once: `source/lob_builder.cpp`, `source/lob_solve.cpp`.
 - **Validation rule:** all convergence/sensitivity/reference/MC studies drive
-  the **public C/C++ API** (`Builder` + `Solve`/`SolveInverse`). White-box
+  the **public C/C++ API** (`Builder` + `Solve`/`SolveELR`/`SolveInverse`/
+  `SolveInverseELR`). White-box
   step-level tests may include internal headers (`source/solve_step.hpp`,
   `source/solve_angle.hpp`, `source/splines.hpp`, `source/ode.hpp`) but only
   in static test builds (see §14.2); nothing validation-specific ships in the
@@ -167,10 +170,11 @@ if code moves, the spec's logic still holds.)
 
 ### 4.2 Deterministic forward solver
 
-- `source/lob_solve.cpp` `LobSolve`: integrates from muzzle with launch angle
-  `zero_angle + aerodynamic_jump`, steps via `FastSolveStep` (firing-site
-  `FastDsDx`), clamps the last step to the target (`ComputeStep` in
-  `source/solve_step.cpp`), stops at all-ranges-reached / `max_time` /
+- `source/lob_solve.cpp` `LobSolve`/`LobSolveELR`: integrate from muzzle
+  with launch angle `zero_angle + aerodynamic_jump`; `LobSolve` steps via
+  `FastSolveStep` (firing-site `FastDsDx`), `LobSolveELR` steps via
+  `SolveStep` (lapse-scaled `DsDx`). Both clamp the last step to the target
+  (`ComputeStep` in `source/solve_step.cpp`), stop at all-ranges-reached /
   `minimum_speed|energy` (linearly interpolated `LerpOutput`) / tumble
   (`|v_y| > 3·v_x`).
 - Output quantization floor (load-bearing for convergence, §8.5):
@@ -197,19 +201,19 @@ if code moves, the spec's logic still holds.)
   `ComputeStep`: `Δx = min(target − x, step)`. No adaptivity, no embedded
   error estimate. `TOF` integrated as `d(TOF)/dx = 1/vx` inside `DsDxCore`.
 
-### 4.4 Two density paths (must be studied separately)
+### 4.4 Two density paths (selected explicitly by the caller)
 
 - `FastDsDx`: `drag = drag_coeff`, `c = speed_of_sound` (firing-site).
 - `DsDx`: scales per step by `ρ/ρ0 = 1−u(1−αu)`, `c/c0 = 1−βu`,
   `u = −k_lapse·P·G`, `α = (e−1)/2e`, `β = 1/2e`, `e = kHydrostaticExponent`
   (`source/solve_step.cpp:96-102`, `source/constants.hpp:27-29`).
-- Routing (`source/lob_solve.cpp:22`, `kDynamicDropThreshold`):
-  forward / zero / Boatright-supersonic integral use `Fast*`; only
-  `LobSolveInverse` ranges with forward `drop > 100 ft`
-  (`elevation < −1200 in`) use `SolveStep`/`SolveAngle`. Builder zero search
-  uses `FastSolveAngle`.
-- Implication: a convergence claim on `LobSolve` does **not** transfer to the
-  lapse-scaled inverse tail. §8 requires both paths.
+- Routing: `LobSolve`/`LobSolveInverse` use `Fast*` throughout;
+  `LobSolveELR`/`LobSolveInverseELR` use `SolveStep`/`SolveAngle`
+  throughout. There is no drop threshold and no per-range switching:
+  the old 100-foot switch is gone. Builder zero search still uses
+  `FastSolveAngle`.
+- Implication: a convergence claim on `LobSolve` does **not** transfer to
+  the lapse-scaled paths. §8 requires both paths.
 
 ### 4.5 Angle solver (shared zero + inverse)
 
@@ -223,11 +227,14 @@ if code moves, the spec's logic still holds.)
   (`source/lob_builder.cpp` `BuildZeroAngle`); inverse seeds with
   `FastInverseAngle(zero_angle, forward_residual, R)` (usually within
   0.1 MOA, 1–2 iterations).
-- `LobSolveInverse` = forward reachability pass + per-range re-solve;
-  `LobFastInverse` = one-step geometric warp in place (no integration; fall
-  shorts yield meaningless numbers by documented design).
+- `LobSolveInverse` = forward reachability pass + closed-form geometric
+  correction per reached range (no iteration; stops at the first fall-short
+  row); `LobSolveInverseELR` = cheap answer first, then lapse-scaled
+  iteration per nonzero reached range. No public one-step conversion
+  entry point remains.
 - Tested: seeds `0°, ±30°, 44°`, `±3 in` round-trip to `±0.1 in`, tight
-  `0.001 MOA → ±0.01 in`, unreachable NaN, iterative-vs-fast `0.1 MOA`
+  `0.001 MOA → ±0.01 in`, unreachable NaN, cheap-vs-ELR agreement where
+  lapse corrections are small
   (`test/source/solve_angle_test.cpp`, `test/source/lob_inverse_test.cpp`).
 - The tolerance parameter already exists on `FastSolveAngle`/`SolveAngle`
   (default `0.01 MOA`) — refinement studies use it directly; no API change
@@ -309,9 +316,10 @@ if code moves, the spec's logic still holds.)
   `±1 fps, ±5 ft·lbf, 0.1 MOA, ±0.01 s` to 1000 yd.
 - Benchmarks: `benchmark/ode.cpp` (Euler/Heun/RK4 cost-matched vs RK4
   `dt=1e-5` reference), `benchmark/loblerp.cpp` (LobLerp vs CurveView),
-  `benchmark/cachegrind/lob_bench.cpp` (7 cases: build_basic/full/
-  custom_table/boatright/zero_search, solve_basic/inverse; `--verify` gate;
-  `CG_MAX_REGRESSION_BP` compare in CI, no hard gate beyond summary).
+  `benchmark/cachegrind/lob_bench.cpp` (9 cases: build_basic/full/
+  custom_table/boatright/zero_search, solve_basic/elr/inverse/inverse_elr;
+  `--verify` gate; `CG_MAX_REGRESSION_BP` compare in CI, no hard gate
+  beyond summary).
 - CI (`.github/workflows/ci.yml`): `lint` (clang-format, codespell),
   `coverage` (ci-coverage preset → codecov), `sanitize` (ASan+UBSan),
   `test` (macos/ubuntu/windows × shared/static), `lobber`, `docs`
