@@ -28,6 +28,8 @@ TEST(LobAPITest, Version) {
   EXPECT_EQ(2, dot_count) << version_string;
 }
 
+TEST(LobAPITest, VersionIs0140) { EXPECT_STREQ(lob::Version(), "0.14.0"); }
+
 TEST(LobELRForwardTest, SolveELRRejectsInvalidArguments) {
   const uint32_t kRangeFt = 300U;
   LobOutput out{};

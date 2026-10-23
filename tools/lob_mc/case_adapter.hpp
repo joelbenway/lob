@@ -1015,8 +1015,10 @@ inline void PadDraws(TrajectorySample* sample, std::size_t width) {
 
 // Branch counters from one built context: forward reach, analytic
 // miller_unstable (Sg < 1, not solver-reported), and the SolveAngle-NaN angle
-// cap, which surfaces publicly as an inverse prefix-short (SolveInverse stops
-// at the first uncapped range, so inverse < forward is the cap branch).
+// cap, which surfaces publicly as an inverse prefix-short (SolveInverseELR
+// stops at the first uncapped range, so inverse < forward is the cap branch).
+// The inverse branch uses the ELR path so the cap semantics match the old
+// iterative SolveInverse rather than the cheap geometric correction.
 inline void SolveBranches(const lob::Context& ctx,
                           const std::vector<std::uint32_t>& ranges,
                           TrajectorySample* sample) {
@@ -1026,7 +1028,7 @@ inline void SolveBranches(const lob::Context& ctx,
   sample->inverse.assign(ranges.size(), lob::Output{});
   sample->forward_count =
       lob::Solve(ctx, ranges.data(), sample->forward.data(), ranges.size());
-  sample->inverse_count = lob::SolveInverse(
+  sample->inverse_count = lob::SolveInverseELR(
       ctx, ranges.data(), sample->inverse.data(), ranges.size());
   sample->flags.reached_all = (sample->forward_count == ranges.size());
   sample->flags.fall_short_index = sample->forward_count;
