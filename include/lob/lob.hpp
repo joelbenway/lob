@@ -984,61 +984,14 @@ inline size_t SolveELR(const Context& ctx, uint32_t range, Output* pout) {
 }
 
 /**
- * @brief Converts forward-solution output to inverse-solution adjustments.
- * @note A one-step approximation. Only convert outputs whose forward solution
- * reached the target range; fall-short trajectories yield meaningless results.
- * Entries with non-finite elevation or deflection are skipped and not counted.
- * @param ctx Context parameters for the calculation.
- * @param pouts Pointer to an array of forward-solution outputs to convert in
- * place.
- * @param size The number of outputs to convert.
- * @return The number of successful conversions, or 0 on invalid arguments.
- * Entries with zero range are skipped and not counted.
- */
-inline size_t FastInverse(const Context& ctx, Output* pouts, size_t size) {
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-  return ::LobFastInverse(reinterpret_cast<const ::LobContext*>(&ctx), pouts,
-                          size);
-}
-
-/**
- * @brief Converts forward-solution output to inverse-solution adjustments.
- * @note A one-step approximation. Only convert outputs whose forward solution
- * reached the target range; fall-short trajectories yield meaningless results.
- * Entries with non-finite elevation or deflection are skipped and not counted.
- * @tparam N The number of outputs to convert.
- * @param ctx Context parameters for the calculation.
- * @param pouts Reference to an array of outputs to convert in place.
- * @return The number of successful conversions.
- */
-template <size_t N>
-inline size_t FastInverse(const Context& ctx, std::array<Output, N>* pouts) {
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-  return ::LobFastInverse(reinterpret_cast<const ::LobContext*>(&ctx),
-                          pouts->data(), N);
-}
-
-/**
- * @brief Converts forward-solution output to inverse-solution adjustments for a
- * single output.
- * @param ctx Context parameters for the calculation.
- * @param pout Pointer to an output to convert in place.
- * @return The number of successful conversions (0 or 1).
- */
-inline size_t FastInverse(const Context& ctx, Output* pout) {
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-  return ::LobFastInverse(reinterpret_cast<const ::LobContext*>(&ctx), pout, 1);
-}
-
-/**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
  * Results contain an inverse-solution.
  * @note An inverse-solution solves for the adjustments (in MOA) required to
- * hit at a given range. Entries with zero range are counted but their
- * adjustments are zeroed. Adjustments for ranges the projectile cannot reach
- * (fall-short solutions) are not produced; solving stops at the first such
- * entry. Unlike FastInverse, a fall-short entry is not silently given a
- * meaningless adjustment.
+ * hit at a given range. This is one forward solve followed by the closed-form
+ * geometric correction; it performs no iterative angle search. Entries with
+ * zero range are counted and their adjustments are zeroed. Adjustments for
+ * ranges the projectile cannot reach (fall-short solutions) are not produced;
+ * solving stops at the first such entry.
  * @param ctx Context parameters for the calculation.
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
  * @param pouts Pointer to an array where the output results will be stored.

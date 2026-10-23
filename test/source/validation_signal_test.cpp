@@ -17,7 +17,10 @@
 #include <string>
 #include <vector>
 
+#include "eng_units.hpp"
+#include "lob/lob.h"
 #include "lob/lob.hpp"
+#include "solve_angle.hpp"
 #include "testing.hpp"
 
 namespace tests {
@@ -272,10 +275,20 @@ TEST(SignalSmoke, LapsePathConverged) {
   ExpectTailDropEngaged(fwd, kRanges);
   std::array<lob::Output, 3> inv{};
   ASSERT_EQ(lob::SolveInverse(kCtx, kRanges, &inv), kRanges.size());
-  // FastInverse converts the forward outputs in place
-  // (SolveInverseMatchesFastInverseWithJump pattern in
-  // test/source/lob_inverse_test.cpp).
-  ASSERT_EQ(lob::FastInverse(kCtx, &fwd), kRanges.size());
+  // Closed-form warp converts the forward outputs in place. The dynamic-branch
+  // coverage moves to SolveInverseELR in a later task; this keeps the recorded
+  // lapse-versus-inverse comparison on the cheap path until then.
+  const lob::RadiansT kTheta =
+      lob::RadiansT(lob::MoaT(kCtx.zero_angle + kCtx.aerodynamic_jump));
+  for (lob::Output& out : fwd) {
+    out.elevation = lob::MoaT(lob::FastInverseAngle(
+                                  kTheta, lob::FeetT(lob::InchT(out.elevation)),
+                                  lob::FeetT(out.range)) -
+                              kTheta)
+                        .Value();
+    out.deflection =
+        ::LobInchToMoa(-out.deflection, static_cast<double>(out.range));
+  }
   RecordLapseVsInverse(fwd, inv, kRanges);
 }
 

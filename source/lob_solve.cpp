@@ -19,7 +19,8 @@
 
 namespace lob {
 namespace {
-constexpr InchT kDynamicDropThreshold = FeetT(100.0);
+using StepFunction = void (*)(const LobContext&, TrajectoryStateT*,
+                              spline::CurveView*, FeetT);
 
 LobOutput OutputAtState(const TrajectoryStateT& s, const LobContext& ctx) {
   const FpsT kVelocity = s.V().Magnitude();
@@ -75,6 +76,29 @@ void ApplyGyroscopicSpinDrift(const LobContext& ctx, LobOutput* pouts,
               .Value();
     }
   }
+}
+
+size_t ConvertForwardToInverse(const LobContext& ctx, LobOutput* pouts,
+                               size_t count) {
+  assert(pouts != nullptr);
+  const RadiansT kTheta = RadiansT(MoaT(ctx.zero_angle + ctx.aerodynamic_jump));
+  for (size_t i = 0; i < count; i++) {
+    if (pouts[i].range == 0) {
+      pouts[i].elevation = 0.0;
+      pouts[i].deflection = 0.0;
+      continue;
+    }
+    if (!std::isfinite(pouts[i].elevation) ||
+        !std::isfinite(pouts[i].deflection)) {
+      return i;
+    }
+    const FeetT kRange = FeetT(pouts[i].range);
+    const FeetT kElevation = FeetT(InchT(pouts[i].elevation));
+    pouts[i].elevation =
+        MoaT(FastInverseAngle(kTheta, kElevation, kRange) - kTheta).Value();
+    pouts[i].deflection = LobInchToMoa(-pouts[i].deflection, kRange.Value());
+  }
+  return count;
 }
 
 using StepFunction = void (*)(const LobContext&, TrajectoryStateT*,
@@ -175,32 +199,6 @@ size_t LobSolveELR(const LobContext* pctx, const uint32_t* pranges,
   return SolveRanges(*pctx, pranges, pouts, size, SolveStep);
 }
 
-size_t LobFastInverse(const LobContext* pctx, LobOutput* pouts, size_t size) {
-  if (pctx == nullptr || pouts == nullptr || size == 0 ||
-      pctx->error != kLobErrorNone || MoaT(pctx->zero_angle).IsNaN()) {
-    return 0;
-  }
-  const RadiansT kTheta =
-      RadiansT(MoaT(pctx->zero_angle + pctx->aerodynamic_jump));
-  size_t count = 0;
-  for (size_t i = 0; i < size; i++) {
-    if (pouts[i].range == 0) {
-      continue;
-    }
-    if (!std::isfinite(pouts[i].elevation) ||
-        !std::isfinite(pouts[i].deflection)) {
-      continue;
-    }
-    const FeetT kRange = FeetT(pouts[i].range);
-    const FeetT kElevation = FeetT(InchT(pouts[i].elevation));
-    pouts[i].elevation =
-        MoaT(FastInverseAngle(kTheta, kElevation, kRange) - kTheta).Value();
-    pouts[i].deflection = LobInchToMoa(-pouts[i].deflection, kRange.Value());
-    count++;
-  }
-  return count;
-}
-
 size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
                        LobOutput* pouts, size_t size) {
   if (pctx == nullptr || pranges == nullptr || pouts == nullptr || size == 0 ||
@@ -208,31 +206,14 @@ size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
     return 0;
   }
   const size_t kForwardSolves = LobSolve(pctx, pranges, pouts, size);
-  const RadiansT kZeroAngle = MoaT(pctx->zero_angle);
-  // Seed represents mechanical launch angle. SolveAngle adds aerodynamic_jump
-  // internally during trajectory evaluation.
-  const RadiansT kSeedBase = MoaT(pctx->zero_angle);
-  for (size_t i = 0; i < kForwardSolves; i++) {
-    if (pouts[i].range == 0) {
-      pouts[i].elevation = 0.0;
-      pouts[i].deflection = 0.0;
-      continue;
-    }
-    const bool kUseDynamic =
-        InchT(pouts[i].elevation) < kDynamicDropThreshold * -1;
-    const FeetT kElevation = InchT(pouts[i].elevation);
-    const FeetT kRange = FeetT(pouts[i].range);
-    const RadiansT kSeed = FastInverseAngle(kSeedBase, kElevation, kRange);
-    const RadiansT kTheta =
-        kUseDynamic ? SolveAngle(*pctx, kRange, FeetT(0.0), kSeed)
-                    : FastSolveAngle(*pctx, kRange, FeetT(0.0), kSeed);
-    if (kTheta.IsNaN()) {
-      return i;
-    }
-    pouts[i].elevation = MoaT(kTheta - kZeroAngle).Value();
-    pouts[i].deflection = LobInchToMoa(-pouts[i].deflection, kRange.Value());
+  // Only reached ranges carry a residual worth converting. A fall-short row
+  // reports a range below its request, so stop there instead of converting a
+  // meaningless miss, mirroring the old iterative stop.
+  size_t reached = 0;
+  while (reached < kForwardSolves && pouts[reached].range >= pranges[reached]) {
+    reached++;
   }
-  return kForwardSolves;
+  return ConvertForwardToInverse(*pctx, pouts, reached);
 }
 
 }  // extern "C"
