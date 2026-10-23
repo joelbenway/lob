@@ -77,10 +77,10 @@ ELR iteration normally converges in a step or two rather than searching
 from nothing. `SolveInverseELR` always pays for the lapse-scaled
 iteration; `SolveInverse` stops at the guess and reports it.
 
-## An asymmetry that is deliberate
+## Truncation, not fabrication
 
-The cheap and ELR operations do not agree on what to do when a range
-cannot be reached, and the difference is intentional.
+The cheap and ELR operations agree on what to do when a range
+cannot be reached, and the agreement is intentional.
 
 Both detect it: a fall-short forward row carries a range below the one
 asked for, so both stop and report only the ranges they could solve.

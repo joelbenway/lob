@@ -4,6 +4,7 @@
 
 #ifndef LOB_H
 #define LOB_H
+// NOLINTBEGIN
 
 #include <stddef.h>
 #include <stdint.h>
@@ -12,7 +13,6 @@
 
 #ifdef __cplusplus
 extern "C" {
-// NOLINTBEGIN
 #endif
 
 /** @brief The number of spline pieces comprising a drag function. */
@@ -943,10 +943,9 @@ LOB_EXPORT extern double LobSToUs(double value);
 LOB_EXPORT extern double LobDegCToDegF(double value);
 
 #ifdef __cplusplus
-// NOLINTEND
 }
 #endif
-
+// NOLINTEND
 #endif  // LOB_H
 
 // This file is part of lob.

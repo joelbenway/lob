@@ -137,8 +137,8 @@ shrink with refinement.
 
 - `Builder → Context → Solve` (§4). `LobOutput.elevation/deflection` are
   **inches in forward solves, MOA in inverse solves**.
-- `FastDsDx / FastSolveStep / FastSolveAngle` = firing-site density fast path;
-  `DsDx / SolveStep / SolveAngle` = lapse-scaled path (§4). The caller
+- `DsDx / SolveStep / SolveAngle` = firing-site density fast path;
+  `DsDxELR / SolveStepELR / SolveAngleELR` = lapse-scaled path (§4). The caller
   selects the path by choosing `Solve`/`SolveInverse` (fast) or
   `SolveELR`/`SolveInverseELR` (lapse-scaled); there is no automatic
   per-range switching.
@@ -174,8 +174,8 @@ if code moves, the spec's logic still holds.)
 
 - `source/lob_solve.cpp` `LobSolve`/`LobSolveELR`: integrate from muzzle
   with launch angle `zero_angle + aerodynamic_jump`; `LobSolve` steps via
-  `FastSolveStep` (firing-site `FastDsDx`), `LobSolveELR` steps via
-  `SolveStep` (lapse-scaled `DsDx`). Both clamp the last step to the target
+  `SolveStep` (firing-site `DsDx`), `LobSolveELR` steps via
+  `SolveStepELR` (lapse-scaled `DsDxELR`). Both clamp the last step to the target
   (`ComputeStep` in `source/solve_step.cpp`), stop at all-ranges-reached /
   `minimum_speed|energy` (linearly interpolated `LerpOutput`) / tumble
   (`|v_y| > 3·v_x`).
@@ -205,15 +205,15 @@ if code moves, the spec's logic still holds.)
 
 ### 4.4 Two density paths (selected explicitly by the caller)
 
-- `FastDsDx`: `drag = drag_coeff`, `c = speed_of_sound` (firing-site).
-- `DsDx`: scales per step by `ρ/ρ0 = 1−u(1−αu)`, `c/c0 = 1−βu`,
+- `DsDx`: `drag = drag_coeff`, `c = speed_of_sound` (firing-site).
+- `DsDxELR`: scales per step by `ρ/ρ0 = 1−u(1−αu)`, `c/c0 = 1−βu`,
   `u = −k_lapse·P·G`, `α = (e−1)/2e`, `β = 1/2e`, `e = kHydrostaticExponent`
   (`source/solve_step.cpp:96-102`, `source/constants.hpp:27-29`).
 - Routing: `LobSolve`/`LobSolveInverse` use `Fast*` throughout;
-  `LobSolveELR`/`LobSolveInverseELR` use `SolveStep`/`SolveAngle`
+  `LobSolveELR`/`LobSolveInverseELR` use `SolveStepELR`/`SolveAngleELR`
   throughout. There is no drop threshold and no per-range switching:
   the old 100-foot switch is gone. Builder zero search still uses
-  `FastSolveAngle`.
+  `SolveAngle`.
 - Implication: a convergence claim on `LobSolve` does **not** transfer to
   the lapse-scaled paths. §8 requires both paths.
 
@@ -238,7 +238,7 @@ if code moves, the spec's logic still holds.)
   `0.001 MOA → ±0.01 in`, unreachable NaN, cheap-vs-ELR agreement where
   lapse corrections are small
   (`test/source/solve_angle_test.cpp`, `test/source/lob_inverse_test.cpp`).
-- The tolerance parameter already exists on `FastSolveAngle`/`SolveAngle`
+- The tolerance parameter already exists on `SolveAngle`/`SolveAngleELR`
   (default `0.01 MOA`) — refinement studies use it directly; no API change
   needed for tolerance tightening. Step refinement goes through public
   `Builder::StepSize`.
@@ -415,8 +415,8 @@ is accurate to X"*.
 | Knob | How | Values | Notes |
 |---|---|---|---|
 | `StepSize` (public `Builder::StepSize`, `uint16_t` in) | Halving ladder at fixed everything else | `36 → 18 → 9 → 4 → 2 → 1` (`0` = 36 default; ladder uses explicit inches) | Integer-only; 9→4 breaks exact halving — record actual `Δx` per run; cost ∝ `1/Δx`, finest ≈ 36× default → offline only |
-| Angle tolerance (existing `SolveAngle`/`FastSolveAngle` param) | Tighten at fixed step | `0.01 → 0.003 → 0.001` MOA | Default path uses 0.01; 0.001 cross-checked to `±0.01 in` in existing tests |
-| Density path | Stratify, never mix | `Fast*` (forward/zero) vs `DsDx` (inverse tail) | Inverse studies split at `drop ≷ 100 ft`; report both branches |
+| Angle tolerance (existing `SolveAngleELR`/`SolveAngle` param) | Tighten at fixed step | `0.01 → 0.003 → 0.001` MOA | Default path uses 0.01; 0.001 cross-checked to `±0.01 in` in existing tests |
+| Density path | Stratify, never mix | `Fast*` (forward/zero) vs `DsDxELR` (inverse tail) | Inverse studies split at `drop ≷ 100 ft`; report both branches |
 | Spline | Isolate, not part of step ladder | Perturb `drags[60]` within `5e-3` budget (§8.6) | Separates drag-table error from integrator error |
 
 Do **not** vary: physics inputs (that's §9), `kMaxIterations`/`±45°` bounds
@@ -465,13 +465,13 @@ compiler flags (that's §16 platform coverage).
 Failure signatures (numerical, fix by config/envelope, not by physics debate):
 
 - Non-monotone ladder, `p ≤ 0` or `p > 4`, oscillation with refinement.
-- `SolveAngle` returns NaN / hits 10-iteration cap / `±45°` bound at any rung
+- `SolveAngleELR` returns NaN / hits 10-iteration cap / `±45°` bound at any rung
   (record iterations-to-converge per range; cap-hit = failure, not "large
   adjustment").
 - Fall-short / tumble / `max_time` / `minimum_speed` interpolation engages at
   different ranges per rung (branch discontinuity — split the envelope at the
   branch, do not difference across it).
-- `Fast*` vs `DsDx` paths diverge on the same inputs beyond the floor (this is
+- `Fast*` vs `DsDxELR` paths diverge on the same inputs beyond the floor (this is
   a **path discrepancy**, reported separately from step convergence; see §13
   for the lapse effect test).
 - Model disagreement looks different: ladder converges cleanly (monotone,
@@ -532,7 +532,7 @@ Reuse existing fixtures verbatim where possible (no new magic trajectories):
    geometry (meplat 0.065, base 0.242, nose 0.690, tail 0.140, RtR 0.90);
    non-zero jump required (`assert jump ≠ 0`).
 7. **C9 inverse pair** — C1/C5/C8 through `SolveInverse` at 300/600/1000 yd
-   (covers `FastSolveAngle` branch) + 2000–3000 yd tail (covers `SolveAngle`
+   (covers `SolveAngle` branch) + 2000–3000 yd tail (covers `SolveAngleELR`
    `drop>100 ft` branch; assert branch taken via forward `elevation < −1200`).
 8. **C10 BC-bands/custom** — bands `0.20@2000 / 0.30@2500 / 0.40@3000` fps
    (`bc_transformation.md` values) + G6 custom-table path.
@@ -754,7 +754,7 @@ no values are re-tuned in the transcription.
 ### 10.5 Model-form spot checks (planned discrepancies)
 
 - G7-vs-G1 mismatch run, single-BC vs BC-bands on the same bands, Litz vs
-  Boatright on full geometry, lapse on/off (`Fast*` vs `DsDx` same inputs),
+  Boatright on full geometry, lapse on/off (`Fast*` vs `DsDxELR` same inputs),
   Coriolis/spin/jump on/off. These quantify **known structural choices** and
   feed §13 effect sizes; they are reported as `δ_structural`, never as
   `ε_num`.
@@ -940,7 +940,7 @@ For fixed case + config, compute the paired difference:
 ```
 
 Candidate effects (minimum set): step refinement (36→9 in); angle tolerance
-(0.01→0.001 MOA); lapse path (`Fast*` vs `DsDx` on the inverse tail);
+(0.01→0.001 MOA); lapse path (`Fast*` vs `DsDxELR` on the inverse tail);
 Coriolis on/off; spin off/Litz/Boatright; jump on/off; single-BC vs bands;
 G7 vs G1 (model-form reference); spline `±5e-3` nudge; single-point profile
 vs uniform (expect `R_sig ≪ 1` — bit-identity oracle, guards the storage
@@ -1167,7 +1167,7 @@ Every JSON artifact starts with a provenance header:
   inline buffer; borrowed table pointers; 60-float spline; two-`CartesianT` +
   `SecT` state), no exceptions, C++14, no `<random>`, no threads, no I/O.
 - Hot path stays branch-light: 7-FLOP `PolyVal`, `O(1)` monotonic `Seek`,
-  `FastDsDx` firing-site fast path; cost linear in `1/Δx` (measured in
+  `DsDx` firing-site fast path; cost linear in `1/Δx` (measured in
   `benchmark/ode.cpp`). Wind query costs one node copy on the uniform /
   no-shear fast path (`wind.hpp` inline, `kCount == 1 && !kShear`) and a
   ≤7-compare scan + lerp + mults on the profile path (`wind.cpp` cold TU,
@@ -1414,7 +1414,7 @@ floors/ceilings checked into `baselines/`):
   mix flat/inclined wind claims (§10.3).
 - **Reference licensing** (JBM/BRL tables, paper excerpts): vendored tables
   already in-tree; new external data needs license check before check-in.
-- **Lapse-gate validity**: forward `Fast*` vs inverse-tail `DsDx` split means
+- **Lapse-gate validity**: forward `Fast*` vs inverse-tail `DsDxELR` split means
   two truths per long-range case — the spec treats this as designed, visible,
   and envelope-defining, not as a bug to hide.
 

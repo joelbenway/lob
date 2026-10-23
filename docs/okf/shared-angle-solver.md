@@ -18,7 +18,9 @@ Sharing guarantees the zero a rifle is zeroed with and the adjustments
 that assume that zero are computed with identical tolerance, bounds,
 and jump handling; two implementations could drift subtly apart. It
 also halves maintenance: a fix to convergence behavior applies to both
-features at once, with a smaller diff than guarding every caller. See
-[Shared Angle Solver](angle-solver.md) for the dedicated treatment, and
+features at once, with a smaller diff than guarding every caller. The
+two density flavors (`SolveAngle` and `SolveAngleELR`) are entry points
+over that one shared search, not rival implementations. See
+[Angle Solver Mechanics](angle-solver.md) for the dedicated treatment, and
 [Drag](drag-model.md) for how the curves it flies were
 built.

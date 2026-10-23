@@ -97,8 +97,8 @@ Why this shape: one LOB test file (harness + smoke + driver share the paired-dif
 `Δ_effect(R) = y_with − y_without` at fixed case+config; yardstick per Global Constraints; band per range/channel; artifact `signal_{effect}_{case}.json` with the honesty header. Isolation levels: ISOLATED (only the effect differs) / JOINT (named confounds move together — reported as joint, never mislabeled) / BOUND (no toggle exists — upper-bound characterization, labeled as such):
 
 1. `step-36-to-9` (C1, ISOLATED): expect ≪1 everywhere (Phase 1: 7e-05 in). The control — proves the harness sees "nothing" correctly.
-2. `angle-tol` (C1, ISOLATED, STATIC probe via `SolveAngle`/`FastSolveAngle` tolerance params 0.01→0.001): expect ≪1 (Phase 1 tightening result, now in R_sig form).
-3. `lapse-fast-vs-solve` (C9 ballistics, ISOLATED, STATIC probe: same initial state stepped with `FastSolveStep` vs `SolveStep` per `solve_step.hpp`, compare trajectories): expect small-but-nonzero (the path gate exists because it matters at range). CI smoke covers the public path-consequence (see Task 2).
+2. `angle-tol` (C1, ISOLATED, STATIC probe via `SolveAngleELR`/`SolveAngle` tolerance params 0.01→0.001): expect ≪1 (Phase 1 tightening result, now in R_sig form).
+3. `lapse-fast-vs-solve` (C9 ballistics, ISOLATED, STATIC probe: same initial state stepped with `SolveStep` vs `SolveStepELR` per `solve_step.hpp`, compare trajectories): expect small-but-nonzero (the path gate exists because it matters at range). CI smoke covers the public path-consequence (see Task 2).
 4. `coriolis-on-off` (C7-style lat 45° × N/S/E/W, ISOLATED via omitting lat/az): expect ≫1 on deflection, ≈1-or-below on elevation.
 5. `spin-litz-vs-off` + `spin-boatright-vs-litz` (C8 geometry, JOINT drift+jump by construction — the inputs that enable jump also enable drift; report both rows, never claim isolation): Litz-vs-off expect ≫1 on deflection (twist share genuine); Boatright-vs-Litz NO expectation (first gap measurement — report, don't predict).
 6. `jump-on-off` (C8 crosswind vs wind-zeroed, JOINT with drift for the same reason; plus the analytic fact that zero crosswind ⇒ zero jump by `BuildLitzAerodynamicJump` early-out): expect ≫1 on elevation (jump −0.48 MOA measured). CI smoke covers the pair.
@@ -169,8 +169,8 @@ Smoke (`SignalSmoke.*`, hermetic, in-memory, 36-in default step) — RECORD-don'
 - Produces: per-effect JSONs (Δ/u_total/R_sig/band/yardstick-header per range/channel) + curated claims doc.
 
 Probes (static-only, characterization with verdicts where applicable):
-- Tolerance: `SolveAngle`/`FastSolveAngle` 0.01→0.001 on C1 @900 ft → R_sig (effect 2).
-- Lapse stepping: `FastSolveStep` vs `SolveStep` trajectories from identical C9 initial state → per-range Δ (effect 3).
+- Tolerance: `SolveAngleELR`/`SolveAngle` 0.01→0.001 on C1 @900 ft → R_sig (effect 2).
+- Lapse stepping: `SolveStep` vs `SolveStepELR` trajectories from identical C9 initial state → per-range Δ (effect 3).
 - GetWind height-response: same downrange × Y sweep at flat + incline 15° → scaling curves (effect 13 bound input).
 - Ceiling: above-300-ft-equivalent states → clamped proof (effect 14).
 Driver (`LOB_FULL_SIGNAL=1`, else `GTEST_SKIP`; existing `LOB_VALIDATION_DIR` — no CMake change beyond the HELPER line): all 15 effects × cases; spline effect 9 via custom-table ±5e-3 (CLOSES §8.6 — commit message says so); duplicate check byte-compares barometer vs weather-station expected[] (flag in claims limitations, vectors untouched); claims doc transcribed from the run (all `provisional`, `human_signoff: pending`, unclaimed list from Phase 3 matrix, limitations incl. duplicate + u_c-absent + single-platform + no-dedup notes).

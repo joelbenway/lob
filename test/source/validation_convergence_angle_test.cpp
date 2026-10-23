@@ -58,7 +58,7 @@ lob::FeetT FireResidual(const LobContext& ctx, const lob::MoaT& angle,
                                  lob::FpsT(0.0)));
   lob::spline::CurveView curve(lob::spline::kKnots.data(), &ctx.drags[0]);
   while (s.P().X() < range) {
-    lob::FastSolveStep(ctx, &s, &curve, range);
+    lob::SolveStep(ctx, &s, &curve, range);
   }
   return s.P().Y() - lob::FeetT(ctx.optic_height);
 }
@@ -70,10 +70,10 @@ TEST(ValidationAngleConvergence, TighteningNeverRegressesResidual) {
   ASSERT_EQ(kCtx.error, kLobErrorNone);
   const lob::FeetT kRange(900.0);
   const lob::MoaT kDefault =
-      lob::FastSolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
+      lob::SolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
   const lob::MoaT kTight =
-      lob::FastSolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0),
-                          lob::RadiansT(lob::MoaT(0.001)));
+      lob::SolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0),
+                      lob::RadiansT(lob::MoaT(0.001)));
   ASSERT_FALSE(kDefault.IsNaN());
   ASSERT_FALSE(kTight.IsNaN());
   // Tighter tolerance lands within one default-tolerance of the default

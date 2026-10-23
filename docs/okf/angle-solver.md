@@ -10,9 +10,10 @@ status: draft
 
 # Angle Solver Mechanics
 
-lob has exactly one routine that answers "what launch angle makes this
-shot go there?". It serves both features that need that answer, and it
-is the same routine for both, down to the tolerance, the bounds, and
+lob has exactly one implementation that answers "what launch angle makes this
+shot go there?". It serves both features that need that answer, through
+two density entry points — `SolveAngle` for firing-site air, `SolveAngleELR`
+for lapse-scaled air — but it is the same search down to the tolerance, the bounds, and
 the iteration policy. This page explains the problem it solves, how it
 works, why it is shared rather than duplicated, and what backs it up.
 
@@ -116,10 +117,12 @@ error; in an inverse solve it truncates the batch at the range that
 failed, so a caller never receives a fabricated adjustment for the
 ranges past it.
 
-Two entry points exist, differing only in which density the integration
-assumes as the projectile climbs: one holds the firing-site density,
-the other recomputes density per step. Inverse solving picks between
-them based on how far the shot has to climb. Everything else about the
+Two entry points share that implementation, differing only in which
+density the integration assumes as the projectile climbs: `SolveAngle`
+holds the firing-site density, `SolveAngleELR` recomputes density per
+step. The caller picks by calling — zero search uses `SolveAngle`,
+`SolveInverseELR` refines through `SolveAngleELR`, and the cheap
+`SolveInverse` performs no iteration at all. Everything else about the
 search, including the shared tolerance and bounds, is identical.
 
 ## Seeds carry intent

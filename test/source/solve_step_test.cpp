@@ -51,28 +51,28 @@ size_t CountStepsTo(const LobContext& ctx, lob::FeetT target) {
   // ~1e-13 ft); any real step-size error is at least 1 inch.
   constexpr double kRoundingToleranceFt = 1e-6;
   while (s.P().X() < target - lob::FeetT(kRoundingToleranceFt)) {
-    lob::FastSolveStep(ctx, &s, &curve, target);
+    lob::SolveStep(ctx, &s, &curve, target);
     ++steps;
   }
   return steps;
 }
 }  // namespace
 
-TEST(SolveStepTests, TwelveInchStepOneYardSolveTakesThreeSteps) {
+TEST(SolveStepELRTests, TwelveInchStepOneYardSolveTakesThreeSteps) {
   const LobContext kCtx = BuildContext(12U);
   const lob::FeetT kTarget = lob::YardT(1);
 
   EXPECT_EQ(CountStepsTo(kCtx, kTarget), 3U);
 }
 
-TEST(SolveStepTests, OneHundredEightyInchStepTenYardSolveTakesTwoSteps) {
+TEST(SolveStepELRTests, OneHundredEightyInchStepTenYardSolveTakesTwoSteps) {
   const LobContext kCtx = BuildContext(180U);
   const lob::FeetT kTarget = lob::FeetT(lob::YardT(10));
 
   EXPECT_EQ(CountStepsTo(kCtx, kTarget), 2U);
 }
 
-TEST(SolveStepTests, ComputeStepTargetBehindReturnsStepSize) {
+TEST(SolveStepELRTests, ComputeStepTargetBehindReturnsStepSize) {
   const LobContext kCtx = BuildContext(36U);  // 1 yard step
   const double kAngle = lob::RadiansT(lob::MoaT(kCtx.zero_angle)).Value();
   lob::TrajectoryStateT s(
@@ -83,7 +83,7 @@ TEST(SolveStepTests, ComputeStepTargetBehindReturnsStepSize) {
   lob::spline::CurveView curve(lob::spline::kKnots.data(), &kCtx.drags[0]);
   const lob::FeetT kTargetBehind = lob::FeetT(50.0);  // behind s.P().X()=100
   const lob::FeetT kBeforeX = s.P().X();
-  lob::FastSolveStep(kCtx, &s, &curve, kTargetBehind);
+  lob::SolveStep(kCtx, &s, &curve, kTargetBehind);
   EXPECT_GT(s.P().X().Value(), kBeforeX.Value());
 
   lob::TrajectoryStateT s2(
@@ -92,11 +92,11 @@ TEST(SolveStepTests, ComputeStepTargetBehindReturnsStepSize) {
                                  lob::FpsT(kCtx.velocity) * std::sin(kAngle),
                                  lob::FpsT(0.0)));
   const lob::FeetT kBeforeX2 = s2.P().X();
-  lob::SolveStep(kCtx, &s2, &curve, kTargetBehind);
+  lob::SolveStepELR(kCtx, &s2, &curve, kTargetBehind);
   EXPECT_GT(s2.P().X().Value(), kBeforeX2.Value());
 }
 
-TEST(SolveStepTests, SolveStepClampsNegativeVx) {
+TEST(SolveStepELRTests, SolveStepELRClampsNegativeVx) {
   constexpr uint16_t kLowVelocityFps = 600U;
   constexpr double kHeadwindMph = 100.0;
   constexpr double kHeadwindDeg = 180.0;
@@ -117,7 +117,7 @@ TEST(SolveStepTests, SolveStepClampsNegativeVx) {
                           lob::CartesianT<lob::FpsT>(
                               lob::FpsT(1.0), lob::FpsT(0.0), lob::FpsT(0.0)));
   lob::spline::CurveView curve(lob::spline::kKnots.data(), &ctx.drags[0]);
-  lob::SolveStep(ctx, &s, &curve, lob::FeetT(kFarTargetFt));
+  lob::SolveStepELR(ctx, &s, &curve, lob::FeetT(kFarTargetFt));
   EXPECT_EQ(s.V().X().Value(), 0.0);
   EXPECT_EQ(s.V().Y().Value(), 0.0);
   EXPECT_EQ(s.V().Z().Value(), 0.0);

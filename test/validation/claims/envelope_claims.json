@@ -37,7 +37,7 @@
       "case": "C1",
       "isolation": "ISOLATED",
       "expectation": "R_sig << 1 (tolerance tightening below resolution)",
-      "finding": "MET: SolveAngle and FastSolveAngle 0.01->0.001 agree bitwise (delta 0.0 MOA @900ft); R_sig 0.0 both paths, indistinguishable.",
+      "finding": "MET: SolveAngleELR and SolveAngle 0.01->0.001 agree bitwise (delta 0.0 MOA @900ft); R_sig 0.0 both paths, indistinguishable.",
       "verdict": "provisional",
       "artifact": "signal_angle-tol_C1.json"
     },

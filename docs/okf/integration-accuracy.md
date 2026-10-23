@@ -104,10 +104,12 @@ second-order step over a higher-order one, which
 ## Limitations
 
 - Fixed step, no embedded error estimate, no adaptive stepping.
-- The per-step air-density variant is gated by the inverse solver
-  rather than always on. Most shots do not climb far enough for it to
-  matter and it is not free, so the cheap path is the default and the
-  accurate path is paid for per range where it is needed. See
+- The per-step air-density variant is selected by the caller, not by
+  the shot: `Solve`/`SolveInverse` always use firing-site air, and
+  `SolveELR`/`SolveInverseELR` always recompute it along the flight.
+  Most shots do not climb far enough for the lapse variant to matter
+  and it is not free, so the cheap path is the default and the
+  lapse-scaled path is an explicit opt-in. See
   [Point-Mass Model](point-mass-model.md).
 
 ## Related

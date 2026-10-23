@@ -33,7 +33,7 @@ constexpr std::uint64_t kTailResolveSamples = 100000U;
 constexpr int kArtifactSchema = 1;
 constexpr std::uint64_t kGzipSuggestSamples = 10000U;
 constexpr const char* kRngName = "mt19937_64";
-// SolveAngle library default (source/solve_angle.hpp): the runner never
+// SolveAngleELR library default (source/solve_angle.hpp): the runner never
 // overrides it, so provenance records it as the fixed per-run value.
 constexpr double kAngleTolMoa = 0.01;
 constexpr const char* kPooledWarning =
