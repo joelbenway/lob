@@ -189,7 +189,7 @@ void PrintUsage(std::ostream& out) {
        << "       lob_mc --selfcheck\n"
        << "       lob_mc --help\n"
        << "Monte Carlo runner: samples the manifest dimensions through the\n"
-       << "unchanged deterministic solver (one Build + Solve + SolveInverse\n"
+       << "unchanged deterministic solver (one Build + Solve + SolveInverseELR\n"
        << "per sample) and writes samples.csv with per-sample branch flags\n"
        << "plus mc_run_{id}.json with convergence-checked summaries.\n"
        << "--cell selects a dimension set from the manifest (default: the\n"
@@ -337,7 +337,7 @@ struct TimedRun {
 };
 
 // steady_clock around the solve loop only: cost_single is wall/N per sample
-// (Build + Solve + SolveInverse through the public API), reported per run.
+// (Build + Solve + SolveInverseELR through the public API), reported per run.
 TimedRun RunTimed(const mc::RunPlan& plan, std::size_t num_samples,
                   std::size_t num_workers) {
   TimedRun run;

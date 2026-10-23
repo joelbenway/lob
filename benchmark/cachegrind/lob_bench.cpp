@@ -156,6 +156,19 @@ void RunSolve(std::uint64_t reps) {
 }
 
 template <lob::Context (*Fn)()>
+void RunSolveELR(std::uint64_t reps) {
+  const lob::Context kCtx = Fn();  // setup outside the loop
+  std::array<lob::Output, kNumRanges> outputs = {};
+  double acc = 0.0;
+  for (std::uint64_t i = 0; i < reps; ++i) {
+    const std::size_t kSolved = lob::SolveELR(kCtx, kRanges, &outputs);
+    acc += static_cast<double>(kSolved) + outputs.at(kNumRanges - 1U).elevation;
+  }
+  static volatile double sink = 0.0;
+  (void)(sink = acc);
+}
+
+template <lob::Context (*Fn)()>
 void RunSolveInverse(std::uint64_t reps) {
   const lob::Context kCtx = Fn();  // setup outside the loop
   std::array<lob::Output, kNumRanges> outputs = {};
@@ -168,20 +181,35 @@ void RunSolveInverse(std::uint64_t reps) {
   (void)(sink = acc);
 }
 
+template <lob::Context (*Fn)()>
+void RunSolveInverseELR(std::uint64_t reps) {
+  const lob::Context kCtx = Fn();  // setup outside the loop
+  std::array<lob::Output, kNumRanges> outputs = {};
+  double acc = 0.0;
+  for (std::uint64_t i = 0; i < reps; ++i) {
+    const std::size_t kSolved = lob::SolveInverseELR(kCtx, kRanges, &outputs);
+    acc += static_cast<double>(kSolved) + outputs.at(kNumRanges - 1U).elevation;
+  }
+  static volatile double sink = 0.0;
+  (void)(sink = acc);
+}
+
 struct Case {
   const char* name;
   void (*run)(std::uint64_t);
   lob::Context (*build)();
 };
 
-constexpr std::array<Case, 7> kCases = {{
+constexpr std::array<Case, 9> kCases = {{
     {"build_basic", &RunBuild<&BuildBasic>, &BuildBasic},
     {"build_full", &RunBuild<&BuildFull>, &BuildFull},
     {"build_custom_table", &RunBuild<&BuildCustomTable>, &BuildCustomTable},
     {"build_boatright", &RunBuild<&BuildBoatright>, &BuildBoatright},
     {"build_zero_search", &RunBuild<&BuildZeroSearch>, &BuildZeroSearch},
     {"solve_basic", &RunSolve<&BuildBasic>, &BuildBasic},
+    {"solve_elr", &RunSolveELR<&BuildBasic>, &BuildBasic},
     {"solve_inverse", &RunSolveInverse<&BuildBasic>, &BuildBasic},
+    {"solve_inverse_elr", &RunSolveInverseELR<&BuildBasic>, &BuildBasic},
 }};
 
 }  // namespace
