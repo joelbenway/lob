@@ -9,8 +9,9 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "helpers.hpp"
+#include "eng_units.hpp"
 #include "lob/lob.hpp"
+#include "solve_angle.hpp"
 
 namespace tests {
 
@@ -23,9 +24,6 @@ struct LobInverseTest : public testing::Test {
   const uint32_t kRangeYd600 = 1800U;
   const uint32_t kRangeYd1000 = 3000U;
   const double kWindSpeed = 5.0;
-  const double kZeroRangeElevation = 5.0;
-  const double kZeroRangeDeflection = 7.0;
-  const double kInvalidElevation = 10.0;
 
   lob::Context MakeTestContext(double bc, uint16_t mv) const {
     lob::Context result = lob::Builder()
@@ -37,13 +35,6 @@ struct LobInverseTest : public testing::Test {
                               .Build();
     EXPECT_EQ(result.error, lob::ErrorT::kNone);
     return result;
-  }
-
-  lob::Output ForwardSolve(uint32_t range_ft) const {
-    lob::Output out{};
-    const size_t kSize = lob::Solve(context, range_ft, &out);
-    EXPECT_EQ(kSize, 1U);
-    return out;
   }
 
   lob::Context context{};
@@ -123,70 +114,44 @@ TEST_F(LobInverseTest, SolveInverseFlipsSignsOfElevationAndDeflection) {
   EXPECT_NE(std::signbit(forward.deflection), std::signbit(inverse.deflection));
 }
 
-TEST_F(LobInverseTest, FastInverseConvertsForwardOutputInPlace) {
-  lob::Output out = ForwardSolve(kRangeYd300);
-  const double kElevation(out.elevation);
-  const size_t kSize = lob::FastInverse(context, &out, 1U);
-  EXPECT_EQ(kSize, 1U);
-  EXPECT_NE(kElevation, out.elevation);
-  EXPECT_TRUE(std::isfinite(out.elevation));
-  EXPECT_TRUE(std::isfinite(out.deflection));
+TEST_F(LobInverseTest, SolveInverseCombinesForwardSolveAndOneStepCorrection) {
+  lob::Output forward{};
+  ASSERT_EQ(lob::Solve(context, kRangeYd300, &forward), 1U);
+  lob::Output inverse{};
+  ASSERT_EQ(lob::SolveInverse(context, kRangeYd300, &inverse), 1U);
+  const lob::RadiansT kTheta =
+      lob::RadiansT(lob::MoaT(context.zero_angle + context.aerodynamic_jump));
+  const double kExpected =
+      lob::MoaT(lob::FastInverseAngle(kTheta,
+                                      lob::FeetT(lob::InchT(forward.elevation)),
+                                      lob::FeetT(forward.range)) -
+                kTheta)
+          .Value();
+  EXPECT_DOUBLE_EQ(inverse.elevation, kExpected);
 }
 
-TEST_F(LobInverseTest, FastInverseSkipsZeroRangeOutputs) {
-  lob::Output out{};
-  out.range = 0;
-  out.elevation = kZeroRangeElevation;
-  out.deflection = kZeroRangeDeflection;
-  const size_t kSize = lob::FastInverse(context, &out, 1U);
-  EXPECT_EQ(kSize, 0U);
-  EXPECT_DOUBLE_EQ(out.elevation, kZeroRangeElevation);
-  EXPECT_DOUBLE_EQ(out.deflection, kZeroRangeDeflection);
-}
-
-TEST_F(LobInverseTest, FastInverseSkipsNonFiniteElevation) {
-  lob::Output out{};
-  out.range = kRangeYd300;
-  out.elevation = lob::NaN();
-  out.deflection = 0.0;
-  const size_t kSize = lob::FastInverse(context, &out, 1U);
-  EXPECT_EQ(kSize, 0U);
-  EXPECT_TRUE(std::isnan(out.elevation));
-}
-
-TEST_F(LobInverseTest, FastInverseSkipsNonFiniteDeflection) {
-  lob::Output out{};
-  out.range = kRangeYd300;
-  out.elevation = 0.0;
-  out.deflection = lob::NaN();
-  const size_t kSize = lob::FastInverse(context, &out, 1U);
-  EXPECT_EQ(kSize, 0U);
-}
-
-TEST_F(LobInverseTest, FastInverseInvalidContextReturnsZero) {
-  const lob::Context kBad =
-      lob::Builder().BallisticCoefficientPsi(kTestBC).Build();
-  EXPECT_NE(kBad.error, lob::ErrorT::kNone);
-  lob::Output out{};
-  out.range = kRangeYd300;
-  out.elevation = kInvalidElevation;
-  EXPECT_EQ(lob::FastInverse(kBad, &out, 1U), 0U);
-}
-
-TEST_F(LobInverseTest, FastInverseArrayOverload) {
-  std::array<lob::Output, 2> outs = {ForwardSolve(kRangeYd300),
-                                     ForwardSolve(kRangeYd600)};
-  const size_t kSize = lob::FastInverse(context, &outs);
-  EXPECT_EQ(kSize, 2U);
-  EXPECT_TRUE(std::isfinite(outs[0].elevation));
-  EXPECT_TRUE(std::isfinite(outs[1].elevation));
-}
-
-TEST_F(LobInverseTest, FastInverseSingleOutputOverload) {
-  lob::Output out = ForwardSolve(kRangeYd300);
-  const size_t kSize = lob::FastInverse(context, &out);
-  EXPECT_EQ(kSize, 1U);
-  EXPECT_TRUE(std::isfinite(out.elevation));
+TEST_F(LobInverseTest, SolveInverseIgnoresDropThreshold) {
+  const lob::Context kCtx = lob::Builder()
+                                .BallisticCoefficientPsi(kTestBC)
+                                .InitialVelocityFps(kTestMuzzleVelocity)
+                                .ZeroAngleMOA(kTestZeroAngle)
+                                .Build();
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+  const std::array<uint32_t, 1> kRanges = {7500U};
+  std::array<lob::Output, 1> forward{};
+  ASSERT_EQ(lob::Solve(kCtx, kRanges, &forward), kRanges.size());
+  ASSERT_LT(forward.at(0).elevation, -1200.0);
+  std::array<lob::Output, 1> inverse{};
+  ASSERT_EQ(lob::SolveInverse(kCtx, kRanges, &inverse), kRanges.size());
+  const lob::RadiansT kTheta =
+      lob::RadiansT(lob::MoaT(kCtx.zero_angle + kCtx.aerodynamic_jump));
+  const double kExpected =
+      lob::MoaT(lob::FastInverseAngle(
+                    kTheta, lob::FeetT(lob::InchT(forward.at(0).elevation)),
+                    lob::FeetT(forward.at(0).range)) -
+                kTheta)
+          .Value();
+  EXPECT_DOUBLE_EQ(inverse.at(0).elevation, kExpected);
 }
 
 TEST_F(LobInverseTest, SolveInverseZeroRangeReturnsZeroAdjustment) {
@@ -228,8 +193,7 @@ TEST_F(LobInverseTest, SolveInverseStopsAtFirstUnreachableInArray) {
   EXPECT_TRUE(std::isfinite(outs[1].elevation));
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
-TEST_F(LobInverseTest, SolveInverseMatchesFastInverseWithJump) {
+TEST_F(LobInverseTest, SolveInverseMatchesGeometricWarpWithJump) {
   const lob::Context kCtx = lob::Builder()
                                 .BallisticCoefficientPsi(kTestBC)
                                 .InitialVelocityFps(kTestMuzzleVelocity)
@@ -243,16 +207,20 @@ TEST_F(LobInverseTest, SolveInverseMatchesFastInverseWithJump) {
                                 .Build();
   ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
   ASSERT_NE(kCtx.aerodynamic_jump, 0.0);
-  for (const uint32_t kRangeFt : {kRangeYd300, kRangeYd1000, 4500U}) {
-    lob::Output forward{};
-    ASSERT_EQ(lob::Solve(kCtx, kRangeFt, &forward), 1U);
-    ASSERT_EQ(lob::FastInverse(kCtx, &forward, 1U), 1U);
-    const double kFast = forward.elevation;
-    lob::Output inverse{};
-    ASSERT_EQ(lob::SolveInverse(kCtx, kRangeFt, &inverse), 1U);
-    EXPECT_NEAR(kFast, inverse.elevation, 0.1)
-        << "range=" << kRangeFt << " jump=" << kCtx.aerodynamic_jump;
-  }
+  const uint32_t kRangeFt = 4500U;
+  lob::Output forward{};
+  ASSERT_EQ(lob::Solve(kCtx, kRangeFt, &forward), 1U);
+  lob::Output inverse{};
+  ASSERT_EQ(lob::SolveInverse(kCtx, kRangeFt, &inverse), 1U);
+  const lob::RadiansT kTheta =
+      lob::RadiansT(lob::MoaT(kCtx.zero_angle + kCtx.aerodynamic_jump));
+  const double kExpected =
+      lob::MoaT(lob::FastInverseAngle(kTheta,
+                                      lob::FeetT(lob::InchT(forward.elevation)),
+                                      lob::FeetT(forward.range)) -
+                kTheta)
+          .Value();
+  EXPECT_DOUBLE_EQ(inverse.elevation, kExpected);
 }
 
 }  // namespace tests
