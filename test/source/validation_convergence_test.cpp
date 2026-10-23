@@ -449,7 +449,7 @@ TEST(ValidationFloorSurvey, SurveyCells) {
 
   // C8-Litz: spin inputs taking the Litz (not Boatright) path. Mirrors the
   // jump context in test/source/lob_inverse_test.cpp
-  // SolveInverseMatchesFastInverseWithJump.
+  // SolveInverseMatchesGeometricWarpWithJump.
   {
     const std::array<uint32_t, 3> kRanges = {900U, 1800U, 2700U};
     std::array<lob::Output, 3> outs36{};
@@ -637,7 +637,7 @@ inline void PrintCoarsePair(const char* cell, uint16_t coarse_step,
 // blocks verbatim: C1 = MakeC1IcaoBuilder(); C5 = MakeWindBaseBuilder() +
 // kIII 5 mph uniform (cf. ValidationFloorSurvey C5-uniform block);
 // C8 = Litz spin builder (cf. ValidationFloorSurvey C8-Litz block; jump
-// context in lob_inverse_test.cpp SolveInverseMatchesFastInverseWithJump).
+// context in lob_inverse_test.cpp SolveInverseMatchesGeometricWarpWithJump).
 // Fixed E3 ranges {300,900,1800,3000} ft for all cases. Hermetic: SURVEY
 // lines to stdout, no file I/O. Unreachable rungs fail loudly via ASSERT_EQ
 // (range, step in the message) — never silently dropped.

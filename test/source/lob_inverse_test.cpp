@@ -141,6 +141,28 @@ TEST(LobELRInverseTest, SolveInverseELRRejectsInvalidArguments) {
   EXPECT_EQ(LobSolveInverseELR(&kBad, &kRange, &out, 0U), 0U);
 }
 
+TEST(LobELRInverseTest, SolveInverseELRZeroRangeReturnsZeroAdjustment) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  LobBuilder builder{};
+  LobBuilderInit(&builder);
+  LobBuilderBallisticCoefficientPsi(&builder, kTestBC);
+  LobBuilderInitialVelocityFps(&builder, kTestMuzzleVelocity);
+  LobBuilderZeroAngleMOA(&builder, kTestZeroAngle);
+  LobContext ctx{};
+  LobBuilderBuild(&builder, &ctx);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  LobBuilderDestroy(&builder);
+  const std::array<uint32_t, 2> kRanges = {0U, 900U};
+  std::array<LobOutput, 2> outs{};
+  ASSERT_EQ(LobSolveInverseELR(&ctx, kRanges.data(), outs.data(), outs.size()),
+            kRanges.size());
+  EXPECT_DOUBLE_EQ(outs.at(0).elevation, 0.0);
+  EXPECT_DOUBLE_EQ(outs.at(0).deflection, 0.0);
+  EXPECT_TRUE(std::isfinite(outs.at(1).elevation));
+}
+
 TEST(LobELRInverseTest, SolveInverseELRStopsAtUnreachableRange) {
   const double kWeakBC = 0.05;
   const uint16_t kWeakVelocityFps = 500U;

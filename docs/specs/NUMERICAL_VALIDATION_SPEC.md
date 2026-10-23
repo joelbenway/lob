@@ -138,15 +138,17 @@ shrink with refinement.
 - `Builder → Context → Solve` (§4). `LobOutput.elevation/deflection` are
   **inches in forward solves, MOA in inverse solves**.
 - `FastDsDx / FastSolveStep / FastSolveAngle` = firing-site density fast path;
-  `DsDx / SolveStep / SolveAngle` = lapse-scaled path (§4).
-- `kDynamicDropThreshold = FeetT(100)` gates the inverse per-range path.
+  `DsDx / SolveStep / SolveAngle` = lapse-scaled path (§4). The caller
+  selects the path by choosing `Solve`/`SolveInverse` (fast) or
+  `SolveELR`/`SolveInverseELR` (lapse-scaled); there is no automatic
+  per-range switching.
 - `CurveView` over `drags[60]`; `kKnots` (16); `kCoefsSize = 60`.
 
 ---
 
 ## 4. Existing `lob` architecture relevant to validation
 
-(Verified against source at v0.13.0. File:line references are the contract;
+(Verified against source at v0.14.0. File:line references are the contract;
 if code moves, the spec's logic still holds.)
 
 ### 4.1 Hourglass API and ABI boundary
