@@ -141,6 +141,48 @@ TEST(LobELRInverseTest, SolveInverseELRRejectsInvalidArguments) {
   EXPECT_EQ(LobSolveInverseELR(&kBad, &kRange, &out, 0U), 0U);
 }
 
+TEST(LobELRInverseTest, SolveInverseELRStopsAtUnreachableRange) {
+  const double kWeakBC = 0.05;
+  const uint16_t kWeakVelocityFps = 500U;
+  const double kWeakZeroAngleMoa = 6.11;
+  const uint32_t kUnreachableRangeFt = 4000U;
+  LobBuilder builder{};
+  LobBuilderInit(&builder);
+  LobBuilderBallisticCoefficientPsi(&builder, kWeakBC);
+  LobBuilderInitialVelocityFps(&builder, kWeakVelocityFps);
+  LobBuilderZeroAngleMOA(&builder, kWeakZeroAngleMoa);
+  LobContext ctx{};
+  LobBuilderBuild(&builder, &ctx);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  LobBuilderDestroy(&builder);
+  LobOutput out{};
+  ASSERT_EQ(LobSolve(&ctx, &kUnreachableRangeFt, &out, 1U), 1U);
+  ASSERT_LT(out.range, kUnreachableRangeFt);
+  EXPECT_EQ(LobSolveInverseELR(&ctx, &kUnreachableRangeFt, &out, 1U), 0U);
+}
+
+TEST(LobELRInverseTest, SolveInverseELRStopsAtFirstUnreachableInArray) {
+  const double kWeakBC = 0.05;
+  const uint16_t kWeakVelocityFps = 500U;
+  const double kWeakZeroAngleMoa = 6.11;
+  LobBuilder builder{};
+  LobBuilderInit(&builder);
+  LobBuilderBallisticCoefficientPsi(&builder, kWeakBC);
+  LobBuilderInitialVelocityFps(&builder, kWeakVelocityFps);
+  LobBuilderZeroAngleMOA(&builder, kWeakZeroAngleMoa);
+  LobContext ctx{};
+  LobBuilderBuild(&builder, &ctx);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  LobBuilderDestroy(&builder);
+  const std::array<uint32_t, 3> kRanges = {300U, 900U, 4000U};
+  std::array<LobOutput, 3> outs{};
+  const size_t kSize =
+      LobSolveInverseELR(&ctx, kRanges.data(), outs.data(), outs.size());
+  EXPECT_EQ(kSize, 2U);
+  EXPECT_TRUE(std::isfinite(outs.at(0).elevation));
+  EXPECT_TRUE(std::isfinite(outs.at(1).elevation));
+}
+
 TEST(LobELRInverseTest, SolveInverseELRStartsFromCheapInverseAndRefines) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;

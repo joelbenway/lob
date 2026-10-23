@@ -134,9 +134,10 @@ test("ELR inverse refines the cheap answer", () => {
 
 test("ELR inverse stops at the first unreachable range", () => {
   const context = makeBuilder().build();
-  const rows = context.solveInverse([300, 50000]);
+  const rows = context.solveInverseELR([300, 50000]);
   assert.equal(rows.length, 1);
   assert.ok(Number.isFinite(rows[0].elevationMoa));
+  assert.deepEqual(context.solveInverseELR([50000]), []);
   context.dispose();
 });
 
