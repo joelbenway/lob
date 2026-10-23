@@ -89,6 +89,24 @@ If you are using a compatible editor (e.g. VSCode) or IDE (e.g. CLion, VS), you 
 
 Please note that both the build and test commands accept a `-j` flag to specify the number of jobs to use, which should ideally be specified to the number of threads your CPU has. You may also want to add that to your preset using the `jobs` property, see the [presets documentation][10] for more details.
 
+### JavaScript and WebAssembly
+
+The `@joelbenway/lob` package uses the committed `wasm` preset and npm:
+
+```sh
+nix develop --command bash -c "npm install"
+nix develop --command bash -c "npm run build:wasm"
+nix develop --command bash -c "npm test"
+nix develop --command bash -c "npm run lint && npm run format:check"
+```
+
+The build writes `lob.mjs`, `lob.wasm`, `index.mjs`, and the package
+metadata to `build/wasm/`. `nix build .#lob-wasm` builds and tests the
+package derivation. Without Nix, install emsdk 3.1.73, activate it,
+source `emsdk_env.sh`, and run `cmake --preset=wasm &&
+cmake --build --preset=wasm`. See
+[docs/specs/JS_LIBRARY_DESIGN.md](docs/specs/JS_LIBRARY_DESIGN.md).
+
 ### Developer mode targets
 
 These are targets you may invoke using the build command from above, with an additional `-t <target>` flag:

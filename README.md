@@ -32,6 +32,8 @@ In addition to ballistic solutions, lob provides instrumental values it calculat
 
 This repo includes a tiny example CLI program, lobber, which demonstrates the library's use either by taking json arguments via stdin/stdout or through an easy interactive wizard.
 
+A browser solver example is available at <https://joelbenway.github.io/lob/docs/solver/>.
+
 ## Design
 Lob is intended to be **easy** to work with, **accurate**, and **fast** in that order.
 

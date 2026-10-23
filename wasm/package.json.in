@@ -1,0 +1,28 @@
+{
+  "name": "@joelbenway/lob",
+  "version": "@PROJECT_VERSION@",
+  "description": "Exterior ballistics calculation library",
+  "homepage": "https://github.com/joelbenway/lob",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joelbenway/lob.git"
+  },
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "main": "./index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./raw": "./lob.mjs"
+  },
+  "files": [
+    "index.mjs",
+    "lob.mjs",
+    "lob.wasm",
+    "README.md",
+    "COPYING.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  }
+}
