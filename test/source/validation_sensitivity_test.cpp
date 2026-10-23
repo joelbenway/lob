@@ -570,16 +570,7 @@ inline void RunParetoCase(const char* cell, const std::vector<uint32_t>& ranges,
 
   std::vector<lob::Output> base_inv;
   if (!inverse_ranges.empty()) {
-    // Fast-branch precondition (InverseLadder pattern): forward drop must
-    // stay above the 1200-in dynamic-branch switch at the inverse ranges.
-    for (size_t i = 0; i < ranges.size(); ++i) {
-      for (const uint32_t kInvRange : inverse_ranges) {
-        if (ranges.at(i) == kInvRange) {
-          EXPECT_GT(base_outs.at(i).elevation, -1200.0)
-              << "range=" << ranges.at(i) << " leaves the Fast branch";
-        }
-      }
-    }
+    // Cheap inverse has no density switch, so no drop precondition applies.
     const lob::Context kBaseCtx = base.Build();
     ASSERT_EQ(kBaseCtx.error, lob::ErrorT::kNone);
     base_inv.assign(inverse_ranges.size(), lob::Output());

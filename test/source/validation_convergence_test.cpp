@@ -175,16 +175,10 @@ TEST(ValidationConvergenceC1, InverseLadderDecreasesWithoutRegression) {
   ASSERT_EQ(lob::SolveInverse(kCtx36, kRanges, &outs36), kRanges.size());
   ASSERT_EQ(lob::SolveInverse(kCtx18, kRanges, &outs18), kRanges.size());
   ASSERT_EQ(lob::SolveInverse(kCtx9, kRanges, &outs9), kRanges.size());
-  // Fast-branch precondition: forward drop must stay above the 1200-in
-  // dynamic-branch switch or this test measures the wrong path.
-  std::array<lob::Output, 2> fwd{};
-  ASSERT_EQ(SolveN(kCtx36, kRanges, &fwd), kRanges.size());
+  // Cheap-inverse ladder: the one-step correction has no density switch, so
+  // no drop precondition applies; convergence of the correction itself is
+  // what this ladder checks.
   for (size_t i = 0; i < kRanges.size(); ++i) {
-    ASSERT_GT(fwd.at(i).elevation, -1200.0) << "range=" << kRanges.at(i);
-  }
-  for (size_t i = 0; i < kRanges.size(); ++i) {
-    // Inverse outputs are MOA adjustments; forward drop must stay above the
-    // 1200-in dynamic-branch switch or this test measures the wrong path.
     EXPECT_TRUE(std::isfinite(outs36.at(i).elevation));
     const double kCoarse =
         std::fabs(outs36.at(i).elevation - outs18.at(i).elevation);
@@ -534,9 +528,10 @@ TEST(ValidationFloorSurvey, SurveyCells) {
               << std::setprecision(kSurveyPrecisionDigits) << w_energy << "\n";
   }
 
-  // C9-dynamic-tail: lapse-scaled SolveAngle path via SolveInverse at
+  // C9-dynamic-tail: lapse-scaled SolveAngle path via SolveInverseELR at
   // {6000, 7500, 9000} ft. Precedent: solve_angle_test.cpp BC 0.436,
-  // 3100 fps, zero 6.11 MOA. Fail loud unless forward drop < -1200 in.
+  // 3100 fps, zero 6.11 MOA. Fail loud unless the long-tail drop sits deep
+  // in lapse-scaled territory, which characterizes the regime ELR serves.
   {
     const std::array<uint32_t, 3> kRanges = {6000U, 7500U, 9000U};
     auto build_tail = [](uint16_t step) {
@@ -561,11 +556,11 @@ TEST(ValidationFloorSurvey, SurveyCells) {
     std::array<lob::Output, 3> outs36{};
     std::array<lob::Output, 3> outs18{};
     std::array<lob::Output, 3> outs9{};
-    ASSERT_EQ(lob::SolveInverse(build_tail(36U), kRanges, &outs36),
+    ASSERT_EQ(lob::SolveInverseELR(build_tail(36U), kRanges, &outs36),
               kRanges.size());
-    ASSERT_EQ(lob::SolveInverse(build_tail(18U), kRanges, &outs18),
+    ASSERT_EQ(lob::SolveInverseELR(build_tail(18U), kRanges, &outs18),
               kRanges.size());
-    ASSERT_EQ(lob::SolveInverse(build_tail(9U), kRanges, &outs9),
+    ASSERT_EQ(lob::SolveInverseELR(build_tail(9U), kRanges, &outs9),
               kRanges.size());
     double w_elev_moa = 0.0;
     double w_defl_moa = 0.0;
