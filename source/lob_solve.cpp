@@ -177,7 +177,7 @@ size_t LobSolve(const LobContext* pctx, const uint32_t* pranges,
       return 0;
     }
   }
-  return SolveRanges(*pctx, pranges, pouts, size, FastSolveStep);
+  return SolveRanges(*pctx, pranges, pouts, size, SolveStep);
 }
 
 size_t LobSolveELR(const LobContext* pctx, const uint32_t* pranges,
@@ -192,7 +192,7 @@ size_t LobSolveELR(const LobContext* pctx, const uint32_t* pranges,
       return 0;
     }
   }
-  return SolveRanges(*pctx, pranges, pouts, size, SolveStep);
+  return SolveRanges(*pctx, pranges, pouts, size, SolveStepELR);
 }
 
 size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
@@ -202,14 +202,6 @@ size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
     return 0;
   }
   const size_t kForwardSolves = LobSolve(pctx, pranges, pouts, size);
-  // Only reached ranges carry a residual worth converting. A reached row
-  // always reports out.range >= pranges[i]: the forward loop emits a
-  // non-terminal row only after s.P().X() >= target, and truncating a
-  // non-negative double to U32 preserves >= against an integer target
-  // (floor(X) >= N iff X >= N). Conversely, terminal, max-time,
-  // minimum-speed, and tumble rows stop short of their request, so the
-  // first below-request row marks the fall-short prefix. Stop there instead
-  // of converting a meaningless miss, mirroring the old iterative stop.
   size_t reached = 0;
   while (reached < kForwardSolves && pouts[reached].range >= pranges[reached]) {
     reached++;
@@ -230,13 +222,13 @@ size_t LobSolveInverseELR(const LobContext* pctx, const uint32_t* pranges,
       continue;
     }
     // Seed represents the mechanical launch angle from the cheap answer.
-    // SolveAngle adds aerodynamic_jump internally during trajectory
+    // SolveAngleELR adds aerodynamic_jump internally during trajectory
     // evaluation. Deflection keeps the cheap geometric hold-off; only the
     // elevation is re-solved here.
     const RadiansT kSeed =
         RadiansT(MoaT(pctx->zero_angle + pouts[i].elevation));
     const MoaT kTheta =
-        SolveAngle(*pctx, FeetT(pouts[i].range), FeetT(0.0), kSeed);
+        SolveAngleELR(*pctx, FeetT(pouts[i].range), FeetT(0.0), kSeed);
     if (kTheta.IsNaN()) {
       return i;
     }

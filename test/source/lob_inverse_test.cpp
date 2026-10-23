@@ -227,7 +227,7 @@ TEST(LobELRInverseTest, SolveInverseELRStartsFromCheapInverseAndRefines) {
       LobSolveInverseELR(&ctx, kRanges.data(), elr.data(), kRanges.size()),
       kRanges.size());
   for (size_t i = 0; i < kRanges.size(); ++i) {
-    const lob::MoaT kDirect = lob::SolveAngle(
+    const lob::MoaT kDirect = lob::SolveAngleELR(
         ctx, lob::FeetT(kRanges.at(i)), lob::FeetT(0.0),
         lob::RadiansT(lob::MoaT(ctx.zero_angle + cheap.at(i).elevation)));
     ASSERT_FALSE(kDirect.IsNaN());

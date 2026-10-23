@@ -204,7 +204,7 @@ inline double ProbeInchToMoa(double inches, double range_ft) {
 
 }  // namespace
 
-// Effect 2 (STATIC): SolveAngle/FastSolveAngle tolerance 0.01→0.001 on
+// Effect 2 (STATIC): SolveAngleELR/SolveAngle tolerance 0.01→0.001 on
 // C1 @900 ft. Structural asserts (both paths complete, tightening lands
 // within granularity); the R_sig verdict is RECORDED, never tripwired.
 TEST(SignalProbes, AngleToleranceTightening) {
@@ -212,15 +212,15 @@ TEST(SignalProbes, AngleToleranceTightening) {
   ASSERT_EQ(kCtx.error, kLobErrorNone);
   const lob::FeetT kRange(900.0);
   const lob::MoaT kSolveDefault =
-      lob::SolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
+      lob::SolveAngleELR(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
   const lob::MoaT kSolveTight =
+      lob::SolveAngleELR(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0),
+                         lob::RadiansT(lob::MoaT(0.001)));
+  const lob::MoaT kFastDefault =
+      lob::SolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
+  const lob::MoaT kFastTight =
       lob::SolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0),
                       lob::RadiansT(lob::MoaT(0.001)));
-  const lob::MoaT kFastDefault =
-      lob::FastSolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
-  const lob::MoaT kFastTight =
-      lob::FastSolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0),
-                          lob::RadiansT(lob::MoaT(0.001)));
   ASSERT_FALSE(kSolveDefault.IsNaN());
   ASSERT_FALSE(kSolveTight.IsNaN());
   ASSERT_FALSE(kFastDefault.IsNaN());
@@ -245,7 +245,7 @@ TEST(SignalProbes, AngleToleranceTightening) {
             << "\n";
 }
 
-// Effect 3 (STATIC): FastSolveStep vs SolveStep trajectories from an
+// Effect 3 (STATIC): SolveStep vs SolveStepELR trajectories from an
 // identical C9 initial state. Both steppers fire to each range from the same
 // seed; the per-range residual Δ is RECORDED (small-but-nonzero expected —
 // the path gate exists because stepping matters at range).
@@ -260,10 +260,10 @@ TEST(SignalProbes, LapseSteppingDivergence) {
     const lob::FeetT kRange(static_cast<double>(kRangeFt));
     const lob::FeetT kFast = lob::detail::FireToTarget(
         kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(lob::MoaT(kSeedMoa)),
-        lob::FastSolveStep);
+        lob::SolveStep);
     const lob::FeetT kSolve = lob::detail::FireToTarget(
         kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(lob::MoaT(kSeedMoa)),
-        lob::SolveStep);
+        lob::SolveStepELR);
     ASSERT_TRUE(std::isfinite(kFast.Value())) << "range=" << kRangeFt;
     ASSERT_TRUE(std::isfinite(kSolve.Value())) << "range=" << kRangeFt;
     fast_resid.push_back(kFast.Value());
@@ -350,15 +350,15 @@ TEST(SignalProbesOffline, WritesStaticEffects) {
     constexpr uint32_t kRangeFt = 900U;
     const lob::FeetT kRange(static_cast<double>(kRangeFt));
     const lob::MoaT kSolveDefault =
-        lob::SolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
+        lob::SolveAngleELR(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
     const lob::MoaT kSolveTight =
+        lob::SolveAngleELR(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0),
+                           lob::RadiansT(lob::MoaT(0.001)));
+    const lob::MoaT kFastDefault =
+        lob::SolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
+    const lob::MoaT kFastTight =
         lob::SolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0),
                         lob::RadiansT(lob::MoaT(0.001)));
-    const lob::MoaT kFastDefault =
-        lob::FastSolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
-    const lob::MoaT kFastTight =
-        lob::FastSolveAngle(kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0),
-                            lob::RadiansT(lob::MoaT(0.001)));
     ASSERT_FALSE(kSolveDefault.IsNaN());
     ASSERT_FALSE(kSolveTight.IsNaN());
     ASSERT_FALSE(kFastDefault.IsNaN());
@@ -425,10 +425,10 @@ TEST(SignalProbesOffline, WritesStaticEffects) {
       const lob::FeetT kRange(static_cast<double>(kRangeFt));
       const lob::FeetT kFast = lob::detail::FireToTarget(
           kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(lob::MoaT(kSeedMoa)),
-          lob::FastSolveStep);
+          lob::SolveStep);
       const lob::FeetT kSolve = lob::detail::FireToTarget(
           kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(lob::MoaT(kSeedMoa)),
-          lob::SolveStep);
+          lob::SolveStepELR);
       ASSERT_TRUE(std::isfinite(kFast.Value()));
       ASSERT_TRUE(std::isfinite(kSolve.Value()));
       const double kDeltaIn = kFast.Value() - kSolve.Value();

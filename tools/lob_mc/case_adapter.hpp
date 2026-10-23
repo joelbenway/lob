@@ -113,7 +113,7 @@ struct BranchFlags {
   // own stop surfaces via reached_all/fall_short_index.
   bool miller_unstable = false;
   bool angle_cap_hit = false;
-  // Manifest echo, not solver observation (the SolveAngle dynamic-tail
+  // Manifest echo, not solver observation (the SolveAngleELR dynamic-tail
   // switch inside SolveInverse has no public per-sample signal to record).
   std::string configured_density_path = kDefaultDensityPath;
 };
@@ -1014,7 +1014,7 @@ inline void PadDraws(TrajectorySample* sample, std::size_t width) {
 }
 
 // Branch counters from one built context: forward reach, analytic
-// miller_unstable (Sg < 1, not solver-reported), and the SolveAngle-NaN angle
+// miller_unstable (Sg < 1, not solver-reported), and the SolveAngleELR-NaN angle
 // cap, which surfaces publicly as an inverse prefix-short (SolveInverseELR
 // stops at the first uncapped range, so inverse < forward is the cap branch).
 // The inverse branch uses the ELR path so the cap semantics match the old

@@ -107,9 +107,10 @@ When down-range velocity becomes nonpositive, `DsDxCore` zeroes the
 derivative contribution and the step helpers hold velocity at zero;
 this prevents continued descent in the distance-based integration rather
 than producing a division by zero. The behavior differs by caller:
-the direct angle-solving helpers `FireToTarget` and `SolveAngle` treat
-a non-advancing state as unreachable and return "no answer". By
-contrast, `LobSolve` may repeat after `FastSolveStep` zeroes velocity
+the direct angle-solving helper `FireToTarget` — hence both `SolveAngle`
+and `SolveAngleELR` — treats a non-advancing state as unreachable and
+returns "no answer". By
+contrast, `LobSolve` may repeat after `SolveStep` zeroes velocity
 before its terminal checks fire in some cases, so it does not
 guarantee termination for stalled progress; `LobSolveInverse` calls
 `LobSolve` first and therefore inherits that behavior, as does
@@ -128,7 +129,7 @@ The **fast variant** assumes the air is the air at the firing site, for
 the whole flight. A bullet that stays in roughly one atmosphere sees
 almost no error from this, and the per-step cost drops to almost
 nothing because nothing about the air needs recomputing. This is the
-variant behind forward solves, zero searches, and `SolveInverse`.
+variant behind `Solve`, zero searches, and `SolveInverse`.
 
 The **lapse variant** recomputes density and speed of sound each step,
 projecting the projectile's climb onto the standard lapse rate, so a

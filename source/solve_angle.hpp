@@ -90,18 +90,18 @@ inline MoaT SolveAngleImpl(const LobContext& ctx, FeetT range,
 }
 }  // namespace detail
 
-inline MoaT FastSolveAngle(
-    const LobContext& ctx, FeetT range, FeetT impact_height, RadiansT seed,
-    RadiansT tolerance = constant::kDefaultAngleTolerance) {
-  return detail::SolveAngleImpl(ctx, range, impact_height, seed, tolerance,
-                                FastSolveStep);
-}
-
 inline MoaT SolveAngle(const LobContext& ctx, FeetT range, FeetT impact_height,
                        RadiansT seed,
                        RadiansT tolerance = constant::kDefaultAngleTolerance) {
   return detail::SolveAngleImpl(ctx, range, impact_height, seed, tolerance,
                                 SolveStep);
+}
+
+inline MoaT SolveAngleELR(
+    const LobContext& ctx, FeetT range, FeetT impact_height, RadiansT seed,
+    RadiansT tolerance = constant::kDefaultAngleTolerance) {
+  return detail::SolveAngleImpl(ctx, range, impact_height, seed, tolerance,
+                                SolveStepELR);
 }
 
 }  // namespace lob

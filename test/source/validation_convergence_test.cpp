@@ -528,7 +528,7 @@ TEST(ValidationFloorSurvey, SurveyCells) {
               << std::setprecision(kSurveyPrecisionDigits) << w_energy << "\n";
   }
 
-  // C9-dynamic-tail: lapse-scaled SolveAngle path via SolveInverseELR at
+  // C9-dynamic-tail: lapse-scaled SolveAngleELR path via SolveInverseELR at
   // {6000, 7500, 9000} ft. Precedent: solve_angle_test.cpp BC 0.436,
   // 3100 fps, zero 6.11 MOA. Fail loud unless the long-tail drop sits deep
   // in lapse-scaled territory, which characterizes the regime ELR serves.
