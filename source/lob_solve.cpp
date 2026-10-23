@@ -19,8 +19,6 @@
 
 namespace lob {
 namespace {
-using StepFunction = void (*)(const LobContext&, TrajectoryStateT*,
-                              spline::CurveView*, FeetT);
 
 LobOutput OutputAtState(const TrajectoryStateT& s, const LobContext& ctx) {
   const FpsT kVelocity = s.V().Magnitude();
@@ -101,11 +99,9 @@ size_t ConvertForwardToInverse(const LobContext& ctx, LobOutput* pouts,
   return count;
 }
 
-using StepFunction = void (*)(const LobContext&, TrajectoryStateT*,
-                              spline::CurveView*, FeetT);
-
+template <typename StepFunc>
 size_t SolveRanges(const LobContext& ctx, const uint32_t* pranges,
-                   LobOutput* pouts, size_t size, StepFunction step) {
+                   LobOutput* pouts, size_t size, StepFunc step) {
   const FpsT kMinimumSpeed(ctx.minimum_speed);
   const auto kAngle = RadiansT(MoaT(ctx.zero_angle + ctx.aerodynamic_jump));
 
