@@ -213,13 +213,13 @@ TEST_F(SolveAngleTest, SolveAngleAngleClampPastMaxAngleReturnsNaN) {
   EXPECT_TRUE(kAngle.IsNaN());
 }
 
-TEST_F(SolveAngleTest, CheapInverseMatchesSolveAngle) {
+TEST_F(SolveAngleTest, SolveInverseELRMatchesSolveAngle) {
   const std::array<uint32_t, 3> kRanges = {900U, 1800U, 3000U};
   const double kToleranceMoa = 0.01;
   for (const uint32_t kRangeFt : kRanges) {
     LobOutput inverse{};
-    ASSERT_EQ(LobSolveInverse(&ctx, &kRangeFt, &inverse, 1U), 1U);
-    const lob::MoaT kSolved = lob::FastSolveAngle(
+    ASSERT_EQ(LobSolveInverseELR(&ctx, &kRangeFt, &inverse, 1U), 1U);
+    const lob::MoaT kSolved = lob::SolveAngle(
         ctx, lob::FeetT(static_cast<double>(kRangeFt)), lob::FeetT(0.0),
         lob::RadiansT(lob::MoaT(ctx.zero_angle)));
     ASSERT_FALSE(kSolved.IsNaN());

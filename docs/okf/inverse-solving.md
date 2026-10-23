@@ -51,7 +51,11 @@ starts from the cheap answer, then iterates every nonzero range with
 the lapse-scaled angle solver — recomputing air density and the speed
 of sound along each candidate trajectory — until it converges. This is
 the authoritative answer, and the one to use for anything published,
-compared against, or fired past a mile.
+compared against, or fired past a mile. One qualification: the
+iteration re-solves elevation only. Windage stays the geometric
+hold-off from the cheap answer; there is no iterative wind solver, so
+an ELR table's deflection column is the cheap deflection, not a
+lapse-refined one.
 
 The same split applies to the forward question: `Solve` integrates
 with firing-site air throughout, while `SolveELR` recomputes the air

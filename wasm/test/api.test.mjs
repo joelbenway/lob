@@ -132,6 +132,16 @@ test("ELR inverse refines the cheap answer", () => {
   context.dispose();
 });
 
+test("ELR inverse counts zero ranges", () => {
+  const context = makeBuilder().build();
+  const rows = context.solveInverseELRYds([0, 100, 200]);
+  assert.equal(rows.length, 3);
+  assert.equal(rows[0].elevationMoa, 0);
+  assert.equal(rows[0].deflectionMoa, 0);
+  assert.ok(Number.isFinite(rows[1].elevationMoa));
+  context.dispose();
+});
+
 test("ELR inverse stops at the first unreachable range", () => {
   const context = makeBuilder().build();
   const rows = context.solveInverseELR([300, 50000]);
