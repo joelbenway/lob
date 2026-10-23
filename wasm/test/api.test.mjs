@@ -95,25 +95,48 @@ test("inverse solutions return MOA adjustments", () => {
     assert.ok(Number.isFinite(row.deflectionMoa));
     assert.equal("elevationInch" in row, false);
   }
-  const fast = context.fastInverse([300, 600, 900]);
-  assert.equal(fast.length, 3);
-  assert.ok(Number.isFinite(fast[1].elevationMoa));
-  assert.ok(Math.abs(fast[1].elevationMoa - rows[1].elevationMoa) < 1);
   context.dispose();
 });
 
-test("fastInverse skips zero ranges", () => {
+test("cheap inverse counts zero ranges", () => {
   const context = makeBuilder().build();
-  const rows = context.fastInverse([0, 300, 600]);
-  assert.deepEqual(
-    rows.map((row) => row.rangeFt),
-    [300, 600],
-  );
-  for (const row of rows) {
-    assert.ok(Number.isFinite(row.elevationMoa));
-    assert.ok(Number.isFinite(row.deflectionMoa));
+  const cheap = context.solveInverseYds([0, 100, 200]);
+  assert.equal(cheap.length, 3);
+  assert.equal(cheap[0].elevationMoa, 0);
+  assert.equal(cheap[0].deflectionMoa, 0);
+  context.dispose();
+});
+
+test("ELR forward matches fast forward on ordinary trajectories", () => {
+  const context = makeBuilder().build();
+  const fast = context.solveYds([0, 100, 200, 300]);
+  const elr = context.solveELRYds([0, 100, 200, 300]);
+  assert.equal(elr.length, fast.length);
+  for (let i = 0; i < fast.length; i++) {
+    assert.equal(elr[i].rangeYds, fast[i].rangeYds);
+    assert.ok(Math.abs(elr[i].velocityFps - fast[i].velocityFps) <= 1);
+    assert.ok(Number.isFinite(elr[i].elevationInch));
   }
-  assert.deepEqual(context.fastInverse([0]), []);
+  context.dispose();
+});
+
+test("ELR inverse refines the cheap answer", () => {
+  const context = makeBuilder().build();
+  const cheap = context.solveInverseYds([100, 200, 300]);
+  const elr = context.solveInverseELRYds([100, 200, 300]);
+  assert.equal(elr.length, cheap.length);
+  for (let i = 0; i < cheap.length; i++) {
+    assert.ok(Number.isFinite(elr[i].elevationMoa));
+    assert.ok(Math.abs(elr[i].elevationMoa - cheap[i].elevationMoa) < 0.5);
+  }
+  context.dispose();
+});
+
+test("ELR inverse stops at the first unreachable range", () => {
+  const context = makeBuilder().build();
+  const rows = context.solveInverse([300, 50000]);
+  assert.equal(rows.length, 1);
+  assert.ok(Number.isFinite(rows[0].elevationMoa));
   context.dispose();
 });
 

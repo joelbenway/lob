@@ -27,8 +27,10 @@ The wrapper is chainable and camelCased from the C++ API. Units are part
 of each method name. `solve` takes ranges in feet; `solveYds` takes yards.
 Forward solutions return `elevationInch`/`deflectionInch`; inverse
 solutions return `elevationMoa`/`deflectionMoa`. Fall-short trajectories
-return fewer rows. `fastInverse` is a one-step approximation and skips
-zero ranges.
+return fewer rows. `solveInverse` is a forward solve plus the closed-form
+geometric correction with no iteration. The `solveELR` and `solveInverseELR`
+variants recompute air density and the speed of sound along the flight for
+extreme-range shots; use them when altitude changes can matter.
 
 The raw C API is available as `@joelbenway/lob/raw`: import the default
 factory, await it, then call the `Lob*` functions (for example
