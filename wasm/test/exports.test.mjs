@@ -19,7 +19,7 @@ test("raw module exports every function declared in lob.h", async () => {
     .filter((line) => line.startsWith("LOB_EXPORT"))
     .map((line) => /\b(Lob\w+)\(/.exec(line)?.[1])
     .filter(Boolean);
-  assert.equal(names.length, 91);
+  assert.equal(names.length, 92);
 
   const createModule = (await import(new URL("lob.mjs", build).href)).default;
   const raw = await createModule();

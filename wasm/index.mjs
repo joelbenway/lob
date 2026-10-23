@@ -521,7 +521,7 @@ export class Context {
     }
   }
 
-  #run(feet, inverse, fast) {
+  #run(feet, inverse, elr) {
     this.#assert();
     const count = feet.length;
     if (count === 0) {
@@ -541,39 +541,27 @@ export class Context {
     try {
       new Uint32Array(wasm.HEAPU32.buffer, rangesPointer, count).set(feet);
       let solved;
-      if (fast) {
-        solved = wasm._LobSolve(
-          this.#ptr,
-          rangesPointer,
-          outputsPointer,
-          count,
-        );
-        wasm._LobFastInverse(this.#ptr, outputsPointer, solved);
-      } else if (inverse) {
-        solved = wasm._LobSolveInverse(
-          this.#ptr,
-          rangesPointer,
-          outputsPointer,
-          count,
-        );
+      if (inverse) {
+        solved = elr
+          ? wasm._LobSolveInverseELR(
+              this.#ptr,
+              rangesPointer,
+              outputsPointer,
+              count,
+            )
+          : wasm._LobSolveInverse(
+              this.#ptr,
+              rangesPointer,
+              outputsPointer,
+              count,
+            );
       } else {
-        solved = wasm._LobSolve(
-          this.#ptr,
-          rangesPointer,
-          outputsPointer,
-          count,
-        );
+        solved = elr
+          ? wasm._LobSolveELR(this.#ptr, rangesPointer, outputsPointer, count)
+          : wasm._LobSolve(this.#ptr, rangesPointer, outputsPointer, count);
       }
       wasm._LobWasmOutputsToDoubles(outputsPointer, solved, doublesPointer);
-      const rows = readRows(solved, doublesPointer, inverse || fast);
-      return fast
-        ? rows.filter(
-            (row) =>
-              row.rangeFt !== 0 &&
-              Number.isFinite(row.elevationMoa) &&
-              Number.isFinite(row.deflectionMoa),
-          )
-        : rows;
+      return readRows(solved, doublesPointer, inverse);
     } finally {
       wasm._free(rangesPointer);
       wasm._free(outputsPointer);
@@ -589,6 +577,14 @@ export class Context {
     return this.#run(rangesToFeet(rangesYd, true), false, false);
   }
 
+  solveELR(rangesFt) {
+    return this.#run(rangesToFeet(rangesFt, false), false, true);
+  }
+
+  solveELRYds(rangesYd) {
+    return this.#run(rangesToFeet(rangesYd, true), false, true);
+  }
+
   solveInverse(rangesFt) {
     return this.#run(rangesToFeet(rangesFt, false), true, false);
   }
@@ -597,8 +593,12 @@ export class Context {
     return this.#run(rangesToFeet(rangesYd, true), true, false);
   }
 
-  fastInverse(rangesFt) {
-    return this.#run(rangesToFeet(rangesFt, false), false, true);
+  solveInverseELR(rangesFt) {
+    return this.#run(rangesToFeet(rangesFt, false), true, true);
+  }
+
+  solveInverseELRYds(rangesYd) {
+    return this.#run(rangesToFeet(rangesYd, true), true, true);
   }
 
   dispose() {

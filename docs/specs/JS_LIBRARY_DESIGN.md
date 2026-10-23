@@ -47,10 +47,13 @@ await) and provides a GC-managed API modeled on `lob.hpp`:
   Enum setters also accept strings (`bcDragFunction("G7")`,
   `bcAtmosphere("ICAO")`) in addition to the exported
   `DragFunction`/`Atmosphere` values.
-- `Context`: `solve(rangesFt)`, `solveYds(rangesYd)`,
-  `solveInverse(rangesFt)`, `solveInverseYds(rangesYd)`,
-  `fastInverse(rangesFt)`, and `dispose()`. `fastInverse` is a one-step
-  approximation and skips zero ranges.
+- `Context`: `solve(rangesFt)`, `solveYds(rangesYd)`, `solveELR(rangesFt)`,
+  `solveELRYds(rangesYd)`, `solveInverse(rangesFt)`,
+  `solveInverseYds(rangesYd)`, `solveInverseELR(rangesFt)`,
+  `solveInverseELRYds(rangesYd)`, and `dispose()`. `solveInverse` is a
+  forward solve plus the closed-form geometric correction with no
+  iteration; the `ELR` variants recompute air density and the speed of
+  sound along the flight.
 - Rows are plain objects: `rangeFt`, `rangeYds`, `velocityFps`,
   `energyFtLbs`, `timeOfFlightSec`, and
   `elevationInch`/`deflectionInch` for forward solutions or
@@ -121,9 +124,9 @@ The package is ESM-only. `package.json` maps `.` to `index.mjs` and
   tooling and `wasm/` tree. Other repository files are not reformatted.
 
 The test suite covers the canonical 168 gr .308 G7 trajectory,
-forward/inverse fast solutions, fall-short row counts, all 91 raw
-exports, heap growth, repeated builds after replacing retained arrays,
-disposal, error codes, and input validation.
+forward/inverse cheap solutions, ELR agreement and fall-short behavior,
+all 92 raw exports, heap growth, repeated builds after replacing retained
+arrays, disposal, error codes, and input validation.
 
 ## Nix and CI
 
