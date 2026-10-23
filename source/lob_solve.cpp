@@ -216,6 +216,34 @@ size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
   return ConvertForwardToInverse(*pctx, pouts, reached);
 }
 
+size_t LobSolveInverseELR(const LobContext* pctx, const uint32_t* pranges,
+                          LobOutput* pouts, size_t size) {
+  if (pctx == nullptr || pranges == nullptr || pouts == nullptr || size == 0 ||
+      pctx->error != kLobErrorNone || MoaT(pctx->zero_angle).IsNaN()) {
+    return 0;
+  }
+  const size_t kCheapSolves = LobSolveInverse(pctx, pranges, pouts, size);
+  const RadiansT kZeroAngle = RadiansT(MoaT(pctx->zero_angle));
+  for (size_t i = 0; i < kCheapSolves; i++) {
+    if (pouts[i].range == 0) {
+      continue;
+    }
+    // Seed represents the mechanical launch angle from the cheap answer.
+    // SolveAngle adds aerodynamic_jump internally during trajectory
+    // evaluation. Deflection keeps the cheap geometric hold-off; only the
+    // elevation is re-solved here.
+    const RadiansT kSeed =
+        RadiansT(MoaT(pctx->zero_angle + pouts[i].elevation));
+    const MoaT kTheta =
+        SolveAngle(*pctx, FeetT(pouts[i].range), FeetT(0.0), kSeed);
+    if (kTheta.IsNaN()) {
+      return i;
+    }
+    pouts[i].elevation = MoaT(kTheta - kZeroAngle).Value();
+  }
+  return kCheapSolves;
+}
+
 }  // extern "C"
 
 // This file is part of lob.
