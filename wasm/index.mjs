@@ -521,7 +521,7 @@ export class Context {
     }
   }
 
-  #run(feet, inverse, elr) {
+  #run(feet, mode) {
     this.#assert();
     const count = feet.length;
     if (count === 0) {
@@ -541,27 +541,38 @@ export class Context {
     try {
       new Uint32Array(wasm.HEAPU32.buffer, rangesPointer, count).set(feet);
       let solved;
-      if (inverse) {
-        solved = elr
-          ? wasm._LobSolveInverseELR(
-              this.#ptr,
-              rangesPointer,
-              outputsPointer,
-              count,
-            )
-          : wasm._LobSolveInverse(
-              this.#ptr,
-              rangesPointer,
-              outputsPointer,
-              count,
-            );
+      if (mode === "solve") {
+        solved = wasm._LobSolve(
+          this.#ptr,
+          rangesPointer,
+          outputsPointer,
+          count,
+        );
+      } else if (mode === "solve-elr") {
+        solved = wasm._LobSolveELR(
+          this.#ptr,
+          rangesPointer,
+          outputsPointer,
+          count,
+        );
+      } else if (mode === "inverse") {
+        solved = wasm._LobSolveInverse(
+          this.#ptr,
+          rangesPointer,
+          outputsPointer,
+          count,
+        );
       } else {
-        solved = elr
-          ? wasm._LobSolveELR(this.#ptr, rangesPointer, outputsPointer, count)
-          : wasm._LobSolve(this.#ptr, rangesPointer, outputsPointer, count);
+        solved = wasm._LobSolveInverseELR(
+          this.#ptr,
+          rangesPointer,
+          outputsPointer,
+          count,
+        );
       }
       wasm._LobWasmOutputsToDoubles(outputsPointer, solved, doublesPointer);
-      return readRows(solved, doublesPointer, inverse);
+      const isInverse = mode === "inverse" || mode === "inverse-elr";
+      return readRows(solved, doublesPointer, isInverse);
     } finally {
       wasm._free(rangesPointer);
       wasm._free(outputsPointer);
@@ -570,35 +581,35 @@ export class Context {
   }
 
   solve(rangesFt) {
-    return this.#run(rangesToFeet(rangesFt, false), false, false);
+    return this.#run(rangesToFeet(rangesFt, false), "solve");
   }
 
   solveYds(rangesYd) {
-    return this.#run(rangesToFeet(rangesYd, true), false, false);
+    return this.#run(rangesToFeet(rangesYd, true), "solve");
   }
 
   solveELR(rangesFt) {
-    return this.#run(rangesToFeet(rangesFt, false), false, true);
+    return this.#run(rangesToFeet(rangesFt, false), "solve-elr");
   }
 
   solveELRYds(rangesYd) {
-    return this.#run(rangesToFeet(rangesYd, true), false, true);
+    return this.#run(rangesToFeet(rangesYd, true), "solve-elr");
   }
 
   solveInverse(rangesFt) {
-    return this.#run(rangesToFeet(rangesFt, false), true, false);
+    return this.#run(rangesToFeet(rangesFt, false), "inverse");
   }
 
   solveInverseYds(rangesYd) {
-    return this.#run(rangesToFeet(rangesYd, true), true, false);
+    return this.#run(rangesToFeet(rangesYd, true), "inverse");
   }
 
   solveInverseELR(rangesFt) {
-    return this.#run(rangesToFeet(rangesFt, false), true, true);
+    return this.#run(rangesToFeet(rangesFt, false), "inverse-elr");
   }
 
   solveInverseELRYds(rangesYd) {
-    return this.#run(rangesToFeet(rangesYd, true), true, true);
+    return this.#run(rangesToFeet(rangesYd, true), "inverse-elr");
   }
 
   dispose() {
