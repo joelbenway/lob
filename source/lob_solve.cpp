@@ -77,6 +77,67 @@ void ApplyGyroscopicSpinDrift(const LobContext& ctx, LobOutput* pouts,
   }
 }
 
+using StepFunction = void (*)(const LobContext&, TrajectoryStateT*,
+                              spline::CurveView*, FeetT);
+
+size_t SolveRanges(const LobContext& ctx, const uint32_t* pranges,
+                   LobOutput* pouts, size_t size, StepFunction step) {
+  const FpsT kMinimumSpeed(ctx.minimum_speed);
+  const auto kAngle = RadiansT(MoaT(ctx.zero_angle + ctx.aerodynamic_jump));
+
+  TrajectoryStateT s(
+      CartesianT<FeetT>(FeetT(0.0)),
+      CartesianT<FpsT>(FpsT(ctx.velocity) * std::cos(kAngle.Value()),
+                       FpsT(ctx.velocity) * std::sin(kAngle.Value()),
+                       FpsT(0.0)));
+  size_t index = 0;
+
+  spline::CurveView curve(spline::kKnots.data(), &ctx.drags[0]);
+
+  while (true) {
+    const TrajectoryStateT kS = s;
+
+    if (pranges[index] > 0) {
+      step(ctx, &s, &curve, FeetT(pranges[index]));
+    }
+
+    if (s.P().X() >= FeetT(pranges[index])) {
+      pouts[index] = OutputAtState(s, ctx);
+      index++;
+    }
+
+    if (index >= size) {
+      break;
+    }
+
+    if (s.TOF() >= SecT(ctx.max_time) && kS.TOF() < SecT(ctx.max_time)) {
+      const double kAlpha =
+          ((SecT(ctx.max_time) - kS.TOF()) / (s.TOF() - kS.TOF())).Value();
+      pouts[index] = LerpOutput(kS, s, kAlpha, ctx);
+      index++;
+      break;
+    }
+    if (s.V().Magnitude() <= kMinimumSpeed &&
+        kS.V().Magnitude() > kMinimumSpeed) {
+      const double kAlpha = ((kMinimumSpeed - kS.V().Magnitude()) /
+                             (s.V().Magnitude() - kS.V().Magnitude()))
+                                .Value();
+      pouts[index] = LerpOutput(kS, s, kAlpha, ctx);
+      index++;
+      break;
+    }
+    // If vertical velocity exceeds 3x horizontal, consider falling straight
+    // down.
+    if (std::abs(s.V().Y().Value()) > s.V().X().Value() * 3) {
+      pouts[index] = OutputAtState(s, ctx);
+      index++;
+      break;
+    }
+  }
+  ApplyGyroscopicSpinDrift(ctx, pouts, index);
+  return index;
+}
+
 }  // namespace
 
 }  // namespace lob
@@ -96,60 +157,22 @@ size_t LobSolve(const LobContext* pctx, const uint32_t* pranges,
       return 0;
     }
   }
-  const FpsT kMinimumSpeed(pctx->minimum_speed);
-  const auto kAngle = RadiansT(MoaT(pctx->zero_angle + pctx->aerodynamic_jump));
+  return SolveRanges(*pctx, pranges, pouts, size, FastSolveStep);
+}
 
-  TrajectoryStateT s(
-      CartesianT<FeetT>(FeetT(0.0)),
-      CartesianT<FpsT>(FpsT(pctx->velocity) * std::cos(kAngle.Value()),
-                       FpsT(pctx->velocity) * std::sin(kAngle.Value()),
-                       FpsT(0.0)));
-  size_t index = 0;
-
-  spline::CurveView curve(spline::kKnots.data(), &pctx->drags[0]);
-
-  while (true) {
-    const TrajectoryStateT kS = s;
-
-    if (pranges[index] > 0) {
-      FastSolveStep(*pctx, &s, &curve, FeetT(pranges[index]));
-    }
-
-    if (s.P().X() >= FeetT(pranges[index])) {
-      pouts[index] = OutputAtState(s, *pctx);
-      index++;
-    }
-
-    if (index >= size) {
-      break;
-    }
-
-    if (s.TOF() >= SecT(pctx->max_time) && kS.TOF() < SecT(pctx->max_time)) {
-      const double kAlpha =
-          ((SecT(pctx->max_time) - kS.TOF()) / (s.TOF() - kS.TOF())).Value();
-      pouts[index] = LerpOutput(kS, s, kAlpha, *pctx);
-      index++;
-      break;
-    }
-    if (s.V().Magnitude() <= kMinimumSpeed &&
-        kS.V().Magnitude() > kMinimumSpeed) {
-      const double kAlpha = ((kMinimumSpeed - kS.V().Magnitude()) /
-                             (s.V().Magnitude() - kS.V().Magnitude()))
-                                .Value();
-      pouts[index] = LerpOutput(kS, s, kAlpha, *pctx);
-      index++;
-      break;
-    }
-    // If vertical velocity exceeds 3x horizontal, consider falling straight
-    // down.
-    if (std::abs(s.V().Y().Value()) > s.V().X().Value() * 3) {
-      pouts[index] = OutputAtState(s, *pctx);
-      index++;
-      break;
+size_t LobSolveELR(const LobContext* pctx, const uint32_t* pranges,
+                   LobOutput* pouts, size_t size) {
+  if (pctx == nullptr || pranges == nullptr || pouts == nullptr || size == 0 ||
+      pctx->error != kLobErrorNone || pctx->velocity == 0 ||
+      pctx->speed_of_sound <= 0.0 || MoaT(pctx->zero_angle).IsNaN()) {
+    return 0;
+  }
+  for (size_t i = 1; i < size; i++) {
+    if (pranges[i] <= pranges[i - 1]) {
+      return 0;
     }
   }
-  ApplyGyroscopicSpinDrift(*pctx, pouts, index);
-  return index;
+  return SolveRanges(*pctx, pranges, pouts, size, SolveStep);
 }
 
 size_t LobFastInverse(const LobContext* pctx, LobOutput* pouts, size_t size) {

@@ -649,6 +649,22 @@ LOB_EXPORT extern size_t LobSolve(const LobContext* pctx,
                                   size_t size);
 
 /**
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain a forward-solution.
+ * @note Air density and the speed of sound are recomputed along the flight.
+ * Use this path when altitude changes can matter, including extreme range or
+ * high-arc shots. Ordinary short-range trajectories should use LobSolve.
+ * @param pctx Pointer to context parameters for the calculation.
+ * @param pranges Pointer to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @param size The number of ranges to solve for.
+ * @return The number of successful solutions.
+ */
+LOB_EXPORT extern size_t LobSolveELR(const LobContext* pctx,
+                                     const uint32_t* pranges,
+                                     LobOutput* pouts, size_t size);
+
+/**
  * @brief Converts forward-solution output to inverse-solution adjustments.
  * @note A one-step approximation. Only convert outputs whose forward solution
  * reached the target range; fall-short trajectories yield meaningless results.

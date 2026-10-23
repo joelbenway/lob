@@ -115,6 +115,11 @@ TEST(LobCAPITest, SolveFunctionsNullptrReturnsZero) {
   EXPECT_EQ(LobSolve(&kCtx, &kRange, nullptr, 1U), 0U);
   EXPECT_EQ(LobSolve(&kCtx, &kRange, &out, 0U), 0U);
 
+  EXPECT_EQ(LobSolveELR(nullptr, &kRange, &out, 1U), 0U);
+  EXPECT_EQ(LobSolveELR(&kCtx, nullptr, &out, 1U), 0U);
+  EXPECT_EQ(LobSolveELR(&kCtx, &kRange, nullptr, 1U), 0U);
+  EXPECT_EQ(LobSolveELR(&kCtx, &kRange, &out, 0U), 0U);
+
   EXPECT_EQ(LobFastInverse(nullptr, &out, 1U), 0U);
   EXPECT_EQ(LobFastInverse(&kCtx, nullptr, 1U), 0U);
   EXPECT_EQ(LobFastInverse(&kCtx, &out, 0U), 0U);
