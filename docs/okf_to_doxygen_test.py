@@ -175,6 +175,13 @@ class GenerateTest(unittest.TestCase):
             "Body\n")
         self.assertIn('<div data-lob-exhibit="bc-bands"></div>', out)
         self.assertIn('<script type="module" src="exhibits/bc-bands.js"></script>', out)
+        self.assertIn(
+            "\\htmlonly\n"
+            '<div data-lob-exhibit="bc-bands"></div>\n'
+            '<script type="module" src="exhibits/bc-bands.js"></script>\n'
+            "\\endhtmlonly\n",
+            out,
+        )
         self.assertTrue(out.startswith("@page okf_bc_bands BC Bands\n"))
 
     def test_stale_generated_pages_removed(self):

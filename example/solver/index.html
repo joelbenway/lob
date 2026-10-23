@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Progressive browser front end for the lob external ballistics solver."
+    />
+    <title>lob solver</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <p class="eyebrow">lob</p>
+      <h1>External ballistics solver</h1>
+      <p>
+        Configure drag, projectile, atmosphere, wind, and Earth effects. Only
+        the inputs that apply to the selected sources are sent to the solver.
+      </p>
+    </header>
+
+    <noscript>
+      <p class="notice">This solver needs JavaScript and WebAssembly.</p>
+    </noscript>
+
+    <main class="layout">
+      <form id="solver-form" autocomplete="off">
+        <section class="card">
+          <h2>Drag model</h2>
+          <div class="field">
+            <label for="dragSource">Drag source</label>
+            <select id="dragSource" name="dragSource">
+              <option value="bc" selected>Ballistic coefficient</option>
+              <option value="bands">BC velocity bands</option>
+              <option value="table">Custom Mach/Cd table</option>
+              <option value="coefficients">Native spline coefficients</option>
+            </select>
+          </div>
+
+          <div class="field-grid" data-group="drag-bc">
+            <div class="field">
+              <label for="bc">Ballistic coefficient</label>
+              <input
+                id="bc"
+                name="bc"
+                type="number"
+                min="0"
+                step="any"
+                value="0.243"
+              />
+            </div>
+          </div>
+
+          <div class="field" data-group="drag-bands">
+            <label for="bandsText">Velocity bands</label>
+            <textarea
+              id="bandsText"
+              name="bandsText"
+              rows="4"
+              spellcheck="false"
+            >
+2000,0.235
+2700,0.243</textarea>
+            <small>One <code>velocity,bc</code> pair per row.</small>
+          </div>
+
+          <div class="field" data-group="drag-table">
+            <label for="dragTableText">Mach/Cd table</label>
+            <textarea
+              id="dragTableText"
+              name="dragTableText"
+              rows="5"
+              spellcheck="false"
+            >
+0,0.12
+1,0.25
+2,0.38
+3,0.48
+4,0.55
+5,0.6</textarea>
+            <small>One <code>mach,cd</code> pair per row.</small>
+          </div>
+
+          <div class="field" data-group="drag-coefficients">
+            <label for="coefficientsText">Spline coefficients</label>
+            <textarea
+              id="coefficientsText"
+              name="coefficientsText"
+              rows="5"
+              spellcheck="false"
+              placeholder="60 numbers"
+            ></textarea>
+            <small
+              >Exactly 60 finite numbers, whitespace or comma separated.</small
+            >
+          </div>
+
+          <div class="field-grid" data-group="drag-bc-ref">
+            <div class="field">
+              <label for="bcAtmosphere">BC atmosphere</label>
+              <select id="bcAtmosphere" name="bcAtmosphere">
+                <option value="ArmyStandardMetro" selected>
+                  Army Standard Metro
+                </option>
+                <option value="ICAO">ICAO</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="dragFunction">Drag function</label>
+              <select id="dragFunction" name="dragFunction">
+                <option value="G1">G1</option>
+                <option value="G2">G2</option>
+                <option value="G5">G5</option>
+                <option value="G6">G6</option>
+                <option value="G7" selected>G7</option>
+                <option value="G8">G8</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Projectile</h2>
+          <div class="field">
+            <label for="projectileTier">Projectile detail</label>
+            <select id="projectileTier" name="projectileTier">
+              <option value="bc">BC only</option>
+              <option value="mass" selected>Mass</option>
+              <option value="stability">Mass and stability geometry</option>
+              <option value="full">Full bullet geometry</option>
+            </select>
+          </div>
+
+          <div class="field" data-group="tier-mass">
+            <label for="massGrains">Mass (gr)</label>
+            <input
+              id="massGrains"
+              name="massGrains"
+              type="number"
+              min="0"
+              step="any"
+              value="168"
+            />
+          </div>
+
+          <div class="field-grid" data-group="tier-stability">
+            <div class="field">
+              <label for="diameterInch">Diameter (in)</label>
+              <input
+                id="diameterInch"
+                name="diameterInch"
+                type="number"
+                min="0"
+                step="any"
+                value="0.308"
+              />
+            </div>
+            <div class="field">
+              <label for="lengthInch">Length (in)</label>
+              <input
+                id="lengthInch"
+                name="lengthInch"
+                type="number"
+                min="0"
+                step="any"
+                value="1.24"
+              />
+            </div>
+            <div class="field">
+              <label for="twistInchesPerTurn">Twist (in/turn)</label>
+              <input
+                id="twistInchesPerTurn"
+                name="twistInchesPerTurn"
+                type="number"
+                min="0"
+                step="any"
+                value="11"
+              />
+            </div>
+          </div>
+
+          <div class="field-grid" data-group="tier-full">
+            <div class="field">
+              <label for="noseLengthInch">Nose length (in)</label>
+              <input
+                id="noseLengthInch"
+                name="noseLengthInch"
+                type="number"
+                min="0"
+                step="any"
+                value="0.6"
+              />
+            </div>
+            <div class="field">
+              <label for="meplatDiameterInch">Meplat diameter (in)</label>
+              <input
+                id="meplatDiameterInch"
+                name="meplatDiameterInch"
+                type="number"
+                min="0"
+                step="any"
+                value="0.05"
+              />
+            </div>
+            <div class="field">
+              <label for="baseDiameterInch">Base diameter (in)</label>
+              <input
+                id="baseDiameterInch"
+                name="baseDiameterInch"
+                type="number"
+                min="0"
+                step="any"
+                value="0.28"
+              />
+            </div>
+            <div class="field">
+              <label for="tailLengthInch">Tail length (in)</label>
+              <input
+                id="tailLengthInch"
+                name="tailLengthInch"
+                type="number"
+                min="0"
+                step="any"
+                value="0.2"
+              />
+            </div>
+            <div class="field">
+              <label for="ogiveRtR">Ogive Rt/R</label>
+              <input
+                id="ogiveRtR"
+                name="ogiveRtR"
+                type="number"
+                min="0"
+                max="1"
+                step="any"
+                value="0.5"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Velocity and zero</h2>
+          <div class="field">
+            <label for="velocityFps">Muzzle velocity (fps)</label>
+            <input
+              id="velocityFps"
+              name="velocityFps"
+              type="number"
+              min="1"
+              step="1"
+              value="2700"
+            />
+          </div>
+
+          <div class="field">
+            <label for="zeroMode">Zero source</label>
+            <select id="zeroMode" name="zeroMode">
+              <option value="distance" selected>Distance</option>
+              <option value="angle">Angle</option>
+            </select>
+          </div>
+
+          <div class="field-grid" data-group="zero-distance">
+            <div class="field">
+              <label for="zeroYds">Zero distance (yd)</label>
+              <input
+                id="zeroYds"
+                name="zeroYds"
+                type="number"
+                min="0"
+                step="any"
+                value="100"
+              />
+            </div>
+            <div class="field">
+              <label for="zeroImpactHeightInches"
+                >Zero impact height (in)</label
+              >
+              <input
+                id="zeroImpactHeightInches"
+                name="zeroImpactHeightInches"
+                type="number"
+                step="any"
+                value="0"
+              />
+            </div>
+          </div>
+
+          <div class="field" data-group="zero-angle">
+            <label for="zeroAngleMoa">Zero angle (MOA)</label>
+            <input
+              id="zeroAngleMoa"
+              name="zeroAngleMoa"
+              type="number"
+              step="any"
+              value="0"
+            />
+          </div>
+
+          <div class="field">
+            <label for="sightHeightInches">Sight height (in)</label>
+            <input
+              id="sightHeightInches"
+              name="sightHeightInches"
+              type="number"
+              min="0"
+              step="any"
+              value="1.5"
+            />
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Atmosphere</h2>
+          <div class="field">
+            <label for="weatherSource">Atmosphere source</label>
+            <select id="weatherSource" name="weatherSource">
+              <option value="standard" selected>Standard atmosphere</option>
+              <option value="altitude">Altitude</option>
+              <option value="measured">
+                Measured pressure and temperature
+              </option>
+            </select>
+          </div>
+
+          <div class="field" data-group="weather-altitude">
+            <label for="altitudeOfFiringSiteFt"
+              >Firing site altitude (ft)</label
+            >
+            <input
+              id="altitudeOfFiringSiteFt"
+              name="altitudeOfFiringSiteFt"
+              type="number"
+              step="any"
+              value="0"
+            />
+          </div>
+
+          <div class="field" data-group="weather-humidity">
+            <label for="relativeHumidityPercent">Relative humidity (%)</label>
+            <input
+              id="relativeHumidityPercent"
+              name="relativeHumidityPercent"
+              type="number"
+              min="0"
+              max="100"
+              step="any"
+              value="0"
+            />
+          </div>
+
+          <div class="field-grid" data-group="weather-measured">
+            <div class="field">
+              <label for="airPressureInHg">Air pressure (inHg)</label>
+              <input
+                id="airPressureInHg"
+                name="airPressureInHg"
+                type="number"
+                min="0"
+                step="any"
+                value="29.92"
+              />
+            </div>
+            <div class="field">
+              <label for="temperatureDegF">Temperature (°F)</label>
+              <input
+                id="temperatureDegF"
+                name="temperatureDegF"
+                type="number"
+                step="any"
+                value="59"
+              />
+            </div>
+          </div>
+
+          <div class="field" data-group="weather-measured">
+            <label class="check">
+              <input id="measuredAway" name="measuredAway" type="checkbox" />
+              Measurements taken away from the firing site
+            </label>
+          </div>
+
+          <div class="field" data-group="weather-barometer-alt">
+            <label for="altitudeOfBarometerFt">Barometer altitude (ft)</label>
+            <input
+              id="altitudeOfBarometerFt"
+              name="altitudeOfBarometerFt"
+              type="number"
+              step="any"
+              value="0"
+            />
+          </div>
+
+          <div class="field" data-group="weather-thermometer-alt">
+            <label for="altitudeOfThermometerFt"
+              >Thermometer altitude (ft)</label
+            >
+            <input
+              id="altitudeOfThermometerFt"
+              name="altitudeOfThermometerFt"
+              type="number"
+              step="any"
+              value="0"
+            />
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Wind</h2>
+          <div class="field">
+            <label for="windSource">Wind source</label>
+            <select id="windSource" name="windSource">
+              <option value="none">Calm</option>
+              <option value="uniform" selected>Uniform</option>
+              <option value="profile">Profile</option>
+            </select>
+          </div>
+
+          <div class="field-grid" data-group="wind-uniform">
+            <div class="field">
+              <label for="windSpeedMph">Wind speed (mph)</label>
+              <input
+                id="windSpeedMph"
+                name="windSpeedMph"
+                type="number"
+                min="0"
+                step="any"
+                value="10"
+              />
+            </div>
+            <div class="field">
+              <label for="windClock">Heading (o’clock)</label>
+              <input
+                id="windClock"
+                name="windClock"
+                type="number"
+                min="1"
+                max="12"
+                step="1"
+                value="3"
+              />
+            </div>
+          </div>
+
+          <div class="field" data-group="wind-profile">
+            <label for="windProfileText">Wind profile</label>
+            <textarea
+              id="windProfileText"
+              name="windProfileText"
+              rows="4"
+              spellcheck="false"
+            >
+0,90,10,1
+500,90,12,10</textarea>
+            <small>One <code>range,heading,speed[,height]</code> row.</small>
+          </div>
+
+          <div class="field" data-group="wind-shear">
+            <label for="windShearExponent">Shear exponent</label>
+            <input
+              id="windShearExponent"
+              name="windShearExponent"
+              type="number"
+              min="0"
+              max="1"
+              step="any"
+              value="0.14"
+            />
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Shot geometry</h2>
+          <div class="field">
+            <label class="check">
+              <input
+                id="rangeAngleEnabled"
+                name="rangeAngleEnabled"
+                type="checkbox"
+              />
+              Inclined fire
+            </label>
+          </div>
+          <div class="field" data-group="range-angle">
+            <label for="rangeAngleDeg">Range angle (deg)</label>
+            <input
+              id="rangeAngleDeg"
+              name="rangeAngleDeg"
+              type="number"
+              min="-89.999"
+              max="89.999"
+              step="any"
+              value="0"
+            />
+          </div>
+
+          <div class="field">
+            <label class="check">
+              <input
+                id="coriolisEnabled"
+                name="coriolisEnabled"
+                type="checkbox"
+              />
+              Coriolis effect
+            </label>
+          </div>
+          <div class="field-grid" data-group="coriolis">
+            <div class="field">
+              <label for="latitudeDeg">Latitude (deg)</label>
+              <input
+                id="latitudeDeg"
+                name="latitudeDeg"
+                type="number"
+                min="-90"
+                max="90"
+                step="any"
+                value="40"
+              />
+            </div>
+            <div class="field">
+              <label for="azimuthDeg">Azimuth (deg)</label>
+              <input
+                id="azimuthDeg"
+                name="azimuthDeg"
+                type="number"
+                min="0"
+                max="360"
+                step="any"
+                value="270"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Advanced</h2>
+          <div class="field">
+            <label class="check">
+              <input
+                id="advancedEnabled"
+                name="advancedEnabled"
+                type="checkbox"
+              />
+              Enable solver limits and step size
+            </label>
+          </div>
+
+          <div class="field-grid" data-group="advanced">
+            <div class="field">
+              <label for="maximumTimeSec">Maximum time (s)</label>
+              <input
+                id="maximumTimeSec"
+                name="maximumTimeSec"
+                type="number"
+                min="0"
+                step="any"
+                value="3"
+              />
+            </div>
+            <div class="field">
+              <label for="minimumSpeedFps">Minimum speed (fps)</label>
+              <input
+                id="minimumSpeedFps"
+                name="minimumSpeedFps"
+                type="number"
+                min="0"
+                step="1"
+                value="1000"
+              />
+            </div>
+            <div class="field" data-energy>
+              <label for="minimumEnergyFtLbs">Minimum energy (ft·lb)</label>
+              <input
+                id="minimumEnergyFtLbs"
+                name="minimumEnergyFtLbs"
+                type="number"
+                min="0"
+                step="1"
+                value="500"
+              />
+            </div>
+            <div class="field">
+              <label for="stepSizeInch">Step size (in)</label>
+              <input
+                id="stepSizeInch"
+                name="stepSizeInch"
+                type="number"
+                min="0"
+                step="1"
+                value="36"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Ranges</h2>
+          <div class="field-grid">
+            <div class="field">
+              <label for="maxYds">Maximum range (yd)</label>
+              <input
+                id="maxYds"
+                name="maxYds"
+                type="number"
+                min="1"
+                step="1"
+                value="1000"
+              />
+            </div>
+            <div class="field">
+              <label for="stepYds">Range step (yd)</label>
+              <input
+                id="stepYds"
+                name="stepYds"
+                type="number"
+                min="1"
+                step="1"
+                value="100"
+              />
+            </div>
+          </div>
+          <button type="submit">Solve</button>
+        </section>
+      </form>
+
+      <aside class="output" aria-label="Solver output">
+        <section class="card sticky">
+          <h2>Model</h2>
+          <p id="model-summary" class="summary">
+            Default: BC 0.243 (G7), 168 gr, standard atmosphere, 10 mph at 3
+            o’clock.
+          </p>
+          <p id="status" class="status" role="status" aria-live="polite">
+            Loading solver…
+          </p>
+
+          <div class="table-wrap">
+            <table id="results">
+              <thead>
+                <tr>
+                  <th scope="col">Range (yd)</th>
+                  <th scope="col">Velocity (fps)</th>
+                  <th scope="col" data-energy>Energy (ft·lb)</th>
+                  <th scope="col">Elevation (in)</th>
+                  <th scope="col">Elevation (MOA)</th>
+                  <th scope="col">Deflection (in)</th>
+                  <th scope="col">Deflection (MOA)</th>
+                  <th scope="col">Time of flight (s)</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>

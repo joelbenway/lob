@@ -23,20 +23,29 @@
           };
         });
   in {
-    packages = forEachSupportedSystem ({pkgs}: {
+    packages = forEachSupportedSystem ({pkgs}: let
+      cleanSrc = pkgs.lib.cleanSourceWith {
+        src = self;
+        filter = path: _type:
+          !builtins.elem (baseNameOf path)
+            ["build" "node_modules" ".superpowers" ".direnv" "prefix" "result"];
+      };
+    in {
       default = pkgs.stdenv.mkDerivation {
         name = "lob";
-        src = self;
+        src = cleanSrc;
         nativeBuildInputs = with pkgs; [
           cmake
           gtest
+          nlohmann_json
         ];
         configurePhase = ''
           cmake -S . -B build \
             -D CMAKE_BUILD_TYPE=Release \
             -D LOB_DEVELOPER_MODE=ON \
             -D BUILD_EXAMPLES=OFF \
-            -D BUILD_BENCHMARKS=OFF
+            -D BUILD_BENCHMARKS=OFF \
+            -D BUILD_TOOLS=OFF
         '';
         buildPhase = ''
           cmake --build build --parallel $NIX_BUILD_CORES
@@ -49,9 +58,42 @@
           cmake --install build --prefix $out
         '';
       };
+      lob-wasm = pkgs.stdenv.mkDerivation {
+        name = "lob-wasm";
+        src = cleanSrc;
+        nativeBuildInputs = with pkgs; [
+          cmake
+          emscripten
+          nodejs
+          python3
+        ];
+        configurePhase = ''
+          export EM_CACHE="$NIX_BUILD_TOP/emscripten-cache"
+          mkdir -p "$EM_CACHE"
+          cmake --preset=wasm
+        '';
+        buildPhase = ''
+          cmake --build --preset=wasm --parallel "$NIX_BUILD_CORES"
+        '';
+        doCheck = true;
+        checkPhase = ''
+          node --check build/wasm/lob.mjs
+          node wasm/smoke.mjs build/wasm/lob.mjs
+          node --test wasm/test/*.test.mjs
+          node --test example/solver/test/*.test.mjs
+          test -f build/wasm/solver/index.html
+        '';
+        installPhase = ''
+          mkdir -p $out/solver
+          install -m 0644 build/wasm/index.mjs build/wasm/lob.mjs \
+            build/wasm/lob.wasm build/wasm/package.json build/wasm/README.md \
+            build/wasm/COPYING.md $out/
+          cp -r build/wasm/solver/. $out/solver/
+        '';
+      };
       lobber = pkgs.stdenv.mkDerivation {
         name = "lobber";
-        src = self;
+        src = cleanSrc;
         nativeBuildInputs = with pkgs; [
           cmake
           nlohmann_json
@@ -80,152 +122,7 @@
         '';
       };
     });
-    devShells = forEachSupportedSystem ({pkgs}: let
-      baseShell =
-        pkgs.mkShell.override {
-          # Override stdenv in order to change compiler:
-          # stdenv = pkgs.clangStdenv;
-        }
-        {
-          packages = with pkgs; [
-            # Build/CI Tools
-            clang-tools
-            cmake
-            codespell
-            cppcheck
-            doxygen
-            emscripten
-            gbenchmark
-            gtest
-            lcov
-            nlohmann_json
-            nodejs
-            python3
-            valgrind
-          ];
-          shellHook = let
-            projectName = "lob";
-            white = "\\[\\033[38;5;015m\\]";
-            blue = "\\[\\033[38;5;081m\\]";
-            snowflake = "\\342\\235\\204";
-            bold = "\\[\\033[01m\\]";
-            reset = "\\[$(tput sgr0)\\]";
-          in ''
-            export PS1="${white}[${reset}${blue}\w${reset}${white}] ${bold}${projectName} ${blue}${snowflake} ${reset}"
-            # The nix store copy of emscripten is read-only; its cache must be writable.
-            export EM_CACHE="''${TMPDIR:-/tmp}/lob-emscripten-cache"
-            mkdir -p "$EM_CACHE"
-            # Root of the emscripten install, for the wasm CMake toolchain file.
-            export EMSCRIPTEN="$(dirname "$(dirname "$(command -v emcc)")")"
-          '';
-        };
-    in {
-      default = baseShell;
-
-      dev = baseShell.overrideAttrs (oldAttrs: let
-        extraDevPackages = with pkgs;
-          [
-            # Extra Development Tools
-            act
-            bloaty
-            cmake-format
-            mold-wrapped
-            ninja
-          ]
-          ++ (
-            if system == "aarch64-darwin"
-            then []
-            else [gdb]
-          );
-      in {
-        buildInputs = oldAttrs.buildInputs ++ extraDevPackages;
-        shellHook = let
-          inherit (pkgs) stdenv;
-          clangdFile = ".clangd";
-          CMakeUserPresetsFile = "CMakeUserPresets.json";
-          os =
-            if stdenv.isLinux
-            then "linux"
-            else if stdenv.isDarwin
-            then "darwin"
-            else "<os>";
-          sourceDir = "\\\${sourceDir}";
-        in
-          ''
-            json=$(cat <<-EOF
-            {
-              "version": 2,
-              "cmakeMinimumRequired": {
-                "major": 3,
-                "minor": 14,
-                "patch": 0
-              },
-              "configurePresets": [
-                {
-                  "name": "dev",
-                  "binaryDir": "${sourceDir}/build/dev",
-                  "inherits": ["dev-mode", "ci-${os}"],
-                  "generator": "Ninja",
-                  "environment": {
-                    "CXX_FLAGS_DEV_LINUX": "-Og -g3"
-                  },
-                  "cacheVariables": {
-                    "CMAKE_BUILD_TYPE": "Debug",
-                    "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                    "CMAKE_CXX_FLAGS": "\$env{CXX_FLAGS_DEV_LINUX} \$env{LOB_CXX_FLAGS_COMMON}",
-                    "CMAKE_LINKER_TYPE": "MOLD"
-                  }
-                }
-              ],
-              "buildPresets": [
-                {
-                  "name": "dev",
-                  "configurePreset": "dev",
-                  "configuration": "Debug",
-                  "jobs": $NIX_BUILD_CORES
-                }
-              ],
-              "testPresets": [
-                {
-                  "name": "dev",
-                  "configurePreset": "dev",
-                  "configuration": "Debug",
-                  "output": {
-                    "outputOnFailure": true
-                  },
-                  "execution": {
-                    "jobs": $NIX_BUILD_CORES,
-                    "noTestsAction": "error"
-                  }
-                }
-              ]
-            }
-            EOF
-            )
-
-            clangd=$(cat <<-EOF
-            CompileFlags:
-              CompilationDatabase: build/dev
-            EOF
-            )
-
-            if [ ! -f ${CMakeUserPresetsFile} ]; then
-              echo "$json" > ${CMakeUserPresetsFile}
-              echo "${CMakeUserPresetsFile} created successfully"
-            else
-              echo "${CMakeUserPresetsFile} already exists"
-            fi
-
-            if [ ! -f ${clangdFile} ]; then
-              echo "$clangd" > ${clangdFile}
-              echo "${clangdFile} created successfully"
-            else
-              echo "${clangdFile} already exists"
-            fi
-          ''
-          + oldAttrs.shellHook;
-      });
-    });
+    devShells = forEachSupportedSystem ({pkgs}: import ./shell.nix {inherit pkgs;});
   };
 }
 # This file is part of lob.

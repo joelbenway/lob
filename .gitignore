@@ -1,4 +1,5 @@
 **/.DS_Store
+node_modules/
 .clangd
 .direnv
 .idea/
@@ -8,7 +9,6 @@
 .vscode/
 .worktrees/
 build/
-build-wasm/
 cmake-build-*/
 CMakeLists.txt.user
 CMakeUserPresets.json

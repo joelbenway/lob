@@ -68,7 +68,9 @@ target_include_directories(
 
 target_compile_features(lob_lob PUBLIC cxx_std_14)
 
-if(EMSCRIPTEN)
+# ---- Wasm library ----
+
+if(PROJECT_IS_TOP_LEVEL AND EMSCRIPTEN)
   add_subdirectory(wasm)
 endif()
 

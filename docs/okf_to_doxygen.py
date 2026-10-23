@@ -198,8 +198,10 @@ def render_page(page_id, frontmatter, body):
             ex = str(exhibit).strip()
         if ex:
             exhibit_html = (
+                "\\htmlonly\n"
                 '<div data-lob-exhibit="%s"></div>\n'
                 '<script type="module" src="exhibits/%s.js"></script>\n'
+                "\\endhtmlonly\n"
                 % (ex, ex)
             )
             return "@page %s %s\n%s%s" % (page_id, title, exhibit_html, body)

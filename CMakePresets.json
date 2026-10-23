@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 2,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 14,
@@ -69,7 +69,8 @@
       }
     },
     {
-      "name": "flags-appleclang",
+      "name": "flags-clang",
+      "description": "Warning flags supported by Clang and Emscripten",
       "hidden": true,
       "environment": {
         "LOB_CXX_FLAGS_COMMON": "-fstack-protector-strong -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-qual -Wformat=2 -Wundef -Werror=float-equal -Wshadow -Wcast-align -Wunused -Wnull-dereference -Wdouble-promotion -Wimplicit-fallthrough -Wextra-semi -Woverloaded-virtual -Wnon-virtual-dtor -Wold-style-cast"
@@ -106,7 +107,7 @@
       "name": "ci-darwin",
       "generator": "Unix Makefiles",
       "hidden": true,
-      "inherits": ["flags-appleclang", "ci-std"],
+      "inherits": ["flags-clang", "ci-std"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
@@ -117,6 +118,19 @@
       "generator": "Visual Studio 18 2026",
       "architecture": "x64",
       "hidden": true
+    },
+    {
+      "name": "ci-standalone",
+      "description": "Targets that run without an operating system underneath: no test runner, no host programs",
+      "hidden": true,
+      "inherits": ["ci-std"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "OFF",
+        "BUILD_EXAMPLES": "OFF",
+        "BUILD_TOOLS": "OFF",
+        "BUILD_BENCHMARKS": "OFF"
+      }
     },
     {
       "name": "coverage-linux",
@@ -179,16 +193,15 @@
       "hidden": true
     },
     {
-      "name": "ci-wasm",
-      "binaryDir": "${sourceDir}/build-wasm",
-      "toolchainFile": "$env{EMSCRIPTEN}/share/emscripten/cmake/Modules/Platform/Emscripten.cmake",
-      "inherits": ["ci-std"],
+      "name": "wasm",
+      "displayName": "WebAssembly (Emscripten)",
+      "description": "WebAssembly build of the lob JS library",
+      "binaryDir": "${sourceDir}/build/wasm",
+      "generator": "Unix Makefiles",
+      "inherits": ["ci-standalone", "flags-clang", "dev-mode"],
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "BUILD_SHARED_LIBS": "OFF",
-        "BUILD_TESTING": "OFF",
-        "BUILD_EXAMPLES": "OFF",
-        "BUILD_TOOLS": "OFF"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/emscripten.cmake",
+        "CMAKE_EXE_LINKER_FLAGS": "--no-entry -sENVIRONMENT=web,node -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createLobModule -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=['HEAPU8','HEAPU32','HEAPF32','HEAPF64','UTF8ToString']"
       }
     },
     {
@@ -202,6 +215,12 @@
     {
       "name": "ci-windows",
       "inherits": ["ci-build", "ci-win64", "dev-mode"]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "wasm",
+      "configurePreset": "wasm"
     }
   ]
 }
