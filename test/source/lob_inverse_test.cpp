@@ -163,6 +163,62 @@ TEST(LobELRInverseTest, SolveInverseELRZeroRangeReturnsZeroAdjustment) {
   EXPECT_TRUE(std::isfinite(outs.at(1).elevation));
 }
 
+TEST(LobELRInverseTest, CheapInverseMatchesELRToAngleToleranceAt1000Yd) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  constexpr double kMaxDifferenceMoa = 0.01;
+  LobBuilder builder{};
+  LobBuilderInit(&builder);
+  LobBuilderBallisticCoefficientPsi(&builder, kTestBC);
+  LobBuilderInitialVelocityFps(&builder, kTestMuzzleVelocity);
+  LobBuilderZeroAngleMOA(&builder, kTestZeroAngle);
+  LobContext ctx{};
+  LobBuilderBuild(&builder, &ctx);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  LobBuilderDestroy(&builder);
+  const std::array<uint32_t, 3> kRanges = {900U, 1800U, 3000U};
+  std::array<LobOutput, 3> cheap{};
+  ASSERT_EQ(LobSolveInverse(&ctx, kRanges.data(), cheap.data(), cheap.size()),
+            cheap.size());
+  std::array<LobOutput, 3> elr{};
+  ASSERT_EQ(LobSolveInverseELR(&ctx, kRanges.data(), elr.data(), elr.size()),
+            elr.size());
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_LE(std::fabs(cheap.at(i).elevation - elr.at(i).elevation),
+              kMaxDifferenceMoa)
+        << "range=" << kRanges.at(i);
+  }
+}
+
+TEST(LobELRInverseTest, CheapInverseAgreesWithELRTo2000Yd) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kTestZeroAngle = 6.11;
+  constexpr double kMaxDifferenceMoa = 0.15;
+  LobBuilder builder{};
+  LobBuilderInit(&builder);
+  LobBuilderBallisticCoefficientPsi(&builder, kTestBC);
+  LobBuilderInitialVelocityFps(&builder, kTestMuzzleVelocity);
+  LobBuilderZeroAngleMOA(&builder, kTestZeroAngle);
+  LobContext ctx{};
+  LobBuilderBuild(&builder, &ctx);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  LobBuilderDestroy(&builder);
+  const std::array<uint32_t, 5> kRanges = {900U, 1800U, 3000U, 4500U, 6000U};
+  std::array<LobOutput, 5> cheap{};
+  ASSERT_EQ(LobSolveInverse(&ctx, kRanges.data(), cheap.data(), cheap.size()),
+            cheap.size());
+  std::array<LobOutput, 5> elr{};
+  ASSERT_EQ(LobSolveInverseELR(&ctx, kRanges.data(), elr.data(), elr.size()),
+            elr.size());
+  for (size_t i = 0; i < kRanges.size(); ++i) {
+    EXPECT_LE(std::fabs(cheap.at(i).elevation - elr.at(i).elevation),
+              kMaxDifferenceMoa)
+        << "range=" << kRanges.at(i);
+  }
+}
+
 TEST(LobELRInverseTest, SolveInverseELRStopsWhenRefinementFails) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
