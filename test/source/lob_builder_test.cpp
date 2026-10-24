@@ -141,7 +141,7 @@ TEST_F(BuilderTestFixture, BuildMissingZeroInput) {
   const lob::Context kResult = puut->BallisticCoefficientPsi(kTestBC)
                                    .InitialVelocityFps(kTestMuzzleVelocity)
                                    .Build();
-  EXPECT_EQ(kResult.error, lob::ErrorT::kZeroDataRequired);
+  EXPECT_EQ(kResult.error, lob::ErrorT::kLaunchAngleRequired);
 }
 
 TEST_F(BuilderTestFixture, InvalidDragFunctionIsG1) {

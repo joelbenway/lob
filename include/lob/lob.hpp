@@ -77,6 +77,7 @@ enum class ErrorT : LobErrorT {
   kInitialVelocityRequired = ::kLobErrorInitialVelocityRequired,
   kInternalError = ::kLobErrorInternalError,
   kLatitudeOOR = ::kLobErrorLatitudeOOR,
+  kLaunchAngleRequired = ::kLobErrorLaunchAngleRequired,
   kLengthOOR = ::kLobErrorLengthOOR,
   kMachDragTableInvalid = ::kLobErrorMachDragTableInvalid,
   kMachDragTableNotMonotonic = ::kLobErrorMachDragTableNotMonotonic,
@@ -95,7 +96,6 @@ enum class ErrorT : LobErrorT {
   kWindProfileNotMonotonic = ::kLobErrorWindProfileNotMonotonic,
   kWindProfileTooLong = ::kLobErrorWindProfileTooLong,
   kZeroAngleOOR = ::kLobErrorZeroAngleOOR,
-  kZeroDataRequired = ::kLobErrorZeroDataRequired,
   kZeroDistanceOOR = ::kLobErrorZeroDistanceOOR,
   kZeroUnreachable = ::kLobErrorZeroUnreachable,
 };

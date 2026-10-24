@@ -583,6 +583,7 @@ TEST(LobAPITest, ErrorTComparisonWithCEnum) {
             ::kLobErrorInitialVelocityRequired},
            {lob::ErrorT::kInternalError, ::kLobErrorInternalError},
            {lob::ErrorT::kLatitudeOOR, ::kLobErrorLatitudeOOR},
+           {lob::ErrorT::kLaunchAngleRequired, ::kLobErrorLaunchAngleRequired},
            {lob::ErrorT::kLengthOOR, ::kLobErrorLengthOOR},
            {lob::ErrorT::kMachDragTableInvalid,
             ::kLobErrorMachDragTableInvalid},
@@ -605,7 +606,6 @@ TEST(LobAPITest, ErrorTComparisonWithCEnum) {
             ::kLobErrorWindProfileNotMonotonic},
            {lob::ErrorT::kWindProfileTooLong, ::kLobErrorWindProfileTooLong},
            {lob::ErrorT::kZeroAngleOOR, ::kLobErrorZeroAngleOOR},
-           {lob::ErrorT::kZeroDataRequired, ::kLobErrorZeroDataRequired},
            {lob::ErrorT::kZeroDistanceOOR, ::kLobErrorZeroDistanceOOR},
            {lob::ErrorT::kZeroUnreachable, ::kLobErrorZeroUnreachable}}};
   static_assert(
