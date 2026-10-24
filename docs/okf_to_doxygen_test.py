@@ -167,6 +167,23 @@ class GenerateTest(unittest.TestCase):
             self.assertTrue(rendered.startswith(
                 "@page okf_drag Drag Model\n"))
 
+    def test_render_page_includes_exhibit_markup(self):
+        from okf_to_doxygen import render_page
+        out = render_page(
+            "okf_bc_bands",
+            {"type": "Guide", "title": "BC Bands", "exhibit": "bc-bands"},
+            "Body\n")
+        self.assertIn('<div data-lob-exhibit="bc-bands"></div>', out)
+        self.assertIn('<script type="module" src="exhibits/bc-bands.js"></script>', out)
+        self.assertIn(
+            "\\htmlonly\n"
+            '<div data-lob-exhibit="bc-bands"></div>\n'
+            '<script type="module" src="exhibits/bc-bands.js"></script>\n'
+            "\\endhtmlonly\n",
+            out,
+        )
+        self.assertTrue(out.startswith("@page okf_bc_bands BC Bands\n"))
+
     def test_stale_generated_pages_removed(self):
         with tempfile.TemporaryDirectory() as src, \
                 tempfile.TemporaryDirectory() as out:

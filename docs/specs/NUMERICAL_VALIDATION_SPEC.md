@@ -137,29 +137,34 @@ shrink with refinement.
 
 - `Builder → Context → Solve` (§4). `LobOutput.elevation/deflection` are
   **inches in forward solves, MOA in inverse solves**.
-- `FastDsDx / FastSolveStep / FastSolveAngle` = firing-site density fast path;
-  `DsDx / SolveStep / SolveAngle` = lapse-scaled path (§4).
-- `kDynamicDropThreshold = FeetT(100)` gates the inverse per-range path.
+- `DsDx / SolveStep / SolveAngle` = firing-site density fast path;
+  `DsDxELR / SolveStepELR / SolveAngleELR` = lapse-scaled path (§4). The caller
+  selects the path by choosing `Solve`/`SolveInverse` (fast) or
+  `SolveELR`/`SolveInverseELR` (lapse-scaled); there is no automatic
+  per-range switching.
 - `CurveView` over `drags[60]`; `kKnots` (16); `kCoefsSize = 60`.
 
 ---
 
 ## 4. Existing `lob` architecture relevant to validation
 
-(Verified against source at v0.13.0. File:line references are the contract;
+(Verified against source at v0.14.0. File:line references are the contract;
 if code moves, the spec's logic still holds.)
 
 ### 4.1 Hourglass API and ABI boundary
 
 - C ABI waist: `include/lob/lob.h` — `LobBuilder` (opaque,
   `LOB_BUILDER_BUFFER_SIZE 320`), `LobContext`, `LobOutput`, `LobSolve`,
-  `LobSolveInverse`, `LobFastInverse`, `LobBuilderBuild`, unit conversions.
+  `LobSolveELR`, `LobSolveInverse`, `LobSolveInverseELR`, `LobBuilderBuild`,
+  unit conversions.
 - C++ wrapper: `include/lob/lob.hpp` — `lob::Builder`, `lob::Context`
-  (layout-identical, `static_assert`s), `lob::Solve/SolveInverse/FastInverse`,
-  `std::array` overloads. Header-only, inline, forwards to C.
+  (layout-identical, `static_assert`s),
+  `lob::Solve/SolveELR/SolveInverse/SolveInverseELR`, `std::array`
+  overloads. Header-only, inline, forwards to C.
 - Implementation once: `source/lob_builder.cpp`, `source/lob_solve.cpp`.
 - **Validation rule:** all convergence/sensitivity/reference/MC studies drive
-  the **public C/C++ API** (`Builder` + `Solve`/`SolveInverse`). White-box
+  the **public C/C++ API** (`Builder` + `Solve`/`SolveELR`/`SolveInverse`/
+  `SolveInverseELR`). White-box
   step-level tests may include internal headers (`source/solve_step.hpp`,
   `source/solve_angle.hpp`, `source/splines.hpp`, `source/ode.hpp`) but only
   in static test builds (see §14.2); nothing validation-specific ships in the
@@ -167,10 +172,11 @@ if code moves, the spec's logic still holds.)
 
 ### 4.2 Deterministic forward solver
 
-- `source/lob_solve.cpp` `LobSolve`: integrates from muzzle with launch angle
-  `zero_angle + aerodynamic_jump`, steps via `FastSolveStep` (firing-site
-  `FastDsDx`), clamps the last step to the target (`ComputeStep` in
-  `source/solve_step.cpp`), stops at all-ranges-reached / `max_time` /
+- `source/lob_solve.cpp` `LobSolve`/`LobSolveELR`: integrate from muzzle
+  with launch angle `zero_angle + aerodynamic_jump`; `LobSolve` steps via
+  `SolveStep` (firing-site `DsDx`), `LobSolveELR` steps via
+  `SolveStepELR` (lapse-scaled `DsDxELR`). Both clamp the last step to the target
+  (`ComputeStep` in `source/solve_step.cpp`), stop at all-ranges-reached /
   `minimum_speed|energy` (linearly interpolated `LerpOutput`) / tumble
   (`|v_y| > 3·v_x`).
 - Output quantization floor (load-bearing for convergence, §8.5):
@@ -197,19 +203,21 @@ if code moves, the spec's logic still holds.)
   `ComputeStep`: `Δx = min(target − x, step)`. No adaptivity, no embedded
   error estimate. `TOF` integrated as `d(TOF)/dx = 1/vx` inside `DsDxCore`.
 
-### 4.4 Two density paths (must be studied separately)
+### 4.4 Two density paths (selected explicitly by the caller)
 
-- `FastDsDx`: `drag = drag_coeff`, `c = speed_of_sound` (firing-site).
-- `DsDx`: scales per step by `ρ/ρ0 = 1−u(1−αu)`, `c/c0 = 1−βu`,
+- `DsDx`: `drag = drag_coeff`, `c = speed_of_sound` (firing-site).
+- `DsDxELR`: scales per step by `ρ/ρ0 = 1−u(1−αu)`, `c/c0 = 1−βu`,
   `u = −k_lapse·P·G`, `α = (e−1)/2e`, `β = 1/2e`, `e = kHydrostaticExponent`
   (`source/solve_step.cpp:96-102`, `source/constants.hpp:27-29`).
-- Routing (`source/lob_solve.cpp:22`, `kDynamicDropThreshold`):
-  forward / zero / Boatright-supersonic integral use `Fast*`; only
-  `LobSolveInverse` ranges with forward `drop > 100 ft`
-  (`elevation < −1200 in`) use `SolveStep`/`SolveAngle`. Builder zero search
-  uses `FastSolveAngle`.
-- Implication: a convergence claim on `LobSolve` does **not** transfer to the
-  lapse-scaled inverse tail. §8 requires both paths.
+- Routing: `LobSolve`/`LobSolveInverse` use the fast path (`DsDx`/
+  `SolveStep`, firing-site air) throughout;
+  `LobSolveELR`/`LobSolveInverseELR` use `SolveStepELR`/`SolveAngleELR`
+  (lapse-scaled air) throughout. There is no drop threshold and no
+  per-range switching: the caller selects the path by choosing which
+  operation to call. Builder zero search still uses
+  `SolveAngle`.
+- Implication: a convergence claim on `LobSolve` does **not** transfer to
+  the lapse-scaled paths. §8 requires both paths.
 
 ### 4.5 Angle solver (shared zero + inverse)
 
@@ -223,13 +231,16 @@ if code moves, the spec's logic still holds.)
   (`source/lob_builder.cpp` `BuildZeroAngle`); inverse seeds with
   `FastInverseAngle(zero_angle, forward_residual, R)` (usually within
   0.1 MOA, 1–2 iterations).
-- `LobSolveInverse` = forward reachability pass + per-range re-solve;
-  `LobFastInverse` = one-step geometric warp in place (no integration; fall
-  shorts yield meaningless numbers by documented design).
+- `LobSolveInverse` = forward reachability pass + closed-form geometric
+  correction per reached range (no iteration; stops at the first fall-short
+  row); `LobSolveInverseELR` = cheap answer first, then lapse-scaled
+  iteration per nonzero reached range. No public one-step conversion
+  entry point remains.
 - Tested: seeds `0°, ±30°, 44°`, `±3 in` round-trip to `±0.1 in`, tight
-  `0.001 MOA → ±0.01 in`, unreachable NaN, iterative-vs-fast `0.1 MOA`
+  `0.001 MOA → ±0.01 in`, unreachable NaN, cheap-vs-ELR agreement where
+  lapse corrections are small
   (`test/source/solve_angle_test.cpp`, `test/source/lob_inverse_test.cpp`).
-- The tolerance parameter already exists on `FastSolveAngle`/`SolveAngle`
+- The tolerance parameter already exists on `SolveAngle`/`SolveAngleELR`
   (default `0.01 MOA`) — refinement studies use it directly; no API change
   needed for tolerance tightening. Step refinement goes through public
   `Builder::StepSize`.
@@ -309,9 +320,10 @@ if code moves, the spec's logic still holds.)
   `±1 fps, ±5 ft·lbf, 0.1 MOA, ±0.01 s` to 1000 yd.
 - Benchmarks: `benchmark/ode.cpp` (Euler/Heun/RK4 cost-matched vs RK4
   `dt=1e-5` reference), `benchmark/loblerp.cpp` (LobLerp vs CurveView),
-  `benchmark/cachegrind/lob_bench.cpp` (7 cases: build_basic/full/
-  custom_table/boatright/zero_search, solve_basic/inverse; `--verify` gate;
-  `CG_MAX_REGRESSION_BP` compare in CI, no hard gate beyond summary).
+  `benchmark/cachegrind/lob_bench.cpp` (9 cases: build_basic/full/
+  custom_table/boatright/zero_search, solve_basic/elr/inverse/inverse_elr;
+  `--verify` gate; `CG_MAX_REGRESSION_BP` compare in CI, no hard gate
+  beyond summary).
 - CI (`.github/workflows/ci.yml`): `lint` (clang-format, codespell),
   `coverage` (ci-coverage preset → codecov), `sanitize` (ASan+UBSan),
   `test` (macos/ubuntu/windows × shared/static), `lobber`, `docs`
@@ -405,8 +417,8 @@ is accurate to X"*.
 | Knob | How | Values | Notes |
 |---|---|---|---|
 | `StepSize` (public `Builder::StepSize`, `uint16_t` in) | Halving ladder at fixed everything else | `36 → 18 → 9 → 4 → 2 → 1` (`0` = 36 default; ladder uses explicit inches) | Integer-only; 9→4 breaks exact halving — record actual `Δx` per run; cost ∝ `1/Δx`, finest ≈ 36× default → offline only |
-| Angle tolerance (existing `SolveAngle`/`FastSolveAngle` param) | Tighten at fixed step | `0.01 → 0.003 → 0.001` MOA | Default path uses 0.01; 0.001 cross-checked to `±0.01 in` in existing tests |
-| Density path | Stratify, never mix | `Fast*` (forward/zero) vs `DsDx` (inverse tail) | Inverse studies split at `drop ≷ 100 ft`; report both branches |
+| Angle tolerance (existing `SolveAngleELR`/`SolveAngle` param) | Tighten at fixed step | `0.01 → 0.003 → 0.001` MOA | Default path uses 0.01; 0.001 cross-checked to `±0.01 in` in existing tests |
+| Density path | Stratify, never mix | Fast path (`Solve`/`SolveInverse`/zero) vs lapse-scaled path (`SolveELR`/`SolveInverseELR`) | Report both paths per cell rather than splitting at a drop threshold |
 | Spline | Isolate, not part of step ladder | Perturb `drags[60]` within `5e-3` budget (§8.6) | Separates drag-table error from integrator error |
 
 Do **not** vary: physics inputs (that's §9), `kMaxIterations`/`±45°` bounds
@@ -455,13 +467,13 @@ compiler flags (that's §16 platform coverage).
 Failure signatures (numerical, fix by config/envelope, not by physics debate):
 
 - Non-monotone ladder, `p ≤ 0` or `p > 4`, oscillation with refinement.
-- `SolveAngle` returns NaN / hits 10-iteration cap / `±45°` bound at any rung
+- `SolveAngleELR` returns NaN / hits 10-iteration cap / `±45°` bound at any rung
   (record iterations-to-converge per range; cap-hit = failure, not "large
   adjustment").
 - Fall-short / tumble / `max_time` / `minimum_speed` interpolation engages at
   different ranges per rung (branch discontinuity — split the envelope at the
   branch, do not difference across it).
-- `Fast*` vs `DsDx` paths diverge on the same inputs beyond the floor (this is
+- Fast-path vs lapse-scaled-path results diverge on the same inputs beyond the floor (this is
   a **path discrepancy**, reported separately from step convergence; see §13
   for the lapse effect test).
 - Model disagreement looks different: ladder converges cleanly (monotone,
@@ -478,8 +490,8 @@ Failure signatures (numerical, fix by config/envelope, not by physics debate):
 - Last-step clamping (`ComputeStep`) means ranges that are exact multiples of
   the step show different local error than off-grid ranges — the canonical
   range set (§8.7) deliberately mixes on/off-grid ranges per rung.
-- `CurveView` Mach clamp at `[0, 5]`, wind-node joints, `vx ≤ 0` zeroing, and
-  the `drop>100 ft` path switch are all non-smooth points: expect local order
+- `CurveView` Mach clamp at `[0, 5]`, wind-node joints, and `vx ≤ 0` zeroing
+  are all non-smooth points: expect local order
   reduction; do not fit a global `p` across a branch switch.
 
 ### 8.6 Spline / drag-table resolution (separate from step ladder)
@@ -522,8 +534,9 @@ Reuse existing fixtures verbatim where possible (no new magic trajectories):
    geometry (meplat 0.065, base 0.242, nose 0.690, tail 0.140, RtR 0.90);
    non-zero jump required (`assert jump ≠ 0`).
 7. **C9 inverse pair** — C1/C5/C8 through `SolveInverse` at 300/600/1000 yd
-   (covers `FastSolveAngle` branch) + 2000–3000 yd tail (covers `SolveAngle`
-   `drop>100 ft` branch; assert branch taken via forward `elevation < −1200`).
+   (fast path) + 2000–3000 yd tail through `SolveInverseELR`
+   (lapse-scaled path; assert the tail sits deep in lapse regime via forward
+   `elevation < −1200`).
 8. **C10 BC-bands/custom** — bands `0.20@2000 / 0.30@2500 / 0.40@3000` fps
    (`bc_transformation.md` values) + G6 custom-table path.
 9. **C11 angle-stress** — zero-by-distance 100 yd + tight-tolerance rerun;
@@ -717,7 +730,7 @@ sensitivity Pareto.
   target), atmosphere branch (ISA / altitude / hot-low / humid), wind branch
   (calm / uniform / profile-unscaled-α0 / profile-scaled-α>0 + α value /
   incline×wind / ceiling-clamp exercised), spin path (off / Litz / Boatright),
-  density path (`Fast*` / lapse-scaled inverse tail), drag source (G* / bands /
+  density path (fast path / lapse-scaled ELR path), drag source (G* / bands /
   custom).
 - A validation claim names the **envelope cell**, the case IDs covering it,
   and the worst residual in the cell. Cells with one case are labeled
@@ -726,9 +739,10 @@ sensitivity Pareto.
   + incline combination is always its own cell (tilted datum + pitch bake
   change the field structurally); unscaled-profile results never cover it.
 - Forbidden: extrapolating a short-range ISA result to long-range humid, or a
-  `Fast*` forward result to the lapse-scaled inverse tail, or a G7 result to
-  G1, or an `α = 0` profile result to a sheared atmosphere. The `drop>100 ft`
-  path gate is an envelope boundary by construction.
+  fast-path forward result to a lapse-scaled ELR result, or a G7 result to
+  G1, or an `α = 0` profile result to a sheared atmosphere. The fast/lapse
+  path choice is an envelope dimension by construction: cells record which
+  operation produced each result.
 
 ### 10.4 Case record format (source-controlled, small)
 
@@ -744,7 +758,8 @@ no values are re-tuned in the transcription.
 ### 10.5 Model-form spot checks (planned discrepancies)
 
 - G7-vs-G1 mismatch run, single-BC vs BC-bands on the same bands, Litz vs
-  Boatright on full geometry, lapse on/off (`Fast*` vs `DsDx` same inputs),
+  Boatright on full geometry, lapse on/off (fast path vs lapse-scaled path,
+  same inputs),
   Coriolis/spin/jump on/off. These quantify **known structural choices** and
   feed §13 effect sizes; they are reported as `δ_structural`, never as
   `ε_num`.
@@ -756,8 +771,8 @@ no values are re-tuned in the transcription.
 - No field/radar data → long-range cells stay provisional regardless of
   residuals; the spec's gap statement in `validation/overview.md` remains
   until data arrives.
-- Per-step lapse gating stays visible: any cell whose ranges cross `drop =
-  100 ft` reports both sides of the gate.
+- Per-step lapse selection stays visible: cells report which operation
+  (fast or ELR) produced each result; long-range cells report both.
 
 ---
 
@@ -930,7 +945,7 @@ For fixed case + config, compute the paired difference:
 ```
 
 Candidate effects (minimum set): step refinement (36→9 in); angle tolerance
-(0.01→0.001 MOA); lapse path (`Fast*` vs `DsDx` on the inverse tail);
+(0.01→0.001 MOA); lapse path (fast `SolveInverse` vs `SolveInverseELR`);
 Coriolis on/off; spin off/Litz/Boatright; jump on/off; single-BC vs bands;
 G7 vs G1 (model-form reference); spline `±5e-3` nudge; single-point profile
 vs uniform (expect `R_sig ≪ 1` — bit-identity oracle, guards the storage
@@ -1157,7 +1172,7 @@ Every JSON artifact starts with a provenance header:
   inline buffer; borrowed table pointers; 60-float spline; two-`CartesianT` +
   `SecT` state), no exceptions, C++14, no `<random>`, no threads, no I/O.
 - Hot path stays branch-light: 7-FLOP `PolyVal`, `O(1)` monotonic `Seek`,
-  `FastDsDx` firing-site fast path; cost linear in `1/Δx` (measured in
+  `DsDx` firing-site fast path; cost linear in `1/Δx` (measured in
   `benchmark/ode.cpp`). Wind query costs one node copy on the uniform /
   no-shear fast path (`wind.hpp` inline, `kCount == 1 && !kShear`) and a
   ≤7-compare scan + lerp + mults on the profile path (`wind.cpp` cold TU,
@@ -1404,7 +1419,7 @@ floors/ceilings checked into `baselines/`):
   mix flat/inclined wind claims (§10.3).
 - **Reference licensing** (JBM/BRL tables, paper excerpts): vendored tables
   already in-tree; new external data needs license check before check-in.
-- **Lapse-gate validity**: forward `Fast*` vs inverse-tail `DsDx` split means
+- **Path-selection validity**: fast-path vs ELR split means
   two truths per long-range case — the spec treats this as designed, visible,
   and envelope-defining, not as a bug to hide.
 
@@ -1425,7 +1440,7 @@ artifact IDs, keeps the evidence-before-synthesis policy):
 - `docs/pages/numerical_methods/splines.md` + `ballistic_model/drag.md` —
   link the `5e-3 → inches/MOA` trajectory mapping (§8.6).
 - `docs/pages/numerical_methods/zero_angle.md` + `inverse.md` + `api/*` —
-  link tolerance-tightening evidence and the `Fast*` vs lapse branch table.
+  link tolerance-tightening evidence and the fast-vs-ELR path comparison.
 - `docs/pages/ballistic_model/wind_coriolis.md` — the usage/limitations
   sections already describe the profile query, but the vector section still
   documents the removed `ctx.wind = {x,z}` storage and the internal-radian

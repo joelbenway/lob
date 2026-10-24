@@ -130,7 +130,7 @@ Adapter rules (spec §12.1 + Phase 2 patterns, exact):
 - Heights drawn ONLY when manifest shear `alpha != 0` (inert-at-α0 pruning, Phase 2 rule); shear sampled on `[0,1]` truncated.
 - BC: normal around band value, truncated positive (lognormal upgrade deferred to human supplier evidence).
 - Categorical: G-curve choice as weighted scenario per manifest weights (default weight 1.0 on the case's own curve — i.e. degenerate unless a study says otherwise).
-- Branch counters per sample: `reached_all_ranges` (else fall-short index), `tumble_hit`, `angle_cap_hit` (SolveAngle NaN → inverse prefix-short), `density_path` taken. Nonzero branch counts split downstream summaries (spec §12.3 — pooled stats across branches forbidden).
+- Branch counters per sample: `reached_all_ranges` (else fall-short index), `tumble_hit`, `angle_cap_hit` (SolveAngleELR NaN → inverse prefix-short), `density_path` taken. Nonzero branch counts split downstream summaries (spec §12.3 — pooled stats across branches forbidden).
 
 Manifest schema: `{run_id, cell, seed, samples, workers, solver_config{...}, dimensions: [{input, family, params, truncation, baseline}], scenarios: [...], synthetic_illustrative_only: bool}`. The smoke manifest's flag is `true` with a comment string naming the §21-item-7 gate for real values.
 

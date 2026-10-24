@@ -10,6 +10,7 @@ set(FORMAT_PATTERNS
     test/*.hpp
     example/*.cpp
     example/*.hpp
+    wasm/*.cpp
     CACHE STRING
           "; separated patterns relative to the project source dir to format")
 

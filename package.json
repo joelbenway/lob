@@ -1,0 +1,22 @@
+{
+  "name": "lob-workspace",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24"
+  },
+  "scripts": {
+    "build:wasm": "cmake --preset=wasm && cmake --build --preset=wasm",
+    "test": "node --test wasm/test/*.test.mjs example/solver/test/*.test.mjs",
+    "lint": "eslint .",
+    "format": "prettier --write eslint.config.js package.json wasm/ example/solver/",
+    "format:check": "prettier --check eslint.config.js package.json wasm/ example/solver/"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10"
+  }
+}

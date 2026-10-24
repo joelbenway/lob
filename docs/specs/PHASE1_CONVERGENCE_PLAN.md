@@ -32,7 +32,7 @@ Phase 1 of `docs/specs/NUMERICAL_VALIDATION_SPEC.md` §20 ONLY: convergence/erro
 Deliberate deferrals inside Phase 1 (all recorded here so reviewers don't re-litigate):
 - JSON *reader* deferred to Phase 3 (reference loader). CI ceilings live as named constants in the test file with provenance comments cross-linked to `floors.json`; Phase 3 unifies them when the reader lands. A reader is harder than a writer; building it now is speculative.
 - CI-fast tests write NO files (hermetic gate, in-memory asserts only). Only the env-gated offline driver writes `build/validation/`.
-- Inverse dynamic branch (`drop > 100 ft`, `SolveAngle` path) is covered offline only; CI uses the `FastSolveAngle` branch (900/1800 ft on C1-class ballistics).
+- Inverse dynamic branch (`drop > 100 ft`, `SolveAngleELR` path) is covered offline only; CI uses the `SolveAngle` branch (900/1800 ft on C1-class ballistics).
 
 ---
 
@@ -661,7 +661,7 @@ git commit -m "test: add CI-fast C1 step-ladder gate with measured floors"
 - Consumes: Tasks 1–2 (`MakeC1IcaoBuilder`, `BuildAtStep`, `ElevMoaDiff`, `DecreasesOrAtFloor`, `kMoaFloor`).
 - Produces: inverse-branch coverage for the CI gate (offline dynamic branch stays in Task 8).
 
-Ranges `{900U, 1800U}` ft on C1 ballistics stay on the `FastSolveAngle` branch (forward drop ≈ −13/−90 in, far above the 1200-in `drop>100 ft` switch) — assert this precondition explicitly so a physics change that flips the branch fails loudly instead of silently changing what's measured.
+Ranges `{900U, 1800U}` ft on C1 ballistics stay on the `SolveAngle` branch (forward drop ≈ −13/−90 in, far above the 1200-in `drop>100 ft` switch) — assert this precondition explicitly so a physics change that flips the branch fails loudly instead of silently changing what's measured.
 
 - [ ] **Step 1: Write the failing inverse test**
 
@@ -868,7 +868,7 @@ lob::FeetT FireResidual(const LobContext& ctx, const lob::MoaT& angle,
                                  lob::FpsT(0.0)));
   lob::spline::CurveView curve(lob::spline::kKnots.data(), &ctx.drags[0]);
   while (s.P().X() < range) {
-    lob::FastSolveStep(ctx, &s, &curve, range);
+    lob::SolveStep(ctx, &s, &curve, range);
   }
   return s.P().Y() - lob::FeetT(ctx.optic_height);
 }
@@ -879,9 +879,9 @@ TEST(ValidationAngleConvergence, TighteningNeverRegressesResidual) {
   const LobContext kCtx = BuildC1CContext();
   ASSERT_EQ(kCtx.error, kLobErrorNone);
   const lob::FeetT kRange(900.0);
-  const lob::MoaT kDefault = lob::FastSolveAngle(
+  const lob::MoaT kDefault = lob::SolveAngle(
       kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
-  const lob::MoaT kTight = lob::FastSolveAngle(
+  const lob::MoaT kTight = lob::SolveAngle(
       kCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0),
       lob::RadiansT(lob::MoaT(0.001)));
   ASSERT_FALSE(kDefault.IsNaN());
@@ -1088,7 +1088,7 @@ Acceptance snapshot (spec §19.1 + §19.2, CI-subset half): C1 36→18→9 monot
 
 **2. Placeholder scan:** no TBD/TODO/later; every number is either repo-verbatim (C1 fixture, tolerances, `LOB_WIND_POINTS`, shear table) or measured-in-task (ceilings/floors via Step-3 procedure) or a structural bound with repo precedent (`0.1` MOA inverse, `0.1` in round-trip, order `[1,3]` from Heun theory cited in spec §8.3). `"<output of...>"`-style slots in `floors.json` are filled in the same task's Step 3/4 — flagged explicitly as fill-before-commit.
 
-**3. Type consistency:** `lob::Output` field types respected (`uint32_t range` comparisons via `kRanges[i]`; `velocity`/`energy` cast to double before `fabs`); `Builder::StepSize(uint16_t)` — ladder literals fit; `WindProfile` `std::array` overload borrows until `Build()` — `kTwoPoint` is function-static lifetime... correction: `kTwoPoint` in Task 6 is a function-local const — `build_profile` calls `Build()` synchronously inside the lambda, so the pointer never dangles. Safe. `FastSolveAngle` overloads: `(ctx, range, impact, seed, tolerance)` — matches `source/solve_angle.hpp`. `lob::Version()` — flagged for verification before use, fallback `LobVersion()` given. `GTEST_SKIP()` valid in GTest 1.14. `std::getenv` needs `<cstdlib>` — listed.
+**3. Type consistency:** `lob::Output` field types respected (`uint32_t range` comparisons via `kRanges[i]`; `velocity`/`energy` cast to double before `fabs`); `Builder::StepSize(uint16_t)` — ladder literals fit; `WindProfile` `std::array` overload borrows until `Build()` — `kTwoPoint` is function-static lifetime... correction: `kTwoPoint` in Task 6 is a function-local const — `build_profile` calls `Build()` synchronously inside the lambda, so the pointer never dangles. Safe. `SolveAngle` overloads: `(ctx, range, impact, seed, tolerance)` — matches `source/solve_angle.hpp`. `lob::Version()` — flagged for verification before use, fallback `LobVersion()` given. `GTEST_SKIP()` valid in GTest 1.14. `std::getenv` needs `<cstdlib>` — listed.
 
 ---
 

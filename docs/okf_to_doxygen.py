@@ -190,6 +190,21 @@ def page_id_for(relpath):
 def render_page(page_id, frontmatter, body):
     """Emit '@page <id> <title>' header plus body verbatim."""
     title = frontmatter.get("title") or page_id
+    exhibit = frontmatter.get("exhibit")
+    if exhibit:
+        if isinstance(exhibit, str):
+            ex = exhibit.strip()
+        else:
+            ex = str(exhibit).strip()
+        if ex:
+            exhibit_html = (
+                "\\htmlonly\n"
+                '<div data-lob-exhibit="%s"></div>\n'
+                '<script type="module" src="exhibits/%s.js"></script>\n'
+                "\\endhtmlonly\n"
+                % (ex, ex)
+            )
+            return "@page %s %s\n%s%s" % (page_id, title, exhibit_html, body)
     return "@page %s %s\n%s" % (page_id, title, body)
 
 

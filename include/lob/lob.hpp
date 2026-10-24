@@ -77,6 +77,7 @@ enum class ErrorT : LobErrorT {
   kInitialVelocityRequired = ::kLobErrorInitialVelocityRequired,
   kInternalError = ::kLobErrorInternalError,
   kLatitudeOOR = ::kLobErrorLatitudeOOR,
+  kLaunchAngleRequired = ::kLobErrorLaunchAngleRequired,
   kLengthOOR = ::kLobErrorLengthOOR,
   kMachDragTableInvalid = ::kLobErrorMachDragTableInvalid,
   kMachDragTableNotMonotonic = ::kLobErrorMachDragTableNotMonotonic,
@@ -95,7 +96,6 @@ enum class ErrorT : LobErrorT {
   kWindProfileNotMonotonic = ::kLobErrorWindProfileNotMonotonic,
   kWindProfileTooLong = ::kLobErrorWindProfileTooLong,
   kZeroAngleOOR = ::kLobErrorZeroAngleOOR,
-  kZeroDataRequired = ::kLobErrorZeroDataRequired,
   kZeroDistanceOOR = ::kLobErrorZeroDistanceOOR,
   kZeroUnreachable = ::kLobErrorZeroUnreachable,
 };
@@ -935,61 +935,63 @@ inline size_t Solve(const Context& ctx, uint32_t range, Output* pout) {
 }
 
 /**
- * @brief Converts forward-solution output to inverse-solution adjustments.
- * @note A one-step approximation. Only convert outputs whose forward solution
- * reached the target range; fall-short trajectories yield meaningless results.
- * Entries with non-finite elevation or deflection are skipped and not counted.
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain a forward-solution.
+ * @note Air density and the speed of sound are recomputed along the flight.
  * @param ctx Context parameters for the calculation.
- * @param pouts Pointer to an array of forward-solution outputs to convert in
- * place.
- * @param size The number of outputs to convert.
- * @return The number of successful conversions, or 0 on invalid arguments.
- * Entries with zero range are skipped and not counted.
+ * @param pranges Pointer to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @param size The number of ranges to solve for.
+ * @return The number of successful solutions.
  */
-inline size_t FastInverse(const Context& ctx, Output* pouts, size_t size) {
+inline size_t SolveELR(const Context& ctx, const uint32_t* pranges,
+                       Output* pouts, size_t size) {
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-  return ::LobFastInverse(reinterpret_cast<const ::LobContext*>(&ctx), pouts,
-                          size);
+  return ::LobSolveELR(reinterpret_cast<const ::LobContext*>(&ctx), pranges,
+                       pouts, size);
 }
 
 /**
- * @brief Converts forward-solution output to inverse-solution adjustments.
- * @note A one-step approximation. Only convert outputs whose forward solution
- * reached the target range; fall-short trajectories yield meaningless results.
- * Entries with non-finite elevation or deflection are skipped and not counted.
- * @tparam N The number of outputs to convert.
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain a forward-solution.
+ * @tparam N The number of ranges to solve for.
  * @param ctx Context parameters for the calculation.
- * @param pouts Reference to an array of outputs to convert in place.
- * @return The number of successful conversions.
+ * @param ranges Reference to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @return The number of successful solutions.
  */
 template <size_t N>
-inline size_t FastInverse(const Context& ctx, std::array<Output, N>* pouts) {
+inline size_t SolveELR(const Context& ctx,
+                       const std::array<uint32_t, N>& ranges,
+                       std::array<Output, N>* pouts) {
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-  return ::LobFastInverse(reinterpret_cast<const ::LobContext*>(&ctx),
-                          pouts->data(), N);
+  return ::LobSolveELR(reinterpret_cast<const ::LobContext*>(&ctx),
+                       ranges.data(), pouts->data(), N);
 }
 
 /**
- * @brief Converts forward-solution output to inverse-solution adjustments for a
- * single output.
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain a forward-solution.
  * @param ctx Context parameters for the calculation.
- * @param pout Pointer to an output to convert in place.
- * @return The number of successful conversions (0 or 1).
+ * @param range Ranges (in feet) to solve for.
+ * @param pout Pointer to an output where results will be stored.
+ * @return The number of successful solutions.
  */
-inline size_t FastInverse(const Context& ctx, Output* pout) {
+inline size_t SolveELR(const Context& ctx, uint32_t range, Output* pout) {
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-  return ::LobFastInverse(reinterpret_cast<const ::LobContext*>(&ctx), pout, 1);
+  return ::LobSolveELR(reinterpret_cast<const ::LobContext*>(&ctx), &range,
+                       pout, 1);
 }
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
  * Results contain an inverse-solution.
  * @note An inverse-solution solves for the adjustments (in MOA) required to
- * hit at a given range. Entries with zero range are counted but their
- * adjustments are zeroed. Adjustments for ranges the projectile cannot reach
- * (fall-short solutions) are not produced; solving stops at the first such
- * entry. Unlike FastInverse, a fall-short entry is not silently given a
- * meaningless adjustment.
+ * hit at a given range. This is one forward solve followed by the closed-form
+ * geometric correction; it performs no iterative angle search. Entries with
+ * zero range are counted and their adjustments are zeroed. Adjustments for
+ * ranges the projectile cannot reach (fall-short solutions) are not produced;
+ * solving stops at the first such entry.
  * @param ctx Context parameters for the calculation.
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
  * @param pouts Pointer to an array where the output results will be stored.
@@ -1033,6 +1035,58 @@ inline size_t SolveInverse(const Context& ctx, uint32_t range, Output* pout) {
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
   return ::LobSolveInverse(reinterpret_cast<const ::LobContext*>(&ctx), &range,
                            pout, 1);
+}
+
+/**
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain an inverse-solution.
+ * @note Starts from the cheap SolveInverse answer, then refines every nonzero
+ * reached range with the lapse-scaled angle solver. Only elevation is
+ * re-solved; deflection retains the cheap geometric hold-off.
+ * @param ctx Context parameters for the calculation.
+ * @param pranges Pointer to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @param size The number of ranges to solve for.
+ * @return The number of successful solutions.
+ */
+inline size_t SolveInverseELR(const Context& ctx, const uint32_t* pranges,
+                              Output* pouts, size_t size) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobSolveInverseELR(reinterpret_cast<const ::LobContext*>(&ctx),
+                              pranges, pouts, size);
+}
+
+/**
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain an inverse-solution.
+ * @tparam N The number of ranges to solve for.
+ * @param ctx Context parameters for the calculation.
+ * @param ranges Reference to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @return The number of successful solutions.
+ */
+template <size_t N>
+inline size_t SolveInverseELR(const Context& ctx,
+                              const std::array<uint32_t, N>& ranges,
+                              std::array<Output, N>* pouts) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobSolveInverseELR(reinterpret_cast<const ::LobContext*>(&ctx),
+                              ranges.data(), pouts->data(), N);
+}
+
+/**
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain an inverse-solution.
+ * @param ctx Context parameters for the calculation.
+ * @param range Range (in feet) to solve for.
+ * @param pout Pointer to an output where results will be stored.
+ * @return The number of successful solutions (0 or 1).
+ */
+inline size_t SolveInverseELR(const Context& ctx, uint32_t range,
+                              Output* pout) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return ::LobSolveInverseELR(reinterpret_cast<const ::LobContext*>(&ctx),
+                              &range, pout, 1);
 }
 
 /**

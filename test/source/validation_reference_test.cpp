@@ -50,7 +50,12 @@ TEST(ReferenceJson, ParsesFlatCaseShape) {
 TEST(ReferenceJson, RejectsMalformedDocuments) {
   for (const char* bad :
        {"{\"a\":1,}", "{\"a\":", "{\"a\" 1}", "[1,2", "{\"a\":01}", ""}) {
-    EXPECT_THROW((void)nlohmann::json::parse(bad), nlohmann::json::parse_error)
+    EXPECT_THROW(
+        {
+          const nlohmann::json kParsed = nlohmann::json::parse(bad);
+          ADD_FAILURE() << "accepted: " << bad << " as " << kParsed.dump();
+        },
+        nlohmann::json::parse_error)
         << "accepted: " << bad;
   }
 }

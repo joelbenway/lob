@@ -8,7 +8,7 @@ include(cmake/prelude.cmake)
 
 project(
   lob
-  VERSION 0.13.0
+  VERSION 0.14.0
   DESCRIPTION "an exterior ballistics calculation library"
   HOMEPAGE_URL "https://github.com/joelbenway/lob"
   LANGUAGES CXX)
@@ -67,6 +67,12 @@ target_include_directories(
   lob_lob SYSTEM PUBLIC "\$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>")
 
 target_compile_features(lob_lob PUBLIC cxx_std_14)
+
+# ---- Wasm library ----
+
+if(PROJECT_IS_TOP_LEVEL AND EMSCRIPTEN)
+  add_subdirectory(wasm)
+endif()
 
 # ---- Install rules ----
 

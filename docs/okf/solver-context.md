@@ -120,4 +120,5 @@ to the lower-fidelity model rather than report a zero.
 - [Angle Solver Mechanics](angle-solver.md): what produced the zero
   angle stored on the context.
 - [Inverse Solving](inverse-solving.md): the solve-time contract,
-  including the deliberate asymmetry between its two entry points.
+  including the deliberate cheap-versus-ELR tradeoff between its entry
+  points (both truncate at the first unreachable range).

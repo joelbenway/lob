@@ -87,7 +87,7 @@
     },
     {
       "cell": "C9-dynamic-tail",
-      "solver_config": {"step_ladder_in": [36, 18, 9], "angle_tol_moa": 0.01, "density_path": "lapse-scaled-inverse-tail"},
+      "solver_config": {"step_ladder_in": [36, 18, 9], "angle_tol_moa": 0.01, "density_path": "elr"},
       "ranges_ft": [6000, 7500, 9000],
       "floors_18_9": {
         "elevation_moa": 6.535115801e-06,
