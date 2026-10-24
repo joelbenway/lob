@@ -856,7 +856,7 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
   }
 
   if (pimpl->zero_distance_ft.IsNaN()) {
-    pout->error = kLobErrorZeroDataRequired;
+    pout->error = kLobErrorLaunchAngleRequired;
     return;
   }
 

@@ -78,6 +78,7 @@ enum {
   kLobErrorInitialVelocityRequired,
   kLobErrorInternalError,
   kLobErrorLatitudeOOR,
+  kLobErrorLaunchAngleRequired,
   kLobErrorLengthOOR,
   kLobErrorMachDragTableInvalid,
   kLobErrorMachDragTableNotMonotonic,
@@ -96,7 +97,6 @@ enum {
   kLobErrorWindProfileNotMonotonic,
   kLobErrorWindProfileTooLong,
   kLobErrorZeroAngleOOR,
-  kLobErrorZeroDataRequired,
   kLobErrorZeroDistanceOOR,
   kLobErrorZeroUnreachable,
   kLobErrorNumberOfErrors  ///< @note Total number of enumerated Errors
