@@ -8,6 +8,11 @@ The input rules are documented in
 The progressive form hides and disables gates that do not apply to the selected
 drag, projectile, atmosphere, wind, and Earth-effect sources.
 
+The Ranges card also selects the solver path (fast or extreme long range)
+and the result kind (forward trajectory or inverse sight adjustments). The
+form re-solves automatically as inputs change; inverse results hide the
+inch columns and report MOA only.
+
 ## Build and run
 
 From the repository root:

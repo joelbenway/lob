@@ -137,34 +137,47 @@ function format(number, digits) {
   return Number.isFinite(number) ? number.toFixed(digits) : "—";
 }
 
-function makeCell(text, energy = false) {
+function makeCell(text, options = {}) {
   const cell = document.createElement("td");
-  if (energy) {
+  if (options.energy) {
     cell.dataset.energy = "";
+  }
+  if (options.col) {
+    cell.dataset.col = options.col;
   }
   cell.textContent = text;
   return cell;
 }
 
-function renderRows(rows, config) {
+function renderRows(rows, config, inverse) {
   tbody.replaceChildren();
   for (const row of rows) {
     const tr = document.createElement("tr");
     tr.append(
       makeCell(format(row.rangeYds, 0)),
       makeCell(format(row.velocityFps, 0)),
-      makeCell(format(row.energyFtLbs, 0), true),
-      makeCell(format(row.elevationInch, 1)),
+      makeCell(format(row.energyFtLbs, 0), { energy: true }),
+      makeCell(inverse ? "—" : format(row.elevationInch, 1), {
+        col: "elevIn",
+      }),
       makeCell(
-        row.rangeFt > 0
-          ? format(lob.inchToMoa(row.elevationInch, row.rangeFt), 2)
-          : "—",
+        inverse
+          ? format(row.elevationMoa, 2)
+          : row.rangeFt > 0
+            ? format(lob.inchToMoa(row.elevationInch, row.rangeFt), 2)
+            : "—",
+        { col: "elevMoa" },
       ),
-      makeCell(format(row.deflectionInch, 1)),
+      makeCell(inverse ? "—" : format(row.deflectionInch, 1), {
+        col: "deflIn",
+      }),
       makeCell(
-        row.rangeFt > 0
-          ? format(lob.inchToMoa(row.deflectionInch, row.rangeFt), 2)
-          : "—",
+        inverse
+          ? format(row.deflectionMoa, 2)
+          : row.rangeFt > 0
+            ? format(lob.inchToMoa(row.deflectionInch, row.rangeFt), 2)
+            : "—",
+        { col: "deflMoa" },
       ),
       makeCell(format(row.timeOfFlightSec, 3)),
     );
@@ -175,9 +188,14 @@ function renderRows(rows, config) {
   for (const cell of table.querySelectorAll("[data-energy]")) {
     cell.hidden = hideEnergy;
   }
+  for (const cell of table.querySelectorAll(
+    '[data-col="elevIn"], [data-col="deflIn"]',
+  )) {
+    cell.hidden = inverse;
+  }
 }
 
-function updateSummary(config) {
+function updateSummary(config, elr, inverse) {
   const atmosphere = {
     ArmyStandardMetro: "Army Standard Metro",
     ICAO: "ICAO",
@@ -213,7 +231,7 @@ function updateSummary(config) {
 
   summary.textContent = `${drag}; ${tier}; ${weather}; ${wind}; ${
     earth || "no Earth effects"
-  }.`;
+  }; ${elr ? "ELR" : "fast"} ${inverse ? "inverse" : "forward"}.`;
 }
 
 function solve(event) {
@@ -228,12 +246,20 @@ function solve(event) {
   try {
     const config = readConfig(Object.fromEntries(new FormData(form)));
     const ranges = buildRanges(config.maxYds, config.stepYds);
+    const elr = value("solverPath") === "elr";
+    const inverse = value("solutionKind") === "inverse";
     builder = new lob.Builder();
     context = applyConfig(builder, config).build();
-    const rows = context.solveYds(ranges);
+    const rows = inverse
+      ? elr
+        ? context.solveInverseELRYds(ranges)
+        : context.solveInverseYds(ranges)
+      : elr
+        ? context.solveELRYds(ranges)
+        : context.solveYds(ranges);
 
-    renderRows(rows, config);
-    updateSummary(config);
+    renderRows(rows, config, inverse);
+    updateSummary(config, elr, inverse);
     if (rows.length < ranges.length) {
       status.textContent = `Trajectory fell short after ${rows.length} of ${ranges.length} ranges.`;
     } else {
@@ -253,6 +279,7 @@ form.addEventListener("submit", solve);
 form.addEventListener("change", (event) => {
   clearDependent(event.target);
   syncVisibility();
+  solve();
 });
 form.addEventListener("input", syncVisibility);
 
