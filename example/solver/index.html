@@ -599,6 +599,24 @@
           <h2>Ranges</h2>
           <div class="field-grid">
             <div class="field">
+              <label for="solverPath">Solver path</label>
+              <select id="solverPath" name="solverPath">
+                <option value="fast" selected>Fast</option>
+                <option value="elr">Extreme long range</option>
+              </select>
+              <small>ELR recomputes air density along the flight.</small>
+            </div>
+            <div class="field">
+              <label for="solutionKind">Result</label>
+              <select id="solutionKind" name="solutionKind">
+                <option value="forward" selected>Forward</option>
+                <option value="inverse">Inverse</option>
+              </select>
+              <small>Inverse reports sight adjustments in MOA.</small>
+            </div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
               <label for="maxYds">Maximum range (yd)</label>
               <input
                 id="maxYds"
@@ -643,10 +661,10 @@
                   <th scope="col">Range (yd)</th>
                   <th scope="col">Velocity (fps)</th>
                   <th scope="col" data-energy>Energy (ft·lb)</th>
-                  <th scope="col">Elevation (in)</th>
-                  <th scope="col">Elevation (MOA)</th>
-                  <th scope="col">Deflection (in)</th>
-                  <th scope="col">Deflection (MOA)</th>
+                  <th scope="col" data-col="elevIn">Elevation (in)</th>
+                  <th scope="col" data-col="elevMoa">Elevation (MOA)</th>
+                  <th scope="col" data-col="deflIn">Deflection (in)</th>
+                  <th scope="col" data-col="deflMoa">Deflection (MOA)</th>
                   <th scope="col">Time of flight (s)</th>
                 </tr>
               </thead>
@@ -656,6 +674,13 @@
         </section>
       </aside>
     </main>
+
+    <footer class="footer">
+      <p>
+        Built on <a href="https://github.com/joelbenway/lob">lob</a> ·
+        <a href="https://joelbenway.github.io/lob/">docs</a>
+      </p>
+    </footer>
 
     <script type="module" src="./app.mjs"></script>
   </body>

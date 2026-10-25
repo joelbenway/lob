@@ -290,6 +290,71 @@ tbody tr:nth-child(even) {
   }
 }
 
+.footer {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 0 1.25rem 2rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.footer a {
+  color: var(--accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --ink: #e8e2d5;
+    --muted: #a89e8d;
+    --paper: #1c1a16;
+    --card: #262320;
+    --line: #453e34;
+    --accent: #d97a4c;
+    --accent-dark: #e88f63;
+    --focus: #6ea8fe;
+    --error: #e88a8a;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 15% 0%, #2b2519 0, transparent 35rem),
+      var(--paper);
+  }
+
+  .card {
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  }
+
+  input:not([type="checkbox"]),
+  select,
+  textarea {
+    border-color: #5a5348;
+    background: #1c1a16;
+  }
+
+  th {
+    background: #332d25;
+  }
+
+  th,
+  td {
+    border-bottom-color: #3a342b;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #221f1b;
+  }
+
+  .status {
+    background: #332720;
+  }
+
+  .status[data-state="error"] {
+    background: #382222;
+  }
+}
+
 @media (max-width: 36rem) {
   .hero {
     padding-top: 1.5rem;
