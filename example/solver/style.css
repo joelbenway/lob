@@ -213,6 +213,8 @@ button:disabled {
 .sticky {
   display: grid;
   gap: 0.85rem;
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
 }
 
 .summary {
@@ -240,6 +242,54 @@ button:disabled {
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: 0.45rem;
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
+}
+
+.plot {
+  margin: 0.9rem 0 0;
+}
+
+.plot svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.plot figcaption {
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.plot-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.plot-zero {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+
+.plot-area {
+  fill: var(--accent);
+  opacity: 0.12;
+}
+
+.plot-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.plot-tick {
+  fill: var(--muted);
+  font-size: 11px;
 }
 
 table {
@@ -287,6 +337,11 @@ tbody tr:nth-child(even) {
     top: 1rem;
     max-height: calc(100vh - 2rem);
     overflow: auto;
+  }
+
+  .table-wrap {
+    max-height: max(11rem, calc(100vh - 28rem));
+    overflow-y: auto;
   }
 }
 

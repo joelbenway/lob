@@ -3,12 +3,15 @@
 // Please see end of file for extended copyright information
 
 import { applyConfig, buildRanges, readConfig } from "./inputs.mjs";
+import { trajectoryChart } from "./plot.mjs";
 
 const form = document.querySelector("#solver-form");
 const status = document.querySelector("#status");
 const summary = document.querySelector("#model-summary");
 const table = document.querySelector("#results");
 const tbody = table.querySelector("tbody");
+const plot = document.querySelector("#plot");
+const plotSvg = document.querySelector("#plot-svg");
 
 let lob;
 
@@ -195,6 +198,94 @@ function renderRows(rows, config, inverse) {
   }
 }
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+function svgNode(name, attributes = {}, text) {
+  const node = document.createElementNS(SVG_NS, name);
+  for (const [key, attributeValue] of Object.entries(attributes)) {
+    node.setAttribute(key, attributeValue);
+  }
+  if (text !== undefined) {
+    node.textContent = text;
+  }
+  return node;
+}
+
+function drawPlot(rows, inverse) {
+  const chart = inverse ? null : trajectoryChart(rows);
+  plot.hidden = !chart;
+  if (!chart) {
+    plotSvg.replaceChildren();
+    return;
+  }
+
+  const grid = [
+    ...chart.yTicks.map(({ y }) =>
+      svgNode("line", {
+        class: "plot-grid",
+        x1: chart.left,
+        x2: chart.right,
+        y1: y,
+        y2: y,
+      }),
+    ),
+    ...chart.xTicks.map(({ x }) =>
+      svgNode("line", {
+        class: "plot-grid",
+        x1: x,
+        x2: x,
+        y1: chart.top,
+        y2: chart.bottom,
+      }),
+    ),
+  ];
+  const labels = [
+    ...chart.yTicks.map(({ y, label }) =>
+      svgNode(
+        "text",
+        {
+          class: "plot-tick",
+          x: chart.left - 8,
+          y: y + 4,
+          "text-anchor": "end",
+        },
+        label,
+      ),
+    ),
+    ...chart.xTicks.map(({ x, label, anchor }) =>
+      svgNode(
+        "text",
+        {
+          class: "plot-tick",
+          x,
+          y: chart.height - 9,
+          "text-anchor": anchor,
+        },
+        label,
+      ),
+    ),
+  ];
+
+  plotSvg.replaceChildren(
+    ...grid,
+    svgNode("path", { class: "plot-area", d: chart.area }),
+    svgNode("line", {
+      class: "plot-zero",
+      x1: chart.left,
+      x2: chart.right,
+      y1: chart.zeroY,
+      y2: chart.zeroY,
+    }),
+    svgNode("polyline", { class: "plot-line", points: chart.curve }),
+    ...labels,
+  );
+  plotSvg.setAttribute("viewBox", `0 0 ${chart.width} ${chart.height}`);
+  plotSvg.setAttribute(
+    "aria-label",
+    `Elevation from ${format(chart.minInch, 1)} to ${format(chart.maxInch, 1)} inches over ${format(chart.maxYds, 0)} yards.`,
+  );
+}
+
 function updateSummary(config, elr, inverse) {
   const atmosphere = {
     ArmyStandardMetro: "Army Standard Metro",
@@ -259,6 +350,7 @@ function solve(event) {
         : context.solveYds(ranges);
 
     renderRows(rows, config, inverse);
+    drawPlot(rows, inverse);
     updateSummary(config, elr, inverse);
     if (rows.length < ranges.length) {
       status.textContent = `Trajectory fell short after ${rows.length} of ${ranges.length} ranges.`;
@@ -267,6 +359,7 @@ function solve(event) {
     }
   } catch (error) {
     tbody.replaceChildren();
+    plot.hidden = true;
     status.dataset.state = "error";
     status.textContent = error instanceof Error ? error.message : String(error);
   } finally {

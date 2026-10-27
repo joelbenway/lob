@@ -11,7 +11,8 @@ drag, projectile, atmosphere, wind, and Earth-effect sources.
 The Ranges card also selects the solver path (fast or extreme long range)
 and the result kind (forward trajectory or inverse sight adjustments). The
 form re-solves automatically as inputs change; inverse results hide the
-inch columns and report MOA only.
+inch columns and report MOA only. Forward results chart elevation against
+range below the table.
 
 ## Build and run
 
