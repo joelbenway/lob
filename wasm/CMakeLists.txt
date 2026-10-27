@@ -47,6 +47,7 @@ if(EMSCRIPTEN)
       "${PROJECT_SOURCE_DIR}/example/solver/style.css"
       "${PROJECT_SOURCE_DIR}/example/solver/app.mjs"
       "${PROJECT_SOURCE_DIR}/example/solver/inputs.mjs"
+      "${PROJECT_SOURCE_DIR}/example/solver/plot.mjs"
       "${CMAKE_BINARY_DIR}/index.mjs" "${CMAKE_BINARY_DIR}/lob.mjs"
       "${CMAKE_BINARY_DIR}/lob.wasm" "${CMAKE_BINARY_DIR}/solver"
     DEPENDS lob_wasm
