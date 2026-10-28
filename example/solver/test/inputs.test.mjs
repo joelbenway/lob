@@ -38,6 +38,10 @@ test("buildRanges rejects non-positive or non-integer inputs", () => {
   assert.throws(() => buildRanges(1000, 12.5), RangeError);
 });
 
+test("buildRanges rejects an unreasonable sample count", () => {
+  assert.throws(() => buildRanges(100_000, 1), /too many ranges/i);
+});
+
 test("readConfig parses the standard BC path", () => {
   const config = readConfig(valid);
   assert.equal(config.dragSource, "bc");
@@ -46,6 +50,58 @@ test("readConfig parses the standard BC path", () => {
   assert.equal(config.massGrains, 168);
   assert.equal(config.zeroYds, 100);
   assert.equal(config.windClock, 3);
+});
+
+test("readConfig reports readable field names and bounds", () => {
+  assert.throws(
+    () => readConfig({ ...valid, bc: "0" }),
+    /Ballistic coefficient must be greater than 0/,
+  );
+  assert.throws(
+    () => readConfig({ ...valid, velocityFps: "70000" }),
+    /Muzzle velocity must be in 1\.\.65535/,
+  );
+  assert.throws(
+    () =>
+      readConfig({
+        ...valid,
+        dragSource: "bands",
+        bandsText: "0,0.2\n2000,0.3",
+      }),
+    /Velocity bands row 1 must be greater than 0/,
+  );
+});
+
+test("readConfig formats open and closed bounds", () => {
+  assert.throws(
+    () =>
+      readConfig({
+        ...valid,
+        zeroMode: "angle",
+        zeroAngleMoa: "Infinity",
+      }),
+    /Zero angle must be a finite number/,
+  );
+  assert.throws(
+    () => readConfig({ ...valid, sightHeightInches: "-1" }),
+    /Sight height must be at least 0/,
+  );
+  assert.throws(
+    () =>
+      readConfig({
+        ...valid,
+        projectileTier: "full",
+        diameterInch: "0.308",
+        lengthInch: "1.24",
+        twistInchesPerTurn: "11",
+        noseLengthInch: "0.6",
+        meplatDiameterInch: "0.05",
+        baseDiameterInch: "0.28",
+        tailLengthInch: "0.2",
+        ogiveRtR: "2",
+      }),
+    /Ogive Rt\/R must be greater than 0 and at most 1/,
+  );
 });
 
 test("readConfig parses and validates band rows", () => {
@@ -103,7 +159,7 @@ test("readConfig parses custom tables and native coefficients", () => {
 test("readConfig enforces projectile tiers", () => {
   assert.throws(
     () => readConfig({ ...valid, projectileTier: "mass", massGrains: "" }),
-    /massGrains/,
+    /mass/i,
   );
   const stability = readConfig({
     ...valid,
@@ -137,7 +193,7 @@ test("readConfig enforces projectile tiers", () => {
         lengthInch: "1.24",
         twistInchesPerTurn: "11",
       }),
-    /noseLength/,
+    /nose length/i,
   );
 });
 
@@ -195,7 +251,7 @@ test("readConfig handles wind modes and profile validation", () => {
         windSource: "profile",
         windProfileText: "100,90,10",
       }),
-    /wind/,
+    /wind/i,
   );
 });
 

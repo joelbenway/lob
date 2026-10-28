@@ -27,13 +27,6 @@ function isChecked(name) {
   return Boolean(element(name)?.checked);
 }
 
-function setValue(name, next) {
-  const control = element(name);
-  if (control) {
-    control.value = next;
-  }
-}
-
 function hasHeight(text) {
   return text.split(/\r?\n/).some((line) => {
     const cells = line.split(",");
@@ -96,42 +89,6 @@ function syncVisibility() {
       "input, select, textarea, button",
     )) {
       control.disabled = !energyActive;
-    }
-  }
-}
-
-function clearDependent(target) {
-  if (target.name === "dragSource") {
-    const stale = {
-      bc: ["bandsText", "dragTableText", "coefficientsText"],
-      bands: ["bc", "dragTableText", "coefficientsText"],
-      table: ["bc", "bandsText", "coefficientsText"],
-      coefficients: ["bc", "bandsText", "dragTableText"],
-    };
-    for (const name of stale[target.value] ?? []) {
-      setValue(name, "");
-    }
-  }
-  if (target.name === "zeroMode") {
-    if (target.value === "distance") {
-      setValue("zeroAngleMoa", "");
-    } else {
-      setValue("zeroYds", "");
-      setValue("zeroImpactHeightInches", "");
-    }
-  }
-  if (target.name === "windSource") {
-    if (target.value === "uniform") {
-      setValue("windProfileText", "");
-      setValue("windShearExponent", "");
-    } else if (target.value === "profile") {
-      setValue("windSpeedMph", "");
-      setValue("windClock", "");
-    } else {
-      setValue("windSpeedMph", "");
-      setValue("windClock", "");
-      setValue("windProfileText", "");
-      setValue("windShearExponent", "");
     }
   }
 }
@@ -310,7 +267,10 @@ function updateSummary(config, elr, inverse) {
   }[config.weatherSource];
   const wind = {
     none: "calm",
-    uniform: `${config.windSpeedMph} mph at ${config.windClock} o’clock`,
+    uniform:
+      config.windSpeedMph > 0
+        ? `${config.windSpeedMph} mph at ${config.windClock} o’clock`
+        : "calm",
     profile: `${config.windProfile?.length ?? 0} wind profile points`,
   }[config.windSource];
   const earth = [
@@ -363,6 +323,7 @@ function solve(event) {
   } catch (error) {
     tbody.replaceChildren();
     plot.hidden = true;
+    summary.textContent = "No valid model.";
     status.dataset.state = "error";
     status.textContent = error instanceof Error ? error.message : String(error);
   } finally {
@@ -372,8 +333,7 @@ function solve(event) {
 }
 
 form.addEventListener("submit", solve);
-form.addEventListener("change", (event) => {
-  clearDependent(event.target);
+form.addEventListener("change", () => {
   syncVisibility();
   solve();
 });
