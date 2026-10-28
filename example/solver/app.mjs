@@ -341,6 +341,7 @@ function solve(event) {
     const inverse = value("solutionKind") === "inverse";
     builder = new lob.Builder();
     context = applyConfig(builder, config).build();
+    const started = performance.now();
     const rows = inverse
       ? elr
         ? context.solveInverseELRYds(ranges)
@@ -348,14 +349,16 @@ function solve(event) {
       : elr
         ? context.solveELRYds(ranges)
         : context.solveYds(ranges);
+    const elapsedMs = performance.now() - started;
+    const elapsed = elapsedMs < 1 ? "< 1 ms" : `${Math.round(elapsedMs)} ms`;
 
     renderRows(rows, config, inverse);
     drawPlot(rows, inverse);
     updateSummary(config, elr, inverse);
     if (rows.length < ranges.length) {
-      status.textContent = `Trajectory fell short after ${rows.length} of ${ranges.length} ranges.`;
+      status.textContent = `Trajectory fell short after ${rows.length} of ${ranges.length} ranges in ${elapsed}.`;
     } else {
-      status.textContent = `Solved ${rows.length} ranges with lob ${lob.version()}.`;
+      status.textContent = `Solved ${rows.length} ranges with lob ${lob.version()} in ${elapsed}.`;
     }
   } catch (error) {
     tbody.replaceChildren();
