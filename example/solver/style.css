@@ -156,7 +156,7 @@ textarea {
   min-height: 2.5rem;
   padding: 0.5rem 0.65rem;
   color: var(--ink);
-  border: 1px solid #aaa294;
+  border: 1px solid #948c7f;
   border-radius: 0.4rem;
   background: #fff;
 }
@@ -208,6 +208,7 @@ button:disabled {
 
 .output {
   min-width: 0;
+  container-type: inline-size;
 }
 
 .sticky {
@@ -239,11 +240,17 @@ button:disabled {
 
 .table-wrap {
   max-width: 100%;
-  overflow-x: auto;
+  max-height: 60vh;
+  overflow: auto;
   border: 1px solid var(--line);
   border-radius: 0.45rem;
   scrollbar-color: var(--line) transparent;
   scrollbar-width: thin;
+}
+
+.table-wrap:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .plot {
@@ -330,7 +337,6 @@ tbody tr:nth-child(even) {
 @media (min-width: 64rem) {
   .layout {
     grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-    align-items: start;
   }
 
   .sticky {
@@ -388,8 +394,12 @@ tbody tr:nth-child(even) {
   input:not([type="checkbox"]),
   select,
   textarea {
-    border-color: #5a5348;
+    border-color: #766d5f;
     background: #1c1a16;
+  }
+
+  button {
+    color: var(--paper);
   }
 
   th {
@@ -411,6 +421,25 @@ tbody tr:nth-child(even) {
 
   .status[data-state="error"] {
     background: #382222;
+  }
+}
+
+@container (max-width: 40rem) {
+  .plot-tick {
+    font-size: 15px;
+  }
+}
+
+@container (max-width: 27rem) {
+  #results [data-col="elevIn"],
+  #results [data-col="deflIn"] {
+    display: none;
+  }
+}
+
+@container (max-width: 25rem) {
+  .plot-tick {
+    font-size: 20px;
   }
 }
 

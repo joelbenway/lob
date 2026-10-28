@@ -6,18 +6,87 @@ export const DRAG_FUNCTIONS = ["G1", "G2", "G5", "G6", "G7", "G8"];
 export const ATMOSPHERES = ["ArmyStandardMetro", "ICAO"];
 
 const MIN_POSITIVE = Number.MIN_VALUE;
+const MAX_RANGES = 2000;
+
+const FIELD_LABELS = {
+  airPressureInHg: "Air pressure",
+  altitudeOfBarometerFt: "Barometer altitude",
+  altitudeOfFiringSiteFt: "Firing site altitude",
+  altitudeOfThermometerFt: "Thermometer altitude",
+  azimuthDeg: "Azimuth",
+  bandsText: "Velocity bands",
+  baseDiameterInch: "Base diameter",
+  bc: "Ballistic coefficient",
+  bcAtmosphere: "BC atmosphere",
+  coefficientsText: "Spline coefficients",
+  diameterInch: "Diameter",
+  dragFunction: "Drag function",
+  dragSource: "Drag source",
+  dragTableText: "Mach/Cd table",
+  latitudeDeg: "Latitude",
+  lengthInch: "Length",
+  massGrains: "Mass",
+  maximumTimeSec: "Maximum time",
+  maxYds: "Maximum range",
+  meplatDiameterInch: "Meplat diameter",
+  minimumEnergyFtLbs: "Minimum energy",
+  minimumSpeedFps: "Minimum speed",
+  noseLengthInch: "Nose length",
+  ogiveRtR: "Ogive Rt/R",
+  projectileTier: "Projectile detail",
+  rangeAngleDeg: "Range angle",
+  relativeHumidityPercent: "Relative humidity",
+  sightHeightInches: "Sight height",
+  stepSizeInch: "Step size",
+  stepYds: "Range step",
+  tailLengthInch: "Tail length",
+  temperatureDegF: "Temperature",
+  twistInchesPerTurn: "Twist",
+  velocityFps: "Muzzle velocity",
+  weatherSource: "Atmosphere source",
+  windClock: "Heading",
+  windProfileText: "Wind profile",
+  windShearExponent: "Shear exponent",
+  windSource: "Wind source",
+  windSpeedMph: "Wind speed",
+  zeroAngleMoa: "Zero angle",
+  zeroImpactHeightInches: "Zero impact height",
+  zeroMode: "Zero source",
+  zeroYds: "Zero distance",
+};
+
+function fieldLabel(key) {
+  return FIELD_LABELS[key] ?? key;
+}
+
+function formatBounds(min, max) {
+  if (min === MIN_POSITIVE) {
+    return max === Infinity
+      ? "greater than 0"
+      : `greater than 0 and at most ${max}`;
+  }
+  if (min === -Infinity) {
+    return "a finite number";
+  }
+  if (max === Infinity) {
+    return `at least ${min}`;
+  }
+  return `in ${min}..${max}`;
+}
 
 function requiredNumber(values, key, min, max, integer = false) {
   const text = values[key];
   if (typeof text !== "string" || text.trim() === "") {
-    throw new RangeError(`${key} is required`);
+    throw new RangeError(`${fieldLabel(key)} is required`);
   }
   const value = Number(text);
   if (!Number.isFinite(value) || value < min || value > max) {
-    throw new RangeError(`${key} must be in ${min}..${max}`);
+    throw new RangeError(
+      `${fieldLabel(key)} must be ${formatBounds(min, max)}`,
+    );
   }
   if (integer && !Number.isInteger(value)) {
-    throw new RangeError(`${key} must be an integer`);
+    throw new RangeError(`${fieldLabel(key)} must be an integer`);
   }
   return value;
 }
@@ -32,7 +101,9 @@ function optionalNumber(values, key, min, max, integer = false) {
 
 function choice(values, key, allowed) {
   if (!allowed.includes(values[key])) {
-    throw new RangeError(`${key} must be one of ${allowed.join(", ")}`);
+    throw new RangeError(
+      `${fieldLabel(key)} must be one of ${allowed.join(", ")}`,
+    );
   }
   return values[key];
 }
@@ -42,21 +113,26 @@ function checkbox(values, key) {
 }
 
 function rows(text, key, minimumColumns, maximumColumns) {
+  const label = fieldLabel(key);
   if (typeof text !== "string" || text.trim() === "") {
-    throw new RangeError(`${key} is required`);
+    throw new RangeError(`${label} is required`);
   }
   const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line !== "");
   if (lines.length === 0) {
-    throw new RangeError(`${key} is required`);
+    throw new RangeError(`${label} is required`);
   }
+  const expectedColumns =
+    minimumColumns === maximumColumns
+      ? `${minimumColumns}`
+      : `${minimumColumns} to ${maximumColumns}`;
   return lines.map((line, index) => {
     const cells = line.split(",").map((cell) => cell.trim());
     if (cells.length < minimumColumns || cells.length > maximumColumns) {
       throw new RangeError(
-        `${key} row ${index + 1} must have ${minimumColumns}..${maximumColumns} columns`,
+        `${label} row ${index + 1} must have ${expectedColumns} columns`,
       );
     }
     return cells;
@@ -66,19 +142,22 @@ function rows(text, key, minimumColumns, maximumColumns) {
 function cell(cells, index, key, row, min, max) {
   const text = cells[index];
   if (text === "") {
-    throw new RangeError(`${key} row ${row + 1} is required`);
+    throw new RangeError(`${fieldLabel(key)} row ${row + 1} is required`);
   }
   const value = Number(text);
   if (!Number.isFinite(value) || value < min || value > max) {
-    throw new RangeError(`${key} row ${row + 1} must be in ${min}..${max}`);
+    throw new RangeError(
+      `${fieldLabel(key)} row ${row + 1} must be ${formatBounds(min, max)}`,
+    );
   }
   return value;
 }
 
 function parseBands(text) {
   const parsed = rows(text, "bandsText", 2, 2);
+  const label = fieldLabel("bandsText");
   if (parsed.length < 2 || parsed.length > 16) {
-    throw new RangeError("bandsText must have 2..16 rows");
+    throw new RangeError(`${label} must have 2 to 16 rows`);
   }
   const fps = [];
   const bcs = [];
@@ -86,7 +165,7 @@ function parseBands(text) {
     const velocity = cell(cells, 0, "bandsText", index, MIN_POSITIVE, Infinity);
     const bc = cell(cells, 1, "bandsText", index, MIN_POSITIVE, Infinity);
     if (index > 0 && velocity <= fps[index - 1]) {
-      throw new RangeError("bandsText velocities must be strictly increasing");
+      throw new RangeError(`${label} velocities must be strictly increasing`);
     }
     fps.push(velocity);
     bcs.push(bc);
@@ -96,8 +175,9 @@ function parseBands(text) {
 
 function parseDragTable(text) {
   const parsed = rows(text, "dragTableText", 2, 2);
+  const label = fieldLabel("dragTableText");
   if (parsed.length < 2) {
-    throw new RangeError("dragTableText must have at least 2 rows");
+    throw new RangeError(`${label} must have at least 2 rows`);
   }
   const machs = [];
   const drags = [];
@@ -105,9 +185,7 @@ function parseDragTable(text) {
     const mach = cell(cells, 0, "dragTableText", index, 0, Infinity);
     const drag = cell(cells, 1, "dragTableText", index, 0, Infinity);
     if (index > 0 && mach <= machs[index - 1]) {
-      throw new RangeError(
-        "dragTableText Mach values must be strictly increasing",
-      );
+      throw new RangeError(`${label} Mach values must be strictly increasing`);
     }
     machs.push(mach);
     drags.push(drag);
@@ -116,25 +194,25 @@ function parseDragTable(text) {
 }
 
 function parseCoefficients(text) {
+  const label = fieldLabel("coefficientsText");
   if (typeof text !== "string" || text.trim() === "") {
-    throw new RangeError("coefficientsText is required");
+    throw new RangeError(`${label} is required`);
   }
   const values = text
     .split(/[\s,]+/)
     .filter((value) => value !== "")
     .map(Number);
   if (values.length !== 60 || values.some((value) => !Number.isFinite(value))) {
-    throw new RangeError(
-      "coefficientsText must contain exactly 60 finite numbers",
-    );
+    throw new RangeError(`${label} must contain exactly 60 finite numbers`);
   }
   return values;
 }
 
 function parseWindProfile(text) {
   const parsed = rows(text, "windProfileText", 3, 4);
+  const label = fieldLabel("windProfileText");
   if (parsed.length > 8) {
-    throw new RangeError("windProfileText must have at most 8 rows");
+    throw new RangeError(`${label} must have at most 8 rows`);
   }
   const profile = [];
   parsed.forEach((cells, index) => {
@@ -143,19 +221,15 @@ function parseWindProfile(text) {
     const speedMph = cell(cells, 2, "windProfileText", index, 0, 1000);
     const point = { rangeFt, headingDeg, speedMph };
     if (index === 0 && rangeFt !== 0) {
-      throw new RangeError("windProfileText first range must be 0");
+      throw new RangeError(`${label} first range must be 0`);
     }
     if (index > 0 && rangeFt <= profile[index - 1].rangeFt) {
-      throw new RangeError(
-        "windProfileText ranges must be strictly increasing",
-      );
+      throw new RangeError(`${label} ranges must be strictly increasing`);
     }
     if (cells[3] !== undefined && cells[3] !== "") {
       point.heightFt = Number(cells[3]);
       if (!Number.isFinite(point.heightFt) || point.heightFt <= 0) {
-        throw new RangeError(
-          `windProfileText row ${index + 1} height is invalid`,
-        );
+        throw new RangeError(`${label} row ${index + 1} height is invalid`);
       }
     }
     profile.push(point);
@@ -405,7 +479,9 @@ export function readConfig(values) {
       config.minimumEnergyFtLbs !== undefined &&
       config.projectileTier === "bc"
     ) {
-      throw new RangeError("minimumEnergyFtLbs requires projectile mass");
+      throw new RangeError(
+        `${fieldLabel("minimumEnergyFtLbs")} requires projectile mass`,
+      );
     }
     config.stepSizeInch = optionalNumber(
       values,
@@ -423,10 +499,17 @@ export function readConfig(values) {
 
 export function buildRanges(maxYds, stepYds) {
   if (!Number.isInteger(maxYds) || maxYds < 1) {
-    throw new RangeError("maxYds must be a positive integer");
+    throw new RangeError(`${fieldLabel("maxYds")} must be a positive integer`);
   }
   if (!Number.isInteger(stepYds) || stepYds < 1) {
-    throw new RangeError("stepYds must be a positive integer");
+    throw new RangeError(`${fieldLabel("stepYds")} must be a positive integer`);
+  }
+  const count =
+    Math.floor(maxYds / stepYds) + 1 + (maxYds % stepYds === 0 ? 0 : 1);
+  if (count > MAX_RANGES) {
+    throw new RangeError(
+      `Too many ranges; increase the range step or lower the maximum (limit ${MAX_RANGES}).`,
+    );
   }
   const ranges = [];
   for (let range = 0; range <= maxYds; range += stepYds) {
