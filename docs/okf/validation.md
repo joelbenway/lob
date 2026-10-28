@@ -5,7 +5,7 @@ description: How lob's correctness is established, and what is still unproven.
 tags: [validation, accuracy, testing, evidence]
 generated: {by: human:joel, at: 2026-10-09T00:00:00Z}
 verified: [{by: human:joel, at: 2026-10-09T00:00:00Z}]
-status: stable
+status: draft
 ---
 
 # Validation
@@ -67,7 +67,10 @@ design decision. A trajectory through a hot, high, fast regime and a
 trajectory through a cool, sea-level, slow one are different problems,
 and a single accuracy figure covering both would be a claim about
 neither. The floor is per cell and per output, and a caller working in
-one regime can read the number that applies to them.
+one regime can read the number that applies to them. Convergence ladders
+run for both the cheap and ELR inverse paths where each is meaningful:
+cheap corrections on ordinary trajectories, lapse-scaled iteration on
+the long-tail C9 survey.
 
 ## Sensitivity
 
@@ -119,8 +122,10 @@ a confident number.
 
 Continuous integration runs linting, sanitizers, coverage, and the test
 suite across several operating systems and both shared and static
-builds, plus a benchmark that tracks instruction counts so a change to
-the hot path shows up as a regression rather than as a surprise later.
+builds, plus a benchmark that tracks instruction counts for all four
+solver operations — `solve_basic`, `solve_elr`, `solve_inverse`, and
+`solve_inverse_elr` — so a change to any path shows up as a regression
+rather than as a surprise later.
 
 The test suite mirrors the source layout, so an area that gains a
 production file is expected to gain matching tests.

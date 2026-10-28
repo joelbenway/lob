@@ -19,7 +19,6 @@
 
 namespace lob {
 namespace {
-constexpr InchT kDynamicDropThreshold = FeetT(100.0);
 
 LobOutput OutputAtState(const TrajectoryStateT& s, const LobContext& ctx) {
   const FpsT kVelocity = s.V().Magnitude();
@@ -77,6 +76,89 @@ void ApplyGyroscopicSpinDrift(const LobContext& ctx, LobOutput* pouts,
   }
 }
 
+size_t ConvertForwardToInverse(const LobContext& ctx, LobOutput* pouts,
+                               size_t count) {
+  assert(pouts != nullptr);
+  const RadiansT kTheta = RadiansT(MoaT(ctx.zero_angle + ctx.aerodynamic_jump));
+  for (size_t i = 0; i < count; i++) {
+    if (pouts[i].range == 0) {
+      pouts[i].elevation = 0.0;
+      pouts[i].deflection = 0.0;
+      continue;
+    }
+    // Reached rows come straight from the forward pass, whose outputs are
+    // finite by construction, so there is no fallible case to return here.
+    // The assert keeps that invariant loud if the forward pass ever changes.
+    assert(std::isfinite(pouts[i].elevation));
+    assert(std::isfinite(pouts[i].deflection));
+    const FeetT kRange = FeetT(pouts[i].range);
+    const FeetT kElevation = FeetT(InchT(pouts[i].elevation));
+    pouts[i].elevation =
+        MoaT(FastInverseAngle(kTheta, kElevation, kRange) - kTheta).Value();
+    pouts[i].deflection = LobInchToMoa(-pouts[i].deflection, kRange.Value());
+  }
+  return count;
+}
+
+template <typename StepFunc>
+size_t SolveRanges(const LobContext& ctx, const uint32_t* pranges,
+                   LobOutput* pouts, size_t size, StepFunc step) {
+  const FpsT kMinimumSpeed(ctx.minimum_speed);
+  const auto kAngle = RadiansT(MoaT(ctx.zero_angle + ctx.aerodynamic_jump));
+
+  TrajectoryStateT s(
+      CartesianT<FeetT>(FeetT(0.0)),
+      CartesianT<FpsT>(FpsT(ctx.velocity) * std::cos(kAngle.Value()),
+                       FpsT(ctx.velocity) * std::sin(kAngle.Value()),
+                       FpsT(0.0)));
+  size_t index = 0;
+
+  spline::CurveView curve(spline::kKnots.data(), &ctx.drags[0]);
+
+  while (true) {
+    const TrajectoryStateT kS = s;
+
+    if (pranges[index] > 0) {
+      step(ctx, &s, &curve, FeetT(pranges[index]));
+    }
+
+    if (s.P().X() >= FeetT(pranges[index])) {
+      pouts[index] = OutputAtState(s, ctx);
+      index++;
+    }
+
+    if (index >= size) {
+      break;
+    }
+
+    if (s.TOF() >= SecT(ctx.max_time) && kS.TOF() < SecT(ctx.max_time)) {
+      const double kAlpha =
+          ((SecT(ctx.max_time) - kS.TOF()) / (s.TOF() - kS.TOF())).Value();
+      pouts[index] = LerpOutput(kS, s, kAlpha, ctx);
+      index++;
+      break;
+    }
+    if (s.V().Magnitude() <= kMinimumSpeed &&
+        kS.V().Magnitude() > kMinimumSpeed) {
+      const double kAlpha = ((kMinimumSpeed - kS.V().Magnitude()) /
+                             (s.V().Magnitude() - kS.V().Magnitude()))
+                                .Value();
+      pouts[index] = LerpOutput(kS, s, kAlpha, ctx);
+      index++;
+      break;
+    }
+    // If vertical velocity exceeds 3x horizontal, consider falling straight
+    // down.
+    if (std::abs(s.V().Y().Value()) > s.V().X().Value() * 3) {
+      pouts[index] = OutputAtState(s, ctx);
+      index++;
+      break;
+    }
+  }
+  ApplyGyroscopicSpinDrift(ctx, pouts, index);
+  return index;
+}
+
 }  // namespace
 
 }  // namespace lob
@@ -96,86 +178,22 @@ size_t LobSolve(const LobContext* pctx, const uint32_t* pranges,
       return 0;
     }
   }
-  const FpsT kMinimumSpeed(pctx->minimum_speed);
-  const auto kAngle = RadiansT(MoaT(pctx->zero_angle + pctx->aerodynamic_jump));
-
-  TrajectoryStateT s(
-      CartesianT<FeetT>(FeetT(0.0)),
-      CartesianT<FpsT>(FpsT(pctx->velocity) * std::cos(kAngle.Value()),
-                       FpsT(pctx->velocity) * std::sin(kAngle.Value()),
-                       FpsT(0.0)));
-  size_t index = 0;
-
-  spline::CurveView curve(spline::kKnots.data(), &pctx->drags[0]);
-
-  while (true) {
-    const TrajectoryStateT kS = s;
-
-    if (pranges[index] > 0) {
-      FastSolveStep(*pctx, &s, &curve, FeetT(pranges[index]));
-    }
-
-    if (s.P().X() >= FeetT(pranges[index])) {
-      pouts[index] = OutputAtState(s, *pctx);
-      index++;
-    }
-
-    if (index >= size) {
-      break;
-    }
-
-    if (s.TOF() >= SecT(pctx->max_time) && kS.TOF() < SecT(pctx->max_time)) {
-      const double kAlpha =
-          ((SecT(pctx->max_time) - kS.TOF()) / (s.TOF() - kS.TOF())).Value();
-      pouts[index] = LerpOutput(kS, s, kAlpha, *pctx);
-      index++;
-      break;
-    }
-    if (s.V().Magnitude() <= kMinimumSpeed &&
-        kS.V().Magnitude() > kMinimumSpeed) {
-      const double kAlpha = ((kMinimumSpeed - kS.V().Magnitude()) /
-                             (s.V().Magnitude() - kS.V().Magnitude()))
-                                .Value();
-      pouts[index] = LerpOutput(kS, s, kAlpha, *pctx);
-      index++;
-      break;
-    }
-    // If vertical velocity exceeds 3x horizontal, consider falling straight
-    // down.
-    if (std::abs(s.V().Y().Value()) > s.V().X().Value() * 3) {
-      pouts[index] = OutputAtState(s, *pctx);
-      index++;
-      break;
-    }
-  }
-  ApplyGyroscopicSpinDrift(*pctx, pouts, index);
-  return index;
+  return SolveRanges(*pctx, pranges, pouts, size, SolveStep);
 }
 
-size_t LobFastInverse(const LobContext* pctx, LobOutput* pouts, size_t size) {
-  if (pctx == nullptr || pouts == nullptr || size == 0 ||
-      pctx->error != kLobErrorNone || MoaT(pctx->zero_angle).IsNaN()) {
+size_t LobSolveELR(const LobContext* pctx, const uint32_t* pranges,
+                   LobOutput* pouts, size_t size) {
+  if (pctx == nullptr || pranges == nullptr || pouts == nullptr || size == 0 ||
+      pctx->error != kLobErrorNone || pctx->velocity == 0 ||
+      pctx->speed_of_sound <= 0.0 || MoaT(pctx->zero_angle).IsNaN()) {
     return 0;
   }
-  const RadiansT kTheta =
-      RadiansT(MoaT(pctx->zero_angle + pctx->aerodynamic_jump));
-  size_t count = 0;
-  for (size_t i = 0; i < size; i++) {
-    if (pouts[i].range == 0) {
-      continue;
+  for (size_t i = 1; i < size; i++) {
+    if (pranges[i] <= pranges[i - 1]) {
+      return 0;
     }
-    if (!std::isfinite(pouts[i].elevation) ||
-        !std::isfinite(pouts[i].deflection)) {
-      continue;
-    }
-    const FeetT kRange = FeetT(pouts[i].range);
-    const FeetT kElevation = FeetT(InchT(pouts[i].elevation));
-    pouts[i].elevation =
-        MoaT(FastInverseAngle(kTheta, kElevation, kRange) - kTheta).Value();
-    pouts[i].deflection = LobInchToMoa(-pouts[i].deflection, kRange.Value());
-    count++;
   }
-  return count;
+  return SolveRanges(*pctx, pranges, pouts, size, SolveStepELR);
 }
 
 size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
@@ -185,31 +203,39 @@ size_t LobSolveInverse(const LobContext* pctx, const uint32_t* pranges,
     return 0;
   }
   const size_t kForwardSolves = LobSolve(pctx, pranges, pouts, size);
-  const RadiansT kZeroAngle = MoaT(pctx->zero_angle);
-  // Seed represents mechanical launch angle. SolveAngle adds aerodynamic_jump
-  // internally during trajectory evaluation.
-  const RadiansT kSeedBase = MoaT(pctx->zero_angle);
-  for (size_t i = 0; i < kForwardSolves; i++) {
+  size_t reached = 0;
+  while (reached < kForwardSolves && pouts[reached].range >= pranges[reached]) {
+    reached++;
+  }
+  return ConvertForwardToInverse(*pctx, pouts, reached);
+}
+
+size_t LobSolveInverseELR(const LobContext* pctx, const uint32_t* pranges,
+                          LobOutput* pouts, size_t size) {
+  if (pctx == nullptr || pranges == nullptr || pouts == nullptr || size == 0 ||
+      pctx->error != kLobErrorNone || MoaT(pctx->zero_angle).IsNaN()) {
+    return 0;
+  }
+  const size_t kCheapSolves = LobSolveInverse(pctx, pranges, pouts, size);
+  const RadiansT kZeroAngle = RadiansT(MoaT(pctx->zero_angle));
+  for (size_t i = 0; i < kCheapSolves; i++) {
     if (pouts[i].range == 0) {
-      pouts[i].elevation = 0.0;
-      pouts[i].deflection = 0.0;
       continue;
     }
-    const bool kUseDynamic =
-        InchT(pouts[i].elevation) < kDynamicDropThreshold * -1;
-    const FeetT kElevation = InchT(pouts[i].elevation);
-    const FeetT kRange = FeetT(pouts[i].range);
-    const RadiansT kSeed = FastInverseAngle(kSeedBase, kElevation, kRange);
-    const RadiansT kTheta =
-        kUseDynamic ? SolveAngle(*pctx, kRange, FeetT(0.0), kSeed)
-                    : FastSolveAngle(*pctx, kRange, FeetT(0.0), kSeed);
+    // Seed represents the mechanical launch angle from the cheap answer.
+    // SolveAngleELR adds aerodynamic_jump internally during trajectory
+    // evaluation. Deflection keeps the cheap geometric hold-off; only the
+    // elevation is re-solved here.
+    const RadiansT kSeed =
+        RadiansT(MoaT(pctx->zero_angle + pouts[i].elevation));
+    const MoaT kTheta =
+        SolveAngleELR(*pctx, FeetT(pouts[i].range), FeetT(0.0), kSeed);
     if (kTheta.IsNaN()) {
       return i;
     }
     pouts[i].elevation = MoaT(kTheta - kZeroAngle).Value();
-    pouts[i].deflection = LobInchToMoa(-pouts[i].deflection, kRange.Value());
   }
-  return kForwardSolves;
+  return kCheapSolves;
 }
 
 }  // extern "C"

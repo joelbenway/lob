@@ -43,6 +43,11 @@ jobs:
       run: nix develop --command bash -c
         "cmake -P cmake/spell.cmake"
 
+    - name: JavaScript lint
+      if: always()
+      run: nix develop --command bash -c
+        "npm ci && npm run lint && npm run format:check"
+
   coverage:
     needs: [lint]
 
@@ -193,6 +198,22 @@ jobs:
       working-directory: build
       run: ctest --output-on-failure --no-tests=error -C Release -j 2
 
+  wasm:
+    needs: [lint]
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and test wasm package
+      run: nix build .#lob-wasm
+
   lobber:
     needs: [lint]
 
@@ -231,6 +252,12 @@ jobs:
       run: nix develop --command bash -c 
         "cmake -DPROJECT_SOURCE_DIR=$PWD -DPROJECT_BINARY_DIR=$PWD/build
         -P cmake/docs-ci.cmake"
+
+    - name: Build solver example
+      run: |
+        nix build .#lob-wasm --out-link build/lob-wasm
+        rm -rf build/docs/html/solver
+        cp -r build/lob-wasm/solver build/docs/html/solver
 
     - name: Deploy Docs to gh-pages
       uses: peaceiris/actions-gh-pages@v4

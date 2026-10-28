@@ -17,7 +17,10 @@
 #include <string>
 #include <vector>
 
+#include "eng_units.hpp"
+#include "lob/lob.h"
 #include "lob/lob.hpp"
+#include "solve_angle.hpp"
 #include "testing.hpp"
 
 namespace tests {
@@ -156,8 +159,8 @@ inline lob::Context BuildTailContext() {
       .Build();
 }
 
-// Path-engagement precondition (Phase 1 Task 5 pattern): fail loud unless
-// the long-tail drop sits on the lapse-scaled branch.
+// Regime characterization: fail loud unless the long-tail drop sits deep in
+// lapse-scaled territory, which is the regime ELR always serves.
 inline void ExpectTailDropEngaged(const std::array<lob::Output, 3>& fwd,
                                   const std::array<uint32_t, 3>& ranges) {
   for (size_t i = 0; i < ranges.size(); ++i) {
@@ -179,6 +182,24 @@ inline void RecordLapseVsInverse(const std::array<lob::Output, 3>& fwd,
     ASSERT_TRUE(std::isfinite(inv.at(i).elevation));
     RecordSignal("lapse", ranges.at(i),
                  fwd.at(i).elevation - inv.at(i).elevation, kUNumMoa,
+                 tests::kMoaFloor);
+  }
+}
+
+// Cheap-versus-ELR inverse outcome on the same long-tail ranges. Mechanism
+// (both solves complete) is asserted by the caller; the outcome here is
+// RECORDED, never tripwired.
+inline void RecordCheapVsELR(const std::array<lob::Output, 3>& cheap,
+                             const std::array<lob::Output, 3>& elr,
+                             const std::array<uint32_t, 3>& ranges) {
+  // Yardstick cross-link: u_num is floors.json C9-dynamic-tail
+  // floors_18_9.elevation_moa; granularity is testing.hpp kMoaFloor.
+  constexpr double kUNumMoa = 6.535115801e-06;
+  for (size_t i = 0; i < ranges.size(); ++i) {
+    ASSERT_TRUE(std::isfinite(cheap.at(i).elevation));
+    ASSERT_TRUE(std::isfinite(elr.at(i).elevation));
+    RecordSignal("cheap-vs-elr", ranges.at(i),
+                 cheap.at(i).elevation - elr.at(i).elevation, kUNumMoa,
                  tests::kMoaFloor);
   }
 }
@@ -272,11 +293,24 @@ TEST(SignalSmoke, LapsePathConverged) {
   ExpectTailDropEngaged(fwd, kRanges);
   std::array<lob::Output, 3> inv{};
   ASSERT_EQ(lob::SolveInverse(kCtx, kRanges, &inv), kRanges.size());
-  // FastInverse converts the forward outputs in place
-  // (SolveInverseMatchesFastInverseWithJump pattern in
-  // test/source/lob_inverse_test.cpp).
-  ASSERT_EQ(lob::FastInverse(kCtx, &fwd), kRanges.size());
+  std::array<lob::Output, 3> elr{};
+  ASSERT_EQ(lob::SolveInverseELR(kCtx, kRanges, &elr), kRanges.size());
+  // Closed-form warp converts the forward outputs in place, so the recorded
+  // cheap comparison is in MOA throughout. ELR coverage arrives with the
+  // cheap-versus-ELR record below.
+  const lob::RadiansT kTheta =
+      lob::RadiansT(lob::MoaT(kCtx.zero_angle + kCtx.aerodynamic_jump));
+  for (lob::Output& out : fwd) {
+    out.elevation = lob::MoaT(lob::FastInverseAngle(
+                                  kTheta, lob::FeetT(lob::InchT(out.elevation)),
+                                  lob::FeetT(out.range)) -
+                              kTheta)
+                        .Value();
+    out.deflection =
+        ::LobInchToMoa(-out.deflection, static_cast<double>(out.range));
+  }
   RecordLapseVsInverse(fwd, inv, kRanges);
+  RecordCheapVsELR(inv, elr, kRanges);
 }
 
 TEST(SignalSmoke, JumpIsLive) {

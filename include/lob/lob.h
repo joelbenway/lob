@@ -4,6 +4,7 @@
 
 #ifndef LOB_H
 #define LOB_H
+// NOLINTBEGIN
 
 #include <stddef.h>
 #include <stdint.h>
@@ -12,7 +13,6 @@
 
 #ifdef __cplusplus
 extern "C" {
-// NOLINTBEGIN
 #endif
 
 /** @brief The number of spline pieces comprising a drag function. */
@@ -78,6 +78,7 @@ enum {
   kLobErrorInitialVelocityRequired,
   kLobErrorInternalError,
   kLobErrorLatitudeOOR,
+  kLobErrorLaunchAngleRequired,
   kLobErrorLengthOOR,
   kLobErrorMachDragTableInvalid,
   kLobErrorMachDragTableNotMonotonic,
@@ -96,7 +97,6 @@ enum {
   kLobErrorWindProfileNotMonotonic,
   kLobErrorWindProfileTooLong,
   kLobErrorZeroAngleOOR,
-  kLobErrorZeroDataRequired,
   kLobErrorZeroDistanceOOR,
   kLobErrorZeroUnreachable,
   kLobErrorNumberOfErrors  ///< @note Total number of enumerated Errors
@@ -649,29 +649,30 @@ LOB_EXPORT extern size_t LobSolve(const LobContext* pctx,
                                   size_t size);
 
 /**
- * @brief Converts forward-solution output to inverse-solution adjustments.
- * @note A one-step approximation. Only convert outputs whose forward solution
- * reached the target range; fall-short trajectories yield meaningless results.
- * Entries with non-finite elevation or deflection are skipped and not counted.
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain a forward-solution.
+ * @note Air density and the speed of sound are recomputed along the flight.
+ * Use this path when altitude changes can matter, including extreme range or
+ * high-arc shots. Ordinary short-range trajectories should use LobSolve.
  * @param pctx Pointer to context parameters for the calculation.
- * @param pouts Pointer to an array of forward-solution outputs to convert in
- * place.
- * @param size The number of outputs to convert.
- * @return The number of successful conversions, or 0 on invalid arguments.
- * Entries with zero range are skipped and not counted.
+ * @param pranges Pointer to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @param size The number of ranges to solve for.
+ * @return The number of successful solutions.
  */
-LOB_EXPORT extern size_t LobFastInverse(const LobContext* pctx,
-                                        LobOutput* pouts, size_t size);
+LOB_EXPORT extern size_t LobSolveELR(const LobContext* pctx,
+                                     const uint32_t* pranges,
+                                     LobOutput* pouts, size_t size);
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
  * Results contain an inverse-solution.
  * @note An inverse-solution solves for the adjustments (in MOA) required to
- * hit at a given range. Entries with zero range are counted but their
- * adjustments are zeroed. Adjustments for ranges the projectile cannot reach
- * (fall-short solutions) are not produced; solving stops at the first such
- * entry. Unlike LobFastInverse, a fall-short entry is not silently given a
- * meaningless adjustment.
+ * hit at a given range. This is one forward solve followed by the closed-form
+ * geometric correction; it performs no iterative angle search. Entries with
+ * zero range are counted and their adjustments are zeroed. Adjustments for
+ * ranges the projectile cannot reach (fall-short solutions) are not produced;
+ * solving stops at the first such entry.
  * @param pctx Pointer to context parameters for the calculation.
  * @param pranges Pointer to an array of ranges (in feet) to solve for.
  * @param pouts Pointer to an array where the output results will be stored.
@@ -681,6 +682,25 @@ LOB_EXPORT extern size_t LobFastInverse(const LobContext* pctx,
 LOB_EXPORT extern size_t LobSolveInverse(const LobContext* pctx,
                                          const uint32_t* pranges,
                                          LobOutput* pouts, size_t size);
+
+/**
+ * @brief Solves the exterior ballistics problem with lapse-scaled air.
+ * Results contain an inverse-solution.
+ * @note Starts from the cheap LobSolveInverse answer, then refines every
+ * nonzero reached range with the lapse-scaled angle solver: there is no
+ * drop threshold, every nonzero range uses the expensive path. Only
+ * elevation is re-solved; deflection retains the cheap geometric hold-off.
+ * Entries with zero range are counted and their adjustments
+ * are zeroed; solving stops at the first unreachable or non-converging entry.
+ * @param pctx Pointer to context parameters for the calculation.
+ * @param pranges Pointer to an array of ranges (in feet) to solve for.
+ * @param pouts Pointer to an array where the output results will be stored.
+ * @param size The number of ranges to solve for.
+ * @return The number of successful solutions.
+ */
+LOB_EXPORT extern size_t LobSolveInverseELR(const LobContext* pctx,
+                                            const uint32_t* pranges,
+                                            LobOutput* pouts, size_t size);
 
 /** @brief Converts minutes of angle (MOA) to milliradians (MIL).
  * @param value Angle in MOA.
@@ -924,10 +944,9 @@ LOB_EXPORT extern double LobSToUs(double value);
 LOB_EXPORT extern double LobDegCToDegF(double value);
 
 #ifdef __cplusplus
-// NOLINTEND
 }
 #endif
-
+// NOLINTEND
 #endif  // LOB_H
 
 // This file is part of lob.

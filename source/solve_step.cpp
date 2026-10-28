@@ -88,13 +88,13 @@ inline TrajectoryStateT DsDxCore(const LobContext& ctx,
   return TrajectoryStateT{kDpDt * kDtDx, kDvDt * kDtDx, SecT(kDtDx)};
 }
 
-TrajectoryStateT FastDsDx(const LobContext& ctx, const TrajectoryStateT& s,
-                          spline::CurveView* pcurve) {
+TrajectoryStateT DsDx(const LobContext& ctx, const TrajectoryStateT& s,
+                      spline::CurveView* pcurve) {
   return DsDxCore(ctx, s, pcurve, ctx.drag_coeff, FpsT(ctx.speed_of_sound));
 }
 
-TrajectoryStateT DsDx(const LobContext& ctx, const TrajectoryStateT& s,
-                      spline::CurveView* pcurve) {
+TrajectoryStateT DsDxELR(const LobContext& ctx, const TrajectoryStateT& s,
+                         spline::CurveView* pcurve) {
   const double kU = GetDimensionlessAltitude(ctx, s);
   const double kScaledDragCoeff = GetScaledDragCoeff(ctx, kU);
   const FpsT kScaledSpeedOfSound = GetScaledSpeedOfSound(ctx, kU);
@@ -111,12 +111,12 @@ inline FeetT ComputeStep(const LobContext& ctx, const TrajectoryStateT& s,
 }
 }  // namespace
 
-void FastSolveStep(const LobContext& ctx, TrajectoryStateT* ps,
-                   spline::CurveView* pcurve, FeetT target_x) {
+void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
+               spline::CurveView* pcurve, FeetT target_x) {
   assert(ps != nullptr && pcurve != nullptr);
   const FeetT kStep = ComputeStep(ctx, *ps, target_x);
   auto f = [&](FeetT, const TrajectoryStateT& s) {
-    return FastDsDx(ctx, s, pcurve);
+    return DsDx(ctx, s, pcurve);
   };
   *ps = HeunStep(FeetT(0), *ps, kStep, f);
   const FpsT kVx = ps->V().X();
@@ -126,12 +126,12 @@ void FastSolveStep(const LobContext& ctx, TrajectoryStateT* ps,
   }
 }
 
-void SolveStep(const LobContext& ctx, TrajectoryStateT* ps,
-               spline::CurveView* pcurve, FeetT target_x) {
+void SolveStepELR(const LobContext& ctx, TrajectoryStateT* ps,
+                  spline::CurveView* pcurve, FeetT target_x) {
   assert(ps != nullptr && pcurve != nullptr);
   const FeetT kStep = ComputeStep(ctx, *ps, target_x);
   auto f = [&](FeetT, const TrajectoryStateT& s) {
-    return DsDx(ctx, s, pcurve);
+    return DsDxELR(ctx, s, pcurve);
   };
   *ps = HeunStep(FeetT(0), *ps, kStep, f);
   const FpsT kVx = ps->V().X();

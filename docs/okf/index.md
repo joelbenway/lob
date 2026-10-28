@@ -21,6 +21,11 @@ bundle documents what to call.
 - [Solver Context](solver-context.md): what a context promises about
   lifetime, reuse, threading, and failure.
 
+## Interactive solver inputs
+
+- [Solver Input State Machine](solver-input-state-machine.md): which
+  questions to ask, when to skip them, and what each answer unlocks.
+
 ## The ballistic model
 
 What lob computes.

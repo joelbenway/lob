@@ -23,7 +23,7 @@
 namespace tests {
 namespace {
 
-struct SolveAngleTest : public testing::Test {
+struct SolveAngleELRTest : public testing::Test {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
   const double kTestZeroAngle = 6.11;
@@ -46,7 +46,7 @@ struct SolveAngleTest : public testing::Test {
   void SetUp() override { ctx = BuildContext(kTestBC, kTestMuzzleVelocity); }
 };
 
-TEST_F(SolveAngleTest, FastInverseAngleZeroResidualReturnsInputAngle) {
+TEST_F(SolveAngleELRTest, FastInverseAngleZeroResidualReturnsInputAngle) {
   const lob::RadiansT kTheta(0.1);
   const lob::FeetT kResidual(0.0);
   const lob::FeetT kRange(300.0);
@@ -55,7 +55,7 @@ TEST_F(SolveAngleTest, FastInverseAngleZeroResidualReturnsInputAngle) {
   EXPECT_DOUBLE_EQ(kResult.Value(), kTheta.Value());
 }
 
-TEST_F(SolveAngleTest, FastInverseAngleNonPositiveRangeReturnsInputAngle) {
+TEST_F(SolveAngleELRTest, FastInverseAngleNonPositiveRangeReturnsInputAngle) {
   const lob::RadiansT kTheta(0.1);
   const lob::FeetT kResidual(3.0);
   for (const double kRangeValue : {0.0, -300.0}) {
@@ -66,7 +66,7 @@ TEST_F(SolveAngleTest, FastInverseAngleNonPositiveRangeReturnsInputAngle) {
   }
 }
 
-TEST_F(SolveAngleTest, FastInverseAngleNegativeResidualIncreasesAngle) {
+TEST_F(SolveAngleELRTest, FastInverseAngleNegativeResidualIncreasesAngle) {
   const lob::RadiansT kTheta(0.1);
   const lob::FeetT kRange(300.0);
   const lob::RadiansT kResultPos =
@@ -77,7 +77,7 @@ TEST_F(SolveAngleTest, FastInverseAngleNegativeResidualIncreasesAngle) {
   EXPECT_GT(kResultNeg.Value(), kTheta.Value());
 }
 
-TEST_F(SolveAngleTest, FastInverseAngleMonotonicInResidual) {
+TEST_F(SolveAngleELRTest, FastInverseAngleMonotonicInResidual) {
   const lob::RadiansT kTheta(0.1);
   const lob::FeetT kRange(300.0);
   const lob::RadiansT kR1 =
@@ -107,136 +107,119 @@ lob::FeetT FireAndMeasureImpact(const LobContext& ctx,
         s.V().Magnitude() <= lob::FpsT(ctx.minimum_speed)) {
       return lob::FeetT(lob::NaN());
     }
-    lob::FastSolveStep(ctx, &s, &curve, range);
+    lob::SolveStep(ctx, &s, &curve, range);
   }
   return s.P().Y() - lob::FeetT(ctx.optic_height);
 }
 
-TEST_F(SolveAngleTest, SolveAngleConvergesFromZeroSeed) {
+TEST_F(SolveAngleELRTest, SolveAngleELRConvergesFromZeroSeed) {
   const lob::FeetT kRange = lob::FeetT(lob::YardT(300));
   const lob::MoaT kAngle =
-      lob::FastSolveAngle(ctx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
+      lob::SolveAngle(ctx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
   ASSERT_FALSE(kAngle.IsNaN());
   EXPECT_TRUE(std::isfinite(kAngle.Value()));
   EXPECT_GT(kAngle.Value(), 0.0);
   EXPECT_NEAR(FireAndMeasureImpact(ctx, kAngle, kRange).Value(), 0.0, 0.1);
 }
 
-TEST_F(SolveAngleTest, SolveAngleConvergesFromPositiveSeed) {
+TEST_F(SolveAngleELRTest, SolveAngleELRConvergesFromPositiveSeed) {
   const lob::FeetT kRange = lob::FeetT(lob::YardT(300));
-  const lob::MoaT kAngle = lob::FastSolveAngle(
-      ctx, kRange, lob::FeetT(0.0), lob::RadiansT(lob::DegreesT(30)));
+  const lob::MoaT kAngle = lob::SolveAngle(ctx, kRange, lob::FeetT(0.0),
+                                           lob::RadiansT(lob::DegreesT(30)));
   ASSERT_FALSE(kAngle.IsNaN());
   EXPECT_TRUE(std::isfinite(kAngle.Value()));
   EXPECT_GT(kAngle.Value(), 0.0);
   EXPECT_NEAR(FireAndMeasureImpact(ctx, kAngle, kRange).Value(), 0.0, 0.1);
 }
 
-TEST_F(SolveAngleTest, SolveAngleConvergesFromNegativeSeed) {
+TEST_F(SolveAngleELRTest, SolveAngleELRConvergesFromNegativeSeed) {
   const lob::FeetT kRange = lob::FeetT(lob::YardT(300));
-  const lob::MoaT kAngle = lob::FastSolveAngle(
-      ctx, kRange, lob::FeetT(0.0), lob::RadiansT(lob::DegreesT(-30)));
+  const lob::MoaT kAngle = lob::SolveAngle(ctx, kRange, lob::FeetT(0.0),
+                                           lob::RadiansT(lob::DegreesT(-30)));
   ASSERT_FALSE(kAngle.IsNaN());
   EXPECT_TRUE(std::isfinite(kAngle.Value()));
   EXPECT_GT(kAngle.Value(), 0.0);
   EXPECT_NEAR(FireAndMeasureImpact(ctx, kAngle, kRange).Value(), 0.0, 0.1);
 }
 
-TEST_F(SolveAngleTest, SolveAngleConvergesFromNearMaxAngleSeed) {
+TEST_F(SolveAngleELRTest, SolveAngleELRConvergesFromNearMaxAngleSeed) {
   const lob::FeetT kRange = lob::FeetT(lob::YardT(300));
-  const lob::MoaT kAngle = lob::FastSolveAngle(
-      ctx, kRange, lob::FeetT(0.0), lob::RadiansT(lob::DegreesT(44)));
+  const lob::MoaT kAngle = lob::SolveAngle(ctx, kRange, lob::FeetT(0.0),
+                                           lob::RadiansT(lob::DegreesT(44)));
   ASSERT_FALSE(kAngle.IsNaN());
   EXPECT_TRUE(std::isfinite(kAngle.Value()));
   EXPECT_GT(kAngle.Value(), 0.0);
   EXPECT_NEAR(FireAndMeasureImpact(ctx, kAngle, kRange).Value(), 0.0, 0.1);
 }
 
-TEST_F(SolveAngleTest, SolveAngleRoundTripImpactHeightZero) {
+TEST_F(SolveAngleELRTest, SolveAngleELRRoundTripImpactHeightZero) {
   const lob::FeetT kRange = lob::FeetT(lob::YardT(300));
   const lob::MoaT kLaunchAngle =
-      lob::FastSolveAngle(ctx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
+      lob::SolveAngle(ctx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
   ASSERT_FALSE(kLaunchAngle.IsNaN());
   EXPECT_NEAR(FireAndMeasureImpact(ctx, kLaunchAngle, kRange).Value(), 0.0,
               0.1);
 }
 
-TEST_F(SolveAngleTest, SolveAngleRoundTripImpactHeightPositive) {
+TEST_F(SolveAngleELRTest, SolveAngleELRRoundTripImpactHeightPositive) {
   const lob::FeetT kRange = lob::FeetT(lob::YardT(300));
   const lob::FeetT kImpactHeight(3.0);
   const lob::MoaT kLaunchAngle =
-      lob::FastSolveAngle(ctx, kRange, kImpactHeight, lob::RadiansT(0.0));
+      lob::SolveAngle(ctx, kRange, kImpactHeight, lob::RadiansT(0.0));
   ASSERT_FALSE(kLaunchAngle.IsNaN());
   EXPECT_NEAR(FireAndMeasureImpact(ctx, kLaunchAngle, kRange).Value(),
               kImpactHeight.Value(), 0.1);
 }
 
-TEST_F(SolveAngleTest, SolveAngleRoundTripImpactHeightNegative) {
+TEST_F(SolveAngleELRTest, SolveAngleELRRoundTripImpactHeightNegative) {
   const lob::FeetT kRange = lob::FeetT(lob::YardT(300));
   const lob::FeetT kImpactHeight(-3.0);
   const lob::MoaT kLaunchAngle =
-      lob::FastSolveAngle(ctx, kRange, kImpactHeight, lob::RadiansT(0.0));
+      lob::SolveAngle(ctx, kRange, kImpactHeight, lob::RadiansT(0.0));
   ASSERT_FALSE(kLaunchAngle.IsNaN());
   EXPECT_NEAR(FireAndMeasureImpact(ctx, kLaunchAngle, kRange).Value(),
               kImpactHeight.Value(), 0.1);
 }
 
-TEST_F(SolveAngleTest, SolveAngleVeryShortRange) {
+TEST_F(SolveAngleELRTest, SolveAngleELRVeryShortRange) {
   const lob::FeetT kRange(10.0);
   const lob::MoaT kAngle =
-      lob::FastSolveAngle(ctx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
+      lob::SolveAngle(ctx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
   EXPECT_FALSE(kAngle.IsNaN());
 }
 
-TEST_F(SolveAngleTest, SolveAngleTightTolerance) {
+TEST_F(SolveAngleELRTest, SolveAngleELRTightTolerance) {
   const lob::FeetT kRange = lob::FeetT(lob::YardT(300));
   const lob::RadiansT kTol = lob::RadiansT(lob::MoaT(0.001));
-  const lob::MoaT kAngle = lob::FastSolveAngle(ctx, kRange, lob::FeetT(0.0),
-                                               lob::RadiansT(0.0), kTol);
+  const lob::MoaT kAngle =
+      lob::SolveAngle(ctx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0), kTol);
   ASSERT_FALSE(kAngle.IsNaN());
   EXPECT_TRUE(std::isfinite(kAngle.Value()));
   EXPECT_NEAR(FireAndMeasureImpact(ctx, kAngle, kRange).Value(), 0.0, 0.01);
 }
 
-TEST_F(SolveAngleTest, SolveAngleUnreachableTargetReturnsNaN) {
+TEST_F(SolveAngleELRTest, SolveAngleELRUnreachableTargetReturnsNaN) {
   const LobContext kWeakCtx = BuildContext(0.1, 600U);
   const lob::FeetT kRange = lob::FeetT(lob::YardT(2000));
-  const lob::MoaT kAngle = lob::FastSolveAngle(
-      kWeakCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
+  const lob::MoaT kAngle =
+      lob::SolveAngle(kWeakCtx, kRange, lob::FeetT(0.0), lob::RadiansT(0.0));
   EXPECT_TRUE(kAngle.IsNaN());
 }
 
-TEST_F(SolveAngleTest, SolveAngleAngleClampPastMaxAngleReturnsNaN) {
+TEST_F(SolveAngleELRTest, SolveAngleELRAngleClampPastMaxAngleReturnsNaN) {
   const lob::FeetT kRange(10.0);
-  const lob::MoaT kAngle = lob::FastSolveAngle(
-      ctx, kRange, lob::FeetT(15.0), lob::RadiansT(lob::DegreesT(44)));
+  const lob::MoaT kAngle = lob::SolveAngle(ctx, kRange, lob::FeetT(15.0),
+                                           lob::RadiansT(lob::DegreesT(44)));
   EXPECT_TRUE(kAngle.IsNaN());
 }
 
-TEST_F(SolveAngleTest, FastInverseMatchesSolveAngle) {
-  const std::array<uint32_t, 3> kRanges = {900U, 1800U, 3000U};
-  const double kToleranceMoa = 0.01;
-  for (const uint32_t kRangeFt : kRanges) {
-    LobOutput forward{};
-    ASSERT_EQ(LobSolve(&ctx, &kRangeFt, &forward, 1U), 1U);
-    ASSERT_EQ(LobFastInverse(&ctx, &forward, 1U), 1U);
-    const lob::MoaT kSolved = lob::FastSolveAngle(
-        ctx, lob::FeetT(static_cast<double>(kRangeFt)), lob::FeetT(0.0),
-        lob::RadiansT(lob::MoaT(ctx.zero_angle)));
-    ASSERT_FALSE(kSolved.IsNaN());
-    EXPECT_NEAR(kSolved.Value(), kTestZeroAngle + forward.elevation,
-                kToleranceMoa)
-        << "range=" << kRangeFt;
-  }
-}
-
-TEST_F(SolveAngleTest, SolveInverseMatchesSolveAngle) {
+TEST_F(SolveAngleELRTest, SolveInverseELRMatchesSolveAngleELR) {
   const std::array<uint32_t, 3> kRanges = {900U, 1800U, 3000U};
   const double kToleranceMoa = 0.01;
   for (const uint32_t kRangeFt : kRanges) {
     LobOutput inverse{};
-    ASSERT_EQ(LobSolveInverse(&ctx, &kRangeFt, &inverse, 1U), 1U);
-    const lob::MoaT kSolved = lob::FastSolveAngle(
+    ASSERT_EQ(LobSolveInverseELR(&ctx, &kRangeFt, &inverse, 1U), 1U);
+    const lob::MoaT kSolved = lob::SolveAngleELR(
         ctx, lob::FeetT(static_cast<double>(kRangeFt)), lob::FeetT(0.0),
         lob::RadiansT(lob::MoaT(ctx.zero_angle)));
     ASSERT_FALSE(kSolved.IsNaN());
@@ -246,17 +229,10 @@ TEST_F(SolveAngleTest, SolveInverseMatchesSolveAngle) {
   }
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
-TEST_F(SolveAngleTest, SolveInverseMatchesSolveAngleDynamic) {
-  const std::array<uint32_t, 3> kRanges = {6000U, 7500U, 9000U};
+TEST_F(SolveAngleELRTest, SolveInverseMatchesSolveAngleELR) {
+  const std::array<uint32_t, 3> kRanges = {900U, 1800U, 3000U};
   const double kToleranceMoa = 0.01;
   for (const uint32_t kRangeFt : kRanges) {
-    LobOutput forward{};
-    ASSERT_EQ(LobSolve(&ctx, &kRangeFt, &forward, 1U), 1U);
-    ASSERT_LT(forward.elevation, -1200.0)
-        << "range=" << kRangeFt << " forward elevation " << forward.elevation
-        << " should be < -1200 to exercise dynamic branch";
-
     LobOutput inverse{};
     ASSERT_EQ(LobSolveInverse(&ctx, &kRangeFt, &inverse, 1U), 1U);
     const lob::MoaT kSolved = lob::SolveAngle(
@@ -269,7 +245,7 @@ TEST_F(SolveAngleTest, SolveInverseMatchesSolveAngleDynamic) {
   }
 }
 
-TEST(BuilderZeroAngleTest, MatchesSolveAngle) {
+TEST(BuilderZeroAngleTest, MatchesSolveAngleELR) {
   const double kTestBC = 0.436;
   const uint16_t kTestMuzzleVelocity = 3100U;
   const double kZeroDistanceYards = 100.0;
@@ -291,8 +267,7 @@ TEST(BuilderZeroAngleTest, MatchesSolveAngle) {
           lob::constant::kMaxAngle,
           lob::RadiansT(0.5 * lob::kStandardGravityFtPerSecSq * kRange.Value() /
                         (kTestMuzzleVelocity * kTestMuzzleVelocity))));
-  const lob::MoaT kAngle =
-      lob::FastSolveAngle(ctx, kRange, lob::FeetT(0.0), kSeed);
+  const lob::MoaT kAngle = lob::SolveAngle(ctx, kRange, lob::FeetT(0.0), kSeed);
   ASSERT_FALSE(kAngle.IsNaN());
   EXPECT_NEAR(kAngle.Value(), ctx.zero_angle, 1.0e-6);
 }

@@ -5,14 +5,15 @@ description: How the shared angle solver finds a launch angle, and what backs it
 tags: [numerics, solver]
 generated: {by: human:joel, at: 2026-10-09T00:00:00Z}
 verified: [{by: human:joel, at: 2026-10-09T00:00:00Z}]
-status: stable
+status: draft
 ---
 
 # Angle Solver Mechanics
 
-lob has exactly one routine that answers "what launch angle makes this
-shot go there?". It serves both features that need that answer, and it
-is the same routine for both, down to the tolerance, the bounds, and
+lob has exactly one implementation that answers "what launch angle makes this
+shot go there?". It serves both features that need that answer, through
+two density entry points — `SolveAngle` for firing-site air, `SolveAngleELR`
+for lapse-scaled air — but it is the same search down to the tolerance, the bounds, and
 the iteration policy. This page explains the problem it solves, how it
 works, why it is shared rather than duplicated, and what backs it up.
 
@@ -116,10 +117,12 @@ error; in an inverse solve it truncates the batch at the range that
 failed, so a caller never receives a fabricated adjustment for the
 ranges past it.
 
-Two entry points exist, differing only in which density the integration
-assumes as the projectile climbs: one holds the firing-site density,
-the other recomputes density per step. Inverse solving picks between
-them based on how far the shot has to climb. Everything else about the
+Two entry points share that implementation, differing only in which
+density the integration assumes as the projectile climbs: `SolveAngle`
+holds the firing-site density, `SolveAngleELR` recomputes density per
+step. The caller picks by calling — zero search uses `SolveAngle`,
+`SolveInverseELR` refines through `SolveAngleELR`, and the cheap
+`SolveInverse` performs no iteration at all. Everything else about the
 search, including the shared tolerance and bounds, is identical.
 
 ## Seeds carry intent
@@ -136,8 +139,9 @@ better than "zero" about where the answer lies.
 - **Inverse seeds from the forward solve.** A forward solve already
   reports how far the shot lands off at that range. Applying the same
   one geometric step to the zero angle with that error corrects the
-  zero into a near-miss guess for the target, which the iteration then
-  refines.
+  zero into a near-miss guess for the target. The cheap
+  `SolveInverse` stops there; `SolveInverseELR` hands that guess to
+  the lapse-scaled iteration, which then refines it.
 
 One subtlety is deliberately inside the trajectory rather than at each
 call site: aerodynamic jump is added to the launch angle when the
@@ -168,14 +172,16 @@ The solver tests pin the properties the design depends on:
 - **Builder and solver agree.** The zero the builder computes is
   identical to calling the shared routine directly, so the builder
   adds no drift of its own on the way in.
-- **Iteration earns its keep.** The refined answer agrees with the
-  single geometric step, including when aerodynamic jump is nonzero.
-  If the iteration ever started drifting away from the closed-form
-  answer it would be inventing results the one-step physics does not
-  support.
-- **The two density variants agree** where both are valid, so choosing
-  between them per range is a speed choice rather than an accuracy
-  choice.
+- **Iteration earns its keep.** The ELR refined answer starts from the
+  single geometric step and agrees with it where the lapse correction
+  is small, including when aerodynamic jump is nonzero. Where lapse
+  scaling matters — long, high shots — the iteration is allowed to
+  depart from the closed-form answer, because that departure is the
+  whole point of the ELR path.
+- **The two density variants agree** where both are valid, so for
+  ordinary trajectories the fast and ELR operations stay close. Where
+  they do not agree, the caller chose which physics to pay for by
+  choosing which operation to call.
 
 ## Related
 
