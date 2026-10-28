@@ -205,11 +205,13 @@ TEST(LobELRInverseTest, CheapInverseAgreesWithELRTo2000Yd) {
   LobBuilderBuild(&builder, &ctx);
   ASSERT_EQ(ctx.error, kLobErrorNone);
   LobBuilderDestroy(&builder);
-  const std::array<uint32_t, 5> kRanges = {900U, 1800U, 3000U, 4500U, 6000U};
-  std::array<LobOutput, 5> cheap{};
+  constexpr size_t kNumRanges = 5;
+  const std::array<uint32_t, kNumRanges> kRanges = {900U, 1800U, 3000U, 4500U,
+                                                    6000U};
+  std::array<LobOutput, kNumRanges> cheap{};
   ASSERT_EQ(LobSolveInverse(&ctx, kRanges.data(), cheap.data(), cheap.size()),
             cheap.size());
-  std::array<LobOutput, 5> elr{};
+  std::array<LobOutput, kNumRanges> elr{};
   ASSERT_EQ(LobSolveInverseELR(&ctx, kRanges.data(), elr.data(), elr.size()),
             elr.size());
   for (size_t i = 0; i < kRanges.size(); ++i) {
