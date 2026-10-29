@@ -1,4 +1,4 @@
-# Solver header design: top links and “Trajectory Explorer, powered by lob”
+# Solver header design: top links and “Ballistics Explorer”
 
 Date: 2026-10-28
 Status: approved simplified scope
@@ -16,8 +16,8 @@ input/output workflow.
 - Add top-of-page links for:
   - Documentation: `https://joelbenway.github.io/lob/docs/`
   - Benchmarks: `https://joelbenway.github.io/lob/bench`
-- Use header title: “Trajectory Explorer, powered by lob”.
-- Make “lob” in the title link to `https://github.com/joelbenway/lob`.
+- Use header title: “Ballistics Explorer”.
+- Keep the repository link in the footer rather than the title.
 - Keep the header responsive and accessible on desktop and phone widths.
 - Preserve existing hero meaning: configure solver inputs, then view results.
 
@@ -39,7 +39,7 @@ input/output workflow.
 1. Keep the current theme and only change text/links, chosen:
    - Keep the existing hero proportions, palette, typography, and layout.
    - Add a header nav with Documentation and Benchmarks.
-   - Title becomes “Trajectory Explorer, powered by lob”, with “lob” linked.
+   - Title becomes “Ballistics Explorer”.
    - Tradeoff: no visual redesign, but exactly matches the approved scope.
 
 2. Editorial drop header, rejected:
@@ -52,9 +52,11 @@ input/output workflow.
 
 ## Builder decisions
 
-- Update both the document `<title>` and hero `<h1>`.
+- Update both the document `<title>` and hero `<h1>` to “Ballistics Explorer”.
 - Move Documentation and Benchmarks links to a header nav.
-- Make the footer plain “Built on lob” text with no links, since both links move to the header.
+- Restore the footer credit links and append Benchmarks:
+  `Built on lob · docs · Benchmarks`, with docs pointing at
+  `https://joelbenway.github.io/lob/docs/`.
 - External links use normal anchors; no JavaScript is required.
 - If a link label needs an abbreviation at narrow widths, preserve full accessible names.
 
