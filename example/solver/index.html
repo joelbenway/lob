@@ -7,13 +7,20 @@
       name="description"
       content="Progressive browser front end for the lob external ballistics solver."
     />
-    <title>lob solver</title>
+    <title>Trajectory Explorer, powered by lob</title>
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
     <header class="hero">
+      <nav class="hero-links" aria-label="Solver resources">
+        <a href="https://joelbenway.github.io/lob/docs/">Documentation</a>
+        <a href="https://joelbenway.github.io/lob/bench">Benchmarks</a>
+      </nav>
       <p class="eyebrow">lob</p>
-      <h1>External ballistics solver</h1>
+      <h1>
+        Trajectory Explorer, powered by
+        <a href="https://github.com/joelbenway/lob">lob</a>
+      </h1>
       <p>
         Configure drag, projectile, atmosphere, wind, and Earth effects. Only
         the inputs that apply to the selected sources are sent to the solver.
@@ -693,10 +700,7 @@
     </main>
 
     <footer class="footer">
-      <p>
-        Built on <a href="https://github.com/joelbenway/lob">lob</a> ·
-        <a href="https://joelbenway.github.io/lob/">docs</a>
-      </p>
+      <p>Built on lob.</p>
     </footer>
 
     <script type="module" src="./app.mjs"></script>
