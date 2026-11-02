@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792560145876,
+  "lastUpdate": 1793629215512,
   "repoUrl": "https://github.com/joelbenway/lob",
   "entries": {
     "lob instruction counts": [
@@ -584,6 +584,75 @@ window.BENCHMARK_DATA = {
           {
             "name": "lob_bench/solve_inverse",
             "value": 1046274.995,
+            "unit": "Ir/op"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "committer": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "distinct": true,
+          "id": "30068b752f8497b8bfd096a79e5792ff22212749",
+          "message": "demo: address solver review findings",
+          "timestamp": "2026-11-02T13:54:22Z",
+          "tree_id": "cc9ade3d6b705b8405325a2fe7e80b4cd656bcb8",
+          "url": "https://github.com/joelbenway/lob/commit/30068b752f8497b8bfd096a79e5792ff22212749"
+        },
+        "date": 1793629214324,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "lob_bench/build_basic",
+            "value": 801,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_full",
+            "value": 1894,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_custom_table",
+            "value": 7813.001,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_boatright",
+            "value": 3141.006,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_zero_search",
+            "value": 77101.005,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_basic",
+            "value": 248441.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_elr",
+            "value": 286840.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse",
+            "value": 249542.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse_elr",
+            "value": 1177808.98,
             "unit": "Ir/op"
           }
         ]
