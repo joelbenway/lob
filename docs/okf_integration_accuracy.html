@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.14.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -146,7 +146,7 @@ What backs it</h2>
 Limitations</h2>
 <ul>
 <li>Fixed step, no embedded error estimate, no adaptive stepping.</li>
-<li>The per-step air-density variant is gated by the inverse solver rather than always on. Most shots do not climb far enough for it to matter and it is not free, so the cheap path is the default and the accurate path is paid for per range where it is needed. See <a class="el" href="okf_point_mass_model.html">Point-Mass Model</a>.</li>
+<li>The per-step air-density variant is selected by the caller, not by the shot: <code>Solve</code>/<code>SolveInverse</code> always use firing-site air, and <code>SolveELR</code>/<code>SolveInverseELR</code> always recompute it along the flight. Most shots do not climb far enough for the lapse variant to matter and it is not free, so the cheap path is the default and the lapse-scaled path is an explicit opt-in. See <a class="el" href="okf_point_mass_model.html">Point-Mass Model</a>.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md65"></a>
 Related</h2>

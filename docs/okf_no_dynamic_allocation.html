@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.14.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -116,7 +116,7 @@ $(function(){initNavTree('okf_no_dynamic_allocation.html',''); initResizable(tru
   <div class="headertitle"><div class="title">No Dynamic Allocation</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="autotoc_md82"></a>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md83"></a>
 No Dynamic Allocation</h1>
 <p>lob never allocates from the heap and never throws. Builders stage into an inline buffer, tables are borrowed rather than copied, and the integration state is a small fixed footprint.</p>
 <p>The motive is callers the library author never meets: embedded targets and real-time contexts that forbid heap use, and integrators who want to vendor the library with no allocator hooks. The consequence is a caller contract (borrowed tables must outlive the build) stated on the builder surface rather than hidden. </p>

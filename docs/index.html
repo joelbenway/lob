@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.14.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -127,6 +127,11 @@ Start here</h2>
 <li><a class="el" href="okf_solver_context.html">Solver Context</a>: what a context promises about lifetime, reuse, threading, and failure.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md77"></a>
+Interactive solver inputs</h2>
+<ul>
+<li><a class="el" href="okf_solver_input_state_machine.html">Solver Input State Machine</a>: which questions to ask, when to skip them, and what each answer unlocks.</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md78"></a>
 The ballistic model</h2>
 <p>What lob computes.</p>
 <ul>
@@ -136,14 +141,14 @@ The ballistic model</h2>
 <li><a class="el" href="okf_spin_drift_and_aerodynamic_jump.html">Spin Drift and Aerodynamic Jump</a>: two corrections for a spinning bullet in crosswind.</li>
 <li><a class="el" href="okf_wind_and_coriolis.html">Wind and Coriolis</a>: corrections that act on velocity rather than on geometry.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md78"></a>
+<h2><a class="anchor" id="autotoc_md79"></a>
 Ballistic coefficients in depth</h2>
 <ul>
 <li><a class="el" href="okf_ballistic_coefficient.html">Ballistic Coefficient</a>: how one number stands in for a bullet's entire drag curve.</li>
 <li><a class="el" href="okf_bc_velocity_band_transformation.html">BC/Velocity-Band Transformation</a>: turning several measured coefficients into one smooth curve.</li>
 <li><a class="el" href="okf_bc_bands_worked_example.html">BC Bands Worked Example</a>: bands to a trajectory, with copy-pasteable code.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md79"></a>
+<h2><a class="anchor" id="autotoc_md80"></a>
 Numerical methods</h2>
 <p>How the trajectories are actually computed.</p>
 <ul>
@@ -151,7 +156,7 @@ Numerical methods</h2>
 <li><a class="el" href="okf_integration_accuracy.html">Integration Accuracy and Step Size</a>: what the step size buys, costs, and stops guaranteeing.</li>
 <li><a class="el" href="okf_inverse_solving.html">Inverse Solving</a>: turning a range into sight adjustments.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md80"></a>
+<h2><a class="anchor" id="autotoc_md81"></a>
 Design decisions</h2>
 <p>Why lob is shaped the way it is.</p>
 <ul>
@@ -165,7 +170,7 @@ Design decisions</h2>
 <li><a class="el" href="okf_shared_angle_solver.html">Shared Angle Solver</a>: one routine serves zero and inverse.</li>
 <li><a class="el" href="okf_angle_solver.html">Angle Solver Mechanics</a>: the problem, the iteration, the seeds, the evidence.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md81"></a>
+<h2><a class="anchor" id="autotoc_md82"></a>
 Evidence</h2>
 <ul>
 <li><a class="el" href="okf_validation.html">Validation</a>: how correctness is established, and what is still unproven.</li>

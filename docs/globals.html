@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.14.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -173,6 +173,7 @@ $(function(){initNavTree('globals.html',''); initResizable(true); });
 <li>kLobErrorInitialVelocityRequired&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0dea9f41ed4a4a3186101ab51d8670700d37">lob.h</a></li>
 <li>kLobErrorInternalError&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0dea2c2358b206a1734c5882e58124224876">lob.h</a></li>
 <li>kLobErrorLatitudeOOR&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0dea2620c06db8097467bfeb8e34a39376d9">lob.h</a></li>
+<li>kLobErrorLaunchAngleRequired&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0deab7bcb2d86ad4d82dd423ec7de537c6af">lob.h</a></li>
 <li>kLobErrorLengthOOR&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0dea4c736c5e7d6a4cc45f0cb7d2ee5f4108">lob.h</a></li>
 <li>kLobErrorMachDragTableInvalid&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0deae83731b0ec574af674de9cc4806a52e2">lob.h</a></li>
 <li>kLobErrorMachDragTableNotMonotonic&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0dea1f4a6afadd1d54baaaf071c15b4f863d">lob.h</a></li>
@@ -193,7 +194,6 @@ $(function(){initNavTree('globals.html',''); initResizable(true); });
 <li>kLobErrorWindProfileNotMonotonic&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0deafcc6c7a9218ab2a1b382271b6ba5343d">lob.h</a></li>
 <li>kLobErrorWindProfileTooLong&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0dead6d552eb3e3a62f0406e36f7f6f8ab49">lob.h</a></li>
 <li>kLobErrorZeroAngleOOR&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0dea489da6bb91a2ca19579855bf4cb7b19a">lob.h</a></li>
-<li>kLobErrorZeroDataRequired&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0dea64964e57d416d646b9911b070cbef2c3">lob.h</a></li>
 <li>kLobErrorZeroDistanceOOR&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0deac9b9515937f8e09ea0db00c6ffc8f0de">lob.h</a></li>
 <li>kLobErrorZeroUnreachable&#160;:&#160;<a class="el" href="lob_8h.html#a8011dd29b51e4cc80be2e5174f29f0dea5113343963edbd50b2ead4ec9416141c">lob.h</a></li>
 </ul>
@@ -255,7 +255,6 @@ $(function(){initNavTree('globals.html',''); initResizable(true); });
 <li>LobDegToMoa()&#160;:&#160;<a class="el" href="lob_8h.html#a49ea6dd2f7acc969a36100088d082bd2">lob.h</a></li>
 <li>LobDragFunctionT&#160;:&#160;<a class="el" href="lob_8h.html#a90ab8b9f63362bfb31fa318c65fae4c2">lob.h</a></li>
 <li>LobErrorT&#160;:&#160;<a class="el" href="lob_8h.html#aa69b9c6df9e548a70d321783e8ed4c7b">lob.h</a></li>
-<li>LobFastInverse()&#160;:&#160;<a class="el" href="lob_8h.html#a4569caed854cbff9aa25e3d19ff506a8">lob.h</a></li>
 <li>LobFpsToMps()&#160;:&#160;<a class="el" href="lob_8h.html#ae917481986fd30fac997a086dcee4408">lob.h</a></li>
 <li>LobFtLbsToJ()&#160;:&#160;<a class="el" href="lob_8h.html#a95a48763a2f030a51b3803586671bd09">lob.h</a></li>
 <li>LobFtToIn()&#160;:&#160;<a class="el" href="lob_8h.html#abd187e94fc6df5ef753f3e61d40d592a">lob.h</a></li>
@@ -291,7 +290,9 @@ $(function(){initNavTree('globals.html',''); initResizable(true); });
 <li>LobPaToInHg()&#160;:&#160;<a class="el" href="lob_8h.html#a0305ededb4dd46a35b4652625b32c073">lob.h</a></li>
 <li>LobPsiToInHg()&#160;:&#160;<a class="el" href="lob_8h.html#add66572d6ecbb8a604a30b33f26976e4">lob.h</a></li>
 <li>LobSolve()&#160;:&#160;<a class="el" href="lob_8h.html#a0d291cea1a7fa38208d37eacebd5adb2">lob.h</a></li>
+<li>LobSolveELR()&#160;:&#160;<a class="el" href="lob_8h.html#aa235f113792ad3820c178b27776f2a4f">lob.h</a></li>
 <li>LobSolveInverse()&#160;:&#160;<a class="el" href="lob_8h.html#adb173353dce638bee8a34497b6159aab">lob.h</a></li>
+<li>LobSolveInverseELR()&#160;:&#160;<a class="el" href="lob_8h.html#a576131488da3510b181e1b7d32db7ee5">lob.h</a></li>
 <li>LobSToMs()&#160;:&#160;<a class="el" href="lob_8h.html#a83d38041a9ee84a95ae35bbc5a80dfd8">lob.h</a></li>
 <li>LobSToUs()&#160;:&#160;<a class="el" href="lob_8h.html#a09e3885360d511b4c54b46bf9e97798f">lob.h</a></li>
 <li>LobUsToS()&#160;:&#160;<a class="el" href="lob_8h.html#aff3bab19603ed272423cfb9ef383fc8c">lob.h</a></li>

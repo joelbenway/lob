@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.14.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -116,7 +116,7 @@ $(function(){initNavTree('okf_strong_unit_types.html',''); initResizable(true); 
   <div class="headertitle"><div class="title">Strong Unit Types</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="autotoc_md106"></a>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md120"></a>
 Strong Unit Types</h1>
 <p>Inside the solver, quantities carry their engineering units as types, and each type does at least three jobs. It prevents mixing up arguments: two parameters that would both be plain numbers become distinct types, so passing them in the wrong order fails to compile. It converts implicitly within its category, so a call site states intent once in whatever unit reads naturally and the factor follows. And it otherwise behaves like its underlying value, at no runtime cost. Mixing categories is ill-formed: lengths, speeds, and angles stay distinct.</p>
 <p>The motive is a class of bug with no test failure but a wrong trajectory: a unit mixup deep in the integrator, atmosphere, or spin corrections.</p>

@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.14.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -116,29 +116,29 @@ $(function(){initNavTree('okf_spin_drift_and_aerodynamic_jump.html',''); initRes
   <div class="headertitle"><div class="title">Spin Drift and Aerodynamic Jump</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="autotoc_md99"></a>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md113"></a>
 Spin Drift and Aerodynamic Jump</h1>
 <p>A gyroscopically stabilized bullet flying through a crosswind does not go where it is pointed. The crosswind pushes on the spinning body, the aerodynamic forces at the nose couple with the spin, and the projectile leans. Leaning is invisible to a point-mass model, which has no orientation to lean. So lob models it as two corrections applied around the point-mass trajectory: spin drift, which pushes the impact sideways, and aerodynamic jump, which tilts it up or down at the muzzle.</p>
-<h2><a class="anchor" id="autotoc_md100"></a>
+<h2><a class="anchor" id="autotoc_md114"></a>
 The two effects</h2>
 <p><b>Spin drift</b> is the lateral one. A spinning projectile precesses rather than simply pointing where it was aimed, and the yaw of repose that results launches it to one side. The effect grows with how hard the shot is elevated and how fast the bullet is spinning, because both increase the precession. Drift is therefore mostly a long-range and elevated-shot phenomenon: it is small enough to ignore up close and grows to matter exactly where precision shots are contested.</p>
 <p><b>Aerodynamic jump</b> is the vertical one, and it happens before the bullet has flown anywhere. Crosswind on a spinning body pitches it at the muzzle, which tilts the entire trajectory. The shooter has to hold off by that angle or hit high or low. Jump is instantaneous from the shooter's point of view: it is a muzzle event, not something that accumulates along the flight.</p>
 <p>Both effects share a direction of consequence. Crosswind drives both, stability and spin rate drive both, and both grow more significant as the shot gets longer. That is why they live together in one model rather than being scattered across the solver.</p>
-<h2><a class="anchor" id="autotoc_md101"></a>
+<h2><a class="anchor" id="autotoc_md115"></a>
 Two fidelity levels</h2>
 <p>Each effect is available at two levels of fidelity, and the choice between them is made automatically from what the caller supplied.</p>
 <p><b>The empirical model</b> is closed-form arithmetic fitted to observed behavior, from Brian Litz's <em>Applied Ballistics for Long Range Shooting</em>. It needs very little: a stability factor and, for drift, the time of flight. It is cheap, it is always available when the basics are known, and it is the level most callers will get. Being empirical, it is a description of what bullets were observed to do rather than a derivation from why they do it.</p>
 <p><b>The geometric model</b> derives the effects from the actual mechanics of a spinning gyroscope in a flow. Precession and nutation are computed from the projectile's real moments of inertia, which means the bullet's shape has to be known: its diameter and length, the nose profile, the boat tail, the meplat and base diameters. On top of that it needs mass, twist rate, launch velocity, speed of sound, and the crosswind at the muzzle. Doing this properly means real computation, including finding the projectile's volume by integrating over its nose profile and running a short supersonic integration to get how long the spin phase lasts before the bullet transits the transonic region.</p>
 <p>The geometric model is the higher-fidelity answer when the inputs justify it, and it is the difference between a shooter who described their bullet and one who only guessed at it.</p>
-<h2><a class="anchor" id="autotoc_md102"></a>
+<h2><a class="anchor" id="autotoc_md116"></a>
 Selection is automatic</h2>
 <p>lob does not ask which model you want. It builds the geometric model if the geometry is complete enough to support it, falls back to the empirical model when it is not, and uses no correction at all when neither can be computed. Both effects are resolved once, when the solver context is built, and the results are reused by every solve against that context.</p>
 <p>This is deliberate, and it is the same design philosophy the <a class="el" href="okf_atmospheric_model.html">Atmospheric Model</a> follows with weather data. A caller who describes their bullet fully gets the geometric answer. A caller who knows only caliber and twist rate still gets an estimate. A caller who knows almost nothing gets a trajectory with no spin correction, rather than an error demanding a full projectile description. The cost of a partial answer is never pushed back onto the caller.</p>
-<h2><a class="anchor" id="autotoc_md103"></a>
+<h2><a class="anchor" id="autotoc_md117"></a>
 Where each one applies</h2>
 <p><b>Drift is a post-solve correction.</b> It adjusts the lateral deflection that the trajectory produced, in proportion to the shot's drop below the bore line, which is how the published model specifies the effect.</p>
 <p><b>Jump enters the launch angle.</b> It is added to the angle before the initial velocity is built, which means the trajectory that gets flown is the trajectory that accounts for it. The important consequence is for the <a class="el" href="okf_angle_solver.html">angle solver</a>: zero-finding and inverse solving search over the mechanical launch angle and add jump themselves, so the zero a rifle is zeroed with and the adjustments computed against that zero both carry the same jump. If jump were applied by each caller instead, the two paths could disagree by exactly the amount jump contributes.</p>
-<h2><a class="anchor" id="autotoc_md104"></a>
+<h2><a class="anchor" id="autotoc_md118"></a>
 Limitations</h2>
 <ul>
 <li>The empirical model is fitted to data, not derived. It is not a six-degree-of-freedom simulation and should not be expected to reproduce individual shots.</li>
@@ -146,7 +146,7 @@ Limitations</h2>
 <li>Jump is a single scalar added to the launch angle. It does not model the rolling moment evolving over the flight, only the pitch it imparts at the muzzle.</li>
 <li>When inputs are missing the correction degrades to nothing. That is intentional, but it means a caller who omits geometry gets no spin effects rather than a rough estimate of them.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md105"></a>
+<h2><a class="anchor" id="autotoc_md119"></a>
 Related</h2>
 <ul>
 <li><a class="el" href="okf_point_mass_model.html">Point-Mass Model</a>: the trajectory these corrections are applied to, and why they cannot be part of it.</li>

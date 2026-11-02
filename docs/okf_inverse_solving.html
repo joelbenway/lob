@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.14.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -125,33 +125,32 @@ Why it takes work</h2>
 <p>A forward solve integrates a trajectory and reads off where the projectile lands. That is easy, because nothing has to be found. The inverse asks for an angle, which means solving for one: find the launch angle whose trajectory meets the target, then report the difference between that angle and the zero.</p>
 <p>That is a root-finding problem nested inside a numerical integration, and doing it naively means integrating repeatedly from scratch for every range in a table.</p>
 <h2><a class="anchor" id="autotoc_md68"></a>
-Two ways to ask</h2>
-<p>lob offers two entry points, backed by the same angle solver, and they differ in how much they trust the geometry.</p>
-<p><b>The iterative solve</b> does the honest thing. It integrates, finds the launch angle that hits the target by iterating, and reports the adjustment. This is the authoritative answer, and the one to use for anything published or compared against.</p>
-<p><b>The fast solve</b> skips the iteration entirely. It takes the forward solution you already have and warps it with the closed-form geometric correction, the same correction the angle solver uses to take one step. No integration happens. It is substantially cheaper, and it is only valid where the forward solve actually reached the range you are asking about, because a shot that fell short has no residual to correct.</p>
+Four ways to ask</h2>
+<p>lob offers four entry points: a cheap and an ELR variant for each of the forward and inverse questions. They differ in how much they trust the geometry — and in how much air they recompute.</p>
+<p><b>The cheap inverse</b> (<code>SolveInverse</code>) does the honest cheap thing. It runs one forward solve, then applies the closed-form geometric correction — the same correction the angle solver uses to take one step — and reports that. No iteration happens. It is substantially cheaper than iterating, and it is only valid where the forward solve actually reached the range you are asking about, because a shot that fell short has no residual to correct.</p>
+<p><b>The ELR inverse</b> (<code>SolveInverseELR</code>) does the expensive thing. It starts from the cheap answer, then iterates every nonzero range with the lapse-scaled angle solver — recomputing air density and the speed of sound along each candidate trajectory — until it converges. This is the authoritative answer, and the one to use for anything published, compared against, or fired past a mile. One qualification: the iteration re-solves elevation only. Windage stays the geometric hold-off from the cheap answer; there is no iterative wind solver, so an ELR table's deflection column is the cheap deflection, not a lapse-refined one.</p>
+<p>The same split applies to the forward question: <code>Solve</code> integrates with firing-site air throughout, while <code>SolveELR</code> recomputes the air along the flight. There is no automatic switching between them. Long shots do not upgrade themselves to the expensive path; short shots do not downgrade. The caller picks by calling.</p>
 <h2><a class="anchor" id="autotoc_md69"></a>
 How the work is avoided</h2>
-<p>The pipeline is what makes the iterative solve affordable across a whole table of ranges.</p>
-<p>First, one forward pass establishes two things at once: how much the shot misses by at every range, and whether it can reach those ranges at all. Then, for each range, that miss is fed into the closed-form correction as a starting guess. Because the correction is derived from the geometry, the guess lands very close to the true answer, and the iteration normally converges in a step or two rather than searching from nothing.</p>
-<p>The initial forward pass establishes misses and reachability once and seeds the solve. LobSolveInverse calls SolveAngle, which invokes FireToTarget during each range refinement, so additional per-range integrations are performed rather than repeating a full table integration from scratch. That is the whole reason asking for a table of dope is not dramatically more expensive than asking where one shot lands.</p>
+<p>The pipeline is what makes the ELR inverse affordable across a whole table of ranges.</p>
+<p>First, one cheap forward pass establishes two things at once: how much the shot misses by at every range, and whether it can reach those ranges at all. Then, for each range, that miss is fed into the closed-form correction as a starting guess. Because the correction is derived from the geometry, the guess lands very close to the true answer, and the ELR iteration normally converges in a step or two rather than searching from nothing. <code>SolveInverseELR</code> always pays for the lapse-scaled iteration; <code>SolveInverse</code> stops at the guess and reports it.</p>
 <h2><a class="anchor" id="autotoc_md70"></a>
-An asymmetry that is deliberate</h2>
-<p>The two entry points do not agree on what to do when a range cannot be reached, and the difference is intentional.</p>
-<p>The iterative solve detects it: the angle search fails, so it stops and reports only the ranges it could solve, returning a shorter result. The caller sees exactly how far the solution got.</p>
-<p>The fast solve cannot detect it, because it never evaluates whether the shot reaches the range. It would happily produce a number. So it does not stop, and the burden of not misusing it is on the caller, which is exactly what the API documentation warns about.</p>
+Truncation, not fabrication</h2>
+<p>The cheap and ELR operations agree on what to do when a range cannot be reached, and the agreement is intentional.</p>
+<p>Both detect it: a fall-short forward row carries a range below the one asked for, so both stop and report only the ranges they could solve. The caller sees exactly how far the solution got. What neither does is silently produce a plausible wrong number for an unreachable range — that burden used to sit with callers of the old one-step conversion, which is gone.</p>
 <p>The design bet is that a short array is a recoverable result and a plausible wrong number is not.</p>
 <h2><a class="anchor" id="autotoc_md71"></a>
 Edges the API handles for you</h2>
-<p>A range of zero is not an error. It is the shooter's own position. LobSolveInverse counts zero-range entries and reports them as zero adjustment. LobFastInverse skips zero-range entries. Results that came back non-finite from the forward pass are skipped by LobFastInverse rather than converted, because there is nothing to convert. Iterative solving returns early when the angle is NaN.</p>
-<p>Ordering matters for the table. LobSolveInverse validates increasing range order (via LobSolve) and rejects tables that are not in increasing order rather than silently reordering them. LobFastInverse converts supplied outputs without checking range order. Sorting a caller's data would hide a mistake instead of surfacing it, which is the same reasoning as not reordering velocity bands.</p>
+<p>A range of zero is not an error. It is the shooter's own position. Both <code>LobSolveInverse</code> and <code>LobSolveInverseELR</code> count zero-range entries and report them as zero adjustment. Results that came back short of the requested range stop both operations at the first such entry, because there is nothing to refine. Iterative solving returns early when the angle is NaN.</p>
+<p>Ordering matters for the table. Both inverse operations validate increasing range order (via the forward pass) and reject tables that are not in increasing order rather than silently reordering them. Sorting a caller's data would hide a mistake instead of surfacing it, which is the same reasoning as not reordering velocity bands.</p>
 <h2><a class="anchor" id="autotoc_md72"></a>
 Which to call</h2>
-<p>Use the iterative solve for published tables, for anything compared against another solution, and anywhere correctness matters more than time.</p>
-<p>Use the fast solve when you already have the forward outputs, you know they reached their ranges, and you want to avoid a second integration sweep. Spot-check a few ranges against the iterative solve to confirm that its error is acceptable for the trajectories you care about. That check is cheap and it is the whole cost of using the fast path.</p>
+<p>Use the ELR operations for published tables, for anything compared against another solution, for extreme range, and anywhere correctness matters more than time.</p>
+<p>Use the cheap operations when you already know the trajectory stays in roughly firing-site air, when you need an answer dozens of times per second, or when you want a seed to refine yourself. Spot-check a few ranges against the ELR answer to confirm that its extra work is negligible for the trajectories you care about. That check is cheap and it is the whole cost of using the cheap path.</p>
 <h2><a class="anchor" id="autotoc_md73"></a>
 What backs it</h2>
-<p>The inverse tests cover the sign conventions against the forward solve, confirm that adjustments grow monotonically with range, exercise the zero-range and unreachable cases, and check both the raw-pointer and array forms of the API agree.</p>
-<p>The one worth calling out is the cross-check between the two paths. They are run against each other with a nonzero aerodynamic jump, and they are required to agree. That is not merely a numeric consistency check: it is a test that both paths applied the muzzle jump the same way, which is the property that makes the adjustment meaningful relative to a rifle that was zeroed through a different code path.</p>
+<p>The inverse tests cover the sign conventions against the forward solve, confirm that adjustments grow monotonically with range, exercise the zero-range and unreachable cases, and check all three call shapes of the API agree.</p>
+<p>The one worth calling out is the cross-check between the cheap and ELR paths. They are run against each other with a nonzero aerodynamic jump, and they are required to agree where the lapse correction is small. That is not merely a numeric consistency check: it is a test that both paths applied the muzzle jump the same way, which is the property that makes the adjustment meaningful relative to a rifle that was zeroed through a different code path.</p>
 <h2><a class="anchor" id="autotoc_md74"></a>
 Related</h2>
 <ul>

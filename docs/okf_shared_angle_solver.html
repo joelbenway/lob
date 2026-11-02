@@ -32,7 +32,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">lob<span id="projectnumber">&#160;0.13.0</span>
+   <div id="projectname">lob<span id="projectnumber">&#160;0.14.0</span>
    </div>
    <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
   </td>
@@ -116,10 +116,10 @@ $(function(){initNavTree('okf_shared_angle_solver.html',''); initResizable(true)
   <div class="headertitle"><div class="title">Shared Angle Solver</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="autotoc_md91"></a>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md92"></a>
 Shared Angle Solver</h1>
 <p>Zero-finding at build time and adjustment-solving at inverse time are the same mathematical problem: find the launch angle whose trajectory meets the target. So lob solves both with one shared routine.</p>
-<p>Sharing guarantees the zero a rifle is zeroed with and the adjustments that assume that zero are computed with identical tolerance, bounds, and jump handling; two implementations could drift subtly apart. It also halves maintenance: a fix to convergence behavior applies to both features at once, with a smaller diff than guarding every caller. See <a class="el" href="okf_angle_solver.html">Shared Angle Solver</a> for the dedicated treatment, and <a class="el" href="okf_drag_model.html">Drag</a> for how the curves it flies were built. </p>
+<p>Sharing guarantees the zero a rifle is zeroed with and the adjustments that assume that zero are computed with identical tolerance, bounds, and jump handling; two implementations could drift subtly apart. It also halves maintenance: a fix to convergence behavior applies to both features at once, with a smaller diff than guarding every caller. The two density flavors (<code>SolveAngle</code> and <code>SolveAngleELR</code>) are entry points over that one shared search, not rival implementations. See <a class="el" href="okf_angle_solver.html">Angle Solver Mechanics</a> for the dedicated treatment, and <a class="el" href="okf_drag_model.html">Drag</a> for how the curves it flies were built. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->

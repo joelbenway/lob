@@ -130,9 +130,9 @@ var NAVTREE =
     [ "Inverse Solving", "okf_inverse_solving.html", [
       [ "Inverse Solving", "okf_inverse_solving.html#autotoc_md66", [
         [ "Why it takes work", "okf_inverse_solving.html#autotoc_md67", null ],
-        [ "Two ways to ask", "okf_inverse_solving.html#autotoc_md68", null ],
+        [ "Four ways to ask", "okf_inverse_solving.html#autotoc_md68", null ],
         [ "How the work is avoided", "okf_inverse_solving.html#autotoc_md69", null ],
-        [ "An asymmetry that is deliberate", "okf_inverse_solving.html#autotoc_md70", null ],
+        [ "Truncation, not fabrication", "okf_inverse_solving.html#autotoc_md70", null ],
         [ "Edges the API handles for you", "okf_inverse_solving.html#autotoc_md71", null ],
         [ "Which to call", "okf_inverse_solving.html#autotoc_md72", null ],
         [ "What backs it", "okf_inverse_solving.html#autotoc_md73", null ],
@@ -140,66 +140,82 @@ var NAVTREE =
       ] ]
     ] ],
     [ "No Dynamic Allocation", "okf_no_dynamic_allocation.html", [
-      [ "No Dynamic Allocation", "okf_no_dynamic_allocation.html#autotoc_md82", null ]
+      [ "No Dynamic Allocation", "okf_no_dynamic_allocation.html#autotoc_md83", null ]
     ] ],
     [ "Performance Posture", "okf_performance_posture.html", [
-      [ "Performance Posture", "okf_performance_posture.html#autotoc_md83", null ]
+      [ "Performance Posture", "okf_performance_posture.html#autotoc_md84", null ]
     ] ],
     [ "Point-Mass Model", "okf_point_mass_model.html", [
-      [ "Point-Mass Model", "okf_point_mass_model.html#autotoc_md84", [
-        [ "The state, and why distance is the independent variable", "okf_point_mass_model.html#autotoc_md85", null ],
-        [ "The equations", "okf_point_mass_model.html#autotoc_md86", null ],
-        [ "When the projectile stops advancing", "okf_point_mass_model.html#autotoc_md87", null ],
-        [ "Two step variants", "okf_point_mass_model.html#autotoc_md88", null ],
-        [ "Assumptions", "okf_point_mass_model.html#autotoc_md89", null ],
-        [ "Related", "okf_point_mass_model.html#autotoc_md90", null ]
+      [ "Point-Mass Model", "okf_point_mass_model.html#autotoc_md85", [
+        [ "The state, and why distance is the independent variable", "okf_point_mass_model.html#autotoc_md86", null ],
+        [ "The equations", "okf_point_mass_model.html#autotoc_md87", null ],
+        [ "When the projectile stops advancing", "okf_point_mass_model.html#autotoc_md88", null ],
+        [ "Two step variants", "okf_point_mass_model.html#autotoc_md89", null ],
+        [ "Assumptions", "okf_point_mass_model.html#autotoc_md90", null ],
+        [ "Related", "okf_point_mass_model.html#autotoc_md91", null ]
       ] ]
     ] ],
     [ "Shared Angle Solver", "okf_shared_angle_solver.html", [
-      [ "Shared Angle Solver", "okf_shared_angle_solver.html#autotoc_md91", null ]
+      [ "Shared Angle Solver", "okf_shared_angle_solver.html#autotoc_md92", null ]
     ] ],
     [ "Solver Context", "okf_solver_context.html", [
-      [ "Solver Context", "okf_solver_context.html#autotoc_md92", [
-        [ "One build, then read forever", "okf_solver_context.html#autotoc_md93", null ],
-        [ "It is self-contained after build", "okf_solver_context.html#autotoc_md94", null ],
-        [ "Safe to share, because it never changes", "okf_solver_context.html#autotoc_md95", null ],
-        [ "Failures arrive two different ways", "okf_solver_context.html#autotoc_md96", null ],
-        [ "What is worth knowing about the contents", "okf_solver_context.html#autotoc_md97", null ],
-        [ "Related", "okf_solver_context.html#autotoc_md98", null ]
+      [ "Solver Context", "okf_solver_context.html#autotoc_md93", [
+        [ "One build, then read forever", "okf_solver_context.html#autotoc_md94", null ],
+        [ "It is self-contained after build", "okf_solver_context.html#autotoc_md95", null ],
+        [ "Safe to share, because it never changes", "okf_solver_context.html#autotoc_md96", null ],
+        [ "Failures arrive two different ways", "okf_solver_context.html#autotoc_md97", null ],
+        [ "What is worth knowing about the contents", "okf_solver_context.html#autotoc_md98", null ],
+        [ "Related", "okf_solver_context.html#autotoc_md99", null ]
+      ] ]
+    ] ],
+    [ "Solver Input State Machine", "okf_solver_input_state_machine.html", [
+      [ "Solver Input State Machine", "okf_solver_input_state_machine.html#autotoc_md100", [
+        [ "Core path", "okf_solver_input_state_machine.html#autotoc_md101", null ],
+        [ "Drag source gate", "okf_solver_input_state_machine.html#autotoc_md102", null ],
+        [ "Projectile detail gate", "okf_solver_input_state_machine.html#autotoc_md103", null ],
+        [ "Zero gate", "okf_solver_input_state_machine.html#autotoc_md104", null ],
+        [ "Atmosphere gate", "okf_solver_input_state_machine.html#autotoc_md105", null ],
+        [ "Wind gate", "okf_solver_input_state_machine.html#autotoc_md106", null ],
+        [ "Shot geometry and Earth gate", "okf_solver_input_state_machine.html#autotoc_md107", null ],
+        [ "Solver controls gate", "okf_solver_input_state_machine.html#autotoc_md108", null ],
+        [ "Capability ladder", "okf_solver_input_state_machine.html#autotoc_md109", null ],
+        [ "Defaults and omissions", "okf_solver_input_state_machine.html#autotoc_md110", null ],
+        [ "Presentation rules", "okf_solver_input_state_machine.html#autotoc_md111", null ],
+        [ "Related", "okf_solver_input_state_machine.html#autotoc_md112", null ]
       ] ]
     ] ],
     [ "Spin Drift and Aerodynamic Jump", "okf_spin_drift_and_aerodynamic_jump.html", [
-      [ "Spin Drift and Aerodynamic Jump", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md99", [
-        [ "The two effects", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md100", null ],
-        [ "Two fidelity levels", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md101", null ],
-        [ "Selection is automatic", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md102", null ],
-        [ "Where each one applies", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md103", null ],
-        [ "Limitations", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md104", null ],
-        [ "Related", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md105", null ]
+      [ "Spin Drift and Aerodynamic Jump", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md113", [
+        [ "The two effects", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md114", null ],
+        [ "Two fidelity levels", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md115", null ],
+        [ "Selection is automatic", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md116", null ],
+        [ "Where each one applies", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md117", null ],
+        [ "Limitations", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md118", null ],
+        [ "Related", "okf_spin_drift_and_aerodynamic_jump.html#autotoc_md119", null ]
       ] ]
     ] ],
     [ "Strong Unit Types", "okf_strong_unit_types.html", [
-      [ "Strong Unit Types", "okf_strong_unit_types.html#autotoc_md106", null ]
+      [ "Strong Unit Types", "okf_strong_unit_types.html#autotoc_md120", null ]
     ] ],
     [ "Validation", "okf_validation.html", [
-      [ "Validation", "okf_validation.html#autotoc_md107", [
-        [ "The rule everything else follows from", "okf_validation.html#autotoc_md108", null ],
-        [ "Reference data", "okf_validation.html#autotoc_md109", null ],
-        [ "Convergence and error floors", "okf_validation.html#autotoc_md110", null ],
-        [ "Sensitivity", "okf_validation.html#autotoc_md111", null ],
-        [ "Monte Carlo", "okf_validation.html#autotoc_md112", null ],
-        [ "Signal versus noise", "okf_validation.html#autotoc_md113", null ],
-        [ "Coverage and gating", "okf_validation.html#autotoc_md114", null ],
-        [ "What is still unproven", "okf_validation.html#autotoc_md115", null ]
+      [ "Validation", "okf_validation.html#autotoc_md121", [
+        [ "The rule everything else follows from", "okf_validation.html#autotoc_md122", null ],
+        [ "Reference data", "okf_validation.html#autotoc_md123", null ],
+        [ "Convergence and error floors", "okf_validation.html#autotoc_md124", null ],
+        [ "Sensitivity", "okf_validation.html#autotoc_md125", null ],
+        [ "Monte Carlo", "okf_validation.html#autotoc_md126", null ],
+        [ "Signal versus noise", "okf_validation.html#autotoc_md127", null ],
+        [ "Coverage and gating", "okf_validation.html#autotoc_md128", null ],
+        [ "What is still unproven", "okf_validation.html#autotoc_md129", null ]
       ] ]
     ] ],
     [ "Wind and Coriolis", "okf_wind_and_coriolis.html", [
-      [ "Wind and Coriolis", "okf_wind_and_coriolis.html#autotoc_md116", [
-        [ "Wind", "okf_wind_and_coriolis.html#autotoc_md117", null ],
-        [ "Wind profiles", "okf_wind_and_coriolis.html#autotoc_md118", null ],
-        [ "Coriolis", "okf_wind_and_coriolis.html#autotoc_md119", null ],
-        [ "Limitations", "okf_wind_and_coriolis.html#autotoc_md120", null ],
-        [ "Related", "okf_wind_and_coriolis.html#autotoc_md121", null ]
+      [ "Wind and Coriolis", "okf_wind_and_coriolis.html#autotoc_md130", [
+        [ "Wind", "okf_wind_and_coriolis.html#autotoc_md131", null ],
+        [ "Wind profiles", "okf_wind_and_coriolis.html#autotoc_md132", null ],
+        [ "Coriolis", "okf_wind_and_coriolis.html#autotoc_md133", null ],
+        [ "Limitations", "okf_wind_and_coriolis.html#autotoc_md134", null ],
+        [ "Related", "okf_wind_and_coriolis.html#autotoc_md135", null ]
       ] ]
     ] ],
     [ "Namespaces", "namespaces.html", [
@@ -237,8 +253,8 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"lob_8hpp.html",
-"okf_spin_drift_and_aerodynamic_jump.html#autotoc_md102"
+"lob_8h.html#aff3bab19603ed272423cfb9ef383fc8c",
+"okf_solver_context.html#autotoc_md98"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronization';
