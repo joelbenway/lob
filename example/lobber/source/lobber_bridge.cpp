@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -17,6 +18,7 @@
 #include <nlohmann/json_fwd.hpp>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "lob/lob.hpp"
@@ -27,6 +29,12 @@ namespace example {
 namespace {
 
 constexpr double kYardsToFeet = 3.0;
+constexpr double kZeroThreshold = 1e-4;
+constexpr int kTableColumnWidth = 12;
+
+double ZeroFlush(double val) {
+  return (std::fabs(val) < kZeroThreshold) ? 0.0 : val;
+}
 
 std::string Trim(const std::string& s) {
   auto start = s.begin();
@@ -35,13 +43,18 @@ std::string Trim(const std::string& s) {
     ++start;
   }
   auto end = s.end();
-  do {
-    if (end == start) {
-      break;
-    }
+  while (end != start &&
+         std::isspace(static_cast<unsigned char>(*(end - 1))) != 0) {
     --end;
-  } while (std::isspace(static_cast<unsigned char>(*end)) != 0);
-  return {start, end + 1};
+  }
+  return {start, end};
+}
+
+std::string ToLower(std::string str) {
+  std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
+  return str;
 }
 
 std::vector<std::string> SplitLines(const std::string& text) {
@@ -49,9 +62,9 @@ std::vector<std::string> SplitLines(const std::string& text) {
   std::istringstream stream(text);
   std::string line;
   while (std::getline(stream, line)) {
-    std::string trimmed = Trim(line);
-    if (!trimmed.empty()) {
-      lines.push_back(trimmed);
+    const std::string kTrimmed = Trim(line);
+    if (!kTrimmed.empty()) {
+      lines.push_back(kTrimmed);
     }
   }
   return lines;
@@ -60,20 +73,521 @@ std::vector<std::string> SplitLines(const std::string& text) {
 std::vector<std::string> SplitTokens(const std::string& line) {
   std::vector<std::string> tokens;
   std::string cur;
-  for (char ch : line) {
-    if (ch == ',' || ch == '\t' || ch == ' ') {
+  for (const char kCh : line) {
+    if (kCh == ',' || kCh == '\t' || kCh == ' ') {
       if (!cur.empty()) {
         tokens.push_back(cur);
         cur.clear();
       }
     } else {
-      cur += ch;
+      cur += kCh;
     }
   }
   if (!cur.empty()) {
     tokens.push_back(cur);
   }
   return tokens;
+}
+
+bool TryParseBandObject(const nlohmann::json& item, BandPoint* out) {
+  if (item.is_array() && item.size() >= 2) {
+    *out = {item.at(0).get<float>(), item.at(1).get<float>()};
+    return true;
+  }
+  if (item.is_object()) {
+    float fps = 0.0F;
+    if (item.contains("fps")) {
+      fps = item["fps"].get<float>();
+    } else if (item.contains("velocity")) {
+      fps = item["velocity"].get<float>();
+    }
+    float bc = 0.0F;
+    if (item.contains("bc")) {
+      bc = item["bc"].get<float>();
+    }
+    if (fps > 0.0F && bc > 0.0F) {
+      *out = {fps, bc};
+      return true;
+    }
+  }
+  return false;
+}
+
+bool TryParseDragObject(const nlohmann::json& item, DragTablePoint* out) {
+  if (item.is_array() && item.size() >= 2) {
+    *out = {item.at(0).get<float>(), item.at(1).get<float>()};
+    return true;
+  }
+  if (item.is_object()) {
+    float mach = 0.0F;
+    if (item.contains("mach")) {
+      mach = item["mach"].get<float>();
+    }
+    float cd = 0.0F;
+    if (item.contains("cd")) {
+      cd = item["cd"].get<float>();
+    } else if (item.contains("drag")) {
+      cd = item["drag"].get<float>();
+    }
+    *out = {mach, cd};
+    return true;
+  }
+  return false;
+}
+
+bool TryParseWindObject(const nlohmann::json& item, lob::WindPoint* out) {
+  if (item.is_array() && item.size() >= 3) {
+    const double kRange = item.at(0).get<double>();
+    const double kHeading = item.at(1).get<double>();
+    const double kSpeed = item.at(2).get<double>();
+    const double kHeight = (item.size() >= 4) ? item.at(3).get<double>() : 0.0;
+    *out = {kRange, kHeading, kSpeed, kHeight};
+    return true;
+  }
+  if (item.is_object()) {
+    double range = 0.0;
+    if (item.contains("range_ft")) {
+      range = item["range_ft"].get<double>();
+    } else if (item.contains("range")) {
+      range = item["range"].get<double>();
+    }
+    double heading = 0.0;
+    if (item.contains("heading_deg")) {
+      heading = item["heading_deg"].get<double>();
+    } else if (item.contains("heading")) {
+      heading = item["heading"].get<double>();
+    }
+    double speed = 0.0;
+    if (item.contains("speed_mph")) {
+      speed = item["speed_mph"].get<double>();
+    } else if (item.contains("speed")) {
+      speed = item["speed"].get<double>();
+    }
+    double height = 0.0;
+    if (item.contains("height_ft")) {
+      height = item["height_ft"].get<double>();
+    } else if (item.contains("height")) {
+      height = item["height"].get<double>();
+    }
+    *out = {range, heading, speed, height};
+    return true;
+  }
+  return false;
+}
+
+struct DragBuffers {
+  std::vector<float> band_fps;
+  std::vector<float> band_bcs;
+  std::vector<float> table_mach;
+  std::vector<float> table_cd;
+  std::vector<float> spline_coeffs;
+};
+
+void ApplyCoefficients(lob::Builder* builder, std::vector<float> coefs,
+                       DragBuffers* buffers) {
+  if (coefs.size() == lob::kLobCoeffsSize) {
+    buffers->spline_coeffs = std::move(coefs);
+    builder->SplineCoefficients(buffers->spline_coeffs.data());
+  }
+}
+
+void ApplyDragTable(lob::Builder* builder,
+                    const std::vector<DragTablePoint>& table,
+                    DragBuffers* buffers) {
+  constexpr size_t kMinPoints = 2;
+  if (table.size() >= kMinPoints) {
+    buffers->table_mach.resize(table.size());
+    buffers->table_cd.resize(table.size());
+    for (size_t i = 0; i < table.size(); ++i) {
+      buffers->table_mach.at(i) = table.at(i).mach;
+      buffers->table_cd.at(i) = table.at(i).cd;
+    }
+    builder->MachVsDragTable(buffers->table_mach.data(),
+                             buffers->table_cd.data(), table.size());
+  }
+}
+
+void ApplyVelocityBands(lob::Builder* builder, const nlohmann::json& j,
+                        const std::vector<BandPoint>& bands,
+                        DragBuffers* buffers) {
+  constexpr size_t kMinPoints = 2;
+  if (bands.size() >= kMinPoints) {
+    buffers->band_fps.resize(bands.size());
+    buffers->band_bcs.resize(bands.size());
+    for (size_t i = 0; i < bands.size(); ++i) {
+      buffers->band_fps.at(i) = bands.at(i).fps;
+      buffers->band_bcs.at(i) = bands.at(i).bc;
+    }
+    builder->BCVelocityBands(buffers->band_fps.data(), buffers->band_bcs.data(),
+                             bands.size());
+    builder->BCDragFunction(JsonToDragFunction(j, "BCDragFunction"));
+    builder->BCAtmosphere(JsonToAtmosphere(j, "BCAtmosphere"));
+  }
+}
+
+void ApplySingleBc(lob::Builder* builder, const nlohmann::json& j) {
+  double bc = JsonToDouble(j, "BallisticCoefficientPsi");
+  if (std::isnan(bc)) {
+    bc = JsonToDouble(j, "bc");
+  }
+  if (!std::isnan(bc) && bc > 0.0) {
+    builder->BallisticCoefficientPsi(bc);
+    builder->BCDragFunction(JsonToDragFunction(j, "BCDragFunction"));
+    builder->BCAtmosphere(JsonToAtmosphere(j, "BCAtmosphere"));
+  }
+}
+
+std::string ExtractDragSource(const nlohmann::json& j) {
+  if (j.contains("DragSource") && j["DragSource"].is_string()) {
+    return j["DragSource"].get<std::string>();
+  }
+  if (j.contains("dragSource") && j["dragSource"].is_string()) {
+    return j["dragSource"].get<std::string>();
+  }
+  return {};
+}
+
+void ApplyDrag(lob::Builder* builder, const nlohmann::json& j,
+               DragBuffers* buffers) {
+  const std::string kDragSource = ExtractDragSource(j);
+  auto bands = ParseBands(j);
+  auto table = ParseDragTable(j);
+  auto coefs = ParseSplineCoefficients(j);
+  const double kExplicitBc = JsonToDouble(j, "BallisticCoefficientPsi");
+
+  if (kDragSource == "coefficients") {
+    ApplyCoefficients(builder, std::move(coefs), buffers);
+    return;
+  }
+  if (kDragSource == "table") {
+    ApplyDragTable(builder, table, buffers);
+    return;
+  }
+  if (kDragSource == "bands") {
+    ApplyVelocityBands(builder, j, bands, buffers);
+    return;
+  }
+
+  if (std::isnan(kExplicitBc)) {
+    if (!coefs.empty() && bands.empty() && table.empty()) {
+      ApplyCoefficients(builder, std::move(coefs), buffers);
+      return;
+    }
+    if (!table.empty() && bands.empty()) {
+      ApplyDragTable(builder, table, buffers);
+      return;
+    }
+    if (!bands.empty()) {
+      ApplyVelocityBands(builder, j, bands, buffers);
+      return;
+    }
+  }
+
+  ApplySingleBc(builder, j);
+}
+
+void ApplyProjectile(lob::Builder* builder, const nlohmann::json& j) {
+  uint16_t mv = JsonToU16(j, "InitialVelocityFps");
+  if (mv == 0) {
+    mv = JsonToU16(j, "velocityFps");
+  }
+  if (mv > 0) {
+    builder->InitialVelocityFps(mv);
+  }
+
+  double mass = JsonToDouble(j, "MassGrains");
+  if (std::isnan(mass)) {
+    mass = JsonToDouble(j, "massGrains");
+  }
+  if (!std::isnan(mass) && mass > 0.0) {
+    builder->MassGrains(mass);
+  }
+
+  const double kDia = std::isnan(JsonToDouble(j, "DiameterInch"))
+                          ? JsonToDouble(j, "diameterInch")
+                          : JsonToDouble(j, "DiameterInch");
+  const double kLen = std::isnan(JsonToDouble(j, "LengthInch"))
+                          ? JsonToDouble(j, "lengthInch")
+                          : JsonToDouble(j, "LengthInch");
+  const double kTwist = std::isnan(JsonToDouble(j, "TwistInchesPerTurn"))
+                            ? JsonToDouble(j, "twistInchesPerTurn")
+                            : JsonToDouble(j, "TwistInchesPerTurn");
+  if (!std::isnan(kDia) && kDia > 0.0 && !std::isnan(kLen) && kLen > 0.0 &&
+      !std::isnan(kTwist) && kTwist > 0.0) {
+    builder->DiameterInch(kDia).LengthInch(kLen).TwistInchesPerTurn(kTwist);
+  }
+
+  const double kNose = std::isnan(JsonToDouble(j, "NoseLengthInch"))
+                           ? JsonToDouble(j, "noseLengthInch")
+                           : JsonToDouble(j, "NoseLengthInch");
+  const double kBase = std::isnan(JsonToDouble(j, "BaseDiameterInch"))
+                           ? JsonToDouble(j, "baseDiameterInch")
+                           : JsonToDouble(j, "BaseDiameterInch");
+  const double kOgive = std::isnan(JsonToDouble(j, "OgiveRtR"))
+                            ? JsonToDouble(j, "ogiveRtR")
+                            : JsonToDouble(j, "OgiveRtR");
+  if (!std::isnan(kNose) && kNose > 0.0 && !std::isnan(kBase) && kBase > 0.0 &&
+      !std::isnan(kOgive) && kOgive > 0.0) {
+    builder->NoseLengthInch(kNose).BaseDiameterInch(kBase).OgiveRtR(kOgive);
+    const double kMeplat = std::isnan(JsonToDouble(j, "MeplatDiameterInch"))
+                               ? JsonToDouble(j, "meplatDiameterInch")
+                               : JsonToDouble(j, "MeplatDiameterInch");
+    if (!std::isnan(kMeplat) && kMeplat >= 0.0) {
+      builder->MeplatDiameterInch(kMeplat);
+    }
+    const double kTail = std::isnan(JsonToDouble(j, "TailLengthInch"))
+                             ? JsonToDouble(j, "tailLengthInch")
+                             : JsonToDouble(j, "TailLengthInch");
+    if (!std::isnan(kTail) && kTail >= 0.0) {
+      builder->TailLengthInch(kTail);
+    }
+  }
+}
+
+void ApplyZero(lob::Builder* builder, const nlohmann::json& j) {
+  double zero_angle = JsonToDouble(j, "ZeroAngleMOA");
+  if (std::isnan(zero_angle)) {
+    zero_angle = JsonToDouble(j, "zeroAngleMoa");
+  }
+  double zero_dist = JsonToDouble(j, "ZeroDistanceYds");
+  if (std::isnan(zero_dist)) {
+    zero_dist = JsonToDouble(j, "zeroYds");
+  }
+  double zero_impact = JsonToDouble(j, "ZeroImpactHeightInches");
+  if (std::isnan(zero_impact)) {
+    zero_impact = JsonToDouble(j, "zeroImpactHeightInches");
+  }
+  if (!std::isnan(zero_angle)) {
+    builder->ZeroAngleMOA(zero_angle);
+  } else if (!std::isnan(zero_dist) && zero_dist > 0.0) {
+    builder->ZeroDistanceYds(zero_dist);
+    if (!std::isnan(zero_impact)) {
+      builder->ZeroImpactHeightInches(zero_impact);
+    }
+  }
+
+  double optic_ht = JsonToDouble(j, "OpticHeightInches");
+  if (std::isnan(optic_ht)) {
+    optic_ht = JsonToDouble(j, "sightHeightInches");
+  }
+  if (!std::isnan(optic_ht) && optic_ht >= 0.0) {
+    builder->OpticHeightInches(optic_ht);
+  }
+}
+
+void ApplyAtmosphere(lob::Builder* builder, const nlohmann::json& j) {
+  double alt = JsonToDouble(j, "AltitudeOfFiringSiteFt");
+  if (std::isnan(alt)) {
+    alt = JsonToDouble(j, "altitudeOfFiringSiteFt");
+  }
+  if (!std::isnan(alt)) {
+    builder->AltitudeOfFiringSiteFt(alt);
+  }
+
+  double pres = JsonToDouble(j, "AirPressureInHg");
+  if (std::isnan(pres)) {
+    pres = JsonToDouble(j, "airPressureInHg");
+  }
+  if (!std::isnan(pres) && pres > 0.0) {
+    builder->AirPressureInHg(pres);
+  }
+
+  double baro_alt = JsonToDouble(j, "AltitudeOfBarometerFt");
+  if (std::isnan(baro_alt)) {
+    baro_alt = JsonToDouble(j, "altitudeOfBarometerFt");
+  }
+  if (!std::isnan(baro_alt)) {
+    builder->AltitudeOfBarometerFt(baro_alt);
+  }
+
+  double temp = JsonToDouble(j, "TemperatureDegF");
+  if (std::isnan(temp)) {
+    temp = JsonToDouble(j, "temperatureDegF");
+  }
+  if (!std::isnan(temp)) {
+    builder->TemperatureDegF(temp);
+  }
+
+  double thermo_alt = JsonToDouble(j, "AltitudeOfThermometerFt");
+  if (std::isnan(thermo_alt)) {
+    thermo_alt = JsonToDouble(j, "altitudeOfThermometerFt");
+  }
+  if (!std::isnan(thermo_alt)) {
+    builder->AltitudeOfThermometerFt(thermo_alt);
+  }
+
+  double rh = JsonToDouble(j, "RelativeHumidityPercent");
+  if (std::isnan(rh)) {
+    rh = JsonToDouble(j, "relativeHumidityPercent");
+  }
+  if (!std::isnan(rh) && rh >= 0.0) {
+    builder->RelativeHumidityPercent(rh);
+  }
+}
+
+void ApplyWind(lob::Builder* builder, const nlohmann::json& j,
+               std::vector<lob::WindPoint>* wind_buffer) {
+  *wind_buffer = ParseWindProfile(j);
+  if (!wind_buffer->empty()) {
+    builder->WindProfile(wind_buffer->data(), wind_buffer->size());
+    double shear = JsonToDouble(j, "WindShearExponent");
+    if (std::isnan(shear)) {
+      shear = JsonToDouble(j, "windShearExponent");
+    }
+    if (!std::isnan(shear) && shear >= 0.0) {
+      builder->WindShearExponent(shear);
+    }
+  } else {
+    double wspd = JsonToDouble(j, "WindSpeedMph");
+    if (std::isnan(wspd)) {
+      wspd = JsonToDouble(j, "windSpeedMph");
+    }
+    if (!std::isnan(wspd) && wspd > 0.0) {
+      builder->WindSpeedMph(wspd);
+      if (j.contains("WindHeading")) {
+        builder->WindHeading(JsonToClockAngle(j, "WindHeading"));
+      } else if (j.contains("windClock")) {
+        builder->WindHeading(JsonToClockAngle(j, "windClock"));
+      }
+    }
+  }
+}
+
+void ApplyGeometry(lob::Builder* builder, const nlohmann::json& j) {
+  double range_angle = JsonToDouble(j, "RangeAngleDeg");
+  if (std::isnan(range_angle)) {
+    range_angle = JsonToDouble(j, "rangeAngleDeg");
+  }
+  if (!std::isnan(range_angle)) {
+    builder->RangeAngleDeg(range_angle);
+  }
+
+  double lat = JsonToDouble(j, "LatitudeDeg");
+  if (std::isnan(lat)) {
+    lat = JsonToDouble(j, "latitudeDeg");
+  }
+  double az = JsonToDouble(j, "AzimuthDeg");
+  if (std::isnan(az)) {
+    az = JsonToDouble(j, "azimuthDeg");
+  }
+  if (!std::isnan(lat) && !std::isnan(az)) {
+    builder->LatitudeDeg(lat).AzimuthDeg(az);
+  }
+}
+
+void ApplyControls(lob::Builder* builder, const nlohmann::json& j) {
+  uint16_t step_size = JsonToU16(j, "StepSize");
+  if (step_size == 0) {
+    step_size = JsonToU16(j, "stepSizeInch");
+  }
+  if (step_size > 0) {
+    builder->StepSize(step_size);
+  }
+
+  uint16_t min_spd = JsonToU16(j, "MinimumSpeed");
+  if (min_spd == 0) {
+    min_spd = JsonToU16(j, "minimumSpeedFps");
+  }
+  if (min_spd > 0) {
+    builder->MinimumSpeed(min_spd);
+  }
+
+  uint16_t min_en = JsonToU16(j, "MinimumEnergy");
+  if (min_en == 0) {
+    min_en = JsonToU16(j, "minimumEnergyFtLbs");
+  }
+  if (min_en > 0) {
+    builder->MinimumEnergy(min_en);
+  }
+
+  double max_t = JsonToDouble(j, "MaximumTime");
+  if (std::isnan(max_t)) {
+    max_t = JsonToDouble(j, "maximumTimeSec");
+  }
+  if (!std::isnan(max_t) && max_t > 0.0) {
+    builder->MaximumTime(max_t);
+  }
+}
+
+void PrintInverseRow(const lob::Output& out, AngularUnit unit, int width) {
+  const double kElevMoa = ZeroFlush(out.elevation);
+  const double kElevMil = ZeroFlush(lob::MoaToMil(kElevMoa));
+  const double kElevInch =
+      (out.range == 0) ? 0.0 : ZeroFlush(lob::MoaToInch(kElevMoa, out.range));
+  const double kWindMoa = ZeroFlush(out.deflection);
+  const double kWindMil = ZeroFlush(lob::MoaToMil(kWindMoa));
+  const double kWindInch =
+      (out.range == 0) ? 0.0 : ZeroFlush(lob::MoaToInch(kWindMoa, out.range));
+
+  std::cout << std::left << std::setw(width)
+            << (out.range / static_cast<uint32_t>(kYardsToFeet))
+            << std::setw(width) << out.velocity << std::setw(width)
+            << out.energy << std::setw(width) << std::fixed
+            << std::setprecision(2)
+            << (unit == AngularUnit::kMil ? kElevMil : kElevMoa)
+            << std::setw(width)
+            << (unit == AngularUnit::kMil ? kElevMoa : kElevMil)
+            << std::setw(width) << kElevInch << std::setw(width)
+            << (unit == AngularUnit::kMil ? kWindMil : kWindMoa)
+            << std::setw(width)
+            << (unit == AngularUnit::kMil ? kWindMoa : kWindMil)
+            << std::setw(width) << kWindInch << std::setw(width)
+            << std::setprecision(3) << out.time_of_flight << "\n";
+}
+
+void PrintForwardRow(const lob::Output& out, int width) {
+  const double kElevInch = ZeroFlush(out.elevation);
+  const double kElevMoa = ZeroFlush(lob::InchToMoa(kElevInch, out.range));
+  const double kElevMil = ZeroFlush(lob::InchToMil(kElevInch, out.range));
+  const double kWindInch = ZeroFlush(out.deflection);
+  const double kWindMoa = ZeroFlush(lob::InchToMoa(kWindInch, out.range));
+  const double kWindMil = ZeroFlush(lob::InchToMil(kWindInch, out.range));
+
+  std::cout << std::left << std::setw(width)
+            << (out.range / static_cast<uint32_t>(kYardsToFeet))
+            << std::setw(width) << out.velocity << std::setw(width)
+            << out.energy << std::setw(width) << std::fixed
+            << std::setprecision(2) << kElevInch << std::setw(width) << kElevMoa
+            << std::setw(width) << kElevMil << std::setw(width) << kWindInch
+            << std::setw(width) << kWindMoa << std::setw(width) << kWindMil
+            << std::setw(width) << std::setprecision(3) << out.time_of_flight
+            << "\n";
+}
+
+nlohmann::json MakeRowJson(const lob::Output& out, SolverMode mode) {
+  double elev_moa = 0.0;
+  double elev_mil = 0.0;
+  double elev_inch = 0.0;
+  double wind_moa = 0.0;
+  double wind_mil = 0.0;
+  double wind_inch = 0.0;
+
+  if (mode == SolverMode::kInverse) {
+    elev_moa = ZeroFlush(out.elevation);
+    elev_mil = ZeroFlush(lob::MoaToMil(elev_moa));
+    elev_inch =
+        (out.range == 0) ? 0.0 : ZeroFlush(lob::MoaToInch(elev_moa, out.range));
+    wind_moa = ZeroFlush(out.deflection);
+    wind_mil = ZeroFlush(lob::MoaToMil(wind_moa));
+    wind_inch =
+        (out.range == 0) ? 0.0 : ZeroFlush(lob::MoaToInch(wind_moa, out.range));
+  } else {
+    elev_inch = ZeroFlush(out.elevation);
+    elev_moa = ZeroFlush(lob::InchToMoa(elev_inch, out.range));
+    elev_mil = ZeroFlush(lob::InchToMil(elev_inch, out.range));
+    wind_inch = ZeroFlush(out.deflection);
+    wind_moa = ZeroFlush(lob::InchToMoa(wind_inch, out.range));
+    wind_mil = ZeroFlush(lob::InchToMil(wind_inch, out.range));
+  }
+
+  return {
+      {"range", out.range},           {"velocity", out.velocity},
+      {"energy", out.energy},         {"elevation", out.elevation},
+      {"deflection", out.deflection}, {"time_of_flight", out.time_of_flight},
+      {"elevation_moa", elev_moa},    {"elevation_mil", elev_mil},
+      {"elevation_inch", elev_inch},  {"deflection_moa", wind_moa},
+      {"deflection_mil", wind_mil},   {"deflection_inch", wind_inch},
+  };
 }
 
 }  // namespace
@@ -118,11 +632,13 @@ lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& j,
   if (std::isnan(kV)) {
     return lob::AtmosphereReferenceT::kArmyStandardMetro;
   }
-  const int kRounded = static_cast<int>(std::round(kV));
-  return (kRounded == static_cast<int>(lob::AtmosphereReferenceT::kIcao) ||
-          kRounded == 2)
-             ? lob::AtmosphereReferenceT::kIcao
-             : lob::AtmosphereReferenceT::kArmyStandardMetro;
+  const auto kCode = static_cast<int>(std::round(kV));
+  constexpr int kLegacyIcao = 2;
+  if (kCode == static_cast<int>(lob::AtmosphereReferenceT::kIcao) ||
+      kCode == kLegacyIcao) {
+    return lob::AtmosphereReferenceT::kIcao;
+  }
+  return lob::AtmosphereReferenceT::kArmyStandardMetro;
 }
 
 lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
@@ -131,39 +647,45 @@ lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
     return lob::DragFunctionT::kG1;
   }
   if (j[key].is_string()) {
-    const std::string kStr = j[key].get<std::string>();
-    if (kStr == "G1" || kStr == "g1" || kStr == "1") {
+    const std::string kVal = j[key].get<std::string>();
+    if (kVal == "G1" || kVal == "g1" || kVal == "1") {
       return lob::DragFunctionT::kG1;
     }
-    if (kStr == "G2" || kStr == "g2" || kStr == "2") {
+    if (kVal == "G2" || kVal == "g2" || kVal == "2") {
       return lob::DragFunctionT::kG2;
     }
-    if (kStr == "G5" || kStr == "g5" || kStr == "5") {
+    if (kVal == "G5" || kVal == "g5" || kVal == "5") {
       return lob::DragFunctionT::kG5;
     }
-    if (kStr == "G6" || kStr == "g6" || kStr == "6") {
+    if (kVal == "G6" || kVal == "g6" || kVal == "6") {
       return lob::DragFunctionT::kG6;
     }
-    if (kStr == "G7" || kStr == "g7" || kStr == "7") {
+    if (kVal == "G7" || kVal == "g7" || kVal == "7") {
       return lob::DragFunctionT::kG7;
     }
-    if (kStr == "G8" || kStr == "g8" || kStr == "8") {
+    if (kVal == "G8" || kVal == "g8" || kVal == "8") {
       return lob::DragFunctionT::kG8;
     }
+    return lob::DragFunctionT::kG1;
   }
   const double kV = JsonToDouble(j, key);
   if (std::isnan(kV)) {
     return lob::DragFunctionT::kG1;
   }
-  const int kRounded = static_cast<int>(std::round(kV));
-  switch (kRounded) {
+  const auto kChoice = static_cast<int>(kV);
+  switch (kChoice) {
     case static_cast<int>(lob::DragFunctionT::kG1):
+      return lob::DragFunctionT::kG1;
     case static_cast<int>(lob::DragFunctionT::kG2):
+      return lob::DragFunctionT::kG2;
     case static_cast<int>(lob::DragFunctionT::kG5):
+      return lob::DragFunctionT::kG5;
     case static_cast<int>(lob::DragFunctionT::kG6):
+      return lob::DragFunctionT::kG6;
     case static_cast<int>(lob::DragFunctionT::kG7):
+      return lob::DragFunctionT::kG7;
     case static_cast<int>(lob::DragFunctionT::kG8):
-      return static_cast<lob::DragFunctionT>(static_cast<uint8_t>(kRounded));
+      return lob::DragFunctionT::kG8;
     default:
       return lob::DragFunctionT::kG1;
   }
@@ -171,17 +693,41 @@ lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
 
 lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
                                   const std::string& key) {
+  if (!j.contains(key) || j[key].is_null()) {
+    return lob::ClockAngleT::kXII;
+  }
   const double kV = JsonToDouble(j, key);
   if (std::isnan(kV)) {
     return lob::ClockAngleT::kXII;
   }
-  const auto kRounded = static_cast<int>(std::round(kV));
-  const int kMinClock = 1;
-  const int kMaxClock = 12;
-  if (kRounded >= kMinClock && kRounded <= kMaxClock) {
-    return static_cast<lob::ClockAngleT>(static_cast<uint8_t>(kRounded));
+  const auto kChoice = static_cast<int>(kV);
+  switch (kChoice) {
+    case static_cast<int>(lob::ClockAngleT::kI):
+      return lob::ClockAngleT::kI;
+    case static_cast<int>(lob::ClockAngleT::kII):
+      return lob::ClockAngleT::kII;
+    case static_cast<int>(lob::ClockAngleT::kIII):
+      return lob::ClockAngleT::kIII;
+    case static_cast<int>(lob::ClockAngleT::kIV):
+      return lob::ClockAngleT::kIV;
+    case static_cast<int>(lob::ClockAngleT::kV):
+      return lob::ClockAngleT::kV;
+    case static_cast<int>(lob::ClockAngleT::kVI):
+      return lob::ClockAngleT::kVI;
+    case static_cast<int>(lob::ClockAngleT::kVII):
+      return lob::ClockAngleT::kVII;
+    case static_cast<int>(lob::ClockAngleT::kVIII):
+      return lob::ClockAngleT::kVIII;
+    case static_cast<int>(lob::ClockAngleT::kIX):
+      return lob::ClockAngleT::kIX;
+    case static_cast<int>(lob::ClockAngleT::kX):
+      return lob::ClockAngleT::kX;
+    case static_cast<int>(lob::ClockAngleT::kXI):
+      return lob::ClockAngleT::kXI;
+    case static_cast<int>(lob::ClockAngleT::kXII):
+    default:
+      return lob::ClockAngleT::kXII;
   }
-  return lob::ClockAngleT::kXII;
 }
 
 std::string ErrorToString(lob::ErrorT err) {
@@ -269,14 +815,11 @@ std::string ErrorToString(lob::ErrorT err) {
 
 SolverPath JsonToSolverPath(const nlohmann::json& j) {
   if (j.contains("SolverPath") && j["SolverPath"].is_string()) {
-    std::string val = j["SolverPath"].get<std::string>();
-    std::transform(val.begin(), val.end(), val.begin(), [](unsigned char c) {
-      return static_cast<char>(std::tolower(c));
-    });
-    if (val == "elr") {
+    const std::string kVal = ToLower(j["SolverPath"].get<std::string>());
+    if (kVal == "elr") {
       return SolverPath::kELR;
     }
-    if (val == "fast") {
+    if (kVal == "fast") {
       return SolverPath::kFast;
     }
   }
@@ -285,14 +828,11 @@ SolverPath JsonToSolverPath(const nlohmann::json& j) {
 
 SolverMode JsonToSolverMode(const nlohmann::json& j) {
   if (j.contains("SolverMode") && j["SolverMode"].is_string()) {
-    std::string val = j["SolverMode"].get<std::string>();
-    std::transform(val.begin(), val.end(), val.begin(), [](unsigned char c) {
-      return static_cast<char>(std::tolower(c));
-    });
-    if (val == "inverse") {
+    const std::string kVal = ToLower(j["SolverMode"].get<std::string>());
+    if (kVal == "inverse") {
       return SolverMode::kInverse;
     }
-    if (val == "forward") {
+    if (kVal == "forward") {
       return SolverMode::kForward;
     }
   }
@@ -301,14 +841,11 @@ SolverMode JsonToSolverMode(const nlohmann::json& j) {
 
 AngularUnit JsonToAngularUnit(const nlohmann::json& j) {
   if (j.contains("AngularUnit") && j["AngularUnit"].is_string()) {
-    std::string val = j["AngularUnit"].get<std::string>();
-    std::transform(val.begin(), val.end(), val.begin(), [](unsigned char c) {
-      return static_cast<char>(std::tolower(c));
-    });
-    if (val == "mil") {
+    const std::string kVal = ToLower(j["AngularUnit"].get<std::string>());
+    if (kVal == "mil") {
       return AngularUnit::kMil;
     }
-    if (val == "moa") {
+    if (kVal == "moa") {
       return AngularUnit::kMoa;
     }
   }
@@ -318,14 +855,14 @@ AngularUnit JsonToAngularUnit(const nlohmann::json& j) {
 std::vector<BandPoint> ParseBandsFromString(const std::string& text) {
   std::vector<BandPoint> result;
   for (const auto& line : SplitLines(text)) {
-    auto tokens = SplitTokens(line);
-    if (tokens.size() >= 2) {
+    const auto kTokens = SplitTokens(line);
+    if (kTokens.size() >= 2) {
       char* end1 = nullptr;
       char* end2 = nullptr;
-      float fps = std::strtof(tokens[0].c_str(), &end1);
-      float bc = std::strtof(tokens[1].c_str(), &end2);
-      if (end1 != tokens[0].c_str() && end2 != tokens[1].c_str()) {
-        result.push_back({fps, bc});
+      const float kFps = std::strtof(kTokens.at(0).c_str(), &end1);
+      const float kBc = std::strtof(kTokens.at(1).c_str(), &end2);
+      if (end1 != kTokens.at(0).c_str() && end2 != kTokens.at(1).c_str()) {
+        result.push_back({kFps, kBc});
       }
     }
   }
@@ -333,9 +870,9 @@ std::vector<BandPoint> ParseBandsFromString(const std::string& text) {
 }
 
 std::vector<BandPoint> ParseBands(const nlohmann::json& j) {
-  std::vector<BandPoint> bands;
-  const std::string keys[] = {"BCVelocityBands", "bands", "bandsText"};
-  for (const auto& key : keys) {
+  constexpr std::array<const char*, 3> kKeys = {"BCVelocityBands", "bands",
+                                                "bandsText"};
+  for (const auto* key : kKeys) {
     if (!j.contains(key) || j[key].is_null()) {
       continue;
     }
@@ -345,51 +882,42 @@ std::vector<BandPoint> ParseBands(const nlohmann::json& j) {
     if (j[key].is_object()) {
       if (j[key].contains("fps") && j[key].contains("bcs") &&
           j[key]["fps"].is_array() && j[key]["bcs"].is_array()) {
-        const size_t n = std::min(j[key]["fps"].size(), j[key]["bcs"].size());
-        for (size_t i = 0; i < n; ++i) {
-          bands.push_back(
-              {j[key]["fps"][i].get<float>(), j[key]["bcs"][i].get<float>()});
+        std::vector<BandPoint> bands;
+        const size_t kCount =
+            std::min(j[key]["fps"].size(), j[key]["bcs"].size());
+        bands.reserve(kCount);
+        for (size_t i = 0; i < kCount; ++i) {
+          bands.push_back({j[key]["fps"].at(i).get<float>(),
+                           j[key]["bcs"].at(i).get<float>()});
         }
         return bands;
       }
     }
     if (j[key].is_array()) {
+      std::vector<BandPoint> bands;
       for (const auto& item : j[key]) {
-        if (item.is_array() && item.size() >= 2) {
-          bands.push_back({item[0].get<float>(), item[1].get<float>()});
-        } else if (item.is_object()) {
-          float fps = 0.0f;
-          float bc = 0.0f;
-          if (item.contains("fps")) {
-            fps = item["fps"].get<float>();
-          } else if (item.contains("velocity")) {
-            fps = item["velocity"].get<float>();
-          }
-          if (item.contains("bc")) {
-            bc = item["bc"].get<float>();
-          }
-          if (fps > 0.0f && bc > 0.0f) {
-            bands.push_back({fps, bc});
-          }
+        BandPoint pt;
+        if (TryParseBandObject(item, &pt)) {
+          bands.push_back(pt);
         }
       }
       return bands;
     }
   }
-  return bands;
+  return {};
 }
 
 std::vector<DragTablePoint> ParseDragTableFromString(const std::string& text) {
   std::vector<DragTablePoint> result;
   for (const auto& line : SplitLines(text)) {
-    auto tokens = SplitTokens(line);
-    if (tokens.size() >= 2) {
+    const auto kTokens = SplitTokens(line);
+    if (kTokens.size() >= 2) {
       char* end1 = nullptr;
       char* end2 = nullptr;
-      float mach = std::strtof(tokens[0].c_str(), &end1);
-      float cd = std::strtof(tokens[1].c_str(), &end2);
-      if (end1 != tokens[0].c_str() && end2 != tokens[1].c_str()) {
-        result.push_back({mach, cd});
+      const float kMach = std::strtof(kTokens.at(0).c_str(), &end1);
+      const float kCd = std::strtof(kTokens.at(1).c_str(), &end2);
+      if (end1 != kTokens.at(0).c_str() && end2 != kTokens.at(1).c_str()) {
+        result.push_back({kMach, kCd});
       }
     }
   }
@@ -397,10 +925,10 @@ std::vector<DragTablePoint> ParseDragTableFromString(const std::string& text) {
 }
 
 std::vector<DragTablePoint> ParseDragTable(const nlohmann::json& j) {
-  std::vector<DragTablePoint> table;
-  const std::string keys[] = {"SplineFitTable", "DragTable", "MachVsDragTable",
-                              "dragTableText", "table"};
-  for (const auto& key : keys) {
+  constexpr std::array<const char*, 5> kKeys = {"SplineFitTable", "DragTable",
+                                                "MachVsDragTable",
+                                                "dragTableText", "table"};
+  for (const auto* key : kKeys) {
     if (!j.contains(key) || j[key].is_null()) {
       continue;
     }
@@ -410,37 +938,29 @@ std::vector<DragTablePoint> ParseDragTable(const nlohmann::json& j) {
     if (j[key].is_object()) {
       if (j[key].contains("machs") && j[key].contains("drags") &&
           j[key]["machs"].is_array() && j[key]["drags"].is_array()) {
-        const size_t n =
+        std::vector<DragTablePoint> table;
+        const size_t kCount =
             std::min(j[key]["machs"].size(), j[key]["drags"].size());
-        for (size_t i = 0; i < n; ++i) {
-          table.push_back({j[key]["machs"][i].get<float>(),
-                           j[key]["drags"][i].get<float>()});
+        table.reserve(kCount);
+        for (size_t i = 0; i < kCount; ++i) {
+          table.push_back({j[key]["machs"].at(i).get<float>(),
+                           j[key]["drags"].at(i).get<float>()});
         }
         return table;
       }
     }
     if (j[key].is_array()) {
+      std::vector<DragTablePoint> table;
       for (const auto& item : j[key]) {
-        if (item.is_array() && item.size() >= 2) {
-          table.push_back({item[0].get<float>(), item[1].get<float>()});
-        } else if (item.is_object()) {
-          float mach = 0.0f;
-          float cd = 0.0f;
-          if (item.contains("mach")) {
-            mach = item["mach"].get<float>();
-          }
-          if (item.contains("cd")) {
-            cd = item["cd"].get<float>();
-          } else if (item.contains("drag")) {
-            cd = item["drag"].get<float>();
-          }
-          table.push_back({mach, cd});
+        DragTablePoint pt;
+        if (TryParseDragObject(item, &pt)) {
+          table.push_back(pt);
         }
       }
       return table;
     }
   }
-  return table;
+  return {};
 }
 
 std::vector<float> ParseSplineCoefficientsFromString(const std::string& text) {
@@ -448,9 +968,9 @@ std::vector<float> ParseSplineCoefficientsFromString(const std::string& text) {
   for (const auto& line : SplitLines(text)) {
     for (const auto& tok : SplitTokens(line)) {
       char* end = nullptr;
-      float val = std::strtof(tok.c_str(), &end);
-      if (end != tok.c_str() && std::isfinite(val)) {
-        result.push_back(val);
+      const float kVal = std::strtof(tok.c_str(), &end);
+      if (end != tok.c_str() && *end == '\0') {
+        result.push_back(kVal);
       }
     }
   }
@@ -458,9 +978,10 @@ std::vector<float> ParseSplineCoefficientsFromString(const std::string& text) {
 }
 
 std::vector<float> ParseSplineCoefficients(const nlohmann::json& j) {
-  const std::string keys[] = {"SplineCoefficients", "coefficients",
-                              "coefficientsText"};
-  for (const auto& key : keys) {
+  constexpr std::array<const char*, 5> kKeys = {
+      "SplineCoefficients", "SplineCoeffs", "coefficients", "dragCoefficients",
+      "coefficientsText"};
+  for (const auto* key : kKeys) {
     if (!j.contains(key) || j[key].is_null()) {
       continue;
     }
@@ -468,13 +989,13 @@ std::vector<float> ParseSplineCoefficients(const nlohmann::json& j) {
       return ParseSplineCoefficientsFromString(j[key].get<std::string>());
     }
     if (j[key].is_array()) {
-      std::vector<float> coefs;
-      for (const auto& val : j[key]) {
-        if (val.is_number()) {
-          coefs.push_back(val.get<float>());
+      std::vector<float> result;
+      for (const auto& item : j[key]) {
+        if (item.is_number()) {
+          result.push_back(item.get<float>());
         }
       }
-      return coefs;
+      return result;
     }
   }
   return {};
@@ -484,22 +1005,22 @@ std::vector<lob::WindPoint> ParseWindProfileFromString(
     const std::string& text) {
   std::vector<lob::WindPoint> result;
   for (const auto& line : SplitLines(text)) {
-    auto tokens = SplitTokens(line);
-    if (tokens.size() >= 3) {
+    const auto kTokens = SplitTokens(line);
+    if (kTokens.size() >= 3) {
       char* end1 = nullptr;
       char* end2 = nullptr;
       char* end3 = nullptr;
-      double range = std::strtod(tokens[0].c_str(), &end1);
-      double heading = std::strtod(tokens[1].c_str(), &end2);
-      double speed = std::strtod(tokens[2].c_str(), &end3);
+      const double kRange = std::strtod(kTokens.at(0).c_str(), &end1);
+      const double kHeading = std::strtod(kTokens.at(1).c_str(), &end2);
+      const double kSpeed = std::strtod(kTokens.at(2).c_str(), &end3);
       double height = 0.0;
-      if (tokens.size() >= 4) {
+      if (kTokens.size() >= 4) {
         char* end4 = nullptr;
-        height = std::strtod(tokens[3].c_str(), &end4);
+        height = std::strtod(kTokens.at(3).c_str(), &end4);
       }
-      if (end1 != tokens[0].c_str() && end2 != tokens[1].c_str() &&
-          end3 != tokens[2].c_str()) {
-        result.push_back({range, heading, speed, height});
+      if (end1 != kTokens.at(0).c_str() && end2 != kTokens.at(1).c_str() &&
+          end3 != kTokens.at(2).c_str()) {
+        result.push_back({kRange, kHeading, kSpeed, height});
       }
     }
   }
@@ -507,8 +1028,9 @@ std::vector<lob::WindPoint> ParseWindProfileFromString(
 }
 
 std::vector<lob::WindPoint> ParseWindProfile(const nlohmann::json& j) {
-  const std::string keys[] = {"WindProfile", "windProfile", "windProfileText"};
-  for (const auto& key : keys) {
+  constexpr std::array<const char*, 3> kKeys = {"WindProfile", "windProfile",
+                                                "windProfileText"};
+  for (const auto* key : kKeys) {
     if (!j.contains(key) || j[key].is_null()) {
       continue;
     }
@@ -518,38 +1040,9 @@ std::vector<lob::WindPoint> ParseWindProfile(const nlohmann::json& j) {
     if (j[key].is_array()) {
       std::vector<lob::WindPoint> profile;
       for (const auto& item : j[key]) {
-        if (item.is_array() && item.size() >= 3) {
-          double range = item[0].get<double>();
-          double heading = item[1].get<double>();
-          double speed = item[2].get<double>();
-          double height = item.size() >= 4 ? item[3].get<double>() : 0.0;
-          profile.push_back({range, heading, speed, height});
-        } else if (item.is_object()) {
-          double range = 0.0;
-          double heading = 0.0;
-          double speed = 0.0;
-          double height = 0.0;
-          if (item.contains("range_ft")) {
-            range = item["range_ft"].get<double>();
-          } else if (item.contains("range")) {
-            range = item["range"].get<double>();
-          }
-          if (item.contains("heading_deg")) {
-            heading = item["heading_deg"].get<double>();
-          } else if (item.contains("heading")) {
-            heading = item["heading"].get<double>();
-          }
-          if (item.contains("speed_mph")) {
-            speed = item["speed_mph"].get<double>();
-          } else if (item.contains("speed")) {
-            speed = item["speed"].get<double>();
-          }
-          if (item.contains("height_ft")) {
-            height = item["height_ft"].get<double>();
-          } else if (item.contains("height")) {
-            height = item["height"].get<double>();
-          }
-          profile.push_back({range, heading, speed, height});
+        lob::WindPoint pt;
+        if (TryParseWindObject(item, &pt)) {
+          profile.push_back(pt);
         }
       }
       return profile;
@@ -574,24 +1067,28 @@ std::vector<uint32_t> ParseRanges(const nlohmann::json& j) {
     return ranges;
   }
   if (j.contains("MaxYds") || j.contains("maxYds")) {
-    double max_yds = j.contains("MaxYds") ? j["MaxYds"].get<double>()
-                                          : j["maxYds"].get<double>();
-    double step_yds = 100.0;
+    const double kMaxYds = j.contains("MaxYds") ? j["MaxYds"].get<double>()
+                                                : j["maxYds"].get<double>();
+    constexpr double kDefaultStep = 100.0;
+    double step_yds = kDefaultStep;
     if (j.contains("StepYds")) {
       step_yds = j["StepYds"].get<double>();
     } else if (j.contains("stepYds")) {
       step_yds = j["stepYds"].get<double>();
     }
     if (step_yds <= 0.0) {
-      step_yds = 100.0;
+      step_yds = kDefaultStep;
     }
     std::vector<uint32_t> ranges;
-    for (double r = 0.0; r <= max_yds; r += step_yds) {
-      ranges.push_back(static_cast<uint32_t>(r * kYardsToFeet));
+    const auto kSteps = static_cast<size_t>(std::ceil(kMaxYds / step_yds));
+    for (size_t step_idx = 0; step_idx <= kSteps; ++step_idx) {
+      const double kYards =
+          std::min(static_cast<double>(step_idx) * step_yds, kMaxYds);
+      ranges.push_back(static_cast<uint32_t>(kYards * kYardsToFeet));
     }
     if (ranges.empty() ||
-        ranges.back() != static_cast<uint32_t>(max_yds * kYardsToFeet)) {
-      ranges.push_back(static_cast<uint32_t>(max_yds * kYardsToFeet));
+        ranges.back() != static_cast<uint32_t>(kMaxYds * kYardsToFeet)) {
+      ranges.push_back(static_cast<uint32_t>(kMaxYds * kYardsToFeet));
     }
     return ranges;
   }
@@ -614,297 +1111,16 @@ std::vector<uint32_t> ParseRanges(const nlohmann::json& j) {
 
 lob::Context BuildContextFromJson(const nlohmann::json& j) {
   lob::Builder builder;
-
-  // Local buffers to hold array data alive until builder.Build() finishes
-  std::vector<float> band_fps;
-  std::vector<float> band_bcs;
-  std::vector<float> table_mach;
-  std::vector<float> table_cd;
-  std::vector<float> spline_coeffs;
+  DragBuffers buffers;
   std::vector<lob::WindPoint> wind_points;
 
-  // Drag source determination
-  std::string drag_source;
-  if (j.contains("DragSource") && j["DragSource"].is_string()) {
-    drag_source = j["DragSource"].get<std::string>();
-  } else if (j.contains("dragSource") && j["dragSource"].is_string()) {
-    drag_source = j["dragSource"].get<std::string>();
-  }
-
-  auto bands = ParseBands(j);
-  auto table = ParseDragTable(j);
-  auto coefs = ParseSplineCoefficients(j);
-
-  if (drag_source == "coefficients" ||
-      (!coefs.empty() && drag_source.empty() && bands.empty() &&
-       table.empty() &&
-       std::isnan(JsonToDouble(j, "BallisticCoefficientPsi")))) {
-    if (coefs.size() == lob::kLobCoeffsSize) {
-      spline_coeffs = std::move(coefs);
-      builder.SplineCoefficients(spline_coeffs.data());
-    }
-  } else if (drag_source == "table" ||
-             (!table.empty() && drag_source.empty() && bands.empty() &&
-              std::isnan(JsonToDouble(j, "BallisticCoefficientPsi")))) {
-    if (table.size() >= 2) {
-      table_mach.resize(table.size());
-      table_cd.resize(table.size());
-      for (size_t i = 0; i < table.size(); ++i) {
-        table_mach[i] = table[i].mach;
-        table_cd[i] = table[i].cd;
-      }
-      builder.MachVsDragTable(table_mach.data(), table_cd.data(), table.size());
-    }
-  } else if (drag_source == "bands" ||
-             (!bands.empty() && drag_source.empty() &&
-              std::isnan(JsonToDouble(j, "BallisticCoefficientPsi")))) {
-    if (bands.size() >= 2) {
-      band_fps.resize(bands.size());
-      band_bcs.resize(bands.size());
-      for (size_t i = 0; i < bands.size(); ++i) {
-        band_fps[i] = bands[i].fps;
-        band_bcs[i] = bands[i].bc;
-      }
-      builder.BCVelocityBands(band_fps.data(), band_bcs.data(), bands.size());
-      builder.BCDragFunction(JsonToDragFunction(j, "BCDragFunction"));
-      builder.BCAtmosphere(JsonToAtmosphere(j, "BCAtmosphere"));
-    }
-  } else {
-    double bc = JsonToDouble(j, "BallisticCoefficientPsi");
-    if (std::isnan(bc)) {
-      bc = JsonToDouble(j, "bc");
-    }
-    if (!std::isnan(bc) && bc > 0.0) {
-      builder.BallisticCoefficientPsi(bc);
-      builder.BCDragFunction(JsonToDragFunction(j, "BCDragFunction"));
-      builder.BCAtmosphere(JsonToAtmosphere(j, "BCAtmosphere"));
-    }
-  }
-
-  // Muzzle velocity
-  uint16_t mv = JsonToU16(j, "InitialVelocityFps");
-  if (mv == 0) {
-    mv = JsonToU16(j, "velocityFps");
-  }
-  if (mv > 0) {
-    builder.InitialVelocityFps(mv);
-  }
-
-  // Projectile detail tiers
-  double mass = JsonToDouble(j, "MassGrains");
-  if (std::isnan(mass)) {
-    mass = JsonToDouble(j, "massGrains");
-  }
-  if (!std::isnan(mass) && mass > 0.0) {
-    builder.MassGrains(mass);
-  }
-
-  double dia = JsonToDouble(j, "DiameterInch");
-  if (std::isnan(dia)) {
-    dia = JsonToDouble(j, "diameterInch");
-  }
-  double len = JsonToDouble(j, "LengthInch");
-  if (std::isnan(len)) {
-    len = JsonToDouble(j, "lengthInch");
-  }
-  double twist = JsonToDouble(j, "TwistInchesPerTurn");
-  if (std::isnan(twist)) {
-    twist = JsonToDouble(j, "twistInchesPerTurn");
-  }
-  if (!std::isnan(dia) && dia > 0.0 && !std::isnan(len) && len > 0.0 &&
-      !std::isnan(twist) && twist > 0.0) {
-    builder.DiameterInch(dia).LengthInch(len).TwistInchesPerTurn(twist);
-  }
-
-  double nose = JsonToDouble(j, "NoseLengthInch");
-  if (std::isnan(nose)) {
-    nose = JsonToDouble(j, "noseLengthInch");
-  }
-  double meplat = JsonToDouble(j, "MeplatDiameterInch");
-  if (std::isnan(meplat)) {
-    meplat = JsonToDouble(j, "meplatDiameterInch");
-  }
-  double base = JsonToDouble(j, "BaseDiameterInch");
-  if (std::isnan(base)) {
-    base = JsonToDouble(j, "baseDiameterInch");
-  }
-  double tail = JsonToDouble(j, "TailLengthInch");
-  if (std::isnan(tail)) {
-    tail = JsonToDouble(j, "tailLengthInch");
-  }
-  double ogive = JsonToDouble(j, "OgiveRtR");
-  if (std::isnan(ogive)) {
-    ogive = JsonToDouble(j, "ogiveRtR");
-  }
-  if (!std::isnan(nose) && nose > 0.0 && !std::isnan(base) && base > 0.0 &&
-      !std::isnan(ogive) && ogive > 0.0) {
-    builder.NoseLengthInch(nose).BaseDiameterInch(base).OgiveRtR(ogive);
-    if (!std::isnan(meplat) && meplat >= 0.0) {
-      builder.MeplatDiameterInch(meplat);
-    }
-    if (!std::isnan(tail) && tail >= 0.0) {
-      builder.TailLengthInch(tail);
-    }
-  }
-
-  // Zero
-  double zero_angle = JsonToDouble(j, "ZeroAngleMOA");
-  if (std::isnan(zero_angle)) {
-    zero_angle = JsonToDouble(j, "zeroAngleMoa");
-  }
-  double zero_dist = JsonToDouble(j, "ZeroDistanceYds");
-  if (std::isnan(zero_dist)) {
-    zero_dist = JsonToDouble(j, "zeroYds");
-  }
-  double zero_impact = JsonToDouble(j, "ZeroImpactHeightInches");
-  if (std::isnan(zero_impact)) {
-    zero_impact = JsonToDouble(j, "zeroImpactHeightInches");
-  }
-  if (!std::isnan(zero_angle)) {
-    builder.ZeroAngleMOA(zero_angle);
-  } else if (!std::isnan(zero_dist) && zero_dist > 0.0) {
-    builder.ZeroDistanceYds(zero_dist);
-    if (!std::isnan(zero_impact)) {
-      builder.ZeroImpactHeightInches(zero_impact);
-    }
-  }
-
-  double optic_ht = JsonToDouble(j, "OpticHeightInches");
-  if (std::isnan(optic_ht)) {
-    optic_ht = JsonToDouble(j, "sightHeightInches");
-  }
-  if (!std::isnan(optic_ht) && optic_ht >= 0.0) {
-    builder.OpticHeightInches(optic_ht);
-  }
-
-  // Atmosphere
-  double alt = JsonToDouble(j, "AltitudeOfFiringSiteFt");
-  if (std::isnan(alt)) {
-    alt = JsonToDouble(j, "altitudeOfFiringSiteFt");
-  }
-  if (!std::isnan(alt)) {
-    builder.AltitudeOfFiringSiteFt(alt);
-  }
-
-  double pres = JsonToDouble(j, "AirPressureInHg");
-  if (std::isnan(pres)) {
-    pres = JsonToDouble(j, "airPressureInHg");
-  }
-  if (!std::isnan(pres) && pres > 0.0) {
-    builder.AirPressureInHg(pres);
-  }
-
-  double baro_alt = JsonToDouble(j, "AltitudeOfBarometerFt");
-  if (std::isnan(baro_alt)) {
-    baro_alt = JsonToDouble(j, "altitudeOfBarometerFt");
-  }
-  if (!std::isnan(baro_alt)) {
-    builder.AltitudeOfBarometerFt(baro_alt);
-  }
-
-  double temp = JsonToDouble(j, "TemperatureDegF");
-  if (std::isnan(temp)) {
-    temp = JsonToDouble(j, "temperatureDegF");
-  }
-  if (!std::isnan(temp)) {
-    builder.TemperatureDegF(temp);
-  }
-
-  double thermo_alt = JsonToDouble(j, "AltitudeOfThermometerFt");
-  if (std::isnan(thermo_alt)) {
-    thermo_alt = JsonToDouble(j, "altitudeOfThermometerFt");
-  }
-  if (!std::isnan(thermo_alt)) {
-    builder.AltitudeOfThermometerFt(thermo_alt);
-  }
-
-  double rh = JsonToDouble(j, "RelativeHumidityPercent");
-  if (std::isnan(rh)) {
-    rh = JsonToDouble(j, "relativeHumidityPercent");
-  }
-  if (!std::isnan(rh) && rh >= 0.0) {
-    builder.RelativeHumidityPercent(rh);
-  }
-
-  // Wind
-  wind_points = ParseWindProfile(j);
-  if (!wind_points.empty()) {
-    builder.WindProfile(wind_points.data(), wind_points.size());
-    double shear = JsonToDouble(j, "WindShearExponent");
-    if (std::isnan(shear)) {
-      shear = JsonToDouble(j, "windShearExponent");
-    }
-    if (!std::isnan(shear) && shear >= 0.0) {
-      builder.WindShearExponent(shear);
-    }
-  } else {
-    double wspd = JsonToDouble(j, "WindSpeedMph");
-    if (std::isnan(wspd)) {
-      wspd = JsonToDouble(j, "windSpeedMph");
-    }
-    if (!std::isnan(wspd) && wspd > 0.0) {
-      builder.WindSpeedMph(wspd);
-      if (j.contains("WindHeading")) {
-        builder.WindHeading(JsonToClockAngle(j, "WindHeading"));
-      } else if (j.contains("windClock")) {
-        builder.WindHeading(JsonToClockAngle(j, "windClock"));
-      }
-    }
-  }
-
-  // Shot geometry & Coriolis
-  double range_angle = JsonToDouble(j, "RangeAngleDeg");
-  if (std::isnan(range_angle)) {
-    range_angle = JsonToDouble(j, "rangeAngleDeg");
-  }
-  if (!std::isnan(range_angle)) {
-    builder.RangeAngleDeg(range_angle);
-  }
-
-  double lat = JsonToDouble(j, "LatitudeDeg");
-  if (std::isnan(lat)) {
-    lat = JsonToDouble(j, "latitudeDeg");
-  }
-  double az = JsonToDouble(j, "AzimuthDeg");
-  if (std::isnan(az)) {
-    az = JsonToDouble(j, "azimuthDeg");
-  }
-  if (!std::isnan(lat) && !std::isnan(az)) {
-    builder.LatitudeDeg(lat).AzimuthDeg(az);
-  }
-
-  // Advanced controls
-  uint16_t step_size = JsonToU16(j, "StepSize");
-  if (step_size == 0) {
-    step_size = JsonToU16(j, "stepSizeInch");
-  }
-  if (step_size > 0) {
-    builder.StepSize(step_size);
-  }
-
-  uint16_t min_spd = JsonToU16(j, "MinimumSpeed");
-  if (min_spd == 0) {
-    min_spd = JsonToU16(j, "minimumSpeedFps");
-  }
-  if (min_spd > 0) {
-    builder.MinimumSpeed(min_spd);
-  }
-
-  uint16_t min_en = JsonToU16(j, "MinimumEnergy");
-  if (min_en == 0) {
-    min_en = JsonToU16(j, "minimumEnergyFtLbs");
-  }
-  if (min_en > 0) {
-    builder.MinimumEnergy(min_en);
-  }
-
-  double max_t = JsonToDouble(j, "MaximumTime");
-  if (std::isnan(max_t)) {
-    max_t = JsonToDouble(j, "maximumTimeSec");
-  }
-  if (!std::isnan(max_t) && max_t > 0.0) {
-    builder.MaximumTime(max_t);
-  }
+  ApplyDrag(&builder, j, &buffers);
+  ApplyProjectile(&builder, j);
+  ApplyZero(&builder, j);
+  ApplyAtmosphere(&builder, j);
+  ApplyWind(&builder, j, &wind_points);
+  ApplyGeometry(&builder, j);
+  ApplyControls(&builder, j);
 
   return builder.Build();
 }
@@ -944,84 +1160,39 @@ void PrintTable(const lob::Context& ctx, const lob::Output* outputs,
                  "condition met).\033[0m\n\n";
   }
 
-  const int kWidth = 12;
   if (mode == SolverMode::kInverse) {
-    std::cout << "\033[32m" << std::left << std::setw(kWidth) << "Yards"
-              << std::setw(kWidth) << "FPS" << std::setw(kWidth) << "FtLbs"
-              << std::setw(kWidth)
+    std::cout << "\033[32m" << std::left << std::setw(kTableColumnWidth)
+              << "Yards" << std::setw(kTableColumnWidth) << "FPS"
+              << std::setw(kTableColumnWidth) << "FtLbs"
+              << std::setw(kTableColumnWidth)
               << (unit == AngularUnit::kMil ? "Hold MIL" : "Hold MOA")
-              << std::setw(kWidth)
+              << std::setw(kTableColumnWidth)
               << (unit == AngularUnit::kMil ? "Hold MOA" : "Hold MIL")
-              << std::setw(kWidth) << "Elev Inch" << std::setw(kWidth)
+              << std::setw(kTableColumnWidth) << "Elev Inch"
+              << std::setw(kTableColumnWidth)
               << (unit == AngularUnit::kMil ? "Wind MIL" : "Wind MOA")
-              << std::setw(kWidth)
+              << std::setw(kTableColumnWidth)
               << (unit == AngularUnit::kMil ? "Wind MOA" : "Wind MIL")
-              << std::setw(kWidth) << "Wind Inch" << std::setw(kWidth)
-              << "Seconds" << "\033[0m\n";
+              << std::setw(kTableColumnWidth) << "Wind Inch"
+              << std::setw(kTableColumnWidth) << "Seconds" << "\033[0m\n";
   } else {
-    std::cout << "\033[32m" << std::left << std::setw(kWidth) << "Yards"
-              << std::setw(kWidth) << "FPS" << std::setw(kWidth) << "FtLbs"
-              << std::setw(kWidth) << "Elev Inch" << std::setw(kWidth)
-              << "Elev MOA" << std::setw(kWidth) << "Elev MIL"
-              << std::setw(kWidth) << "Wind Inch" << std::setw(kWidth)
-              << "Wind MOA" << std::setw(kWidth) << "Wind MIL"
-              << std::setw(kWidth) << "Seconds" << "\033[0m\n";
+    std::cout << "\033[32m" << std::left << std::setw(kTableColumnWidth)
+              << "Yards" << std::setw(kTableColumnWidth) << "FPS"
+              << std::setw(kTableColumnWidth) << "FtLbs"
+              << std::setw(kTableColumnWidth) << "Elev Inch"
+              << std::setw(kTableColumnWidth) << "Elev MOA"
+              << std::setw(kTableColumnWidth) << "Elev MIL"
+              << std::setw(kTableColumnWidth) << "Wind Inch"
+              << std::setw(kTableColumnWidth) << "Wind MOA"
+              << std::setw(kTableColumnWidth) << "Wind MIL"
+              << std::setw(kTableColumnWidth) << "Seconds" << "\033[0m\n";
   }
 
-  auto zero_flush = [](double v) { return std::fabs(v) < 1e-4 ? 0.0 : v; };
-
   for (size_t i = 0; i < count; ++i) {
-    double elev_moa = 0.0;
-    double elev_mil = 0.0;
-    double elev_inch = 0.0;
-    double wind_moa = 0.0;
-    double wind_mil = 0.0;
-    double wind_inch = 0.0;
-
     if (mode == SolverMode::kInverse) {
-      elev_moa = zero_flush(outputs[i].elevation);
-      elev_mil = zero_flush(lob::MoaToMil(elev_moa));
-      elev_inch = (outputs[i].range == 0)
-                      ? 0.0
-                      : zero_flush(lob::MoaToInch(elev_moa, outputs[i].range));
-      wind_moa = zero_flush(outputs[i].deflection);
-      wind_mil = zero_flush(lob::MoaToMil(wind_moa));
-      wind_inch = (outputs[i].range == 0)
-                      ? 0.0
-                      : zero_flush(lob::MoaToInch(wind_moa, outputs[i].range));
-
-      std::cout << std::left << std::setw(kWidth)
-                << outputs[i].range / static_cast<uint32_t>(kYardsToFeet)
-                << std::setw(kWidth) << outputs[i].velocity << std::setw(kWidth)
-                << outputs[i].energy << std::setw(kWidth) << std::fixed
-                << std::setprecision(2)
-                << (unit == AngularUnit::kMil ? elev_mil : elev_moa)
-                << std::setw(kWidth)
-                << (unit == AngularUnit::kMil ? elev_moa : elev_mil)
-                << std::setw(kWidth) << elev_inch << std::setw(kWidth)
-                << (unit == AngularUnit::kMil ? wind_mil : wind_moa)
-                << std::setw(kWidth)
-                << (unit == AngularUnit::kMil ? wind_moa : wind_mil)
-                << std::setw(kWidth) << wind_inch << std::setw(kWidth)
-                << std::setprecision(3) << outputs[i].time_of_flight << "\n";
+      PrintInverseRow(outputs[i], unit, kTableColumnWidth);
     } else {
-      elev_inch = zero_flush(outputs[i].elevation);
-      elev_moa = zero_flush(lob::InchToMoa(elev_inch, outputs[i].range));
-      elev_mil = zero_flush(lob::InchToMil(elev_inch, outputs[i].range));
-      wind_inch = zero_flush(outputs[i].deflection);
-      wind_moa = zero_flush(lob::InchToMoa(wind_inch, outputs[i].range));
-      wind_mil = zero_flush(lob::InchToMil(wind_inch, outputs[i].range));
-
-      std::cout << std::left << std::setw(kWidth)
-                << outputs[i].range / static_cast<uint32_t>(kYardsToFeet)
-                << std::setw(kWidth) << outputs[i].velocity << std::setw(kWidth)
-                << outputs[i].energy << std::setw(kWidth) << std::fixed
-                << std::setprecision(2) << elev_inch << std::setw(kWidth)
-                << elev_moa << std::setw(kWidth) << elev_mil
-                << std::setw(kWidth) << wind_inch << std::setw(kWidth)
-                << wind_moa << std::setw(kWidth) << wind_mil
-                << std::setw(kWidth) << std::setprecision(3)
-                << outputs[i].time_of_flight << "\n";
+      PrintForwardRow(outputs[i], kTableColumnWidth);
     }
   }
   std::cout << "\n";
@@ -1030,50 +1201,9 @@ void PrintTable(const lob::Context& ctx, const lob::Output* outputs,
 nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count,
                              SolverMode mode, AngularUnit unit) {
   (void)unit;
-  auto zero_flush = [](double v) { return std::fabs(v) < 1e-4 ? 0.0 : v; };
   nlohmann::json j = nlohmann::json::array();
   for (size_t i = 0; i < count; ++i) {
-    double elev_moa = 0.0;
-    double elev_mil = 0.0;
-    double elev_inch = 0.0;
-    double wind_moa = 0.0;
-    double wind_mil = 0.0;
-    double wind_inch = 0.0;
-
-    if (mode == SolverMode::kInverse) {
-      elev_moa = zero_flush(outputs[i].elevation);
-      elev_mil = zero_flush(lob::MoaToMil(elev_moa));
-      elev_inch = (outputs[i].range == 0)
-                      ? 0.0
-                      : zero_flush(lob::MoaToInch(elev_moa, outputs[i].range));
-      wind_moa = zero_flush(outputs[i].deflection);
-      wind_mil = zero_flush(lob::MoaToMil(wind_moa));
-      wind_inch = (outputs[i].range == 0)
-                      ? 0.0
-                      : zero_flush(lob::MoaToInch(wind_moa, outputs[i].range));
-    } else {
-      elev_inch = zero_flush(outputs[i].elevation);
-      elev_moa = zero_flush(lob::InchToMoa(elev_inch, outputs[i].range));
-      elev_mil = zero_flush(lob::InchToMil(elev_inch, outputs[i].range));
-      wind_inch = zero_flush(outputs[i].deflection);
-      wind_moa = zero_flush(lob::InchToMoa(wind_inch, outputs[i].range));
-      wind_mil = zero_flush(lob::InchToMil(wind_inch, outputs[i].range));
-    }
-
-    j.push_back({
-        {"range", outputs[i].range},
-        {"velocity", outputs[i].velocity},
-        {"energy", outputs[i].energy},
-        {"elevation", outputs[i].elevation},
-        {"deflection", outputs[i].deflection},
-        {"time_of_flight", outputs[i].time_of_flight},
-        {"elevation_moa", elev_moa},
-        {"elevation_mil", elev_mil},
-        {"elevation_inch", elev_inch},
-        {"deflection_moa", wind_moa},
-        {"deflection_mil", wind_mil},
-        {"deflection_inch", wind_inch},
-    });
+    j.push_back(MakeRowJson(outputs[i], mode));
   }
   return j;
 }
