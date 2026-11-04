@@ -217,7 +217,7 @@ size_t LobSolveInverseELR(const LobContext* pctx, const uint32_t* pranges,
     return 0;
   }
   const size_t kCheapSolves = LobSolveInverse(pctx, pranges, pouts, size);
-  const RadiansT kZeroAngle = RadiansT(MoaT(pctx->zero_angle));
+  const MoaT kZeroAngle = MoaT(pctx->zero_angle);
   for (size_t i = 0; i < kCheapSolves; i++) {
     if (pouts[i].range == 0) {
       continue;
@@ -233,7 +233,7 @@ size_t LobSolveInverseELR(const LobContext* pctx, const uint32_t* pranges,
     if (kTheta.IsNaN()) {
       return i;
     }
-    pouts[i].elevation = MoaT(kTheta - kZeroAngle).Value();
+    pouts[i].elevation = (kTheta - kZeroAngle).Value();
   }
   return kCheapSolves;
 }
