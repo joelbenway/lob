@@ -4,9 +4,27 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 namespace example {
+
+enum class SolverPath : uint8_t {
+  kAuto = 0,
+  kFast,
+  kELR,
+};
+
+enum class SolverMode : uint8_t {
+  kAuto = 0,
+  kForward,
+  kInverse,
+};
+
+enum class AngularUnit : uint8_t {
+  kMoa = 0,
+  kMil,
+};
 
 struct CliConfig {
   bool show_help = false;
@@ -15,6 +33,9 @@ struct CliConfig {
   bool parse_error = false;
   bool has_save_input_path = false;
   std::string save_input_path;
+  SolverPath solver_path = SolverPath::kAuto;
+  SolverMode solver_mode = SolverMode::kAuto;
+  AngularUnit angular_unit = AngularUnit::kMoa;
 };
 
 CliConfig ParseArgs(int argc, char* argv[]);  // NOLINT
