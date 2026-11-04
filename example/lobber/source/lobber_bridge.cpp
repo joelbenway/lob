@@ -52,11 +52,25 @@ uint16_t JsonToU16(const nlohmann::json& j, const std::string& key) {
 
 lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& j,
                                            const std::string& key) {
+  if (!j.contains(key) || j[key].is_null()) {
+    return lob::AtmosphereReferenceT::kArmyStandardMetro;
+  }
+  if (j[key].is_string()) {
+    const std::string kVal = j[key].get<std::string>();
+    if (kVal == "1" || kVal == "2" || kVal == "icao" || kVal == "ICAO") {
+      return lob::AtmosphereReferenceT::kIcao;
+    }
+    return lob::AtmosphereReferenceT::kArmyStandardMetro;
+  }
   const double kV = JsonToDouble(j, key);
   if (std::isnan(kV)) {
     return lob::AtmosphereReferenceT::kArmyStandardMetro;
   }
-  return static_cast<int>(std::round(kV)) == 2
+  const int kRounded = static_cast<int>(std::round(kV));
+  // 1 is canonical ICAO (kLobAtmosphereReferenceIcao); 2 is accepted for
+  // backward compatibility with the legacy wizard prompt.
+  return (kRounded == static_cast<int>(lob::AtmosphereReferenceT::kIcao) ||
+          kRounded == 2)
              ? lob::AtmosphereReferenceT::kIcao
              : lob::AtmosphereReferenceT::kArmyStandardMetro;
 }
