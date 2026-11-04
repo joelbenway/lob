@@ -40,13 +40,11 @@ std::string Trim(const std::string& s) {
     ++start;
   }
   auto end = s.end();
-  do {
-    if (end == start) {
-      break;
-    }
+  while (end != start &&
+         std::isspace(static_cast<unsigned char>(*(end - 1))) != 0) {
     --end;
-  } while (std::isspace(static_cast<unsigned char>(*end)) != 0);
-  return {start, end + 1};
+  }
+  return {start, end};
 }
 
 std::string ReadLine(const std::string& prompt) {
@@ -174,7 +172,7 @@ void WizardPhaseDrag(nlohmann::json* j) {
     (*j)["DragSource"] = "bc";
     double bc = 0.0;
     while (bc <= 0.0) {
-      bc = PromptDouble("Enter Ballistic Coefficient (Psi)", true);
+      bc = PromptDouble("Enter Ballistic Coefficient (Psi)", true, 0.225);
       if (bc <= 0.0) {
         std::cerr
             << "\033[31mBallistic coefficient must be greater than 0.\033[0m\n";
@@ -231,12 +229,20 @@ void WizardPhaseDrag(nlohmann::json* j) {
     if (bands.empty()) {
       std::cout << "\nEnter 2 to 16 velocity (fps) and BC pairs (e.g. '3000, "
                    "0.52' or '3000 0.52').\n"
-                << "Velocities must be strictly increasing. Blank line when "
-                   "finished.\n";
+                << "Velocities must be strictly increasing. Press Enter on "
+                   "Band 1 for sample bands.\n";
       while (bands.size() < 16) {
         std::string line =
             ReadLine("Band " + std::to_string(bands.size() + 1) + " > ");
         if (line.empty()) {
+          if (bands.empty()) {
+            bands = {{1500.0f, 0.305f},
+                     {2000.0f, 0.312f},
+                     {2500.0f, 0.318f},
+                     {3000.0f, 0.322f}};
+            std::cout << "Using sample velocity bands (4 stations).\n";
+            break;
+          }
           if (bands.size() >= 2) {
             break;
           }
@@ -290,12 +296,21 @@ void WizardPhaseDrag(nlohmann::json* j) {
     if (table.empty()) {
       std::cout << "\nEnter 2 or more Mach and Cd pairs (e.g. '2.5, 0.35' or "
                    "'2.5 0.35').\n"
-                << "Mach values must be strictly increasing. Blank line when "
-                   "finished.\n";
+                << "Mach values must be strictly increasing. Press Enter on "
+                   "Point 1 for sample table.\n";
       while (true) {
         std::string line =
             ReadLine("Point " + std::to_string(table.size() + 1) + " > ");
         if (line.empty()) {
+          if (table.empty()) {
+            table = {{0.5f, 0.15f},
+                     {1.0f, 0.38f},
+                     {1.5f, 0.32f},
+                     {2.0f, 0.28f},
+                     {3.0f, 0.22f}};
+            std::cout << "Using sample Mach/Cd table (5 points).\n";
+            break;
+          }
           if (table.size() >= 2) {
             break;
           }
@@ -334,10 +349,19 @@ void WizardPhaseDrag(nlohmann::json* j) {
     }
     if (coefs.size() != lob::kLobCoeffsSize) {
       std::cout << "Enter or paste the 60 space/comma separated floating point "
-                   "coefficients:\n";
+                   "coefficients (press Enter for sample coefficients):\n";
       while (coefs.size() < lob::kLobCoeffsSize) {
         std::string line = ReadLine("> ");
         if (line.empty()) {
+          if (coefs.empty()) {
+            const auto sample_ctx = lob::Builder()
+                                        .BallisticCoefficientPsi(0.225)
+                                        .InitialVelocityFps(2650)
+                                        .ZeroAngleMOA(0.0)
+                                        .Build();
+            coefs.assign(sample_ctx.drags.begin(), sample_ctx.drags.end());
+            std::cout << "Using sample spline coefficients (60 floats).\n";
+          }
           break;
         }
         auto parsed = ParseSplineCoefficientsFromString(line);
@@ -624,17 +648,18 @@ void WizardPhaseWind(nlohmann::json* j) {
       std::cout << "\nEnter 1 to 8 downrange wind stations: range_ft, "
                    "heading_deg, speed_mph [, height_ft].\n"
                 << "First station must start at range 0. Ranges must be "
-                   "strictly increasing. Blank line when finished.\n";
+                   "strictly increasing. Press Enter on Station 1 for sample "
+                   "profile.\n";
       while (profile.size() < 8) {
         std::string line =
             ReadLine("Station " + std::to_string(profile.size() + 1) + " > ");
         if (line.empty()) {
-          if (!profile.empty()) {
+          if (profile.empty()) {
+            profile = {{0.0, 90.0, 10.0, 6.0}, {1500.0, 90.0, 12.0, 6.0}};
+            std::cout << "Using sample wind profile (2 stations).\n";
             break;
           }
-          std::cerr << "\033[31mAt least 1 station (at range 0) is "
-                       "required.\033[0m\n";
-          continue;
+          break;
         }
         auto parsed = ParseWindProfileFromString(line);
         if (parsed.empty()) {
@@ -861,7 +886,10 @@ void WizardPhaseSolverAndReview(nlohmann::json* j) {
   std::cout << "  Solution Mode:    " << (*j)["SolverMode"] << "\n";
   std::cout << "\033[1;32m============================\033[0m\n\n";
 
-  PromptYesNo("Proceed to solve trajectory?", true);
+  if (!PromptYesNo("Proceed to solve trajectory?", true)) {
+    std::cout << "Trajectory solve cancelled.\n";
+    std::exit(0);
+  }
 }
 
 }  // namespace
@@ -878,7 +906,6 @@ void PrintGreeting() {
   std::cout << "\033[1;34m"
             << "╔══════════════════════════════════════════════════════════╗\n"
             << "║                 LOBBER BALLISTICS WIZARD                 ║\n"
-            << "║          Bringing parity to the CLI ballistics tool      ║\n"
             << "╚══════════════════════════════════════════════════════════╝\n"
             << "\033[0m"
             << "Welcome to lobber! Follow the 8 phases to set up your load.\n"
