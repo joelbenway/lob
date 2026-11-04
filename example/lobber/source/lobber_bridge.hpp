@@ -33,15 +33,15 @@ AngularUnit JsonToAngularUnit(const nlohmann::json& j);
 
 // Multi-point parsing helpers
 struct BandPoint {
-  float fps;
-  float bc;
+  float fps{0.0F};
+  float bc{0.0F};
 };
 std::vector<BandPoint> ParseBands(const nlohmann::json& j);
 std::vector<BandPoint> ParseBandsFromString(const std::string& text);
 
 struct DragTablePoint {
-  float mach;
-  float cd;
+  float mach{0.0F};
+  float cd{0.0F};
 };
 std::vector<DragTablePoint> ParseDragTable(const nlohmann::json& j);
 std::vector<DragTablePoint> ParseDragTableFromString(const std::string& text);

@@ -4,23 +4,23 @@
 
 #include "lobber_wizard.hpp"
 
-#include <algorithm>
+#include <array>
 #include <cctype>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "lob/lob.hpp"
 #include "lobber_bridge.hpp"
-#include "lobber_cli.hpp"
 
 #ifdef _WIN32
 #include <io.h>
@@ -32,6 +32,53 @@ namespace example {
 namespace {
 
 constexpr double kNaN = std::numeric_limits<double>::quiet_NaN();
+constexpr int kBaseTen = 10;
+constexpr int kTotalPhases = 8;
+constexpr int kPhaseDrag = 1;
+constexpr int kPhaseProjectile = 2;
+constexpr int kPhaseZero = 3;
+constexpr int kPhaseAtmosphere = 4;
+constexpr int kPhaseWind = 5;
+constexpr int kPhaseGeometry = 6;
+constexpr int kPhaseControlsAndRanges = 7;
+constexpr int kPhaseSolverAndReview = 8;
+
+constexpr size_t kMinPoints = 2;
+constexpr size_t kMaxBands = 16;
+constexpr size_t kMaxWindStations = 8;
+
+constexpr double kDefaultG1Bc = 0.462;
+constexpr double kDefaultG7Bc = 0.243;
+constexpr double kDefaultOtherBc = 0.400;
+
+constexpr double kDefaultMvFps = 2700.0;
+constexpr double kMaxMvFps = 65535.0;
+constexpr double kDefaultMassGrains = 168.0;
+constexpr double kDefaultCaliberInch = 0.308;
+constexpr double kDefaultBulletLengthInch = 1.24;
+constexpr double kDefaultTwistInches = 11.0;
+constexpr double kDefaultNoseLengthInch = 0.60;
+constexpr double kDefaultMeplatDiameterInch = 0.05;
+constexpr double kDefaultBaseDiameterInch = 0.28;
+constexpr double kDefaultTailLengthInch = 0.20;
+constexpr double kDefaultOgiveRatio = 0.50;
+
+constexpr double kDefaultOpticHeightInch = 1.5;
+constexpr double kDefaultZeroDistanceYards = 100.0;
+constexpr double kDefaultZeroImpactHeightInch = 0.0;
+constexpr double kDefaultZeroAngleMoa = 0.0;
+
+constexpr double kDefaultWindSpeedMph = 10.0;
+constexpr double kDefaultWindHeadingClock = 3.0;
+
+constexpr double kDefaultLatitudeDeg = 45.0;
+constexpr double kDefaultAzimuthDeg = 90.0;
+
+constexpr double kDefaultStepSizeInch = 36.0;
+constexpr double kDefaultMaxRangeYds = 1000.0;
+constexpr double kDefaultStepRangeYds = 100.0;
+
+constexpr double kZeroTolerance = 1e-6;
 
 std::string Trim(const std::string& s) {
   auto start = s.begin();
@@ -67,7 +114,7 @@ int PromptChoice(const std::string& prompt_title,
     std::cout << prompt_title << "\n";
   }
   for (size_t i = 0; i < options.size(); ++i) {
-    std::cout << "  " << (i + 1) << ") " << options[i];
+    std::cout << "  " << (i + 1) << ") " << options.at(i);
     if (static_cast<int>(i) + 1 == default_index) {
       std::cout << " \033[33m[Default]\033[0m";
     }
@@ -75,17 +122,18 @@ int PromptChoice(const std::string& prompt_title,
   }
 
   while (true) {
-    std::string line =
-        ReadLine("Select [1-" + std::to_string(options.size()) +
-                 ", enter for " + std::to_string(default_index) + "]: ");
-    if (line.empty()) {
+    const std::string kPrompt = "Select [1-" + std::to_string(options.size()) +
+                                ", enter for " + std::to_string(default_index) +
+                                "]: ";
+    const std::string kLine = ReadLine(kPrompt);
+    if (kLine.empty()) {
       return default_index;
     }
     char* end = nullptr;
-    long val = std::strtol(line.c_str(), &end, 10);
-    if (end != line.c_str() && *end == '\0' && val >= 1 &&
-        val <= static_cast<long>(options.size())) {
-      return static_cast<int>(val);
+    const int64_t kVal = std::strtol(kLine.c_str(), &end, kBaseTen);
+    if (end != kLine.c_str() && *end == '\0' && kVal >= 1 &&
+        kVal <= static_cast<int64_t>(options.size())) {
+      return static_cast<int>(kVal);
     }
     std::cerr << "\033[31mInvalid choice. Please enter a number between 1 and "
               << options.size() << ".\033[0m\n";
@@ -93,18 +141,21 @@ int PromptChoice(const std::string& prompt_title,
 }
 
 bool PromptYesNo(const std::string& question, bool default_yes) {
-  const std::string hint = default_yes ? "[Y/n]: " : "[y/N]: ";
+  const std::string kHint = default_yes ? "[Y/n]: " : "[y/N]: ";
   while (true) {
-    std::string line = ReadLine(question + " " + hint);
-    if (line.empty()) {
+    std::string prompt_str = question;
+    prompt_str += " ";
+    prompt_str += kHint;
+    const std::string kLine = ReadLine(prompt_str);
+    if (kLine.empty()) {
       return default_yes;
     }
-    char c =
-        static_cast<char>(std::tolower(static_cast<unsigned char>(line[0])));
-    if (c == 'y') {
+    const char kC = static_cast<char>(
+        std::tolower(static_cast<unsigned char>(kLine.at(0))));
+    if (kC == 'y') {
       return true;
     }
-    if (c == 'n') {
+    if (kC == 'n') {
       return false;
     }
     std::cerr << "\033[31mPlease enter 'y' for yes or 'n' for no.\033[0m\n";
@@ -125,9 +176,12 @@ double PromptDouble(const std::string& label, bool required,
     suffix = " \033[33m[blank to omit]\033[0m > ";
   }
 
+  std::string prompt_text = label;
+  prompt_text += suffix;
+
   while (true) {
-    std::string line = ReadLine(label + suffix);
-    if (line.empty()) {
+    const std::string kLine = ReadLine(prompt_text);
+    if (kLine.empty()) {
       if (!std::isnan(default_val)) {
         return default_val;
       }
@@ -138,9 +192,9 @@ double PromptDouble(const std::string& label, bool required,
       continue;
     }
     char* end = nullptr;
-    double val = std::strtod(line.c_str(), &end);
-    if (end != line.c_str() && *end == '\0' && std::isfinite(val)) {
-      return val;
+    const double kVal = std::strtod(kLine.c_str(), &end);
+    if (end != kLine.c_str() && *end == '\0' && std::isfinite(kVal)) {
+      return kVal;
     }
     std::cerr << "\033[31mInvalid number. Please try again.\033[0m\n";
   }
@@ -157,338 +211,429 @@ std::string ReadFileToString(const std::string& path) {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 1: Drag Source
+// Phase 1: Drag Source Helpers & Sub-wizards
 // ---------------------------------------------------------------------------
-void WizardPhaseDrag(nlohmann::json* j) {
-  PrintPhaseBanner(1, 8, "Drag Source");
+int PromptDragFunction() {
+  const std::vector<std::string> kDfOptions = {"G1", "G2", "G5",
+                                               "G6", "G7", "G8"};
+  constexpr int kDefaultG7Choice = 5;
+  const int kChoice = PromptChoice(
+      "Select reference drag function:", kDfOptions, kDefaultG7Choice);
+  constexpr std::array<int, 6> kDfMap = {
+      static_cast<int>(lob::DragFunctionT::kG1),
+      static_cast<int>(lob::DragFunctionT::kG2),
+      static_cast<int>(lob::DragFunctionT::kG5),
+      static_cast<int>(lob::DragFunctionT::kG6),
+      static_cast<int>(lob::DragFunctionT::kG7),
+      static_cast<int>(lob::DragFunctionT::kG8)};
+  return kDfMap.at(static_cast<size_t>(kChoice) - 1);
+}
 
-  const std::vector<std::string> drag_options = {
+int PromptBcAtmosphere() {
+  const std::vector<std::string> kAtmoOptions = {"Army Standard Metro (ASM)",
+                                                 "ICAO Reference Atmosphere"};
+  const int kChoice =
+      PromptChoice("Select BC atmosphere reference standard:", kAtmoOptions, 1);
+  return (kChoice == 2) ? 1 : 0;
+}
+
+void WizardDragSingleBc(nlohmann::json* j) {
+  (*j)["DragSource"] = "bc";
+  const int kDf = PromptDragFunction();
+  (*j)["BCDragFunction"] = kDf;
+
+  double default_bc = kDefaultOtherBc;
+  if (kDf == static_cast<int>(lob::DragFunctionT::kG7)) {
+    default_bc = kDefaultG7Bc;
+  } else if (kDf == static_cast<int>(lob::DragFunctionT::kG1)) {
+    default_bc = kDefaultG1Bc;
+  }
+
+  double bc = 0.0;
+  while (bc <= 0.0) {
+    bc = PromptDouble("Enter Ballistic Coefficient (Psi)", /*required=*/true,
+                      default_bc);
+    if (bc <= 0.0) {
+      std::cerr
+          << "\033[31mBallistic coefficient must be greater than 0.\033[0m\n";
+    }
+  }
+  (*j)["BallisticCoefficientPsi"] = bc;
+  (*j)["BCAtmosphere"] = PromptBcAtmosphere();
+}
+
+std::vector<BandPoint> PromptInteractiveBands() {
+  std::cout << "\nEnter 2 to 16 velocity (fps) and BC pairs (e.g. '3000, "
+               "0.52' or '3000 0.52').\n"
+            << "Velocities must be strictly increasing. Press Enter on Band 1 "
+               "for sample bands.\n";
+  std::vector<BandPoint> bands;
+  while (bands.size() < kMaxBands) {
+    const std::string kPrompt =
+        "Band " + std::to_string(bands.size() + 1) + " > ";
+    const std::string kLine = ReadLine(kPrompt);
+    if (kLine.empty()) {
+      if (bands.empty()) {
+        constexpr float kSampleBand1Fps = 2000.0F;
+        constexpr float kSampleBand1Bc = 0.235F;
+        constexpr float kSampleBand2Fps = 2700.0F;
+        constexpr float kSampleBand2Bc = 0.243F;
+        bands = {{kSampleBand1Fps, kSampleBand1Bc},
+                 {kSampleBand2Fps, kSampleBand2Bc}};
+        std::cout << "Using sample velocity bands (2 stations).\n";
+        break;
+      }
+      if (bands.size() >= kMinPoints) {
+        break;
+      }
+      std::cerr << "\033[31mAt least 2 velocity bands are required.\033[0m\n";
+      continue;
+    }
+    const auto kParsed = ParseBandsFromString(kLine);
+    if (kParsed.empty() || kParsed.at(0).fps <= 0.0F ||
+        kParsed.at(0).bc <= 0.0F) {
+      std::cerr << "\033[31mInvalid pair. Expected: velocity_fps bc\033[0m\n";
+      continue;
+    }
+    if (!bands.empty() && kParsed.at(0).fps <= bands.back().fps) {
+      std::cerr << "\033[31mVelocities must be strictly increasing (previous: "
+                << bands.back().fps << " fps).\033[0m\n";
+      continue;
+    }
+    bands.push_back(kParsed.at(0));
+  }
+  return bands;
+}
+
+std::vector<BandPoint> LoadBandsFromFileOrInteractive() {
+  const std::string kFilePath = ReadLine(
+      "Load bands from file or enter interactively? (enter path or press "
+      "Enter): ");
+  if (!kFilePath.empty()) {
+    const std::string kContent = ReadFileToString(kFilePath);
+    if (kContent.empty()) {
+      std::cerr << "\033[31mCould not read file '" << kFilePath
+                << "', falling back to interactive entry.\033[0m\n";
+    } else {
+      const auto kBands = ParseBandsFromString(kContent);
+      if (kBands.size() >= kMinPoints) {
+        return kBands;
+      }
+      std::cerr << "\033[31mFile contained fewer than 2 valid band pairs, "
+                   "falling back to interactive entry.\033[0m\n";
+    }
+  }
+  return PromptInteractiveBands();
+}
+
+void WizardDragVelocityBands(nlohmann::json* j) {
+  (*j)["DragSource"] = "bands";
+  (*j)["BCDragFunction"] = PromptDragFunction();
+  (*j)["BCAtmosphere"] = PromptBcAtmosphere();
+
+  const auto kBands = LoadBandsFromFileOrInteractive();
+  nlohmann::json jbands = nlohmann::json::array();
+  for (const auto& b : kBands) {
+    jbands.push_back({{"fps", b.fps}, {"bc", b.bc}});
+  }
+  (*j)["BCVelocityBands"] = std::move(jbands);
+}
+
+std::vector<DragTablePoint> GetSampleDragTable() {
+  constexpr float kM0 = 0.0F;
+  constexpr float kCd0 = 0.12F;
+  constexpr float kM1 = 1.0F;
+  constexpr float kCd1 = 0.25F;
+  constexpr float kM2 = 2.0F;
+  constexpr float kCd2 = 0.38F;
+  constexpr float kM3 = 3.0F;
+  constexpr float kCd3 = 0.48F;
+  constexpr float kM4 = 4.0F;
+  constexpr float kCd4 = 0.55F;
+  constexpr float kM5 = 5.0F;
+  constexpr float kCd5 = 0.60F;
+  return {{kM0, kCd0}, {kM1, kCd1}, {kM2, kCd2},
+          {kM3, kCd3}, {kM4, kCd4}, {kM5, kCd5}};
+}
+
+std::vector<DragTablePoint> PromptInteractiveDragTable() {
+  std::cout << "\nEnter 2 or more Mach and Cd pairs (e.g. '2.5, 0.35' or "
+               "'2.5 0.35').\n"
+            << "Mach values must be strictly increasing. Press Enter on Point "
+               "1 for sample table.\n";
+  std::vector<DragTablePoint> table;
+  while (true) {
+    const std::string kPrompt =
+        "Point " + std::to_string(table.size() + 1) + " > ";
+    const std::string kLine = ReadLine(kPrompt);
+    if (kLine.empty()) {
+      if (table.empty()) {
+        table = GetSampleDragTable();
+        std::cout << "Using sample Mach/Cd table (6 points).\n";
+        break;
+      }
+      if (table.size() >= kMinPoints) {
+        break;
+      }
+      std::cerr << "\033[31mAt least 2 points are required.\033[0m\n";
+      continue;
+    }
+    const auto kParsed = ParseDragTableFromString(kLine);
+    if (kParsed.empty() || kParsed.at(0).mach < 0.0F ||
+        kParsed.at(0).cd < 0.0F) {
+      std::cerr << "\033[31mInvalid pair. Expected: mach cd\033[0m\n";
+      continue;
+    }
+    if (!table.empty() && kParsed.at(0).mach <= table.back().mach) {
+      std::cerr << "\033[31mMach values must be strictly increasing (previous: "
+                << table.back().mach << ").\033[0m\n";
+      continue;
+    }
+    table.push_back(kParsed.at(0));
+  }
+  return table;
+}
+
+std::vector<DragTablePoint> LoadDragTableFromFileOrInteractive() {
+  const std::string kFilePath = ReadLine(
+      "Load Mach/Cd table from file or enter interactively? (enter path or "
+      "press Enter): ");
+  if (!kFilePath.empty()) {
+    const std::string kContent = ReadFileToString(kFilePath);
+    if (kContent.empty()) {
+      std::cerr << "\033[31mCould not read file '" << kFilePath
+                << "', falling back to interactive entry.\033[0m\n";
+    } else {
+      const auto kTable = ParseDragTableFromString(kContent);
+      if (kTable.size() >= kMinPoints) {
+        return kTable;
+      }
+      std::cerr << "\033[31mFile contained fewer than 2 valid rows, falling "
+                   "back to interactive entry.\033[0m\n";
+    }
+  }
+  return PromptInteractiveDragTable();
+}
+
+void WizardDragCustomTable(nlohmann::json* j) {
+  (*j)["DragSource"] = "table";
+  const auto kTable = LoadDragTableFromFileOrInteractive();
+  nlohmann::json jtable = nlohmann::json::array();
+  for (const auto& pt : kTable) {
+    jtable.push_back({{"mach", pt.mach}, {"cd", pt.cd}});
+  }
+  (*j)["SplineFitTable"] = std::move(jtable);
+}
+
+std::vector<float> PromptInteractiveSplineCoefficients() {
+  std::cout << "Enter or paste the 60 space/comma separated floating point "
+               "coefficients (press Enter for sample coefficients):\n";
+  std::vector<float> coefs;
+  while (coefs.size() < lob::kLobCoeffsSize) {
+    const std::string kLine = ReadLine("> ");
+    if (kLine.empty()) {
+      if (coefs.empty()) {
+        const auto kSampleCtx =
+            lob::Builder()
+                .BallisticCoefficientPsi(kDefaultG7Bc)
+                .BCDragFunction(lob::DragFunctionT::kG7)
+                .InitialVelocityFps(static_cast<uint16_t>(kDefaultMvFps))
+                .ZeroAngleMOA(kDefaultZeroAngleMoa)
+                .Build();
+        coefs.assign(kSampleCtx.drags.begin(), kSampleCtx.drags.end());
+        std::cout << "Using sample spline coefficients (60 floats).\n";
+      }
+      break;
+    }
+    const auto kParsed = ParseSplineCoefficientsFromString(kLine);
+    for (const float kVal : kParsed) {
+      coefs.push_back(kVal);
+      if (coefs.size() == lob::kLobCoeffsSize) {
+        break;
+      }
+    }
+    std::cout << "Read " << coefs.size() << "/" << lob::kLobCoeffsSize
+              << " coefficients.\n";
+  }
+  return coefs;
+}
+
+std::vector<float> LoadSplineCoefficientsFromFileOrInteractive() {
+  const std::string kFilePath = ReadLine(
+      "Load 60 spline coefficients from file or paste? (enter path or press "
+      "Enter to paste): ");
+  if (!kFilePath.empty()) {
+    const std::string kContent = ReadFileToString(kFilePath);
+    auto coefs = ParseSplineCoefficientsFromString(kContent);
+    if (coefs.size() == lob::kLobCoeffsSize) {
+      return coefs;
+    }
+  }
+  return PromptInteractiveSplineCoefficients();
+}
+
+void WizardDragSplineCoefficients(nlohmann::json* j) {
+  (*j)["DragSource"] = "coefficients";
+  const auto kCoefs = LoadSplineCoefficientsFromFileOrInteractive();
+  (*j)["SplineCoefficients"] = kCoefs;
+}
+
+void WizardPhaseDrag(nlohmann::json* j) {
+  PrintPhaseBanner(kPhaseDrag, kTotalPhases, "Drag Source");
+
+  const std::vector<std::string> kDragOptions = {
       "Single Ballistic Coefficient (BC)", "BC Velocity Bands",
       "Custom Mach vs. Cd Table", "Native Spline Coefficients (60 floats)"};
-  int choice =
-      PromptChoice("Select projectile drag representation:", drag_options, 1);
+  const int kChoice =
+      PromptChoice("Select projectile drag representation:", kDragOptions, 1);
 
-  if (choice == 1) {
-    (*j)["DragSource"] = "bc";
-
-    const std::vector<std::string> df_options = {"G1", "G2", "G5",
-                                                 "G6", "G7", "G8"};
-    int df_choice =
-        PromptChoice("Select reference drag function:", df_options, 5);
-    const int df_map[] = {1, 2, 5, 6, 7, 8};
-    (*j)["BCDragFunction"] = df_map[df_choice - 1];
-
-    const double default_bc =
-        (df_choice == 5) ? 0.243 : (df_choice == 1 ? 0.462 : 0.400);
-    double bc = 0.0;
-    while (bc <= 0.0) {
-      bc = PromptDouble("Enter Ballistic Coefficient (Psi)", true, default_bc);
-      if (bc <= 0.0) {
-        std::cerr
-            << "\033[31mBallistic coefficient must be greater than 0.\033[0m\n";
-      }
-    }
-    (*j)["BallisticCoefficientPsi"] = bc;
-
-    const std::vector<std::string> atmo_options = {"Army Standard Metro (ASM)",
-                                                   "ICAO Reference Atmosphere"};
-    int atmo_choice = PromptChoice(
-        "Select BC atmosphere reference standard:", atmo_options, 1);
-    (*j)["BCAtmosphere"] = (atmo_choice == 2) ? 1 : 0;
-  } else if (choice == 2) {
-    (*j)["DragSource"] = "bands";
-    const std::vector<std::string> df_options = {"G1", "G2", "G5",
-                                                 "G6", "G7", "G8"};
-    int df_choice =
-        PromptChoice("Select reference drag function:", df_options, 5);
-    const int df_map[] = {1, 2, 5, 6, 7, 8};
-    (*j)["BCDragFunction"] = df_map[df_choice - 1];
-
-    const std::vector<std::string> atmo_options = {"Army Standard Metro (ASM)",
-                                                   "ICAO Reference Atmosphere"};
-    int atmo_choice = PromptChoice(
-        "Select BC atmosphere reference standard:", atmo_options, 1);
-    (*j)["BCAtmosphere"] = (atmo_choice == 2) ? 1 : 0;
-
-    std::vector<BandPoint> bands;
-    std::string file_path = ReadLine(
-        "Load bands from file or enter interactively? (enter path or press "
-        "Enter): ");
-    if (!file_path.empty()) {
-      std::string content = ReadFileToString(file_path);
-      if (content.empty()) {
-        std::cerr << "\033[31mCould not read file '" << file_path
-                  << "', falling back to interactive entry.\033[0m\n";
-      } else {
-        bands = ParseBandsFromString(content);
-        if (bands.size() < 2) {
-          std::cerr << "\033[31mFile contained fewer than 2 valid band pairs, "
-                       "falling back to interactive entry.\033[0m\n";
-          bands.clear();
-        }
-      }
-    }
-
-    if (bands.empty()) {
-      std::cout << "\nEnter 2 to 16 velocity (fps) and BC pairs (e.g. '3000, "
-                   "0.52' or '3000 0.52').\n"
-                << "Velocities must be strictly increasing. Press Enter on "
-                   "Band 1 for sample bands.\n";
-      while (bands.size() < 16) {
-        std::string line =
-            ReadLine("Band " + std::to_string(bands.size() + 1) + " > ");
-        if (line.empty()) {
-          if (bands.empty()) {
-            bands = {{2000.0f, 0.235f}, {2700.0f, 0.243f}};
-            std::cout << "Using sample velocity bands (2 stations).\n";
-            break;
-          }
-          if (bands.size() >= 2) {
-            break;
-          }
-          std::cerr
-              << "\033[31mAt least 2 velocity bands are required.\033[0m\n";
-          continue;
-        }
-        auto parsed = ParseBandsFromString(line);
-        if (parsed.empty() || parsed[0].fps <= 0.0f || parsed[0].bc <= 0.0f) {
-          std::cerr
-              << "\033[31mInvalid pair. Expected: velocity_fps bc\033[0m\n";
-          continue;
-        }
-        if (!bands.empty() && parsed[0].fps <= bands.back().fps) {
-          std::cerr
-              << "\033[31mVelocities must be strictly increasing (previous: "
-              << bands.back().fps << " fps).\033[0m\n";
-          continue;
-        }
-        bands.push_back(parsed[0]);
-      }
-    }
-
-    nlohmann::json jbands = nlohmann::json::array();
-    for (const auto& b : bands) {
-      jbands.push_back({{"fps", b.fps}, {"bc", b.bc}});
-    }
-    (*j)["BCVelocityBands"] = jbands;
-  } else if (choice == 3) {
-    (*j)["DragSource"] = "table";
-    std::vector<DragTablePoint> table;
-    std::string file_path = ReadLine(
-        "Load Mach/Cd table from file or enter interactively? (enter path or "
-        "press Enter): ");
-    if (!file_path.empty()) {
-      std::string content = ReadFileToString(file_path);
-      if (content.empty()) {
-        std::cerr << "\033[31mCould not read file '" << file_path
-                  << "', falling back to interactive entry.\033[0m\n";
-      } else {
-        table = ParseDragTableFromString(content);
-        if (table.size() < 2) {
-          std::cerr
-              << "\033[31mFile contained fewer than 2 valid rows, falling "
-                 "back to interactive entry.\033[0m\n";
-          table.clear();
-        }
-      }
-    }
-
-    if (table.empty()) {
-      std::cout << "\nEnter 2 or more Mach and Cd pairs (e.g. '2.5, 0.35' or "
-                   "'2.5 0.35').\n"
-                << "Mach values must be strictly increasing. Press Enter on "
-                   "Point 1 for sample table.\n";
-      while (true) {
-        std::string line =
-            ReadLine("Point " + std::to_string(table.size() + 1) + " > ");
-        if (line.empty()) {
-          if (table.empty()) {
-            table = {{0.0f, 0.12f}, {1.0f, 0.25f}, {2.0f, 0.38f},
-                     {3.0f, 0.48f}, {4.0f, 0.55f}, {5.0f, 0.60f}};
-            std::cout << "Using sample Mach/Cd table (6 points).\n";
-            break;
-          }
-          if (table.size() >= 2) {
-            break;
-          }
-          std::cerr << "\033[31mAt least 2 points are required.\033[0m\n";
-          continue;
-        }
-        auto parsed = ParseDragTableFromString(line);
-        if (parsed.empty() || parsed[0].mach < 0.0f || parsed[0].cd < 0.0f) {
-          std::cerr << "\033[31mInvalid pair. Expected: mach cd\033[0m\n";
-          continue;
-        }
-        if (!table.empty() && parsed[0].mach <= table.back().mach) {
-          std::cerr
-              << "\033[31mMach values must be strictly increasing (previous: "
-              << table.back().mach << ").\033[0m\n";
-          continue;
-        }
-        table.push_back(parsed[0]);
-      }
-    }
-
-    nlohmann::json jtable = nlohmann::json::array();
-    for (const auto& pt : table) {
-      jtable.push_back({{"mach", pt.mach}, {"cd", pt.cd}});
-    }
-    (*j)["SplineFitTable"] = jtable;
-  } else if (choice == 4) {
-    (*j)["DragSource"] = "coefficients";
-    std::vector<float> coefs;
-    std::string file_path = ReadLine(
-        "Load 60 spline coefficients from file or paste? (enter path or press "
-        "Enter to paste): ");
-    if (!file_path.empty()) {
-      std::string content = ReadFileToString(file_path);
-      coefs = ParseSplineCoefficientsFromString(content);
-    }
-    if (coefs.size() != lob::kLobCoeffsSize) {
-      std::cout << "Enter or paste the 60 space/comma separated floating point "
-                   "coefficients (press Enter for sample coefficients):\n";
-      while (coefs.size() < lob::kLobCoeffsSize) {
-        std::string line = ReadLine("> ");
-        if (line.empty()) {
-          if (coefs.empty()) {
-            const auto sample_ctx = lob::Builder()
-                                        .BallisticCoefficientPsi(0.243)
-                                        .BCDragFunction(lob::DragFunctionT::kG7)
-                                        .InitialVelocityFps(2700)
-                                        .ZeroAngleMOA(0.0)
-                                        .Build();
-            coefs.assign(sample_ctx.drags.begin(), sample_ctx.drags.end());
-            std::cout << "Using sample spline coefficients (60 floats).\n";
-          }
-          break;
-        }
-        auto parsed = ParseSplineCoefficientsFromString(line);
-        for (float v : parsed) {
-          coefs.push_back(v);
-          if (coefs.size() == lob::kLobCoeffsSize) {
-            break;
-          }
-        }
-        std::cout << "Read " << coefs.size() << "/" << lob::kLobCoeffsSize
-                  << " coefficients.\n";
-      }
-    }
-    (*j)["SplineCoefficients"] = coefs;
+  switch (kChoice) {
+    case 1:
+      WizardDragSingleBc(j);
+      break;
+    case 2:
+      WizardDragVelocityBands(j);
+      break;
+    case 3:
+      WizardDragCustomTable(j);
+      break;
+    case 4:
+      WizardDragSplineCoefficients(j);
+      break;
+    default:
+      WizardDragSingleBc(j);
+      break;
   }
 }
 
 // ---------------------------------------------------------------------------
 // Phase 2: Projectile Detail & Muzzle Velocity
 // ---------------------------------------------------------------------------
+void PromptProjectileMass(nlohmann::json* j) {
+  double mass = 0.0;
+  while (mass <= 0.0) {
+    mass = PromptDouble("Enter projectile mass in grains", /*required=*/true,
+                        kDefaultMassGrains);
+    if (mass <= 0.0) {
+      std::cerr << "\033[31mMass must be greater than 0.\033[0m\n";
+    }
+  }
+  (*j)["MassGrains"] = mass;
+}
+
+void PromptProjectileDimensions(nlohmann::json* j) {
+  double dia = 0.0;
+  while (dia <= 0.0) {
+    dia = PromptDouble("Enter bullet diameter (caliber) in inches",
+                       /*required=*/true, kDefaultCaliberInch);
+    if (dia <= 0.0) {
+      std::cerr << "\033[31mDiameter must be greater than 0.\033[0m\n";
+    }
+  }
+  (*j)["DiameterInch"] = dia;
+
+  double len = 0.0;
+  while (len <= 0.0) {
+    len = PromptDouble("Enter bullet length in inches", /*required=*/true,
+                       kDefaultBulletLengthInch);
+    if (len <= 0.0) {
+      std::cerr << "\033[31mLength must be greater than 0.\033[0m\n";
+    }
+  }
+  (*j)["LengthInch"] = len;
+
+  double twist = 0.0;
+  while (twist <= 0.0) {
+    twist = PromptDouble(
+        "Enter rifling barrel twist in inches per turn (e.g. 11.0 for "
+        "1:11\")",
+        /*required=*/true, kDefaultTwistInches);
+    if (twist <= 0.0) {
+      std::cerr << "\033[31mTwist rate must be greater than 0.\033[0m\n";
+    }
+  }
+  (*j)["TwistInchesPerTurn"] = twist;
+}
+
+void PromptProjectileGeometry(nlohmann::json* j) {
+  double nose = 0.0;
+  while (nose <= 0.0) {
+    nose = PromptDouble("Enter nose length in inches", /*required=*/true,
+                        kDefaultNoseLengthInch);
+    if (nose <= 0.0) {
+      std::cerr << "\033[31mNose length must be greater than 0.\033[0m\n";
+    }
+  }
+  (*j)["NoseLengthInch"] = nose;
+
+  const double kMeplat =
+      PromptDouble("Enter meplat diameter in inches", /*required=*/false,
+                   kDefaultMeplatDiameterInch);
+  if (!std::isnan(kMeplat)) {
+    (*j)["MeplatDiameterInch"] = kMeplat;
+  }
+
+  double base = 0.0;
+  while (base <= 0.0) {
+    base = PromptDouble("Enter base diameter in inches", /*required=*/true,
+                        kDefaultBaseDiameterInch);
+    if (base <= 0.0) {
+      std::cerr << "\033[31mBase diameter must be greater than 0.\033[0m\n";
+    }
+  }
+  (*j)["BaseDiameterInch"] = base;
+
+  const double kTail = PromptDouble("Enter tail (boattail) length in inches",
+                                    /*required=*/false, kDefaultTailLengthInch);
+  if (!std::isnan(kTail)) {
+    (*j)["TailLengthInch"] = kTail;
+  }
+
+  double ogive = 0.0;
+  while (ogive <= 0.0 || ogive > 1.0) {
+    ogive = PromptDouble(
+        "Enter ogive radius ratio (Rt/R) (greater than 0, up to 1.0)",
+        /*required=*/true, kDefaultOgiveRatio);
+    if (ogive <= 0.0 || ogive > 1.0) {
+      std::cerr << "\033[31mOgive Rt/R must be in the range (0, 1.0].\033[0m\n";
+    }
+  }
+  (*j)["OgiveRtR"] = ogive;
+}
+
 void WizardPhaseProjectile(nlohmann::json* j) {
-  PrintPhaseBanner(2, 8, "Muzzle Velocity & Projectile Detail");
+  PrintPhaseBanner(kPhaseProjectile, kTotalPhases,
+                   "Muzzle Velocity & Projectile Detail");
 
   double mv = 0.0;
-  while (mv <= 0.0 || mv > 65535.0) {
-    mv = PromptDouble("Enter Muzzle Velocity in feet per second (fps)", true,
-                      2700.0);
-    if (mv <= 0.0 || mv > 65535.0) {
+  while (mv <= 0.0 || mv > kMaxMvFps) {
+    mv = PromptDouble("Enter Muzzle Velocity in feet per second (fps)",
+                      /*required=*/true, kDefaultMvFps);
+    if (mv <= 0.0 || mv > kMaxMvFps) {
       std::cerr << "\033[31mMuzzle velocity must be between 1 and 65535 "
                    "fps.\033[0m\n";
     }
   }
   (*j)["InitialVelocityFps"] = static_cast<uint16_t>(mv);
 
-  const std::vector<std::string> tier_options = {
+  const std::vector<std::string> kTierOptions = {
       "BC Only (minimal trajectory model)",
       "Mass Only (enables kinetic energy & energy cutoff)",
       "Stability Tier (mass, caliber, length, twist -> Miller stability & "
       "aerodynamic jump)",
       "Full Geometry (stability + nose, meplat, base, tail, ogive -> Boatright "
       "spin drift)"};
-  int tier = PromptChoice("Select projectile detail level:", tier_options, 2);
+  const int kTier =
+      PromptChoice("Select projectile detail level:", kTierOptions, 2);
 
-  if (tier >= 2) {
-    double mass = 0.0;
-    while (mass <= 0.0) {
-      mass = PromptDouble("Enter projectile mass in grains", true, 168.0);
-      if (mass <= 0.0) {
-        std::cerr << "\033[31mMass must be greater than 0.\033[0m\n";
-      }
-    }
-    (*j)["MassGrains"] = mass;
+  if (kTier >= 2) {
+    PromptProjectileMass(j);
   }
-
-  if (tier >= 3) {
-    double dia = 0.0;
-    while (dia <= 0.0) {
-      dia = PromptDouble("Enter bullet diameter (caliber) in inches", true,
-                         0.308);
-      if (dia <= 0.0) {
-        std::cerr << "\033[31mDiameter must be greater than 0.\033[0m\n";
-      }
-    }
-    (*j)["DiameterInch"] = dia;
-
-    double len = 0.0;
-    while (len <= 0.0) {
-      len = PromptDouble("Enter bullet length in inches", true, 1.24);
-      if (len <= 0.0) {
-        std::cerr << "\033[31mLength must be greater than 0.\033[0m\n";
-      }
-    }
-    (*j)["LengthInch"] = len;
-
-    double twist = 0.0;
-    while (twist <= 0.0) {
-      twist = PromptDouble(
-          "Enter rifling barrel twist in inches per turn (e.g. 11.0 for "
-          "1:11\")",
-          true, 11.0);
-      if (twist <= 0.0) {
-        std::cerr << "\033[31mTwist rate must be greater than 0.\033[0m\n";
-      }
-    }
-    (*j)["TwistInchesPerTurn"] = twist;
+  if (kTier >= 3) {
+    PromptProjectileDimensions(j);
   }
-
-  if (tier == 4) {
-    double nose = 0.0;
-    while (nose <= 0.0) {
-      nose = PromptDouble("Enter nose length in inches", true, 0.60);
-      if (nose <= 0.0) {
-        std::cerr << "\033[31mNose length must be greater than 0.\033[0m\n";
-      }
-    }
-    (*j)["NoseLengthInch"] = nose;
-
-    double meplat =
-        PromptDouble("Enter meplat diameter in inches", false, 0.05);
-    if (!std::isnan(meplat)) {
-      (*j)["MeplatDiameterInch"] = meplat;
-    }
-
-    double base = 0.0;
-    while (base <= 0.0) {
-      base = PromptDouble("Enter base diameter in inches", true, 0.28);
-      if (base <= 0.0) {
-        std::cerr << "\033[31mBase diameter must be greater than 0.\033[0m\n";
-      }
-    }
-    (*j)["BaseDiameterInch"] = base;
-
-    double tail =
-        PromptDouble("Enter tail (boattail) length in inches", false, 0.20);
-    if (!std::isnan(tail)) {
-      (*j)["TailLengthInch"] = tail;
-    }
-
-    double ogive = 0.0;
-    while (ogive <= 0.0 || ogive > 1.0) {
-      ogive = PromptDouble(
-          "Enter ogive radius ratio (Rt/R) (greater than 0, up to 1.0)", true,
-          0.50);
-      if (ogive <= 0.0 || ogive > 1.0) {
-        std::cerr
-            << "\033[31mOgive Rt/R must be in the range (0, 1.0].\033[0m\n";
-      }
-    }
-    (*j)["OgiveRtR"] = ogive;
+  if (kTier >= 4) {
+    PromptProjectileGeometry(j);
   }
 }
 
@@ -496,212 +641,244 @@ void WizardPhaseProjectile(nlohmann::json* j) {
 // Phase 3: Rifle Zero & Optic
 // ---------------------------------------------------------------------------
 void WizardPhaseZero(nlohmann::json* j) {
-  PrintPhaseBanner(3, 8, "Rifle Zero & Optic");
+  PrintPhaseBanner(kPhaseZero, kTotalPhases, "Rifle Zero & Optic");
 
-  double optic_ht =
-      PromptDouble("Enter sight/optic height above bore in inches", false, 1.5);
-  if (!std::isnan(optic_ht)) {
-    (*j)["OpticHeightInches"] = optic_ht;
+  const double kOpticHt =
+      PromptDouble("Enter sight/optic height above bore in inches",
+                   /*required=*/false, kDefaultOpticHeightInch);
+  if (!std::isnan(kOpticHt)) {
+    (*j)["OpticHeightInches"] = kOpticHt;
   }
 
-  const std::vector<std::string> zero_options = {
+  const std::vector<std::string> kZeroOptions = {
       "Zero by Distance (standard zero range in yards)",
       "Zero by Angle (known bore-to-sight angle in MOA)"};
-  int choice = PromptChoice("Select zero method:", zero_options, 1);
+  const int kChoice = PromptChoice("Select zero method:", kZeroOptions, 1);
 
-  if (choice == 1) {
+  if (kChoice == 1) {
     double zero_dist = 0.0;
     while (zero_dist <= 0.0) {
-      zero_dist = PromptDouble("Enter zero distance in yards", true, 100.0);
+      zero_dist = PromptDouble("Enter zero distance in yards",
+                               /*required=*/true, kDefaultZeroDistanceYards);
       if (zero_dist <= 0.0) {
         std::cerr << "\033[31mZero distance must be greater than 0.\033[0m\n";
       }
     }
     (*j)["ZeroDistanceYds"] = zero_dist;
 
-    double impact_ht = PromptDouble(
-        "Enter zero impact height in inches (+ above point of aim)", false,
-        0.0);
-    if (!std::isnan(impact_ht)) {
-      (*j)["ZeroImpactHeightInches"] = impact_ht;
+    const double kImpactHt = PromptDouble(
+        "Enter zero impact height in inches (+ above point of aim)",
+        /*required=*/false, kDefaultZeroImpactHeightInch);
+    if (!std::isnan(kImpactHt)) {
+      (*j)["ZeroImpactHeightInches"] = kImpactHt;
     }
   } else {
-    double zero_moa =
-        PromptDouble("Enter bore-to-sight zero angle in MOA", true, 0.0);
-    (*j)["ZeroAngleMOA"] = zero_moa;
+    const double kZeroMoa =
+        PromptDouble("Enter bore-to-sight zero angle in MOA",
+                     /*required=*/true, kDefaultZeroAngleMoa);
+    (*j)["ZeroAngleMOA"] = kZeroMoa;
   }
 }
 
 // ---------------------------------------------------------------------------
 // Phase 4: Atmosphere & Weather
 // ---------------------------------------------------------------------------
-void WizardPhaseAtmosphere(nlohmann::json* j) {
-  PrintPhaseBanner(4, 8, "Atmosphere & Weather");
+void PromptMeasuredAtmosphere(nlohmann::json* j) {
+  const double kAlt = PromptDouble("Enter firing site altitude in feet",
+                                   /*required=*/false, kNaN, "sea level");
+  if (!std::isnan(kAlt)) {
+    (*j)["AltitudeOfFiringSiteFt"] = kAlt;
+  }
 
-  const std::vector<std::string> atmo_sources = {
+  const double kPres =
+      PromptDouble("Enter air pressure in inHg",
+                   /*required=*/false, kNaN, "derive from altitude");
+  if (!std::isnan(kPres)) {
+    (*j)["AirPressureInHg"] = kPres;
+  }
+
+  const double kTemp =
+      PromptDouble("Enter temperature in °F",
+                   /*required=*/false, kNaN, "derive from altitude");
+  if (!std::isnan(kTemp)) {
+    (*j)["TemperatureDegF"] = kTemp;
+  }
+
+  const double kRh = PromptDouble("Enter relative humidity in percent (0-100)",
+                                  /*required=*/false, kNaN, "ISA default");
+  if (!std::isnan(kRh)) {
+    (*j)["RelativeHumidityPercent"] = kRh;
+  }
+
+  if (!std::isnan(kPres) || !std::isnan(kTemp)) {
+    const bool kAway = PromptYesNo(
+        "Were weather readings taken at an altitude away from the firing "
+        "site?",
+        /*default_yes=*/false);
+    if (kAway) {
+      const double kDefaultAlt = std::isnan(kAlt) ? 0.0 : kAlt;
+      if (!std::isnan(kPres)) {
+        const double kBaroAlt = PromptDouble("Enter barometer altitude in feet",
+                                             /*required=*/true, kDefaultAlt);
+        (*j)["AltitudeOfBarometerFt"] = kBaroAlt;
+      }
+      if (!std::isnan(kTemp)) {
+        const double kThermoAlt =
+            PromptDouble("Enter thermometer altitude in feet",
+                         /*required=*/true, kDefaultAlt);
+        (*j)["AltitudeOfThermometerFt"] = kThermoAlt;
+      }
+    }
+  }
+}
+
+void WizardPhaseAtmosphere(nlohmann::json* j) {
+  PrintPhaseBanner(kPhaseAtmosphere, kTotalPhases, "Atmosphere & Weather");
+
+  const std::vector<std::string> kAtmoSources = {
       "Standard Sea-Level ISA (29.92 inHg, 59°F, 0% RH)",
       "Altitude-derived atmosphere (derives pressure/temp from altitude)",
       "Measured station weather (user-entered pressure, temp, humidity)"};
-  int choice =
-      PromptChoice("Select weather/atmosphere model:", atmo_sources, 1);
+  const int kChoice =
+      PromptChoice("Select weather/atmosphere model:", kAtmoSources, 1);
 
-  if (choice == 2) {
-    double alt = PromptDouble("Enter firing site altitude in feet", true, 0.0);
-    (*j)["AltitudeOfFiringSiteFt"] = alt;
+  if (kChoice == 2) {
+    const double kAlt = PromptDouble("Enter firing site altitude in feet",
+                                     /*required=*/true, 0.0);
+    (*j)["AltitudeOfFiringSiteFt"] = kAlt;
 
-    double rh = PromptDouble("Enter relative humidity in percent (0-100)",
-                             false, kNaN, "ISA default");
-    if (!std::isnan(rh)) {
-      (*j)["RelativeHumidityPercent"] = rh;
+    const double kRh =
+        PromptDouble("Enter relative humidity in percent (0-100)",
+                     /*required=*/false, kNaN, "ISA default");
+    if (!std::isnan(kRh)) {
+      (*j)["RelativeHumidityPercent"] = kRh;
     }
-  } else if (choice == 3) {
-    double alt = PromptDouble("Enter firing site altitude in feet", false, kNaN,
-                              "sea level");
-    if (!std::isnan(alt)) {
-      (*j)["AltitudeOfFiringSiteFt"] = alt;
-    }
-
-    double pres = PromptDouble("Enter air pressure in inHg", false, kNaN,
-                               "derive from altitude");
-    if (!std::isnan(pres)) {
-      (*j)["AirPressureInHg"] = pres;
-    }
-
-    double temp = PromptDouble("Enter temperature in °F", false, kNaN,
-                               "derive from altitude");
-    if (!std::isnan(temp)) {
-      (*j)["TemperatureDegF"] = temp;
-    }
-
-    double rh = PromptDouble("Enter relative humidity in percent (0-100)",
-                             false, kNaN, "ISA default");
-    if (!std::isnan(rh)) {
-      (*j)["RelativeHumidityPercent"] = rh;
-    }
-
-    if (!std::isnan(pres) || !std::isnan(temp)) {
-      bool away = PromptYesNo(
-          "Were weather readings taken at an altitude away from the firing "
-          "site?",
-          false);
-      if (away) {
-        if (!std::isnan(pres)) {
-          double baro_alt = PromptDouble("Enter barometer altitude in feet",
-                                         true, std::isnan(alt) ? 0.0 : alt);
-          (*j)["AltitudeOfBarometerFt"] = baro_alt;
-        }
-        if (!std::isnan(temp)) {
-          double thermo_alt = PromptDouble("Enter thermometer altitude in feet",
-                                           true, std::isnan(alt) ? 0.0 : alt);
-          (*j)["AltitudeOfThermometerFt"] = thermo_alt;
-        }
-      }
-    }
+  } else if (kChoice == 3) {
+    PromptMeasuredAtmosphere(j);
   }
 }
 
 // ---------------------------------------------------------------------------
 // Phase 5: Wind Conditions
 // ---------------------------------------------------------------------------
-void WizardPhaseWind(nlohmann::json* j) {
-  PrintPhaseBanner(5, 8, "Wind Conditions");
+std::vector<lob::WindPoint> PromptInteractiveWindProfile() {
+  std::cout << "\nEnter 1 to 8 downrange wind stations: range_ft, "
+               "heading_deg, speed_mph [, height_ft].\n"
+            << "First station must start at range 0. Ranges must be "
+               "strictly increasing. Press Enter on Station 1 for sample "
+               "profile.\n";
+  std::vector<lob::WindPoint> profile;
+  while (profile.size() < kMaxWindStations) {
+    const std::string kPrompt =
+        "Station " + std::to_string(profile.size() + 1) + " > ";
+    const std::string kLine = ReadLine(kPrompt);
+    if (kLine.empty()) {
+      if (profile.empty()) {
+        constexpr double kSampleRange1 = 0.0;
+        constexpr double kSampleHeading = 90.0;
+        constexpr double kSampleSpeed1 = 10.0;
+        constexpr double kSampleHeight = 6.0;
+        constexpr double kSampleRange2 = 1500.0;
+        constexpr double kSampleSpeed2 = 12.0;
+        profile = {
+            {kSampleRange1, kSampleHeading, kSampleSpeed1, kSampleHeight},
+            {kSampleRange2, kSampleHeading, kSampleSpeed2, kSampleHeight}};
+        std::cout << "Using sample wind profile (2 stations).\n";
+        break;
+      }
+      break;
+    }
+    const auto kParsed = ParseWindProfileFromString(kLine);
+    if (kParsed.empty()) {
+      std::cerr << "\033[31mInvalid station format. Expected: range_ft, "
+                   "heading_deg, speed_mph [, height_ft]\033[0m\n";
+      continue;
+    }
+    if (profile.empty() && std::fabs(kParsed.at(0).range_ft) > kZeroTolerance) {
+      std::cerr << "\033[31mFirst station must be at range 0 ft.\033[0m\n";
+      continue;
+    }
+    if (!profile.empty() && kParsed.at(0).range_ft <= profile.back().range_ft) {
+      std::cerr << "\033[31mStation ranges must be strictly increasing "
+                   "(previous: "
+                << profile.back().range_ft << " ft).\033[0m\n";
+      continue;
+    }
+    profile.push_back(kParsed.at(0));
+  }
+  return profile;
+}
 
-  const std::vector<std::string> wind_sources = {
+std::vector<lob::WindPoint> LoadWindProfileFromFileOrInteractive() {
+  const std::string kFilePath = ReadLine(
+      "Load wind profile from file or enter interactively? (enter path or "
+      "press Enter): ");
+  if (!kFilePath.empty()) {
+    const std::string kContent = ReadFileToString(kFilePath);
+    if (kContent.empty()) {
+      std::cerr << "\033[31mCould not read file '" << kFilePath
+                << "', falling back to interactive entry.\033[0m\n";
+    } else {
+      const auto kProfile = ParseWindProfileFromString(kContent);
+      if (!kProfile.empty() &&
+          std::fabs(kProfile.at(0).range_ft) <= kZeroTolerance) {
+        return kProfile;
+      }
+      std::cerr << "\033[31mProfile must start at range 0 ft. Falling back to "
+                   "interactive entry.\033[0m\n";
+    }
+  }
+  return PromptInteractiveWindProfile();
+}
+
+void PromptMultiStationWind(nlohmann::json* j) {
+  const auto kProfile = LoadWindProfileFromFileOrInteractive();
+  nlohmann::json jprof = nlohmann::json::array();
+  bool has_height = false;
+  for (const auto& p : kProfile) {
+    nlohmann::json node = {{"range_ft", p.range_ft},
+                           {"heading_deg", p.heading_deg},
+                           {"speed_mph", p.speed_mph}};
+    if (p.height_ft > 0.0) {
+      node["height_ft"] = p.height_ft;
+      has_height = true;
+    }
+    jprof.push_back(node);
+  }
+  (*j)["WindProfile"] = std::move(jprof);
+
+  if (has_height) {
+    const double kShear = PromptDouble(
+        "Enter Hellmann wind shear exponent (0 disables height scaling)",
+        /*required=*/false, 0.0);
+    if (!std::isnan(kShear)) {
+      (*j)["WindShearExponent"] = kShear;
+    }
+  }
+}
+
+void WizardPhaseWind(nlohmann::json* j) {
+  PrintPhaseBanner(kPhaseWind, kTotalPhases, "Wind Conditions");
+
+  const std::vector<std::string> kWindSources = {
       "Calm (no wind)", "Uniform wind (speed & clock angle / heading)",
       "Multi-station downrange wind profile"};
-  int choice = PromptChoice("Select wind environment:", wind_sources, 2);
+  const int kChoice = PromptChoice("Select wind environment:", kWindSources, 2);
 
-  if (choice == 2) {
-    double wspd =
-        PromptDouble("Enter wind speed in miles per hour (mph)", true, 10.0);
-    (*j)["WindSpeedMph"] = wspd;
-    if (wspd > 0.0) {
-      double clock = PromptDouble(
+  if (kChoice == 2) {
+    const double kWspd =
+        PromptDouble("Enter wind speed in miles per hour (mph)",
+                     /*required=*/true, kDefaultWindSpeedMph);
+    (*j)["WindSpeedMph"] = kWspd;
+    if (kWspd > 0.0) {
+      const double kClock = PromptDouble(
           "Enter wind heading as clock angle (1-12, e.g. 3 for 3 o'clock "
           "crosswind)",
-          true, 3.0);
-      (*j)["WindHeading"] = clock;
+          /*required=*/true, kDefaultWindHeadingClock);
+      (*j)["WindHeading"] = kClock;
     }
-  } else if (choice == 3) {
-    std::vector<lob::WindPoint> profile;
-    std::string file_path = ReadLine(
-        "Load wind profile from file or enter interactively? (enter path or "
-        "press Enter): ");
-    if (!file_path.empty()) {
-      std::string content = ReadFileToString(file_path);
-      if (content.empty()) {
-        std::cerr << "\033[31mCould not read file '" << file_path
-                  << "', falling back to interactive entry.\033[0m\n";
-      } else {
-        profile = ParseWindProfileFromString(content);
-        if (profile.empty() || std::fabs(profile[0].range_ft) > 1e-6) {
-          std::cerr
-              << "\033[31mProfile must start at range 0 ft. Falling back to "
-                 "interactive entry.\033[0m\n";
-          profile.clear();
-        }
-      }
-    }
-
-    if (profile.empty()) {
-      std::cout << "\nEnter 1 to 8 downrange wind stations: range_ft, "
-                   "heading_deg, speed_mph [, height_ft].\n"
-                << "First station must start at range 0. Ranges must be "
-                   "strictly increasing. Press Enter on Station 1 for sample "
-                   "profile.\n";
-      while (profile.size() < 8) {
-        std::string line =
-            ReadLine("Station " + std::to_string(profile.size() + 1) + " > ");
-        if (line.empty()) {
-          if (profile.empty()) {
-            profile = {{0.0, 90.0, 10.0, 6.0}, {1500.0, 90.0, 12.0, 6.0}};
-            std::cout << "Using sample wind profile (2 stations).\n";
-            break;
-          }
-          break;
-        }
-        auto parsed = ParseWindProfileFromString(line);
-        if (parsed.empty()) {
-          std::cerr << "\033[31mInvalid station format. Expected: range_ft, "
-                       "heading_deg, speed_mph [, height_ft]\033[0m\n";
-          continue;
-        }
-        if (profile.empty() && std::fabs(parsed[0].range_ft) > 1e-6) {
-          std::cerr << "\033[31mFirst station must be at range 0 ft.\033[0m\n";
-          continue;
-        }
-        if (!profile.empty() && parsed[0].range_ft <= profile.back().range_ft) {
-          std::cerr << "\033[31mStation ranges must be strictly increasing "
-                       "(previous: "
-                    << profile.back().range_ft << " ft).\033[0m\n";
-          continue;
-        }
-        profile.push_back(parsed[0]);
-      }
-    }
-
-    nlohmann::json jprof = nlohmann::json::array();
-    bool has_height = false;
-    for (const auto& p : profile) {
-      nlohmann::json node = {{"range_ft", p.range_ft},
-                             {"heading_deg", p.heading_deg},
-                             {"speed_mph", p.speed_mph}};
-      if (p.height_ft > 0.0) {
-        node["height_ft"] = p.height_ft;
-        has_height = true;
-      }
-      jprof.push_back(node);
-    }
-    (*j)["WindProfile"] = jprof;
-
-    if (has_height) {
-      double shear = PromptDouble(
-          "Enter Hellmann wind shear exponent (0 disables height scaling)",
-          false, 0.0);
-      if (!std::isnan(shear)) {
-        (*j)["WindShearExponent"] = shear;
-      }
-    }
+  } else if (kChoice == 3) {
+    PromptMultiStationWind(j);
   }
 }
 
@@ -709,186 +886,227 @@ void WizardPhaseWind(nlohmann::json* j) {
 // Phase 6: Shot Geometry & Coriolis
 // ---------------------------------------------------------------------------
 void WizardPhaseGeometry(nlohmann::json* j) {
-  PrintPhaseBanner(6, 8, "Shot Geometry & Coriolis");
+  PrintPhaseBanner(kPhaseGeometry, kTotalPhases, "Shot Geometry & Coriolis");
 
-  bool incline = PromptYesNo(
-      "Include slope / inclination angle (shooting uphill/downhill)?", false);
-  if (incline) {
-    double range_angle = PromptDouble(
-        "Enter range angle in degrees (-89.9 to +89.9, + uphill)", true, 0.0);
-    (*j)["RangeAngleDeg"] = range_angle;
+  const bool kIncline = PromptYesNo(
+      "Include slope / inclination angle (shooting uphill/downhill)?",
+      /*default_yes=*/false);
+  if (kIncline) {
+    const double kRangeAngle =
+        PromptDouble("Enter range angle in degrees (-89.9 to +89.9, + uphill)",
+                     /*required=*/true, 0.0);
+    (*j)["RangeAngleDeg"] = kRangeAngle;
   }
 
-  bool coriolis =
-      PromptYesNo("Include Earth rotation / Coriolis correction?", false);
-  if (coriolis) {
-    double lat = PromptDouble(
-        "Enter shooting site latitude in degrees (-90 to +90, + North)", true,
-        45.0);
-    (*j)["LatitudeDeg"] = lat;
+  const bool kCoriolis = PromptYesNo(
+      "Include Earth rotation / Coriolis correction?", /*default_yes=*/false);
+  if (kCoriolis) {
+    const double kLat = PromptDouble(
+        "Enter shooting site latitude in degrees (-90 to +90, + North)",
+        /*required=*/true, kDefaultLatitudeDeg);
+    (*j)["LatitudeDeg"] = kLat;
 
-    double az = PromptDouble(
-        "Enter azimuth / firing direction in degrees (0=North, 90=East)", true,
-        90.0);
-    (*j)["AzimuthDeg"] = az;
+    const double kAz = PromptDouble(
+        "Enter azimuth / firing direction in degrees (0=North, 90=East)",
+        /*required=*/true, kDefaultAzimuthDeg);
+    (*j)["AzimuthDeg"] = kAz;
   }
 }
 
 // ---------------------------------------------------------------------------
 // Phase 7: Advanced Controls & Ranges
 // ---------------------------------------------------------------------------
-void WizardPhaseControlsAndRanges(nlohmann::json* j) {
-  PrintPhaseBanner(7, 8, "Advanced Controls & Ranges");
+void PromptAdvancedControls(nlohmann::json* j) {
+  const double kStep =
+      PromptDouble("Enter solver step size in inches (default 36 in / 1 yd)",
+                   /*required=*/false, kDefaultStepSizeInch);
+  if (!std::isnan(kStep) && kStep > 0.0) {
+    (*j)["StepSize"] = static_cast<uint16_t>(kStep);
+  }
 
-  bool adv = PromptYesNo(
-      "Configure advanced solver controls (step size, speed/energy limits)?",
-      false);
-  if (adv) {
-    double step = PromptDouble(
-        "Enter solver step size in inches (default 36 in / 1 yd)", false, 36.0);
-    if (!std::isnan(step) && step > 0.0) {
-      (*j)["StepSize"] = static_cast<uint16_t>(step);
-    }
+  const double kMinSpd = PromptDouble("Enter minimum speed cutoff in fps",
+                                      /*required=*/false, kNaN, "no limit");
+  if (!std::isnan(kMinSpd) && kMinSpd > 0.0) {
+    (*j)["MinimumSpeed"] = static_cast<uint16_t>(kMinSpd);
+  }
 
-    double min_spd = PromptDouble("Enter minimum speed cutoff in fps", false,
-                                  kNaN, "no limit");
-    if (!std::isnan(min_spd) && min_spd > 0.0) {
-      (*j)["MinimumSpeed"] = static_cast<uint16_t>(min_spd);
-    }
-
-    if (j->contains("MassGrains")) {
-      double min_en = PromptDouble("Enter minimum energy cutoff in ft-lbs",
-                                   false, kNaN, "no limit");
-      if (!std::isnan(min_en) && min_en > 0.0) {
-        (*j)["MinimumEnergy"] = static_cast<uint16_t>(min_en);
-      }
-    }
-
-    double max_t =
-        PromptDouble("Enter maximum time of flight cutoff in seconds", false,
-                     kNaN, "no limit");
-    if (!std::isnan(max_t) && max_t > 0.0) {
-      (*j)["MaximumTime"] = max_t;
+  if (j->contains("MassGrains")) {
+    const double kMinEn = PromptDouble("Enter minimum energy cutoff in ft-lbs",
+                                       /*required=*/false, kNaN, "no limit");
+    if (!std::isnan(kMinEn) && kMinEn > 0.0) {
+      (*j)["MinimumEnergy"] = static_cast<uint16_t>(kMinEn);
     }
   }
 
-  const std::vector<std::string> range_options = {
+  const double kMaxT =
+      PromptDouble("Enter maximum time of flight cutoff in seconds",
+                   /*required=*/false, kNaN, "no limit");
+  if (!std::isnan(kMaxT) && kMaxT > 0.0) {
+    (*j)["MaximumTime"] = kMaxT;
+  }
+}
+
+std::vector<uint32_t> BuildDefaultLadder() {
+  constexpr uint32_t kFirstStep = 50;
+  constexpr uint32_t kStep = 100;
+  constexpr uint32_t kMax = 1000;
+  std::vector<uint32_t> ladder;
+  constexpr size_t kDefaultLadderCount = 12;
+  ladder.reserve(kDefaultLadderCount);
+  ladder.push_back(0);
+  ladder.push_back(kFirstStep);
+  for (uint32_t range_val = kStep; range_val <= kMax; range_val += kStep) {
+    ladder.push_back(range_val);
+  }
+  return ladder;
+}
+
+std::vector<double> BuildSpanRanges() {
+  const double kMaxYds = PromptDouble("Enter maximum range in yards",
+                                      /*required=*/true, kDefaultMaxRangeYds);
+  double step_yds = PromptDouble("Enter range step in yards", /*required=*/true,
+                                 kDefaultStepRangeYds);
+  if (step_yds <= 0.0) {
+    step_yds = kDefaultStepRangeYds;
+  }
+  const auto kSteps = static_cast<size_t>(std::floor(kMaxYds / step_yds));
+  std::vector<double> ranges;
+  ranges.reserve(kSteps + 2);
+  for (size_t i = 0; i <= kSteps; ++i) {
+    ranges.push_back(static_cast<double>(i) * step_yds);
+  }
+  if (ranges.empty() || std::fabs(ranges.back() - kMaxYds) > kZeroTolerance) {
+    ranges.push_back(kMaxYds);
+  }
+  return ranges;
+}
+
+std::vector<double> PromptCustomRanges() {
+  std::cout
+      << "\nEnter ranges in yards one per line (blank line when finished):\n";
+  std::vector<double> ranges;
+  while (true) {
+    const std::string kPrompt =
+        "Range " + std::to_string(ranges.size() + 1) + " (yd) > ";
+    const std::string kLine = ReadLine(kPrompt);
+    if (kLine.empty()) {
+      break;
+    }
+    char* end = nullptr;
+    const double kR = std::strtod(kLine.c_str(), &end);
+    if (end != kLine.c_str() && *end == '\0' && kR >= 0.0) {
+      ranges.push_back(kR);
+    } else {
+      std::cerr << "\033[31mInvalid range. Must be non-negative.\033[0m\n";
+    }
+  }
+  if (ranges.empty()) {
+    const auto kDefaultLadder = BuildDefaultLadder();
+    ranges.assign(kDefaultLadder.begin(), kDefaultLadder.end());
+  }
+  return ranges;
+}
+
+void WizardPhaseControlsAndRanges(nlohmann::json* j) {
+  PrintPhaseBanner(kPhaseControlsAndRanges, kTotalPhases,
+                   "Advanced Controls & Ranges");
+
+  const bool kAdv = PromptYesNo(
+      "Configure advanced solver controls (step size, speed/energy limits)?",
+      /*default_yes=*/false);
+  if (kAdv) {
+    PromptAdvancedControls(j);
+  }
+
+  const std::vector<std::string> kRangeOptions = {
       "Standard range ladder (0 to 1000 yd by 100 yd increments)",
       "Custom span (max range and step in yards)",
       "Explicit custom range list"};
-  int r_choice =
-      PromptChoice("Select downrange output intervals:", range_options, 1);
+  const int kRChoice =
+      PromptChoice("Select downrange output intervals:", kRangeOptions, 1);
 
-  if (r_choice == 1) {
-    (*j)["Ranges"] = {0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
-  } else if (r_choice == 2) {
-    double max_yds = PromptDouble("Enter maximum range in yards", true, 1000.0);
-    double step_yds = PromptDouble("Enter range step in yards", true, 100.0);
-    if (step_yds <= 0.0) {
-      step_yds = 100.0;
-    }
-    std::vector<double> ranges;
-    for (double r = 0.0; r <= max_yds; r += step_yds) {
-      ranges.push_back(r);
-    }
-    if (ranges.empty() || std::fabs(ranges.back() - max_yds) > 1e-6) {
-      ranges.push_back(max_yds);
-    }
-    (*j)["Ranges"] = ranges;
+  if (kRChoice == 1) {
+    (*j)["Ranges"] = BuildDefaultLadder();
+  } else if (kRChoice == 2) {
+    (*j)["Ranges"] = BuildSpanRanges();
   } else {
-    std::cout
-        << "\nEnter ranges in yards one per line (blank line when finished):\n";
-    std::vector<double> ranges;
-    while (true) {
-      std::string line =
-          ReadLine("Range " + std::to_string(ranges.size() + 1) + " (yd) > ");
-      if (line.empty()) {
-        break;
-      }
-      char* end = nullptr;
-      double r = std::strtod(line.c_str(), &end);
-      if (end != line.c_str() && *end == '\0' && r >= 0.0) {
-        ranges.push_back(r);
-      } else {
-        std::cerr << "\033[31mInvalid range. Must be non-negative.\033[0m\n";
-      }
-    }
-    if (ranges.empty()) {
-      ranges = {0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
-    }
-    (*j)["Ranges"] = ranges;
+    (*j)["Ranges"] = PromptCustomRanges();
   }
 }
 
 // ---------------------------------------------------------------------------
 // Phase 8: Solver Configuration & Review
 // ---------------------------------------------------------------------------
-void WizardPhaseSolverAndReview(nlohmann::json* j) {
-  PrintPhaseBanner(8, 8, "Solver Configuration & Review");
-
-  const std::vector<std::string> path_options = {
-      "Fast solver (standard numerical integration, constant atmosphere)",
-      "ELR solver (lapse-scaled dynamic density along high-arc / extreme "
-      "trajectories)"};
-  int path_choice =
-      PromptChoice("Select trajectory solver path:", path_options, 1);
-  (*j)["SolverPath"] = (path_choice == 2) ? "elr" : "fast";
-
-  const std::vector<std::string> mode_options = {
-      "Forward solution (trajectory drop and windage in inches)",
-      "Inverse solution (optic sight hold-off and dial adjustments)"};
-  int mode_choice =
-      PromptChoice("Select solution output mode:", mode_options, 1);
-  (*j)["SolverMode"] = (mode_choice == 2) ? "inverse" : "forward";
-
-  if (mode_choice == 2) {
-    const std::vector<std::string> unit_options = {"MOA (Minutes of Angle)",
-                                                   "MIL (Milliradians)"};
-    int unit_choice =
-        PromptChoice("Select preferred inverse angular unit:", unit_options, 1);
-    (*j)["AngularUnit"] = (unit_choice == 2) ? "mil" : "moa";
-  }
-
-  // Pre-solve Configuration Review
+void PrintConfigurationReview(const nlohmann::json& j) {
   std::cout << "\n\033[1;32m=== Configuration Review ===\033[0m\n";
   std::cout << "  Drag model:       "
-            << ((*j)["DragSource"].is_string()
-                    ? (*j)["DragSource"].get<std::string>()
-                    : "bc")
+            << (j["DragSource"].is_string() ? j["DragSource"].get<std::string>()
+                                            : "bc")
             << "\n";
-  std::cout << "  Muzzle velocity:  " << (*j)["InitialVelocityFps"] << " fps\n";
-  if (j->contains("MassGrains")) {
-    std::cout << "  Mass:             " << (*j)["MassGrains"] << " gr\n";
+  std::cout << "  Muzzle velocity:  " << j["InitialVelocityFps"] << " fps\n";
+  if (j.contains("MassGrains")) {
+    std::cout << "  Mass:             " << j["MassGrains"] << " gr\n";
   }
-  if (j->contains("DiameterInch")) {
-    std::cout << "  Caliber / Twist:  " << (*j)["DiameterInch"]
-              << "\" / 1:" << (*j)["TwistInchesPerTurn"] << "\"\n";
+  if (j.contains("DiameterInch")) {
+    std::cout << "  Caliber / Twist:  " << j["DiameterInch"]
+              << "\" / 1:" << j["TwistInchesPerTurn"] << "\"\n";
   }
-  if (j->contains("ZeroDistanceYds")) {
-    std::cout << "  Zero:             " << (*j)["ZeroDistanceYds"] << " yd\n";
-  } else if (j->contains("ZeroAngleMOA")) {
-    std::cout << "  Zero angle:       " << (*j)["ZeroAngleMOA"] << " MOA\n";
+  if (j.contains("ZeroDistanceYds")) {
+    std::cout << "  Zero:             " << j["ZeroDistanceYds"] << " yd\n";
+  } else if (j.contains("ZeroAngleMOA")) {
+    std::cout << "  Zero angle:       " << j["ZeroAngleMOA"] << " MOA\n";
   }
-  if (j->contains("AltitudeOfFiringSiteFt")) {
-    std::cout << "  Altitude:         " << (*j)["AltitudeOfFiringSiteFt"]
+  if (j.contains("AltitudeOfFiringSiteFt")) {
+    std::cout << "  Altitude:         " << j["AltitudeOfFiringSiteFt"]
               << " ft\n";
   }
-  if (j->contains("WindSpeedMph")) {
-    std::cout << "  Wind:             " << (*j)["WindSpeedMph"] << " mph\n";
-  } else if (j->contains("WindProfile")) {
-    std::cout << "  Wind:             Profile (" << (*j)["WindProfile"].size()
+  if (j.contains("WindSpeedMph")) {
+    std::cout << "  Wind:             " << j["WindSpeedMph"] << " mph\n";
+  } else if (j.contains("WindProfile")) {
+    std::cout << "  Wind:             Profile (" << j["WindProfile"].size()
               << " stations)\n";
   } else {
     std::cout << "  Wind:             Calm\n";
   }
-  std::cout << "  Solver Path:      " << (*j)["SolverPath"] << "\n";
-  std::cout << "  Solution Mode:    " << (*j)["SolverMode"] << "\n";
+  std::cout << "  Solver Path:      " << j["SolverPath"] << "\n";
+  std::cout << "  Solution Mode:    " << j["SolverMode"] << "\n";
   std::cout << "\033[1;32m============================\033[0m\n\n";
+}
 
-  if (!PromptYesNo("Proceed to solve trajectory?", true)) {
-    std::cout << "Trajectory solve cancelled.\n";
-    std::exit(0);
+bool WizardPhaseSolverAndReview(nlohmann::json* j) {
+  PrintPhaseBanner(kPhaseSolverAndReview, kTotalPhases,
+                   "Solver Configuration & Review");
+
+  const std::vector<std::string> kPathOptions = {
+      "Fast solver (standard numerical integration, constant atmosphere)",
+      "ELR solver (lapse-scaled dynamic density along high-arc / extreme "
+      "trajectories)"};
+  const int kPathChoice =
+      PromptChoice("Select trajectory solver path:", kPathOptions, 1);
+  (*j)["SolverPath"] = (kPathChoice == 2) ? "elr" : "fast";
+
+  const std::vector<std::string> kModeOptions = {
+      "Forward solution (trajectory drop and windage in inches)",
+      "Inverse solution (optic sight hold-off and dial adjustments)"};
+  const int kModeChoice =
+      PromptChoice("Select solution output mode:", kModeOptions, 1);
+  (*j)["SolverMode"] = (kModeChoice == 2) ? "inverse" : "forward";
+
+  if (kModeChoice == 2) {
+    const std::vector<std::string> kUnitOptions = {"MOA (Minutes of Angle)",
+                                                   "MIL (Milliradians)"};
+    const int kUnitChoice =
+        PromptChoice("Select preferred inverse angular unit:", kUnitOptions, 1);
+    (*j)["AngularUnit"] = (kUnitChoice == 2) ? "mil" : "moa";
   }
+
+  PrintConfigurationReview(*j);
+
+  if (!PromptYesNo("Proceed to solve trajectory?", /*default_yes=*/true)) {
+    std::cout << "Trajectory solve cancelled.\n";
+    return false;
+  }
+  return true;
 }
 
 }  // namespace
@@ -923,7 +1141,9 @@ nlohmann::json RunWizard() {
   WizardPhaseWind(&j);
   WizardPhaseGeometry(&j);
   WizardPhaseControlsAndRanges(&j);
-  WizardPhaseSolverAndReview(&j);
+  if (!WizardPhaseSolverAndReview(&j)) {
+    return {};
+  }
 
   return j;
 }
