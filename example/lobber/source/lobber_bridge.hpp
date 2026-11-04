@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "lob/lob.hpp"
+#include "lobber_cli.hpp"
 
 namespace example {
 
@@ -23,14 +24,48 @@ lob::DragFunctionT JsonToDragFunction(const nlohmann::json& j,
                                       const std::string& key);
 lob::ClockAngleT JsonToClockAngle(const nlohmann::json& j,
                                   const std::string& key);
+std::string ErrorToString(lob::ErrorT err);
+
+// Solver config from JSON
+SolverPath JsonToSolverPath(const nlohmann::json& j);
+SolverMode JsonToSolverMode(const nlohmann::json& j);
+AngularUnit JsonToAngularUnit(const nlohmann::json& j);
+
+// Multi-point parsing helpers
+struct BandPoint {
+  float fps;
+  float bc;
+};
+std::vector<BandPoint> ParseBands(const nlohmann::json& j);
+std::vector<BandPoint> ParseBandsFromString(const std::string& text);
+
+struct DragTablePoint {
+  float mach;
+  float cd;
+};
+std::vector<DragTablePoint> ParseDragTable(const nlohmann::json& j);
+std::vector<DragTablePoint> ParseDragTableFromString(const std::string& text);
+
+std::vector<float> ParseSplineCoefficients(const nlohmann::json& j);
+std::vector<float> ParseSplineCoefficientsFromString(const std::string& text);
+
+std::vector<lob::WindPoint> ParseWindProfile(const nlohmann::json& j);
+std::vector<lob::WindPoint> ParseWindProfileFromString(const std::string& text);
 
 // Range parsing (defaults to 0–1000 yd in 100 yd increments if not specified)
 std::vector<uint32_t> ParseRanges(const nlohmann::json& j);
 
+// Context building
+lob::Context BuildContextFromJson(const nlohmann::json& j);
+
 // View helpers
 void PrintTable(const lob::Context& ctx, const lob::Output* outputs,
-                size_t count);
-nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count);
+                size_t count, size_t requested_count = 0,
+                SolverMode mode = SolverMode::kForward,
+                AngularUnit unit = AngularUnit::kMoa);
+nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count,
+                             SolverMode mode = SolverMode::kForward,
+                             AngularUnit unit = AngularUnit::kMoa);
 
 }  // namespace example
 
