@@ -66,70 +66,73 @@ int main(int argc, char* argv[]) try {
     }
   }
 
-  // Build Context via lob::Builder
-  auto ctx =
-      lob::Builder()
-          .BallisticCoefficientPsi(
-              example::JsonToDouble(json, "BallisticCoefficientPsi"))
-          .BCAtmosphere(example::JsonToAtmosphere(json, "BCAtmosphere"))
-          .BCDragFunction(example::JsonToDragFunction(json, "BCDragFunction"))
-          .DiameterInch(example::JsonToDouble(json, "DiameterInch"))
-          .MeplatDiameterInch(example::JsonToDouble(json, "MeplatDiameterInch"))
-          .BaseDiameterInch(example::JsonToDouble(json, "BaseDiameterInch"))
-          .LengthInch(example::JsonToDouble(json, "LengthInch"))
-          .NoseLengthInch(example::JsonToDouble(json, "NoseLengthInch"))
-          .TailLengthInch(example::JsonToDouble(json, "TailLengthInch"))
-          .OgiveRtR(example::JsonToDouble(json, "OgiveRtR"))
-          .MassGrains(example::JsonToDouble(json, "MassGrains"))
-          .InitialVelocityFps(example::JsonToU16(json, "InitialVelocityFps"))
-          .OpticHeightInches(example::JsonToDouble(json, "OpticHeightInches"))
-          .TwistInchesPerTurn(example::JsonToDouble(json, "TwistInchesPerTurn"))
-          .ZeroAngleMOA(example::JsonToDouble(json, "ZeroAngleMOA"))
-          .ZeroDistanceYds(example::JsonToDouble(json, "ZeroDistanceYds"))
-          .ZeroImpactHeightInches(
-              example::JsonToDouble(json, "ZeroImpactHeightInches"))
-          .AltitudeOfFiringSiteFt(
-              example::JsonToDouble(json, "AltitudeOfFiringSiteFt"))
-          .AirPressureInHg(example::JsonToDouble(json, "AirPressureInHg"))
-          .AltitudeOfBarometerFt(
-              example::JsonToDouble(json, "AltitudeOfBarometerFt"))
-          .TemperatureDegF(example::JsonToDouble(json, "TemperatureDegF"))
-          .AltitudeOfThermometerFt(
-              example::JsonToDouble(json, "AltitudeOfThermometerFt"))
-          .RelativeHumidityPercent(
-              example::JsonToDouble(json, "RelativeHumidityPercent"))
-          .WindHeading(example::JsonToClockAngle(json, "WindHeading"))
-          .WindSpeedMph(example::JsonToDouble(json, "WindSpeedMph"))
-          .AzimuthDeg(example::JsonToDouble(json, "AzimuthDeg"))
-          .LatitudeDeg(example::JsonToDouble(json, "LatitudeDeg"))
-          .RangeAngleDeg(example::JsonToDouble(json, "RangeAngleDeg"))
-          .MinimumSpeed(example::JsonToU16(json, "MinimumSpeed"))
-          .MinimumEnergy(example::JsonToU16(json, "MinimumEnergy"))
-          .MaximumTime(example::JsonToDouble(json, "MaximumTime"))
-          .Build();
+  // Build Context via lobber_bridge helper
+  auto ctx = example::BuildContextFromJson(json);
 
   if (ctx.error != lob::ErrorT::kNone) {
-    std::cerr << "\033[31mBuilder error: code " << static_cast<int>(ctx.error)
-              << "\033[0m\n";
+    std::cerr << "\033[31mBuilder error: " << example::ErrorToString(ctx.error)
+              << " (code " << static_cast<int>(ctx.error) << ")\033[0m\n";
     return 1;
+  }
+
+  // Resolve solver path, mode, and unit (CLI overrides JSON configuration)
+  auto path = config.solver_path;
+  if (path == example::SolverPath::kAuto) {
+    path = example::JsonToSolverPath(json);
+  }
+  if (path == example::SolverPath::kAuto) {
+    path = example::SolverPath::kFast;
+  }
+
+  auto mode = config.solver_mode;
+  if (mode == example::SolverMode::kAuto) {
+    mode = example::JsonToSolverMode(json);
+  }
+  if (mode == example::SolverMode::kAuto) {
+    mode = example::SolverMode::kForward;
+  }
+
+  auto unit = config.angular_unit;
+  if (unit == example::AngularUnit::kMoa &&
+      (json.contains("AngularUnit") || json.contains("angularUnit"))) {
+    unit = example::JsonToAngularUnit(json);
   }
 
   // Solve
   auto ranges = example::ParseRanges(json);
-  std::vector<lob::Output> outputs(ranges.size());
-  const size_t kCount =
-      lob::Solve(ctx, ranges.data(), outputs.data(), ranges.size());
+  if (ranges.empty()) {
+    std::cerr << "\033[31mError: No ranges to solve for\033[0m\n";
+    return 1;
+  }
 
-  if (kCount == 0) {
+  std::vector<lob::Output> outputs(ranges.size());
+  size_t count = 0;
+  if (path == example::SolverPath::kELR) {
+    if (mode == example::SolverMode::kInverse) {
+      count = lob::SolveInverseELR(ctx, ranges.data(), outputs.data(),
+                                   ranges.size());
+    } else {
+      count = lob::SolveELR(ctx, ranges.data(), outputs.data(), ranges.size());
+    }
+  } else {
+    if (mode == example::SolverMode::kInverse) {
+      count =
+          lob::SolveInverse(ctx, ranges.data(), outputs.data(), ranges.size());
+    } else {
+      count = lob::Solve(ctx, ranges.data(), outputs.data(), ranges.size());
+    }
+  }
+
+  if (count == 0) {
     std::cerr << "\033[31mSolver error: no solutions returned\033[0m\n";
     return 1;
   }
 
   if (config.json_mode) {
-    auto jout = example::OutputsToJson(outputs.data(), kCount);
+    auto jout = example::OutputsToJson(outputs.data(), count, mode, unit);
     std::cout << jout.dump(4) << "\n";
   } else {
-    example::PrintTable(ctx, outputs.data(), kCount);
+    example::PrintTable(ctx, outputs.data(), count, ranges.size(), mode, unit);
     example::PrintGH();
   }
 
