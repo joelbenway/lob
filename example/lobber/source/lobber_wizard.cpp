@@ -170,22 +170,25 @@ void WizardPhaseDrag(nlohmann::json* j) {
 
   if (choice == 1) {
     (*j)["DragSource"] = "bc";
+
+    const std::vector<std::string> df_options = {"G1", "G2", "G5",
+                                                 "G6", "G7", "G8"};
+    int df_choice =
+        PromptChoice("Select reference drag function:", df_options, 5);
+    const int df_map[] = {1, 2, 5, 6, 7, 8};
+    (*j)["BCDragFunction"] = df_map[df_choice - 1];
+
+    const double default_bc =
+        (df_choice == 5) ? 0.243 : (df_choice == 1 ? 0.462 : 0.400);
     double bc = 0.0;
     while (bc <= 0.0) {
-      bc = PromptDouble("Enter Ballistic Coefficient (Psi)", true, 0.225);
+      bc = PromptDouble("Enter Ballistic Coefficient (Psi)", true, default_bc);
       if (bc <= 0.0) {
         std::cerr
             << "\033[31mBallistic coefficient must be greater than 0.\033[0m\n";
       }
     }
     (*j)["BallisticCoefficientPsi"] = bc;
-
-    const std::vector<std::string> df_options = {"G1", "G2", "G5",
-                                                 "G6", "G7", "G8"};
-    int df_choice =
-        PromptChoice("Select reference drag function:", df_options, 1);
-    const int df_map[] = {1, 2, 5, 6, 7, 8};
-    (*j)["BCDragFunction"] = df_map[df_choice - 1];
 
     const std::vector<std::string> atmo_options = {"Army Standard Metro (ASM)",
                                                    "ICAO Reference Atmosphere"};
@@ -197,7 +200,7 @@ void WizardPhaseDrag(nlohmann::json* j) {
     const std::vector<std::string> df_options = {"G1", "G2", "G5",
                                                  "G6", "G7", "G8"};
     int df_choice =
-        PromptChoice("Select reference drag function:", df_options, 1);
+        PromptChoice("Select reference drag function:", df_options, 5);
     const int df_map[] = {1, 2, 5, 6, 7, 8};
     (*j)["BCDragFunction"] = df_map[df_choice - 1];
 
@@ -236,11 +239,8 @@ void WizardPhaseDrag(nlohmann::json* j) {
             ReadLine("Band " + std::to_string(bands.size() + 1) + " > ");
         if (line.empty()) {
           if (bands.empty()) {
-            bands = {{1500.0f, 0.305f},
-                     {2000.0f, 0.312f},
-                     {2500.0f, 0.318f},
-                     {3000.0f, 0.322f}};
-            std::cout << "Using sample velocity bands (4 stations).\n";
+            bands = {{2000.0f, 0.235f}, {2700.0f, 0.243f}};
+            std::cout << "Using sample velocity bands (2 stations).\n";
             break;
           }
           if (bands.size() >= 2) {
@@ -303,12 +303,9 @@ void WizardPhaseDrag(nlohmann::json* j) {
             ReadLine("Point " + std::to_string(table.size() + 1) + " > ");
         if (line.empty()) {
           if (table.empty()) {
-            table = {{0.5f, 0.15f},
-                     {1.0f, 0.38f},
-                     {1.5f, 0.32f},
-                     {2.0f, 0.28f},
-                     {3.0f, 0.22f}};
-            std::cout << "Using sample Mach/Cd table (5 points).\n";
+            table = {{0.0f, 0.12f}, {1.0f, 0.25f}, {2.0f, 0.38f},
+                     {3.0f, 0.48f}, {4.0f, 0.55f}, {5.0f, 0.60f}};
+            std::cout << "Using sample Mach/Cd table (6 points).\n";
             break;
           }
           if (table.size() >= 2) {
@@ -355,8 +352,9 @@ void WizardPhaseDrag(nlohmann::json* j) {
         if (line.empty()) {
           if (coefs.empty()) {
             const auto sample_ctx = lob::Builder()
-                                        .BallisticCoefficientPsi(0.225)
-                                        .InitialVelocityFps(2650)
+                                        .BallisticCoefficientPsi(0.243)
+                                        .BCDragFunction(lob::DragFunctionT::kG7)
+                                        .InitialVelocityFps(2700)
                                         .ZeroAngleMOA(0.0)
                                         .Build();
             coefs.assign(sample_ctx.drags.begin(), sample_ctx.drags.end());
@@ -388,7 +386,7 @@ void WizardPhaseProjectile(nlohmann::json* j) {
   double mv = 0.0;
   while (mv <= 0.0 || mv > 65535.0) {
     mv = PromptDouble("Enter Muzzle Velocity in feet per second (fps)", true,
-                      2650.0);
+                      2700.0);
     if (mv <= 0.0 || mv > 65535.0) {
       std::cerr << "\033[31mMuzzle velocity must be between 1 and 65535 "
                    "fps.\033[0m\n";
@@ -403,7 +401,7 @@ void WizardPhaseProjectile(nlohmann::json* j) {
       "aerodynamic jump)",
       "Full Geometry (stability + nose, meplat, base, tail, ogive -> Boatright "
       "spin drift)"};
-  int tier = PromptChoice("Select projectile detail level:", tier_options, 1);
+  int tier = PromptChoice("Select projectile detail level:", tier_options, 2);
 
   if (tier >= 2) {
     double mass = 0.0;
@@ -429,7 +427,7 @@ void WizardPhaseProjectile(nlohmann::json* j) {
 
     double len = 0.0;
     while (len <= 0.0) {
-      len = PromptDouble("Enter bullet length in inches", true, 1.25);
+      len = PromptDouble("Enter bullet length in inches", true, 1.24);
       if (len <= 0.0) {
         std::cerr << "\033[31mLength must be greater than 0.\033[0m\n";
       }
@@ -439,9 +437,9 @@ void WizardPhaseProjectile(nlohmann::json* j) {
     double twist = 0.0;
     while (twist <= 0.0) {
       twist = PromptDouble(
-          "Enter rifling barrel twist in inches per turn (e.g. 10.0 for "
-          "1:10\")",
-          true, 10.0);
+          "Enter rifling barrel twist in inches per turn (e.g. 11.0 for "
+          "1:11\")",
+          true, 11.0);
       if (twist <= 0.0) {
         std::cerr << "\033[31mTwist rate must be greater than 0.\033[0m\n";
       }
@@ -452,14 +450,15 @@ void WizardPhaseProjectile(nlohmann::json* j) {
   if (tier == 4) {
     double nose = 0.0;
     while (nose <= 0.0) {
-      nose = PromptDouble("Enter nose length in inches", true, 0.70);
+      nose = PromptDouble("Enter nose length in inches", true, 0.60);
       if (nose <= 0.0) {
         std::cerr << "\033[31mNose length must be greater than 0.\033[0m\n";
       }
     }
     (*j)["NoseLengthInch"] = nose;
 
-    double meplat = PromptDouble("Enter meplat diameter in inches", false, 0.0);
+    double meplat =
+        PromptDouble("Enter meplat diameter in inches", false, 0.05);
     if (!std::isnan(meplat)) {
       (*j)["MeplatDiameterInch"] = meplat;
     }
@@ -474,7 +473,7 @@ void WizardPhaseProjectile(nlohmann::json* j) {
     (*j)["BaseDiameterInch"] = base;
 
     double tail =
-        PromptDouble("Enter tail (boattail) length in inches", false, 0.15);
+        PromptDouble("Enter tail (boattail) length in inches", false, 0.20);
     if (!std::isnan(tail)) {
       (*j)["TailLengthInch"] = tail;
     }
@@ -483,7 +482,7 @@ void WizardPhaseProjectile(nlohmann::json* j) {
     while (ogive <= 0.0 || ogive > 1.0) {
       ogive = PromptDouble(
           "Enter ogive radius ratio (Rt/R) (greater than 0, up to 1.0)", true,
-          0.5);
+          0.50);
       if (ogive <= 0.0 || ogive > 1.0) {
         std::cerr
             << "\033[31mOgive Rt/R must be in the range (0, 1.0].\033[0m\n";
@@ -610,7 +609,7 @@ void WizardPhaseWind(nlohmann::json* j) {
   const std::vector<std::string> wind_sources = {
       "Calm (no wind)", "Uniform wind (speed & clock angle / heading)",
       "Multi-station downrange wind profile"};
-  int choice = PromptChoice("Select wind environment:", wind_sources, 1);
+  int choice = PromptChoice("Select wind environment:", wind_sources, 2);
 
   if (choice == 2) {
     double wspd =
