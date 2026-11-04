@@ -15,6 +15,7 @@ default(
   PATTERNS
   source/*.cpp
   source/*.hpp
+  include/*.h
   include/*.hpp
   test/*.cpp
   test/*.hpp

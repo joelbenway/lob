@@ -110,18 +110,19 @@ typedef struct {
 
 /** @brief Downrange wind profile point (horizontal-plane wind). */
 typedef struct {
-  double range_ft;  ///< @brief Downrange position in feet.
-  double heading_deg;  ///< @brief Wind heading in degrees (0 tailwind, 180 headwind); wraps mod 360.
-  double speed_mph;  ///< @brief Wind speed in miles per hour.
-  double height_ft;  ///< @brief Measurement height above ground in feet.
+  double range_ft;     ///< @brief Downrange position in feet.
+  double heading_deg;  ///< @brief Wind heading in degrees (0 tailwind, 180
+                       ///< headwind); wraps mod 360.
+  double speed_mph;    ///< @brief Wind speed in miles per hour.
+  double height_ft;    ///< @brief Measurement height above ground in feet.
 } LobWindPoint;
 
 /** @brief Solver-ready wind profile node with frame-resolved components. */
 typedef struct {
   uint32_t range_ft;  ///< @brief Downrange station in whole feet.
-  double x_fps;  ///< @brief Wind in fps, frame X (downrange).
-  double y_fps;  ///< @brief Wind in fps, frame Y (frame-up).
-  double z_fps;  ///< @brief Wind in fps, lateral.
+  double x_fps;       ///< @brief Wind in fps, frame X (downrange).
+  double y_fps;       ///< @brief Wind in fps, frame Y (frame-up).
+  double z_fps;       ///< @brief Wind in fps, lateral.
 } LobWindNode;
 
 /** @brief Coriolis effect parameters. */
@@ -149,11 +150,11 @@ typedef struct {
   double spindrift_factor;  ///< @brief Spin drift factor.
   double k_lapse;           ///< @brief Projected linear density lapse coeff.
   double max_time;          ///< @brief Max time of flight for solver.
-  float drags[LOB_SPLINE_SEGMENTS * 4];  ///< @brief Drag curve coefficients.
+  float drags[LOB_SPLINE_SEGMENTS * 4];     ///< @brief Drag curve coefficients.
   LobWindNode wind_nodes[LOB_WIND_POINTS];  ///< @brief Frame-resolved profile
                                             ///< nodes; [0] is the muzzle.
   double wind_shear_exponent;  ///< @brief Hellmann exponent alpha; scaling
-                                 ///< is always active, 0 disables it exactly.
+                               ///< is always active, 0 disables it exactly.
   uint16_t velocity;       ///< @brief Initial velocity of projectile in Fps.
   uint16_t minimum_speed;  ///< @brief Minimum speed for solver.
   uint16_t step_size;      ///< @brief Solver step size in inches.
@@ -538,8 +539,9 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindSpeedMph(LobBuilder* pbuilder,
  * @param count The number of wind profile points.
  * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
-LOB_EXPORT extern LobBuilder* LobBuilderWindProfile(
-    LobBuilder* pbuilder, const LobWindPoint* ppoints, size_t count);
+LOB_EXPORT extern LobBuilder* LobBuilderWindProfile(LobBuilder* pbuilder,
+                                                    const LobWindPoint* ppoints,
+                                                    size_t count);
 
 /**
  * @brief Sets the Hellmann shear exponent for wind profile height scaling.
@@ -552,8 +554,8 @@ LOB_EXPORT extern LobBuilder* LobBuilderWindProfile(
  * @param value The shear exponent in [0, 1].
  * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
-LOB_EXPORT extern LobBuilder* LobBuilderWindShearExponent(
-    LobBuilder* pbuilder, double value);
+LOB_EXPORT extern LobBuilder* LobBuilderWindShearExponent(LobBuilder* pbuilder,
+                                                          double value);
 
 /**
  * @brief Sets the azimuth (bearing) of the target in degrees.
@@ -661,8 +663,8 @@ LOB_EXPORT extern size_t LobSolve(const LobContext* pctx,
  * @return The number of successful solutions.
  */
 LOB_EXPORT extern size_t LobSolveELR(const LobContext* pctx,
-                                     const uint32_t* pranges,
-                                     LobOutput* pouts, size_t size);
+                                     const uint32_t* pranges, LobOutput* pouts,
+                                     size_t size);
 
 /**
  * @brief Solves the exterior ballistics problem for a given set of ranges.
