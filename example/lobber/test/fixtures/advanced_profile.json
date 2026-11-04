@@ -1,0 +1,40 @@
+{
+    "DragSource": "bands",
+    "BCDragFunction": "G7",
+    "BCAtmosphere": "ICAO",
+    "BCVelocityBands": [
+        [1500, 0.305],
+        [2000, 0.312],
+        [2500, 0.318],
+        [3000, 0.322]
+    ],
+    "InitialVelocityFps": 2850,
+    "MassGrains": 140,
+    "DiameterInch": 0.264,
+    "LengthInch": 1.38,
+    "TwistInchesPerTurn": 8.0,
+    "NoseLengthInch": 0.72,
+    "MeplatDiameterInch": 0.04,
+    "BaseDiameterInch": 0.22,
+    "TailLengthInch": 0.18,
+    "OgiveRtR": 0.5,
+    "OpticHeightInches": 1.7,
+    "ZeroDistanceYds": 100,
+    "ZeroImpactHeightInches": 0.0,
+    "AltitudeOfFiringSiteFt": 4500,
+    "AirPressureInHg": 25.4,
+    "TemperatureDegF": 45,
+    "RelativeHumidityPercent": 25,
+    "WindProfile": [
+        {"range_ft": 0, "heading_deg": 90, "speed_mph": 8, "height_ft": 6},
+        {"range_ft": 900, "heading_deg": 110, "speed_mph": 12, "height_ft": 6},
+        {"range_ft": 1800, "heading_deg": 135, "speed_mph": 15, "height_ft": 6}
+    ],
+    "WindShearExponent": 0.143,
+    "RangeAngleDeg": 5.0,
+    "LatitudeDeg": 43.5,
+    "AzimuthDeg": 65.0,
+    "StepSize": 18,
+    "MinimumSpeed": 900,
+    "Ranges": [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+}

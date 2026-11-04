@@ -946,7 +946,7 @@ void PrintTable(const lob::Context& ctx, const lob::Output* outputs,
 
   const int kWidth = 12;
   if (mode == SolverMode::kInverse) {
-    std::cout << std::left << std::setw(kWidth) << "\033[32mYards"
+    std::cout << "\033[32m" << std::left << std::setw(kWidth) << "Yards"
               << std::setw(kWidth) << "FPS" << std::setw(kWidth) << "FtLbs"
               << std::setw(kWidth)
               << (unit == AngularUnit::kMil ? "Hold MIL" : "Hold MOA")
@@ -959,7 +959,7 @@ void PrintTable(const lob::Context& ctx, const lob::Output* outputs,
               << std::setw(kWidth) << "Wind Inch" << std::setw(kWidth)
               << "Seconds" << "\033[0m\n";
   } else {
-    std::cout << std::left << std::setw(kWidth) << "\033[32mYards"
+    std::cout << "\033[32m" << std::left << std::setw(kWidth) << "Yards"
               << std::setw(kWidth) << "FPS" << std::setw(kWidth) << "FtLbs"
               << std::setw(kWidth) << "Elev Inch" << std::setw(kWidth)
               << "Elev MOA" << std::setw(kWidth) << "Elev MIL"
@@ -967,6 +967,8 @@ void PrintTable(const lob::Context& ctx, const lob::Output* outputs,
               << "Wind MOA" << std::setw(kWidth) << "Wind MIL"
               << std::setw(kWidth) << "Seconds" << "\033[0m\n";
   }
+
+  auto zero_flush = [](double v) { return std::fabs(v) < 1e-4 ? 0.0 : v; };
 
   for (size_t i = 0; i < count; ++i) {
     double elev_moa = 0.0;
@@ -977,16 +979,16 @@ void PrintTable(const lob::Context& ctx, const lob::Output* outputs,
     double wind_inch = 0.0;
 
     if (mode == SolverMode::kInverse) {
-      elev_moa = outputs[i].elevation;
-      elev_mil = lob::MoaToMil(elev_moa);
+      elev_moa = zero_flush(outputs[i].elevation);
+      elev_mil = zero_flush(lob::MoaToMil(elev_moa));
       elev_inch = (outputs[i].range == 0)
                       ? 0.0
-                      : lob::MoaToInch(elev_moa, outputs[i].range);
-      wind_moa = outputs[i].deflection;
-      wind_mil = lob::MoaToMil(wind_moa);
+                      : zero_flush(lob::MoaToInch(elev_moa, outputs[i].range));
+      wind_moa = zero_flush(outputs[i].deflection);
+      wind_mil = zero_flush(lob::MoaToMil(wind_moa));
       wind_inch = (outputs[i].range == 0)
                       ? 0.0
-                      : lob::MoaToInch(wind_moa, outputs[i].range);
+                      : zero_flush(lob::MoaToInch(wind_moa, outputs[i].range));
 
       std::cout << std::left << std::setw(kWidth)
                 << outputs[i].range / static_cast<uint32_t>(kYardsToFeet)
@@ -1003,12 +1005,12 @@ void PrintTable(const lob::Context& ctx, const lob::Output* outputs,
                 << std::setw(kWidth) << wind_inch << std::setw(kWidth)
                 << std::setprecision(3) << outputs[i].time_of_flight << "\n";
     } else {
-      elev_inch = outputs[i].elevation;
-      elev_moa = lob::InchToMoa(elev_inch, outputs[i].range);
-      elev_mil = lob::InchToMil(elev_inch, outputs[i].range);
-      wind_inch = outputs[i].deflection;
-      wind_moa = lob::InchToMoa(wind_inch, outputs[i].range);
-      wind_mil = lob::InchToMil(wind_inch, outputs[i].range);
+      elev_inch = zero_flush(outputs[i].elevation);
+      elev_moa = zero_flush(lob::InchToMoa(elev_inch, outputs[i].range));
+      elev_mil = zero_flush(lob::InchToMil(elev_inch, outputs[i].range));
+      wind_inch = zero_flush(outputs[i].deflection);
+      wind_moa = zero_flush(lob::InchToMoa(wind_inch, outputs[i].range));
+      wind_mil = zero_flush(lob::InchToMil(wind_inch, outputs[i].range));
 
       std::cout << std::left << std::setw(kWidth)
                 << outputs[i].range / static_cast<uint32_t>(kYardsToFeet)
@@ -1028,6 +1030,7 @@ void PrintTable(const lob::Context& ctx, const lob::Output* outputs,
 nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count,
                              SolverMode mode, AngularUnit unit) {
   (void)unit;
+  auto zero_flush = [](double v) { return std::fabs(v) < 1e-4 ? 0.0 : v; };
   nlohmann::json j = nlohmann::json::array();
   for (size_t i = 0; i < count; ++i) {
     double elev_moa = 0.0;
@@ -1038,23 +1041,23 @@ nlohmann::json OutputsToJson(const lob::Output* outputs, size_t count,
     double wind_inch = 0.0;
 
     if (mode == SolverMode::kInverse) {
-      elev_moa = outputs[i].elevation;
-      elev_mil = lob::MoaToMil(elev_moa);
+      elev_moa = zero_flush(outputs[i].elevation);
+      elev_mil = zero_flush(lob::MoaToMil(elev_moa));
       elev_inch = (outputs[i].range == 0)
                       ? 0.0
-                      : lob::MoaToInch(elev_moa, outputs[i].range);
-      wind_moa = outputs[i].deflection;
-      wind_mil = lob::MoaToMil(wind_moa);
+                      : zero_flush(lob::MoaToInch(elev_moa, outputs[i].range));
+      wind_moa = zero_flush(outputs[i].deflection);
+      wind_mil = zero_flush(lob::MoaToMil(wind_moa));
       wind_inch = (outputs[i].range == 0)
                       ? 0.0
-                      : lob::MoaToInch(wind_moa, outputs[i].range);
+                      : zero_flush(lob::MoaToInch(wind_moa, outputs[i].range));
     } else {
-      elev_inch = outputs[i].elevation;
-      elev_moa = lob::InchToMoa(elev_inch, outputs[i].range);
-      elev_mil = lob::InchToMil(elev_inch, outputs[i].range);
-      wind_inch = outputs[i].deflection;
-      wind_moa = lob::InchToMoa(wind_inch, outputs[i].range);
-      wind_mil = lob::InchToMil(wind_inch, outputs[i].range);
+      elev_inch = zero_flush(outputs[i].elevation);
+      elev_moa = zero_flush(lob::InchToMoa(elev_inch, outputs[i].range));
+      elev_mil = zero_flush(lob::InchToMil(elev_inch, outputs[i].range));
+      wind_inch = zero_flush(outputs[i].deflection);
+      wind_moa = zero_flush(lob::InchToMoa(wind_inch, outputs[i].range));
+      wind_mil = zero_flush(lob::InchToMil(wind_inch, outputs[i].range));
     }
 
     j.push_back({

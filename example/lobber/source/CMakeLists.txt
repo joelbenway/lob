@@ -24,21 +24,25 @@ if(PROJECT_IS_TOP_LEVEL)
   find_package(lob REQUIRED)
 endif()
 
-add_executable(lobber
-  lobber.cpp
-  lobber_cli.cpp
-  lobber_wizard.cpp
-  lobber_bridge.cpp)
-target_include_directories(lobber
-  PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include)
+add_executable(lobber lobber.cpp lobber_cli.cpp lobber_wizard.cpp
+                      lobber_bridge.cpp)
+target_include_directories(lobber PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include)
 target_link_libraries(lobber PRIVATE lob::lob nlohmann_json::nlohmann_json)
 target_compile_features(lobber PRIVATE cxx_std_14)
 
+add_test(
+  NAME Lobber.Smoke
+  COMMAND
+    "${CMAKE_COMMAND}" "-DLOBBER=$<TARGET_FILE:lobber>"
+    "-DFIXTURE=${CMAKE_CURRENT_SOURCE_DIR}/../test/fixtures/minimal_g1.json" -P
+    "${CMAKE_CURRENT_SOURCE_DIR}/../test/smoke_test.cmake"
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 
-add_test(NAME Lobber.Smoke
-  COMMAND "${CMAKE_COMMAND}"
-    "-DLOBBER=$<TARGET_FILE:lobber>"
-    "-DFIXTURE=${CMAKE_CURRENT_SOURCE_DIR}/../test/fixtures/minimal_g1.json"
+add_test(
+  NAME Lobber.Advanced
+  COMMAND
+    "${CMAKE_COMMAND}" "-DLOBBER=$<TARGET_FILE:lobber>"
+    "-DFIXTURE=${CMAKE_CURRENT_SOURCE_DIR}/../test/fixtures/advanced_profile.json"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/../test/smoke_test.cmake"
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 
@@ -46,8 +50,8 @@ add_folders(Example)
 
 # This file is part of lob.
 #
-# lob is free software: you can redistribute it and/or modify it under the
-# terms of the GNU General Public License as published by the Free Software
+# lob is free software: you can redistribute it and/or modify it under the terms
+# of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
 #
