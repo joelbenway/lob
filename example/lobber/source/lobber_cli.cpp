@@ -21,6 +21,12 @@ constexpr const char* kVersion = "--version";
 constexpr const char* kV = "--v";
 constexpr const char* kJson = "--json";
 constexpr const char* kSaveInput = "--save-input=";
+constexpr const char* kFast = "--fast";
+constexpr const char* kElr = "--elr";
+constexpr const char* kForward = "--forward";
+constexpr const char* kInverse = "--inverse";
+constexpr const char* kMoa = "--moa";
+constexpr const char* kMil = "--mil";
 
 }  // namespace
 
@@ -37,6 +43,18 @@ CliConfig ParseArgs(int argc, char* argv[]) {  // NOLINT
     } else if (kArg.compare(0, std::strlen(kSaveInput), kSaveInput) == 0) {
       config.has_save_input_path = true;
       config.save_input_path = kArg.substr(std::strlen(kSaveInput));
+    } else if (kArg == kFast) {
+      config.solver_path = SolverPath::kFast;
+    } else if (kArg == kElr) {
+      config.solver_path = SolverPath::kELR;
+    } else if (kArg == kForward) {
+      config.solver_mode = SolverMode::kForward;
+    } else if (kArg == kInverse) {
+      config.solver_mode = SolverMode::kInverse;
+    } else if (kArg == kMoa) {
+      config.angular_unit = AngularUnit::kMoa;
+    } else if (kArg == kMil) {
+      config.angular_unit = AngularUnit::kMil;
     } else if (kArg.size() > 1 && kArg[0] == '-') {
       std::cerr << "\033[33mWarning: Unknown option " << kArg << "\033[0m\n";
       config.parse_error = true;
@@ -53,11 +71,21 @@ void PrintHelp() {
       << "  -v, --v, --version     Show version information\n"
       << "  --json                 Output results to stdout in json format\n"
       << "  --save-input=FILE      Save input configuration JSON to FILE\n"
+      << "  --fast                 Solve with constant atmosphere (default)\n"
+      << "  --elr                  Solve with lapse-scaled dynamic atmosphere "
+         "(ELR)\n"
+      << "  --forward              Forward solve: drop and windage in inches "
+         "(default)\n"
+      << "  --inverse              Inverse solve: optic hold-off adjustments\n"
+      << "  --moa                  Output inverse adjustments in MOA "
+         "(default)\n"
+      << "  --mil                  Output inverse adjustments in MIL\n"
       << "\n"
       << "Note: When run interactively, a wizard prompts for input.\n"
       << "      When stdin is redirected, JSON data is read from stdin.\n"
       << "Example:\n"
       << "\033[33m  lobber --save-input=my_rifle_load.json\n\033[0m"
+      << "\033[33m  lobber --inverse --mil < my_rifle_load.json\n\033[0m"
       << "\n";
   PrintGH();
 }
