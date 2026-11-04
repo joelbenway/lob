@@ -107,7 +107,7 @@ const std::map<Step, std::string>& GetPrompts() {
   static const std::map<Step, std::string> kPrompts{
       {Step::kBallisticCoefficientPsi, "Enter ballistic coefficient in PSI"},
       {Step::kBCAtmosphere,
-       "Enter 1 for Army Standard Metro or 2 for ICAO reference atmosphere"},
+       "Enter 0 for Army Standard Metro or 1 for ICAO reference atmosphere"},
       {Step::kBCDragFunction,
        "Enter 1, 2, 5, 6, 7, or 8 for associated drag function"},
       {Step::kDiameterInch, "Enter bullet diameter in inches"},
