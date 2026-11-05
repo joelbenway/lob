@@ -384,12 +384,12 @@ void ApplyAtmosphere(lob::Builder* builder, const nlohmann::json& j) {
     builder->AltitudeOfFiringSiteFt(alt);
   }
 
-  double pres = JsonToDouble(j, "AirPressureInHg");
-  if (std::isnan(pres)) {
-    pres = JsonToDouble(j, "airPressureInHg");
+  double pressure = JsonToDouble(j, "AirPressureInHg");
+  if (std::isnan(pressure)) {
+    pressure = JsonToDouble(j, "airPressureInHg");
   }
-  if (!std::isnan(pres) && pres > 0.0) {
-    builder->AirPressureInHg(pres);
+  if (!std::isnan(pressure) && pressure > 0.0) {
+    builder->AirPressureInHg(pressure);
   }
 
   double baro_alt = JsonToDouble(j, "AltitudeOfBarometerFt");
