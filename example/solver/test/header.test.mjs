@@ -15,7 +15,9 @@ test("solver header exposes top-level resources and title", () => {
   );
   assert.ok(/<h1>\s*Ballistics Explorer\s*<\/h1>/.test(flat));
   assert.ok(css.includes(".hero-links"));
+  assert.ok(/\.hero-links\s*\{[^}]*flex-wrap:\s*wrap/s.test(css));
   assert.ok(css.includes(".hero a"));
+  assert.ok(/\.hero a:focus-visible\s*\{[^}]*outline:/s.test(css));
   assert.ok(
     /<footer class="footer">\s*<p>\s*Built on\s*<a href="https:\/\/github\.com\/joelbenway\/lob">lob<\/a>\s*·\s*<a href="https:\/\/joelbenway\.github\.io\/lob\/docs\/">docs<\/a>\s*·\s*<a href="https:\/\/joelbenway\.github\.io\/lob\/bench">Benchmarks<\/a>\s*<\/p>\s*<\/footer>/.test(
       flat,
