@@ -105,10 +105,8 @@ bool TryParseBandObject(const nlohmann::json& item, BandPoint* out) {
     if (item.contains("bc")) {
       bc = item["bc"].get<float>();
     }
-    if (fps > 0.0F && bc > 0.0F) {
-      *out = {fps, bc};
-      return true;
-    }
+    *out = {fps, bc};
+    return true;
   }
   return false;
 }
@@ -140,7 +138,9 @@ bool TryParseWindObject(const nlohmann::json& item, lob::WindPoint* out) {
     const double kRange = item.at(0).get<double>();
     const double kHeading = item.at(1).get<double>();
     const double kSpeed = item.at(2).get<double>();
-    const double kHeight = (item.size() >= 4) ? item.at(3).get<double>() : 0.0;
+    const double kHeight = (item.size() >= 4)
+                               ? item.at(3).get<double>()
+                               : std::numeric_limits<double>::quiet_NaN();
     *out = {kRange, kHeading, kSpeed, kHeight};
     return true;
   }
@@ -163,7 +163,7 @@ bool TryParseWindObject(const nlohmann::json& item, lob::WindPoint* out) {
     } else if (item.contains("speed")) {
       speed = item["speed"].get<double>();
     }
-    double height = 0.0;
+    double height = std::numeric_limits<double>::quiet_NaN();
     if (item.contains("height_ft")) {
       height = item["height_ft"].get<double>();
     } else if (item.contains("height")) {
@@ -173,6 +173,128 @@ bool TryParseWindObject(const nlohmann::json& item, lob::WindPoint* out) {
     return true;
   }
   return false;
+}
+
+std::vector<BandPoint> ParseBandsFromObject(const nlohmann::json& node) {
+  if (node.contains("fps") && node.contains("bcs") && node["fps"].is_array() &&
+      node["bcs"].is_array()) {
+    if (node["fps"].size() != node["bcs"].size()) {
+      throw std::invalid_argument(
+          "BCVelocityBands fps and bcs array lengths must match");
+    }
+    std::vector<BandPoint> bands;
+    const size_t kCount = node["fps"].size();
+    bands.reserve(kCount);
+    for (size_t i = 0; i < kCount; ++i) {
+      bands.push_back(
+          {node["fps"].at(i).get<float>(), node["bcs"].at(i).get<float>()});
+    }
+    return bands;
+  }
+  return {};
+}
+
+std::vector<BandPoint> ParseBandsFromArray(const nlohmann::json& node) {
+  std::vector<BandPoint> bands;
+  for (const auto& item : node) {
+    BandPoint pt;
+    if (TryParseBandObject(item, &pt)) {
+      bands.push_back(pt);
+    }
+  }
+  return bands;
+}
+
+std::vector<DragTablePoint> ParseDragTableFromObject(
+    const nlohmann::json& node) {
+  if (node.contains("machs") && node.contains("drags") &&
+      node["machs"].is_array() && node["drags"].is_array()) {
+    if (node["machs"].size() != node["drags"].size()) {
+      throw std::invalid_argument(
+          "MachVsDragTable machs and drags array lengths must match");
+    }
+    std::vector<DragTablePoint> table;
+    const size_t kCount = node["machs"].size();
+    table.reserve(kCount);
+    for (size_t i = 0; i < kCount; ++i) {
+      table.push_back(
+          {node["machs"].at(i).get<float>(), node["drags"].at(i).get<float>()});
+    }
+    return table;
+  }
+  return {};
+}
+
+std::vector<DragTablePoint> ParseDragTableFromArray(
+    const nlohmann::json& node) {
+  std::vector<DragTablePoint> table;
+  for (const auto& item : node) {
+    DragTablePoint pt;
+    if (TryParseDragObject(item, &pt)) {
+      table.push_back(pt);
+    }
+  }
+  return table;
+}
+
+std::vector<uint32_t> ParseExplicitRanges(const nlohmann::json& arr) {
+  std::vector<uint32_t> ranges;
+  for (const auto& r : arr) {
+    if (!r.is_number()) {
+      return {};
+    }
+    const double kYards = r.get<double>();
+    if (!std::isfinite(kYards) || kYards < 0.0) {
+      return {};
+    }
+    const double kFeet = kYards * kYardsToFeet;
+    if (!std::isfinite(kFeet) ||
+        kFeet > static_cast<double>(std::numeric_limits<uint32_t>::max())) {
+      return {};
+    }
+    ranges.push_back(static_cast<uint32_t>(kFeet));
+  }
+  return ranges;
+}
+
+std::vector<uint32_t> ParseSpanRanges(double max_yds, double step_yds) {
+  constexpr size_t kMaxSpanSteps = 10000;
+  if (!std::isfinite(max_yds) || max_yds <= 0.0) {
+    return {};
+  }
+  constexpr double kDefaultStep = 100.0;
+  double effective_step = step_yds;
+  if (!std::isfinite(effective_step) || effective_step <= 0.0) {
+    effective_step = kDefaultStep;
+  }
+  const double kStepsVal = std::ceil(max_yds / effective_step);
+  if (!std::isfinite(kStepsVal) || kStepsVal <= 0.0 ||
+      kStepsVal > static_cast<double>(kMaxSpanSteps)) {
+    return {};
+  }
+  const auto kSteps = static_cast<size_t>(kStepsVal);
+  std::vector<uint32_t> ranges;
+  ranges.reserve(kSteps + 2);
+  for (size_t step_idx = 0; step_idx <= kSteps; ++step_idx) {
+    const double kYards =
+        std::min(static_cast<double>(step_idx) * effective_step, max_yds);
+    const double kFeet = kYards * kYardsToFeet;
+    if (!std::isfinite(kFeet) ||
+        kFeet > static_cast<double>(std::numeric_limits<uint32_t>::max())) {
+      return {};
+    }
+    ranges.push_back(static_cast<uint32_t>(kFeet));
+  }
+  const double kMaxFeet = max_yds * kYardsToFeet;
+  if (!std::isfinite(kMaxFeet) ||
+      kMaxFeet > static_cast<double>(std::numeric_limits<uint32_t>::max())) {
+    return {};
+  }
+  const auto kMaxFeetU32 = static_cast<uint32_t>(kMaxFeet);
+  if (ranges.empty() || ranges.back() != kMaxFeetU32) {
+    ranges.push_back(kMaxFeetU32);
+  }
+  return ranges;
 }
 
 struct DragBuffers {
@@ -250,25 +372,28 @@ std::string ExtractDragSource(const nlohmann::json& j) {
 void ApplyDrag(lob::Builder* builder, const nlohmann::json& j,
                DragBuffers* buffers) {
   const std::string kDragSource = ExtractDragSource(j);
-  auto bands = ParseBands(j);
-  auto table = ParseDragTable(j);
-  auto coefs = ParseSplineCoefficients(j);
-  const double kExplicitBc = JsonToDouble(j, "BallisticCoefficientPsi");
-
+  if (kDragSource == "bc") {
+    ApplySingleBc(builder, j);
+    return;
+  }
   if (kDragSource == "coefficients") {
-    ApplyCoefficients(builder, std::move(coefs), buffers);
+    ApplyCoefficients(builder, ParseSplineCoefficients(j), buffers);
     return;
   }
   if (kDragSource == "table") {
-    ApplyDragTable(builder, table, buffers);
+    ApplyDragTable(builder, ParseDragTable(j), buffers);
     return;
   }
   if (kDragSource == "bands") {
-    ApplyVelocityBands(builder, j, bands, buffers);
+    ApplyVelocityBands(builder, j, ParseBands(j), buffers);
     return;
   }
 
+  const double kExplicitBc = JsonToDouble(j, "BallisticCoefficientPsi");
   if (std::isnan(kExplicitBc)) {
+    auto coefs = ParseSplineCoefficients(j);
+    auto table = ParseDragTable(j);
+    auto bands = ParseBands(j);
     if (!coefs.empty() && bands.empty() && table.empty()) {
       ApplyCoefficients(builder, std::move(coefs), buffers);
       return;
@@ -388,7 +513,7 @@ void ApplyAtmosphere(lob::Builder* builder, const nlohmann::json& j) {
   if (std::isnan(pressure)) {
     pressure = JsonToDouble(j, "airPressureInHg");
   }
-  if (!std::isnan(pressure) && pressure > 0.0) {
+  if (!std::isnan(pressure)) {
     builder->AirPressureInHg(pressure);
   }
 
@@ -420,7 +545,7 @@ void ApplyAtmosphere(lob::Builder* builder, const nlohmann::json& j) {
   if (std::isnan(rh)) {
     rh = JsonToDouble(j, "relativeHumidityPercent");
   }
-  if (!std::isnan(rh) && rh >= 0.0) {
+  if (!std::isnan(rh)) {
     builder->RelativeHumidityPercent(rh);
   }
 }
@@ -840,8 +965,14 @@ SolverMode JsonToSolverMode(const nlohmann::json& j) {
 }
 
 AngularUnit JsonToAngularUnit(const nlohmann::json& j) {
+  std::string val;
   if (j.contains("AngularUnit") && j["AngularUnit"].is_string()) {
-    const std::string kVal = ToLower(j["AngularUnit"].get<std::string>());
+    val = j["AngularUnit"].get<std::string>();
+  } else if (j.contains("angularUnit") && j["angularUnit"].is_string()) {
+    val = j["angularUnit"].get<std::string>();
+  }
+  if (!val.empty()) {
+    const std::string kVal = ToLower(val);
     if (kVal == "mil") {
       return AngularUnit::kMil;
     }
@@ -861,7 +992,8 @@ std::vector<BandPoint> ParseBandsFromString(const std::string& text) {
       char* end2 = nullptr;
       const float kFps = std::strtof(kTokens.at(0).c_str(), &end1);
       const float kBc = std::strtof(kTokens.at(1).c_str(), &end2);
-      if (end1 != kTokens.at(0).c_str() && end2 != kTokens.at(1).c_str()) {
+      if (end1 != kTokens.at(0).c_str() && *end1 == '\0' &&
+          end2 != kTokens.at(1).c_str() && *end2 == '\0') {
         result.push_back({kFps, kBc});
       }
     }
@@ -880,28 +1012,10 @@ std::vector<BandPoint> ParseBands(const nlohmann::json& j) {
       return ParseBandsFromString(j[key].get<std::string>());
     }
     if (j[key].is_object()) {
-      if (j[key].contains("fps") && j[key].contains("bcs") &&
-          j[key]["fps"].is_array() && j[key]["bcs"].is_array()) {
-        std::vector<BandPoint> bands;
-        const size_t kCount =
-            std::min(j[key]["fps"].size(), j[key]["bcs"].size());
-        bands.reserve(kCount);
-        for (size_t i = 0; i < kCount; ++i) {
-          bands.push_back({j[key]["fps"].at(i).get<float>(),
-                           j[key]["bcs"].at(i).get<float>()});
-        }
-        return bands;
-      }
+      return ParseBandsFromObject(j[key]);
     }
     if (j[key].is_array()) {
-      std::vector<BandPoint> bands;
-      for (const auto& item : j[key]) {
-        BandPoint pt;
-        if (TryParseBandObject(item, &pt)) {
-          bands.push_back(pt);
-        }
-      }
-      return bands;
+      return ParseBandsFromArray(j[key]);
     }
   }
   return {};
@@ -916,7 +1030,8 @@ std::vector<DragTablePoint> ParseDragTableFromString(const std::string& text) {
       char* end2 = nullptr;
       const float kMach = std::strtof(kTokens.at(0).c_str(), &end1);
       const float kCd = std::strtof(kTokens.at(1).c_str(), &end2);
-      if (end1 != kTokens.at(0).c_str() && end2 != kTokens.at(1).c_str()) {
+      if (end1 != kTokens.at(0).c_str() && *end1 == '\0' &&
+          end2 != kTokens.at(1).c_str() && *end2 == '\0') {
         result.push_back({kMach, kCd});
       }
     }
@@ -936,28 +1051,10 @@ std::vector<DragTablePoint> ParseDragTable(const nlohmann::json& j) {
       return ParseDragTableFromString(j[key].get<std::string>());
     }
     if (j[key].is_object()) {
-      if (j[key].contains("machs") && j[key].contains("drags") &&
-          j[key]["machs"].is_array() && j[key]["drags"].is_array()) {
-        std::vector<DragTablePoint> table;
-        const size_t kCount =
-            std::min(j[key]["machs"].size(), j[key]["drags"].size());
-        table.reserve(kCount);
-        for (size_t i = 0; i < kCount; ++i) {
-          table.push_back({j[key]["machs"].at(i).get<float>(),
-                           j[key]["drags"].at(i).get<float>()});
-        }
-        return table;
-      }
+      return ParseDragTableFromObject(j[key]);
     }
     if (j[key].is_array()) {
-      std::vector<DragTablePoint> table;
-      for (const auto& item : j[key]) {
-        DragTablePoint pt;
-        if (TryParseDragObject(item, &pt)) {
-          table.push_back(pt);
-        }
-      }
-      return table;
+      return ParseDragTableFromArray(j[key]);
     }
   }
   return {};
@@ -1013,13 +1110,18 @@ std::vector<lob::WindPoint> ParseWindProfileFromString(
       const double kRange = std::strtod(kTokens.at(0).c_str(), &end1);
       const double kHeading = std::strtod(kTokens.at(1).c_str(), &end2);
       const double kSpeed = std::strtod(kTokens.at(2).c_str(), &end3);
-      double height = 0.0;
+      double height = std::numeric_limits<double>::quiet_NaN();
+      bool valid = (end1 != kTokens.at(0).c_str() && *end1 == '\0' &&
+                    end2 != kTokens.at(1).c_str() && *end2 == '\0' &&
+                    end3 != kTokens.at(2).c_str() && *end3 == '\0');
       if (kTokens.size() >= 4) {
         char* end4 = nullptr;
         height = std::strtod(kTokens.at(3).c_str(), &end4);
+        if (end4 == kTokens.at(3).c_str() || *end4 != '\0') {
+          valid = false;
+        }
       }
-      if (end1 != kTokens.at(0).c_str() && end2 != kTokens.at(1).c_str() &&
-          end3 != kTokens.at(2).c_str()) {
+      if (valid) {
         result.push_back({kRange, kHeading, kSpeed, height});
       }
     }
@@ -1053,18 +1155,10 @@ std::vector<lob::WindPoint> ParseWindProfile(const nlohmann::json& j) {
 
 std::vector<uint32_t> ParseRanges(const nlohmann::json& j) {
   if (j.contains("Ranges") && j["Ranges"].is_array()) {
-    std::vector<uint32_t> ranges;
-    for (const auto& r : j["Ranges"]) {
-      ranges.push_back(static_cast<uint32_t>(r.get<double>() * kYardsToFeet));
-    }
-    return ranges;
+    return ParseExplicitRanges(j["Ranges"]);
   }
   if (j.contains("ranges") && j["ranges"].is_array()) {
-    std::vector<uint32_t> ranges;
-    for (const auto& r : j["ranges"]) {
-      ranges.push_back(static_cast<uint32_t>(r.get<double>() * kYardsToFeet));
-    }
-    return ranges;
+    return ParseExplicitRanges(j["ranges"]);
   }
   if (j.contains("MaxYds") || j.contains("maxYds")) {
     const double kMaxYds = j.contains("MaxYds") ? j["MaxYds"].get<double>()
@@ -1076,21 +1170,7 @@ std::vector<uint32_t> ParseRanges(const nlohmann::json& j) {
     } else if (j.contains("stepYds")) {
       step_yds = j["stepYds"].get<double>();
     }
-    if (step_yds <= 0.0) {
-      step_yds = kDefaultStep;
-    }
-    std::vector<uint32_t> ranges;
-    const auto kSteps = static_cast<size_t>(std::ceil(kMaxYds / step_yds));
-    for (size_t step_idx = 0; step_idx <= kSteps; ++step_idx) {
-      const double kYards =
-          std::min(static_cast<double>(step_idx) * step_yds, kMaxYds);
-      ranges.push_back(static_cast<uint32_t>(kYards * kYardsToFeet));
-    }
-    if (ranges.empty() ||
-        ranges.back() != static_cast<uint32_t>(kMaxYds * kYardsToFeet)) {
-      ranges.push_back(static_cast<uint32_t>(kMaxYds * kYardsToFeet));
-    }
-    return ranges;
+    return ParseSpanRanges(kMaxYds, step_yds);
   }
 
   const std::array<uint32_t, 12> kDefaultRanges = {
