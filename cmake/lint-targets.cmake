@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Please see end of file for extended copyright information
 
-set(FORMAT_PATTERNS
+set(FORMAT_PATTERNS_DEFAULT
     source/*.cpp
     source/*.hpp
     include/*.h
@@ -11,9 +11,32 @@ set(FORMAT_PATTERNS
     test/*.hpp
     example/*.cpp
     example/*.hpp
-    wasm/*.cpp
-    CACHE STRING
-          "; separated patterns relative to the project source dir to format")
+    wasm/*.cpp)
+
+set(FORMAT_PATTERNS_PREV_DEFAULT
+    source/*.cpp
+    source/*.hpp
+    include/*.hpp
+    test/*.cpp
+    test/*.hpp
+    example/*.cpp
+    example/*.hpp
+    wasm/*.cpp)
+
+if(DEFINED CACHE{FORMAT_PATTERNS})
+  if("$CACHE{FORMAT_PATTERNS}" STREQUAL "${FORMAT_PATTERNS_PREV_DEFAULT}")
+    set(FORMAT_PATTERNS
+        "${FORMAT_PATTERNS_DEFAULT}"
+        CACHE STRING
+              "; separated patterns relative to the project source dir to format"
+              FORCE)
+  endif()
+else()
+  set(FORMAT_PATTERNS
+      "${FORMAT_PATTERNS_DEFAULT}"
+      CACHE STRING
+            "; separated patterns relative to the project source dir to format")
+endif()
 
 set(FORMAT_COMMAND
     clang-format
