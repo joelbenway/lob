@@ -53,8 +53,10 @@ CliConfig ParseArgs(int argc, char* argv[]) {  // NOLINT
       config.solver_mode = SolverMode::kInverse;
     } else if (kArg == kMoa) {
       config.angular_unit = AngularUnit::kMoa;
+      config.has_explicit_angular_unit = true;
     } else if (kArg == kMil) {
       config.angular_unit = AngularUnit::kMil;
+      config.has_explicit_angular_unit = true;
     } else if (kArg.size() > 1 && kArg[0] == '-') {
       std::cerr << "\033[33mWarning: Unknown option " << kArg << "\033[0m\n";
       config.parse_error = true;

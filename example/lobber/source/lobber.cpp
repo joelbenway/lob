@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -70,15 +71,15 @@ example::SolverMode ResolveSolverMode(example::SolverMode cli_mode,
              : example::SolverMode::kForward;
 }
 
-example::AngularUnit ResolveAngularUnit(example::AngularUnit cli_unit,
+example::AngularUnit ResolveAngularUnit(const example::CliConfig& config,
                                         const nlohmann::json& json) {
-  if (cli_unit != example::AngularUnit::kMoa) {
-    return cli_unit;
+  if (config.has_explicit_angular_unit) {
+    return config.angular_unit;
   }
   if (json.contains("AngularUnit") || json.contains("angularUnit")) {
     return example::JsonToAngularUnit(json);
   }
-  return cli_unit;
+  return config.angular_unit;
 }
 
 size_t SolveTrajectory(example::SolverPath path, example::SolverMode mode,
@@ -157,7 +158,7 @@ int main(int argc, char* argv[]) try {
 
   const auto kPath = ResolveSolverPath(kConfig.solver_path, json);
   const auto kMode = ResolveSolverMode(kConfig.solver_mode, json);
-  const auto kUnit = ResolveAngularUnit(kConfig.angular_unit, json);
+  const auto kUnit = ResolveAngularUnit(kConfig, json);
 
   const auto kRanges = example::ParseRanges(json);
   if (kRanges.empty()) {
@@ -175,6 +176,9 @@ int main(int argc, char* argv[]) try {
 
   EmitResults(kConfig, kMode, kUnit, kCtx, outputs, kCount, kRanges.size());
   return 0;
+} catch (const std::exception& e) {
+  std::cerr << "\033[31mError: " << e.what() << "\033[0m\n";
+  return 1;
 } catch (...) {
   std::cerr << "\033[31mUnexpected error\033[0m\n";
   return 1;
