@@ -272,6 +272,9 @@ std::vector<BandPoint> PromptInteractiveBands() {
     const std::string kPrompt =
         "Band " + std::to_string(bands.size() + 1) + " > ";
     const std::string kLine = ReadLine(kPrompt);
+    if (!std::cin) {
+      break;
+    }
     if (kLine.empty()) {
       if (bands.empty()) {
         constexpr float kSampleBand1Fps = 2000.0F;
@@ -366,6 +369,9 @@ std::vector<DragTablePoint> PromptInteractiveDragTable() {
     const std::string kPrompt =
         "Point " + std::to_string(table.size() + 1) + " > ";
     const std::string kLine = ReadLine(kPrompt);
+    if (!std::cin) {
+      break;
+    }
     if (kLine.empty()) {
       if (table.empty()) {
         table = GetSampleDragTable();
@@ -431,6 +437,9 @@ std::vector<float> PromptInteractiveSplineCoefficients() {
   std::vector<float> coefs;
   while (coefs.size() < lob::kLobCoeffsSize) {
     const std::string kLine = ReadLine("> ");
+    if (!std::cin) {
+      break;
+    }
     if (kLine.empty()) {
       if (coefs.empty()) {
         const auto kSampleCtx =
@@ -442,8 +451,9 @@ std::vector<float> PromptInteractiveSplineCoefficients() {
                 .Build();
         coefs.assign(kSampleCtx.drags.begin(), kSampleCtx.drags.end());
         std::cout << "Using sample spline coefficients (60 floats).\n";
+        break;
       }
-      break;
+      continue;
     }
     const auto kParsed = ParseSplineCoefficientsFromString(kLine);
     for (const float kVal : kParsed) {
@@ -809,6 +819,21 @@ std::vector<lob::WindPoint> PromptInteractiveWindProfile() {
   return profile;
 }
 
+bool IsValidWindProfile(const std::vector<lob::WindPoint>& profile) {
+  if (profile.empty() || profile.size() > kMaxWindStations) {
+    return false;
+  }
+  if (std::fabs(profile.front().range_ft) > kZeroTolerance) {
+    return false;
+  }
+  for (size_t i = 1; i < profile.size(); ++i) {
+    if (profile.at(i).range_ft <= profile.at(i - 1).range_ft) {
+      return false;
+    }
+  }
+  return true;
+}
+
 std::vector<lob::WindPoint> LoadWindProfileFromFileOrInteractive() {
   const std::string kFilePath = ReadLine(
       "Load wind profile from file or enter interactively? (enter path or "
@@ -820,12 +845,12 @@ std::vector<lob::WindPoint> LoadWindProfileFromFileOrInteractive() {
                 << "', falling back to interactive entry.\033[0m\n";
     } else {
       const auto kProfile = ParseWindProfileFromString(kContent);
-      if (!kProfile.empty() &&
-          std::fabs(kProfile.at(0).range_ft) <= kZeroTolerance) {
+      if (IsValidWindProfile(kProfile)) {
         return kProfile;
       }
-      std::cerr << "\033[31mProfile must start at range 0 ft. Falling back to "
-                   "interactive entry.\033[0m\n";
+      std::cerr
+          << "\033[31mFile contained invalid wind profile, falling back to "
+             "interactive entry.\033[0m\n";
     }
   }
   return PromptInteractiveWindProfile();
@@ -917,24 +942,50 @@ void WizardPhaseGeometry(nlohmann::json* j) {
 // Phase 7: Advanced Controls & Ranges
 // ---------------------------------------------------------------------------
 void PromptAdvancedControls(nlohmann::json* j) {
-  const double kStep =
-      PromptDouble("Enter solver step size in inches (default 36 in / 1 yd)",
-                   /*required=*/false, kDefaultStepSizeInch);
-  if (!std::isnan(kStep) && kStep > 0.0) {
-    (*j)["StepSize"] = static_cast<uint16_t>(kStep);
+  constexpr double kMaxU16 = 65535.0;
+  while (true) {
+    const double kStep =
+        PromptDouble("Enter solver step size in inches (default 36 in / 1 yd)",
+                     /*required=*/false, kDefaultStepSizeInch);
+    if (std::isnan(kStep)) {
+      break;
+    }
+    if (kStep >= 1.0 && kStep <= kMaxU16) {
+      (*j)["StepSize"] = static_cast<uint16_t>(kStep);
+      break;
+    }
+    std::cerr
+        << "\033[31mStep size must be between 1 and 65535 inches.\033[0m\n";
   }
 
-  const double kMinSpd = PromptDouble("Enter minimum speed cutoff in fps",
-                                      /*required=*/false, kNaN, "no limit");
-  if (!std::isnan(kMinSpd) && kMinSpd > 0.0) {
-    (*j)["MinimumSpeed"] = static_cast<uint16_t>(kMinSpd);
+  while (true) {
+    const double kMinSpd = PromptDouble("Enter minimum speed cutoff in fps",
+                                        /*required=*/false, kNaN, "no limit");
+    if (std::isnan(kMinSpd)) {
+      break;
+    }
+    if (kMinSpd >= 1.0 && kMinSpd <= kMaxU16) {
+      (*j)["MinimumSpeed"] = static_cast<uint16_t>(kMinSpd);
+      break;
+    }
+    std::cerr
+        << "\033[31mMinimum speed must be between 1 and 65535 fps.\033[0m\n";
   }
 
   if (j->contains("MassGrains")) {
-    const double kMinEn = PromptDouble("Enter minimum energy cutoff in ft-lbs",
-                                       /*required=*/false, kNaN, "no limit");
-    if (!std::isnan(kMinEn) && kMinEn > 0.0) {
-      (*j)["MinimumEnergy"] = static_cast<uint16_t>(kMinEn);
+    while (true) {
+      const double kMinEn =
+          PromptDouble("Enter minimum energy cutoff in ft-lbs",
+                       /*required=*/false, kNaN, "no limit");
+      if (std::isnan(kMinEn)) {
+        break;
+      }
+      if (kMinEn >= 1.0 && kMinEn <= kMaxU16) {
+        (*j)["MinimumEnergy"] = static_cast<uint16_t>(kMinEn);
+        break;
+      }
+      std::cerr << "\033[31mMinimum energy must be between 1 and 65535 "
+                   "ft-lbs.\033[0m\n";
     }
   }
 
@@ -962,14 +1013,23 @@ std::vector<uint32_t> BuildDefaultLadder() {
 }
 
 std::vector<double> BuildSpanRanges() {
+  constexpr size_t kMaxSpanSteps = 10000;
   const double kMaxYds = PromptDouble("Enter maximum range in yards",
                                       /*required=*/true, kDefaultMaxRangeYds);
+  if (!std::isfinite(kMaxYds) || kMaxYds <= 0.0) {
+    return {};
+  }
   double step_yds = PromptDouble("Enter range step in yards", /*required=*/true,
                                  kDefaultStepRangeYds);
-  if (step_yds <= 0.0) {
+  if (!std::isfinite(step_yds) || step_yds <= 0.0) {
     step_yds = kDefaultStepRangeYds;
   }
-  const auto kSteps = static_cast<size_t>(std::floor(kMaxYds / step_yds));
+  const double kStepsVal = std::floor(kMaxYds / step_yds);
+  if (!std::isfinite(kStepsVal) || kStepsVal < 0.0 ||
+      kStepsVal > static_cast<double>(kMaxSpanSteps)) {
+    return {};
+  }
+  const auto kSteps = static_cast<size_t>(kStepsVal);
   std::vector<double> ranges;
   ranges.reserve(kSteps + 2);
   for (size_t i = 0; i <= kSteps; ++i) {
