@@ -1103,7 +1103,7 @@ bool WizardPhaseSolverAndReview(nlohmann::json* j) {
   PrintConfigurationReview(*j);
 
   if (!PromptYesNo("Proceed to solve trajectory?", /*default_yes=*/true)) {
-    std::cout << "Trajectory solve cancelled.\n";
+    std::cout << "Trajectory solve canceled.\n";
     return false;
   }
   return true;
