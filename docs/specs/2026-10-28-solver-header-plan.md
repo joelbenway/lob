@@ -17,9 +17,9 @@
 - Use these exact destinations:
   - Documentation: `https://joelbenway.github.io/lob/docs/`
   - Benchmarks: `https://joelbenway.github.io/lob/bench`
-  - Title `lob` link: `https://github.com/joelbenway/lob`
-- Use this exact visible title: `Trajectory Explorer, powered by lob`.
-- Make the footer exactly: `Built on lob.`
+  - Footer `lob` link: `https://github.com/joelbenway/lob`
+- Use this exact visible title: `Ballistics Explorer`.
+- Make the footer text: `Built on lob · docs · Benchmarks.`
 - Verify 1440 px, 500 px, and 390 px widths in light and dark modes.
 
 ## Review Focus
@@ -71,23 +71,19 @@ const css = readFileSync(new URL("../style.css", import.meta.url), "utf8");
 const flat = html.replace(/\s+/g, " ");
 
 test("solver header exposes top-level resources and title", () => {
-  assert.ok(
-    flat.includes("<title>Trajectory Explorer, powered by lob</title>"),
-  );
+  assert.ok(flat.includes("<title>Ballistics Explorer</title>"));
   assert.ok(
     flat.includes(
       '<nav class="hero-links" aria-label="Solver resources"> <a href="https://joelbenway.github.io/lob/docs/">Documentation</a> <a href="https://joelbenway.github.io/lob/bench">Benchmarks</a> </nav>',
     ),
   );
-  assert.ok(
-    flat.includes(
-      '<h1>Trajectory Explorer, powered by <a href="https://github.com/joelbenway/lob">lob</a></h1>',
-    ),
-  );
+  assert.ok(/<h1>\s*Ballistics Explorer\s*<\/h1>/.test(flat));
   assert.ok(css.includes(".hero-links"));
   assert.ok(css.includes(".hero a"));
   assert.ok(
-    flat.includes('<footer class="footer"> <p>Built on lob.</p> </footer>'),
+    /<footer class="footer">\s*<p>\s*Built on\s*<a href="https:\/\/github\.com\/joelbenway\/lob">lob<\/a>\s*·\s*<a href="https:\/\/joelbenway\.github\.io\/lob\/docs\/">docs<\/a>\s*·\s*<a href="https:\/\/joelbenway\.github\.io\/lob\/bench">Benchmarks<\/a>\s*<\/p>\s*<\/footer>/.test(
+      flat,
+    ),
   );
 });
 ```
@@ -107,7 +103,7 @@ Expected: FAIL because the new title, header nav, CSS hooks, and plain footer ar
 In `example/solver/index.html`:
 
 1. Change document title to:
-   `Trajectory Explorer, powered by lob`
+   `Ballistics Explorer`
 2. Insert this nav as the first child of `.hero`:
    ```html
    <nav class="hero-links" aria-label="Solver resources">
@@ -117,14 +113,15 @@ In `example/solver/index.html`:
    ```
 3. Change the hero heading to:
    ```html
-   <h1>
-     Trajectory Explorer, powered by
-     <a href="https://github.com/joelbenway/lob">lob</a>
-   </h1>
+   <h1>Ballistics Explorer</h1>
    ```
-4. Replace the footer paragraph with exactly:
+4. Replace the footer paragraph with:
    ```html
-   <p>Built on lob.</p>
+   <p>
+     Built on <a href="https://github.com/joelbenway/lob">lob</a> ·
+     <a href="https://joelbenway.github.io/lob/docs/">docs</a> ·
+     <a href="https://joelbenway.github.io/lob/bench">Benchmarks</a>
+   </p>
    ```
 
 In `example/solver/style.css`, add only theme-matching rules for `.hero-links` and `.hero a`, including wrapping, right alignment, accent color, and a visible focus outline.
