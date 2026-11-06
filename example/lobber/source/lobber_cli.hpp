@@ -9,27 +9,23 @@
 
 namespace example {
 
-/** @brief Supported solver calculation paths. */
 enum class SolverPath : uint8_t {
   kAuto = 0,
   kFast,
   kELR,
 };
 
-/** @brief Supported solver output modes. */
 enum class SolverMode : uint8_t {
   kAuto = 0,
   kForward,
   kInverse,
 };
 
-/** @brief Angular units for inverse sight adjustments. */
 enum class AngularUnit : uint8_t {
   kMoa = 0,
   kMil,
 };
 
-/** @brief Command-line option settings. */
 struct CliConfig {
   bool show_help = false;
   bool show_version = false;
@@ -43,16 +39,12 @@ struct CliConfig {
   AngularUnit angular_unit = AngularUnit::kMoa;
 };
 
-/** @brief Parse CLI arguments into a CliConfig structure. */
 CliConfig ParseArgs(int argc, char* argv[]);  // NOLINT
 
-/** @brief Print CLI help message to stdout. */
 void PrintHelp();
 
-/** @brief Print version information to stdout. */
 void PrintVersion();
 
-/** @brief Print GitHub repo URL and feedback notice to stdout. */
 void PrintGH();
 
 }  // namespace example
