@@ -172,6 +172,42 @@ div.fragment {
     font-weight: 600;
 }
 
+/* OKF Neighborhood Orientation Banner */
+.okf-neighborhood-graph {
+    border: 1px solid var(--separator-color);
+    border-radius: var(--border-radius-base);
+    background: var(--code-background);
+    padding: 0.75rem 1rem 0.5rem;
+    margin: 1rem 0 1.5rem;
+    overflow-x: auto;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+}
+
+.okf-graph-caption {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.okf-neighborhood-graph .dotgraph {
+    display: flex;
+    justify-content: center;
+    margin: 0;
+}
+
+.okf-neighborhood-graph svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* In dark mode, ensure SVG text and neighbor node backgrounds look clean */
+html.dark-mode .okf-neighborhood-graph text {
+    fill: var(--page-foreground-color);
+}
+
 /* This file is part of lob.
  *
  * lob is free software: you can redistribute it and/or modify it under the
