@@ -169,7 +169,6 @@ void FillManifestRow(const nlohmann::json& row_node, ManifestRow* row) {
   row->c = row_node.at("sensitivity_c").get<double>();
   (void)ReqManifestString(row_node, "sensitivity_source");
   const nlohmann::json& u = row_node.at("u");
-  // ponytail: string-or-number branch; any non-numeric u fails closed.
   row->u_known = u.is_number();
   (void)ReqManifestString(row_node, "u_provenance");
   (void)ReqManifestString(row_node, "distribution");
