@@ -231,7 +231,7 @@ jobs:
       run: nix build .#lobber
 
   docs:
-    needs: [sanitize, test]
+    needs: [sanitize, test, wasm]
 
     runs-on: ubuntu-latest
 
@@ -253,18 +253,22 @@ jobs:
         "cmake -DPROJECT_SOURCE_DIR=$PWD -DPROJECT_BINARY_DIR=$PWD/build
         -P cmake/docs-ci.cmake"
 
-    - name: Build solver example
+    - name: Stage GitHub Pages site
       run: |
         nix build .#lob-wasm --out-link build/lob-wasm
-        rm -rf build/docs/html/solver
-        cp -r build/lob-wasm/solver build/docs/html/solver
+        rm -rf build/site
+        mkdir -p build/site/docs
+        cp -r build/docs/html/. build/site/docs/
+        cp -r build/lob-wasm/loblab/. build/site/
+        mkdir -p build/site/docs/solver build/site/docs/loblab
+        echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=../../"><title>Redirecting...</title></head><body><p>Redirecting to <a href="../../">loblab</a>...</p></body></html>' > build/site/docs/solver/index.html
+        echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=../../"><title>Redirecting...</title></head><body><p>Redirecting to <a href="../../">loblab</a>...</p></body></html>' > build/site/docs/loblab/index.html
 
-    - name: Deploy Docs to gh-pages
+    - name: Deploy to gh-pages
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./build/docs/html
-        destination_dir: docs
+        publish_dir: ./build/site
         keep_files: true
 
   benchmark:
