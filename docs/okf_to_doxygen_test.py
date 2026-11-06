@@ -7,11 +7,28 @@
 import unittest
 
 from okf_to_doxygen import parse_frontmatter, page_id_for, render_page
+from okf_to_doxygen import format_type_title, type_slug
 import tempfile
 from okf_to_doxygen import rewrite_links, generate
 from pathlib import Path
 from okf_to_doxygen import check_bundle
 from okf_to_doxygen import main
+
+
+class TypeFormattingTest(unittest.TestCase):
+    def test_format_type_title(self):
+        self.assertEqual(format_type_title("Concept"), "Concepts")
+        self.assertEqual(format_type_title("Guide"), "Guides & Workflows")
+        self.assertEqual(format_type_title("DesignDecision"), "Design Decisions")
+        self.assertEqual(format_type_title("SystemPolicy"), "System Policies")
+        self.assertEqual(format_type_title("Hardware"), "Hardware")
+
+    def test_type_slug(self):
+        self.assertEqual(type_slug("Concept"), "concepts")
+        self.assertEqual(type_slug("Guide"), "guides")
+        self.assertEqual(type_slug("DesignDecision"), "decisions")
+        self.assertEqual(type_slug("SystemPolicy"), "system_policies")
+
 
 
 class MissingDirTest(unittest.TestCase):
@@ -177,11 +194,11 @@ class GenerateTest(unittest.TestCase):
             "okf_bc_bands",
             {"type": "Guide", "title": "BC Bands", "exhibit": "bc-bands"},
             "Body\n")
-        self.assertIn('<div data-lob-exhibit="bc-bands"></div>', out)
+        self.assertIn('<div data-okf-exhibit="bc-bands"></div>', out)
         self.assertIn('<script type="module" src="exhibits/bc-bands.js"></script>', out)
         self.assertIn(
             "\\htmlonly\n"
-            '<div data-lob-exhibit="bc-bands"></div>\n'
+            '<div data-okf-exhibit="bc-bands"></div>\n'
             '<script type="module" src="exhibits/bc-bands.js"></script>\n'
             "\\endhtmlonly\n",
             out,

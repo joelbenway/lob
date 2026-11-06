@@ -344,14 +344,16 @@ html.dark-mode .okf-neighborhood-graph #navigator {
 }
 
 /* Dual-Pillar Jump Cards on Landing Page */
-.lob-pillar-cards {
+.lob-pillar-cards,
+.okf-pillar-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.25rem;
     margin: 1.5rem 0 2rem 0;
 }
 
-.lob-pillar-card {
+.lob-pillar-card,
+.okf-pillar-card {
     display: flex;
     flex-direction: column;
     padding: 1.25rem;
@@ -362,13 +364,15 @@ html.dark-mode .okf-neighborhood-graph #navigator {
     transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.lob-pillar-card:hover {
+.lob-pillar-card:hover,
+.okf-pillar-card:hover {
     transform: translateY(-2px);
     border-color: var(--primary-color);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.lob-pillar-card-badge {
+.lob-pillar-card-badge,
+.okf-pillar-card-badge {
     align-self: flex-start;
     font-size: 0.75rem;
     font-weight: 600;
@@ -381,13 +385,15 @@ html.dark-mode .okf-neighborhood-graph #navigator {
     margin-bottom: 0.75rem;
 }
 
-.lob-pillar-card h3 {
+.lob-pillar-card h3,
+.okf-pillar-card h3 {
     margin: 0 0 0.5rem 0 !important;
     font-size: 1.15rem;
     color: var(--page-foreground-color);
 }
 
-.lob-pillar-card p {
+.lob-pillar-card p,
+.okf-pillar-card p {
     margin: 0 0 1rem 0;
     font-size: 0.9rem;
     line-height: 1.5;
@@ -396,7 +402,8 @@ html.dark-mode .okf-neighborhood-graph #navigator {
     flex-grow: 1;
 }
 
-.lob-pillar-card-cta {
+.lob-pillar-card-cta,
+.okf-pillar-card-cta {
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--primary-color);

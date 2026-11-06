@@ -189,6 +189,44 @@ def page_id_for(relpath):
     return "okf_" + re.sub(r"[/\\\-.]+", "_", stem)
 
 
+def format_type_title(ptype):
+    """Convert 'DesignDecision' -> 'Design Decisions', 'Concept' -> 'Concepts'."""
+    ptype = str(ptype).strip()
+    if ptype == "Guide":
+        return "Guides & Workflows"
+    if ptype == "DesignDecision":
+        return "Design Decisions"
+    if ptype == "Concept":
+        return "Concepts"
+
+    words = re.findall(r"[A-Z]?[a-z0-9]+|[A-Z]+(?=[A-Z][a-z0-9]|\b)", ptype)
+    if not words:
+        words = [ptype]
+    last = words[-1]
+    uncountable = {"hardware", "software", "firmware", "infrastructure", "middleware"}
+    if last.lower() in uncountable or last.endswith("s"):
+        plural_last = last
+    elif len(last) > 1 and last.endswith("y") and last[-2].lower() not in "aeiou":
+        plural_last = last[:-1] + "ies"
+    else:
+        plural_last = last + "s"
+    words[-1] = plural_last
+    return " ".join(words)
+
+
+def type_slug(ptype):
+    """Convert 'DesignDecision' -> 'decisions', 'SystemPolicy' -> 'system_policies'."""
+    ptype = str(ptype).strip()
+    if ptype == "DesignDecision":
+        return "decisions"
+    if ptype == "Guide":
+        return "guides"
+    if ptype == "Concept":
+        return "concepts"
+    title = format_type_title(ptype)
+    return re.sub(r"[^a-z0-9]+", "_", title.lower()).strip("_")
+
+
 def render_page(page_id, frontmatter, body, graph_dot=""):
     """Emit '@page <id> <title>' header plus banner, exhibit, and body."""
     title = frontmatter.get("title") or page_id
@@ -215,7 +253,7 @@ def render_page(page_id, frontmatter, body, graph_dot=""):
         if ex:
             exhibit_html = (
                 "\\htmlonly\n"
-                '<div data-lob-exhibit="%s"></div>\n'
+                '<div data-okf-exhibit="%s"></div>\n'
                 '<script type="module" src="exhibits/%s.js"></script>\n'
                 "\\endhtmlonly\n"
                 % (ex, ex)
