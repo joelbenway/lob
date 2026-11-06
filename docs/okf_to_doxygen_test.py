@@ -206,7 +206,15 @@ class GenerateTest(unittest.TestCase):
             generate(srcp, Path(out))
             self.assertEqual(
                 sorted(p.name for p in Path(out).iterdir()),
-                ["keep.txt", "okf_a.md", "okf_mainpage.md"])
+                [
+                    "keep.txt",
+                    "okf_a.md",
+                    "okf_concepts.md",
+                    "okf_decisions.md",
+                    "okf_guides.md",
+                    "okf_mainpage.md",
+                    "okf_technical_reference.md",
+                ])
 
     def test_root_index_frontmatter_stripped_from_mainpage(self):
         with tempfile.TemporaryDirectory() as src, \
@@ -224,6 +232,38 @@ class GenerateTest(unittest.TestCase):
             self.assertNotIn("---", mainpage)
             self.assertNotIn("okf_version", mainpage)
             self.assertIn("# Bundle", mainpage)
+
+    def test_technical_reference_category_hubs_generated(self):
+        with tempfile.TemporaryDirectory() as src, \
+                tempfile.TemporaryDirectory() as out:
+            srcp = Path(src)
+            (srcp / "index.md").write_text(
+                "# Bundle\n- [G](g.md)\n- [C](c.md)\n- [D](d.md)\n", encoding="utf-8")
+            (srcp / "g.md").write_text(
+                "---\ntype: Guide\ntitle: Guide G\n---\nGuide body\n", encoding="utf-8")
+            (srcp / "c.md").write_text(
+                "---\ntype: Concept\ntitle: Concept C\n---\nConcept body\n", encoding="utf-8")
+            (srcp / "d.md").write_text(
+                "---\ntype: DesignDecision\ntitle: Decision D\n---\nDecision body\n", encoding="utf-8")
+            generate(srcp, Path(out))
+
+            tech_ref = (Path(out) / "okf_technical_reference.md").read_text(encoding="utf-8")
+            self.assertIn("@page okf_technical_reference Technical Reference", tech_ref)
+            self.assertIn("@subpage okf_guides", tech_ref)
+            self.assertIn("@subpage okf_concepts", tech_ref)
+            self.assertIn("@subpage okf_decisions", tech_ref)
+
+            guides = (Path(out) / "okf_guides.md").read_text(encoding="utf-8")
+            self.assertIn("@page okf_guides Guides & Workflows", guides)
+            self.assertIn("@subpage okf_g", guides)
+
+            concepts = (Path(out) / "okf_concepts.md").read_text(encoding="utf-8")
+            self.assertIn("@page okf_concepts Core Concepts", concepts)
+            self.assertIn("@subpage okf_c", concepts)
+
+            decisions = (Path(out) / "okf_decisions.md").read_text(encoding="utf-8")
+            self.assertIn("@page okf_decisions Design Decisions", decisions)
+            self.assertIn("@subpage okf_d", decisions)
 
 
 class CheckTest(unittest.TestCase):

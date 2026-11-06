@@ -567,6 +567,86 @@ def generate(src_dir, out_dir):
         rel: parsed[rel][0].get("type", "Concept") for rel in concepts
     }
 
+    guides = []
+    core_concepts = []
+    decisions = []
+    for rel in sorted(concepts):
+        ptype = concept_types[rel]
+        pid = id_map[rel]
+        title = concept_titles[rel]
+        if ptype == "Guide":
+            guides.append((pid, title))
+        elif ptype == "DesignDecision":
+            decisions.append((pid, title))
+        else:
+            core_concepts.append((pid, title))
+
+    # Generate category hubs and master Technical Reference page
+    tech_ref_lines = [
+        "@page okf_technical_reference Technical Reference",
+        "",
+        "# Technical Reference",
+        "",
+        "The technical knowledge base documents the complete exterior ballistics physics, "
+        "mathematical models, numerical integration algorithms, and architectural design "
+        "decisions behind lob.",
+        "",
+        "## Categories",
+        "- @subpage okf_guides",
+        "- @subpage okf_concepts",
+        "- @subpage okf_decisions",
+        "",
+    ]
+    (out_dir / "okf_technical_reference.md").write_text(
+        "\n".join(tech_ref_lines), encoding="utf-8"
+    )
+
+    guides_lines = [
+        "@page okf_guides Guides & Workflows",
+        "",
+        "# Guides & Workflows",
+        "",
+        "End-to-end walkthroughs, step-by-step solver workflows, and worked examples.",
+        "",
+    ]
+    for pid, title in guides:
+        guides_lines.append("- @subpage %s \"%s\"" % (pid, title))
+    guides_lines.append("")
+    (out_dir / "okf_guides.md").write_text(
+        "\n".join(guides_lines), encoding="utf-8"
+    )
+
+    concepts_lines = [
+        "@page okf_concepts Core Concepts",
+        "",
+        "# Core Concepts",
+        "",
+        "Fundamental ballistic trajectory models, atmospheric equations, aerodynamic coefficients, "
+        "and numerical solvers.",
+        "",
+    ]
+    for pid, title in core_concepts:
+        concepts_lines.append("- @subpage %s \"%s\"" % (pid, title))
+    concepts_lines.append("")
+    (out_dir / "okf_concepts.md").write_text(
+        "\n".join(concepts_lines), encoding="utf-8"
+    )
+
+    decisions_lines = [
+        "@page okf_decisions Design Decisions",
+        "",
+        "# Design Decisions",
+        "",
+        "Architectural rationales, memory layout guarantees, C ABI boundaries, and library invariants.",
+        "",
+    ]
+    for pid, title in decisions:
+        decisions_lines.append("- @subpage %s \"%s\"" % (pid, title))
+    decisions_lines.append("")
+    (out_dir / "okf_decisions.md").write_text(
+        "\n".join(decisions_lines), encoding="utf-8"
+    )
+
     # root index.md becomes the @mainpage
     root_index = src_dir / "index.md"
     if root_index.exists():
