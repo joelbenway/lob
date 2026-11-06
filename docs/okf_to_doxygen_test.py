@@ -341,6 +341,23 @@ class NeighborhoodGraphTest(unittest.TestCase):
         self.assertIn('okf_in -> okf_curr;', dot)
         self.assertIn('okf_curr -> okf_out;', dot)
 
+    def test_build_global_dot_structure(self):
+        from okf_to_doxygen import build_global_dot
+        concepts = {"a.md": Path("a.md"), "b.md": Path("b.md")}
+        titles = {"a.md": "Alpha", "b.md": "Beta Decision"}
+        types = {"a.md": "Concept", "b.md": "DesignDecision"}
+        outgoing = {"a.md": {"b.md"}}
+        id_map = {"a.md": "okf_a", "b.md": "okf_b"}
+        dot = build_global_dot(concepts, titles, types, outgoing, id_map)
+        self.assertTrue(dot.startswith("\\dot\n"))
+        self.assertTrue(dot.endswith("\n\\enddot\n"))
+        self.assertIn("rankdir=LR;", dot)
+        self.assertIn('bgcolor="transparent";', dot)
+        self.assertIn('URL="@ref okf_a"', dot)
+        self.assertIn('URL="@ref okf_b"', dot)
+        self.assertIn("peripheries=2", dot)  # DesignDecision
+        self.assertIn("okf_a -> okf_b;", dot)
+
     def test_generate_injects_graph_banner(self):
         with tempfile.TemporaryDirectory() as tmp, \
                 tempfile.TemporaryDirectory() as out:
@@ -358,7 +375,8 @@ class NeighborhoodGraphTest(unittest.TestCase):
             self.assertIn("\\dot", page_a)
             self.assertIn("okf-neighborhood-graph", page_b)
             self.assertIn("\\dot", page_b)
-            self.assertNotIn("okf-neighborhood-graph", mainpage)
+            self.assertIn("okf-global-graph", mainpage)
+            self.assertIn("\\dot", mainpage)
 
 
 if __name__ == "__main__":

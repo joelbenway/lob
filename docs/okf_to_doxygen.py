@@ -332,6 +332,9 @@ def _escape_dot(s):
     return str(s).replace("\\", "\\\\").replace('"', '\\"')
 
 
+DOT_FONT = "ui-sans-serif, system-ui, sans-serif"
+
+
 def build_neighborhood_dot(pid, title, ptype, incoming_nodes, outgoing_nodes):
     """Construct a 1-hop Graphviz digraph for the concept page."""
     if not incoming_nodes and not outgoing_nodes:
@@ -342,8 +345,8 @@ def build_neighborhood_dot(pid, title, ptype, incoming_nodes, outgoing_nodes):
         'digraph "neighborhood" {' ,
         "  rankdir=LR;",
         '  bgcolor="transparent";',
-        '  node [fontname="ui-sans-serif, system-ui, sans-serif", fontsize=10, '
-        'height=0.34, shape=box, style="filled,rounded"];',
+        '  node [fontname="%s", fontsize=10, '
+        'height=0.34, shape=box, style="filled,rounded"];' % DOT_FONT,
         '  edge [color="#859399", penwidth=1.2, arrowsize=0.65];',
         "",
     ]
@@ -391,6 +394,49 @@ def build_neighborhood_dot(pid, title, ptype, incoming_nodes, outgoing_nodes):
         lines.append("  %s -> %s;" % (inc_id, pid))
     for out_id in sorted(outgoing_nodes.keys()):
         lines.append("  %s -> %s;" % (pid, out_id))
+
+    lines.extend(["}", "\\enddot", ""])
+    return "\n".join(lines)
+
+
+def build_global_dot(concepts, titles, types, outgoing_by_rel, id_map):
+    """Emit a complete Graphviz directed graph for the entire OKF corpus."""
+    if not concepts:
+        return ""
+    lines = [
+        "\\dot",
+        "digraph global_map {",
+        '  bgcolor="transparent";',
+        "  rankdir=LR;",
+        "  nodesep=0.35;",
+        "  ranksep=0.6;",
+        '  node [shape=box, style="filled,rounded", fontname="%s", fontsize=10];'
+        % DOT_FONT,
+        '  edge [color="#859399", penwidth=1.2, arrowsize=0.75];',
+        "",
+    ]
+    for rel in sorted(concepts):
+        pid = id_map[rel]
+        title = _escape_dot(titles.get(rel) or pid)
+        ptype = types.get(rel, "Concept")
+        periph = (
+            " peripheries=2"
+            if ptype == "DesignDecision"
+            else ' shape=box, style="filled,rounded"'
+        )
+        lines.append(
+            '  %s [label="%s", tooltip="%s", URL="@ref %s", target="_top", '
+            'fillcolor="#fffdf8", fontcolor="#17202a", color="#d8d1c2"%s];'
+            % (pid, title, title, pid, periph)
+        )
+
+    lines.append("")
+    for src_rel in sorted(outgoing_by_rel):
+        src_id = id_map[src_rel]
+        for dst_rel in sorted(outgoing_by_rel[src_rel]):
+            if dst_rel in id_map:
+                dst_id = id_map[dst_rel]
+                lines.append("  %s -> %s;" % (src_id, dst_id))
 
     lines.extend(["}", "\\enddot", ""])
     return "\n".join(lines)
@@ -465,6 +511,14 @@ def generate(src_dir, out_dir):
         (out_dir / (pid + ".md")).write_text(
             render_page(pid, fm, body, graph_dot=dot), encoding="utf-8")
         written.append(pid)
+
+    concept_titles = {
+        rel: parsed[rel][0].get("title") or id_map[rel] for rel in concepts
+    }
+    concept_types = {
+        rel: parsed[rel][0].get("type", "Concept") for rel in concepts
+    }
+
     # root index.md becomes the @mainpage
     root_index = src_dir / "index.md"
     if root_index.exists():
@@ -472,12 +526,38 @@ def generate(src_dir, out_dir):
         m = FRONTMATTER_RE.match(text)
         if m:
             text = text[m.end():]
+        text = re.sub(
+            r'<div style="display:\s*none;?">.*?</div>',
+            "",
+            text,
+            flags=re.DOTALL,
+        )
         text = rewrite_links(text, "index.md", id_map, exclude)
         # Title from the index body's first heading, else a generic label.
         heading = re.search(r"^#\s+(.+)$", text, re.MULTILINE)
         title = heading.group(1).strip() if heading else "Technical Reference"
+
+        global_dot = build_global_dot(
+            concepts, concept_titles, concept_types, outgoing_by_rel, id_map
+        )
+        graph_block = ""
+        if global_dot:
+            graph_block = (
+                "\n\n\\htmlonly\n"
+                '<div class="okf-neighborhood-graph okf-global-graph">\n'
+                '  <div class="okf-graph-caption">'
+                "Corpus Topic Map &bull; Complete Knowledge Graph</div>\n"
+                "\\endhtmlonly\n"
+                "%s\n"
+                "\\htmlonly\n"
+                "</div>\n"
+                "\\endhtmlonly\n"
+            ) % global_dot.strip()
+
         (out_dir / "okf_mainpage.md").write_text(
-            "@mainpage %s\n" % title + text, encoding="utf-8")
+            "@mainpage %s\n" % title + text.strip() + graph_block,
+            encoding="utf-8",
+        )
     return written
 
 
