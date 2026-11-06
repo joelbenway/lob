@@ -47,21 +47,21 @@ constexpr size_t kMinPoints = 2;
 constexpr size_t kMaxBands = 16;
 constexpr size_t kMaxWindStations = 8;
 
-constexpr double kDefaultG1Bc = 0.462;
-constexpr double kDefaultG7Bc = 0.243;
-constexpr double kDefaultOtherBc = 0.400;
+constexpr double kDefaultG1Bc = 0.426;
+constexpr double kDefaultG7Bc = 0.218;
+constexpr double kDefaultOtherBc = 0.300;
 
-constexpr double kDefaultMvFps = 2700.0;
+constexpr double kDefaultMvFps = 2800.0;
 constexpr double kMaxMvFps = 65535.0;
 constexpr double kDefaultMassGrains = 168.0;
 constexpr double kDefaultCaliberInch = 0.308;
-constexpr double kDefaultBulletLengthInch = 1.24;
-constexpr double kDefaultTwistInches = 11.0;
-constexpr double kDefaultNoseLengthInch = 0.60;
-constexpr double kDefaultMeplatDiameterInch = 0.05;
-constexpr double kDefaultBaseDiameterInch = 0.28;
-constexpr double kDefaultTailLengthInch = 0.20;
-constexpr double kDefaultOgiveRatio = 0.50;
+constexpr double kDefaultBulletLengthInch = 1.215;
+constexpr double kDefaultTwistInches = 10.0;
+constexpr double kDefaultNoseLengthInch = 0.69;
+constexpr double kDefaultMeplatDiameterInch = 0.065;
+constexpr double kDefaultBaseDiameterInch = 0.242;
+constexpr double kDefaultTailLengthInch = 0.14;
+constexpr double kDefaultOgiveRatio = 0.90;
 
 constexpr double kDefaultOpticHeightInch = 1.5;
 constexpr double kDefaultZeroDistanceYards = 100.0;
@@ -230,10 +230,12 @@ int PromptDragFunction() {
 }
 
 int PromptBcAtmosphere() {
+  constexpr int kDefaultIcaoChoice = 2;
   const std::vector<std::string> kAtmoOptions = {"Army Standard Metro (ASM)",
                                                  "ICAO Reference Atmosphere"};
   const int kChoice =
-      PromptChoice("Select BC atmosphere reference standard:", kAtmoOptions, 1);
+      PromptChoice("Select BC atmosphere reference standard:", kAtmoOptions,
+                   kDefaultIcaoChoice);
   return (kChoice == 2) ? 1 : 0;
 }
 
@@ -888,7 +890,9 @@ void WizardPhaseWind(nlohmann::json* j) {
   const std::vector<std::string> kWindSources = {
       "Calm (no wind)", "Uniform wind (speed & clock angle / heading)",
       "Multi-station downrange wind profile"};
-  const int kChoice = PromptChoice("Select wind environment:", kWindSources, 2);
+  constexpr int kDefaultCalmChoice = 1;
+  const int kChoice = PromptChoice("Select wind environment:", kWindSources,
+                                   kDefaultCalmChoice);
 
   if (kChoice == 2) {
     const double kWspd =
