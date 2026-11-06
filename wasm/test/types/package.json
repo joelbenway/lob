@@ -1,0 +1,8 @@
+{
+  "name": "lob-type-consumer",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@joelbenway/lob": "file:../../../build/wasm"
+  }
+}

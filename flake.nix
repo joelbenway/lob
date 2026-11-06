@@ -66,6 +66,7 @@
           emscripten
           nodejs
           python3
+          typescript
         ];
         configurePhase = ''
           export EM_CACHE="$NIX_BUILD_TOP/emscripten-cache"

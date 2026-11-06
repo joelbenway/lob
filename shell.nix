@@ -23,6 +23,7 @@
         nlohmann_json
         nodejs
         python3
+        typescript
         valgrind
       ];
       shellHook = let

@@ -61,6 +61,10 @@ if(EMSCRIPTEN)
                  "${CMAKE_BINARY_DIR}/package.json" @ONLY)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/index.mjs"
                  "${CMAKE_BINARY_DIR}/index.mjs" COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/index.d.ts"
+                 "${CMAKE_BINARY_DIR}/index.d.ts" COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/lob.d.ts"
+                 "${CMAKE_BINARY_DIR}/lob.d.ts" COPYONLY)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/README.md"
                  "${CMAKE_BINARY_DIR}/README.md" COPYONLY)
   configure_file("${PROJECT_SOURCE_DIR}/COPYING.md"

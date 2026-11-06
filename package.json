@@ -8,6 +8,7 @@
   "scripts": {
     "build:wasm": "cmake --preset=wasm && cmake --build --preset=wasm",
     "test": "node --test wasm/test/*.test.mjs example/loblab/test/*.test.mjs",
+    "test:types": "tsc --project wasm/test/types/tsconfig.json --noEmit",
     "lint": "eslint .",
     "format": "prettier --write eslint.config.js package.json wasm/ example/loblab/",
     "format:check": "prettier --check eslint.config.js package.json wasm/ example/loblab/"
