@@ -323,7 +323,7 @@ def extract_concept_links(body, src_rel, concept_rels, exclude=()):
         key = "/".join(parts)
         if _is_excluded(key, exclude):
             continue
-        if key in concept_rels:
+        if key in concept_rels and key != src_rel:
             out.add(key)
     return out
 
@@ -402,7 +402,11 @@ def build_neighborhood_dot(pid, title, ptype, incoming_nodes, outgoing_nodes):
 def reduce_edges(outgoing, id_map):
     """Transitive reduction of outgoing concept links, preserving cycles."""
     graph = {
-        id_map[u]: {id_map[v] for v in targets if v in id_map}
+        id_map[u]: {
+            id_map[v]
+            for v in targets
+            if v in id_map and id_map[v] != id_map[u]
+        }
         for u, targets in outgoing.items()
     }
 

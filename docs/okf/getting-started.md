@@ -1,14 +1,14 @@
 ---
 type: Guide
-title: Getting Started
-description: Building lob and getting your first solution.
-tags: [guide, getting-started, quickstart]
+title: Basic Worked Example
+description: Configuring a builder, checking errors, and solving forward and inverse trajectories.
+tags: [guide, worked-example, tutorial]
 generated: {by: human:joel, at: 2026-10-09T00:00:00Z}
 verified: [{by: human:joel, at: 2026-10-09T00:00:00Z}]
 status: draft
 ---
 
-# Getting Started
+# Basic Worked Example
 
 This is the shortest path from nothing to a trajectory. Build
 instructions for the library itself live in the repository's build

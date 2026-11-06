@@ -320,6 +320,13 @@ class NeighborhoodGraphTest(unittest.TestCase):
         found = extract_concept_links(body, "source.md", concepts, exclude=[])
         self.assertEqual(found, {"sub/target.md", "other.md"})
 
+    def test_extract_concept_links_ignores_self_links(self):
+        from okf_to_doxygen import extract_concept_links
+        body = "See [Self](source.md) and [Target](target.md)."
+        concepts = {"source.md", "target.md"}
+        found = extract_concept_links(body, "source.md", concepts, exclude=[])
+        self.assertEqual(found, {"target.md"})
+
     def test_build_neighborhood_dot_empty(self):
         from okf_to_doxygen import build_neighborhood_dot
         dot = build_neighborhood_dot("okf_a", "Page A", "Concept", {}, {})

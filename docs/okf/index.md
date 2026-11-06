@@ -18,7 +18,7 @@ For the full C API reference, including every function signature, error code, an
 
 <div style="display: none;">
 
-- [Getting Started](getting-started.md)
+- [Basic Worked Example](getting-started.md)
 - [Ballistic Coefficient](ballistic-coefficient.md)
 - [Solver Context](solver-context.md)
 - [Solver Input State Machine](solver-input-state-machine.md)
