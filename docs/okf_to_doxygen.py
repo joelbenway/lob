@@ -439,15 +439,13 @@ def build_global_dot(concepts, titles, types, outgoing_by_rel, id_map):
     lines = [
         "\\dot",
         "digraph global_map {",
-        "  layout=fdp;",
-        "  overlap=false;",
-        "  splines=true;",
         '  bgcolor="transparent";',
-        '  size="10,6.5!";',
-        '  ratio="fill";',
-        '  node [shape=box, style="filled,rounded", fontname="%s", fontsize=9, height=0.3];'
+        "  rankdir=LR;",
+        "  nodesep=0.35;",
+        "  ranksep=0.6;",
+        '  node [shape=box, style="filled,rounded", fontname="%s", fontsize=10];'
         % DOT_FONT,
-        '  edge [color="#859399", penwidth=1.1, arrowsize=0.6];',
+        '  edge [color="#859399", penwidth=1.2, arrowsize=0.75];',
         "",
     ]
     clusters = [

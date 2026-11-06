@@ -303,6 +303,21 @@ div.fragment {
     max-width: 100% !important;
 }
 
+.okf-global-graph .dotgraph {
+    width: 100%;
+    height: 620px;
+    border: 1px solid var(--separator-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.okf-global-graph .dotgraph iframe {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    border: none;
+}
+
 .okf-neighborhood-graph svg {
     max-width: 100%;
     height: auto;
@@ -316,6 +331,16 @@ html.dark-mode .okf-neighborhood-graph text {
 html.dark-mode .okf-neighborhood-graph g.cluster path,
 html.dark-mode .okf-neighborhood-graph g.cluster polygon {
     stroke: var(--separator-color) !important;
+}
+
+html.dark-mode .okf-neighborhood-graph #navigator rect,
+html.dark-mode .okf-neighborhood-graph #arrow_out rect {
+    fill: var(--page-background-color) !important;
+    stroke: var(--separator-color) !important;
+}
+
+html.dark-mode .okf-neighborhood-graph #navigator {
+    fill: var(--page-foreground-color) !important;
 }
 
 /* This file is part of lob.
