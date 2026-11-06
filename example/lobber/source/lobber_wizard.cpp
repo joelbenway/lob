@@ -1017,6 +1017,7 @@ std::vector<double> BuildSpanRanges() {
   const double kMaxYds = PromptDouble("Enter maximum range in yards",
                                       /*required=*/true, kDefaultMaxRangeYds);
   if (!std::isfinite(kMaxYds) || kMaxYds <= 0.0) {
+    std::cerr << "\033[31mMaximum range must be greater than 0.\033[0m\n";
     return {};
   }
   double step_yds = PromptDouble("Enter range step in yards", /*required=*/true,
@@ -1027,6 +1028,8 @@ std::vector<double> BuildSpanRanges() {
   const double kStepsVal = std::floor(kMaxYds / step_yds);
   if (!std::isfinite(kStepsVal) || kStepsVal < 0.0 ||
       kStepsVal > static_cast<double>(kMaxSpanSteps)) {
+    std::cerr << "\033[31mToo many range steps (maximum 10000). Increase the "
+                 "step or reduce the maximum range.\033[0m\n";
     return {};
   }
   const auto kSteps = static_cast<size_t>(kStepsVal);
@@ -1088,7 +1091,15 @@ void WizardPhaseControlsAndRanges(nlohmann::json* j) {
   if (kRChoice == 1) {
     (*j)["Ranges"] = BuildDefaultLadder();
   } else if (kRChoice == 2) {
-    (*j)["Ranges"] = BuildSpanRanges();
+    std::vector<double> ranges;
+    while (ranges.empty() && std::cin) {
+      ranges = BuildSpanRanges();
+    }
+    if (ranges.empty()) {
+      const auto kDefaultLadder = BuildDefaultLadder();
+      ranges.assign(kDefaultLadder.begin(), kDefaultLadder.end());
+    }
+    (*j)["Ranges"] = std::move(ranges);
   } else {
     (*j)["Ranges"] = PromptCustomRanges();
   }
