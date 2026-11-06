@@ -12,7 +12,23 @@ import tempfile
 from okf_to_doxygen import rewrite_links, generate
 from pathlib import Path
 from okf_to_doxygen import check_bundle
-from okf_to_doxygen import main
+from okf_to_doxygen import main, parse_args
+
+
+class CLITest(unittest.TestCase):
+    def test_cli_argument_parsing(self):
+        args = parse_args(["docs/okf", "build/pages", "--title", "Custom Title", "--accent-color", "#123456", "--api-ref-url", "api.html"])
+        self.assertEqual(args.src_dir, Path("docs/okf"))
+        self.assertEqual(args.out_dir, Path("build/pages"))
+        self.assertEqual(args.title, "Custom Title")
+        self.assertEqual(args.accent_color, "#123456")
+        self.assertEqual(args.api_ref_url, "api.html")
+
+    def test_cli_check_mode(self):
+        with tempfile.TemporaryDirectory() as src:
+            ret = main(["--check", src])
+            self.assertEqual(ret, 0)
+
 
 
 class TypeFormattingTest(unittest.TestCase):

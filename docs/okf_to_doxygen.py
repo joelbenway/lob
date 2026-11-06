@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Please see end of file for extended copyright information
 
-"""OKF bundle -> Doxygen pages. Stdlib only (pathlib, re, sys)."""
+"""OKF bundle -> Doxygen pages. Stdlib only (argparse, pathlib, re, sys)."""
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -821,23 +822,122 @@ def check_bundle(src_dir):
     return errors
 
 
+def parse_args(argv):
+    """Parse CLI arguments using argparse."""
+    parser = argparse.ArgumentParser(
+        description="OKF bundle -> Doxygen pages converter.",
+        prog="okf_to_doxygen.py",
+    )
+    parser.add_argument(
+        "src_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Path to OKF source directory containing concepts.",
+    )
+    parser.add_argument(
+        "out_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Output directory for generated Doxygen markdown files.",
+    )
+    parser.add_argument(
+        "--check",
+        nargs="?",
+        const=True,
+        default=False,
+        metavar="SRC",
+        help="Validate OKF bundle without generating output. Can take optional SRC or use src_dir.",
+    )
+    parser.add_argument(
+        "--title",
+        default=None,
+        help="Custom title for the generated @mainpage (defaults to index.md heading or 'Technical Reference').",
+    )
+    parser.add_argument(
+        "--accent-color",
+        default="#2458a6",
+        help="Hex color for current page node and cluster headers in Graphviz (default: #2458a6).",
+    )
+    parser.add_argument(
+        "--api-ref-url",
+        default=None,
+        help="Relative or absolute URL for the API Reference jump card (e.g. classes.html).",
+    )
+    parser.add_argument(
+        "--api-ref-title",
+        default="API Reference",
+        help="Title for the API Reference card (default: 'API Reference').",
+    )
+    parser.add_argument(
+        "--api-ref-desc",
+        default="Full programming interface: classes, functions, and data types.",
+        help="Description text for the API Reference card.",
+    )
+    parser.add_argument(
+        "--api-ref-badge",
+        default="API",
+        help="Badge label for the API Reference card (default: 'API').",
+    )
+    parser.add_argument(
+        "--no-cards",
+        action="store_true",
+        help="Disable generation of jump cards on the landing page.",
+    )
+    parser.add_argument(
+        "--no-global-graph",
+        action="store_true",
+        help="Disable generation of the global topic map on the landing page.",
+    )
+    args = parser.parse_args(argv)
+
+    if args.check:
+        if isinstance(args.check, str):
+            args.src_dir = Path(args.check)
+            args.check = True
+        elif not args.src_dir:
+            parser.error("source directory required for --check")
+    elif not args.src_dir or not args.out_dir:
+        parser.error("src_dir and out_dir are required unless --check is specified")
+
+    return args
+
+
 def main(argv):
-    if len(argv) == 2 and argv[0] == "--check":
-        src, check_mode = Path(argv[1]), True
-    elif len(argv) == 2:
-        src, check_mode = Path(argv[0]), False
-    else:
-        print("usage: okf_to_doxygen.py [--check <src>] | [<src> <out>]")
+    try:
+        args = parse_args(argv)
+    except SystemExit as exc:
+        return exc.code
+
+    if not args.src_dir.is_dir():
+        print("error: %s: not a directory" % args.src_dir, file=sys.stderr)
         return 2
-    if not src.is_dir():
-        print("error: %s: not a directory" % src)
-        return 2
-    if check_mode:
-        errors = check_bundle(src)
+
+    if args.check:
+        errors = check_bundle(args.src_dir)
         for err in errors:
             print("error: " + err)
         return 1 if errors else 0
-    for pid in generate(src, Path(argv[1])):
+
+    api_ref = None
+    if args.api_ref_url:
+        api_ref = {
+            "url": args.api_ref_url,
+            "title": args.api_ref_title,
+            "desc": args.api_ref_desc,
+            "badge": args.api_ref_badge,
+        }
+
+    for pid in generate(
+        args.src_dir,
+        args.out_dir,
+        title=args.title,
+        accent_color=args.accent_color,
+        api_ref=api_ref,
+        no_cards=args.no_cards,
+        no_global_graph=args.no_global_graph,
+    ):
         print("wrote " + pid)
     return 0
 
