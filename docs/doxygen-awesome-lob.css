@@ -74,22 +74,69 @@ html.dark-mode body {
         var(--page-background-color) !important;
 }
 
-/* Top Navigation Bar */
+/* Header layout: Brand on left, Navigation links and Search on right */
+#top {
+    display: block !important;
+    background: var(--header-background);
+    border-bottom: 1px solid var(--separator-color);
+    position: relative;
+    z-index: 99;
+}
+
+#titlearea {
+    width: 100% !important;
+    padding: 0.85rem 1.5rem !important;
+    background: none;
+    color: var(--header-foreground);
+    border-bottom: none;
+    box-sizing: border-box;
+}
+
+#titlearea table {
+    width: 100% !important;
+    table-layout: auto;
+    border-collapse: collapse;
+}
+
+#titlearea table tbody tr#projectrow {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+#projectalign {
+    flex: 1 1 auto;
+    text-align: left;
+    padding: 0 !important;
+}
+
+#projectcontrols {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 0.45rem !important;
+    flex: 0 0 auto !important;
+    padding: 0 !important;
+}
+
+/* Top Navigation Links */
 .lob-top-nav {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    padding: 0.5rem 1.25rem 0.25rem;
     background: transparent;
-    border-bottom: 1px solid var(--separator-color);
-    font-size: 0.9rem;
+    border-bottom: none !important;
+    padding: 0 !important;
+    font-size: 0.88rem;
 }
 
 .lob-nav-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem 1rem;
+    gap: 0.25rem 1.15rem;
     align-items: center;
+    justify-content: flex-end;
 }
 
 .lob-nav-item {
@@ -106,6 +153,57 @@ html.dark-mode body {
 .lob-nav-item.active {
     font-weight: 700;
     color: var(--page-foreground-color) !important;
+}
+
+/* Search Row on the Right */
+.lob-search-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.lob-search-row #MSearchBox {
+    margin: 0 !important;
+    float: none !important;
+    border-radius: var(--border-radius-base);
+}
+
+doxygen-awesome-dark-mode-toggle {
+    margin: 0 !important;
+    display: inline-flex;
+    align-items: center;
+}
+
+@media screen and (max-width: 767px) {
+    #titlearea {
+        padding: 0.75rem 1rem !important;
+    }
+
+    #titlearea table tbody tr#projectrow {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+    }
+
+    #projectcontrols {
+        align-items: flex-start !important;
+        width: 100% !important;
+    }
+
+    .lob-top-nav,
+    .lob-nav-links {
+        justify-content: flex-start !important;
+    }
+
+    .lob-search-row {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+
+    .lob-search-row #MSearchBox {
+        width: calc(100% - 40px) !important;
+    }
 }
 
 /* Brand Logo in Title Area */

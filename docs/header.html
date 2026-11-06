@@ -75,14 +75,6 @@ $extrastylesheet
 
 <!--BEGIN TITLEAREA-->
 <div id="titlearea">
-<div class="lob-top-nav" aria-label="Project resources">
-  <div class="lob-nav-links">
-    <a href="../" class="lob-nav-item">loblab</a>
-    <a href="index.html" class="lob-nav-item active" aria-current="page">Documentation</a>
-    <a href="../bench/" class="lob-nav-item">Benchmarks</a>
-    <a href="https://github.com/joelbenway/lob" class="lob-nav-item">GitHub</a>
-  </div>
-</div>
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr id="projectrow">
@@ -103,13 +95,25 @@ $extrastylesheet
     </td>
    <!--END PROJECT_BRIEF-->
   <!--END !PROJECT_NAME-->
-  <!--BEGIN DISABLE_INDEX-->
-   <!--BEGIN SEARCHENGINE-->
-     <!--BEGIN !FULL_SIDEBAR-->
-    <td>$searchbox</td>
-     <!--END !FULL_SIDEBAR-->
-   <!--END SEARCHENGINE-->
-  <!--END DISABLE_INDEX-->
+  <td id="projectcontrols">
+    <nav class="lob-top-nav" aria-label="Project resources">
+      <div class="lob-nav-links">
+        <a href="../" class="lob-nav-item">loblab</a>
+        <a href="index.html" class="lob-nav-item active" aria-current="page">Documentation</a>
+        <a href="../bench/" class="lob-nav-item">Benchmarks</a>
+        <a href="https://github.com/joelbenway/lob" class="lob-nav-item">GitHub</a>
+      </div>
+    </nav>
+    <!--BEGIN DISABLE_INDEX-->
+     <!--BEGIN SEARCHENGINE-->
+       <!--BEGIN !FULL_SIDEBAR-->
+      <div class="lob-search-row">
+        $searchbox
+      </div>
+       <!--END !FULL_SIDEBAR-->
+     <!--END SEARCHENGINE-->
+    <!--END DISABLE_INDEX-->
+  </td>
  </tr>
   <!--BEGIN SEARCHENGINE-->
    <!--BEGIN FULL_SIDEBAR-->
