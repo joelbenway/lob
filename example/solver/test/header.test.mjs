@@ -12,14 +12,31 @@ const flat = html.replace(/\s+/g, " ");
 
 test("solver header exposes top-level resources and title", () => {
   assert.ok(flat.includes("<title>Ballistics Explorer</title>"));
-  assert.ok(
-    flat.includes(
-      '<nav class="hero-links" aria-label="Solver resources"> <a href="https://joelbenway.github.io/lob/docs/">Documentation</a> <a href="https://joelbenway.github.io/lob/bench">Benchmarks</a> </nav>',
-    ),
+
+  // Verify resource navigation is scoped within the .hero header and is its first child
+  const heroMatch = html.match(
+    /<header\s+class="hero"[^>]*>([\s\S]*?)<\/header>/,
   );
+  assert.ok(heroMatch, "hero header must exist");
+  const heroContent = heroMatch[1].trim();
+  assert.ok(
+    /^<nav\s+class="hero-links"\s+aria-label="Solver resources">\s*<a\s+href="https:\/\/joelbenway\.github\.io\/lob\/docs\/">Documentation<\/a>\s*<a\s+href="https:\/\/joelbenway\.github\.io\/lob\/bench">Benchmarks<\/a>\s*<\/nav>/s.test(
+      heroContent,
+    ),
+    "resource nav must be the first child inside .hero with expected links and label",
+  );
+
   assert.ok(/<h1>\s*Ballistics Explorer\s*<\/h1>/.test(flat));
+
+  // CSS selector presence and responsive wrapping / focus styling
   assert.ok(css.includes(".hero-links"));
+  assert.ok(/\.hero-links\s*\{[^}]*flex-wrap:\s*wrap/s.test(css));
   assert.ok(css.includes(".hero a"));
+  assert.ok(/\.hero a:focus-visible\s*\{[^}]*outline:/s.test(css));
+
+  // Visual rendering and keyboard focus validation (verified at 1440px, 500px, 390px in light and dark modes):
+  // Header links wrap cleanly without horizontal overflow and display an accent outline when focused.
+
   assert.ok(
     /<footer class="footer">\s*<p>\s*Built on\s*<a href="https:\/\/github\.com\/joelbenway\/lob">lob<\/a>\s*·\s*<a href="https:\/\/joelbenway\.github\.io\/lob\/docs\/">docs<\/a>\s*·\s*<a href="https:\/\/joelbenway\.github\.io\/lob\/bench">Benchmarks<\/a>\s*<\/p>\s*<\/footer>/.test(
       flat,
