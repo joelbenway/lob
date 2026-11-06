@@ -1,4 +1,4 @@
-# Browser solver example
+# loblab (browser solver example)
 
 A static, dependency-free front end for the lob WebAssembly package. It is an
 example consumer of the package, not part of the package API.
@@ -23,8 +23,8 @@ nix develop --command npm run build:wasm
 python3 -m http.server -d build/wasm 8000
 ```
 
-Open <http://localhost:8000/solver/>. The wasm build assembles this directory
-into `build/wasm/solver/`.
+Open <http://localhost:8000/loblab/>. The wasm build assembles this directory
+into `build/wasm/loblab/`.
 
 The deployed copy is at
-<https://joelbenway.github.io/lob/docs/solver/>.
+<https://joelbenway.github.io/lob/>.

@@ -7,10 +7,10 @@
   },
   "scripts": {
     "build:wasm": "cmake --preset=wasm && cmake --build --preset=wasm",
-    "test": "node --test wasm/test/*.test.mjs example/solver/test/*.test.mjs",
+    "test": "node --test wasm/test/*.test.mjs example/loblab/test/*.test.mjs",
     "lint": "eslint .",
-    "format": "prettier --write eslint.config.js package.json wasm/ example/solver/",
-    "format:check": "prettier --check eslint.config.js package.json wasm/ example/solver/"
+    "format": "prettier --write eslint.config.js package.json wasm/ example/loblab/",
+    "format:check": "prettier --check eslint.config.js package.json wasm/ example/loblab/"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

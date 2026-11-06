@@ -80,15 +80,16 @@
           node --check build/wasm/lob.mjs
           node wasm/smoke.mjs build/wasm/lob.mjs
           node --test wasm/test/*.test.mjs
-          node --test example/solver/test/*.test.mjs
-          test -f build/wasm/solver/index.html
+          node --test example/loblab/test/*.test.mjs
+          test -f build/wasm/loblab/index.html
         '';
         installPhase = ''
-          mkdir -p $out/solver
+          mkdir -p $out/loblab $out/solver
           install -m 0644 build/wasm/index.mjs build/wasm/lob.mjs \
             build/wasm/lob.wasm build/wasm/package.json build/wasm/README.md \
             build/wasm/COPYING.md $out/
-          cp -r build/wasm/solver/. $out/solver/
+          cp -r build/wasm/loblab/. $out/loblab/
+          cp -r build/wasm/loblab/. $out/solver/
         '';
       };
       lobber = pkgs.stdenv.mkDerivation {
