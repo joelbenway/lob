@@ -99,6 +99,8 @@ endif()
 set(out "${DOXYGEN_OUTPUT_DIRECTORY}")
 set(doxyfile "${bin}/docs/Doxyfile")
 
+include("${src}/cmake/doxygen-awesome-css.cmake")
+
 configure_file("${src}/docs/Doxyfile.in" "${doxyfile}" @ONLY)
 
 find_program(OKF_PYTHON NAMES python3 REQUIRED)

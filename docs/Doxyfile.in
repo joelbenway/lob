@@ -39,9 +39,19 @@ GENERATE_HTML = YES
 GENERATE_TREEVIEW = YES
 HTML_DYNAMIC_MENUS = NO
 DISABLE_INDEX = NO
+FULL_SIDEBAR = NO
 GENERATE_LEGEND = YES
 HTML_COLORSTYLE = LIGHT
-HTML_EXTRA_STYLESHEET =
+HTML_HEADER = "@PROJECT_SOURCE_DIR@/docs/header.html"
+HTML_EXTRA_STYLESHEET = "@DOXYGEN_AWESOME_CSS_DIR@/doxygen-awesome.css" \
+                        "@DOXYGEN_AWESOME_CSS_DIR@/doxygen-awesome-sidebar-only.css" \
+                        "@DOXYGEN_AWESOME_CSS_DIR@/doxygen-awesome-sidebar-only-darkmode-toggle.css" \
+                        "@PROJECT_SOURCE_DIR@/docs/doxygen-awesome-lob.css"
+HTML_EXTRA_FILES = "@DOXYGEN_AWESOME_CSS_DIR@/doxygen-awesome-darkmode-toggle.js" \
+                   "@DOXYGEN_AWESOME_CSS_DIR@/doxygen-awesome-fragment-copy-button.js" \
+                   "@DOXYGEN_AWESOME_CSS_DIR@/doxygen-awesome-interactive-toc.js" \
+                   "@DOXYGEN_AWESOME_CSS_DIR@/doxygen-awesome-paragraph-link.js"
+HTML_COPY_CLIPBOARD = NO
 GENERATE_LATEX = NO
 GENERATE_XML = NO
 XML_PROGRAMLISTING = NO

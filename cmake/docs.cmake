@@ -14,6 +14,8 @@ set(DOXYGEN_OUTPUT_DIRECTORY
 
 set(working_dir "${PROJECT_BINARY_DIR}/docs")
 
+include(${PROJECT_SOURCE_DIR}/cmake/doxygen-awesome-css.cmake)
+
 configure_file("docs/Doxyfile.in" "${working_dir}/Doxyfile" @ONLY)
 
 set(DOXYGEN_CMD)

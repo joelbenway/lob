@@ -1,0 +1,188 @@
+/* Copyright (c) 2026  Joel Benway
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Please see end of file for extended copyright information
+ */
+
+:root,
+html {
+    /* Brand color tokens aligned with loblab */
+    --accent: #a44122;
+    --accent-dark: #7b2e17;
+    --primary-color: #a44122;
+    --primary-dark-color: #7b2e17;
+    --primary-light-color: #fff8e8;
+
+    --page-background-color: #f4f1ea;
+    --page-foreground-color: #17202a;
+    --page-secondary-foreground-color: #5c6773;
+
+    --separator-color: #d8d1c2;
+    --side-nav-background: #ece7dc;
+
+    --code-background: #fffdf8;
+    --code-foreground-color: #17202a;
+    --table-header-color: #ece7dc;
+    --table-header-foreground-color: #17202a;
+
+    --blockquote-background: #fff8e8;
+    --blockquote-border: #a44122;
+
+    /* Typography matching loblab */
+    --font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-family-monospace: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+    --font-size-base: 15px;
+    --line-height-base: 1.55;
+    --border-radius-base: 8px;
+    --border-radius-medium: 10px;
+    --border-radius-large: 12px;
+}
+
+html.dark-mode {
+    --accent: #d97a4c;
+    --accent-dark: #e88f63;
+    --primary-color: #d97a4c;
+    --primary-dark-color: #e88f63;
+    --primary-light-color: #2b2519;
+
+    --page-background-color: #1c1a16;
+    --page-foreground-color: #e8e2d5;
+    --page-secondary-foreground-color: #a89e8d;
+
+    --separator-color: #453e34;
+    --side-nav-background: #23201c;
+
+    --code-background: #262320;
+    --code-foreground-color: #e8e2d5;
+    --table-header-color: #332d25;
+    --table-header-foreground-color: #e8e2d5;
+
+    --blockquote-background: #2b2519;
+    --blockquote-border: #d97a4c;
+}
+
+/* Background gradient matching loblab */
+body {
+    background:
+        radial-gradient(circle at 15% 0%, #fff8e8 0, transparent 35rem),
+        var(--page-background-color) !important;
+}
+
+html.dark-mode body {
+    background:
+        radial-gradient(circle at 15% 0%, #2b2519 0, transparent 35rem),
+        var(--page-background-color) !important;
+}
+
+/* Top Navigation Bar */
+.lob-top-nav {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0.5rem 1.25rem 0.25rem;
+    background: transparent;
+    border-bottom: 1px solid var(--separator-color);
+    font-size: 0.9rem;
+}
+
+.lob-nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    align-items: center;
+}
+
+.lob-nav-item {
+    color: var(--primary-color) !important;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.15s ease;
+}
+
+.lob-nav-item:hover {
+    text-decoration: underline;
+}
+
+.lob-nav-item.active {
+    font-weight: 700;
+    color: var(--page-foreground-color) !important;
+}
+
+/* Brand Logo in Title Area */
+#projectname {
+    font-size: 1.75rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em;
+}
+
+#projectname a {
+    text-decoration: none !important;
+    color: inherit !important;
+}
+
+.logo-lob {
+    color: var(--primary-color);
+}
+
+.logo-docs {
+    color: var(--page-foreground-color);
+}
+
+html.dark-mode .logo-docs {
+    color: #ffffff;
+}
+
+#projectbrief {
+    color: var(--page-secondary-foreground-color) !important;
+    font-size: 0.85rem !important;
+}
+
+#projectnumber {
+    font-size: 0.75rem !important;
+    font-weight: 600;
+    background: var(--code-background);
+    border: 1px solid var(--separator-color);
+    border-radius: 9999px;
+    padding: 0.15rem 0.55rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    color: var(--page-secondary-foreground-color);
+}
+
+/* Code fragment styling */
+div.fragment {
+    border: 1px solid var(--separator-color) !important;
+    border-radius: var(--border-radius-base) !important;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+
+/* Search bar refinements */
+#MSearchBox {
+    border-radius: var(--border-radius-base);
+}
+
+/* Treeview and sidebar styling */
+#nav-tree {
+    background: var(--side-nav-background);
+}
+
+#nav-tree .selected {
+    background-color: var(--primary-light-color) !important;
+    color: var(--primary-color) !important;
+    font-weight: 600;
+}
+
+/* This file is part of lob.
+ *
+ * lob is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * lob is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * lob. If not, see <https://www.gnu.org/licenses/>.
+ */

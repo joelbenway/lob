@@ -58,6 +58,51 @@ function(lob_find_or_fetch name)
         ON
         CACHE INTERNAL "Suppress third-party CMake errors" FORCE)
 
+    if(CMAKE_SCRIPT_MODE_FILE)
+      set(_subbuild_dir "${bin}")
+      if(NOT _subbuild_dir AND DEFINED PROJECT_BINARY_DIR)
+        set(_subbuild_dir "${PROJECT_BINARY_DIR}")
+      endif()
+      if(NOT _subbuild_dir)
+        set(_subbuild_dir "${CMAKE_BINARY_DIR}")
+      endif()
+      if(NOT _subbuild_dir)
+        set(_subbuild_dir "${CMAKE_CURRENT_BINARY_DIR}/_fetch_${ARG_FETCH_NAME}")
+      else()
+        set(_subbuild_dir "${_subbuild_dir}/_fetch_${ARG_FETCH_NAME}")
+      endif()
+
+      file(MAKE_DIRECTORY "${_subbuild_dir}")
+      file(
+        WRITE "${_subbuild_dir}/CMakeLists.txt"
+        "cmake_minimum_required(VERSION 3.14)\n"
+        "project(fetch_${ARG_FETCH_NAME} NONE)\n"
+        "include(FetchContent)\n"
+        "FetchContent_Declare(${ARG_FETCH_NAME} GIT_REPOSITORY ${ARG_GIT_REPOSITORY} GIT_TAG ${ARG_GIT_TAG})\n"
+        "FetchContent_MakeAvailable(${ARG_FETCH_NAME})\n"
+        "file(WRITE \"\${CMAKE_CURRENT_BINARY_DIR}/src_dir.txt\" \"\${${ARG_FETCH_NAME}_SOURCE_DIR}\")\n"
+      )
+      execute_process(
+        COMMAND "${CMAKE_COMMAND}" -S "${_subbuild_dir}" -B
+                "${_subbuild_dir}/build"
+        OUTPUT_QUIET
+        ERROR_VARIABLE _fetch_err
+        RESULT_VARIABLE _fetch_res)
+      if(NOT _fetch_res EQUAL 0)
+        message(
+          FATAL_ERROR "Failed to fetch ${ARG_DISPLAY_NAME}: ${_fetch_err}")
+      endif()
+      file(READ "${_subbuild_dir}/build/src_dir.txt" _src_dir)
+      string(STRIP "${_src_dir}" _src_dir)
+      if(ARG_PATH_VAR)
+        set(${ARG_PATH_VAR}
+            "${_src_dir}"
+            CACHE PATH "Path to ${ARG_DISPLAY_NAME} directory" FORCE)
+        set(${ARG_PATH_VAR} "${_src_dir}" PARENT_SCOPE)
+      endif()
+      return()
+    endif()
+
     FetchContent_Declare(
       ${ARG_FETCH_NAME}
       GIT_REPOSITORY ${ARG_GIT_REPOSITORY}
