@@ -299,6 +299,10 @@ div.fragment {
     margin: 0;
 }
 
+.okf-neighborhood-graph .dotgraph iframe {
+    max-width: 100% !important;
+}
+
 .okf-neighborhood-graph svg {
     max-width: 100%;
     height: auto;
@@ -307,6 +311,11 @@ div.fragment {
 /* In dark mode, ensure SVG text and neighbor node backgrounds look clean */
 html.dark-mode .okf-neighborhood-graph text {
     fill: var(--page-foreground-color);
+}
+
+html.dark-mode .okf-neighborhood-graph g.cluster path,
+html.dark-mode .okf-neighborhood-graph g.cluster polygon {
+    stroke: var(--separator-color) !important;
 }
 
 /* This file is part of lob.

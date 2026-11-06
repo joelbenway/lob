@@ -399,44 +399,90 @@ def build_neighborhood_dot(pid, title, ptype, incoming_nodes, outgoing_nodes):
     return "\n".join(lines)
 
 
+def reduce_edges(outgoing, id_map):
+    """Transitive reduction of outgoing concept links, preserving cycles."""
+    graph = {
+        id_map[u]: {id_map[v] for v in targets if v in id_map}
+        for u, targets in outgoing.items()
+    }
+
+    def reachable_nodes(start, avoid_edge=None):
+        visited = set()
+        queue = [start]
+        while queue:
+            curr = queue.pop()
+            if curr not in visited:
+                visited.add(curr)
+                for neighbor in graph.get(curr, ()):
+                    if avoid_edge and curr == avoid_edge[0] and neighbor == avoid_edge[1]:
+                        continue
+                    queue.append(neighbor)
+        return visited
+
+    reduced = {u: set(targets) for u, targets in graph.items()}
+    for u in sorted(graph):
+        for v in sorted(graph[u]):
+            v_reaches = reachable_nodes(v)
+            if u in v_reaches:
+                continue
+            u_reaches_without = reachable_nodes(u, avoid_edge=(u, v))
+            if v in u_reaches_without:
+                reduced[u].remove(v)
+    return reduced
+
+
 def build_global_dot(concepts, titles, types, outgoing_by_rel, id_map):
-    """Emit a complete Graphviz directed graph for the entire OKF corpus."""
+    """Emit a force-directed, clustered Graphviz graph for the entire OKF corpus."""
     if not concepts:
         return ""
+    reduced_edges = reduce_edges(outgoing_by_rel, id_map)
     lines = [
         "\\dot",
         "digraph global_map {",
+        "  layout=fdp;",
+        "  overlap=false;",
+        "  splines=true;",
         '  bgcolor="transparent";',
-        "  rankdir=LR;",
-        "  nodesep=0.35;",
-        "  ranksep=0.6;",
-        '  node [shape=box, style="filled,rounded", fontname="%s", fontsize=10];'
+        '  size="10,6.5!";',
+        '  ratio="fill";',
+        '  node [shape=box, style="filled,rounded", fontname="%s", fontsize=9, height=0.3];'
         % DOT_FONT,
-        '  edge [color="#859399", penwidth=1.2, arrowsize=0.75];',
+        '  edge [color="#859399", penwidth=1.1, arrowsize=0.6];',
         "",
     ]
-    for rel in sorted(concepts):
-        pid = id_map[rel]
-        title = _escape_dot(titles.get(rel) or pid)
-        ptype = types.get(rel, "Concept")
-        periph = (
-            " peripheries=2"
-            if ptype == "DesignDecision"
-            else ' shape=box, style="filled,rounded"'
-        )
+    clusters = [
+        ("Guide", "cluster_guides", "Guides & Workflows"),
+        ("Concept", "cluster_concepts", "Core Concepts"),
+        ("DesignDecision", "cluster_decisions", "Design Decisions"),
+    ]
+    for ptype, cname, clabel in clusters:
+        lines.append("  subgraph %s {" % cname)
+        lines.append('    label="%s";' % clabel)
+        lines.append('    style="rounded,dashed";')
+        lines.append('    color="#d8d1c2";')
         lines.append(
-            '  %s [label="%s", tooltip="%s", URL="@ref %s", target="_top", '
-            'fillcolor="#fffdf8", fontcolor="#17202a", color="#d8d1c2"%s];'
-            % (pid, title, title, pid, periph)
+            '    fontname="%s"; fontsize=11; fontcolor="#a44122";' % DOT_FONT
         )
+        for rel in sorted(concepts):
+            item_type = types.get(rel, "Concept")
+            if item_type == ptype or (
+                ptype == "Concept"
+                and item_type not in ("Guide", "DesignDecision")
+            ):
+                pid = id_map[rel]
+                title = _escape_dot(titles.get(rel) or pid)
+                periph = " peripheries=2" if item_type == "DesignDecision" else ""
+                lines.append(
+                    '    %s [label="%s", tooltip="%s", URL="@ref %s", target="_top", '
+                    'fillcolor="#fffdf8", fontcolor="#17202a", color="#d8d1c2"%s];'
+                    % (pid, title, title, pid, periph)
+                )
+        lines.append("  }")
 
     lines.append("")
-    for src_rel in sorted(outgoing_by_rel):
-        src_id = id_map[src_rel]
-        for dst_rel in sorted(outgoing_by_rel[src_rel]):
-            if dst_rel in id_map:
-                dst_id = id_map[dst_rel]
-                lines.append("  %s -> %s;" % (src_id, dst_id))
+    for src_id in sorted(reduced_edges):
+        for dst_id in sorted(reduced_edges[src_id]):
+            lines.append("  %s -> %s;" % (src_id, dst_id))
 
     lines.extend(["}", "\\enddot", ""])
     return "\n".join(lines)
