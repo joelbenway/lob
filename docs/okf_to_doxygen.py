@@ -373,7 +373,7 @@ def _escape_dot(s):
 DOT_FONT = "ui-sans-serif, system-ui, sans-serif"
 
 
-def build_neighborhood_dot(pid, title, ptype, incoming_nodes, outgoing_nodes):
+def build_neighborhood_dot(pid, title, ptype, incoming_nodes, outgoing_nodes, accent_color="#2458a6"):
     """Construct a 1-hop Graphviz digraph for the concept page."""
     if not incoming_nodes and not outgoing_nodes:
         return ""
@@ -409,9 +409,9 @@ def build_neighborhood_dot(pid, title, ptype, incoming_nodes, outgoing_nodes):
         else 'shape=box, style="filled,rounded"'
     )
     lines.append(
-        '  %s [label="%s", tooltip="Current Page", fillcolor="#a44122", '
-        'fontcolor="#ffffff", color="#7b2e17", penwidth=2.0, %s];'
-        % (pid, ctitle, cshape)
+        '  %s [label="%s", tooltip="Current Page", fillcolor="%s", '
+        'fontcolor="#ffffff", color="%s", penwidth=2.0, %s];'
+        % (pid, ctitle, accent_color, accent_color, cshape)
     )
 
     for nid, info in sorted(outgoing_nodes.items()):
@@ -473,7 +473,7 @@ def reduce_edges(outgoing, id_map):
     return reduced
 
 
-def build_global_dot(concepts, titles, types, outgoing_by_rel, id_map):
+def build_global_dot(concepts, titles, types, outgoing_by_rel, id_map, accent_color="#2458a6"):
     """Emit a force-directed, clustered Graphviz graph for the entire OKF corpus."""
     if not concepts:
         return ""
@@ -490,25 +490,28 @@ def build_global_dot(concepts, titles, types, outgoing_by_rel, id_map):
         '  edge [color="#859399", penwidth=1.2, arrowsize=0.75];',
         "",
     ]
-    clusters = [
-        ("Guide", "cluster_guides", "Guides & Workflows"),
-        ("Concept", "cluster_concepts", "Core Concepts"),
-        ("DesignDecision", "cluster_decisions", "Design Decisions"),
-    ]
-    for ptype, cname, clabel in clusters:
+    seen_types = []
+    for standard in ("Guide", "Concept", "DesignDecision"):
+        if any(types.get(rel, "Concept") == standard for rel in concepts):
+            seen_types.append(standard)
+    for rel in sorted(concepts):
+        t = types.get(rel, "Concept")
+        if t not in seen_types:
+            seen_types.append(t)
+
+    for ptype in seen_types:
+        cname = "cluster_" + type_slug(ptype)
+        clabel = format_type_title(ptype)
         lines.append("  subgraph %s {" % cname)
         lines.append('    label="%s";' % clabel)
         lines.append('    style="rounded,dashed";')
         lines.append('    color="#d8d1c2";')
         lines.append(
-            '    fontname="%s"; fontsize=11; fontcolor="#a44122";' % DOT_FONT
+            '    fontname="%s"; fontsize=11; fontcolor="%s";' % (DOT_FONT, accent_color)
         )
         for rel in sorted(concepts):
             item_type = types.get(rel, "Concept")
-            if item_type == ptype or (
-                ptype == "Concept"
-                and item_type not in ("Guide", "DesignDecision")
-            ):
+            if item_type == ptype:
                 pid = id_map[rel]
                 title = _escape_dot(titles.get(rel) or pid)
                 periph = " peripheries=2" if item_type == "DesignDecision" else ""
@@ -542,7 +545,7 @@ def collect_concepts(src_dir):
     return found
 
 
-def generate(src_dir, out_dir):
+def generate(src_dir, out_dir, title=None, accent_color="#2458a6", api_ref=None, no_cards=False, no_global_graph=False):
     """Render every concept to '<page_id>.md' in out_dir; return IDs."""
     src_dir, out_dir = Path(src_dir), Path(out_dir)
     if not src_dir.is_dir():
@@ -572,7 +575,7 @@ def generate(src_dir, out_dir):
         fm, raw_body = parsed[rel]
         body = rewrite_links(raw_body, rel, id_map, exclude)
         pid = id_map[rel]
-        title = fm.get("title") or pid
+        title_val = fm.get("title") or pid
         ptype = fm.get("type", "Concept")
 
         inc_nodes = {
@@ -593,7 +596,7 @@ def generate(src_dir, out_dir):
         }
 
         dot = build_neighborhood_dot(
-            pid, title, ptype, inc_nodes, out_nodes)
+            pid, title_val, ptype, inc_nodes, out_nodes, accent_color=accent_color)
         (out_dir / (pid + ".md")).write_text(
             render_page(pid, fm, body, graph_dot=dot), encoding="utf-8")
         written.append(pid)
@@ -605,69 +608,40 @@ def generate(src_dir, out_dir):
         rel: parsed[rel][0].get("type", "Concept") for rel in concepts
     }
 
-    guides = []
-    core_concepts = []
-    decisions = []
+    category_order = []
+    for standard in ("Guide", "Concept", "DesignDecision"):
+        if any(concept_types[rel] == standard for rel in concepts):
+            category_order.append(standard)
     for rel in sorted(concepts):
-        ptype = concept_types[rel]
-        pid = id_map[rel]
-        title = concept_titles[rel]
-        if ptype == "Guide":
-            guides.append((pid, title))
-        elif ptype == "DesignDecision":
-            decisions.append((pid, title))
-        else:
-            core_concepts.append((pid, title))
+        t = concept_types[rel]
+        if t not in category_order:
+            category_order.append(t)
 
-    # Generate category hubs
-    guides_lines = [
-        "@page okf_guides Guides & Workflows",
-        "",
-        "# Guides & Workflows",
-        "",
-        "End-to-end walkthroughs, step-by-step solver workflows, and worked examples.",
-        "",
-    ]
-    for pid, title in guides:
-        guides_lines.append("- @subpage %s \"%s\"" % (pid, title))
-    guides_lines.append("")
-    (out_dir / "okf_guides.md").write_text(
-        "\n".join(guides_lines), encoding="utf-8"
-    )
+    categories = {t: [] for t in category_order}
+    for rel in sorted(concepts):
+        categories[concept_types[rel]].append((id_map[rel], concept_titles[rel]))
 
-    concepts_lines = [
-        "@page okf_concepts Core Concepts",
-        "",
-        "# Core Concepts",
-        "",
-        "Fundamental ballistic trajectory models, atmospheric equations, aerodynamic coefficients, "
-        "and numerical solvers.",
-        "",
-    ]
-    for pid, title in core_concepts:
-        concepts_lines.append("- @subpage %s \"%s\"" % (pid, title))
-    concepts_lines.append("")
-    (out_dir / "okf_concepts.md").write_text(
-        "\n".join(concepts_lines), encoding="utf-8"
-    )
+    for ptype, items in categories.items():
+        cslug = type_slug(ptype)
+        ctitle = format_type_title(ptype)
+        hub_page_id = "okf_" + cslug
+        hub_lines = [
+            "@page %s %s" % (hub_page_id, ctitle),
+            "",
+            "# %s" % ctitle,
+            "",
+        ]
+        for pid, ititle in items:
+            hub_lines.append("- @subpage %s \"%s\"" % (pid, ititle))
+        hub_lines.append("")
+        (out_dir / ("%s.md" % hub_page_id)).write_text(
+            "\n".join(hub_lines), encoding="utf-8"
+        )
 
-    decisions_lines = [
-        "@page okf_decisions Design Decisions",
-        "",
-        "# Design Decisions",
-        "",
-        "Architectural rationales, memory layout guarantees, C ABI boundaries, and library invariants.",
-        "",
-    ]
-    for pid, title in decisions:
-        decisions_lines.append("- @subpage %s \"%s\"" % (pid, title))
-    decisions_lines.append("")
-    (out_dir / "okf_decisions.md").write_text(
-        "\n".join(decisions_lines), encoding="utf-8"
-    )
-
-    # root index.md becomes the @mainpage Technical Reference
+    # Tool-owned @mainpage
     root_index = src_dir / "index.md"
+    intro_text = ""
+    inferred_title = None
     if root_index.exists():
         text = root_index.read_text(encoding="utf-8")
         m = FRONTMATTER_RE.match(text)
@@ -680,50 +654,76 @@ def generate(src_dir, out_dir):
             flags=re.DOTALL,
         )
         text = rewrite_links(text, "index.md", id_map, exclude)
-        # Title from the index body's first heading, else a generic label.
         heading = re.search(r"^#\s+(.+)$", text, re.MULTILINE)
-        title = heading.group(1).strip() if heading else "Technical Reference"
+        if heading:
+            inferred_title = heading.group(1).strip()
+        intro_text = text.strip()
+    else:
+        intro_text = "Welcome to the technical documentation."
 
+    final_title = title if title else (inferred_title if inferred_title else "Technical Reference")
+
+    subpage_items = []
+    for ptype in category_order:
+        cslug = type_slug(ptype)
+        ctitle = format_type_title(ptype)
+        subpage_items.append("- @subpage okf_%s \"%s\"" % (cslug, ctitle))
+    subpages_block = ("\n\n## Categories\n" + "\n".join(subpage_items) + "\n") if subpage_items else ""
+
+    cards_block = ""
+    if not no_cards:
+        badge_map = {
+            "Guide": ("Walkthroughs", "🧭"),
+            "Concept": ("Core", "⚛️"),
+            "DesignDecision": ("Architecture", "⚖️"),
+        }
+        desc_map = {
+            "Guide": "Step-by-step guides, walkthroughs, and worked examples.",
+            "Concept": "Fundamental concepts, domain models, and equations.",
+            "DesignDecision": "Architectural rationales, invariants, and design trade-offs.",
+        }
+        card_items = []
+        for ptype in category_order:
+            cslug = type_slug(ptype)
+            ctitle = format_type_title(ptype)
+            badge_text, icon = badge_map.get(ptype, ("Reference", "📚"))
+            desc = desc_map.get(ptype, "Explore %s topics." % ctitle)
+            card_items.append(
+                '  <a class="okf-pillar-card" href="okf_%s.html">\n'
+                '    <span class="okf-pillar-card-badge">%s</span>\n'
+                '    <h3>%s %s</h3>\n'
+                '    <p>%s</p>\n'
+                '    <span class="okf-pillar-card-cta">Explore %s &rarr;</span>\n'
+                '  </a>' % (cslug, badge_text, icon, ctitle, desc, ctitle)
+            )
+        if api_ref and api_ref.get("url"):
+            a_url = api_ref["url"]
+            a_title = api_ref.get("title", "API Reference")
+            a_badge = api_ref.get("badge", "API")
+            a_desc = api_ref.get("desc", "Complete programming interface, classes, functions, and types.")
+            card_items.append(
+                '  <a class="okf-pillar-card" href="%s">\n'
+                '    <span class="okf-pillar-card-badge">%s</span>\n'
+                '    <h3>⚙️ %s</h3>\n'
+                '    <p>%s</p>\n'
+                '    <span class="okf-pillar-card-cta">Explore %s &rarr;</span>\n'
+                '  </a>' % (a_url, a_badge, a_title, a_desc, a_title)
+            )
+        if card_items:
+            cards_block = (
+                "\n\n\\htmlonly\n"
+                '<div class="okf-pillar-cards">\n'
+                + "\n".join(card_items)
+                + "\n</div>\n"
+                "\\endhtmlonly\n"
+            )
+
+    graph_block = ""
+    if not no_global_graph:
         global_dot = build_global_dot(
-            concepts, concept_titles, concept_types, outgoing_by_rel, id_map
+            concepts, concept_titles, concept_types, outgoing_by_rel, id_map,
+            accent_color=accent_color
         )
-        cards_block = (
-            "\n\n\\htmlonly\n"
-            '<div class="lob-pillar-cards">\n'
-            '  <a class="lob-pillar-card" href="okf_guides.html">\n'
-            '    <span class="lob-pillar-card-badge">Walkthroughs</span>\n'
-            '    <h3>🧭 Guides &amp; Workflows</h3>\n'
-            '    <p>Step-by-step solver workflows, basic worked examples, and input state machine rules.</p>\n'
-            '    <span class="lob-pillar-card-cta">Explore Guides &rarr;</span>\n'
-            '  </a>\n'
-            '  <a class="lob-pillar-card" href="okf_concepts.html">\n'
-            '    <span class="lob-pillar-card-badge">Physics &amp; Math</span>\n'
-            '    <h3>⚛️ Core Concepts</h3>\n'
-            '    <p>Supersonic drag tables, 1976 Standard Atmosphere, Heun integration, and aerodynamic jump.</p>\n'
-            '    <span class="lob-pillar-card-cta">Explore Concepts &rarr;</span>\n'
-            '  </a>\n'
-            '  <a class="lob-pillar-card" href="okf_decisions.html">\n'
-            '    <span class="lob-pillar-card-badge">Architecture</span>\n'
-            '    <h3>⚖️ Design Decisions</h3>\n'
-            '    <p>Pure C ABI waist, zero dynamic allocation, cache line alignment, and library invariants.</p>\n'
-            '    <span class="lob-pillar-card-cta">Explore Decisions &rarr;</span>\n'
-            '  </a>\n'
-            '  <a class="lob-pillar-card" href="classes.html">\n'
-            '    <span class="lob-pillar-card-badge">C &amp; C++</span>\n'
-            '    <h3>⚙️ API Reference</h3>\n'
-            '    <p>Full programming interface: C99 narrow-waist ABI, C++ fluent builder, solver context, and types.</p>\n'
-            '    <span class="lob-pillar-card-cta">Explore Classes &amp; Headers &rarr;</span>\n'
-            '  </a>\n'
-            '</div>\n'
-            "\\endhtmlonly\n"
-        )
-        subpages_block = (
-            "\n\n## Categories\n"
-            "- @subpage okf_guides \"Guides & Workflows\"\n"
-            "- @subpage okf_concepts \"Core Concepts\"\n"
-            "- @subpage okf_decisions \"Design Decisions\"\n"
-        )
-        graph_block = ""
         if global_dot:
             graph_block = (
                 "\n\n\\htmlonly\n"
@@ -737,14 +737,14 @@ def generate(src_dir, out_dir):
                 "\\endhtmlonly\n"
             ) % global_dot.strip()
 
-        (out_dir / "okf_mainpage.md").write_text(
-            "@mainpage %s\n" % title
-            + text.strip()
-            + subpages_block
-            + cards_block
-            + graph_block,
-            encoding="utf-8",
-        )
+    (out_dir / "okf_mainpage.md").write_text(
+        "@mainpage %s\n" % final_title
+        + intro_text.strip()
+        + subpages_block
+        + cards_block
+        + graph_block,
+        encoding="utf-8",
+    )
     return written
 
 

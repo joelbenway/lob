@@ -227,8 +227,6 @@ class GenerateTest(unittest.TestCase):
                     "keep.txt",
                     "okf_a.md",
                     "okf_concepts.md",
-                    "okf_decisions.md",
-                    "okf_guides.md",
                     "okf_mainpage.md",
                 ])
 
@@ -249,6 +247,28 @@ class GenerateTest(unittest.TestCase):
             self.assertNotIn("okf_version", mainpage)
             self.assertIn("# Bundle", mainpage)
 
+    def test_dynamic_categories_and_mainpage_generation(self):
+        with tempfile.TemporaryDirectory() as src, tempfile.TemporaryDirectory() as out:
+            srcp = Path(src)
+            (srcp / "c1.md").write_text("---\ntype: Concept\ntitle: Topic 1\n---\nBody\n", encoding="utf-8")
+            (srcp / "p1.md").write_text("---\ntype: SystemPolicy\ntitle: Policy 1\n---\nBody\n", encoding="utf-8")
+            generate(srcp, Path(out), title="My Reference", api_ref={"url": "classes.html", "title": "API"})
+
+            mainpage = (Path(out) / "okf_mainpage.md").read_text(encoding="utf-8")
+            self.assertIn("@mainpage My Reference", mainpage)
+            self.assertIn("@subpage okf_concepts", mainpage)
+            self.assertIn("@subpage okf_system_policies", mainpage)
+            self.assertIn("okf-pillar-cards", mainpage)
+            self.assertIn("classes.html", mainpage)
+
+            concepts_hub = (Path(out) / "okf_concepts.md").read_text(encoding="utf-8")
+            self.assertIn("@page okf_concepts Concepts", concepts_hub)
+            self.assertIn("@subpage okf_c1", concepts_hub)
+
+            policy_hub = (Path(out) / "okf_system_policies.md").read_text(encoding="utf-8")
+            self.assertIn("@page okf_system_policies System Policies", policy_hub)
+            self.assertIn("@subpage okf_p1", policy_hub)
+
     def test_mainpage_includes_dual_pillar_jump_cards(self):
         with tempfile.TemporaryDirectory() as src, \
                 tempfile.TemporaryDirectory() as out:
@@ -257,10 +277,21 @@ class GenerateTest(unittest.TestCase):
                 "# Technical Reference\nWelcome text.\n- [Drag](drag.md)\n", encoding="utf-8")
             (srcp / "drag.md").write_text(
                 "---\ntype: Concept\ntitle: Drag Model\n---\nBody\n", encoding="utf-8")
+            generate(srcp, Path(out), api_ref={"url": "classes.html", "title": "API Reference"})
+            mainpage = (Path(out) / "okf_mainpage.md").read_text(encoding="utf-8")
+            self.assertIn("okf-pillar-cards", mainpage)
+            self.assertIn("API Reference", mainpage)
+
+    def test_mainpage_omits_api_ref_when_not_provided(self):
+        with tempfile.TemporaryDirectory() as src, \
+                tempfile.TemporaryDirectory() as out:
+            srcp = Path(src)
+            (srcp / "drag.md").write_text(
+                "---\ntype: Concept\ntitle: Drag Model\n---\nBody\n", encoding="utf-8")
             generate(srcp, Path(out))
             mainpage = (Path(out) / "okf_mainpage.md").read_text(encoding="utf-8")
-            self.assertIn("lob-pillar-cards", mainpage)
-            self.assertIn("API Reference", mainpage)
+            self.assertIn("okf-pillar-cards", mainpage)
+            self.assertNotIn("API Reference", mainpage)
 
     def test_technical_reference_category_hubs_generated(self):
         with tempfile.TemporaryDirectory() as src, \
@@ -287,7 +318,7 @@ class GenerateTest(unittest.TestCase):
             self.assertIn("@subpage okf_g", guides)
 
             concepts = (Path(out) / "okf_concepts.md").read_text(encoding="utf-8")
-            self.assertIn("@page okf_concepts Core Concepts", concepts)
+            self.assertIn("@page okf_concepts Concepts", concepts)
             self.assertIn("@subpage okf_c", concepts)
 
             decisions = (Path(out) / "okf_decisions.md").read_text(encoding="utf-8")
@@ -410,7 +441,9 @@ class NeighborhoodGraphTest(unittest.TestCase):
         self.assertTrue(dot.endswith("\n\\enddot\n"))
         self.assertIn('rankdir=LR;', dot)
         self.assertIn('bgcolor="transparent";', dot)
-        self.assertIn('fillcolor="#a44122"', dot)
+        self.assertIn('fillcolor="#2458a6"', dot)
+        custom_dot = build_neighborhood_dot("okf_curr", "Current Page", "Concept", incoming, outgoing, accent_color="#a44122")
+        self.assertIn('fillcolor="#a44122"', custom_dot)
         self.assertIn('URL="@ref okf_in"', dot)
         self.assertIn('URL="@ref okf_out"', dot)
         self.assertIn('peripheries=2', dot)  # DesignDecision node styling
