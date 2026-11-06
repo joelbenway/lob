@@ -54,6 +54,29 @@ context.dispose();
 - **Fall-Short Trajectories**: If a projectile impacts ground or drops below configured thresholds, solvers return only reached rows without throwing.
 - **Resource Management**: Instances manage WASM memory automatically via `FinalizationRegistry`, but explicit `dispose()` is recommended for predictable resource reclamation.
 
+## Browser Usage
+
+`@joelbenway/lob` runs directly in modern browsers (Chromium, Firefox, Safari) using native ES module imports without requiring a bundler:
+
+```html
+<script type="module">
+  import { Builder, DragFunction } from "./path/to/lob/index.mjs";
+
+  const context = new Builder()
+    .ballisticCoefficientPsi(0.243)
+    .bcDragFunction(DragFunction.G7)
+    .build();
+
+  const rows = context.solveYds([100, 200, 300]);
+  console.log(rows);
+</script>
+```
+
+**Hosting Requirements:**
+
+- Web servers must serve `lob.wasm` with `Content-Type: application/wasm` so the browser can instantiate WebAssembly streaming.
+- `index.mjs`, `lob.mjs`, and `lob.wasm` should reside in the same directory so Emscripten relative URL asset resolution succeeds without custom configuration.
+
 ## Low-Level Raw API
 
 For direct access to the underlying Emscripten C ABI functions, import the module factory from `@joelbenway/lob/raw`:
