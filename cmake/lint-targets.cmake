@@ -31,12 +31,12 @@ if(DEFINED CACHE{FORMAT_PATTERNS})
               "; separated patterns relative to the project source dir to format"
               FORCE)
   endif()
-else()
-  set(FORMAT_PATTERNS
-      "${FORMAT_PATTERNS_DEFAULT}"
-      CACHE STRING
-            "; separated patterns relative to the project source dir to format")
 endif()
+
+set(FORMAT_PATTERNS
+    "${FORMAT_PATTERNS_DEFAULT}"
+    CACHE STRING
+          "; separated patterns relative to the project source dir to format")
 
 set(FORMAT_COMMAND
     clang-format
