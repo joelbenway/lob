@@ -39,6 +39,12 @@ add_custom_target(
   COMMAND "${OKF_PYTHON}" "${PROJECT_SOURCE_DIR}/docs/okf_to_doxygen.py"
           "${PROJECT_SOURCE_DIR}/docs/okf"
           "${PROJECT_BINARY_DIR}/generated/okf_pages"
+          --title "Technical Reference"
+          --accent-color "#a44122"
+          --api-ref-url "classes.html"
+          --api-ref-title "API Reference"
+          --api-ref-badge "C & C++"
+          --api-ref-desc "Full programming interface: C99 narrow-waist ABI, C++ fluent builder, solver context, and types."
   COMMAND "${CMAKE_COMMAND}" -E remove_directory
           "${DOXYGEN_OUTPUT_DIRECTORY}/html"
   COMMAND "${DOXYGEN_CMD}" "${working_dir}/Doxyfile"
