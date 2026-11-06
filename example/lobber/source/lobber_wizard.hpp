@@ -8,26 +8,10 @@
 
 namespace example {
 
-/**
- * @brief Runs the interactive 8-phase terminal wizard to build a ballistics
- * configuration JSON.
- * @return Fully populated JSON object representing the user's ballistic
- * configuration.
- */
 nlohmann::json RunWizard();
 
-/**
- * @brief Prints the ASCII art banner and introductory welcome message for
- * Lobber.
- */
 void PrintGreeting();
 
-/**
- * @brief Determines whether standard input is connected to an interactive
- * terminal.
- * @return True if standard input is an interactive terminal/tty, false if piped
- * or redirected.
- */
 bool IsInteractive();
 
 }  // namespace example
