@@ -17,6 +17,7 @@
         doxygen
         emscripten
         gbenchmark
+        graphviz
         gtest
         lcov
         nlohmann_json
