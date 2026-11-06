@@ -668,6 +668,26 @@ def generate(src_dir, out_dir):
         global_dot = build_global_dot(
             concepts, concept_titles, concept_types, outgoing_by_rel, id_map
         )
+        cards_block = (
+            "\n\n\\htmlonly\n"
+            '<div class="lob-pillar-cards">\n'
+            '  <a class="lob-pillar-card" href="okf_technical_reference.html">\n'
+            '    <span class="lob-pillar-card-badge">OKF Corpus</span>\n'
+            '    <h3>📚 Technical Reference</h3>\n'
+            '    <p>Complete exterior ballistics theory: supersonic drag tables, Heun integration, '
+            'atmospheric modeling, and design decisions.</p>\n'
+            '    <span class="lob-pillar-card-cta">Explore Guides &amp; Concepts &rarr;</span>\n'
+            '  </a>\n'
+            '  <a class="lob-pillar-card" href="classes.html">\n'
+            '    <span class="lob-pillar-card-badge">C &amp; C++</span>\n'
+            '    <h3>⚙️ API Reference</h3>\n'
+            '    <p>Full programming interface: C99 narrow-waist ABI, C++ fluent builder, solver context, '
+            'data types, and error codes.</p>\n'
+            '    <span class="lob-pillar-card-cta">Explore Classes &amp; Headers &rarr;</span>\n'
+            '  </a>\n'
+            '</div>\n'
+            "\\endhtmlonly\n"
+        )
         graph_block = ""
         if global_dot:
             graph_block = (
@@ -683,7 +703,11 @@ def generate(src_dir, out_dir):
             ) % global_dot.strip()
 
         (out_dir / "okf_mainpage.md").write_text(
-            "@mainpage %s\n" % title + text.strip() + graph_block,
+            "@mainpage %s\n" % title
+            + text.strip()
+            + "\n\nSee the @ref okf_technical_reference for detailed topic guides, or the API Reference in the sidebar."
+            + cards_block
+            + graph_block,
             encoding="utf-8",
         )
     return written

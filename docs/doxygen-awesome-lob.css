@@ -343,6 +343,65 @@ html.dark-mode .okf-neighborhood-graph #navigator {
     fill: var(--page-foreground-color) !important;
 }
 
+/* Dual-Pillar Jump Cards on Landing Page */
+.lob-pillar-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin: 1.5rem 0 2rem 0;
+}
+
+.lob-pillar-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    background-color: var(--fragment-background);
+    border: 1px solid var(--separator-color);
+    border-radius: 8px;
+    text-decoration: none !important;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lob-pillar-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.lob-pillar-card-badge {
+    align-self: flex-start;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary-color);
+    background-color: rgba(164, 65, 34, 0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+}
+
+.lob-pillar-card h3 {
+    margin: 0 0 0.5rem 0 !important;
+    font-size: 1.15rem;
+    color: var(--page-foreground-color);
+}
+
+.lob-pillar-card p {
+    margin: 0 0 1rem 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--page-foreground-color);
+    opacity: 0.85;
+    flex-grow: 1;
+}
+
+.lob-pillar-card-cta {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
 /* This file is part of lob.
  *
  * lob is free software: you can redistribute it and/or modify it under the

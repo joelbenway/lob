@@ -233,6 +233,19 @@ class GenerateTest(unittest.TestCase):
             self.assertNotIn("okf_version", mainpage)
             self.assertIn("# Bundle", mainpage)
 
+    def test_mainpage_includes_dual_pillar_jump_cards(self):
+        with tempfile.TemporaryDirectory() as src, \
+                tempfile.TemporaryDirectory() as out:
+            srcp = Path(src)
+            (srcp / "index.md").write_text(
+                "# lob Knowledge\nWelcome text.\n- [Drag](drag.md)\n", encoding="utf-8")
+            (srcp / "drag.md").write_text(
+                "---\ntype: Concept\ntitle: Drag Model\n---\nBody\n", encoding="utf-8")
+            generate(srcp, Path(out))
+            mainpage = (Path(out) / "okf_mainpage.md").read_text(encoding="utf-8")
+            self.assertIn("lob-pillar-cards", mainpage)
+            self.assertIn("@ref okf_technical_reference", mainpage)
+
     def test_technical_reference_category_hubs_generated(self):
         with tempfile.TemporaryDirectory() as src, \
                 tempfile.TemporaryDirectory() as out:
