@@ -77,66 +77,69 @@ html.dark-mode body {
 /* Header layout: Brand on left, Navigation links and Search on right */
 #top {
     display: block !important;
-    background: var(--header-background);
-    border-bottom: 1px solid var(--separator-color);
+    width: 100% !important;
+    background: var(--header-background) !important;
+    border-bottom: 1px solid var(--separator-color) !important;
     position: relative;
     z-index: 99;
-}
-
-#titlearea {
-    width: 100% !important;
-    padding: 0.85rem 1.5rem !important;
-    background: none;
-    color: var(--header-foreground);
-    border-bottom: none;
     box-sizing: border-box;
 }
 
-#titlearea table {
+#titlearea {
+    display: block !important;
     width: 100% !important;
-    table-layout: auto;
-    border-collapse: collapse;
+    padding: 0.85rem 1.5rem !important;
+    background: none !important;
+    color: var(--header-foreground) !important;
+    border-bottom: none !important;
+    box-sizing: border-box !important;
 }
 
-#titlearea table tbody tr#projectrow {
+.lob-header-bar {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
     width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.lob-header-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    flex: 1 1 auto !important;
 }
 
 #projectalign {
-    flex: 1 1 auto;
     text-align: left;
     padding: 0 !important;
 }
 
-#projectcontrols {
+.lob-header-controls {
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-end !important;
     gap: 0.45rem !important;
     flex: 0 0 auto !important;
-    padding: 0 !important;
 }
 
 /* Top Navigation Links */
 .lob-top-nav {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    background: transparent;
-    border-bottom: none !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    background: transparent !important;
+    border: none !important;
     padding: 0 !important;
-    font-size: 0.88rem;
+    font-size: 0.88rem !important;
 }
 
 .lob-nav-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 1.15rem;
-    align-items: center;
-    justify-content: flex-end;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.25rem 1.15rem !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
 }
 
 .lob-nav-item {
@@ -157,10 +160,10 @@ html.dark-mode body {
 
 /* Search Row on the Right */
 .lob-search-row {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.5rem;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 0.5rem !important;
 }
 
 .lob-search-row #MSearchBox {
@@ -180,13 +183,13 @@ doxygen-awesome-dark-mode-toggle {
         padding: 0.75rem 1rem !important;
     }
 
-    #titlearea table tbody tr#projectrow {
+    .lob-header-bar {
         flex-direction: column !important;
         align-items: flex-start !important;
         gap: 0.75rem !important;
     }
 
-    #projectcontrols {
+    .lob-header-controls {
         align-items: flex-start !important;
         width: 100% !important;
     }

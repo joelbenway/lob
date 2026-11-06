@@ -75,53 +75,39 @@ $extrastylesheet
 
 <!--BEGIN TITLEAREA-->
 <div id="titlearea">
-<table cellspacing="0" cellpadding="0">
- <tbody>
- <tr id="projectrow">
-  <!--BEGIN PROJECT_LOGO-->
-  <td id="projectlogo"><a href="index.html"><img alt="Logo" src="$relpath^$projectlogo"$logosize/></a></td>
-  <!--END PROJECT_LOGO-->
-  <!--BEGIN PROJECT_NAME-->
-  <td id="projectalign">
-   <div id="projectname"><a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><!--BEGIN PROJECT_NUMBER--><span id="projectnumber">&#160;$projectnumber</span><!--END PROJECT_NUMBER-->
-   </div>
-   <!--BEGIN PROJECT_BRIEF--><div id="projectbrief">$projectbrief</div><!--END PROJECT_BRIEF-->
-  </td>
-  <!--END PROJECT_NAME-->
-  <!--BEGIN !PROJECT_NAME-->
-   <!--BEGIN PROJECT_BRIEF-->
-    <td>
-    <div id="projectbrief">$projectbrief</div>
-    </td>
-   <!--END PROJECT_BRIEF-->
-  <!--END !PROJECT_NAME-->
-  <td id="projectcontrols">
-    <nav class="lob-top-nav" aria-label="Project resources">
-      <div class="lob-nav-links">
-        <a href="../" class="lob-nav-item">loblab</a>
-        <a href="index.html" class="lob-nav-item active" aria-current="page">Documentation</a>
-        <a href="../bench/" class="lob-nav-item">Benchmarks</a>
-        <a href="https://github.com/joelbenway/lob" class="lob-nav-item">GitHub</a>
+  <div class="lob-header-bar">
+    <div class="lob-header-brand">
+      <!--BEGIN PROJECT_LOGO-->
+      <div id="projectlogo"><a href="index.html"><img alt="Logo" src="$relpath^$projectlogo"$logosize/></a></div>
+      <!--END PROJECT_LOGO-->
+      <div id="projectalign">
+        <div id="projectname">
+          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><!--BEGIN PROJECT_NUMBER--><span id="projectnumber">&#160;$projectnumber</span><!--END PROJECT_NUMBER-->
+        </div>
+        <!--BEGIN PROJECT_BRIEF--><div id="projectbrief">$projectbrief</div><!--END PROJECT_BRIEF-->
       </div>
-    </nav>
-    <!--BEGIN DISABLE_INDEX-->
-     <!--BEGIN SEARCHENGINE-->
-       <!--BEGIN !FULL_SIDEBAR-->
-      <div class="lob-search-row">
-        $searchbox
-      </div>
-       <!--END !FULL_SIDEBAR-->
-     <!--END SEARCHENGINE-->
-    <!--END DISABLE_INDEX-->
-  </td>
- </tr>
-  <!--BEGIN SEARCHENGINE-->
-   <!--BEGIN FULL_SIDEBAR-->
-   <tr><td colspan="2">$searchbox</td></tr>
-   <!--END FULL_SIDEBAR-->
-  <!--END SEARCHENGINE-->
- </tbody>
-</table>
+    </div>
+
+    <div class="lob-header-controls">
+      <nav class="lob-top-nav" aria-label="Project resources">
+        <div class="lob-nav-links">
+          <a href="../" class="lob-nav-item">loblab</a>
+          <a href="index.html" class="lob-nav-item active" aria-current="page">Documentation</a>
+          <a href="../bench/" class="lob-nav-item">Benchmarks</a>
+          <a href="https://github.com/joelbenway/lob" class="lob-nav-item">GitHub</a>
+        </div>
+      </nav>
+      <!--BEGIN DISABLE_INDEX-->
+       <!--BEGIN SEARCHENGINE-->
+         <!--BEGIN !FULL_SIDEBAR-->
+        <div class="lob-search-row">
+          $searchbox
+        </div>
+         <!--END !FULL_SIDEBAR-->
+       <!--END SEARCHENGINE-->
+      <!--END DISABLE_INDEX-->
+    </div>
+  </div>
 </div>
 <!--END TITLEAREA-->
 <!-- end header part -->
