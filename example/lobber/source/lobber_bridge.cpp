@@ -744,7 +744,7 @@ uint16_t JsonToU16(const nlohmann::json& j, const std::string& key) {
 lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& j,
                                            const std::string& key) {
   if (!j.contains(key) || j[key].is_null()) {
-    return lob::AtmosphereReferenceT::kArmyStandardMetro;
+    return lob::AtmosphereReferenceT::kIcao;
   }
   if (j[key].is_string()) {
     const std::string kVal = j[key].get<std::string>();
@@ -755,7 +755,7 @@ lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& j,
   }
   const double kV = JsonToDouble(j, key);
   if (std::isnan(kV)) {
-    return lob::AtmosphereReferenceT::kArmyStandardMetro;
+    return lob::AtmosphereReferenceT::kIcao;
   }
   const auto kCode = static_cast<int>(std::round(kV));
   constexpr int kLegacyIcao = 2;
