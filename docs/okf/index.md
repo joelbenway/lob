@@ -5,7 +5,7 @@ exclude: [SKILL.md]
 
 # Technical Reference
 
-Welcome to the technical reference for **lob**, a fast, zero-allocation exterior ballistics library written in modern C with bindings for WebAssembly and modern languages.
+Welcome to the technical reference for **lob**.
 
 This reference documents the complete architecture, physical models, numerical integration routines, and design decisions behind lob:
 - **Ballistic Physics:** Point-mass trajectory integration, 1976 Standard Atmosphere, supersonic drag tables, Heun second-order integration, and environmental corrections (wind, Coriolis, spin drift, aerodynamic jump).
