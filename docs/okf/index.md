@@ -3,11 +3,11 @@ okf_version: "0.2"
 exclude: [SKILL.md]
 ---
 
-# lob Knowledge
+# Technical Reference
 
-Welcome to **lob**, a fast, zero-allocation exterior ballistics library written in modern C with bindings for WebAssembly and modern languages.
+Welcome to the technical reference for **lob**, a fast, zero-allocation exterior ballistics library written in modern C with bindings for WebAssembly and modern languages.
 
-This technical knowledge base documents the complete architecture, physical models, numerical integration routines, and design decisions behind lob:
+This reference documents the complete architecture, physical models, numerical integration routines, and design decisions behind lob:
 - **Ballistic Physics:** Point-mass trajectory integration, 1976 Standard Atmosphere, supersonic drag tables, Heun second-order integration, and environmental corrections (wind, Coriolis, spin drift, aerodynamic jump).
 - **Numerical Methods:** Cubic Hermite spline interpolation, step size and truncation error bounds, and shared forward/inverse zero solvers.
 - **Software Architecture:** Pure C ABI narrow waist, zero dynamic heap allocation, strong unit typing, and builder configurations.

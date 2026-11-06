@@ -581,26 +581,7 @@ def generate(src_dir, out_dir):
         else:
             core_concepts.append((pid, title))
 
-    # Generate category hubs and master Technical Reference page
-    tech_ref_lines = [
-        "@page okf_technical_reference Technical Reference",
-        "",
-        "# Technical Reference",
-        "",
-        "The technical knowledge base documents the complete exterior ballistics physics, "
-        "mathematical models, numerical integration algorithms, and architectural design "
-        "decisions behind lob.",
-        "",
-        "## Categories",
-        "- @subpage okf_guides",
-        "- @subpage okf_concepts",
-        "- @subpage okf_decisions",
-        "",
-    ]
-    (out_dir / "okf_technical_reference.md").write_text(
-        "\n".join(tech_ref_lines), encoding="utf-8"
-    )
-
+    # Generate category hubs
     guides_lines = [
         "@page okf_guides Guides & Workflows",
         "",
@@ -647,7 +628,7 @@ def generate(src_dir, out_dir):
         "\n".join(decisions_lines), encoding="utf-8"
     )
 
-    # root index.md becomes the @mainpage
+    # root index.md becomes the @mainpage Technical Reference
     root_index = src_dir / "index.md"
     if root_index.exists():
         text = root_index.read_text(encoding="utf-8")
@@ -671,22 +652,38 @@ def generate(src_dir, out_dir):
         cards_block = (
             "\n\n\\htmlonly\n"
             '<div class="lob-pillar-cards">\n'
-            '  <a class="lob-pillar-card" href="okf_technical_reference.html">\n'
-            '    <span class="lob-pillar-card-badge">OKF Corpus</span>\n'
-            '    <h3>📚 Technical Reference</h3>\n'
-            '    <p>Complete exterior ballistics theory: supersonic drag tables, Heun integration, '
-            'atmospheric modeling, and design decisions.</p>\n'
-            '    <span class="lob-pillar-card-cta">Explore Guides &amp; Concepts &rarr;</span>\n'
+            '  <a class="lob-pillar-card" href="okf_guides.html">\n'
+            '    <span class="lob-pillar-card-badge">Walkthroughs</span>\n'
+            '    <h3>🧭 Guides &amp; Workflows</h3>\n'
+            '    <p>Step-by-step solver workflows, basic worked examples, and input state machine rules.</p>\n'
+            '    <span class="lob-pillar-card-cta">Explore Guides &rarr;</span>\n'
+            '  </a>\n'
+            '  <a class="lob-pillar-card" href="okf_concepts.html">\n'
+            '    <span class="lob-pillar-card-badge">Physics &amp; Math</span>\n'
+            '    <h3>⚛️ Core Concepts</h3>\n'
+            '    <p>Supersonic drag tables, 1976 Standard Atmosphere, Heun integration, and aerodynamic jump.</p>\n'
+            '    <span class="lob-pillar-card-cta">Explore Concepts &rarr;</span>\n'
+            '  </a>\n'
+            '  <a class="lob-pillar-card" href="okf_decisions.html">\n'
+            '    <span class="lob-pillar-card-badge">Architecture</span>\n'
+            '    <h3>⚖️ Design Decisions</h3>\n'
+            '    <p>Pure C ABI waist, zero dynamic allocation, cache line alignment, and library invariants.</p>\n'
+            '    <span class="lob-pillar-card-cta">Explore Decisions &rarr;</span>\n'
             '  </a>\n'
             '  <a class="lob-pillar-card" href="classes.html">\n'
             '    <span class="lob-pillar-card-badge">C &amp; C++</span>\n'
             '    <h3>⚙️ API Reference</h3>\n'
-            '    <p>Full programming interface: C99 narrow-waist ABI, C++ fluent builder, solver context, '
-            'data types, and error codes.</p>\n'
+            '    <p>Full programming interface: C99 narrow-waist ABI, C++ fluent builder, solver context, and types.</p>\n'
             '    <span class="lob-pillar-card-cta">Explore Classes &amp; Headers &rarr;</span>\n'
             '  </a>\n'
             '</div>\n'
             "\\endhtmlonly\n"
+        )
+        subpages_block = (
+            "\n\n## Categories\n"
+            "- @subpage okf_guides \"Guides & Workflows\"\n"
+            "- @subpage okf_concepts \"Core Concepts\"\n"
+            "- @subpage okf_decisions \"Design Decisions\"\n"
         )
         graph_block = ""
         if global_dot:
@@ -705,7 +702,7 @@ def generate(src_dir, out_dir):
         (out_dir / "okf_mainpage.md").write_text(
             "@mainpage %s\n" % title
             + text.strip()
-            + "\n\nSee the @ref okf_technical_reference for detailed topic guides, or the API Reference in the sidebar."
+            + subpages_block
             + cards_block
             + graph_block,
             encoding="utf-8",

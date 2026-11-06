@@ -213,7 +213,6 @@ class GenerateTest(unittest.TestCase):
                     "okf_decisions.md",
                     "okf_guides.md",
                     "okf_mainpage.md",
-                    "okf_technical_reference.md",
                 ])
 
     def test_root_index_frontmatter_stripped_from_mainpage(self):
@@ -238,20 +237,20 @@ class GenerateTest(unittest.TestCase):
                 tempfile.TemporaryDirectory() as out:
             srcp = Path(src)
             (srcp / "index.md").write_text(
-                "# lob Knowledge\nWelcome text.\n- [Drag](drag.md)\n", encoding="utf-8")
+                "# Technical Reference\nWelcome text.\n- [Drag](drag.md)\n", encoding="utf-8")
             (srcp / "drag.md").write_text(
                 "---\ntype: Concept\ntitle: Drag Model\n---\nBody\n", encoding="utf-8")
             generate(srcp, Path(out))
             mainpage = (Path(out) / "okf_mainpage.md").read_text(encoding="utf-8")
             self.assertIn("lob-pillar-cards", mainpage)
-            self.assertIn("@ref okf_technical_reference", mainpage)
+            self.assertIn("API Reference", mainpage)
 
     def test_technical_reference_category_hubs_generated(self):
         with tempfile.TemporaryDirectory() as src, \
                 tempfile.TemporaryDirectory() as out:
             srcp = Path(src)
             (srcp / "index.md").write_text(
-                "# Bundle\n- [G](g.md)\n- [C](c.md)\n- [D](d.md)\n", encoding="utf-8")
+                "# Technical Reference\n- [G](g.md)\n- [C](c.md)\n- [D](d.md)\n", encoding="utf-8")
             (srcp / "g.md").write_text(
                 "---\ntype: Guide\ntitle: Guide G\n---\nGuide body\n", encoding="utf-8")
             (srcp / "c.md").write_text(
@@ -260,11 +259,11 @@ class GenerateTest(unittest.TestCase):
                 "---\ntype: DesignDecision\ntitle: Decision D\n---\nDecision body\n", encoding="utf-8")
             generate(srcp, Path(out))
 
-            tech_ref = (Path(out) / "okf_technical_reference.md").read_text(encoding="utf-8")
-            self.assertIn("@page okf_technical_reference Technical Reference", tech_ref)
-            self.assertIn("@subpage okf_guides", tech_ref)
-            self.assertIn("@subpage okf_concepts", tech_ref)
-            self.assertIn("@subpage okf_decisions", tech_ref)
+            mainpage = (Path(out) / "okf_mainpage.md").read_text(encoding="utf-8")
+            self.assertIn("@mainpage Technical Reference", mainpage)
+            self.assertIn("@subpage okf_guides", mainpage)
+            self.assertIn("@subpage okf_concepts", mainpage)
+            self.assertIn("@subpage okf_decisions", mainpage)
 
             guides = (Path(out) / "okf_guides.md").read_text(encoding="utf-8")
             self.assertIn("@page okf_guides Guides & Workflows", guides)
