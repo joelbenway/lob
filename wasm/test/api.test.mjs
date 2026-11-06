@@ -75,7 +75,7 @@ test("solveYds returns forward solutions with rows in range order", () => {
 
 test("solve in feet matches solveYds", () => {
   const context = makeBuilder().build();
-  const feet = context.solve([0, 300, 600, 900]);
+  const feet = context.solveFt([0, 300, 600, 900]);
   const yards = context.solveYds([0, 100, 200, 300]);
   assert.equal(feet.length, yards.length);
   for (let i = 0; i < feet.length; i++) {
@@ -144,10 +144,10 @@ test("ELR inverse counts zero ranges", () => {
 
 test("ELR inverse stops at the first unreachable range", () => {
   const context = makeBuilder().build();
-  const rows = context.solveInverseELR([300, 50000]);
+  const rows = context.solveInverseELRFt([300, 50000]);
   assert.equal(rows.length, 1);
   assert.ok(Number.isFinite(rows[0].elevationMoa));
-  assert.deepEqual(context.solveInverseELR([50000]), []);
+  assert.deepEqual(context.solveInverseELRFt([50000]), []);
   context.dispose();
 });
 
@@ -186,7 +186,7 @@ test("unit conversions are exposed", () => {
 
 test("fall-short trajectories return only reached rows", () => {
   const context = makeBuilder().build();
-  const rows = context.solve([50000]);
+  const rows = context.solveFt([50000]);
   assert.equal(rows.length, 1);
   assert.ok(rows[0].rangeFt < 50000);
   context.dispose();
@@ -195,7 +195,7 @@ test("fall-short trajectories return only reached rows", () => {
 test("large range lists grow wasm memory safely", () => {
   const context = makeBuilder().build();
   const ranges = Array.from({ length: 200000 }, (_, index) => index);
-  const rows = context.solve(ranges);
+  const rows = context.solveFt(ranges);
   assert.ok(rows.length > 0);
   assert.ok(rows.length <= ranges.length);
   context.dispose();

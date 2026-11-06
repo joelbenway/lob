@@ -92,39 +92,68 @@ export class LobError extends Error {
 }
 
 function enumValue(value, values, name) {
-  if (typeof value === "string" && Object.hasOwn(values, value)) {
-    return values[value];
+  if (typeof value === "string") {
+    if (Object.hasOwn(values, value)) {
+      return values[value];
+    }
+    throw new RangeError(`lob: invalid ${name}: ${value}`);
   }
-  if (typeof value === "number" && Object.values(values).includes(value)) {
-    return value;
+  if (typeof value === "number") {
+    if (Object.values(values).includes(value)) {
+      return value;
+    }
+    throw new RangeError(`lob: invalid ${name}: ${value}`);
   }
-  throw new RangeError(`lob: invalid ${name}: ${value}`);
+  throw new TypeError(`lob: ${name} must be a number or string`);
 }
 
 function uint16(value, name) {
-  if (!Number.isInteger(value) || value < 0 || value > 0xffff) {
+  if (typeof value !== "number") {
+    throw new TypeError(`lob: ${name} must be a number`);
+  }
+  if (
+    !Number.isFinite(value) ||
+    !Number.isInteger(value) ||
+    value < 0 ||
+    value > 0xffff
+  ) {
     throw new RangeError(`lob: ${name} must be an integer in 0..65535`);
   }
   return value;
 }
 
+function clockAngle(value, name) {
+  if (typeof value !== "number") {
+    throw new TypeError(`lob: ${name} must be a number`);
+  }
+  if (
+    !Number.isFinite(value) ||
+    !Number.isInteger(value) ||
+    value < 1 ||
+    value > 12
+  ) {
+    throw new RangeError(`lob: ${name} must be an integer in 1..12`);
+  }
+  return value;
+}
+
 function finiteNumber(value, name) {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
+  if (typeof value !== "number") {
+    throw new TypeError(`lob: ${name} must be a number`);
+  }
+  if (!Number.isFinite(value)) {
     throw new RangeError(`lob: ${name} must be a finite number`);
   }
   return value;
 }
 
 function numbers(values, name) {
-  const array = Array.isArray(values)
-    ? values
-    : ArrayBuffer.isView(values)
-      ? Array.from(values)
-      : null;
-  if (array === null) {
+  if (!Array.isArray(values) && !ArrayBuffer.isView(values)) {
     throw new TypeError(`lob: ${name} must be an array of numbers`);
   }
-  return array.map((value, index) => finiteNumber(value, `${name}[${index}]`));
+  return Array.from(values).map((value, index) =>
+    finiteNumber(value, `${name}[${index}]`),
+  );
 }
 
 function rangesToFeet(values, yards) {
@@ -134,7 +163,10 @@ function rangesToFeet(values, yards) {
   const feet = [];
   let previous = -1;
   for (const [index, value] of Array.from(values).entries()) {
-    if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    if (typeof value !== "number") {
+      throw new TypeError(`lob: ranges[${index}] must be a number`);
+    }
+    if (!Number.isFinite(value) || value < 0) {
       throw new RangeError(
         `lob: ranges[${index}] must be a finite non-negative number`,
       );
@@ -209,14 +241,17 @@ export class Builder {
 
   #floatBuffer(values, name) {
     this.#assert();
+    const count = values.length;
     const pointer = wasm._malloc(
-      values.length * Float32Array.BYTES_PER_ELEMENT,
+      Math.max(1, count) * Float32Array.BYTES_PER_ELEMENT,
     );
     if (pointer === 0) {
       throw new Error(`lob: out of wasm memory for ${name}`);
     }
     this.#buffers.push(pointer);
-    new Float32Array(wasm.HEAPF32.buffer, pointer, values.length).set(values);
+    if (count > 0) {
+      new Float32Array(wasm.HEAPF32.buffer, pointer, count).set(values);
+    }
     return pointer;
   }
 
@@ -228,7 +263,10 @@ export class Builder {
   }
 
   ballisticCoefficientPsi(value) {
-    return this.#call("_LobBuilderBallisticCoefficientPsi", value);
+    return this.#call(
+      "_LobBuilderBallisticCoefficientPsi",
+      finiteNumber(value, "ballisticCoefficientPsi"),
+    );
   }
 
   bcAtmosphere(value) {
@@ -246,31 +284,49 @@ export class Builder {
   }
 
   diameterInch(value) {
-    return this.#call("_LobBuilderDiameterInch", value);
+    return this.#call(
+      "_LobBuilderDiameterInch",
+      finiteNumber(value, "diameterInch"),
+    );
   }
 
   meplatDiameterInch(value) {
-    return this.#call("_LobBuilderMeplatDiameterInch", value);
+    return this.#call(
+      "_LobBuilderMeplatDiameterInch",
+      finiteNumber(value, "meplatDiameterInch"),
+    );
   }
 
   baseDiameterInch(value) {
-    return this.#call("_LobBuilderBaseDiameterInch", value);
+    return this.#call(
+      "_LobBuilderBaseDiameterInch",
+      finiteNumber(value, "baseDiameterInch"),
+    );
   }
 
   lengthInch(value) {
-    return this.#call("_LobBuilderLengthInch", value);
+    return this.#call(
+      "_LobBuilderLengthInch",
+      finiteNumber(value, "lengthInch"),
+    );
   }
 
   noseLengthInch(value) {
-    return this.#call("_LobBuilderNoseLengthInch", value);
+    return this.#call(
+      "_LobBuilderNoseLengthInch",
+      finiteNumber(value, "noseLengthInch"),
+    );
   }
 
   tailLengthInch(value) {
-    return this.#call("_LobBuilderTailLengthInch", value);
+    return this.#call(
+      "_LobBuilderTailLengthInch",
+      finiteNumber(value, "tailLengthInch"),
+    );
   }
 
   ogiveRtR(value) {
-    return this.#call("_LobBuilderOgiveRtR", value);
+    return this.#call("_LobBuilderOgiveRtR", finiteNumber(value, "ogiveRtR"));
   }
 
   machVsDragTable(machs, drags) {
@@ -317,7 +373,10 @@ export class Builder {
   }
 
   massGrains(value) {
-    return this.#call("_LobBuilderMassGrains", value);
+    return this.#call(
+      "_LobBuilderMassGrains",
+      finiteNumber(value, "massGrains"),
+    );
   }
 
   initialVelocityFps(value) {
@@ -328,66 +387,108 @@ export class Builder {
   }
 
   opticHeightInches(value) {
-    return this.#call("_LobBuilderOpticHeightInches", value);
+    return this.#call(
+      "_LobBuilderOpticHeightInches",
+      finiteNumber(value, "opticHeightInches"),
+    );
   }
 
   twistInchesPerTurn(value) {
-    return this.#call("_LobBuilderTwistInchesPerTurn", value);
+    return this.#call(
+      "_LobBuilderTwistInchesPerTurn",
+      finiteNumber(value, "twistInchesPerTurn"),
+    );
   }
 
   zeroAngleMoa(value) {
-    return this.#call("_LobBuilderZeroAngleMOA", value);
+    return this.#call(
+      "_LobBuilderZeroAngleMOA",
+      finiteNumber(value, "zeroAngleMoa"),
+    );
   }
 
   zeroDistanceYds(value) {
-    return this.#call("_LobBuilderZeroDistanceYds", value);
+    return this.#call(
+      "_LobBuilderZeroDistanceYds",
+      finiteNumber(value, "zeroDistanceYds"),
+    );
   }
 
   zeroImpactHeightInches(value) {
-    return this.#call("_LobBuilderZeroImpactHeightInches", value);
+    return this.#call(
+      "_LobBuilderZeroImpactHeightInches",
+      finiteNumber(value, "zeroImpactHeightInches"),
+    );
   }
 
   altitudeOfFiringSiteFt(value) {
-    return this.#call("_LobBuilderAltitudeOfFiringSiteFt", value);
+    return this.#call(
+      "_LobBuilderAltitudeOfFiringSiteFt",
+      finiteNumber(value, "altitudeOfFiringSiteFt"),
+    );
   }
 
   airPressureInHg(value) {
-    return this.#call("_LobBuilderAirPressureInHg", value);
+    return this.#call(
+      "_LobBuilderAirPressureInHg",
+      finiteNumber(value, "airPressureInHg"),
+    );
   }
 
   altitudeOfBarometerFt(value) {
-    return this.#call("_LobBuilderAltitudeOfBarometerFt", value);
+    return this.#call(
+      "_LobBuilderAltitudeOfBarometerFt",
+      finiteNumber(value, "altitudeOfBarometerFt"),
+    );
   }
 
   temperatureDegF(value) {
-    return this.#call("_LobBuilderTemperatureDegF", value);
+    return this.#call(
+      "_LobBuilderTemperatureDegF",
+      finiteNumber(value, "temperatureDegF"),
+    );
   }
 
   altitudeOfThermometerFt(value) {
-    return this.#call("_LobBuilderAltitudeOfThermometerFt", value);
+    return this.#call(
+      "_LobBuilderAltitudeOfThermometerFt",
+      finiteNumber(value, "altitudeOfThermometerFt"),
+    );
   }
 
   relativeHumidityPercent(value) {
-    return this.#call("_LobBuilderRelativeHumidityPercent", value);
+    return this.#call(
+      "_LobBuilderRelativeHumidityPercent",
+      finiteNumber(value, "relativeHumidityPercent"),
+    );
   }
 
   windHeading(value) {
-    if (!Number.isInteger(value) || value < 1 || value > 12) {
-      throw new RangeError("lob: windHeading must be an integer in 1..12");
-    }
-    return this.#call("_LobBuilderWindHeading", value);
+    return this.#call(
+      "_LobBuilderWindHeading",
+      clockAngle(value, "windHeading"),
+    );
   }
 
   windHeadingDeg(value) {
-    return this.#call("_LobBuilderWindHeadingDeg", value);
+    return this.#call(
+      "_LobBuilderWindHeadingDeg",
+      finiteNumber(value, "windHeadingDeg"),
+    );
   }
 
   windSpeedFps(value) {
-    return this.#call("_LobBuilderWindSpeedFps", value);
+    return this.#call(
+      "_LobBuilderWindSpeedFps",
+      finiteNumber(value, "windSpeedFps"),
+    );
   }
 
   windSpeedMph(value) {
-    return this.#call("_LobBuilderWindSpeedMph", value);
+    return this.#call(
+      "_LobBuilderWindSpeedMph",
+      finiteNumber(value, "windSpeedMph"),
+    );
   }
 
   windProfile(points) {
@@ -398,47 +499,63 @@ export class Builder {
       if (typeof point !== "object" || point === null) {
         throw new TypeError(`lob: points[${index}] must be an object`);
       }
-      const height = point.heightFt ?? NaN;
-      return [
-        finiteNumber(point.rangeFt, `points[${index}].rangeFt`),
-        finiteNumber(point.headingDeg, `points[${index}].headingDeg`),
-        finiteNumber(point.speedMph, `points[${index}].speedMph`),
-        Number.isNaN(height)
-          ? height
-          : finiteNumber(height, `points[${index}].heightFt`),
-      ];
+      const rangeFt = finiteNumber(point.rangeFt, `points[${index}].rangeFt`);
+      const headingDeg = finiteNumber(
+        point.headingDeg,
+        `points[${index}].headingDeg`,
+      );
+      const speedMph = finiteNumber(
+        point.speedMph,
+        `points[${index}].speedMph`,
+      );
+      let height = NaN;
+      if (point.heightFt !== undefined && point.heightFt !== null) {
+        height = finiteNumber(point.heightFt, `points[${index}].heightFt`);
+      }
+      return [rangeFt, headingDeg, speedMph, height];
     });
     this.#assert();
-    const pointer = wasm._malloc(points.length * WIND_POINT_SIZE);
+    const count = points.length;
+    const pointer = wasm._malloc(Math.max(1, count) * WIND_POINT_SIZE);
     if (pointer === 0) {
       throw new Error("lob: out of wasm memory for wind profile");
     }
     this.#buffers.push(pointer);
-    const view = new Float64Array(
-      wasm.HEAPF64.buffer,
-      pointer,
-      points.length * 4,
-    );
-    for (const [index, row] of rows.entries()) {
-      view.set(row, index * 4);
+    if (count > 0) {
+      const view = new Float64Array(wasm.HEAPF64.buffer, pointer, count * 4);
+      for (const [index, row] of rows.entries()) {
+        view.set(row, index * 4);
+      }
     }
-    return this.#call("_LobBuilderWindProfile", pointer, points.length);
+    return this.#call("_LobBuilderWindProfile", pointer, count);
   }
 
   windShearExponent(value) {
-    return this.#call("_LobBuilderWindShearExponent", value);
+    return this.#call(
+      "_LobBuilderWindShearExponent",
+      finiteNumber(value, "windShearExponent"),
+    );
   }
 
   azimuthDeg(value) {
-    return this.#call("_LobBuilderAzimuthDeg", value);
+    return this.#call(
+      "_LobBuilderAzimuthDeg",
+      finiteNumber(value, "azimuthDeg"),
+    );
   }
 
   latitudeDeg(value) {
-    return this.#call("_LobBuilderLatitudeDeg", value);
+    return this.#call(
+      "_LobBuilderLatitudeDeg",
+      finiteNumber(value, "latitudeDeg"),
+    );
   }
 
   rangeAngleDeg(value) {
-    return this.#call("_LobBuilderRangeAngleDeg", value);
+    return this.#call(
+      "_LobBuilderRangeAngleDeg",
+      finiteNumber(value, "rangeAngleDeg"),
+    );
   }
 
   minimumSpeed(value) {
@@ -453,7 +570,10 @@ export class Builder {
   }
 
   maximumTime(value) {
-    return this.#call("_LobBuilderMaximumTime", value);
+    return this.#call(
+      "_LobBuilderMaximumTime",
+      finiteNumber(value, "maximumTime"),
+    );
   }
 
   stepSize(value) {
@@ -580,7 +700,7 @@ export class Context {
     }
   }
 
-  solve(rangesFt) {
+  solveFt(rangesFt) {
     return this.#run(rangesToFeet(rangesFt, false), "solve");
   }
 
@@ -588,7 +708,7 @@ export class Context {
     return this.#run(rangesToFeet(rangesYd, true), "solve");
   }
 
-  solveELR(rangesFt) {
+  solveELRFt(rangesFt) {
     return this.#run(rangesToFeet(rangesFt, false), "solve-elr");
   }
 
@@ -596,7 +716,7 @@ export class Context {
     return this.#run(rangesToFeet(rangesYd, true), "solve-elr");
   }
 
-  solveInverse(rangesFt) {
+  solveInverseFt(rangesFt) {
     return this.#run(rangesToFeet(rangesFt, false), "inverse");
   }
 
@@ -604,7 +724,7 @@ export class Context {
     return this.#run(rangesToFeet(rangesYd, true), "inverse");
   }
 
-  solveInverseELR(rangesFt) {
+  solveInverseELRFt(rangesFt) {
     return this.#run(rangesToFeet(rangesFt, false), "inverse-elr");
   }
 
@@ -628,175 +748,190 @@ export function version() {
 }
 
 export function moaToMil(value) {
-  return wasm._LobMoaToMil(value);
+  return wasm._LobMoaToMil(finiteNumber(value, "value"));
 }
 
 export function moaToDeg(value) {
-  return wasm._LobMoaToDeg(value);
+  return wasm._LobMoaToDeg(finiteNumber(value, "value"));
 }
 
 export function moaToIphy(value) {
-  return wasm._LobMoaToIphy(value);
+  return wasm._LobMoaToIphy(finiteNumber(value, "value"));
 }
 
 export function moaToInch(value, rangeFt) {
-  return wasm._LobMoaToInch(value, rangeFt);
+  return wasm._LobMoaToInch(
+    finiteNumber(value, "value"),
+    finiteNumber(rangeFt, "rangeFt"),
+  );
 }
 
 export function milToMoa(value) {
-  return wasm._LobMilToMoa(value);
+  return wasm._LobMilToMoa(finiteNumber(value, "value"));
 }
 
 export function milToDeg(value) {
-  return wasm._LobMilToDeg(value);
+  return wasm._LobMilToDeg(finiteNumber(value, "value"));
 }
 
 export function milToIphy(value) {
-  return wasm._LobMilToIphy(value);
+  return wasm._LobMilToIphy(finiteNumber(value, "value"));
 }
 
 export function milToInch(value, rangeFt) {
-  return wasm._LobMilToInch(value, rangeFt);
+  return wasm._LobMilToInch(
+    finiteNumber(value, "value"),
+    finiteNumber(rangeFt, "rangeFt"),
+  );
 }
 
 export function degToMoa(value) {
-  return wasm._LobDegToMoa(value);
+  return wasm._LobDegToMoa(finiteNumber(value, "value"));
 }
 
 export function degToMil(value) {
-  return wasm._LobDegToMil(value);
+  return wasm._LobDegToMil(finiteNumber(value, "value"));
 }
 
 export function inchToMoa(value, rangeFt) {
-  return wasm._LobInchToMoa(value, rangeFt);
+  return wasm._LobInchToMoa(
+    finiteNumber(value, "value"),
+    finiteNumber(rangeFt, "rangeFt"),
+  );
 }
 
 export function inchToMil(value, rangeFt) {
-  return wasm._LobInchToMil(value, rangeFt);
+  return wasm._LobInchToMil(
+    finiteNumber(value, "value"),
+    finiteNumber(rangeFt, "rangeFt"),
+  );
 }
 
 export function inchToDeg(value, rangeFt) {
-  return wasm._LobInchToDeg(value, rangeFt);
+  return wasm._LobInchToDeg(
+    finiteNumber(value, "value"),
+    finiteNumber(rangeFt, "rangeFt"),
+  );
 }
 
 export function jToFtLbs(value) {
-  return wasm._LobJToFtLbs(value);
+  return wasm._LobJToFtLbs(finiteNumber(value, "value"));
 }
 
 export function ftLbsToJ(value) {
-  return wasm._LobFtLbsToJ(value);
+  return wasm._LobFtLbsToJ(finiteNumber(value, "value"));
 }
 
 export function mToYd(value) {
-  return wasm._LobMToYd(value);
+  return wasm._LobMToYd(finiteNumber(value, "value"));
 }
 
 export function ydToFt(value) {
-  return wasm._LobYdToFt(value);
+  return wasm._LobYdToFt(finiteNumber(value, "value"));
 }
 
 export function mToFt(value) {
-  return wasm._LobMToFt(value);
+  return wasm._LobMToFt(finiteNumber(value, "value"));
 }
 
 export function ftToIn(value) {
-  return wasm._LobFtToIn(value);
+  return wasm._LobFtToIn(finiteNumber(value, "value"));
 }
 
 export function mmToIn(value) {
-  return wasm._LobMmToIn(value);
+  return wasm._LobMmToIn(finiteNumber(value, "value"));
 }
 
 export function cmToIn(value) {
-  return wasm._LobCmToIn(value);
+  return wasm._LobCmToIn(finiteNumber(value, "value"));
 }
 
 export function ydToM(value) {
-  return wasm._LobYdToM(value);
+  return wasm._LobYdToM(finiteNumber(value, "value"));
 }
 
 export function ftToM(value) {
-  return wasm._LobFtToM(value);
+  return wasm._LobFtToM(finiteNumber(value, "value"));
 }
 
 export function ftToYd(value) {
-  return wasm._LobFtToYd(value);
+  return wasm._LobFtToYd(finiteNumber(value, "value"));
 }
 
 export function inToMm(value) {
-  return wasm._LobInToMm(value);
+  return wasm._LobInToMm(finiteNumber(value, "value"));
 }
 
 export function inToCm(value) {
-  return wasm._LobInToCm(value);
+  return wasm._LobInToCm(finiteNumber(value, "value"));
 }
 
 export function inToFt(value) {
-  return wasm._LobInToFt(value);
+  return wasm._LobInToFt(finiteNumber(value, "value"));
 }
 
 export function paToInHg(value) {
-  return wasm._LobPaToInHg(value);
+  return wasm._LobPaToInHg(finiteNumber(value, "value"));
 }
 
 export function mbarToInHg(value) {
-  return wasm._LobMbarToInHg(value);
+  return wasm._LobMbarToInHg(finiteNumber(value, "value"));
 }
 
 export function psiToInHg(value) {
-  return wasm._LobPsiToInHg(value);
+  return wasm._LobPsiToInHg(finiteNumber(value, "value"));
 }
 
 export function lbsToGrain(value) {
-  return wasm._LobLbsToGrain(value);
+  return wasm._LobLbsToGrain(finiteNumber(value, "value"));
 }
 
 export function gToGrain(value) {
-  return wasm._LobGToGrain(value);
+  return wasm._LobGToGrain(finiteNumber(value, "value"));
 }
 
 export function kgToGrain(value) {
-  return wasm._LobKgToGrain(value);
+  return wasm._LobKgToGrain(finiteNumber(value, "value"));
 }
 
 export function kgSqMToPmsi(value) {
-  return wasm._LobKgSqMToPmsi(value);
+  return wasm._LobKgSqMToPmsi(finiteNumber(value, "value"));
 }
 
 export function fpsToMps(value) {
-  return wasm._LobFpsToMps(value);
+  return wasm._LobFpsToMps(finiteNumber(value, "value"));
 }
 
 export function mpsToFps(value) {
-  return wasm._LobMpsToFps(value);
+  return wasm._LobMpsToFps(finiteNumber(value, "value"));
 }
 
 export function kphToMph(value) {
-  return wasm._LobKphToMph(value);
+  return wasm._LobKphToMph(finiteNumber(value, "value"));
 }
 
 export function knToMph(value) {
-  return wasm._LobKnToMph(value);
+  return wasm._LobKnToMph(finiteNumber(value, "value"));
 }
 
 export function msToS(value) {
-  return wasm._LobMsToS(value);
+  return wasm._LobMsToS(finiteNumber(value, "value"));
 }
 
 export function usToS(value) {
-  return wasm._LobUsToS(value);
+  return wasm._LobUsToS(finiteNumber(value, "value"));
 }
 
 export function sToMs(value) {
-  return wasm._LobSToMs(value);
+  return wasm._LobSToMs(finiteNumber(value, "value"));
 }
 
 export function sToUs(value) {
-  return wasm._LobSToUs(value);
+  return wasm._LobSToUs(finiteNumber(value, "value"));
 }
 
 export function degCToDegF(value) {
-  return wasm._LobDegCToDegF(value);
+  return wasm._LobDegCToDegF(finiteNumber(value, "value"));
 }
 
 // This file is part of lob.
