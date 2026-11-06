@@ -189,9 +189,23 @@ def page_id_for(relpath):
     return "okf_" + re.sub(r"[/\\\-.]+", "_", stem)
 
 
-def render_page(page_id, frontmatter, body):
-    """Emit '@page <id> <title>' header plus body verbatim."""
+def render_page(page_id, frontmatter, body, graph_dot=""):
+    """Emit '@page <id> <title>' header plus banner, exhibit, and body."""
     title = frontmatter.get("title") or page_id
+    banner = ""
+    if graph_dot:
+        banner = (
+            "\\htmlonly\n"
+            '<div class="okf-neighborhood-graph">\n'
+            '  <div class="okf-graph-caption">'
+            "Topic Map &bull; Prerequisites &amp; Related Concepts</div>\n"
+            "\\endhtmlonly\n"
+            "%s\n"
+            "\\htmlonly\n"
+            "</div>\n"
+            "\\endhtmlonly\n"
+            % graph_dot.strip()
+        )
     exhibit = frontmatter.get("exhibit")
     if exhibit:
         if isinstance(exhibit, str):
@@ -206,8 +220,9 @@ def render_page(page_id, frontmatter, body):
                 "\\endhtmlonly\n"
                 % (ex, ex)
             )
-            return "@page %s %s\n%s%s" % (page_id, title, exhibit_html, body)
-    return "@page %s %s\n%s" % (page_id, title, body)
+            return "@page %s %s\n%s%s%s" % (
+                page_id, title, banner, exhibit_html, body)
+    return "@page %s %s\n%s%s" % (page_id, title, banner, body)
 
 
 MD_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)\"']+?)(?:\s+\"[^\"]*\")?\)")
@@ -282,6 +297,105 @@ def rewrite_links(body, src_rel, id_map, exclude=()):
     return MD_LINK_RE.sub(sub, body)
 
 
+def extract_concept_links(body, src_rel, concept_rels, exclude=()):
+    """Return set of normalized concept bundle_rels referenced by links in body."""
+    src_dir = Path(src_rel).parent
+    out = set()
+    for m in MD_LINK_RE.finditer(body):
+        target = m.group(2)
+        path_part = target.split("#", 1)[0]
+        if not path_part.endswith(".md"):
+            continue
+        if target.startswith(("http://", "https://", "#", "/")):
+            continue
+        if _is_reserved(path_part):
+            continue
+        norm = (src_dir / path_part).as_posix()
+        parts = []
+        for seg in norm.split("/"):
+            if seg in ("", "."):
+                continue
+            if seg == "..":
+                if parts:
+                    parts.pop()
+                continue
+            parts.append(seg)
+        key = "/".join(parts)
+        if _is_excluded(key, exclude):
+            continue
+        if key in concept_rels:
+            out.add(key)
+    return out
+
+
+def _escape_dot(s):
+    return str(s).replace("\\", "\\\\").replace('"', '\\"')
+
+
+def build_neighborhood_dot(pid, title, ptype, incoming_nodes, outgoing_nodes):
+    """Construct a 1-hop Graphviz digraph for the concept page."""
+    if not incoming_nodes and not outgoing_nodes:
+        return ""
+
+    lines = [
+        "\\dot",
+        'digraph "neighborhood" {' ,
+        "  rankdir=LR;",
+        '  bgcolor="transparent";',
+        '  node [fontname="ui-sans-serif, system-ui, sans-serif", fontsize=10, '
+        'height=0.34, shape=box, style="filled,rounded"];',
+        '  edge [color="#859399", penwidth=1.2, arrowsize=0.65];',
+        "",
+    ]
+
+    for nid, info in sorted(incoming_nodes.items()):
+        ntitle = _escape_dot(info.get("title", nid))
+        shape_attr = (
+            "peripheries=2"
+            if info.get("type") == "DesignDecision"
+            else 'shape=box, style="filled,rounded"'
+        )
+        lines.append(
+            '  %s [label="%s", tooltip="%s", URL="@ref %s", '
+            'fillcolor="#fffdf8", fontcolor="#17202a", color="#d8d1c2", %s];'
+            % (nid, ntitle, ntitle, nid, shape_attr)
+        )
+
+    ctitle = _escape_dot(title)
+    cshape = (
+        "peripheries=2"
+        if ptype == "DesignDecision"
+        else 'shape=box, style="filled,rounded"'
+    )
+    lines.append(
+        '  %s [label="%s", tooltip="Current Page", fillcolor="#a44122", '
+        'fontcolor="#ffffff", color="#7b2e17", penwidth=2.0, %s];'
+        % (pid, ctitle, cshape)
+    )
+
+    for nid, info in sorted(outgoing_nodes.items()):
+        ntitle = _escape_dot(info.get("title", nid))
+        shape_attr = (
+            "peripheries=2"
+            if info.get("type") == "DesignDecision"
+            else 'shape=box, style="filled,rounded"'
+        )
+        lines.append(
+            '  %s [label="%s", tooltip="%s", URL="@ref %s", '
+            'fillcolor="#fffdf8", fontcolor="#17202a", color="#d8d1c2", %s];'
+            % (nid, ntitle, ntitle, nid, shape_attr)
+        )
+
+    lines.append("")
+    for inc_id in sorted(incoming_nodes.keys()):
+        lines.append("  %s -> %s;" % (inc_id, pid))
+    for out_id in sorted(outgoing_nodes.keys()):
+        lines.append("  %s -> %s;" % (pid, out_id))
+
+    lines.extend(["}", "\\enddot", ""])
+    return "\n".join(lines)
+
+
 def collect_concepts(src_dir):
     """Return {bundle_rel: path} for non-reserved, non-excluded .md, sorted."""
     exclude = _exclude_list(src_dir)
@@ -307,14 +421,49 @@ def generate(src_dir, out_dir):
     out_dir.mkdir(parents=True, exist_ok=True)
     for stale in out_dir.glob("okf_*.md"):
         stale.unlink()
+
+    parsed = {}
+    outgoing_by_rel = {}
+    for rel in concepts:
+        fm, b = parse_frontmatter(concepts[rel].read_text(encoding="utf-8"))
+        parsed[rel] = (fm, b)
+        outgoing_by_rel[rel] = extract_concept_links(
+            b, rel, concepts, exclude)
+
+    incoming_by_rel = {rel: set() for rel in concepts}
+    for src_rel, targets in outgoing_by_rel.items():
+        for tgt_rel in targets:
+            incoming_by_rel[tgt_rel].add(src_rel)
+
     written = []
     for rel in sorted(concepts):
-        fm, body = parse_frontmatter(
-            concepts[rel].read_text(encoding="utf-8"))
-        body = rewrite_links(body, rel, id_map, exclude)
+        fm, raw_body = parsed[rel]
+        body = rewrite_links(raw_body, rel, id_map, exclude)
         pid = id_map[rel]
+        title = fm.get("title") or pid
+        ptype = fm.get("type", "Concept")
+
+        inc_nodes = {
+            id_map[s]: {
+                "title": parsed[s][0].get("title") or id_map[s],
+                "type": parsed[s][0].get("type", "Concept"),
+            }
+            for s in sorted(incoming_by_rel[rel])
+            if s != rel
+        }
+        out_nodes = {
+            id_map[t]: {
+                "title": parsed[t][0].get("title") or id_map[t],
+                "type": parsed[t][0].get("type", "Concept"),
+            }
+            for t in sorted(outgoing_by_rel[rel])
+            if t != rel
+        }
+
+        dot = build_neighborhood_dot(
+            pid, title, ptype, inc_nodes, out_nodes)
         (out_dir / (pid + ".md")).write_text(
-            render_page(pid, fm, body), encoding="utf-8")
+            render_page(pid, fm, body, graph_dot=dot), encoding="utf-8")
         written.append(pid)
     # root index.md becomes the @mainpage
     root_index = src_dir / "index.md"

@@ -309,6 +309,58 @@ class CheckTest(unittest.TestCase):
             self.assertEqual(generate(base, Path(out)), ["okf_a"])
 
 
+class NeighborhoodGraphTest(unittest.TestCase):
+    def test_extract_concept_links(self):
+        from okf_to_doxygen import extract_concept_links
+        body = (
+            "See [Target](sub/target.md) and [Index](index.md) and "
+            "[Ext](https://example.com) and [Other](other.md)."
+        )
+        concepts = {"sub/target.md", "other.md"}
+        found = extract_concept_links(body, "source.md", concepts, exclude=[])
+        self.assertEqual(found, {"sub/target.md", "other.md"})
+
+    def test_build_neighborhood_dot_empty(self):
+        from okf_to_doxygen import build_neighborhood_dot
+        dot = build_neighborhood_dot("okf_a", "Page A", "Concept", {}, {})
+        self.assertEqual(dot, "")
+
+    def test_build_neighborhood_dot_structure(self):
+        from okf_to_doxygen import build_neighborhood_dot
+        incoming = {"okf_in": {"title": "Inbound", "type": "Guide"}}
+        outgoing = {"okf_out": {"title": "Outbound", "type": "DesignDecision"}}
+        dot = build_neighborhood_dot("okf_curr", "Current Page", "Concept", incoming, outgoing)
+        self.assertTrue(dot.startswith("\\dot\n"))
+        self.assertTrue(dot.endswith("\n\\enddot\n"))
+        self.assertIn('rankdir=LR;', dot)
+        self.assertIn('bgcolor="transparent";', dot)
+        self.assertIn('fillcolor="#a44122"', dot)
+        self.assertIn('URL="@ref okf_in"', dot)
+        self.assertIn('URL="@ref okf_out"', dot)
+        self.assertIn('peripheries=2', dot)  # DesignDecision node styling
+        self.assertIn('okf_in -> okf_curr;', dot)
+        self.assertIn('okf_curr -> okf_out;', dot)
+
+    def test_generate_injects_graph_banner(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                tempfile.TemporaryDirectory() as out:
+            base = Path(tmp)
+            (base / "index.md").write_text("# Root\n- [A](a.md)\n- [B](b.md)\n", encoding="utf-8")
+            (base / "a.md").write_text("---\ntype: Concept\ntitle: Alpha\n---\nLinks to [Beta](b.md).\n", encoding="utf-8")
+            (base / "b.md").write_text("---\ntype: Concept\ntitle: Beta\n---\nNo outgoing links.\n", encoding="utf-8")
+            written = generate(base, Path(out))
+            self.assertEqual(written, ["okf_a", "okf_b"])
+            page_a = (Path(out) / "okf_a.md").read_text(encoding="utf-8")
+            page_b = (Path(out) / "okf_b.md").read_text(encoding="utf-8")
+            mainpage = (Path(out) / "okf_mainpage.md").read_text(encoding="utf-8")
+
+            self.assertIn("okf-neighborhood-graph", page_a)
+            self.assertIn("\\dot", page_a)
+            self.assertIn("okf-neighborhood-graph", page_b)
+            self.assertIn("\\dot", page_b)
+            self.assertNotIn("okf-neighborhood-graph", mainpage)
+
+
 if __name__ == "__main__":
     unittest.main()
 
