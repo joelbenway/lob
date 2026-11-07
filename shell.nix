@@ -17,11 +17,13 @@
         doxygen
         emscripten
         gbenchmark
+        graphviz
         gtest
         lcov
         nlohmann_json
         nodejs
         python3
+        typescript
         valgrind
       ];
       shellHook = let

@@ -39,24 +39,32 @@ if(EMSCRIPTEN)
                       "-sEXPORTED_FUNCTIONS=${_lob_exports_list}")
 
   add_custom_target(
-    lob_solver ALL
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/solver"
+    lob_loblab ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/loblab"
     COMMAND
       ${CMAKE_COMMAND} -E copy_if_different
-      "${PROJECT_SOURCE_DIR}/example/solver/index.html"
-      "${PROJECT_SOURCE_DIR}/example/solver/style.css"
-      "${PROJECT_SOURCE_DIR}/example/solver/app.mjs"
-      "${PROJECT_SOURCE_DIR}/example/solver/inputs.mjs"
-      "${PROJECT_SOURCE_DIR}/example/solver/plot.mjs"
+      "${PROJECT_SOURCE_DIR}/example/loblab/index.html"
+      "${PROJECT_SOURCE_DIR}/example/loblab/style.css"
+      "${PROJECT_SOURCE_DIR}/example/loblab/app.mjs"
+      "${PROJECT_SOURCE_DIR}/example/loblab/inputs.mjs"
+      "${PROJECT_SOURCE_DIR}/example/loblab/plot.mjs"
       "${CMAKE_BINARY_DIR}/index.mjs" "${CMAKE_BINARY_DIR}/lob.mjs"
-      "${CMAKE_BINARY_DIR}/lob.wasm" "${CMAKE_BINARY_DIR}/solver"
+      "${CMAKE_BINARY_DIR}/lob.wasm" "${CMAKE_BINARY_DIR}/loblab"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/solver"
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_directory
+      "${CMAKE_BINARY_DIR}/loblab" "${CMAKE_BINARY_DIR}/solver"
     DEPENDS lob_wasm
-    COMMENT "Assembling the browser solver example")
+    COMMENT "Assembling the browser loblab example")
 
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/package.json.in"
                  "${CMAKE_BINARY_DIR}/package.json" @ONLY)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/index.mjs"
                  "${CMAKE_BINARY_DIR}/index.mjs" COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/index.d.ts"
+                 "${CMAKE_BINARY_DIR}/index.d.ts" COPYONLY)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/lob.d.ts"
+                 "${CMAKE_BINARY_DIR}/lob.d.ts" COPYONLY)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/README.md"
                  "${CMAKE_BINARY_DIR}/README.md" COPYONLY)
   configure_file("${PROJECT_SOURCE_DIR}/COPYING.md"

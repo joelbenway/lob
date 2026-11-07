@@ -5,37 +5,15 @@
 # Provides the nlohmann_json::nlohmann_json target, preferring a system
 # package and falling back to FetchContent. Include from any directory scope
 # that links the target instead of repeating this block.
-find_package(nlohmann_json CONFIG)
+include(${CMAKE_CURRENT_LIST_DIR}/find-or-fetch.cmake)
 
-if(NOT nlohmann_json_FOUND)
-  message(STATUS "nlohmann/json not found, FetchContent instead...")
-  set(DEV_WARNINGS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_WARNINGS}")
-  set(DEV_ERRORS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_ERRORS}")
-  set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
-      ON
-      CACHE INTERNAL "Suppress third-party CMake warnings" FORCE)
-  set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
-      ON
-      CACHE INTERNAL "Suppress third-party CMake errors" FORCE)
-
-  include(FetchContent)
-  FetchContent_Declare(
-    json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.12.0)
-  FetchContent_MakeAvailable(json)
-
-  set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
-      ${DEV_WARNINGS_RECOVER_STATE}
-      CACHE INTERNAL "Restore original setting" FORCE)
-  set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
-      ${DEV_ERRORS_RECOVER_STATE}
-      CACHE INTERNAL "Restore original setting" FORCE)
-  unset(DEV_WARNINGS_RECOVER_STATE)
-  unset(DEV_ERRORS_RECOVER_STATE)
-else()
-  message(STATUS "Found nlohmann/json: ${nlohmann_json_DIR}")
-endif()
+lob_find_or_fetch(
+  nlohmann_json
+  PACKAGE nlohmann_json
+  DISPLAY_NAME "nlohmann/json"
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG v3.12.0
+  FETCH_NAME json)
 
 # This file is part of lob.
 #

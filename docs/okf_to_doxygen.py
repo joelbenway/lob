@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # Copyright (c) 2026  Joel Benway
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""OKF bundle -> Doxygen pages. Stdlib only (pathlib, re, sys)."""
+# Please see end of file for extended copyright information
+
+"""OKF bundle -> Doxygen pages. Stdlib only (argparse, pathlib, re, sys)."""
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -187,9 +190,61 @@ def page_id_for(relpath):
     return "okf_" + re.sub(r"[/\\\-.]+", "_", stem)
 
 
-def render_page(page_id, frontmatter, body):
-    """Emit '@page <id> <title>' header plus body verbatim."""
+def format_type_title(ptype):
+    """Convert 'DesignDecision' -> 'Design Decisions', 'Concept' -> 'Concepts'."""
+    ptype = str(ptype).strip()
+    if ptype == "Guide":
+        return "Guides & Workflows"
+    if ptype == "DesignDecision":
+        return "Design Decisions"
+    if ptype == "Concept":
+        return "Concepts"
+
+    words = re.findall(r"[A-Z]?[a-z0-9]+|[A-Z]+(?=[A-Z][a-z0-9]|\b)", ptype)
+    if not words:
+        words = [ptype]
+    last = words[-1]
+    uncountable = {"hardware", "software", "firmware", "infrastructure", "middleware"}
+    if last.lower() in uncountable or last.endswith("s"):
+        plural_last = last
+    elif len(last) > 1 and last.endswith("y") and last[-2].lower() not in "aeiou":
+        plural_last = last[:-1] + "ies"
+    else:
+        plural_last = last + "s"
+    words[-1] = plural_last
+    return " ".join(words)
+
+
+def type_slug(ptype):
+    """Convert 'DesignDecision' -> 'decisions', 'SystemPolicy' -> 'system_policies'."""
+    ptype = str(ptype).strip()
+    if ptype == "DesignDecision":
+        return "decisions"
+    if ptype == "Guide":
+        return "guides"
+    if ptype == "Concept":
+        return "concepts"
+    title = format_type_title(ptype)
+    return re.sub(r"[^a-z0-9]+", "_", title.lower()).strip("_")
+
+
+def render_page(page_id, frontmatter, body, graph_dot=""):
+    """Emit '@page <id> <title>' header plus banner, exhibit, and body."""
     title = frontmatter.get("title") or page_id
+    banner = ""
+    if graph_dot:
+        banner = (
+            "\\htmlonly\n"
+            '<div class="okf-neighborhood-graph">\n'
+            '  <div class="okf-graph-caption">'
+            "Topic Map &bull; Prerequisites &amp; Related Concepts</div>\n"
+            "\\endhtmlonly\n"
+            "%s\n"
+            "\\htmlonly\n"
+            "</div>\n"
+            "\\endhtmlonly\n"
+            % graph_dot.strip()
+        )
     exhibit = frontmatter.get("exhibit")
     if exhibit:
         if isinstance(exhibit, str):
@@ -199,13 +254,14 @@ def render_page(page_id, frontmatter, body):
         if ex:
             exhibit_html = (
                 "\\htmlonly\n"
-                '<div data-lob-exhibit="%s"></div>\n'
+                '<div data-okf-exhibit="%s"></div>\n'
                 '<script type="module" src="exhibits/%s.js"></script>\n'
                 "\\endhtmlonly\n"
                 % (ex, ex)
             )
-            return "@page %s %s\n%s%s" % (page_id, title, exhibit_html, body)
-    return "@page %s %s\n%s" % (page_id, title, body)
+            return "@page %s %s\n%s%s%s" % (
+                page_id, title, banner, exhibit_html, body)
+    return "@page %s %s\n%s%s" % (page_id, title, banner, body)
 
 
 MD_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)\"']+?)(?:\s+\"[^\"]*\")?\)")
@@ -280,6 +336,202 @@ def rewrite_links(body, src_rel, id_map, exclude=()):
     return MD_LINK_RE.sub(sub, body)
 
 
+def extract_concept_links(body, src_rel, concept_rels, exclude=()):
+    """Return set of normalized concept bundle_rels referenced by links in body."""
+    src_dir = Path(src_rel).parent
+    out = set()
+    for m in MD_LINK_RE.finditer(body):
+        target = m.group(2)
+        path_part = target.split("#", 1)[0]
+        if not path_part.endswith(".md"):
+            continue
+        if target.startswith(("http://", "https://", "#", "/")):
+            continue
+        if _is_reserved(path_part):
+            continue
+        norm = (src_dir / path_part).as_posix()
+        parts = []
+        for seg in norm.split("/"):
+            if seg in ("", "."):
+                continue
+            if seg == "..":
+                if parts:
+                    parts.pop()
+                continue
+            parts.append(seg)
+        key = "/".join(parts)
+        if _is_excluded(key, exclude):
+            continue
+        if key in concept_rels and key != src_rel:
+            out.add(key)
+    return out
+
+
+def _escape_dot(s):
+    return str(s).replace("\\", "\\\\").replace('"', '\\"')
+
+
+DOT_FONT = "ui-sans-serif, system-ui, sans-serif"
+
+
+def build_neighborhood_dot(pid, title, ptype, incoming_nodes, outgoing_nodes, accent_color="#2458a6"):
+    """Construct a 1-hop Graphviz digraph for the concept page."""
+    if not incoming_nodes and not outgoing_nodes:
+        return ""
+
+    lines = [
+        "\\dot",
+        'digraph "neighborhood" {' ,
+        "  rankdir=LR;",
+        '  bgcolor="transparent";',
+        '  node [fontname="%s", fontsize=10, '
+        'height=0.34, shape=box, style="filled,rounded"];' % DOT_FONT,
+        '  edge [color="#859399", penwidth=1.2, arrowsize=0.65];',
+        "",
+    ]
+
+    for nid, info in sorted(incoming_nodes.items()):
+        ntitle = _escape_dot(info.get("title", nid))
+        shape_attr = (
+            "peripheries=2"
+            if info.get("type") == "DesignDecision"
+            else 'shape=box, style="filled,rounded"'
+        )
+        lines.append(
+            '  %s [label="%s", tooltip="%s", URL="@ref %s", '
+            'fillcolor="#fffdf8", fontcolor="#17202a", color="#d8d1c2", %s];'
+            % (nid, ntitle, ntitle, nid, shape_attr)
+        )
+
+    ctitle = _escape_dot(title)
+    cshape = (
+        "peripheries=2"
+        if ptype == "DesignDecision"
+        else 'shape=box, style="filled,rounded"'
+    )
+    lines.append(
+        '  %s [label="%s", tooltip="Current Page", fillcolor="%s", '
+        'fontcolor="#ffffff", color="%s", penwidth=2.0, %s];'
+        % (pid, ctitle, accent_color, accent_color, cshape)
+    )
+
+    for nid, info in sorted(outgoing_nodes.items()):
+        ntitle = _escape_dot(info.get("title", nid))
+        shape_attr = (
+            "peripheries=2"
+            if info.get("type") == "DesignDecision"
+            else 'shape=box, style="filled,rounded"'
+        )
+        lines.append(
+            '  %s [label="%s", tooltip="%s", URL="@ref %s", '
+            'fillcolor="#fffdf8", fontcolor="#17202a", color="#d8d1c2", %s];'
+            % (nid, ntitle, ntitle, nid, shape_attr)
+        )
+
+    lines.append("")
+    for inc_id in sorted(incoming_nodes.keys()):
+        lines.append("  %s -> %s;" % (inc_id, pid))
+    for out_id in sorted(outgoing_nodes.keys()):
+        lines.append("  %s -> %s;" % (pid, out_id))
+
+    lines.extend(["}", "\\enddot", ""])
+    return "\n".join(lines)
+
+
+def reduce_edges(outgoing, id_map):
+    """Transitive reduction of outgoing concept links, preserving cycles."""
+    graph = {
+        id_map[u]: {
+            id_map[v]
+            for v in targets
+            if v in id_map and id_map[v] != id_map[u]
+        }
+        for u, targets in outgoing.items()
+    }
+
+    def reachable_nodes(start, avoid_edge=None):
+        visited = set()
+        queue = [start]
+        while queue:
+            curr = queue.pop()
+            if curr not in visited:
+                visited.add(curr)
+                for neighbor in graph.get(curr, ()):
+                    if avoid_edge and curr == avoid_edge[0] and neighbor == avoid_edge[1]:
+                        continue
+                    queue.append(neighbor)
+        return visited
+
+    reduced = {u: set(targets) for u, targets in graph.items()}
+    for u in sorted(graph):
+        for v in sorted(graph[u]):
+            v_reaches = reachable_nodes(v)
+            if u in v_reaches:
+                continue
+            u_reaches_without = reachable_nodes(u, avoid_edge=(u, v))
+            if v in u_reaches_without:
+                reduced[u].remove(v)
+    return reduced
+
+
+def build_global_dot(concepts, titles, types, outgoing_by_rel, id_map, accent_color="#2458a6"):
+    """Emit a force-directed, clustered Graphviz graph for the entire OKF corpus."""
+    if not concepts:
+        return ""
+    reduced_edges = reduce_edges(outgoing_by_rel, id_map)
+    lines = [
+        "\\dot",
+        "digraph global_map {",
+        '  bgcolor="transparent";',
+        "  rankdir=LR;",
+        "  nodesep=0.35;",
+        "  ranksep=0.6;",
+        '  node [shape=box, style="filled,rounded", fontname="%s", fontsize=10];'
+        % DOT_FONT,
+        '  edge [color="#859399", penwidth=1.2, arrowsize=0.75];',
+        "",
+    ]
+    seen_types = []
+    for standard in ("Guide", "Concept", "DesignDecision"):
+        if any(types.get(rel, "Concept") == standard for rel in concepts):
+            seen_types.append(standard)
+    for rel in sorted(concepts):
+        t = types.get(rel, "Concept")
+        if t not in seen_types:
+            seen_types.append(t)
+
+    for ptype in seen_types:
+        cname = "cluster_" + type_slug(ptype)
+        clabel = format_type_title(ptype)
+        lines.append("  subgraph %s {" % cname)
+        lines.append('    label="%s";' % clabel)
+        lines.append('    style="rounded,dashed";')
+        lines.append('    color="#d8d1c2";')
+        lines.append(
+            '    fontname="%s"; fontsize=11; fontcolor="%s";' % (DOT_FONT, accent_color)
+        )
+        for rel in sorted(concepts):
+            item_type = types.get(rel, "Concept")
+            if item_type == ptype:
+                pid = id_map[rel]
+                title = _escape_dot(titles.get(rel) or pid)
+                periph = " peripheries=2" if item_type == "DesignDecision" else ""
+                lines.append(
+                    '    %s [label="%s", tooltip="%s", URL="@ref %s", target="_top", '
+                    'fillcolor="#fffdf8", fontcolor="#17202a", color="#d8d1c2"%s];'
+                    % (pid, title, title, pid, periph)
+                )
+        lines.append("  }")
+
+    lines.append("")
+    for src_id in sorted(reduced_edges):
+        for dst_id in sorted(reduced_edges[src_id]):
+            lines.append("  %s -> %s;" % (src_id, dst_id))
+
+    lines.extend(["}", "\\enddot", ""])
+    return "\n".join(lines)
+
+
 def collect_concepts(src_dir):
     """Return {bundle_rel: path} for non-reserved, non-excluded .md, sorted."""
     exclude = _exclude_list(src_dir)
@@ -294,7 +546,7 @@ def collect_concepts(src_dir):
     return found
 
 
-def generate(src_dir, out_dir):
+def generate(src_dir, out_dir, title=None, accent_color="#2458a6", api_ref=None, no_cards=False, no_global_graph=False):
     """Render every concept to '<page_id>.md' in out_dir; return IDs."""
     src_dir, out_dir = Path(src_dir), Path(out_dir)
     if not src_dir.is_dir():
@@ -305,28 +557,195 @@ def generate(src_dir, out_dir):
     out_dir.mkdir(parents=True, exist_ok=True)
     for stale in out_dir.glob("okf_*.md"):
         stale.unlink()
+
+    parsed = {}
+    outgoing_by_rel = {}
+    for rel in concepts:
+        fm, b = parse_frontmatter(concepts[rel].read_text(encoding="utf-8"))
+        parsed[rel] = (fm, b)
+        outgoing_by_rel[rel] = extract_concept_links(
+            b, rel, concepts, exclude)
+
+    incoming_by_rel = {rel: set() for rel in concepts}
+    for src_rel, targets in outgoing_by_rel.items():
+        for tgt_rel in targets:
+            incoming_by_rel[tgt_rel].add(src_rel)
+
     written = []
     for rel in sorted(concepts):
-        fm, body = parse_frontmatter(
-            concepts[rel].read_text(encoding="utf-8"))
-        body = rewrite_links(body, rel, id_map, exclude)
+        fm, raw_body = parsed[rel]
+        body = rewrite_links(raw_body, rel, id_map, exclude)
         pid = id_map[rel]
+        title_val = fm.get("title") or pid
+        ptype = fm.get("type", "Concept")
+
+        inc_nodes = {
+            id_map[s]: {
+                "title": parsed[s][0].get("title") or id_map[s],
+                "type": parsed[s][0].get("type", "Concept"),
+            }
+            for s in sorted(incoming_by_rel[rel])
+            if s != rel
+        }
+        out_nodes = {
+            id_map[t]: {
+                "title": parsed[t][0].get("title") or id_map[t],
+                "type": parsed[t][0].get("type", "Concept"),
+            }
+            for t in sorted(outgoing_by_rel[rel])
+            if t != rel
+        }
+
+        dot = build_neighborhood_dot(
+            pid, title_val, ptype, inc_nodes, out_nodes, accent_color=accent_color)
         (out_dir / (pid + ".md")).write_text(
-            render_page(pid, fm, body), encoding="utf-8")
+            render_page(pid, fm, body, graph_dot=dot), encoding="utf-8")
         written.append(pid)
-    # root index.md becomes the @mainpage
+
+    concept_titles = {
+        rel: parsed[rel][0].get("title") or id_map[rel] for rel in concepts
+    }
+    concept_types = {
+        rel: parsed[rel][0].get("type", "Concept") for rel in concepts
+    }
+
+    category_order = []
+    for standard in ("Guide", "Concept", "DesignDecision"):
+        if any(concept_types[rel] == standard for rel in concepts):
+            category_order.append(standard)
+    for rel in sorted(concepts):
+        t = concept_types[rel]
+        if t not in category_order:
+            category_order.append(t)
+
+    categories = {t: [] for t in category_order}
+    for rel in sorted(concepts):
+        categories[concept_types[rel]].append((id_map[rel], concept_titles[rel]))
+
+    for ptype, items in categories.items():
+        cslug = type_slug(ptype)
+        ctitle = format_type_title(ptype)
+        hub_page_id = "okf_" + cslug
+        hub_lines = [
+            "@page %s %s" % (hub_page_id, ctitle),
+            "",
+            "# %s" % ctitle,
+            "",
+        ]
+        for pid, ititle in items:
+            hub_lines.append("- @subpage %s \"%s\"" % (pid, ititle))
+        hub_lines.append("")
+        (out_dir / ("%s.md" % hub_page_id)).write_text(
+            "\n".join(hub_lines), encoding="utf-8"
+        )
+
+    # Tool-owned @mainpage
     root_index = src_dir / "index.md"
+    intro_text = ""
+    inferred_title = None
     if root_index.exists():
         text = root_index.read_text(encoding="utf-8")
         m = FRONTMATTER_RE.match(text)
         if m:
             text = text[m.end():]
+        text = re.sub(
+            r'<div style="display:\s*none;?">.*?</div>',
+            "",
+            text,
+            flags=re.DOTALL,
+        )
         text = rewrite_links(text, "index.md", id_map, exclude)
-        # Title from the index body's first heading, else a generic label.
         heading = re.search(r"^#\s+(.+)$", text, re.MULTILINE)
-        title = heading.group(1).strip() if heading else "Technical Reference"
-        (out_dir / "okf_mainpage.md").write_text(
-            "@mainpage %s\n" % title + text, encoding="utf-8")
+        if heading:
+            inferred_title = heading.group(1).strip()
+        intro_text = text.strip()
+    else:
+        intro_text = "Welcome to the technical documentation."
+
+    final_title = title if title else (inferred_title if inferred_title else "Technical Reference")
+
+    subpage_items = []
+    for ptype in category_order:
+        cslug = type_slug(ptype)
+        ctitle = format_type_title(ptype)
+        subpage_items.append("- @subpage okf_%s \"%s\"" % (cslug, ctitle))
+    subpages_block = ("\n\n## Categories\n" + "\n".join(subpage_items) + "\n") if subpage_items else ""
+
+    cards_block = ""
+    if not no_cards:
+        badge_map = {
+            "Guide": ("Walkthroughs", "🧭"),
+            "Concept": ("Core", "⚛️"),
+            "DesignDecision": ("Architecture", "⚖️"),
+        }
+        desc_map = {
+            "Guide": "Step-by-step guides, walkthroughs, and worked examples.",
+            "Concept": "Fundamental concepts, domain models, and equations.",
+            "DesignDecision": "Architectural rationales, invariants, and design trade-offs.",
+        }
+        card_items = []
+        for ptype in category_order:
+            cslug = type_slug(ptype)
+            ctitle = format_type_title(ptype)
+            badge_text, icon = badge_map.get(ptype, ("Reference", "📚"))
+            desc = desc_map.get(ptype, "Explore %s topics." % ctitle)
+            card_items.append(
+                '  <a class="okf-pillar-card" href="okf_%s.html">\n'
+                '    <span class="okf-pillar-card-badge">%s</span>\n'
+                '    <h3>%s %s</h3>\n'
+                '    <p>%s</p>\n'
+                '    <span class="okf-pillar-card-cta">Explore %s &rarr;</span>\n'
+                '  </a>' % (cslug, badge_text, icon, ctitle, desc, ctitle)
+            )
+        if api_ref and api_ref.get("url"):
+            a_url = api_ref["url"]
+            a_title = api_ref.get("title", "API Reference")
+            a_badge = api_ref.get("badge", "API")
+            a_desc = api_ref.get("desc", "Complete programming interface, classes, functions, and types.")
+            card_items.append(
+                '  <a class="okf-pillar-card" href="%s">\n'
+                '    <span class="okf-pillar-card-badge">%s</span>\n'
+                '    <h3>⚙️ %s</h3>\n'
+                '    <p>%s</p>\n'
+                '    <span class="okf-pillar-card-cta">Explore %s &rarr;</span>\n'
+                '  </a>' % (a_url, a_badge, a_title, a_desc, a_title)
+            )
+        if card_items:
+            cards_block = (
+                "\n\n\\htmlonly\n"
+                '<div class="okf-pillar-cards">\n'
+                + "\n".join(card_items)
+                + "\n</div>\n"
+                "\\endhtmlonly\n"
+            )
+
+    graph_block = ""
+    if not no_global_graph:
+        global_dot = build_global_dot(
+            concepts, concept_titles, concept_types, outgoing_by_rel, id_map,
+            accent_color=accent_color
+        )
+        if global_dot:
+            graph_block = (
+                "\n\n\\htmlonly\n"
+                '<div class="okf-neighborhood-graph okf-global-graph">\n'
+                '  <div class="okf-graph-caption">'
+                "Corpus Topic Map &bull; Complete Knowledge Graph</div>\n"
+                "\\endhtmlonly\n"
+                "%s\n"
+                "\\htmlonly\n"
+                "</div>\n"
+                "\\endhtmlonly\n"
+            ) % global_dot.strip()
+
+    (out_dir / "okf_mainpage.md").write_text(
+        "@mainpage %s\n" % final_title
+        + intro_text.strip()
+        + subpages_block
+        + cards_block
+        + graph_block,
+        encoding="utf-8",
+    )
     return written
 
 
@@ -403,26 +822,139 @@ def check_bundle(src_dir):
     return errors
 
 
+def parse_args(argv):
+    """Parse CLI arguments using argparse."""
+    parser = argparse.ArgumentParser(
+        description="OKF bundle -> Doxygen pages converter.",
+        prog="okf_to_doxygen.py",
+    )
+    parser.add_argument(
+        "src_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Path to OKF source directory containing concepts.",
+    )
+    parser.add_argument(
+        "out_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Output directory for generated Doxygen markdown files.",
+    )
+    parser.add_argument(
+        "--check",
+        nargs="?",
+        const=True,
+        default=False,
+        metavar="SRC",
+        help="Validate OKF bundle without generating output. Can take optional SRC or use src_dir.",
+    )
+    parser.add_argument(
+        "--title",
+        default=None,
+        help="Custom title for the generated @mainpage (defaults to index.md heading or 'Technical Reference').",
+    )
+    parser.add_argument(
+        "--accent-color",
+        default="#2458a6",
+        help="Hex color for current page node and cluster headers in Graphviz (default: #2458a6).",
+    )
+    parser.add_argument(
+        "--api-ref-url",
+        default=None,
+        help="Relative or absolute URL for the API Reference jump card (e.g. classes.html).",
+    )
+    parser.add_argument(
+        "--api-ref-title",
+        default="API Reference",
+        help="Title for the API Reference card (default: 'API Reference').",
+    )
+    parser.add_argument(
+        "--api-ref-desc",
+        default="Full programming interface: classes, functions, and data types.",
+        help="Description text for the API Reference card.",
+    )
+    parser.add_argument(
+        "--api-ref-badge",
+        default="API",
+        help="Badge label for the API Reference card (default: 'API').",
+    )
+    parser.add_argument(
+        "--no-cards",
+        action="store_true",
+        help="Disable generation of jump cards on the landing page.",
+    )
+    parser.add_argument(
+        "--no-global-graph",
+        action="store_true",
+        help="Disable generation of the global topic map on the landing page.",
+    )
+    args = parser.parse_args(argv)
+
+    if args.check:
+        if isinstance(args.check, str):
+            args.src_dir = Path(args.check)
+            args.check = True
+        elif not args.src_dir:
+            parser.error("source directory required for --check")
+    elif not args.src_dir or not args.out_dir:
+        parser.error("src_dir and out_dir are required unless --check is specified")
+
+    return args
+
+
 def main(argv):
-    if len(argv) == 2 and argv[0] == "--check":
-        src, check_mode = Path(argv[1]), True
-    elif len(argv) == 2:
-        src, check_mode = Path(argv[0]), False
-    else:
-        print("usage: okf_to_doxygen.py [--check <src>] | [<src> <out>]")
+    try:
+        args = parse_args(argv)
+    except SystemExit as exc:
+        return exc.code
+
+    if not args.src_dir.is_dir():
+        print("error: %s: not a directory" % args.src_dir, file=sys.stderr)
         return 2
-    if not src.is_dir():
-        print("error: %s: not a directory" % src)
-        return 2
-    if check_mode:
-        errors = check_bundle(src)
+
+    if args.check:
+        errors = check_bundle(args.src_dir)
         for err in errors:
             print("error: " + err)
         return 1 if errors else 0
-    for pid in generate(src, Path(argv[1])):
+
+    api_ref = None
+    if args.api_ref_url:
+        api_ref = {
+            "url": args.api_ref_url,
+            "title": args.api_ref_title,
+            "desc": args.api_ref_desc,
+            "badge": args.api_ref_badge,
+        }
+
+    for pid in generate(
+        args.src_dir,
+        args.out_dir,
+        title=args.title,
+        accent_color=args.accent_color,
+        api_ref=api_ref,
+        no_cards=args.no_cards,
+        no_global_graph=args.no_global_graph,
+    ):
         print("wrote " + pid)
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
+# This file is part of lob.
+#
+# lob is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# lob is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# lob. If not, see <https://www.gnu.org/licenses/>.

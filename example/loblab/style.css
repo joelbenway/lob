@@ -1,3 +1,8 @@
+/* Copyright (c) 2026  Joel Benway
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Please see end of file for extended copyright information
+ */
+
 :root {
   color-scheme: light;
   --ink: #17202a;
@@ -69,9 +74,18 @@ body {
 
 .hero h1 {
   margin: 0;
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(2.5rem, 6vw, 4.25rem);
+  font-weight: 800;
   line-height: 1.05;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
+}
+
+.hero h1 .logo-lob {
+  color: var(--accent);
+}
+
+.hero h1 .logo-lab {
+  color: var(--ink);
 }
 
 .hero p:not(.eyebrow) {
@@ -405,6 +419,10 @@ tbody tr:nth-child(even) {
       var(--paper);
   }
 
+  .hero h1 .logo-lab {
+    color: #ffffff;
+  }
+
   .card {
     box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
   }
@@ -470,3 +488,18 @@ tbody tr:nth-child(even) {
     padding: 1rem;
   }
 }
+
+/* This file is part of lob.
+ *
+ * lob is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * lob is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * lob. If not, see <https://www.gnu.org/licenses/>.
+ */
