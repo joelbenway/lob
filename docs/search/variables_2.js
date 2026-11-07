@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['coriolis_0',['coriolis',['../structLobContext.html#a20833ae08bb886f62f208d647286a1a2',1,'LobContext::coriolis'],['../structlob_1_1Context.html#adfdd46afb3a59535d9b3dfd7985a2397',1,'lob::Context::coriolis']]],
-  ['cos_5fl_5fcos_5fa_1',['cos_l_cos_a',['../structLobCoriolis.html#afa5ebade6b761a37e205d4f2147babe1',1,'LobCoriolis']]],
-  ['cos_5fl_5fsin_5fa_2',['cos_l_sin_a',['../structLobCoriolis.html#a4429daab662eed7da25be5cd0a3035d3',1,'LobCoriolis']]]
+  ['buffer_0',['buffer',['../structLobBuilder.html#af8a1e32ac083f3c8c9e2ebf6b4bcc196',1,'LobBuilder::buffer'],['../structLobBuilder.html#a4c9d23e3eb3eef912f257989c2f0239a',1,'LobBuilder::buffer']]],
+  ['builder_5fsize_1',['BUILDER_SIZE',['../index_8mjs.html#ad6b39618bb10035cc0c949d76e49899d',1,'index.mjs']]]
 ];

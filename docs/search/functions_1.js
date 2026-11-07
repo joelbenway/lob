@@ -1,10 +1,13 @@
 var searchData=
 [
-  ['ballisticcoefficientpsi_0',['BallisticCoefficientPsi',['../classlob_1_1Builder.html#a5b38687d35683ec09b2208465e55fd5a',1,'lob::Builder']]],
-  ['basediameterinch_1',['BaseDiameterInch',['../classlob_1_1Builder.html#aecc95f7b7d80a6506da24cd7bc1ef782',1,'lob::Builder']]],
-  ['bcatmosphere_2',['BCAtmosphere',['../classlob_1_1Builder.html#a9317f76f7e5269e26992d8e964349aac',1,'lob::Builder::BCAtmosphere(AtmosphereReferenceT type)'],['../classlob_1_1Builder.html#a13db55761e32d21c46955edb83b487f7',1,'lob::Builder::BCAtmosphere(LobAtmosphereReferenceT type)']]],
-  ['bcdragfunction_3',['BCDragFunction',['../classlob_1_1Builder.html#ab05bc635e647fe972048a77990a7f018',1,'lob::Builder::BCDragFunction(DragFunctionT type)'],['../classlob_1_1Builder.html#af6f4e5887de4ef476c44e2d6b0d29053',1,'lob::Builder::BCDragFunction(LobDragFunctionT type)']]],
-  ['bcvelocitybands_4',['BCVelocityBands',['../classlob_1_1Builder.html#a960f31fd350b46ef9d48fbe1ad28d671',1,'lob::Builder::BCVelocityBands(const float *pfps, const float *pbcvs, size_t size)'],['../classlob_1_1Builder.html#a3e89cc562e904dc5cc7db716d4bf1aca',1,'lob::Builder::BCVelocityBands(const std::array&lt; float, N &gt; &amp;fps, const std::array&lt; float, N &gt; &amp;bcvs)'],['../classlob_1_1Builder.html#a2d193dcde3ffd00c47b6f02af87b568c',1,'lob::Builder::BCVelocityBands(const std::array&lt; float, N &gt; &amp;&amp;fps, const std::array&lt; float, N &gt; &amp;bcvs)=delete'],['../classlob_1_1Builder.html#ab270fd2f88764b8ca20569c65232db71',1,'lob::Builder::BCVelocityBands(const std::array&lt; float, N &gt; &amp;fps, const std::array&lt; float, N &gt; &amp;&amp;bcvs)=delete'],['../classlob_1_1Builder.html#a13a3d5d014766130b3a0f744d089afb6',1,'lob::Builder::BCVelocityBands(const std::array&lt; float, N &gt; &amp;&amp;fps, const std::array&lt; float, N &gt; &amp;&amp;bcvs)=delete']]],
-  ['build_5',['Build',['../classlob_1_1Builder.html#a026a493100562d3f29a29daf1c1e78f9',1,'lob::Builder']]],
-  ['builder_6',['Builder',['../classlob_1_1Builder.html#a9a6f54d138c3056e38ae2616069ac0d3',1,'lob::Builder::Builder()'],['../classlob_1_1Builder.html#aa9e41099fc72543e4b76584a84bf228b',1,'lob::Builder::Builder(const Builder &amp;other)'],['../classlob_1_1Builder.html#abc2b6ed69a647d751af47326c3a1c88d',1,'lob::Builder::Builder(Builder &amp;&amp;other) noexcept']]]
+  ['airpressureinhg_0',['AirPressureInHg',['../classlob_1_1Builder.html#a5eafa266e59430891617fd874a97121f',1,'lob::Builder']]],
+  ['airpressureinhg_1',['airPressureInHg',['../classBuilder.html#a37d2ca26aa2f1082d694d0be4a7d8cad',1,'Builder']]],
+  ['altitudeofbarometerft_2',['AltitudeOfBarometerFt',['../classlob_1_1Builder.html#ad7272cfae5f9111a7d674e3a4a299b31',1,'lob::Builder']]],
+  ['altitudeofbarometerft_3',['altitudeOfBarometerFt',['../classBuilder.html#a4c4eb1cf74121307988cbbefdd63707c',1,'Builder']]],
+  ['altitudeoffiringsiteft_4',['AltitudeOfFiringSiteFt',['../classlob_1_1Builder.html#a53f96cf21db22a8fe4c799729f80e1dc',1,'lob::Builder']]],
+  ['altitudeoffiringsiteft_5',['altitudeOfFiringSiteFt',['../classBuilder.html#a639f7b352a24c46d60c358fa0a0a3454',1,'Builder']]],
+  ['altitudeofthermometerft_6',['AltitudeOfThermometerFt',['../classlob_1_1Builder.html#af96b35e2f5cfe10ce23f625b52813abf',1,'lob::Builder']]],
+  ['altitudeofthermometerft_7',['altitudeOfThermometerFt',['../classBuilder.html#a9075df0050e8bfaab5784488d1b2d388',1,'Builder']]],
+  ['azimuthdeg_8',['AzimuthDeg',['../classlob_1_1Builder.html#a2cda522b77f4d6b7b480423127a2bfdf',1,'lob::Builder']]],
+  ['azimuthdeg_9',['azimuthDeg',['../classBuilder.html#a2b5cd5420a324374a65151d59b6eb233',1,'Builder']]]
 ];

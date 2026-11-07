@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['getting_20started_0',['Getting Started',['../okf_getting_started.html',1,'']]]
+  ['guides_20workflows_0',['Guides &amp; Workflows',['../okf_guides.html',1,'index']]]
 ];

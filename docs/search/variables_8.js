@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['mass_0',['mass',['../structLobContext.html#a896e5c8cda237b1e5e6875b543fa1fd5',1,'LobContext::mass'],['../structlob_1_1Context.html#a097ca0c4fb5bbaabefc032a4538a4601',1,'lob::Context::mass']]],
-  ['max_5ftime_1',['max_time',['../structLobContext.html#a60d1d5394cb1b2d7bb34cd7d63ad400a',1,'LobContext::max_time'],['../structlob_1_1Context.html#ae9a8eec7677b940b6746ab07bc6cd1b7',1,'lob::Context::max_time']]],
-  ['minimum_5fspeed_2',['minimum_speed',['../structLobContext.html#a9239b3631836f6a21555df6fce312d79',1,'LobContext::minimum_speed'],['../structlob_1_1Context.html#a41770bd12461d57bd53c62086648810c',1,'lob::Context::minimum_speed']]]
+  ['k_5flapse_0',['k_lapse',['../structLobContext.html#a22553dd319140a37ad2f48e5b83ad6e8',1,'LobContext::k_lapse'],['../structlob_1_1Context.html#add0676336d384d6277836eb314242167',1,'lob::Context::k_lapse']]],
+  ['klobbuilderbuffersize_1',['kLobBuilderBufferSize',['../namespacelob.html#ae27c9902195169c9f5d06347d46ffdf5',1,'lob']]],
+  ['klobcoeffssize_2',['kLobCoeffsSize',['../namespacelob.html#adc3c3c663752f07a27b84cd3462d570e',1,'lob']]],
+  ['klobwindpoints_3',['kLobWindPoints',['../namespacelob.html#a09169f920ca4002ca1ea181de29e2254',1,'lob']]]
 ];

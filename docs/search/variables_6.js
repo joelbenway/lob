@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['heading_5fdeg_0',['heading_deg',['../structLobWindPoint.html#a05c71bac7fa152f1b71150397577b18d',1,'LobWindPoint']]],
-  ['height_5fft_1',['height_ft',['../structLobWindPoint.html#ac74f50d92f32a23c897adace68b583c2',1,'LobWindPoint']]]
+  ['gravity_0',['gravity',['../structLobContext.html#a958dbdacdb002c6d2e2f34ae78194212',1,'LobContext::gravity'],['../structlob_1_1Context.html#a6fac645ee61e14d3f4fafacae68ce4b6',1,'lob::Context::gravity']]]
 ];

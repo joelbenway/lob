@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['lob_20knowledge_0',['lob Knowledge',['../index.html',1,'']]]
+  ['narrow_20waist_0',['C ABI Narrow Waist',['../okf_c_abi_narrow_waist.html',1,'okf_decisions']]],
+  ['no_20dynamic_20allocation_1',['No Dynamic Allocation',['../okf_no_dynamic_allocation.html',1,'okf_decisions']]]
 ];

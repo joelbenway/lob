@@ -1,6 +1,8 @@
 var searchData=
 [
-  ['deflection_0',['deflection',['../structLobOutput.html#af583f649044dea69e29dbbb636aefb1c',1,'LobOutput']]],
-  ['drag_5fcoeff_1',['drag_coeff',['../structLobContext.html#a6d9c2c1f3669104d53cbf73a2639404b',1,'LobContext::drag_coeff'],['../structlob_1_1Context.html#ae9feec1ee28c9cb671448ebef4054e4c',1,'lob::Context::drag_coeff']]],
-  ['drags_2',['drags',['../structLobContext.html#a09075a661d42db50cbfa01711e044509',1,'LobContext::drags'],['../structlob_1_1Context.html#a366b1de2f689c34227775147df12efa1',1,'lob::Context::drags']]]
+  ['context_5fsize_0',['CONTEXT_SIZE',['../index_8mjs.html#a144c01c6cf4d4d44a824450bd1241eee',1,'index.mjs']]],
+  ['context_5ftoken_1',['CONTEXT_TOKEN',['../index_8mjs.html#ac1285b719b1a4afd2e1d8b3600c78a97',1,'index.mjs']]],
+  ['coriolis_2',['coriolis',['../structLobContext.html#a20833ae08bb886f62f208d647286a1a2',1,'LobContext::coriolis'],['../structlob_1_1Context.html#adfdd46afb3a59535d9b3dfd7985a2397',1,'lob::Context::coriolis']]],
+  ['cos_5fl_5fcos_5fa_3',['cos_l_cos_a',['../structLobCoriolis.html#afa5ebade6b761a37e205d4f2147babe1',1,'LobCoriolis']]],
+  ['cos_5fl_5fsin_5fa_4',['cos_l_sin_a',['../structLobCoriolis.html#a4429daab662eed7da25be5cd0a3035d3',1,'LobCoriolis']]]
 ];

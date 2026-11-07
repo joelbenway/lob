@@ -1,13 +1,13 @@
 var searchData=
 [
-  ['handles_20for_20you_0',['Edges the API handles for you',['../okf_inverse_solving.html#autotoc_md71',1,'']]],
-  ['heading_5fdeg_1',['heading_deg',['../structLobWindPoint.html#a05c71bac7fa152f1b71150397577b18d',1,'LobWindPoint']]],
-  ['height_5fft_2',['height_ft',['../structLobWindPoint.html#ac74f50d92f32a23c897adace68b583c2',1,'LobWindPoint']]],
-  ['here_3',['Start here',['../index.html#autotoc_md76',1,'']]],
-  ['hermite_20splines_4',['Hermite Splines',['../okf_cubic_hermite_splines.html',1,'Cubic Hermite Splines'],['../okf_cubic_hermite_splines.html#autotoc_md35',1,'Cubic Hermite Splines']]],
-  ['heun_20integration_5',['Heun Integration',['../okf_heun_integration.html',1,'Heun Integration'],['../okf_heun_integration.html#autotoc_md57',1,'Heun Integration']]],
-  ['how_20it_20works_6',['How it works',['../okf_angle_solver.html#autotoc_md3',1,'']]],
-  ['how_20the_20solver_20uses_20the_20curve_7',['How the solver uses the curve',['../okf_drag_model.html#autotoc_md48',1,'']]],
-  ['how_20the_20work_20is_20avoided_8',['How the work is avoided',['../okf_inverse_solving.html#autotoc_md69',1,'']]],
-  ['humidity_9',['Humidity',['../okf_atmospheric_model.html#autotoc_md11',1,'']]]
+  ['gate_0',['gate',['../okf_solver_input_state_machine.html#autotoc_md102',1,'Atmosphere gate'],['../okf_solver_input_state_machine.html#autotoc_md99',1,'Drag source gate'],['../okf_solver_input_state_machine.html#autotoc_md100',1,'Projectile detail gate'],['../okf_solver_input_state_machine.html#autotoc_md104',1,'Shot geometry and Earth gate'],['../okf_solver_input_state_machine.html#autotoc_md105',1,'Solver controls gate'],['../okf_solver_input_state_machine.html#autotoc_md103',1,'Wind gate'],['../okf_solver_input_state_machine.html#autotoc_md101',1,'Zero gate']]],
+  ['gating_1',['Coverage and gating',['../okf_validation.html#autotoc_md125',1,'']]],
+  ['geometry_20and_20earth_20gate_2',['Shot geometry and Earth gate',['../okf_solver_input_state_machine.html#autotoc_md104',1,'']]],
+  ['go_20next_3',['Where to go next',['../okf_getting_started.html#autotoc_md58',1,'']]],
+  ['gravity_4',['Gravity',['../namespacelob.html#a678840e09a95b34161f4463dfe73c046',1,'lob']]],
+  ['gravity_5',['gravity',['../structLobContext.html#a958dbdacdb002c6d2e2f34ae78194212',1,'LobContext::gravity'],['../structlob_1_1Context.html#a6fac645ee61e14d3f4fafacae68ce4b6',1,'lob::Context::gravity']]],
+  ['gtograin_6',['GToGrain',['../namespacelob.html#a1d8bdef94d55dafc1178beba1cfc90e3',1,'lob']]],
+  ['gtograin_7',['gToGrain',['../index_8mjs.html#aee3a5b4a0e5ccbc7bc2356c7ffa12f40',1,'index.mjs']]],
+  ['guidance_20stops_8',['Where the guidance stops',['../okf_integration_accuracy.html#autotoc_md65',1,'']]],
+  ['guides_20workflows_9',['Guides Workflows',['../okf_guides.html',1,'Guides &amp; Workflows'],['../okf_guides.html#autotoc_md59',1,'Guides &amp; Workflows']]]
 ];

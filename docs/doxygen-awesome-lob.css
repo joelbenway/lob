@@ -1,0 +1,425 @@
+/* Copyright (c) 2026  Joel Benway
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Please see end of file for extended copyright information
+ */
+
+:root,
+html {
+    /* Brand color tokens aligned with loblab */
+    --accent: #a44122;
+    --accent-dark: #7b2e17;
+    --primary-color: #a44122;
+    --primary-dark-color: #7b2e17;
+    --primary-light-color: #fff8e8;
+
+    --page-background-color: #f4f1ea;
+    --page-foreground-color: #17202a;
+    --page-secondary-foreground-color: #5c6773;
+
+    --separator-color: #d8d1c2;
+    --side-nav-background: #ece7dc;
+
+    --code-background: #fffdf8;
+    --code-foreground-color: #17202a;
+    --table-header-color: #ece7dc;
+    --table-header-foreground-color: #17202a;
+
+    --blockquote-background: #fff8e8;
+    --blockquote-border: #a44122;
+
+    /* Typography matching loblab */
+    --font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-family-monospace: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+    --font-size-base: 15px;
+    --line-height-base: 1.55;
+    --border-radius-base: 8px;
+    --border-radius-medium: 10px;
+    --border-radius-large: 12px;
+}
+
+html.dark-mode {
+    --accent: #d97a4c;
+    --accent-dark: #e88f63;
+    --primary-color: #d97a4c;
+    --primary-dark-color: #e88f63;
+    --primary-light-color: #2b2519;
+
+    --page-background-color: #1c1a16;
+    --page-foreground-color: #e8e2d5;
+    --page-secondary-foreground-color: #a89e8d;
+
+    --separator-color: #453e34;
+    --side-nav-background: #23201c;
+
+    --code-background: #262320;
+    --code-foreground-color: #e8e2d5;
+    --table-header-color: #332d25;
+    --table-header-foreground-color: #e8e2d5;
+
+    --blockquote-background: #2b2519;
+    --blockquote-border: #d97a4c;
+}
+
+/* Background gradient matching loblab */
+body {
+    background:
+        radial-gradient(circle at 15% 0%, #fff8e8 0, transparent 35rem),
+        var(--page-background-color) !important;
+}
+
+html.dark-mode body {
+    background:
+        radial-gradient(circle at 15% 0%, #2b2519 0, transparent 35rem),
+        var(--page-background-color) !important;
+}
+
+/* Header layout: Brand on left, Navigation links and Search on right */
+#top {
+    display: block !important;
+    width: 100% !important;
+    background: var(--header-background) !important;
+    border-bottom: 1px solid var(--separator-color) !important;
+    position: relative;
+    z-index: 99;
+    box-sizing: border-box;
+}
+
+#titlearea {
+    display: block !important;
+    width: 100% !important;
+    padding: 0.85rem 1.5rem !important;
+    background: none !important;
+    color: var(--header-foreground) !important;
+    border-bottom: none !important;
+    box-sizing: border-box !important;
+}
+
+.lob-header-bar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.lob-header-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    flex: 1 1 auto !important;
+}
+
+#projectalign {
+    text-align: left;
+    padding: 0 !important;
+}
+
+.lob-header-controls {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 0.45rem !important;
+    flex: 0 0 auto !important;
+}
+
+/* Top Navigation Links */
+.lob-top-nav {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 0.88rem !important;
+}
+
+.lob-nav-links {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.25rem 1.15rem !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+}
+
+.lob-nav-item {
+    color: var(--primary-color) !important;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.15s ease;
+}
+
+.lob-nav-item:hover {
+    text-decoration: underline;
+}
+
+.lob-nav-item.active {
+    font-weight: 700;
+    color: var(--page-foreground-color) !important;
+}
+
+/* Search Row on the Right */
+.lob-search-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 0.5rem !important;
+}
+
+.lob-search-row #MSearchBox {
+    margin: 0 !important;
+    float: none !important;
+    border-radius: var(--border-radius-base);
+}
+
+doxygen-awesome-dark-mode-toggle {
+    margin: 0 !important;
+    display: inline-flex;
+    align-items: center;
+}
+
+@media screen and (max-width: 767px) {
+    #titlearea {
+        padding: 0.75rem 1rem !important;
+    }
+
+    .lob-header-bar {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+    }
+
+    .lob-header-controls {
+        align-items: flex-start !important;
+        width: 100% !important;
+    }
+
+    .lob-top-nav,
+    .lob-nav-links {
+        justify-content: flex-start !important;
+    }
+
+    .lob-search-row {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+
+    .lob-search-row #MSearchBox {
+        width: calc(100% - 40px) !important;
+    }
+}
+
+/* Brand Logo in Title Area */
+#projectname {
+    font-size: 1.75rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em;
+}
+
+#projectname a {
+    text-decoration: none !important;
+    color: inherit !important;
+}
+
+.logo-lob {
+    color: var(--primary-color);
+}
+
+.logo-docs {
+    color: var(--page-foreground-color);
+}
+
+html.dark-mode .logo-docs {
+    color: #ffffff;
+}
+
+#projectbrief {
+    color: var(--page-secondary-foreground-color) !important;
+    font-size: 0.85rem !important;
+}
+
+#projectnumber {
+    font-size: 0.75rem !important;
+    font-weight: 600;
+    background: var(--code-background);
+    border: 1px solid var(--separator-color);
+    border-radius: 9999px;
+    padding: 0.15rem 0.55rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    color: var(--page-secondary-foreground-color);
+}
+
+/* Code fragment styling */
+div.fragment {
+    border: 1px solid var(--separator-color) !important;
+    border-radius: var(--border-radius-base) !important;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+
+/* Search bar refinements */
+#MSearchBox {
+    border-radius: var(--border-radius-base);
+}
+
+/* Treeview and sidebar styling */
+#nav-tree {
+    background: var(--side-nav-background);
+}
+
+#nav-tree .selected {
+    background-color: var(--primary-light-color) !important;
+    color: var(--primary-color) !important;
+    font-weight: 600;
+}
+
+/* OKF Neighborhood Orientation Banner */
+.okf-neighborhood-graph {
+    border: 1px solid var(--separator-color);
+    border-radius: var(--border-radius-base);
+    background: var(--code-background);
+    padding: 0.75rem 1rem 0.5rem;
+    margin: 1rem 0 1.5rem;
+    overflow-x: auto;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+}
+
+.okf-graph-caption {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.okf-neighborhood-graph .dotgraph {
+    display: flex;
+    justify-content: center;
+    margin: 0;
+}
+
+.okf-neighborhood-graph .dotgraph iframe {
+    max-width: 100% !important;
+}
+
+.okf-global-graph .dotgraph {
+    width: 100%;
+    height: 620px;
+    border: 1px solid var(--separator-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.okf-global-graph .dotgraph iframe {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    border: none;
+}
+
+.okf-neighborhood-graph svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* In dark mode, ensure SVG text and neighbor node backgrounds look clean */
+html.dark-mode .okf-neighborhood-graph text {
+    fill: var(--page-foreground-color);
+}
+
+html.dark-mode .okf-neighborhood-graph g.cluster path,
+html.dark-mode .okf-neighborhood-graph g.cluster polygon {
+    stroke: var(--separator-color) !important;
+}
+
+html.dark-mode .okf-neighborhood-graph #navigator rect,
+html.dark-mode .okf-neighborhood-graph #arrow_out rect {
+    fill: var(--page-background-color) !important;
+    stroke: var(--separator-color) !important;
+}
+
+html.dark-mode .okf-neighborhood-graph #navigator {
+    fill: var(--page-foreground-color) !important;
+}
+
+/* Dual-Pillar Jump Cards on Landing Page */
+.lob-pillar-cards,
+.okf-pillar-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin: 1.5rem 0 2rem 0;
+}
+
+.lob-pillar-card,
+.okf-pillar-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    background-color: var(--fragment-background);
+    border: 1px solid var(--separator-color);
+    border-radius: 8px;
+    text-decoration: none !important;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lob-pillar-card:hover,
+.okf-pillar-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.lob-pillar-card-badge,
+.okf-pillar-card-badge {
+    align-self: flex-start;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary-color);
+    background-color: rgba(164, 65, 34, 0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+}
+
+.lob-pillar-card h3,
+.okf-pillar-card h3 {
+    margin: 0 0 0.5rem 0 !important;
+    font-size: 1.15rem;
+    color: var(--page-foreground-color);
+}
+
+.lob-pillar-card p,
+.okf-pillar-card p {
+    margin: 0 0 1rem 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--page-foreground-color);
+    opacity: 0.85;
+    flex-grow: 1;
+}
+
+.lob-pillar-card-cta,
+.okf-pillar-card-cta {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* This file is part of lob.
+ *
+ * lob is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * lob is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * lob. If not, see <https://www.gnu.org/licenses/>.
+ */

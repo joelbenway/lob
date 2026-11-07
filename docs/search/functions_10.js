@@ -1,6 +1,11 @@
 var searchData=
 [
-  ['taillengthinch_0',['TailLengthInch',['../classlob_1_1Builder.html#a325f30d1d239ee904b47fc299cad37d6',1,'lob::Builder']]],
-  ['temperaturedegf_1',['TemperatureDegF',['../classlob_1_1Builder.html#a0e245bbbc62c048cc93d4c7bba6aa10a',1,'lob::Builder']]],
-  ['twistinchesperturn_2',['TwistInchesPerTurn',['../classlob_1_1Builder.html#adfd57fb857614231be3371ee2defb794',1,'lob::Builder']]]
+  ['rangeangledeg_0',['RangeAngleDeg',['../classlob_1_1Builder.html#aa4cd1eed7abc570cf882063ed95f8f05',1,'lob::Builder']]],
+  ['rangeangledeg_1',['rangeAngleDeg',['../classBuilder.html#a4c73a93015fe5316d4c567fcf7628af9',1,'Builder']]],
+  ['rangestofeet_2',['rangesToFeet',['../index_8mjs.html#ad32764ae5fa904d44e802a8ecdd4d324',1,'index.mjs']]],
+  ['readrows_3',['readRows',['../index_8mjs.html#aefe8cb8e3d0fa5a024f2da92f8262435',1,'index.mjs']]],
+  ['relativehumiditypercent_4',['RelativeHumidityPercent',['../classlob_1_1Builder.html#af6d9b61a429c8c61e53f62da17d85fe3',1,'lob::Builder']]],
+  ['relativehumiditypercent_5',['relativeHumidityPercent',['../classBuilder.html#a07133a0fa07ed9371f2d5e23564fddcf',1,'Builder']]],
+  ['reset_6',['Reset',['../classlob_1_1Builder.html#a983a5d1d5208c71807cc2119f55a9b7a',1,'lob::Builder']]],
+  ['reset_7',['reset',['../classBuilder.html#aa0a77377c21a43d84dd1842baf780453',1,'Builder']]]
 ];

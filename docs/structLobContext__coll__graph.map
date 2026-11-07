@@ -1,0 +1,9 @@
+<map id="LobContext" name="LobContext">
+<area shape="rect" id="Node000001" title="Structure of parameters consumed by the solver." alt="" coords="121,98,216,126"/>
+<area shape="rect" id="Node000002" href="$structLobGravity.html" title="Gravity vector." alt="" coords="5,5,98,33"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="78,41,115,72,149,95,146,100,112,76,75,46"/>
+<area shape="rect" id="Node000003" href="$structLobCoriolis.html" title="Coriolis effect parameters." alt="" coords="122,5,216,33"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="172,48,172,98,166,98,166,48"/>
+<area shape="rect" id="Node000004" href="$structLobWindNode.html" title="Solver&#45;ready wind profile node with frame&#45;resolved components." alt="" coords="240,5,351,33"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="269,45,226,76,191,100,188,95,223,72,266,41"/>
+</map>
