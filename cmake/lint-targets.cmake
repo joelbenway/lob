@@ -16,7 +16,6 @@ set(FORMAT_PATTERNS_DEFAULT
 set(FORMAT_PATTERNS_PREV_DEFAULT
     source/*.cpp
     source/*.hpp
-    include/*.h
     include/*.hpp
     test/*.cpp
     test/*.hpp
