@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793950048253,
+  "lastUpdate": 1794078951065,
   "repoUrl": "https://github.com/joelbenway/lob",
   "entries": {
     "lob instruction counts": [
@@ -677,6 +677,75 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/joelbenway/lob/commit/265f4ee097bd32a3bf3b825d255c4659c8274295"
         },
         "date": 1793950047389,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "lob_bench/build_basic",
+            "value": 801,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_full",
+            "value": 1894,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_custom_table",
+            "value": 7813.001,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_boatright",
+            "value": 3141.006,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_zero_search",
+            "value": 77101.005,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_basic",
+            "value": 248441.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_elr",
+            "value": 286840.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse",
+            "value": 249542.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse_elr",
+            "value": 1177794.98,
+            "unit": "Ir/op"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "76f9176c347323b4c0c049ac27cff38a80204c3c",
+          "message": "Merge pull request #49 from joelbenway/feat/wasm-exhibits\n\nrefactor: review fixes for linting, presets, elevation offset, and explorer UI",
+          "timestamp": "2026-11-07T18:54:32Z",
+          "tree_id": "835faa326e81c66c48b9365c4294e516e0cd2911",
+          "url": "https://github.com/joelbenway/lob/commit/76f9176c347323b4c0c049ac27cff38a80204c3c"
+        },
+        "date": 1794078950067,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
