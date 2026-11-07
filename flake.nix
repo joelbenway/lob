@@ -87,6 +87,7 @@
         installPhase = ''
           mkdir -p $out/loblab $out/solver
           install -m 0644 build/wasm/index.mjs build/wasm/lob.mjs \
+            build/wasm/index.d.ts build/wasm/lob.d.ts \
             build/wasm/lob.wasm build/wasm/package.json build/wasm/README.md \
             build/wasm/COPYING.md $out/
           cp -r build/wasm/loblab/. $out/loblab/
