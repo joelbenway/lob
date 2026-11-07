@@ -4,8 +4,7 @@
 
 include_guard(GLOBAL)
 include(FetchContent)
-
-set(_LOB_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+include(${CMAKE_CURRENT_LIST_DIR}/silence.cmake)
 
 function(lob_find_or_fetch name)
   cmake_parse_arguments(
@@ -49,8 +48,17 @@ function(lob_find_or_fetch name)
   if(NOT _found)
     message(STATUS "${ARG_DISPLAY_NAME} not found, FetchContent instead...")
 
-    set(DEV_WARNINGS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_WARNINGS}")
-    set(DEV_ERRORS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_ERRORS}")
+    if(DEFINED CACHE{CMAKE_SUPPRESS_DEVELOPER_WARNINGS})
+      set(DEV_WARNINGS_RECOVER_STATE
+          "$CACHE{CMAKE_SUPPRESS_DEVELOPER_WARNINGS}")
+    else()
+      set(DEV_WARNINGS_RECOVER_STATE "__UNSET__")
+    endif()
+    if(DEFINED CACHE{CMAKE_SUPPRESS_DEVELOPER_ERRORS})
+      set(DEV_ERRORS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_ERRORS}")
+    else()
+      set(DEV_ERRORS_RECOVER_STATE "__UNSET__")
+    endif()
     set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
         ON
         CACHE INTERNAL "Suppress third-party CMake warnings" FORCE)
@@ -124,17 +132,24 @@ function(lob_find_or_fetch name)
       unset(SHARED_LIBS_RECOVER_STATE)
     endif()
 
-    set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
-        ${DEV_WARNINGS_RECOVER_STATE}
-        CACHE INTERNAL "Restore original setting" FORCE)
-    set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
-        ${DEV_ERRORS_RECOVER_STATE}
-        CACHE INTERNAL "Restore original setting" FORCE)
+    if(DEV_WARNINGS_RECOVER_STATE STREQUAL "__UNSET__")
+      unset(CMAKE_SUPPRESS_DEVELOPER_WARNINGS CACHE)
+    else()
+      set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
+          ${DEV_WARNINGS_RECOVER_STATE}
+          CACHE INTERNAL "Restore original setting" FORCE)
+    endif()
+    if(DEV_ERRORS_RECOVER_STATE STREQUAL "__UNSET__")
+      unset(CMAKE_SUPPRESS_DEVELOPER_ERRORS CACHE)
+    else()
+      set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
+          ${DEV_ERRORS_RECOVER_STATE}
+          CACHE INTERNAL "Restore original setting" FORCE)
+    endif()
     unset(DEV_WARNINGS_RECOVER_STATE)
     unset(DEV_ERRORS_RECOVER_STATE)
 
     if(ARG_SILENCE_TARGETS)
-      include(${_LOB_CMAKE_DIR}/silence.cmake)
       foreach(tgt IN LISTS ARG_SILENCE_TARGETS)
         if(TARGET ${tgt})
           silence(${tgt})
