@@ -17,7 +17,7 @@ PROJECT_NUMBER = "@PROJECT_VERSION@"
 INPUT = "@PROJECT_SOURCE_DIR@/include" "@PROJECT_BINARY_DIR@/generated/okf_pages" "@PROJECT_SOURCE_DIR@/wasm/index.mjs"
 FILE_PATTERNS = *.h *.hpp *.c *.cpp *.md *.dox *.mjs
 EXTENSION_MAPPING = mjs=Javascript
-FILTER_PATTERNS = *.mjs="sed -e s/#/_/g"
+FILTER_PATTERNS = *.mjs="@OKF_PYTHON@ @PROJECT_SOURCE_DIR@/docs/filter_js.py"
 EXTRACT_ALL = YES
 EXTRACT_PRIVATE = NO
 EXTRACT_STATIC = YES

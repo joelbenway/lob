@@ -90,11 +90,11 @@ console.log(`lob version: ${wasm.UTF8ToString(wasm._LobVersion())}`);
 
 ## Documentation
 
-Full class, method, and OKF conceptual documentation is available in the project's generated Doxygen Technical Reference (`build/docs/html/index.html` or online documentation):
+Full class, method, and OKF conceptual documentation is available in the project's [Technical Reference](https://joelbenway.github.io/lob/docs/):
 
-- [Builder Reference](classBuilder.html)
-- [Context Reference](classContext.html)
-- [LobError Reference](classLobError.html)
+- [Builder Reference](https://joelbenway.github.io/lob/docs/classBuilder.html)
+- [Context Reference](https://joelbenway.github.io/lob/docs/classContext.html)
+- [LobError Reference](https://joelbenway.github.io/lob/docs/classLobError.html)
 
 ## License
 

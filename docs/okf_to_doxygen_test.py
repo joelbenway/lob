@@ -9,7 +9,7 @@ import unittest
 from okf_to_doxygen import parse_frontmatter, page_id_for, render_page
 from okf_to_doxygen import format_type_title, type_slug
 import tempfile
-from okf_to_doxygen import rewrite_links, generate
+from okf_to_doxygen import rewrite_links, generate, reduce_edges
 from pathlib import Path
 from okf_to_doxygen import check_bundle
 from okf_to_doxygen import main, parse_args
@@ -503,6 +503,48 @@ class NeighborhoodGraphTest(unittest.TestCase):
             self.assertIn("\\dot", page_b)
             self.assertIn("okf-global-graph", mainpage)
             self.assertIn("\\dot", mainpage)
+
+    def test_category_hub_collision_raises(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                tempfile.TemporaryDirectory() as out:
+            base = Path(tmp)
+            (base / "index.md").write_text("# Root\n- [Hub](concepts.md)\n", encoding="utf-8")
+            (base / "concepts.md").write_text(
+                "---\ntype: Concept\ntitle: Concepts Overview\n---\nBody\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError) as ctx:
+                generate(base, Path(out))
+            self.assertIn("collides with", str(ctx.exception))
+
+
+class ReduceEdgesTest(unittest.TestCase):
+    def test_cycle_and_shared_target_reachability(self):
+        # A <-> B with both A -> C and B -> C
+        outgoing = {
+            "a.md": {"b.md", "c.md"},
+            "b.md": {"a.md", "c.md"},
+            "c.md": set(),
+        }
+        id_map = {
+            "a.md": "okf_a",
+            "b.md": "okf_b",
+            "c.md": "okf_c",
+        }
+        reduced = reduce_edges(outgoing, id_map)
+        # Direct cycle edges must be preserved
+        self.assertIn("okf_b", reduced["okf_a"])
+        self.assertIn("okf_a", reduced["okf_b"])
+        # Both A and B must maintain reachability to C
+        for start in ("okf_a", "okf_b"):
+            visited = set()
+            queue = [start]
+            while queue:
+                curr = queue.pop()
+                if curr not in visited:
+                    visited.add(curr)
+                    queue.extend(reduced.get(curr, ()))
+            self.assertIn("okf_c", visited)
 
 
 if __name__ == "__main__":

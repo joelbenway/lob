@@ -115,8 +115,13 @@ async function runTests() {
     "inverse elevation at 200 yd is positive (~1.8 MOA)",
   );
   assert(
-    "elevationMoa" in inv[0] && !("elevationInch" in inv[0]),
-    "inverse rows expose elevationMoa and not elevationInch",
+    inv.every(
+      (row) =>
+        "elevationMoa" in row &&
+        "deflectionMoa" in row &&
+        !("elevationInch" in row),
+    ),
+    "inverse rows expose elevationMoa and deflectionMoa, and not elevationInch",
   );
 
   // 7. Memory growth test

@@ -14,6 +14,8 @@ set(DOXYGEN_OUTPUT_DIRECTORY
 
 set(working_dir "${PROJECT_BINARY_DIR}/docs")
 
+find_program(OKF_PYTHON NAMES python3 REQUIRED)
+
 include(${PROJECT_SOURCE_DIR}/cmake/doxygen-awesome-css.cmake)
 
 configure_file("docs/Doxyfile.in" "${working_dir}/Doxyfile" @ONLY)
@@ -31,7 +33,6 @@ else()
   set(DOXYGEN_CMD "doxygen")
 endif()
 
-find_program(OKF_PYTHON NAMES python3 REQUIRED)
 add_custom_target(
   docs
   COMMAND "${CMAKE_COMMAND}" -E make_directory

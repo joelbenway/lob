@@ -98,12 +98,12 @@ if(NOT DEFINED DOXYGEN_OUTPUT_DIRECTORY)
 endif()
 set(out "${DOXYGEN_OUTPUT_DIRECTORY}")
 set(doxyfile "${bin}/docs/Doxyfile")
+find_program(OKF_PYTHON NAMES python3 REQUIRED)
 
 include("${src}/cmake/doxygen-awesome-css.cmake")
 
 configure_file("${src}/docs/Doxyfile.in" "${doxyfile}" @ONLY)
 
-find_program(OKF_PYTHON NAMES python3 REQUIRED)
 execute_process(
   COMMAND "${OKF_PYTHON}" "${src}/docs/okf_to_doxygen.py"
           "${src}/docs/okf" "${bin}/generated/okf_pages"

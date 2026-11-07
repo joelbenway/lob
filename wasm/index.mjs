@@ -97,6 +97,12 @@ export const DragFunction = Object.freeze({
 });
 
 /**
+ * Sequence of numbers accepted by array inputs (Array or numeric TypedArray).
+ *
+ * @typedef {readonly number[] | Float64Array | Float32Array | Int32Array | Int16Array | Int8Array | Uint32Array | Uint16Array | Uint8Array | Uint8ClampedArray} NumberSequence
+ */
+
+/**
  * Reference atmospheric models accepted by {@link Builder.bcAtmosphere}.
  *
  * String representations ("ArmyStandardMetro", "ICAO") are also accepted.
@@ -284,6 +290,15 @@ export class Builder {
     return this;
   }
 
+  /**
+   * Allocate a 32-bit float buffer in WASM memory and copy values into it.
+   *
+   * Allocated WASM buffers remain retained until reset() or dispose().
+   *
+   * @param {number[]} values
+   * @param {string} name
+   * @returns {number} Pointer to allocated buffer in WASM memory.
+   */
   #floatBuffer(values, name) {
     this.#assert();
     const count = values.length;
@@ -462,10 +477,10 @@ export class Builder {
    * Load custom Mach vs Drag coefficient ($C_d$) curve data.
    *
    * The mach values must be strictly ascending. Retains allocated WASM buffers
-   * until replaced, reset, or disposed.
+   * until reset() or dispose().
    *
-   * @param {ArrayLike<number>} machs Array of Mach numbers.
-   * @param {ArrayLike<number>} drags Array of corresponding drag coefficients.
+   * @param {NumberSequence} machs Array or numeric TypedArray of Mach numbers.
+   * @param {NumberSequence} drags Array or numeric TypedArray of corresponding drag coefficients.
    * @returns {this}
    * @throws {TypeError} If inputs are not arrays of numbers.
    * @throws {RangeError} If array lengths do not match or contain non-finite numbers.
@@ -490,8 +505,8 @@ export class Builder {
   /**
    * Load stepped ballistic coefficients across velocity thresholds.
    *
-   * @param {ArrayLike<number>} fps Velocity thresholds in feet per second.
-   * @param {ArrayLike<number>} bcs Ballistic coefficient values for each band.
+   * @param {NumberSequence} fps Array or numeric TypedArray of velocity thresholds in feet per second.
+   * @param {NumberSequence} bcs Array or numeric TypedArray of ballistic coefficient values for each band.
    * @returns {this}
    * @throws {TypeError} If inputs are not arrays of numbers.
    * @throws {RangeError} If array lengths do not match or contain non-finite numbers.
@@ -516,7 +531,7 @@ export class Builder {
   /**
    * Load custom 60-element cubic Hermite spline coefficients.
    *
-   * @param {ArrayLike<number>} coefs Array containing exactly 60 coefficients.
+   * @param {NumberSequence} coefs Array or numeric TypedArray containing exactly 60 coefficients.
    * @returns {this}
    * @throws {TypeError} If input is not an array of numbers.
    * @throws {RangeError} If length is not 60 or contains non-finite numbers.
@@ -1144,7 +1159,7 @@ export class Context {
    * Returns vertical drop and horizontal deflection in inches relative to line of sight.
    * Trajectories that fall short of distant ranges return fewer rows without throwing.
    *
-   * @param {ArrayLike<number>} rangesFt Strictly ascending array of ranges in feet.
+   * @param {NumberSequence} rangesFt Strictly ascending array or numeric TypedArray of ranges in feet.
    * @returns {Array<{rangeFt: number, rangeYds: number, velocityFps: number, energyFtLbs: number, elevationInch: number, deflectionInch: number, timeOfFlightSec: number}>}
    * @throws {TypeError} If `rangesFt` is not an array of numbers.
    * @throws {RangeError} If ranges are negative, non-finite, or not strictly ascending.
@@ -1160,7 +1175,7 @@ export class Context {
    * Yard values are converted to whole feet via `Math.round(yards * 3)`.
    * Returns vertical drop and horizontal deflection in inches relative to line of sight.
    *
-   * @param {ArrayLike<number>} rangesYd Strictly ascending array of ranges in yards.
+   * @param {NumberSequence} rangesYd Strictly ascending array or numeric TypedArray of ranges in yards.
    * @returns {Array<{rangeFt: number, rangeYds: number, velocityFps: number, energyFtLbs: number, elevationInch: number, deflectionInch: number, timeOfFlightSec: number}>}
    * @throws {TypeError} If `rangesYd` is not an array of numbers.
    * @throws {RangeError} If ranges are negative, non-finite, or not strictly ascending.
@@ -1175,7 +1190,7 @@ export class Context {
    * Recalculates local air density, pressure, and speed of sound at each integration step
    * as projectile altitude changes along the flight path.
    *
-   * @param {ArrayLike<number>} rangesFt Strictly ascending array of ranges in feet.
+   * @param {NumberSequence} rangesFt Strictly ascending array or numeric TypedArray of ranges in feet.
    * @returns {Array<{rangeFt: number, rangeYds: number, velocityFps: number, energyFtLbs: number, elevationInch: number, deflectionInch: number, timeOfFlightSec: number}>}
    * @throws {TypeError} If `rangesFt` is not an array of numbers.
    * @throws {RangeError} If ranges are negative, non-finite, or not strictly ascending.
@@ -1187,7 +1202,7 @@ export class Context {
   /**
    * Extended Long Range (ELR) forward trajectory solution in yards.
    *
-   * @param {ArrayLike<number>} rangesYd Strictly ascending array of ranges in yards.
+   * @param {NumberSequence} rangesYd Strictly ascending array or numeric TypedArray of ranges in yards.
    * @returns {Array<{rangeFt: number, rangeYds: number, velocityFps: number, energyFtLbs: number, elevationInch: number, deflectionInch: number, timeOfFlightSec: number}>}
    * @throws {TypeError} If `rangesYd` is not an array of numbers.
    * @throws {RangeError} If ranges are negative, non-finite, or not strictly ascending.
@@ -1206,7 +1221,7 @@ export class Context {
    * Uses a closed-form geometric correction applied to the forward solution.
    * Range 0 returns 0 MOA elevation and 0 MOA deflection.
    *
-   * @param {ArrayLike<number>} rangesFt Strictly ascending array of ranges in feet.
+   * @param {NumberSequence} rangesFt Strictly ascending array or numeric TypedArray of ranges in feet.
    * @returns {Array<{rangeFt: number, rangeYds: number, velocityFps: number, energyFtLbs: number, elevationMoa: number, deflectionMoa: number, timeOfFlightSec: number}>}
    * @throws {TypeError} If `rangesFt` is not an array of numbers.
    * @throws {RangeError} If ranges are negative, non-finite, or not strictly ascending.
@@ -1222,7 +1237,7 @@ export class Context {
    * Yard values are converted to whole feet via `Math.round(yards * 3)`.
    * Returns sight adjustments in Minutes of Angle (MOA).
    *
-   * @param {ArrayLike<number>} rangesYd Strictly ascending array of ranges in yards.
+   * @param {NumberSequence} rangesYd Strictly ascending array or numeric TypedArray of ranges in yards.
    * @returns {Array<{rangeFt: number, rangeYds: number, velocityFps: number, energyFtLbs: number, elevationMoa: number, deflectionMoa: number, timeOfFlightSec: number}>}
    * @throws {TypeError} If `rangesYd` is not an array of numbers.
    * @throws {RangeError} If ranges are negative, non-finite, or not strictly ascending.
@@ -1237,7 +1252,7 @@ export class Context {
    *
    * Returns MOA sight adjustments with altitude-dependent atmospheric recalculation.
    *
-   * @param {ArrayLike<number>} rangesFt Strictly ascending array of ranges in feet.
+   * @param {NumberSequence} rangesFt Strictly ascending array or numeric TypedArray of ranges in feet.
    * @returns {Array<{rangeFt: number, rangeYds: number, velocityFps: number, energyFtLbs: number, elevationMoa: number, deflectionMoa: number, timeOfFlightSec: number}>}
    * @throws {TypeError} If `rangesFt` is not an array of numbers.
    * @throws {RangeError} If ranges are negative, non-finite, or not strictly ascending.
@@ -1249,7 +1264,7 @@ export class Context {
   /**
    * Extended Long Range (ELR) inverse trajectory solution taking ranges in yards.
    *
-   * @param {ArrayLike<number>} rangesYd Strictly ascending array of ranges in yards.
+   * @param {NumberSequence} rangesYd Strictly ascending array or numeric TypedArray of ranges in yards.
    * @returns {Array<{rangeFt: number, rangeYds: number, velocityFps: number, energyFtLbs: number, elevationMoa: number, deflectionMoa: number, timeOfFlightSec: number}>}
    * @throws {TypeError} If `rangesYd` is not an array of numbers.
    * @throws {RangeError} If ranges are negative, non-finite, or not strictly ascending.

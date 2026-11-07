@@ -90,9 +90,13 @@ function(lob_find_or_fetch name)
         "FetchContent_MakeAvailable(${ARG_FETCH_NAME})\n"
         "file(WRITE \"\${CMAKE_CURRENT_BINARY_DIR}/src_dir.txt\" \"\${${ARG_FETCH_NAME}_SOURCE_DIR}\")\n"
       )
+      set(_fetch_cmd "${CMAKE_COMMAND}" -S "${_subbuild_dir}" -B
+                     "${_subbuild_dir}/build")
+      if(ARG_FORCE_STATIC)
+        list(APPEND _fetch_cmd -D BUILD_SHARED_LIBS=OFF)
+      endif()
       execute_process(
-        COMMAND "${CMAKE_COMMAND}" -S "${_subbuild_dir}" -B
-                "${_subbuild_dir}/build"
+        COMMAND ${_fetch_cmd}
         OUTPUT_QUIET
         ERROR_VARIABLE _fetch_err
         RESULT_VARIABLE _fetch_res)
@@ -117,7 +121,11 @@ function(lob_find_or_fetch name)
       GIT_TAG ${ARG_GIT_TAG})
 
     if(ARG_FORCE_STATIC)
-      set(SHARED_LIBS_RECOVER_STATE ${BUILD_SHARED_LIBS})
+      if(DEFINED BUILD_SHARED_LIBS)
+        set(SHARED_LIBS_RECOVER_STATE "${BUILD_SHARED_LIBS}")
+      else()
+        set(SHARED_LIBS_RECOVER_STATE "__UNSET__")
+      endif()
       set(BUILD_SHARED_LIBS
           OFF
           CACHE BOOL "Force static dependency build" FORCE)
@@ -126,9 +134,13 @@ function(lob_find_or_fetch name)
     FetchContent_MakeAvailable(${ARG_FETCH_NAME})
 
     if(ARG_FORCE_STATIC)
-      set(BUILD_SHARED_LIBS
-          ${SHARED_LIBS_RECOVER_STATE}
-          CACHE BOOL "Restore original setting" FORCE)
+      if(SHARED_LIBS_RECOVER_STATE STREQUAL "__UNSET__")
+        unset(BUILD_SHARED_LIBS CACHE)
+      else()
+        set(BUILD_SHARED_LIBS
+            ${SHARED_LIBS_RECOVER_STATE}
+            CACHE BOOL "Restore original setting" FORCE)
+      endif()
       unset(SHARED_LIBS_RECOVER_STATE)
     endif()
 

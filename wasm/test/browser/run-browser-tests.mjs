@@ -20,7 +20,6 @@ const MIME_TYPES = {
   ".js": "application/javascript; charset=utf-8",
   ".wasm": "application/wasm",
   ".json": "application/json; charset=utf-8",
-  ".d.ts": "text/plain; charset=utf-8",
   ".ts": "text/plain; charset=utf-8",
 };
 
@@ -91,14 +90,19 @@ function createTestServer() {
     } else if (pathname === "/test-runner.mjs") {
       filePath = path.join(__dirname, "test-runner.mjs");
     } else if (pathname.startsWith("/package/")) {
-      const rel = pathname.slice("/package/".length);
-      const candidates = [
-        path.join(wasmDir, rel),
-        path.join(buildWasmDir, rel),
-      ];
-      for (const cand of candidates) {
-        if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
-          filePath = cand;
+      const rel = pathname.slice("/package/".length).replace(/\\/g, "/");
+      const candidates = [wasmDir, buildWasmDir];
+      for (const base of candidates) {
+        const resolved = path.resolve(base, rel);
+        const relCheck = path.relative(base, resolved);
+        const isContained =
+          relCheck && !relCheck.startsWith("..") && !path.isAbsolute(relCheck);
+        if (
+          isContained &&
+          fs.existsSync(resolved) &&
+          fs.statSync(resolved).isFile()
+        ) {
+          filePath = resolved;
           break;
         }
       }
@@ -170,9 +174,38 @@ async function runBrowser(
     stderr += d.toString();
   });
 
+  let settled = false;
+  let childReject;
+  const childFailurePromise = new Promise((_, reject) => {
+    childReject = reject;
+  });
+  childFailurePromise.catch(() => {});
+
+  child.on("error", (err) => {
+    if (!settled) {
+      childReject(
+        new Error(
+          `${name} process error: ${err.message}\nStdout: ${stdout}\nStderr: ${stderr}`,
+          { cause: err },
+        ),
+      );
+    }
+  });
+
+  child.on("exit", (code, signal) => {
+    if (!settled) {
+      childReject(
+        new Error(
+          `${name} exited prematurely (code: ${code}, signal: ${signal}).\nStdout: ${stdout}\nStderr: ${stderr}`,
+        ),
+      );
+    }
+  });
+
   const timeoutMs = 30000;
+  let timer;
   const timeoutPromise = new Promise((_, reject) => {
-    const timer = setTimeout(() => {
+    timer = setTimeout(() => {
       reject(
         new Error(
           `${name} test timed out after ${timeoutMs}ms.\nStdout: ${stdout}\nStderr: ${stderr}`,
@@ -183,7 +216,13 @@ async function runBrowser(
   });
 
   try {
-    const report = await Promise.race([reportPromise, timeoutPromise]);
+    const report = await Promise.race([
+      reportPromise,
+      timeoutPromise,
+      childFailurePromise,
+    ]);
+    settled = true;
+    clearTimeout(timer);
     if (report.status !== "pass") {
       throw new Error(
         `${name} test failed: ${report.error}\nStack:\n${report.stack}`,
@@ -193,6 +232,8 @@ async function runBrowser(
     console.log(`  User-Agent: ${report.userAgent}`);
     return report;
   } finally {
+    settled = true;
+    clearTimeout(timer);
     testServer.resetResolver();
     child.kill("SIGKILL");
     try {

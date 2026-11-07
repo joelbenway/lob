@@ -89,8 +89,18 @@ export class LobError extends Error {
   constructor(code: number);
 }
 
-/** Sequence of numbers, such as an Array or TypedArray. */
-export type NumberSequence = ArrayLike<number>;
+/** Sequence of numbers, such as an Array or numeric TypedArray. */
+export type NumberSequence =
+  | readonly number[]
+  | Float64Array
+  | Float32Array
+  | Int32Array
+  | Int16Array
+  | Int8Array
+  | Uint32Array
+  | Uint16Array
+  | Uint8Array
+  | Uint8ClampedArray;
 
 /**
  * Fluent builder for configuring external ballistics simulation parameters.

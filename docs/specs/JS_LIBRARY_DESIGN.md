@@ -50,12 +50,12 @@ await) and provides a GC-managed API modeled on `lob.hpp`:
 - `Context`: unit-bearing solver methods:
   - `solveFt(rangesFt)`: forward solution taking ranges in feet.
   - `solveYds(rangesYd)`: forward solution taking ranges in yards (rounded to integer feet).
-  - `solveELRFt(rangesFt)`: extended long range forward solution with continuous atmospheric recalculation.
-  - `solveELRYds(rangesYd)`: extended long range forward solution in yards.
+  - `solveELRFt(rangesFt)`: extended long-range forward solution with continuous atmospheric recalculation.
+  - `solveELRYds(rangesYd)`: extended long-range forward solution in yards.
   - `solveInverseFt(rangesFt)`: closed-form geometric inverse solution taking ranges in feet.
   - `solveInverseYds(rangesYd)`: closed-form geometric inverse solution taking ranges in yards.
-  - `solveInverseELRFt(rangesFt)`: extended long range geometric inverse solution taking ranges in feet.
-  - `solveInverseELRYds(rangesYd)`: extended long range geometric inverse solution taking ranges in yards.
+  - `solveInverseELRFt(rangesFt)`: extended long-range geometric inverse solution taking ranges in feet.
+  - `solveInverseELRYds(rangesYd)`: extended long-range geometric inverse solution taking ranges in yards.
   - `dispose()`: frees context wasm memory; idempotent.
 - Rows are plain objects:
   - Forward rows expose `rangeFt`, `rangeYds`, `velocityFps`, `energyFtLbs`,

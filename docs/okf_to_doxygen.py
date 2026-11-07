@@ -13,6 +13,7 @@ FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n?", re.DOTALL)
 
 
 def _strip_quotes(s):
+    """Strip leading and trailing quotes from a string."""
     s = s.strip()
     if len(s) >= 2 and s[0] == s[-1] and s[0] in ("'", '"'):
         return s[1:-1]
@@ -46,6 +47,7 @@ def _split_top_level(s, delim):
 
 
 def _parse_scalar(value):
+    """Parse a frontmatter scalar value, inline list, or inline map."""
     s = value.strip()
     if s.startswith("["):
         if not s.endswith("]"):
@@ -269,6 +271,7 @@ RESERVED = {"index.md", "log.md"}
 
 
 def _is_reserved(path):
+    """Check whether path matches a reserved bundle filename."""
     return Path(path).name in RESERVED
 
 
@@ -293,6 +296,7 @@ def _exclude_list(src_dir):
 
 
 def _is_excluded(rel, exclude):
+    """Check whether relative path or its basename is in the exclude list."""
     return rel in exclude or Path(rel).name in exclude
 
 
@@ -368,6 +372,7 @@ def extract_concept_links(body, src_rel, concept_rels, exclude=()):
 
 
 def _escape_dot(s):
+    """Escape backslashes and double quotes for Graphviz dot output."""
     return str(s).replace("\\", "\\\\").replace('"', '\\"')
 
 
@@ -449,14 +454,16 @@ def reduce_edges(outgoing, id_map):
         for u, targets in outgoing.items()
     }
 
-    def reachable_nodes(start, avoid_edge=None):
+    def reachable_nodes(start, avoid_edge=None, source_graph=None):
+        if source_graph is None:
+            source_graph = graph
         visited = set()
         queue = [start]
         while queue:
             curr = queue.pop()
             if curr not in visited:
                 visited.add(curr)
-                for neighbor in graph.get(curr, ()):
+                for neighbor in source_graph.get(curr, ()):
                     if avoid_edge and curr == avoid_edge[0] and neighbor == avoid_edge[1]:
                         continue
                     queue.append(neighbor)
@@ -468,7 +475,7 @@ def reduce_edges(outgoing, id_map):
             v_reaches = reachable_nodes(v)
             if u in v_reaches:
                 continue
-            u_reaches_without = reachable_nodes(u, avoid_edge=(u, v))
+            u_reaches_without = reachable_nodes(u, avoid_edge=(u, v), source_graph=reduced)
             if v in u_reaches_without:
                 reduced[u].remove(v)
     return reduced
@@ -622,10 +629,16 @@ def generate(src_dir, out_dir, title=None, accent_color="#2458a6", api_ref=None,
     for rel in sorted(concepts):
         categories[concept_types[rel]].append((id_map[rel], concept_titles[rel]))
 
+    concept_page_ids = set(id_map.values())
     for ptype, items in categories.items():
         cslug = type_slug(ptype)
         ctitle = format_type_title(ptype)
         hub_page_id = "okf_" + cslug
+        if hub_page_id in concept_page_ids:
+            raise ValueError(
+                "Category hub page ID '%s' collides with an existing concept page ID"
+                % hub_page_id
+            )
         hub_lines = [
             "@page %s %s" % (hub_page_id, ctitle),
             "",
@@ -905,6 +918,7 @@ def parse_args(argv):
 
 
 def main(argv):
+    """CLI entry point for the OKF to Doxygen converter."""
     try:
         args = parse_args(argv)
     except SystemExit as exc:
