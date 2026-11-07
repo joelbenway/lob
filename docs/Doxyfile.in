@@ -1,3 +1,7 @@
+# Copyright (c) 2026  Joel Benway
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Please see end of file for extended copyright information
+
 # Configuration for Doxygen for use with CMake
 # Only options that deviate from the default are included
 # To create a new Doxyfile containing all available options, call `doxygen -g`
@@ -10,8 +14,10 @@ PROJECT_NUMBER = "@PROJECT_VERSION@"
 # they stand alone on GitHub. The technical reference lives as an OKF bundle in
 # docs/okf/ and is translated into Doxygen pages at build time; the API reference
 # comes from the headers.
-INPUT = "@PROJECT_SOURCE_DIR@/include" "@PROJECT_BINARY_DIR@/generated/okf_pages"
-FILE_PATTERNS = *.h *.hpp *.c *.cpp *.md *.dox
+INPUT = "@PROJECT_SOURCE_DIR@/include" "@PROJECT_BINARY_DIR@/generated/okf_pages" "@PROJECT_SOURCE_DIR@/wasm/index.mjs"
+FILE_PATTERNS = *.h *.hpp *.c *.cpp *.md *.dox *.mjs
+EXTENSION_MAPPING = mjs=Javascript
+FILTER_PATTERNS = *.mjs="@OKF_PYTHON@ @PROJECT_SOURCE_DIR@/docs/filter_js.py"
 EXTRACT_ALL = YES
 EXTRACT_PRIVATE = NO
 EXTRACT_STATIC = YES
@@ -38,10 +44,23 @@ LAYOUT_FILE = "@PROJECT_SOURCE_DIR@/docs/DoxygenLayout.xml"
 GENERATE_HTML = YES
 GENERATE_TREEVIEW = YES
 HTML_DYNAMIC_MENUS = NO
-DISABLE_INDEX = NO
+DISABLE_INDEX = YES
+FULL_SIDEBAR = NO
 GENERATE_LEGEND = YES
 HTML_COLORSTYLE = LIGHT
-HTML_EXTRA_STYLESHEET =
+HTML_HEADER = "@PROJECT_SOURCE_DIR@/docs/header.html"
+HTML_EXTRA_STYLESHEET = "@DOXYGEN_AWESOME_CSS_DIR@/doxygen-awesome.css" \
+                        "@PROJECT_SOURCE_DIR@/docs/doxygen-awesome-lob.css"
+HTML_EXTRA_FILES = "@DOXYGEN_AWESOME_CSS_DIR@/doxygen-awesome-darkmode-toggle.js" \
+                   "@DOXYGEN_AWESOME_CSS_DIR@/doxygen-awesome-fragment-copy-button.js" \
+                   "@DOXYGEN_AWESOME_CSS_DIR@/doxygen-awesome-interactive-toc.js" \
+                   "@DOXYGEN_AWESOME_CSS_DIR@/doxygen-awesome-paragraph-link.js"
+HTML_COPY_CLIPBOARD = NO
+HAVE_DOT = YES
+DOT_IMAGE_FORMAT = svg
+INTERACTIVE_SVG = YES
+DOT_TRANSPARENT = YES
+DOT_MULTI_TARGETS = YES
 GENERATE_LATEX = NO
 GENERATE_XML = NO
 XML_PROGRAMLISTING = NO
@@ -50,3 +69,17 @@ QUIET = NO
 WARN_IF_UNDOCUMENTED = NO
 WARN_IF_DOC_ERROR = YES
 WARN_NO_PARAMDOC = NO
+
+# This file is part of lob.
+#
+# lob is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# lob is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# lob. If not, see <https://www.gnu.org/licenses/>.

@@ -15,59 +15,11 @@ set(PROJECT_VERSION "${PROJECT_VERSION}")
 
 include(../cmake/project-is-top-level.cmake)
 include(../cmake/folders.cmake)
-include(../cmake/silence.cmake)
-
 if(PROJECT_IS_TOP_LEVEL)
   find_package(lob REQUIRED)
 endif()
 
-find_package(benchmark CONFIG)
-
-if(NOT benchmark_FOUND)
-  message(STATUS "google/benchmark not found, FetchContent instead...")
-  set(DEV_WARNINGS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_WARNINGS}")
-  set(DEV_ERRORS_RECOVER_STATE "$CACHE{CMAKE_SUPPRESS_DEVELOPER_ERRORS}")
-  set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
-      ON
-      CACHE INTERNAL "Suppress GoogleBenchmark CMake Warnings" FORCE)
-  set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
-      ON
-      CACHE INTERNAL "Suppress GoogleBenchmark CMake Errors" FORCE)
-
-  set(BENCHMARK_ENABLE_TESTING NO)
-
-  include(FetchContent)
-  FetchContent_Declare(
-    googlebenchmark
-    GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG v1.9.2)
-
-  set(SHARED_LIBS_RECOVER_STATE ${BUILD_SHARED_LIBS})
-  set(BUILD_SHARED_LIBS
-      OFF
-      CACHE BOOL "Force static GoogleBenchmark" FORCE)
-
-  FetchContent_MakeAvailable(googlebenchmark)
-
-  set(BUILD_SHARED_LIBS
-      ${SHARED_LIBS_RECOVER_STATE}
-      CACHE BOOL "Restore original setting" FORCE)
-  unset(SHARED_LIBS_RECOVER_STATE)
-
-  set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS
-      ${DEV_WARNINGS_RECOVER_STATE}
-      CACHE INTERNAL "Restore original setting" FORCE)
-  set(CMAKE_SUPPRESS_DEVELOPER_ERRORS
-      ${DEV_ERRORS_RECOVER_STATE}
-      CACHE INTERNAL "Restore original setting" FORCE)
-  unset(DEV_WARNINGS_RECOVER_STATE)
-  unset(DEV_ERRORS_RECOVER_STATE)
-
-  silence(benchmark)
-  silence(benchmark_main)
-else()
-  message(STATUS "Found google/benchmark: ${benchmark_DIR}")
-endif()
+include(../cmake/googlebenchmark.cmake)
 
 add_custom_target(run-benchmarks)
 

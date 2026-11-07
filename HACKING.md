@@ -105,7 +105,7 @@ metadata to `build/wasm/`. `nix build .#lob-wasm` builds and tests the
 package derivation. Without Nix, install emsdk 3.1.73, activate it,
 source `emsdk_env.sh`, and run `cmake --preset=wasm &&
 cmake --build --preset=wasm`. See
-[docs/specs/JS_LIBRARY_DESIGN.md](docs/specs/JS_LIBRARY_DESIGN.md).
+[wasm/README.md](wasm/README.md).
 
 ### Developer mode targets
 

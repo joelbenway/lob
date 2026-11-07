@@ -1,13 +1,50 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026  Joel Benway
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Please see end of file for extended copyright information
+
 """Tests for docs/okf_to_doxygen.py (stdlib unittest, no deps)."""
 import unittest
 
 from okf_to_doxygen import parse_frontmatter, page_id_for, render_page
+from okf_to_doxygen import format_type_title, type_slug
 import tempfile
-from okf_to_doxygen import rewrite_links, generate
+from okf_to_doxygen import rewrite_links, generate, reduce_edges
 from pathlib import Path
 from okf_to_doxygen import check_bundle
-from okf_to_doxygen import main
+from okf_to_doxygen import main, parse_args
+
+
+class CLITest(unittest.TestCase):
+    def test_cli_argument_parsing(self):
+        args = parse_args(["docs/okf", "build/pages", "--title", "Custom Title", "--accent-color", "#123456", "--api-ref-url", "api.html"])
+        self.assertEqual(args.src_dir, Path("docs/okf"))
+        self.assertEqual(args.out_dir, Path("build/pages"))
+        self.assertEqual(args.title, "Custom Title")
+        self.assertEqual(args.accent_color, "#123456")
+        self.assertEqual(args.api_ref_url, "api.html")
+
+    def test_cli_check_mode(self):
+        with tempfile.TemporaryDirectory() as src:
+            ret = main(["--check", src])
+            self.assertEqual(ret, 0)
+
+
+
+class TypeFormattingTest(unittest.TestCase):
+    def test_format_type_title(self):
+        self.assertEqual(format_type_title("Concept"), "Concepts")
+        self.assertEqual(format_type_title("Guide"), "Guides & Workflows")
+        self.assertEqual(format_type_title("DesignDecision"), "Design Decisions")
+        self.assertEqual(format_type_title("SystemPolicy"), "System Policies")
+        self.assertEqual(format_type_title("Hardware"), "Hardware")
+
+    def test_type_slug(self):
+        self.assertEqual(type_slug("Concept"), "concepts")
+        self.assertEqual(type_slug("Guide"), "guides")
+        self.assertEqual(type_slug("DesignDecision"), "decisions")
+        self.assertEqual(type_slug("SystemPolicy"), "system_policies")
+
 
 
 class MissingDirTest(unittest.TestCase):
@@ -173,11 +210,11 @@ class GenerateTest(unittest.TestCase):
             "okf_bc_bands",
             {"type": "Guide", "title": "BC Bands", "exhibit": "bc-bands"},
             "Body\n")
-        self.assertIn('<div data-lob-exhibit="bc-bands"></div>', out)
+        self.assertIn('<div data-okf-exhibit="bc-bands"></div>', out)
         self.assertIn('<script type="module" src="exhibits/bc-bands.js"></script>', out)
         self.assertIn(
             "\\htmlonly\n"
-            '<div data-lob-exhibit="bc-bands"></div>\n'
+            '<div data-okf-exhibit="bc-bands"></div>\n'
             '<script type="module" src="exhibits/bc-bands.js"></script>\n'
             "\\endhtmlonly\n",
             out,
@@ -202,7 +239,12 @@ class GenerateTest(unittest.TestCase):
             generate(srcp, Path(out))
             self.assertEqual(
                 sorted(p.name for p in Path(out).iterdir()),
-                ["keep.txt", "okf_a.md", "okf_mainpage.md"])
+                [
+                    "keep.txt",
+                    "okf_a.md",
+                    "okf_concepts.md",
+                    "okf_mainpage.md",
+                ])
 
     def test_root_index_frontmatter_stripped_from_mainpage(self):
         with tempfile.TemporaryDirectory() as src, \
@@ -220,6 +262,84 @@ class GenerateTest(unittest.TestCase):
             self.assertNotIn("---", mainpage)
             self.assertNotIn("okf_version", mainpage)
             self.assertIn("# Bundle", mainpage)
+
+    def test_dynamic_categories_and_mainpage_generation(self):
+        with tempfile.TemporaryDirectory() as src, tempfile.TemporaryDirectory() as out:
+            srcp = Path(src)
+            (srcp / "c1.md").write_text("---\ntype: Concept\ntitle: Topic 1\n---\nBody\n", encoding="utf-8")
+            (srcp / "p1.md").write_text("---\ntype: SystemPolicy\ntitle: Policy 1\n---\nBody\n", encoding="utf-8")
+            generate(srcp, Path(out), title="My Reference", api_ref={"url": "classes.html", "title": "API"})
+
+            mainpage = (Path(out) / "okf_mainpage.md").read_text(encoding="utf-8")
+            self.assertIn("@mainpage My Reference", mainpage)
+            self.assertIn("@subpage okf_concepts", mainpage)
+            self.assertIn("@subpage okf_system_policies", mainpage)
+            self.assertIn("okf-pillar-cards", mainpage)
+            self.assertIn("classes.html", mainpage)
+
+            concepts_hub = (Path(out) / "okf_concepts.md").read_text(encoding="utf-8")
+            self.assertIn("@page okf_concepts Concepts", concepts_hub)
+            self.assertIn("@subpage okf_c1", concepts_hub)
+
+            policy_hub = (Path(out) / "okf_system_policies.md").read_text(encoding="utf-8")
+            self.assertIn("@page okf_system_policies System Policies", policy_hub)
+            self.assertIn("@subpage okf_p1", policy_hub)
+
+    def test_mainpage_includes_dual_pillar_jump_cards(self):
+        with tempfile.TemporaryDirectory() as src, \
+                tempfile.TemporaryDirectory() as out:
+            srcp = Path(src)
+            (srcp / "index.md").write_text(
+                "# Technical Reference\nWelcome text.\n- [Drag](drag.md)\n", encoding="utf-8")
+            (srcp / "drag.md").write_text(
+                "---\ntype: Concept\ntitle: Drag Model\n---\nBody\n", encoding="utf-8")
+            generate(srcp, Path(out), api_ref={"url": "classes.html", "title": "API Reference"})
+            mainpage = (Path(out) / "okf_mainpage.md").read_text(encoding="utf-8")
+            self.assertIn("okf-pillar-cards", mainpage)
+            self.assertIn("API Reference", mainpage)
+
+    def test_mainpage_omits_api_ref_when_not_provided(self):
+        with tempfile.TemporaryDirectory() as src, \
+                tempfile.TemporaryDirectory() as out:
+            srcp = Path(src)
+            (srcp / "drag.md").write_text(
+                "---\ntype: Concept\ntitle: Drag Model\n---\nBody\n", encoding="utf-8")
+            generate(srcp, Path(out))
+            mainpage = (Path(out) / "okf_mainpage.md").read_text(encoding="utf-8")
+            self.assertIn("okf-pillar-cards", mainpage)
+            self.assertNotIn("API Reference", mainpage)
+
+    def test_technical_reference_category_hubs_generated(self):
+        with tempfile.TemporaryDirectory() as src, \
+                tempfile.TemporaryDirectory() as out:
+            srcp = Path(src)
+            (srcp / "index.md").write_text(
+                "# Technical Reference\n- [G](g.md)\n- [C](c.md)\n- [D](d.md)\n", encoding="utf-8")
+            (srcp / "g.md").write_text(
+                "---\ntype: Guide\ntitle: Guide G\n---\nGuide body\n", encoding="utf-8")
+            (srcp / "c.md").write_text(
+                "---\ntype: Concept\ntitle: Concept C\n---\nConcept body\n", encoding="utf-8")
+            (srcp / "d.md").write_text(
+                "---\ntype: DesignDecision\ntitle: Decision D\n---\nDecision body\n", encoding="utf-8")
+            generate(srcp, Path(out))
+
+            mainpage = (Path(out) / "okf_mainpage.md").read_text(encoding="utf-8")
+            self.assertIn("@mainpage Technical Reference", mainpage)
+            self.assertIn("@subpage okf_guides", mainpage)
+            self.assertIn("@subpage okf_concepts", mainpage)
+            self.assertIn("@subpage okf_decisions", mainpage)
+
+            guides = (Path(out) / "okf_guides.md").read_text(encoding="utf-8")
+            self.assertIn("@page okf_guides Guides & Workflows", guides)
+            self.assertIn("@subpage okf_g", guides)
+
+            concepts = (Path(out) / "okf_concepts.md").read_text(encoding="utf-8")
+            self.assertIn("@page okf_concepts Concepts", concepts)
+            self.assertIn("@subpage okf_c", concepts)
+
+            decisions = (Path(out) / "okf_decisions.md").read_text(encoding="utf-8")
+            self.assertIn("@page okf_decisions Design Decisions", decisions)
+            self.assertIn("@subpage okf_d", decisions)
 
 
 class CheckTest(unittest.TestCase):
@@ -305,5 +425,141 @@ class CheckTest(unittest.TestCase):
             self.assertEqual(generate(base, Path(out)), ["okf_a"])
 
 
+class NeighborhoodGraphTest(unittest.TestCase):
+    def test_extract_concept_links(self):
+        from okf_to_doxygen import extract_concept_links
+        body = (
+            "See [Target](sub/target.md) and [Index](index.md) and "
+            "[Ext](https://example.com) and [Other](other.md)."
+        )
+        concepts = {"sub/target.md", "other.md"}
+        found = extract_concept_links(body, "source.md", concepts, exclude=[])
+        self.assertEqual(found, {"sub/target.md", "other.md"})
+
+    def test_extract_concept_links_ignores_self_links(self):
+        from okf_to_doxygen import extract_concept_links
+        body = "See [Self](source.md) and [Target](target.md)."
+        concepts = {"source.md", "target.md"}
+        found = extract_concept_links(body, "source.md", concepts, exclude=[])
+        self.assertEqual(found, {"target.md"})
+
+    def test_build_neighborhood_dot_empty(self):
+        from okf_to_doxygen import build_neighborhood_dot
+        dot = build_neighborhood_dot("okf_a", "Page A", "Concept", {}, {})
+        self.assertEqual(dot, "")
+
+    def test_build_neighborhood_dot_structure(self):
+        from okf_to_doxygen import build_neighborhood_dot
+        incoming = {"okf_in": {"title": "Inbound", "type": "Guide"}}
+        outgoing = {"okf_out": {"title": "Outbound", "type": "DesignDecision"}}
+        dot = build_neighborhood_dot("okf_curr", "Current Page", "Concept", incoming, outgoing)
+        self.assertTrue(dot.startswith("\\dot\n"))
+        self.assertTrue(dot.endswith("\n\\enddot\n"))
+        self.assertIn('rankdir=LR;', dot)
+        self.assertIn('bgcolor="transparent";', dot)
+        self.assertIn('fillcolor="#2458a6"', dot)
+        custom_dot = build_neighborhood_dot("okf_curr", "Current Page", "Concept", incoming, outgoing, accent_color="#a44122")
+        self.assertIn('fillcolor="#a44122"', custom_dot)
+        self.assertIn('URL="@ref okf_in"', dot)
+        self.assertIn('URL="@ref okf_out"', dot)
+        self.assertIn('peripheries=2', dot)  # DesignDecision node styling
+        self.assertIn('okf_in -> okf_curr;', dot)
+        self.assertIn('okf_curr -> okf_out;', dot)
+
+    def test_build_global_dot_structure(self):
+        from okf_to_doxygen import build_global_dot
+        concepts = {"a.md": Path("a.md"), "b.md": Path("b.md")}
+        titles = {"a.md": "Alpha", "b.md": "Beta Decision"}
+        types = {"a.md": "Concept", "b.md": "DesignDecision"}
+        outgoing = {"a.md": {"b.md"}}
+        id_map = {"a.md": "okf_a", "b.md": "okf_b"}
+        dot = build_global_dot(concepts, titles, types, outgoing, id_map)
+        self.assertTrue(dot.startswith("\\dot\n"))
+        self.assertTrue(dot.endswith("\n\\enddot\n"))
+        self.assertIn("rankdir=LR;", dot)
+        self.assertIn('bgcolor="transparent";', dot)
+        self.assertIn("cluster_decisions", dot)
+        self.assertIn('URL="@ref okf_a"', dot)
+        self.assertIn('URL="@ref okf_b"', dot)
+        self.assertIn("peripheries=2", dot)  # DesignDecision
+        self.assertIn("okf_a -> okf_b;", dot)
+
+    def test_generate_injects_graph_banner(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                tempfile.TemporaryDirectory() as out:
+            base = Path(tmp)
+            (base / "index.md").write_text("# Root\n- [A](a.md)\n- [B](b.md)\n", encoding="utf-8")
+            (base / "a.md").write_text("---\ntype: Concept\ntitle: Alpha\n---\nLinks to [Beta](b.md).\n", encoding="utf-8")
+            (base / "b.md").write_text("---\ntype: Concept\ntitle: Beta\n---\nNo outgoing links.\n", encoding="utf-8")
+            written = generate(base, Path(out))
+            self.assertEqual(written, ["okf_a", "okf_b"])
+            page_a = (Path(out) / "okf_a.md").read_text(encoding="utf-8")
+            page_b = (Path(out) / "okf_b.md").read_text(encoding="utf-8")
+            mainpage = (Path(out) / "okf_mainpage.md").read_text(encoding="utf-8")
+
+            self.assertIn("okf-neighborhood-graph", page_a)
+            self.assertIn("\\dot", page_a)
+            self.assertIn("okf-neighborhood-graph", page_b)
+            self.assertIn("\\dot", page_b)
+            self.assertIn("okf-global-graph", mainpage)
+            self.assertIn("\\dot", mainpage)
+
+    def test_category_hub_collision_raises(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                tempfile.TemporaryDirectory() as out:
+            base = Path(tmp)
+            (base / "index.md").write_text("# Root\n- [Hub](concepts.md)\n", encoding="utf-8")
+            (base / "concepts.md").write_text(
+                "---\ntype: Concept\ntitle: Concepts Overview\n---\nBody\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError) as ctx:
+                generate(base, Path(out))
+            self.assertIn("collides with", str(ctx.exception))
+
+
+class ReduceEdgesTest(unittest.TestCase):
+    def test_cycle_and_shared_target_reachability(self):
+        # A <-> B with both A -> C and B -> C
+        outgoing = {
+            "a.md": {"b.md", "c.md"},
+            "b.md": {"a.md", "c.md"},
+            "c.md": set(),
+        }
+        id_map = {
+            "a.md": "okf_a",
+            "b.md": "okf_b",
+            "c.md": "okf_c",
+        }
+        reduced = reduce_edges(outgoing, id_map)
+        # Direct cycle edges must be preserved
+        self.assertIn("okf_b", reduced["okf_a"])
+        self.assertIn("okf_a", reduced["okf_b"])
+        # Both A and B must maintain reachability to C
+        for start in ("okf_a", "okf_b"):
+            visited = set()
+            queue = [start]
+            while queue:
+                curr = queue.pop()
+                if curr not in visited:
+                    visited.add(curr)
+                    queue.extend(reduced.get(curr, ()))
+            self.assertIn("okf_c", visited)
+
+
 if __name__ == "__main__":
     unittest.main()
+
+# This file is part of lob.
+#
+# lob is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# lob is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# lob. If not, see <https://www.gnu.org/licenses/>.

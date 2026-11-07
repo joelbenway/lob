@@ -98,13 +98,21 @@ if(NOT DEFINED DOXYGEN_OUTPUT_DIRECTORY)
 endif()
 set(out "${DOXYGEN_OUTPUT_DIRECTORY}")
 set(doxyfile "${bin}/docs/Doxyfile")
+find_program(OKF_PYTHON NAMES python3 REQUIRED)
+
+include("${src}/cmake/doxygen-awesome-css.cmake")
 
 configure_file("${src}/docs/Doxyfile.in" "${doxyfile}" @ONLY)
 
-find_program(OKF_PYTHON NAMES python3 REQUIRED)
 execute_process(
   COMMAND "${OKF_PYTHON}" "${src}/docs/okf_to_doxygen.py"
           "${src}/docs/okf" "${bin}/generated/okf_pages"
+          --title "Technical Reference"
+          --accent-color "#a44122"
+          --api-ref-url "classes.html"
+          --api-ref-title "API Reference"
+          --api-ref-badge "C & C++"
+          --api-ref-desc "Full programming interface: C99 narrow-waist ABI, C++ fluent builder, solver context, and types."
   RESULT_VARIABLE okf_result)
 if(NOT okf_result EQUAL "0")
   message(FATAL_ERROR "OKF generation failed with ${okf_result}")

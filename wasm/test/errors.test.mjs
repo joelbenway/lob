@@ -54,10 +54,10 @@ test("range input is validated", () => {
     .initialVelocityFps(2700)
     .zeroDistanceYds(100)
     .build();
-  assert.throws(() => context.solve([100, 50]), RangeError);
-  assert.throws(() => context.solve([-1]), RangeError);
-  assert.throws(() => context.solve([1.5]), RangeError);
-  assert.throws(() => context.solve("100"), TypeError);
+  assert.throws(() => context.solveFt([100, 50]), RangeError);
+  assert.throws(() => context.solveFt([-1]), RangeError);
+  assert.throws(() => context.solveFt([1.5]), RangeError);
+  assert.throws(() => context.solveFt("100"), TypeError);
   context.dispose();
 });
 

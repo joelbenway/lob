@@ -2,6 +2,6 @@
 builtin = clear,rare,en-GB_to_en-US,names,informal,code
 check-filenames =
 check-hidden =
-skip = */.git,*/build,*/build-wasm,*/node_modules,*/prefix,*/.direnv,*/.opencode,*/.superpowers
+skip = */.git,*/build,*/build-wasm,*/node_modules,*/prefix,*/.direnv,*/.opencode,*/.superpowers,package-lock.json,*/package-lock.json
 quiet-level = 2
-ignore-words-list = ws,cachegrind,valgrind,setarch,boatright,epicyclic,ir,cg,lets,iff,assertIn,trough,precesses,precession,thead
+ignore-words-list = assertIn,boatright,cachegrind,cg,epicyclic,iff,ir,lets,precesses,precession,setarch,stdio,thead,trough,valgrind,ws

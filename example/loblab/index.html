@@ -1,4 +1,9 @@
 <!doctype html>
+<!--
+Copyright (c) 2026  Joel Benway
+SPDX-License-Identifier: GPL-3.0-or-later
+Please see end of file for extended copyright information
+-->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -7,7 +12,7 @@
       name="description"
       content="Progressive browser front end for the lob external ballistics solver."
     />
-    <title>Ballistics Explorer</title>
+    <title>loblab</title>
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
@@ -15,9 +20,11 @@
       <nav class="hero-links" aria-label="Solver resources">
         <a href="https://joelbenway.github.io/lob/docs/">Documentation</a>
         <a href="https://joelbenway.github.io/lob/bench">Benchmarks</a>
+        <a href="https://github.com/joelbenway/lob">GitHub</a>
       </nav>
-      <p class="eyebrow">lob</p>
-      <h1>Ballistics Explorer</h1>
+      <h1>
+        <span class="logo-lob">lob</span><span class="logo-lab">lab</span>
+      </h1>
       <p>
         Configure drag, projectile, atmosphere, wind, and Earth effects. Only
         the inputs that apply to the selected sources are sent to the solver.
@@ -707,3 +714,19 @@
     <script type="module" src="./app.mjs"></script>
   </body>
 </html>
+
+<!--
+This file is part of lob.
+
+lob is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+lob is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+lob. If not, see <https://www.gnu.org/licenses/>.
+-->
