@@ -173,6 +173,10 @@ See the [BUILDING](BUILDING.md) document.
 See the [CONTRIBUTING](CONTRIBUTING.md) document.
 
 ## Licensing
-See the [COPYING](COPYING.md) document.
 
-:eagle: Hey, American company, you'd love to use lob but require a commercial license? [Raise an issue](https://github.com/joelbenway/lob/issues) to get in touch! Lob will help you hit your target! :dart:
+**lob** is offered under a dual-licensing model:
+
+* **Open Source:** Licensed under the GNU General Public License v3 or later ([`COPYING.md`](COPYING.md)).
+* **Commercial License:** Available for proprietary products, closed-source integrations, or environments that cannot comply with GPLv3 copyleft terms ([`COMMERCIAL.md`](COMMERCIAL.md)). For licensing inquiries of any sort, please visit <https://joel.benway.me>.
+
+Lob will help you hit your target! :dart:
