@@ -5,26 +5,12 @@
   <navindex>
     <tab type="mainpage" visible="yes" title="Overview"/>
     <tab type="pages" visible="yes" title="Technical Reference" intro=""/>
-    <tab type="usergroup" visible="yes" title="API Reference">
-      <tab type="namespaces" visible="yes" title="Namespaces">
-        <tab type="namespacelist" visible="yes" title="" intro=""/>
-        <tab type="namespacemembers" visible="yes" title="" intro=""/>
-      </tab>
-      <tab type="classes" visible="yes" title="Classes &amp; Structs">
-        <tab type="classlist" visible="yes" title="" intro=""/>
-        <tab type="classindex" visible="$ALPHABETICAL_INDEX" title=""/>
-        <tab type="hierarchy" visible="yes" title="" intro=""/>
-        <tab type="classmembers" visible="yes" title="" intro=""/>
-      </tab>
-      <tab type="files" visible="yes" title="Files &amp; Headers">
-        <tab type="filelist" visible="yes" title="" intro=""/>
-        <tab type="globals" visible="yes" title="" intro=""/>
-      </tab>
-    </tab>
-    <tab type="topics" visible="no" title="" intro=""/>
-    <tab type="modules" visible="no" title="" intro="">
-      <tab type="modulelist" visible="no" title="" intro=""/>
-      <tab type="modulemembers" visible="no" title="" intro=""/>
+    <tab type="topics" visible="yes" title="API Reference" intro="Language-partitioned API references."/>
+    <tab type="namespaces" visible="no" title="Namespaces"/>
+    <tab type="classes" visible="no" title="Classes &amp; Structs"/>
+    <tab type="files" visible="yes" title="Files &amp; Headers">
+      <tab type="filelist" visible="yes" title="" intro=""/>
+      <tab type="globals" visible="yes" title="" intro=""/>
     </tab>
     <tab type="concepts" visible="no" title=""/>
     <tab type="interfaces" visible="no" title="">

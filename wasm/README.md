@@ -1,5 +1,7 @@
 # @joelbenway/lob
 
+[![npm](https://img.shields.io/npm/v/@joelbenway/lob.svg)](https://www.npmjs.com/package/@joelbenway/lob)
+
 Exterior ballistics calculation library, compiled from GPL-3.0-or-later C++ to WebAssembly.
 Provides fluent JavaScript and TypeScript APIs for Node 20+ and modern standard browsers.
 

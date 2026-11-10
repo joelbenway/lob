@@ -15,6 +15,13 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup api_c C ABI (lob.h)
+ * @brief Stable C99 narrow-waist ABI providing binary compatibility and foreign
+ * function interface (FFI) bindings.
+ * @{
+ */
+
 /** @brief The number of spline pieces comprising a drag function. */
 #define LOB_SPLINE_SEGMENTS 15
 /** @brief The size in bytes of the builder buffer. */
@@ -944,6 +951,8 @@ LOB_EXPORT extern double LobSToUs(double value);
  * @return Equivalent temperature in degrees fahrenheit.
  */
 LOB_EXPORT extern double LobDegCToDegF(double value);
+
+/** @} */
 
 #ifdef __cplusplus
 }
