@@ -3,7 +3,7 @@
 # lob
 This is lob, a useful and free exterior ballistics calculation library written in industrial-strength C++. :rocket:
 
-[![CI](https://github.com/joelbenway/lob/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/joelbenway/lob/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob) [![C++14](https://img.shields.io/badge/C%2B%2B-14-blue.svg)](https://isocpp.org/) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](COPYING.md)
+[![CI](https://github.com/joelbenway/lob/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/joelbenway/lob/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob) [![npm](https://img.shields.io/npm/v/@joelbenway/lob.svg)](https://www.npmjs.com/package/@joelbenway/lob) [![C++14](https://img.shields.io/badge/C%2B%2B-14-blue.svg)](https://isocpp.org/) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](COPYING.md)
 
 ## Features
 Building a world-class ballistics app? Lob's got the math covered. :mage_man:
@@ -30,15 +30,15 @@ The following can be accounted for in lob's solutions:
    * Crosswind aerodynamic jump (standard empirical model or projectile geometry model)
    * Gyroscopic stability estimation via the Miller rule
  * **Dual Solver Architecture**
-   * **Forward solutions**: Computes trajectory drop, windage deflection, velocity, Mach number, and time of flight
-   * **Inverse solutions**: Computes precise optic dial elevation and windage adjustments (in MOA) to hit a target at range using a closed-form geometric correction without iterative overhead
+   * **Forward solutions**: Computes trajectory drop, windage deflection, velocity, and time of flight (Mach number is calculated internally but not included in returned trajectory results)
+   * **Inverse solutions**: Computes precise optic dial elevation and windage adjustments (in MOA) to hit a target at range; `SolveInverse` uses a closed-form geometric correction without iterative overhead, while `SolveInverseELR` uses iterative angle refinement for nonzero reached ranges
    * **ELR Solvers**: Continuously updates local atmospheric lapse rates along the flight path (`SolveELR`, `SolveInverseELR`)
-   * **Graceful fall-short handling**: Accurately reports trajectory rows up to ground impact or target bounds without throwing exceptions
+   * **Graceful fall-short handling**: Accurately reports trajectory rows until requested target bounds are reached or the solver stops on time, speed, or steep-trajectory limits without assuming ground impact or terrain
 
 In addition to ballistic solutions, lob provides calculated instrumental values including local speed of sound, stability factor, and the "zero angle" between the line of sight and line of fire. All native units are customary American freedom units :statue_of_liberty: but a collection of unit conversion functions are included. :hammer_and_wrench:
 
 ### Ecosystem & Tooling
- * **C++ & C**: Header-only C++14 API ([`lob.hpp`](include/lob/lob.hpp)) and stable C ABI narrow waist ([`lob.h`](include/lob/lob.h)).
+ * **C++ & C**: C++14 wrapper API ([`lob.hpp`](include/lob/lob.hpp)) implemented in the header atop compiled library functions (link with `lob::lob`), with a stable C ABI narrow waist ([`lob.h`](include/lob/lob.h)).
  * **WebAssembly & TypeScript**: Full npm package `@joelbenway/lob` for Node.js and modern browsers—see the [WebAssembly README](wasm/README.md).
  * **CLI Wizard**: Includes `lobber`, a command-line tool supporting both an interactive wizard and streaming JSON input/output over stdin/stdout.
  * **Interactive Web Explorer**: Try the in-browser ballistic calculator, `loblab`, live at <https://joelbenway.github.io/lob/>.
@@ -136,7 +136,7 @@ There are features that set lob's accuracy apart as well. A solution can only be
 Lob is not just high-performance because it's C++; it was designed from the ground up for maximum throughput and [benchmarked](https://joelbenway.github.io/lob/bench) along the way. Every architectural choice in the solving pipeline focuses on computational efficiency and cache locality:
 
  * **Heun Predictor-Corrector Method**: Rather than using a generic 4th-order Runge-Kutta (RK4) method requiring four derivative evaluations per step, lob employs Heun's 2nd-order predictor-corrector method. As documented by Robert McCoy in *Modern Exterior Ballistics* and established by Ballistic Research Laboratory (BRL) research, 2nd-order methods hit the optimal sweet spot for exterior ballistics: they halve the number of drag evaluations compared to RK4 while matching real-world radar precision, since higher-order terms fall well within physical atmospheric noise.
- * **Down-Range Distance Stepping**: Instead of integrating across time increments ($\Delta t$), lob steps directly over horizontal down-range distance (36 inches / 1 yard by default). The runtime scales strictly linearly with target range ($O(R)$), and output rows land exactly on requested step boundaries without requiring adaptive time-stepping, Newton-Raphson root searches, or post-hoc interpolation.
+ * **Down-Range Distance Stepping**: Instead of integrating across time increments ($\Delta t$), lob steps directly over horizontal down-range distance (36 inches / 1 yard by default). The runtime scales strictly linearly with target range ($O(R)$) for forward solves and `SolveInverse`; for ELR inverse solves (`LobSolveInverseELR`), the solver integrates from the muzzle separately for each reached range, so work across multiple requested ranges grows with the sum of their ranges rather than only the final range. Output rows land exactly on requested step boundaries for ranges the solver reaches; if a time or speed limit is reached first, the forward solver may include an interpolated terminal row at an intermediate range, so callers should check each returned row’s range.
  * **Monotonic Spline Segment Caching**: Drag curves are modeled as piecewise cubic Hermite splines. Because projectile Mach numbers decrease monotonically down-range during flight, lob caches the active spline segment and walks it forward rather than performing a binary search on spline knots at every step. Each evaluation collapses into branch-light fused arithmetic.
  * **Zero Allocations & Cache Locality**: Lob never dynamically allocates heap memory (`malloc`/`new`), contains zero virtual function tables, and never throws C++ exceptions. The solver state fits comfortably within L1 cache, allowing hot loop variables to remain in CPU registers.
  * **Inlining Discipline & Outlined Cold Paths**: The core ODE integration loop (`DsDxCore`) is kept strictly inlined and branch-predictable. Cold paths—such as wind profile validation and boundary condition setup—are outlined to separate translation units so the inner loop never spills registers or bloats instruction cache.
