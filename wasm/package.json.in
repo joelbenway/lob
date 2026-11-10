@@ -8,6 +8,20 @@
     "url": "git+https://github.com/joelbenway/lob.git"
   },
   "license": "GPL-3.0-or-later",
+  "author": "Joel Benway",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "3dof",
+    "4dof",
+    "ballistics",
+    "ballistic-calculator",
+    "ballistic-solver",
+    "exterior-ballistics",
+    "firing-solution",
+    "point-mass"
+  ],
   "type": "module",
   "main": "./index.mjs",
   "types": "./index.d.ts",
