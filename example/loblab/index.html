@@ -111,10 +111,8 @@ Please see end of file for extended copyright information
             <div class="field">
               <label for="bcAtmosphere">BC atmosphere</label>
               <select id="bcAtmosphere" name="bcAtmosphere">
-                <option value="ArmyStandardMetro" selected>
-                  Army Standard Metro
-                </option>
-                <option value="ICAO">ICAO</option>
+                <option value="ArmyStandardMetro">Army Standard Metro</option>
+                <option value="ICAO" selected>ICAO</option>
               </select>
             </div>
             <div class="field">
@@ -423,8 +421,8 @@ Please see end of file for extended copyright information
           <div class="field">
             <label for="windSource">Wind source</label>
             <select id="windSource" name="windSource">
-              <option value="none">Calm</option>
-              <option value="uniform" selected>Uniform</option>
+              <option value="none" selected>Calm</option>
+              <option value="uniform">Uniform</option>
               <option value="profile">Profile</option>
             </select>
           </div>
@@ -658,8 +656,7 @@ Please see end of file for extended copyright information
         <section class="card sticky">
           <h2>Model</h2>
           <p id="model-summary" class="summary">
-            Default: BC 0.243 (G7), 168 gr, standard atmosphere, 10 mph at 3
-            o’clock.
+            Default: BC 0.243 (G7, ICAO), 168 gr, standard atmosphere, calm.
           </p>
           <p id="status" class="status" role="status" aria-live="polite">
             Loading solver…

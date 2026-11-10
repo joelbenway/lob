@@ -42,10 +42,10 @@ add_custom_target(
           "${PROJECT_BINARY_DIR}/generated/okf_pages"
           --title "Technical Reference"
           --accent-color "#a44122"
-          --api-ref-url "classes.html"
+          --api-ref-url "topics.html"
           --api-ref-title "API Reference"
-          --api-ref-badge "C & C++"
-          --api-ref-desc "Full programming interface: C99 narrow-waist ABI, C++ fluent builder, solver context, and types."
+          --api-ref-badge "C, C++, JS"
+          --api-ref-desc "Language-partitioned programming interfaces: C++14 header, C99 narrow-waist ABI, and WebAssembly bindings."
   COMMAND "${CMAKE_COMMAND}" -E remove_directory
           "${DOXYGEN_OUTPUT_DIRECTORY}/html"
   COMMAND "${DOXYGEN_CMD}" "${working_dir}/Doxyfile"

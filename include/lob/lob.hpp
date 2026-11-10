@@ -12,6 +12,13 @@
 
 namespace lob {
 
+/**
+ * @defgroup api_cpp C++ API (lob.hpp)
+ * @brief Modern C++14 header-only interface with fluent Builder, RAII Context,
+ * and unit conversions.
+ * @{
+ */
+
 /** @brief The size in bytes of the builder buffer. */
 constexpr size_t kLobBuilderBufferSize = LOB_BUILDER_BUFFER_SIZE;
 /** @brief The size of spline coeffs in Context. */
@@ -1382,6 +1389,8 @@ inline double SToUs(double value) { return ::LobSToUs(value); }
  * @return Equivalent temperature in degrees fahrenheit.
  */
 inline double DegCToDegF(double value) { return ::LobDegCToDegF(value); }
+
+/** @} */
 
 }  // namespace lob
 

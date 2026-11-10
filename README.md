@@ -9,30 +9,39 @@ This is lob, a useful and free exterior ballistics calculation library written i
 Building a world-class ballistics app? Lob's got the math covered. :mage_man:
 
 The following can be accounted for in lob's solutions:
- * Aerodynamic drag
-    * Standard drag curves (G1, G7, etc)
-    * Tailored drag curves via BC/velocity pairs :zap:
-    * Custom user-provided drag curves :sparkles:
-    * Drag curves comprised from cubic hermite splines :brain:
-    * Drag coefficient of changing air density mid-flight :exploding_head:
- * Gravity :earth_americas:
- * Wind :flags:
- * Atmospheric conditions :partly_sunny:
-   * Altitude :mountain_snow:
-   * Air pressure
-   * Temperature :thermometer:
-   * Relative humidity
- * Coriolis effect :globe_with_meridians:
- * Gyroscopic spin drift (two models)
- * Crosswind aerodynamic (two models)
- * Forward solutions (distance dropped at range)
- * Inverse solutions (adjustment required to hit target at range)
+ * **Aerodynamic drag**
+   * Standard drag curves (G1, G2, G5, G6, G7, G8)
+   * Tailored drag curves via stepped BC/velocity bands :zap:
+   * Custom user-provided drag curves and empirical radar tables :sparkles:
+   * High-performance drag curves evaluated via cubic Hermite splines :brain:
+   * Extended Long Range (ELR) atmospheric density and temperature lapse mid-flight :exploding_head:
+ * **Gravity & Planetary mechanics** :earth_americas:
+   * Point-mass gravitational acceleration
+   * Full Coriolis effect (latitude and firing azimuth) :globe_with_meridians:
+ * **Wind & Atmospheric boundary layer** :flags:
+   * Multi-point down-range wind profiles (varying wind by altitude and range)
+   * Power-law atmospheric boundary layer wind shear scaling with height
+ * **Atmospheric conditions** :partly_sunny:
+   * Altitude, station pressure, temperature, and relative humidity :mountain_snow: :thermometer:
+   * Standard atmosphere reference models (ICAO, Army Standard Metro)
+   * Precision vapor pressure calculation
+ * **Spin & Aerodynamic perturbations**
+   * Gyroscopic spin drift (standard empirical model or geometry-based precession/nutation)
+   * Crosswind aerodynamic jump (standard empirical model or projectile geometry model)
+   * Gyroscopic stability estimation via the Miller rule
+ * **Dual Solver Architecture**
+   * **Forward solutions**: Computes trajectory drop, windage deflection, velocity, Mach number, and time of flight
+   * **Inverse solutions**: Computes precise optic dial elevation and windage adjustments (in MOA) to hit a target at range using a closed-form geometric correction without iterative overhead
+   * **ELR Solvers**: Continuously updates local atmospheric lapse rates along the flight path (`SolveELR`, `SolveInverseELR`)
+   * **Graceful fall-short handling**: Accurately reports trajectory rows up to ground impact or target bounds without throwing exceptions
 
-In addition to ballistic solutions, lob provides instrumental values it calculates including the local speed of sound, stability factor, and the "zero angle" between the line of sight and line of fire. All native units are customary American freedom units :statue_of_liberty: but a collection of unit conversion functions are included :hammer_and_wrench:
+In addition to ballistic solutions, lob provides calculated instrumental values including local speed of sound, stability factor, and the "zero angle" between the line of sight and line of fire. All native units are customary American freedom units :statue_of_liberty: but a collection of unit conversion functions are included. :hammer_and_wrench:
 
-This repo includes a tiny example CLI program, lobber, which demonstrates the library's use either by taking json arguments via stdin/stdout or through an easy interactive wizard.
-
-A browser solver example, loblab, is available at <https://joelbenway.github.io/lob/>.
+### Ecosystem & Tooling
+ * **C++ & C**: Header-only C++14 API ([`lob.hpp`](include/lob/lob.hpp)) and stable C ABI narrow waist ([`lob.h`](include/lob/lob.h)).
+ * **WebAssembly & TypeScript**: Full npm package `@joelbenway/lob` for Node.js and modern browsers—see the [WebAssembly README](wasm/README.md).
+ * **CLI Wizard**: Includes `lobber`, a command-line tool supporting both an interactive wizard and streaming JSON input/output over stdin/stdout.
+ * **Interactive Web Explorer**: Try the in-browser ballistic calculator, `loblab`, live at <https://joelbenway.github.io/lob/>.
 
 ## Design
 Lob is intended to be **easy** to work with, **accurate**, and **fast** in that order.
@@ -43,6 +52,8 @@ Ballistics solutions require many inputs to model all the factors affecting the 
 Lob's architecture follows an [hourglass pattern](https://www.youtube.com/watch?v=PVYdHDm0q6Y): a C++ implementation at the base, a C API ([`lob.h`](include/lob/lob.h)) as the narrow waist providing a stable ABI boundary, and a C++ wrapper ([`lob.hpp`](include/lob/lob.hpp)) atop that restores the ergonomic C++ interface. The C interface makes it easy to bring your favorite language along and use lob as the little spoon. :hugs:
 
 To use lob in your project, [the C++ header](include/lob/lob.hpp) has everything you need! Or use [the C header](include/lob/lob.h) directly. Lob does not dynamically allocate memory or throw exceptions. It is suitable for use in embedded systems provided they have a C++14 compiler and the capability to handle floating-point math. Lob is CMake FetchContent-friendly with no dependencies of its own.
+
+For JavaScript, TypeScript, and modern web environments, pre-compiled WebAssembly bindings are available—see the [WebAssembly README](wasm/README.md).
 
 Easy to use, easy to run, easy to integrate. :thumbsup:
 
@@ -117,12 +128,19 @@ const lob::Context kBetterCtx =
 Now we're cooking! :cook:
 
 ### Accurate
-Under the hood lob uses numerical methods to solve well-known ordinary differential equations (ODEs) which model the projectile motion of a point mass like any good workhorse solver. The path to accuracy begins with preventing errors. Every calculation lob uses is validated against published material by comprehensive unit tests. Internally lob uses a custom [strong type](source/eng_units.hpp) system for engineering units that eliminate an entire class of potential bugs. Quality is strictly enforced by [continuous integration](https://github.com/joelbenway/lob/actions/workflows/ci.yml) befitting a critical software system. :mechanical_arm:
+Under the hood lob uses numerical methods to solve well-known ordinary differential equations (ODEs) which model the projectile motion of a point mass like any good workhorse solver. The path to accuracy begins with preventing errors. Every calculation lob uses is validated against published material by comprehensive unit tests. Internally lob uses a custom [strong type](source/eng_units.hpp) system for engineering units that eliminates an entire class of potential bugs. Quality is strictly enforced by [continuous integration](https://github.com/joelbenway/lob/actions/workflows/ci.yml) befitting a critical software system. :mechanical_arm:
 
-There are features that set lob's accuracy apart as well. A solution can only be as good as the drag function used so whether provided with a single ballistics coefficient (BC), a set of BC/velocity pairs provided by a projectile manufacturer, or a full table of empirical radar measurements lob is ready to match the performance of your data. On an extreme long-range shot, lob can account for the change in air density due to altitude during flight — but only if you ask for it, by calling the ELR operations (`SolveELR`, `SolveInverseELR`), which recompute the air along the flight. The ordinary `Solve` operations assume firing-site air throughout. Lob implements the most common formulas for estimating the spin-related phenomena of cross-wind aerodynamic jump and gyroscopic spin drift, however with enough data about your projectile's geometry it will calculate these effects from the expected precession and nutation for a higher fidelity solution.
+There are features that set lob's accuracy apart as well. A solution can only be as good as the drag function used so whether provided with a single ballistics coefficient (BC), a set of BC/velocity pairs provided by a projectile manufacturer, or a full table of empirical radar measurements lob is ready to match the performance of your data. On an extreme long-range shot, lob can account for the change in air density due to altitude during flight. By calling the ELR operations (`SolveELR`, `SolveInverseELR`), The state of the air is recalculated along the flight. The ordinary `Solve` operations assume firing-site air throughout. Lob implements the most common formulas for estimating the spin-related phenomena of crosswind aerodynamic jump and gyroscopic spin drift, however with enough data about your projectile's geometry it will calculate these effects from the expected precession and nutation for a higher fidelity solution.
 
 ### Fast!
-Lob is not just high-performance because it's C++; it was designed with performance in mind and [benchmarked](https://joelbenway.github.io/lob/bench) along the way. To speed up the solver's most critical performance path lob uniquely models drag functions as cubic Hermite spline curves built from mach vs drag tables at compile-time. These spline curves evaluate with just a handful of arithmetic ops for extraordinary speed! :checkered_flag:
+Lob is not just high-performance because it's C++; it was designed from the ground up for maximum throughput and [benchmarked](https://joelbenway.github.io/lob/bench) along the way. Every architectural choice in the solving pipeline focuses on computational efficiency and cache locality:
+
+ * **Heun Predictor-Corrector Method**: Rather than using a generic 4th-order Runge-Kutta (RK4) method requiring four derivative evaluations per step, lob employs Heun's 2nd-order predictor-corrector method. As documented by Robert McCoy in *Modern Exterior Ballistics* and established by Ballistic Research Laboratory (BRL) research, 2nd-order methods hit the optimal sweet spot for exterior ballistics: they halve the number of drag evaluations compared to RK4 while matching real-world radar precision, since higher-order terms fall well within physical atmospheric noise.
+ * **Down-Range Distance Stepping**: Instead of integrating across time increments ($\Delta t$), lob steps directly over horizontal down-range distance (36 inches / 1 yard by default). The runtime scales strictly linearly with target range ($O(R)$), and output rows land exactly on requested step boundaries without requiring adaptive time-stepping, Newton-Raphson root searches, or post-hoc interpolation.
+ * **Monotonic Spline Segment Caching**: Drag curves are modeled as piecewise cubic Hermite splines. Because projectile Mach numbers decrease monotonically down-range during flight, lob caches the active spline segment and walks it forward rather than performing a binary search on spline knots at every step. Each evaluation collapses into branch-light fused arithmetic.
+ * **Zero Allocations & Cache Locality**: Lob never dynamically allocates heap memory (`malloc`/`new`), contains zero virtual function tables, and never throws C++ exceptions. The solver state fits comfortably within L1 cache, allowing hot loop variables to remain in CPU registers.
+ * **Inlining Discipline & Outlined Cold Paths**: The core ODE integration loop (`DsDxCore`) is kept strictly inlined and branch-predictable. Cold paths—such as wind profile validation and boundary condition setup—are outlined to separate translation units so the inner loop never spills registers or bloats instruction cache.
+ * **Instruction Counting in CI**: Lob is continuously profiled with Valgrind / Cachegrind in CI across all four primary solver operations (`solve_basic`, `solve_elr`, `solve_inverse`, and `solve_inverse_elr`). Instruction count regressions are caught automatically on every pull request, and live micro-benchmarks are published at [joelbenway.github.io/lob/bench](https://joelbenway.github.io/lob/bench). :checkered_flag:
 
 ## Why did you build this?
 I wrote lob for fun, to learn, [because this is what computers are for](https://en.wikipedia.org/wiki/ENIAC), and to share an example of my work.
