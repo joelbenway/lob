@@ -26,37 +26,16 @@ var NAVTREE =
 [
   [ "lob", "index.html", [
     [ "Technical Reference", "index.html", "index" ],
-    [ "API Reference", "usergroup0.html", [
-      [ "Namespaces", "namespaces.html", [
-        [ "Namespace List", "namespaces.html", "namespaces_dup" ],
-        [ "Namespace Members", "namespacemembers.html", [
-          [ "All", "namespacemembers.html", null ],
-          [ "Functions", "namespacemembers_func.html", null ],
-          [ "Variables", "namespacemembers_vars.html", null ],
-          [ "Typedefs", "namespacemembers_type.html", null ],
-          [ "Enumerations", "namespacemembers_enum.html", null ]
-        ] ]
-      ] ],
-      [ "Classes & Structs", "annotated.html", [
-        [ "Class List", "annotated.html", "annotated_dup" ],
-        [ "Class Index", "classes.html", null ],
-        [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],
-        [ "Class Members", "functions.html", [
-          [ "All", "functions.html", null ],
-          [ "Functions", "functions_func.html", null ],
-          [ "Variables", "functions_vars.html", null ]
-        ] ]
-      ] ],
-      [ "Files & Headers", "files.html", [
-        [ "File List", "files.html", "files_dup" ],
-        [ "File Members", "globals.html", [
-          [ "All", "globals.html", "globals_dup" ],
-          [ "Functions", "globals_func.html", null ],
-          [ "Variables", "globals_vars.html", null ],
-          [ "Typedefs", "globals_type.html", null ],
-          [ "Enumerator", "globals_eval.html", null ],
-          [ "Macros", "globals_defs.html", null ]
-        ] ]
+    [ "API Reference", "topics.html", "topics" ],
+    [ "Files & Headers", "files.html", [
+      [ "File List", "files.html", "files_dup" ],
+      [ "File Members", "globals.html", [
+        [ "All", "globals.html", "globals_dup" ],
+        [ "Functions", "globals_func.html", null ],
+        [ "Variables", "globals_vars.html", null ],
+        [ "Typedefs", "globals_type.html", null ],
+        [ "Enumerator", "globals_eval.html", null ],
+        [ "Macros", "globals_defs.html", null ]
       ] ]
     ] ]
   ] ]
@@ -64,10 +43,10 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"annotated.html",
-"index_8mjs.html#a5055a796c9b81c119a8d335e6df25259",
-"namespacelob.html#a9b4bcd567a8054959d0a30ac4f869853a2c6295dbf56c4c72802878e7d04a1ede",
-"structlob_1_1Context.html#a034dba0e58d07c987c7fda04fe67dc1c"
+"classBuilder.html",
+"group__api__c.html#gae583f71a8ed1cf2165f6f59600acab24",
+"group__api__js.html#gac6b0621a8bb45af9d16163a1249f72ae",
+"structlob_1_1Context.html#adfdd46afb3a59535d9b3dfd7985a2397"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronization';

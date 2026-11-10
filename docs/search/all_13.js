@@ -53,5 +53,6 @@ var searchData=
   ['two_20effects_50',['The two effects',['../okf_spin_drift_and_aerodynamic_jump.html#autotoc_md111',1,'']]],
   ['two_20fidelity_20levels_51',['Two fidelity levels',['../okf_spin_drift_and_aerodynamic_jump.html#autotoc_md112',1,'']]],
   ['two_20step_20variants_52',['Two step variants',['../okf_point_mass_model.html#autotoc_md86',1,'']]],
-  ['types_53',['Types',['../okf_strong_unit_types.html',1,'Strong Unit Types'],['../okf_strong_unit_types.html#autotoc_md117',1,'Strong Unit Types']]]
+  ['types_53',['Types',['../okf_strong_unit_types.html',1,'Strong Unit Types'],['../okf_strong_unit_types.html#autotoc_md117',1,'Strong Unit Types']]],
+  ['typescript_20api_20joelbenway_20lob_54',['JavaScript &amp; TypeScript API (@joelbenway/lob)',['../group__api__js.html',1,'']]]
 ];

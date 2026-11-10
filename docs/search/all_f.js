@@ -36,14 +36,14 @@ var searchData=
   ['one_20applies_33',['Where each one applies',['../okf_spin_drift_and_aerodynamic_jump.html#autotoc_md114',1,'']]],
   ['one_20build_20then_20read_20forever_34',['One build, then read forever',['../okf_solver_context.html#autotoc_md91',1,'']]],
   ['one_20coefficient_20or_20several_35',['One coefficient, or several',['../okf_ballistic_coefficient.html#autotoc_md17',1,'']]],
-  ['operator_21_3d_36',['operator!=',['../namespacelob.html#aad53e27c8e08cae0c3b97f79c614da40',1,'lob::operator!=(::LobErrorT a, ErrorT b) noexcept'],['../namespacelob.html#a9eed1ba9f254d5cc4585681ee81864bc',1,'lob::operator!=(ErrorT a, ::LobErrorT b) noexcept']]],
+  ['operator_21_3d_36',['operator!=',['../group__api__cpp.html#gaad53e27c8e08cae0c3b97f79c614da40',1,'lob::operator!=(::LobErrorT a, ErrorT b) noexcept'],['../group__api__cpp.html#ga9eed1ba9f254d5cc4585681ee81864bc',1,'lob::operator!=(ErrorT a, ::LobErrorT b) noexcept']]],
   ['operator_3d_37',['operator=',['../classlob_1_1Builder.html#a0f87fac85fae2e6cb5d496524478ac01',1,'lob::Builder::operator=(const Builder &amp;rhs)'],['../classlob_1_1Builder.html#a32c9b2b2afe8ba67157502351612835d',1,'lob::Builder::operator=(Builder &amp;&amp;rhs) noexcept']]],
-  ['operator_3d_3d_38',['operator==',['../namespacelob.html#a1fced6ca7ae724ad17f0d4de92cc31c2',1,'lob::operator==(::LobErrorT a, ErrorT b) noexcept'],['../namespacelob.html#aad3fdd20b38a3e93e779b6325b569234',1,'lob::operator==(ErrorT a, ::LobErrorT b) noexcept']]],
+  ['operator_3d_3d_38',['operator==',['../group__api__cpp.html#ga1fced6ca7ae724ad17f0d4de92cc31c2',1,'lob::operator==(::LobErrorT a, ErrorT b) noexcept'],['../group__api__cpp.html#gaad3fdd20b38a3e93e779b6325b569234',1,'lob::operator==(ErrorT a, ::LobErrorT b) noexcept']]],
   ['optic_5fheight_39',['optic_height',['../structLobContext.html#a956628cb3077d84056333e61aa41ebc0',1,'LobContext::optic_height'],['../structlob_1_1Context.html#a48e85fb08b0b01ad74a5247e6d5c172c',1,'lob::Context::optic_height']]],
   ['opticheightinches_40',['OpticHeightInches',['../classlob_1_1Builder.html#a88e732a7ac663e2a7c39c332fd5cc489',1,'lob::Builder']]],
   ['opticheightinches_41',['opticHeightInches',['../classBuilder.html#afa141d74a99c7e496e2ab5cbea41125a',1,'Builder']]],
   ['or_20several_42',['One coefficient, or several',['../okf_ballistic_coefficient.html#autotoc_md17',1,'']]],
-  ['output_43',['Output',['../namespacelob.html#a56d6ad7c0448becc9ec3b7667d49d843',1,'lob']]],
-  ['output_5ffields_44',['OUTPUT_FIELDS',['../index_8mjs.html#a5055a796c9b81c119a8d335e6df25259',1,'index.mjs']]],
-  ['output_5fsize_45',['OUTPUT_SIZE',['../index_8mjs.html#ac6b0621a8bb45af9d16163a1249f72ae',1,'index.mjs']]]
+  ['output_43',['Output',['../group__api__cpp.html#ga56d6ad7c0448becc9ec3b7667d49d843',1,'lob']]],
+  ['output_5ffields_44',['OUTPUT_FIELDS',['../group__api__js.html#ga5055a796c9b81c119a8d335e6df25259',1,'index.mjs']]],
+  ['output_5fsize_45',['OUTPUT_SIZE',['../group__api__js.html#gac6b0621a8bb45af9d16163a1249f72ae',1,'index.mjs']]]
 ];

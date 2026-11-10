@@ -1,0 +1,1742 @@
+<!-- HTML header for doxygen 1.13.2-->
+<!--
+Copyright (c) 2026  Joel Benway
+SPDX-License-Identifier: GPL-3.0-or-later
+This file is part of lob.
+lob is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+lob is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with
+lob. If not, see <https://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.13.2"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>lob: JavaScript &amp; TypeScript API (@joelbenway/lob)</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="cookie.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+  $(function() { init_search(); });
+/* @license-end */
+</script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
+<link href="doxygen-awesome-lob.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="doxygen-awesome-darkmode-toggle.js"></script>
+<script type="text/javascript">
+    DoxygenAwesomeDarkModeToggle.init()
+</script>
+<script type="text/javascript" src="doxygen-awesome-fragment-copy-button.js"></script>
+<script type="text/javascript">
+    DoxygenAwesomeFragmentCopyButton.init()
+</script>
+<script type="text/javascript" src="doxygen-awesome-interactive-toc.js"></script>
+<script type="text/javascript">
+    DoxygenAwesomeInteractiveToc.init()
+</script>
+<script type="text/javascript" src="doxygen-awesome-paragraph-link.js"></script>
+<script type="text/javascript">
+    DoxygenAwesomeParagraphLink.init()
+</script>
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+  <div class="lob-header-bar">
+    <div class="lob-header-brand">
+      <div id="projectalign">
+        <div id="projectname">
+          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.14.0</span>
+        </div>
+        <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
+      </div>
+    </div>
+    <div class="lob-header-controls">
+      <nav class="lob-top-nav" aria-label="Project resources">
+        <div class="lob-nav-links">
+          <a href="https://joelbenway.github.io/lob/" class="lob-nav-item">loblab</a>
+          <a href="index.html" class="lob-nav-item active" aria-current="page">Documentation</a>
+          <a href="https://joelbenway.github.io/lob/bench/" class="lob-nav-item">Benchmarks</a>
+          <a href="https://github.com/joelbenway/lob" class="lob-nav-item">GitHub</a>
+        </div>
+      </nav>
+        <div class="lob-search-row">
+                  <div id="MSearchBox" class="MSearchBoxInactive">
+        <span class="left">
+          <span id="MSearchSelect"                onmouseover="return searchBox.OnSearchSelectShow()"                onmouseout="return searchBox.OnSearchSelectHide()">&#160;</span>
+          <input type="text" id="MSearchField" value="" placeholder="Search" accesskey="S"
+               onfocus="searchBox.OnSearchFieldFocus(true)" 
+               onblur="searchBox.OnSearchFieldFocus(false)" 
+               onkeyup="searchBox.OnSearchFieldChange(event)"/>
+          </span><span class="right">
+            <a id="MSearchClose" href="javascript:searchBox.CloseResultsWindow()"><img id="MSearchCloseImg" border="0" src="search/close.svg" alt=""/></a>
+          </span>
+        </div>
+        </div>
+    </div>
+  </div>
+</div>
+<!-- end header part -->
+<!-- Generated by Doxygen 1.13.2 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() { codefold.init(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function(){initNavTree('group__api__js.html',''); initResizable(true); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">Loading...</div>
+<div class="SRStatus" id="Searching">Searching...</div>
+<div class="SRStatus" id="NoMatches">No Matches</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
+  <div class="headertitle"><div class="title">JavaScript &amp; TypeScript API (@joelbenway/lob)</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>WebAssembly bindings for Node.js and modern browsers with fluent classes and TypeScript definitions.  
+<a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLobError.html">LobError</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBuilder.html">Builder</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classContext.html">Context</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ga3436c3ba6a8e81438f2d7b80d797852a" id="r_ga3436c3ba6a8e81438f2d7b80d797852a"><td class="memItemLeft" align="right" valign="top">function&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga3436c3ba6a8e81438f2d7b80d797852a">enumValue</a> (value, values, name)</td></tr>
+<tr class="separator:ga3436c3ba6a8e81438f2d7b80d797852a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga08d64902ebaf13526024919b32b6fe11" id="r_ga08d64902ebaf13526024919b32b6fe11"><td class="memItemLeft" align="right" valign="top">function&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga08d64902ebaf13526024919b32b6fe11">uint16</a> (value, name)</td></tr>
+<tr class="separator:ga08d64902ebaf13526024919b32b6fe11"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga561219d5612221bc3952caef485ff851" id="r_ga561219d5612221bc3952caef485ff851"><td class="memItemLeft" align="right" valign="top">function&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga561219d5612221bc3952caef485ff851">clockAngle</a> (value, name)</td></tr>
+<tr class="separator:ga561219d5612221bc3952caef485ff851"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac09c666889d1eec3e5bdfd93331a2374" id="r_gac09c666889d1eec3e5bdfd93331a2374"><td class="memItemLeft" align="right" valign="top">function&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gac09c666889d1eec3e5bdfd93331a2374">finiteNumber</a> (value, name)</td></tr>
+<tr class="separator:gac09c666889d1eec3e5bdfd93331a2374"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga67fb1bbf59b7525582909c3c6a7f231f" id="r_ga67fb1bbf59b7525582909c3c6a7f231f"><td class="memItemLeft" align="right" valign="top">function&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga67fb1bbf59b7525582909c3c6a7f231f">numbers</a> (values, name)</td></tr>
+<tr class="separator:ga67fb1bbf59b7525582909c3c6a7f231f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad32764ae5fa904d44e802a8ecdd4d324" id="r_gad32764ae5fa904d44e802a8ecdd4d324"><td class="memItemLeft" align="right" valign="top">function&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gad32764ae5fa904d44e802a8ecdd4d324">rangesToFeet</a> (values, yards)</td></tr>
+<tr class="separator:gad32764ae5fa904d44e802a8ecdd4d324"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaefe8cb8e3d0fa5a024f2da92f8262435" id="r_gaefe8cb8e3d0fa5a024f2da92f8262435"><td class="memItemLeft" align="right" valign="top">function&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gaefe8cb8e3d0fa5a024f2da92f8262435">readRows</a> (count, pointer, inverse)</td></tr>
+<tr class="separator:gaefe8cb8e3d0fa5a024f2da92f8262435"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae7b8ae1aaa1c36ae5833c8097bc48053" id="r_gae7b8ae1aaa1c36ae5833c8097bc48053"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gae7b8ae1aaa1c36ae5833c8097bc48053">version</a> ()</td></tr>
+<tr class="separator:gae7b8ae1aaa1c36ae5833c8097bc48053"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gafb2eba19c386e9a5d6e482126c746f7d" id="r_gafb2eba19c386e9a5d6e482126c746f7d"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gafb2eba19c386e9a5d6e482126c746f7d">moaToMil</a> (value)</td></tr>
+<tr class="separator:gafb2eba19c386e9a5d6e482126c746f7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga80f219580d5ecec037b58de873194296" id="r_ga80f219580d5ecec037b58de873194296"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga80f219580d5ecec037b58de873194296">moaToDeg</a> (value)</td></tr>
+<tr class="separator:ga80f219580d5ecec037b58de873194296"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga22969c7f18803fee8faed00b9bea5a98" id="r_ga22969c7f18803fee8faed00b9bea5a98"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga22969c7f18803fee8faed00b9bea5a98">moaToIphy</a> (value)</td></tr>
+<tr class="separator:ga22969c7f18803fee8faed00b9bea5a98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga28ee3934e655a5d9dfb68cf355368f6a" id="r_ga28ee3934e655a5d9dfb68cf355368f6a"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga28ee3934e655a5d9dfb68cf355368f6a">moaToInch</a> (value, rangeFt)</td></tr>
+<tr class="separator:ga28ee3934e655a5d9dfb68cf355368f6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab89ea8eedfb8450a4674e89356b16702" id="r_gab89ea8eedfb8450a4674e89356b16702"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gab89ea8eedfb8450a4674e89356b16702">milToMoa</a> (value)</td></tr>
+<tr class="separator:gab89ea8eedfb8450a4674e89356b16702"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5df2e58839563b564e4158c7e3e7b5e9" id="r_ga5df2e58839563b564e4158c7e3e7b5e9"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga5df2e58839563b564e4158c7e3e7b5e9">milToDeg</a> (value)</td></tr>
+<tr class="separator:ga5df2e58839563b564e4158c7e3e7b5e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad5fc87e1c6e7a22f80a7907383a2f928" id="r_gad5fc87e1c6e7a22f80a7907383a2f928"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gad5fc87e1c6e7a22f80a7907383a2f928">milToIphy</a> (value)</td></tr>
+<tr class="separator:gad5fc87e1c6e7a22f80a7907383a2f928"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gabe2a7dd1dfe77ae90e80aa9a02738f6d" id="r_gabe2a7dd1dfe77ae90e80aa9a02738f6d"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gabe2a7dd1dfe77ae90e80aa9a02738f6d">milToInch</a> (value, rangeFt)</td></tr>
+<tr class="separator:gabe2a7dd1dfe77ae90e80aa9a02738f6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga032365c8803c8e2c3c1fdbc654cd9e24" id="r_ga032365c8803c8e2c3c1fdbc654cd9e24"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga032365c8803c8e2c3c1fdbc654cd9e24">degToMoa</a> (value)</td></tr>
+<tr class="separator:ga032365c8803c8e2c3c1fdbc654cd9e24"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf1cbcb6483dc55116a0ff3cae2c0f67c" id="r_gaf1cbcb6483dc55116a0ff3cae2c0f67c"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gaf1cbcb6483dc55116a0ff3cae2c0f67c">degToMil</a> (value)</td></tr>
+<tr class="separator:gaf1cbcb6483dc55116a0ff3cae2c0f67c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga584da9e6cdb50fceee50ccc09e2c1fd0" id="r_ga584da9e6cdb50fceee50ccc09e2c1fd0"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga584da9e6cdb50fceee50ccc09e2c1fd0">inchToMoa</a> (value, rangeFt)</td></tr>
+<tr class="separator:ga584da9e6cdb50fceee50ccc09e2c1fd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga716149948145018f09ea264edd3185b1" id="r_ga716149948145018f09ea264edd3185b1"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga716149948145018f09ea264edd3185b1">inchToMil</a> (value, rangeFt)</td></tr>
+<tr class="separator:ga716149948145018f09ea264edd3185b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9579d4f1daf5199342a660cc78a704d9" id="r_ga9579d4f1daf5199342a660cc78a704d9"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga9579d4f1daf5199342a660cc78a704d9">inchToDeg</a> (value, rangeFt)</td></tr>
+<tr class="separator:ga9579d4f1daf5199342a660cc78a704d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga646f20faed4633825536f12e6193a8da" id="r_ga646f20faed4633825536f12e6193a8da"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga646f20faed4633825536f12e6193a8da">jToFtLbs</a> (value)</td></tr>
+<tr class="separator:ga646f20faed4633825536f12e6193a8da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac4e3f819801deb3fae1a4bce6462afaf" id="r_gac4e3f819801deb3fae1a4bce6462afaf"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gac4e3f819801deb3fae1a4bce6462afaf">ftLbsToJ</a> (value)</td></tr>
+<tr class="separator:gac4e3f819801deb3fae1a4bce6462afaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5ff60766d73e39aa49441bbca9727adb" id="r_ga5ff60766d73e39aa49441bbca9727adb"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga5ff60766d73e39aa49441bbca9727adb">mToYd</a> (value)</td></tr>
+<tr class="separator:ga5ff60766d73e39aa49441bbca9727adb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga719cfbf5a16f3a7a8e32f0c2e5a243b2" id="r_ga719cfbf5a16f3a7a8e32f0c2e5a243b2"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga719cfbf5a16f3a7a8e32f0c2e5a243b2">ydToFt</a> (value)</td></tr>
+<tr class="separator:ga719cfbf5a16f3a7a8e32f0c2e5a243b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae956a825cb6e50d2cb673d7eaa5594ee" id="r_gae956a825cb6e50d2cb673d7eaa5594ee"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gae956a825cb6e50d2cb673d7eaa5594ee">mToFt</a> (value)</td></tr>
+<tr class="separator:gae956a825cb6e50d2cb673d7eaa5594ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab7632d93b047c379e077dd64f2e6e521" id="r_gab7632d93b047c379e077dd64f2e6e521"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gab7632d93b047c379e077dd64f2e6e521">ftToIn</a> (value)</td></tr>
+<tr class="separator:gab7632d93b047c379e077dd64f2e6e521"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga4bc4ce7b8c35b603b32a1b1b7de5d882" id="r_ga4bc4ce7b8c35b603b32a1b1b7de5d882"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga4bc4ce7b8c35b603b32a1b1b7de5d882">mmToIn</a> (value)</td></tr>
+<tr class="separator:ga4bc4ce7b8c35b603b32a1b1b7de5d882"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9b5d29def2d34d9b0832c6c3c89d3b39" id="r_ga9b5d29def2d34d9b0832c6c3c89d3b39"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga9b5d29def2d34d9b0832c6c3c89d3b39">cmToIn</a> (value)</td></tr>
+<tr class="separator:ga9b5d29def2d34d9b0832c6c3c89d3b39"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaeb9609b3f3c5a6c1b889bff2443a9fc1" id="r_gaeb9609b3f3c5a6c1b889bff2443a9fc1"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gaeb9609b3f3c5a6c1b889bff2443a9fc1">ydToM</a> (value)</td></tr>
+<tr class="separator:gaeb9609b3f3c5a6c1b889bff2443a9fc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3f9bce31fcf11328b7fcb969884d33f7" id="r_ga3f9bce31fcf11328b7fcb969884d33f7"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga3f9bce31fcf11328b7fcb969884d33f7">ftToM</a> (value)</td></tr>
+<tr class="separator:ga3f9bce31fcf11328b7fcb969884d33f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae895c997b5e955c619e7a317dc7e45dc" id="r_gae895c997b5e955c619e7a317dc7e45dc"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gae895c997b5e955c619e7a317dc7e45dc">ftToYd</a> (value)</td></tr>
+<tr class="separator:gae895c997b5e955c619e7a317dc7e45dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa67ff6ff4464eb941e447856c05317dc" id="r_gaa67ff6ff4464eb941e447856c05317dc"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gaa67ff6ff4464eb941e447856c05317dc">inToMm</a> (value)</td></tr>
+<tr class="separator:gaa67ff6ff4464eb941e447856c05317dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaaf13a6a283e45e7d8f12deda54898a15" id="r_gaaf13a6a283e45e7d8f12deda54898a15"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gaaf13a6a283e45e7d8f12deda54898a15">inToCm</a> (value)</td></tr>
+<tr class="separator:gaaf13a6a283e45e7d8f12deda54898a15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab97185c45182c6b6a27aabe6faf1c334" id="r_gab97185c45182c6b6a27aabe6faf1c334"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gab97185c45182c6b6a27aabe6faf1c334">inToFt</a> (value)</td></tr>
+<tr class="separator:gab97185c45182c6b6a27aabe6faf1c334"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad8e763951ec45868b6660a39e4c6ebb3" id="r_gad8e763951ec45868b6660a39e4c6ebb3"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gad8e763951ec45868b6660a39e4c6ebb3">paToInHg</a> (value)</td></tr>
+<tr class="separator:gad8e763951ec45868b6660a39e4c6ebb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab05182ccd19ec1927e7fbd9f36543785" id="r_gab05182ccd19ec1927e7fbd9f36543785"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gab05182ccd19ec1927e7fbd9f36543785">mbarToInHg</a> (value)</td></tr>
+<tr class="separator:gab05182ccd19ec1927e7fbd9f36543785"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab2a991452409f39109fa7296405159cb" id="r_gab2a991452409f39109fa7296405159cb"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gab2a991452409f39109fa7296405159cb">psiToInHg</a> (value)</td></tr>
+<tr class="separator:gab2a991452409f39109fa7296405159cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga99c4369798540c19faa28d23e5713106" id="r_ga99c4369798540c19faa28d23e5713106"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga99c4369798540c19faa28d23e5713106">lbsToGrain</a> (value)</td></tr>
+<tr class="separator:ga99c4369798540c19faa28d23e5713106"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaee3a5b4a0e5ccbc7bc2356c7ffa12f40" id="r_gaee3a5b4a0e5ccbc7bc2356c7ffa12f40"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gaee3a5b4a0e5ccbc7bc2356c7ffa12f40">gToGrain</a> (value)</td></tr>
+<tr class="separator:gaee3a5b4a0e5ccbc7bc2356c7ffa12f40"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1717003b1e6642a3237fb336c4330840" id="r_ga1717003b1e6642a3237fb336c4330840"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga1717003b1e6642a3237fb336c4330840">kgToGrain</a> (value)</td></tr>
+<tr class="separator:ga1717003b1e6642a3237fb336c4330840"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac422d271ea5db7b0b680ce170a32fb43" id="r_gac422d271ea5db7b0b680ce170a32fb43"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gac422d271ea5db7b0b680ce170a32fb43">kgSqMToPmsi</a> (value)</td></tr>
+<tr class="separator:gac422d271ea5db7b0b680ce170a32fb43"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadf98f64eb5bd37ec8a3084a2087bf43b" id="r_gadf98f64eb5bd37ec8a3084a2087bf43b"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gadf98f64eb5bd37ec8a3084a2087bf43b">fpsToMps</a> (value)</td></tr>
+<tr class="separator:gadf98f64eb5bd37ec8a3084a2087bf43b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1cdf91608d6f70aecb44730351487e6c" id="r_ga1cdf91608d6f70aecb44730351487e6c"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga1cdf91608d6f70aecb44730351487e6c">mpsToFps</a> (value)</td></tr>
+<tr class="separator:ga1cdf91608d6f70aecb44730351487e6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga246a28b48e8679f3e493b1cc5c79393b" id="r_ga246a28b48e8679f3e493b1cc5c79393b"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga246a28b48e8679f3e493b1cc5c79393b">kphToMph</a> (value)</td></tr>
+<tr class="separator:ga246a28b48e8679f3e493b1cc5c79393b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaaa5eec96571c66b067bf1e7c9801ab81" id="r_gaaa5eec96571c66b067bf1e7c9801ab81"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gaaa5eec96571c66b067bf1e7c9801ab81">knToMph</a> (value)</td></tr>
+<tr class="separator:gaaa5eec96571c66b067bf1e7c9801ab81"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaac9ca5259d726b3f1bb59cd005429aed" id="r_gaac9ca5259d726b3f1bb59cd005429aed"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gaac9ca5259d726b3f1bb59cd005429aed">msToS</a> (value)</td></tr>
+<tr class="separator:gaac9ca5259d726b3f1bb59cd005429aed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga67c80ebd5ba7334db996235da21b4b0d" id="r_ga67c80ebd5ba7334db996235da21b4b0d"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga67c80ebd5ba7334db996235da21b4b0d">usToS</a> (value)</td></tr>
+<tr class="separator:ga67c80ebd5ba7334db996235da21b4b0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga88439da011e46192228cea0643844183" id="r_ga88439da011e46192228cea0643844183"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga88439da011e46192228cea0643844183">sToMs</a> (value)</td></tr>
+<tr class="separator:ga88439da011e46192228cea0643844183"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9cab6519fdf8823714a1759c28789ddc" id="r_ga9cab6519fdf8823714a1759c28789ddc"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga9cab6519fdf8823714a1759c28789ddc">sToUs</a> (value)</td></tr>
+<tr class="separator:ga9cab6519fdf8823714a1759c28789ddc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga12a5785e163c461a13964427023aa453" id="r_ga12a5785e163c461a13964427023aa453"><td class="memItemLeft" align="right" valign="top">function export&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga12a5785e163c461a13964427023aa453">degCToDegF</a> (value)</td></tr>
+<tr class="separator:ga12a5785e163c461a13964427023aa453"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:ga467b8772d91be4c6bf75a83f4ab4985a" id="r_ga467b8772d91be4c6bf75a83f4ab4985a"><td class="memItemLeft" align="right" valign="top">const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga467b8772d91be4c6bf75a83f4ab4985a">wasm</a> = await createLobModule()</td></tr>
+<tr class="separator:ga467b8772d91be4c6bf75a83f4ab4985a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad6b39618bb10035cc0c949d76e49899d" id="r_gad6b39618bb10035cc0c949d76e49899d"><td class="memItemLeft" align="right" valign="top">const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gad6b39618bb10035cc0c949d76e49899d">BUILDER_SIZE</a> = wasm._LobWasmBuilderSize()</td></tr>
+<tr class="separator:gad6b39618bb10035cc0c949d76e49899d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga144c01c6cf4d4d44a824450bd1241eee" id="r_ga144c01c6cf4d4d44a824450bd1241eee"><td class="memItemLeft" align="right" valign="top">const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga144c01c6cf4d4d44a824450bd1241eee">CONTEXT_SIZE</a> = wasm._LobWasmContextSize()</td></tr>
+<tr class="separator:ga144c01c6cf4d4d44a824450bd1241eee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac6b0621a8bb45af9d16163a1249f72ae" id="r_gac6b0621a8bb45af9d16163a1249f72ae"><td class="memItemLeft" align="right" valign="top">const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gac6b0621a8bb45af9d16163a1249f72ae">OUTPUT_SIZE</a> = wasm._LobWasmOutputSize()</td></tr>
+<tr class="separator:gac6b0621a8bb45af9d16163a1249f72ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9c6bb98f745de50cc206ed596f96bda4" id="r_ga9c6bb98f745de50cc206ed596f96bda4"><td class="memItemLeft" align="right" valign="top">const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga9c6bb98f745de50cc206ed596f96bda4">WIND_POINT_SIZE</a> = wasm._LobWasmWindPointSize()</td></tr>
+<tr class="separator:ga9c6bb98f745de50cc206ed596f96bda4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5055a796c9b81c119a8d335e6df25259" id="r_ga5055a796c9b81c119a8d335e6df25259"><td class="memItemLeft" align="right" valign="top">const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga5055a796c9b81c119a8d335e6df25259">OUTPUT_FIELDS</a> = 6</td></tr>
+<tr class="separator:ga5055a796c9b81c119a8d335e6df25259"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gacf2c9e5a596f9fd2731ab7f40caf7e8f" id="r_gacf2c9e5a596f9fd2731ab7f40caf7e8f"><td class="memItemLeft" align="right" valign="top">const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gacf2c9e5a596f9fd2731ab7f40caf7e8f">UINT32_MAX</a> = 0xffffffff</td></tr>
+<tr class="separator:gacf2c9e5a596f9fd2731ab7f40caf7e8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga05e68cb4e04a19719d939527cf471fd1" id="r_ga05e68cb4e04a19719d939527cf471fd1"><td class="memItemLeft" align="right" valign="top">const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga05e68cb4e04a19719d939527cf471fd1">ERROR_NAMES</a></td></tr>
+<tr class="separator:ga05e68cb4e04a19719d939527cf471fd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0a885438ede941bbd0cf8c82e775a164" id="r_ga0a885438ede941bbd0cf8c82e775a164"><td class="memItemLeft" align="right" valign="top">const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga0a885438ede941bbd0cf8c82e775a164">registry</a></td></tr>
+<tr class="separator:ga0a885438ede941bbd0cf8c82e775a164"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab91d7145132401898b1298209eb2cf0b" id="r_gab91d7145132401898b1298209eb2cf0b"><td class="memItemLeft" align="right" valign="top">export const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gab91d7145132401898b1298209eb2cf0b">DragFunction</a></td></tr>
+<tr class="separator:gab91d7145132401898b1298209eb2cf0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5ca5dc7550ed48192f4b1cc79cbc3b3a" id="r_ga5ca5dc7550ed48192f4b1cc79cbc3b3a"><td class="memItemLeft" align="right" valign="top">export const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga5ca5dc7550ed48192f4b1cc79cbc3b3a">Atmosphere</a></td></tr>
+<tr class="separator:ga5ca5dc7550ed48192f4b1cc79cbc3b3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac1285b719b1a4afd2e1d8b3600c78a97" id="r_gac1285b719b1a4afd2e1d8b3600c78a97"><td class="memItemLeft" align="right" valign="top">const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gac1285b719b1a4afd2e1d8b3600c78a97">CONTEXT_TOKEN</a> = Symbol(&quot;Context&quot;)</td></tr>
+<tr class="separator:gac1285b719b1a4afd2e1d8b3600c78a97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<p>WebAssembly bindings for Node.js and modern browsers with fluent classes and TypeScript definitions. </p>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="ga561219d5612221bc3952caef485ff851" name="ga561219d5612221bc3952caef485ff851"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga561219d5612221bc3952caef485ff851">&#9670;&#160;</a></span>clockAngle()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function clockAngle </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>name</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ga9b5d29def2d34d9b0832c6c3c89d3b39" name="ga9b5d29def2d34d9b0832c6c3c89d3b39"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga9b5d29def2d34d9b0832c6c3c89d3b39">&#9670;&#160;</a></span>cmToIn()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export cmToIn </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert length in centimeters to inches. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Length in centimeters. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Length in inches. </dd></dl>
+
+</div>
+</div>
+<a id="ga12a5785e163c461a13964427023aa453" name="ga12a5785e163c461a13964427023aa453"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga12a5785e163c461a13964427023aa453">&#9670;&#160;</a></span>degCToDegF()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export degCToDegF </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert temperature in degrees Celsius (°C) to degrees Fahrenheit (°F). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Temperature in °C. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Temperature in °F. </dd></dl>
+
+</div>
+</div>
+<a id="gaf1cbcb6483dc55116a0ff3cae2c0f67c" name="gaf1cbcb6483dc55116a0ff3cae2c0f67c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaf1cbcb6483dc55116a0ff3cae2c0f67c">&#9670;&#160;</a></span>degToMil()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export degToMil </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert decimal degrees to milliradians (mil). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Angle in degrees. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Angle in milliradians. </dd></dl>
+
+</div>
+</div>
+<a id="ga032365c8803c8e2c3c1fdbc654cd9e24" name="ga032365c8803c8e2c3c1fdbc654cd9e24"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga032365c8803c8e2c3c1fdbc654cd9e24">&#9670;&#160;</a></span>degToMoa()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export degToMoa </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert decimal degrees to Minutes of Angle (MOA). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Angle in degrees. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Angle in MOA. </dd></dl>
+
+</div>
+</div>
+<a id="ga3436c3ba6a8e81438f2d7b80d797852a" name="ga3436c3ba6a8e81438f2d7b80d797852a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga3436c3ba6a8e81438f2d7b80d797852a">&#9670;&#160;</a></span>enumValue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function enumValue </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>values</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>name</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="gac09c666889d1eec3e5bdfd93331a2374" name="gac09c666889d1eec3e5bdfd93331a2374"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gac09c666889d1eec3e5bdfd93331a2374">&#9670;&#160;</a></span>finiteNumber()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function finiteNumber </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>name</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="gadf98f64eb5bd37ec8a3084a2087bf43b" name="gadf98f64eb5bd37ec8a3084a2087bf43b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gadf98f64eb5bd37ec8a3084a2087bf43b">&#9670;&#160;</a></span>fpsToMps()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export fpsToMps </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert velocity in feet per second (fps) to meters per second (m/s). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Velocity in fps. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Velocity in m/s. </dd></dl>
+
+</div>
+</div>
+<a id="gac4e3f819801deb3fae1a4bce6462afaf" name="gac4e3f819801deb3fae1a4bce6462afaf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gac4e3f819801deb3fae1a4bce6462afaf">&#9670;&#160;</a></span>ftLbsToJ()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export ftLbsToJ </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert energy in foot-pounds (ft-lbs) to Joules. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Energy in ft-lbs. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Energy in Joules. </dd></dl>
+
+</div>
+</div>
+<a id="gab7632d93b047c379e077dd64f2e6e521" name="gab7632d93b047c379e077dd64f2e6e521"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gab7632d93b047c379e077dd64f2e6e521">&#9670;&#160;</a></span>ftToIn()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export ftToIn </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert length in feet to inches. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Length in feet. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Length in inches. </dd></dl>
+
+</div>
+</div>
+<a id="ga3f9bce31fcf11328b7fcb969884d33f7" name="ga3f9bce31fcf11328b7fcb969884d33f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga3f9bce31fcf11328b7fcb969884d33f7">&#9670;&#160;</a></span>ftToM()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export ftToM </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert length in feet to meters. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Length in feet. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Length in meters. </dd></dl>
+
+</div>
+</div>
+<a id="gae895c997b5e955c619e7a317dc7e45dc" name="gae895c997b5e955c619e7a317dc7e45dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gae895c997b5e955c619e7a317dc7e45dc">&#9670;&#160;</a></span>ftToYd()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export ftToYd </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert length in feet to yards. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Length in feet. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Length in yards. </dd></dl>
+
+</div>
+</div>
+<a id="gaee3a5b4a0e5ccbc7bc2356c7ffa12f40" name="gaee3a5b4a0e5ccbc7bc2356c7ffa12f40"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaee3a5b4a0e5ccbc7bc2356c7ffa12f40">&#9670;&#160;</a></span>gToGrain()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export gToGrain </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert mass in grams to grains. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Mass in grams. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Mass in grains. </dd></dl>
+
+</div>
+</div>
+<a id="ga9579d4f1daf5199342a660cc78a704d9" name="ga9579d4f1daf5199342a660cc78a704d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga9579d4f1daf5199342a660cc78a704d9">&#9670;&#160;</a></span>inchToDeg()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export inchToDeg </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>rangeFt</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert subtended length in inches at range to decimal degrees. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Subtended length in inches. </td></tr>
+    <tr><td class="paramname">{number}</td><td>rangeFt Range distance in feet. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Angle in degrees. </dd></dl>
+
+</div>
+</div>
+<a id="ga716149948145018f09ea264edd3185b1" name="ga716149948145018f09ea264edd3185b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga716149948145018f09ea264edd3185b1">&#9670;&#160;</a></span>inchToMil()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export inchToMil </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>rangeFt</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert subtended length in inches at range to milliradians (mil). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Subtended length in inches. </td></tr>
+    <tr><td class="paramname">{number}</td><td>rangeFt Range distance in feet. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Angle in milliradians. </dd></dl>
+
+</div>
+</div>
+<a id="ga584da9e6cdb50fceee50ccc09e2c1fd0" name="ga584da9e6cdb50fceee50ccc09e2c1fd0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga584da9e6cdb50fceee50ccc09e2c1fd0">&#9670;&#160;</a></span>inchToMoa()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export inchToMoa </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>rangeFt</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert subtended length in inches at range to Minutes of Angle (MOA). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Subtended length in inches. </td></tr>
+    <tr><td class="paramname">{number}</td><td>rangeFt Range distance in feet. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Angle in MOA. </dd></dl>
+
+</div>
+</div>
+<a id="gaaf13a6a283e45e7d8f12deda54898a15" name="gaaf13a6a283e45e7d8f12deda54898a15"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaaf13a6a283e45e7d8f12deda54898a15">&#9670;&#160;</a></span>inToCm()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export inToCm </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert length in inches to centimeters. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Length in inches. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Length in centimeters. </dd></dl>
+
+</div>
+</div>
+<a id="gab97185c45182c6b6a27aabe6faf1c334" name="gab97185c45182c6b6a27aabe6faf1c334"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gab97185c45182c6b6a27aabe6faf1c334">&#9670;&#160;</a></span>inToFt()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export inToFt </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert length in inches to feet. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Length in inches. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Length in feet. </dd></dl>
+
+</div>
+</div>
+<a id="gaa67ff6ff4464eb941e447856c05317dc" name="gaa67ff6ff4464eb941e447856c05317dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaa67ff6ff4464eb941e447856c05317dc">&#9670;&#160;</a></span>inToMm()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export inToMm </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert length in inches to millimeters. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Length in inches. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Length in millimeters. </dd></dl>
+
+</div>
+</div>
+<a id="ga646f20faed4633825536f12e6193a8da" name="ga646f20faed4633825536f12e6193a8da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga646f20faed4633825536f12e6193a8da">&#9670;&#160;</a></span>jToFtLbs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export jToFtLbs </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert energy in Joules to foot-pounds (ft-lbs). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Energy in Joules. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Energy in ft-lbs. </dd></dl>
+
+</div>
+</div>
+<a id="gac422d271ea5db7b0b680ce170a32fb43" name="gac422d271ea5db7b0b680ce170a32fb43"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gac422d271ea5db7b0b680ce170a32fb43">&#9670;&#160;</a></span>kgSqMToPmsi()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export kgSqMToPmsi </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert sectional density in $kg/m^2$ to pounds per square inch ($lb/in^2$). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Sectional density in $kg/m^2$. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Sectional density in $lb/in^2$. </dd></dl>
+
+</div>
+</div>
+<a id="ga1717003b1e6642a3237fb336c4330840" name="ga1717003b1e6642a3237fb336c4330840"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga1717003b1e6642a3237fb336c4330840">&#9670;&#160;</a></span>kgToGrain()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export kgToGrain </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert mass in kilograms to grains. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Mass in kilograms. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Mass in grains. </dd></dl>
+
+</div>
+</div>
+<a id="gaaa5eec96571c66b067bf1e7c9801ab81" name="gaaa5eec96571c66b067bf1e7c9801ab81"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaaa5eec96571c66b067bf1e7c9801ab81">&#9670;&#160;</a></span>knToMph()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export knToMph </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert velocity in knots (kn) to miles per hour (mph). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Velocity in knots. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Velocity in mph. </dd></dl>
+
+</div>
+</div>
+<a id="ga246a28b48e8679f3e493b1cc5c79393b" name="ga246a28b48e8679f3e493b1cc5c79393b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga246a28b48e8679f3e493b1cc5c79393b">&#9670;&#160;</a></span>kphToMph()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export kphToMph </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert velocity in kilometers per hour (km/h) to miles per hour (mph). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Velocity in km/h. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Velocity in mph. </dd></dl>
+
+</div>
+</div>
+<a id="ga99c4369798540c19faa28d23e5713106" name="ga99c4369798540c19faa28d23e5713106"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga99c4369798540c19faa28d23e5713106">&#9670;&#160;</a></span>lbsToGrain()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export lbsToGrain </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert mass in pounds to grains. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Mass in pounds. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Mass in grains. </dd></dl>
+
+</div>
+</div>
+<a id="gab05182ccd19ec1927e7fbd9f36543785" name="gab05182ccd19ec1927e7fbd9f36543785"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gab05182ccd19ec1927e7fbd9f36543785">&#9670;&#160;</a></span>mbarToInHg()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export mbarToInHg </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert pressure in millibars (hPa) to inches of mercury (inHg). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Pressure in millibars. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Pressure in inHg. </dd></dl>
+
+</div>
+</div>
+<a id="ga5df2e58839563b564e4158c7e3e7b5e9" name="ga5df2e58839563b564e4158c7e3e7b5e9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga5df2e58839563b564e4158c7e3e7b5e9">&#9670;&#160;</a></span>milToDeg()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export milToDeg </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert milliradians (mil) to decimal degrees. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Angle in milliradians. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Angle in degrees. </dd></dl>
+
+</div>
+</div>
+<a id="gabe2a7dd1dfe77ae90e80aa9a02738f6d" name="gabe2a7dd1dfe77ae90e80aa9a02738f6d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gabe2a7dd1dfe77ae90e80aa9a02738f6d">&#9670;&#160;</a></span>milToInch()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export milToInch </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>rangeFt</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert milliradians (mil) to subtended arc length in inches at range. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Angle in milliradians. </td></tr>
+    <tr><td class="paramname">{number}</td><td>rangeFt Range distance in feet. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Subtended height/width in inches. </dd></dl>
+
+</div>
+</div>
+<a id="gad5fc87e1c6e7a22f80a7907383a2f928" name="gad5fc87e1c6e7a22f80a7907383a2f928"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gad5fc87e1c6e7a22f80a7907383a2f928">&#9670;&#160;</a></span>milToIphy()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export milToIphy </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert milliradians (mil) to Inches Per Hundred Yards (IPHY). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Angle in milliradians. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Value in IPHY. </dd></dl>
+
+</div>
+</div>
+<a id="gab89ea8eedfb8450a4674e89356b16702" name="gab89ea8eedfb8450a4674e89356b16702"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gab89ea8eedfb8450a4674e89356b16702">&#9670;&#160;</a></span>milToMoa()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export milToMoa </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert milliradians (mil) to Minutes of Angle (MOA). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Angle in milliradians. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Angle in MOA. </dd></dl>
+
+</div>
+</div>
+<a id="ga4bc4ce7b8c35b603b32a1b1b7de5d882" name="ga4bc4ce7b8c35b603b32a1b1b7de5d882"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga4bc4ce7b8c35b603b32a1b1b7de5d882">&#9670;&#160;</a></span>mmToIn()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export mmToIn </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert length in millimeters to inches. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Length in millimeters. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Length in inches. </dd></dl>
+
+</div>
+</div>
+<a id="ga80f219580d5ecec037b58de873194296" name="ga80f219580d5ecec037b58de873194296"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga80f219580d5ecec037b58de873194296">&#9670;&#160;</a></span>moaToDeg()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export moaToDeg </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert Minutes of Angle (MOA) to decimal degrees. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Angle in MOA. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Angle in degrees. </dd></dl>
+
+</div>
+</div>
+<a id="ga28ee3934e655a5d9dfb68cf355368f6a" name="ga28ee3934e655a5d9dfb68cf355368f6a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga28ee3934e655a5d9dfb68cf355368f6a">&#9670;&#160;</a></span>moaToInch()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export moaToInch </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>rangeFt</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert Minutes of Angle (MOA) to subtended arc length in inches at range. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Angle in MOA. </td></tr>
+    <tr><td class="paramname">{number}</td><td>rangeFt Range distance in feet. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Subtended height/width in inches. </dd></dl>
+
+</div>
+</div>
+<a id="ga22969c7f18803fee8faed00b9bea5a98" name="ga22969c7f18803fee8faed00b9bea5a98"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga22969c7f18803fee8faed00b9bea5a98">&#9670;&#160;</a></span>moaToIphy()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export moaToIphy </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert Minutes of Angle (MOA) to Inches Per Hundred Yards (IPHY). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Angle in MOA. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Value in IPHY. </dd></dl>
+
+</div>
+</div>
+<a id="gafb2eba19c386e9a5d6e482126c746f7d" name="gafb2eba19c386e9a5d6e482126c746f7d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gafb2eba19c386e9a5d6e482126c746f7d">&#9670;&#160;</a></span>moaToMil()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export moaToMil </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert Minutes of Angle (MOA) to milliradians (mil). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Angle in MOA. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Angle in milliradians. </dd></dl>
+
+</div>
+</div>
+<a id="ga1cdf91608d6f70aecb44730351487e6c" name="ga1cdf91608d6f70aecb44730351487e6c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga1cdf91608d6f70aecb44730351487e6c">&#9670;&#160;</a></span>mpsToFps()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export mpsToFps </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert velocity in meters per second (m/s) to feet per second (fps). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Velocity in m/s. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Velocity in fps. </dd></dl>
+
+</div>
+</div>
+<a id="gaac9ca5259d726b3f1bb59cd005429aed" name="gaac9ca5259d726b3f1bb59cd005429aed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaac9ca5259d726b3f1bb59cd005429aed">&#9670;&#160;</a></span>msToS()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export msToS </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert time in milliseconds (ms) to seconds (s). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Time in milliseconds. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Time in seconds. </dd></dl>
+
+</div>
+</div>
+<a id="gae956a825cb6e50d2cb673d7eaa5594ee" name="gae956a825cb6e50d2cb673d7eaa5594ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gae956a825cb6e50d2cb673d7eaa5594ee">&#9670;&#160;</a></span>mToFt()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export mToFt </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert length in meters to feet. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Length in meters. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Length in feet. </dd></dl>
+
+</div>
+</div>
+<a id="ga5ff60766d73e39aa49441bbca9727adb" name="ga5ff60766d73e39aa49441bbca9727adb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga5ff60766d73e39aa49441bbca9727adb">&#9670;&#160;</a></span>mToYd()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export mToYd </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert length in meters to yards. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Length in meters. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Length in yards. </dd></dl>
+
+</div>
+</div>
+<a id="ga67fb1bbf59b7525582909c3c6a7f231f" name="ga67fb1bbf59b7525582909c3c6a7f231f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga67fb1bbf59b7525582909c3c6a7f231f">&#9670;&#160;</a></span>numbers()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function numbers </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>values</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>name</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="gad8e763951ec45868b6660a39e4c6ebb3" name="gad8e763951ec45868b6660a39e4c6ebb3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gad8e763951ec45868b6660a39e4c6ebb3">&#9670;&#160;</a></span>paToInHg()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export paToInHg </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert pressure in Pascals to inches of mercury (inHg). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Pressure in Pascals. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Pressure in inHg. </dd></dl>
+
+</div>
+</div>
+<a id="gab2a991452409f39109fa7296405159cb" name="gab2a991452409f39109fa7296405159cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gab2a991452409f39109fa7296405159cb">&#9670;&#160;</a></span>psiToInHg()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export psiToInHg </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert pressure in pounds per square inch (psi) to inches of mercury (inHg). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Pressure in psi. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Pressure in inHg. </dd></dl>
+
+</div>
+</div>
+<a id="gad32764ae5fa904d44e802a8ecdd4d324" name="gad32764ae5fa904d44e802a8ecdd4d324"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gad32764ae5fa904d44e802a8ecdd4d324">&#9670;&#160;</a></span>rangesToFeet()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function rangesToFeet </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>values</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>yards</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="gaefe8cb8e3d0fa5a024f2da92f8262435" name="gaefe8cb8e3d0fa5a024f2da92f8262435"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaefe8cb8e3d0fa5a024f2da92f8262435">&#9670;&#160;</a></span>readRows()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function readRows </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>count</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>pointer</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>inverse</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ga88439da011e46192228cea0643844183" name="ga88439da011e46192228cea0643844183"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga88439da011e46192228cea0643844183">&#9670;&#160;</a></span>sToMs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export sToMs </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert time in seconds (s) to milliseconds (ms). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Time in seconds. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Time in milliseconds. </dd></dl>
+
+</div>
+</div>
+<a id="ga9cab6519fdf8823714a1759c28789ddc" name="ga9cab6519fdf8823714a1759c28789ddc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga9cab6519fdf8823714a1759c28789ddc">&#9670;&#160;</a></span>sToUs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export sToUs </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert time in seconds (s) to microseconds (us). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Time in seconds. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Time in microseconds. </dd></dl>
+
+</div>
+</div>
+<a id="ga08d64902ebaf13526024919b32b6fe11" name="ga08d64902ebaf13526024919b32b6fe11"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga08d64902ebaf13526024919b32b6fe11">&#9670;&#160;</a></span>uint16()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function uint16 </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>name</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ga67c80ebd5ba7334db996235da21b4b0d" name="ga67c80ebd5ba7334db996235da21b4b0d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga67c80ebd5ba7334db996235da21b4b0d">&#9670;&#160;</a></span>usToS()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export usToS </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert time in microseconds (us) to seconds (s). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Time in microseconds. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Time in seconds. </dd></dl>
+
+</div>
+</div>
+<a id="gae7b8ae1aaa1c36ae5833c8097bc48053" name="gae7b8ae1aaa1c36ae5833c8097bc48053"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gae7b8ae1aaa1c36ae5833c8097bc48053">&#9670;&#160;</a></span>version()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export version </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Returns the library semantic version string.</p>
+<dl class="section return"><dt>Returns</dt><dd>{string} Version string (e.g., "1.0.0"). </dd></dl>
+
+</div>
+</div>
+<a id="ga719cfbf5a16f3a7a8e32f0c2e5a243b2" name="ga719cfbf5a16f3a7a8e32f0c2e5a243b2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga719cfbf5a16f3a7a8e32f0c2e5a243b2">&#9670;&#160;</a></span>ydToFt()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export ydToFt </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert length in yards to feet. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Length in yards. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Length in feet. </dd></dl>
+
+</div>
+</div>
+<a id="gaeb9609b3f3c5a6c1b889bff2443a9fc1" name="gaeb9609b3f3c5a6c1b889bff2443a9fc1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaeb9609b3f3c5a6c1b889bff2443a9fc1">&#9670;&#160;</a></span>ydToM()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">function export ydToM </td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convert length in yards to meters. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">{number}</td><td>value Length in yards. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{number} Length in meters. </dd></dl>
+
+</div>
+</div>
+<h2 class="groupheader">Variable Documentation</h2>
+<a id="ga5ca5dc7550ed48192f4b1cc79cbc3b3a" name="ga5ca5dc7550ed48192f4b1cc79cbc3b3a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga5ca5dc7550ed48192f4b1cc79cbc3b3a">&#9670;&#160;</a></span>Atmosphere</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">export const Atmosphere</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= Object.freeze({</div>
+<div class="line">  ArmyStandardMetro: 0,</div>
+<div class="line">  ICAO: 1,</div>
+<div class="line">})</div>
+</div><!-- fragment --><p>Reference atmospheric models accepted by <code><a class="el" href="classBuilder.html#a01ce77b4be2266aa9a379247775ca2e9">Builder.bcAtmosphere</a></code>.</p>
+<p>String representations ("ArmyStandardMetro", "ICAO") are also accepted.</p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="okf_atmospheric_model.html">Atmospheric Model</a> </dd></dl>
+
+</div>
+</div>
+<a id="gad6b39618bb10035cc0c949d76e49899d" name="gad6b39618bb10035cc0c949d76e49899d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gad6b39618bb10035cc0c949d76e49899d">&#9670;&#160;</a></span>BUILDER_SIZE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const BUILDER_SIZE = wasm._LobWasmBuilderSize()</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ga144c01c6cf4d4d44a824450bd1241eee" name="ga144c01c6cf4d4d44a824450bd1241eee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga144c01c6cf4d4d44a824450bd1241eee">&#9670;&#160;</a></span>CONTEXT_SIZE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const CONTEXT_SIZE = wasm._LobWasmContextSize()</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="gac1285b719b1a4afd2e1d8b3600c78a97" name="gac1285b719b1a4afd2e1d8b3600c78a97"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gac1285b719b1a4afd2e1d8b3600c78a97">&#9670;&#160;</a></span>CONTEXT_TOKEN</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const CONTEXT_TOKEN = Symbol(&quot;Context&quot;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="gab91d7145132401898b1298209eb2cf0b" name="gab91d7145132401898b1298209eb2cf0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gab91d7145132401898b1298209eb2cf0b">&#9670;&#160;</a></span>DragFunction</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">export const DragFunction</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= Object.freeze({</div>
+<div class="line">  G1: 1,</div>
+<div class="line">  G2: 2,</div>
+<div class="line">  G5: 5,</div>
+<div class="line">  G6: 6,</div>
+<div class="line">  G7: 7,</div>
+<div class="line">  G8: 8,</div>
+<div class="line">})</div>
+</div><!-- fragment --><p>Standard drag functions accepted by <code><a class="el" href="classBuilder.html#af564eb836c44a72f83cd8a1aa4a10bc8">Builder.bcDragFunction</a></code>.</p>
+<p>Values correspond to G-function reference projectiles. String representations ("G1", "G2", "G5", "G6", "G7", "G8") are also accepted by the builder.</p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="okf_drag_model.html">Drag Model</a> </dd></dl>
+
+</div>
+</div>
+<a id="ga05e68cb4e04a19719d939527cf471fd1" name="ga05e68cb4e04a19719d939527cf471fd1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga05e68cb4e04a19719d939527cf471fd1">&#9670;&#160;</a></span>ERROR_NAMES</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const ERROR_NAMES</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ga5055a796c9b81c119a8d335e6df25259" name="ga5055a796c9b81c119a8d335e6df25259"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga5055a796c9b81c119a8d335e6df25259">&#9670;&#160;</a></span>OUTPUT_FIELDS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const OUTPUT_FIELDS = 6</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="gac6b0621a8bb45af9d16163a1249f72ae" name="gac6b0621a8bb45af9d16163a1249f72ae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gac6b0621a8bb45af9d16163a1249f72ae">&#9670;&#160;</a></span>OUTPUT_SIZE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const OUTPUT_SIZE = wasm._LobWasmOutputSize()</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ga0a885438ede941bbd0cf8c82e775a164" name="ga0a885438ede941bbd0cf8c82e775a164"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga0a885438ede941bbd0cf8c82e775a164">&#9670;&#160;</a></span>registry</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const registry</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <span class="keyword">new</span> FinalizationRegistry(({ kind, ptr, buffers }) =&gt; {</div>
+<div class="line">  <span class="keywordflow">if</span> (kind === <span class="stringliteral">&quot;builder&quot;</span> &amp;&amp; ptr !== 0) {</div>
+<div class="line">    <a class="code hl_variable" href="#ga467b8772d91be4c6bf75a83f4ab4985a">wasm</a>._LobBuilderDestroy(ptr);</div>
+<div class="line">  }</div>
+<div class="line">  <span class="keywordflow">for</span> (<span class="keyword">const</span> buffer of buffers) {</div>
+<div class="line">    <a class="code hl_variable" href="#ga467b8772d91be4c6bf75a83f4ab4985a">wasm</a>._free(buffer);</div>
+<div class="line">  }</div>
+<div class="line">  <a class="code hl_variable" href="#ga467b8772d91be4c6bf75a83f4ab4985a">wasm</a>._free(ptr);</div>
+<div class="line">})</div>
+<div class="ttc" id="agroup__api__js_html_ga467b8772d91be4c6bf75a83f4ab4985a"><div class="ttname"><a href="#ga467b8772d91be4c6bf75a83f4ab4985a">wasm</a></div><div class="ttdeci">const wasm</div><div class="ttdef"><b>Definition</b> index.mjs:27</div></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="gacf2c9e5a596f9fd2731ab7f40caf7e8f" name="gacf2c9e5a596f9fd2731ab7f40caf7e8f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gacf2c9e5a596f9fd2731ab7f40caf7e8f">&#9670;&#160;</a></span>UINT32_MAX</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const UINT32_MAX = 0xffffffff</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ga467b8772d91be4c6bf75a83f4ab4985a" name="ga467b8772d91be4c6bf75a83f4ab4985a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga467b8772d91be4c6bf75a83f4ab4985a">&#9670;&#160;</a></span>wasm</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const wasm = await createLobModule()</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ga9c6bb98f745de50cc206ed596f96bda4" name="ga9c6bb98f745de50cc206ed596f96bda4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga9c6bb98f745de50cc206ed596f96bda4">&#9670;&#160;</a></span>WIND_POINT_SIZE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const WIND_POINT_SIZE = wasm._LobWasmWindPointSize()</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+  </ul>
+</div>
+</body>
+</html>

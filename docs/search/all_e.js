@@ -12,5 +12,5 @@ var searchData=
   ['not_20linear_20interpolation_9',['Why not linear interpolation',['../okf_cubic_hermite_splines.html#autotoc_md42',1,'']]],
   ['now_20the_20inverse_10',['Now the inverse',['../okf_getting_started.html#autotoc_md55',1,'']]],
   ['number_20not_20a_20procedure_11',['The zero angle is a number, not a procedure',['../okf_angle_solver.html#autotoc_md2',1,'']]],
-  ['numbers_12',['numbers',['../index_8mjs.html#a67fb1bbf59b7525582909c3c6a7f231f',1,'index.mjs']]]
+  ['numbers_12',['numbers',['../group__api__js.html#ga67fb1bbf59b7525582909c3c6a7f231f',1,'index.mjs']]]
 ];

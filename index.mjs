@@ -18,6 +18,12 @@
 
 import createLobModule from "./lob.mjs";
 
+/**
+ * @defgroup api_js JavaScript & TypeScript API (@joelbenway/lob)
+ * @brief WebAssembly bindings for Node.js and modern browsers with fluent classes and TypeScript definitions.
+ * @{
+ */
+
 const wasm = await createLobModule();
 
 const BUILDER_SIZE = wasm._LobWasmBuilderSize();
@@ -1704,6 +1710,8 @@ export function sToUs(value) {
 export function degCToDegF(value) {
   return wasm._LobDegCToDegF(finiteNumber(value, "value"));
 }
+
+/** @} */
 
 // This file is part of lob.
 //

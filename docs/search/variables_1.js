@@ -3,5 +3,5 @@ var searchData=
   ['aerodynamic_5fjump_0',['aerodynamic_jump',['../structLobContext.html#a1b61885c72868f16916e6ee586d14110',1,'LobContext::aerodynamic_jump'],['../structlob_1_1Context.html#a716605642104b36b231ce2fb2cd61e05',1,'lob::Context::aerodynamic_jump']]],
   ['align_5fdouble_1',['align_double',['../structLobBuilder.html#ad8248a38975d977b8cc2c187cf040d01',1,'LobBuilder']]],
   ['align_5fsize_2',['align_size',['../structLobBuilder.html#a57e1d5bb72d458cd78043db860af58ab',1,'LobBuilder']]],
-  ['atmosphere_3',['Atmosphere',['../index_8mjs.html#a5ca5dc7550ed48192f4b1cc79cbc3b3a',1,'index.mjs']]]
+  ['atmosphere_3',['Atmosphere',['../group__api__js.html#ga5ca5dc7550ed48192f4b1cc79cbc3b3a',1,'index.mjs']]]
 ];

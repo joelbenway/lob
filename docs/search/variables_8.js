@@ -1,7 +1,7 @@
 var searchData=
 [
   ['k_5flapse_0',['k_lapse',['../structLobContext.html#a22553dd319140a37ad2f48e5b83ad6e8',1,'LobContext::k_lapse'],['../structlob_1_1Context.html#add0676336d384d6277836eb314242167',1,'lob::Context::k_lapse']]],
-  ['klobbuilderbuffersize_1',['kLobBuilderBufferSize',['../namespacelob.html#ae27c9902195169c9f5d06347d46ffdf5',1,'lob']]],
-  ['klobcoeffssize_2',['kLobCoeffsSize',['../namespacelob.html#adc3c3c663752f07a27b84cd3462d570e',1,'lob']]],
-  ['klobwindpoints_3',['kLobWindPoints',['../namespacelob.html#a09169f920ca4002ca1ea181de29e2254',1,'lob']]]
+  ['klobbuilderbuffersize_1',['kLobBuilderBufferSize',['../group__api__cpp.html#gae27c9902195169c9f5d06347d46ffdf5',1,'lob']]],
+  ['klobcoeffssize_2',['kLobCoeffsSize',['../group__api__cpp.html#gadc3c3c663752f07a27b84cd3462d570e',1,'lob']]],
+  ['klobwindpoints_3',['kLobWindPoints',['../group__api__cpp.html#ga09169f920ca4002ca1ea181de29e2254',1,'lob']]]
 ];

@@ -27,7 +27,7 @@ var searchData=
   ['build_20then_20read_20forever_24',['One build, then read forever',['../okf_solver_context.html#autotoc_md91',1,'']]],
   ['builder_25',['Builder',['../classBuilder.html',1,'Builder'],['../classlob_1_1Builder.html',1,'lob::Builder'],['../classlob_1_1Builder.html#a9a6f54d138c3056e38ae2616069ac0d3',1,'lob::Builder::Builder()'],['../classlob_1_1Builder.html#aa9e41099fc72543e4b76584a84bf228b',1,'lob::Builder::Builder(const Builder &amp;other)'],['../classlob_1_1Builder.html#abc2b6ed69a647d751af47326c3a1c88d',1,'lob::Builder::Builder(Builder &amp;&amp;other) noexcept']]],
   ['builder_20pattern_26',['Builder Pattern',['../okf_builder_pattern.html',1,'Builder Pattern'],['../okf_builder_pattern.html#autotoc_md33',1,'Builder Pattern']]],
-  ['builder_5fsize_27',['BUILDER_SIZE',['../index_8mjs.html#ad6b39618bb10035cc0c949d76e49899d',1,'index.mjs']]],
+  ['builder_5fsize_27',['BUILDER_SIZE',['../group__api__js.html#gad6b39618bb10035cc0c949d76e49899d',1,'index.mjs']]],
   ['building_20the_20context_28',['Building the context',['../okf_bc_bands_worked_example.html#autotoc_md22',1,'']]],
   ['building_20the_20curve_29',['Building the curve',['../okf_bc_velocity_band_transformation.html#autotoc_md28',1,'']]],
   ['bullet_20s_20drag_30',['Four ways to describe a bullet&apos;s drag',['../okf_drag_model.html#autotoc_md49',1,'']]],
