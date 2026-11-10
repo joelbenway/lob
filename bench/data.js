@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794078951065,
+  "lastUpdate": 1794335544056,
   "repoUrl": "https://github.com/joelbenway/lob",
   "entries": {
     "lob instruction counts": [
@@ -746,6 +746,75 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/joelbenway/lob/commit/76f9176c347323b4c0c049ac27cff38a80204c3c"
         },
         "date": 1794078950067,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "lob_bench/build_basic",
+            "value": 801,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_full",
+            "value": 1894,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_custom_table",
+            "value": 7813.001,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_boatright",
+            "value": 3141.006,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_zero_search",
+            "value": 77101.005,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_basic",
+            "value": 248441.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_elr",
+            "value": 286840.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse",
+            "value": 249542.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse_elr",
+            "value": 1177794.98,
+            "unit": "Ir/op"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "baa94d95277828766dc681e762e67238fb4f0861",
+          "message": "Merge pull request #51 from joelbenway/docs/polish-readme\n\ndocs: polish README, partition API reference by language, and update …",
+          "timestamp": "2026-11-10T18:12:29Z",
+          "tree_id": "f0f5415ea39f058ad2e1371621ac5fdbbda7bad9",
+          "url": "https://github.com/joelbenway/lob/commit/baa94d95277828766dc681e762e67238fb4f0861"
+        },
+        "date": 1794335542975,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
