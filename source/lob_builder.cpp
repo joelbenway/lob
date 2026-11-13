@@ -720,19 +720,27 @@ void BuildStability(Impl* pimpl, LobContext* pout) {
 void BuildCoriolis(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
-  if (!std::isnan(pimpl->azimuth_rad) && !std::isnan(pimpl->latitude_rad)) {
+  if (!std::isnan(pimpl->azimuth_rad)) {
     const DegreesT kAzimuthLimit(kDegreesPerTurn);
-    if (pimpl->azimuth_rad > kAzimuthLimit ||
+    if (!std::isfinite(pimpl->azimuth_rad.Value()) ||
+        pimpl->azimuth_rad > kAzimuthLimit ||
         pimpl->azimuth_rad < kAzimuthLimit * -1) {
       pout->error = kLobErrorAzimuthOOR;
       return;
     }
+  }
+
+  if (!std::isnan(pimpl->latitude_rad)) {
     const DegreesT kLatitudeLimit(90);
-    if (pimpl->latitude_rad > kLatitudeLimit ||
+    if (!std::isfinite(pimpl->latitude_rad.Value()) ||
+        pimpl->latitude_rad > kLatitudeLimit ||
         pimpl->latitude_rad < kLatitudeLimit * -1) {
       pout->error = kLobErrorLatitudeOOR;
       return;
     }
+  }
+
+  if (!std::isnan(pimpl->azimuth_rad) && !std::isnan(pimpl->latitude_rad)) {
     constexpr double k2Omega = 2.0 * kAngularVelocityOfEarthRadPerSec;
     const double kSinL = std::sin(pimpl->latitude_rad.Value());
     const double kCosL = std::cos(pimpl->latitude_rad.Value());

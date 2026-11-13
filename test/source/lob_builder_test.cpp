@@ -1880,6 +1880,27 @@ TEST_F(BuilderTestFixture,
   EXPECT_LT(kCtxCold.speed_of_sound, kSosColdThreshold);
 }
 
+TEST_F(BuilderTestFixture, CoriolisAzimuthAndLatitudeValidatedIndependently) {
+  constexpr uint16_t kVelocity = 2800U;
+  constexpr double kZeroDist = 100.0;
+  constexpr double kBc = 0.400;
+  constexpr double kOorAzimuth = 999.0;
+  constexpr double kOorLatitude = 200.0;
+
+  puut->InitialVelocityFps(kVelocity)
+      .ZeroDistanceYds(kZeroDist)
+      .BallisticCoefficientPsi(kBc);
+
+  // Azimuth alone out of range trips kAzimuthOOR
+  puut->AzimuthDeg(kOorAzimuth);
+  EXPECT_EQ(puut->Build().error, lob::ErrorT::kAzimuthOOR);
+
+  // Latitude alone out of range trips kLatitudeOOR
+  puut->AzimuthDeg(std::numeric_limits<double>::quiet_NaN());
+  puut->LatitudeDeg(kOorLatitude);
+  EXPECT_EQ(puut->Build().error, lob::ErrorT::kLatitudeOOR);
+}
+
 }  // namespace tests
 
 // This file is part of lob.
