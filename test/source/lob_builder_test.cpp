@@ -667,6 +667,23 @@ TEST_F(BuilderTestFixture, MachVsDragTableNarrowHighExtrapolationInvalid) {
             lob::ErrorT::kMachDragTableInvalid);
 }
 
+TEST_F(BuilderTestFixture, MachVsDragTableInteriorKnotExtrapolationInvalid) {
+  constexpr float kStartMach = 1.0F;
+  constexpr float kEndMach = 5.0F;
+  constexpr float kStartDrag = 0.01F;
+  constexpr float kEndDrag = 1.0F;
+  const std::array<float, 2> kMachs = {kStartMach, kEndMach};
+  const std::array<float, 2> kDrags = {kStartDrag, kEndDrag};
+  EXPECT_EQ(puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                .InitialVelocityFps(kM70MuzzleVelocity)
+                .ZeroDistanceYds(kJackOConnorZeroYardage)
+                .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+                .MachVsDragTable(kMachs, kDrags)
+                .Build()
+                .error,
+            lob::ErrorT::kMachDragTableInvalid);
+}
+
 TEST_F(BuilderTestFixture, MachVsDragTableCoverageTooShort) {
   const std::array<float, 1> kMachs = {0.5F};
   const std::array<float, 1> kDrags = {0.0F};
@@ -1520,6 +1537,34 @@ TEST_F(BuilderTestFixture, SplineCoefficientsInvalidNonFinite) {
                                      .ZeroAngleMOA(5.0)
                                      .Build();
   EXPECT_EQ(kInfinite.error, lob::ErrorT::kSplineCoefsInvalid);
+}
+
+TEST_F(BuilderTestFixture, SplineCoefficientsNegativeKnot) {
+  constexpr float kBaseDrag = 0.5F;
+  constexpr float kNegativeDragLow = -0.1F;
+  constexpr float kNegativeDragHigh = -0.2F;
+  constexpr uint16_t kVelocityFps = 2800U;
+  constexpr double kZeroAngle = 5.0;
+  constexpr auto kLastSegmentKnotIdx = static_cast<size_t>(4 * 14);
+
+  std::array<float, lob::kLobCoeffsSize> bad{};
+  bad.fill(kBaseDrag);
+  bad[0] = kNegativeDragLow;
+  const lob::Context kBadLow = lob::Builder()
+                                   .SplineCoefficients(bad.data())
+                                   .InitialVelocityFps(kVelocityFps)
+                                   .ZeroAngleMOA(kZeroAngle)
+                                   .Build();
+  EXPECT_EQ(kBadLow.error, lob::ErrorT::kSplineCoefsInvalid);
+
+  bad.fill(kBaseDrag);
+  bad[kLastSegmentKnotIdx] = kNegativeDragHigh;
+  const lob::Context kBadHigh = lob::Builder()
+                                    .SplineCoefficients(bad.data())
+                                    .InitialVelocityFps(kVelocityFps)
+                                    .ZeroAngleMOA(kZeroAngle)
+                                    .Build();
+  EXPECT_EQ(kBadHigh.error, lob::ErrorT::kSplineCoefsInvalid);
 }
 
 TEST_F(BuilderTestFixture, SplineCoefficientsLastCallWins) {

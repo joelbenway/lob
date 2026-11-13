@@ -485,23 +485,11 @@ LobErrorT ValidateCustomTable(Impl* pimpl) {
 }
 
 LobErrorT BuildCustomTableSpline(Impl* pimpl, LobContext* pout) {
-  const bool kNeedLow = pimpl->table_xs[0] > spline::kKnots.front();
-  const bool kNeedHigh =
-      pimpl->table_xs[pimpl->table_count - 1] < spline::kKnots.back();
   spline::Build(pimpl->table_xs, pimpl->table_ys, pimpl->table_count,
                 spline::kKnots.data(), spline::kKnotCount, &pout->drags[0]);
-  if (!kNeedLow && !kNeedHigh) {
-    return kLobErrorNone;
-  }
   spline::CurveView curve(spline::kKnots.data(), &pout->drags[0]);
-  if (kNeedLow) {
-    const float kCd = curve.Eval(spline::kKnots.front());
-    if (kCd < 0.0F || !std::isfinite(kCd)) {
-      return kLobErrorMachDragTableInvalid;
-    }
-  }
-  if (kNeedHigh) {
-    const float kCd = curve.Eval(spline::kKnots.back());
+  for (const float kKnot : spline::kKnots) {
+    const float kCd = curve.Eval(kKnot);
     if (kCd < 0.0F || !std::isfinite(kCd)) {
       return kLobErrorMachDragTableInvalid;
     }
@@ -554,6 +542,23 @@ LobErrorT BuildBcBandsSpline(
   spline::CurveView drag_curve(spline::kKnots, *coefs);
   auto merged_curve = spline::Merge(scaling_curve, drag_curve);
   std::copy_n(merged_curve.data(), spline::kCoefsSize, &pout->drags[0]);
+  return kLobErrorNone;
+}
+
+LobErrorT BuildNativeSpline(const float* src, LobContext* pout) {
+  assert(src != nullptr && pout != nullptr);
+  if (std::any_of(src, src + spline::kCoefsSize,
+                  [](float v) { return !std::isfinite(v); })) {
+    return kLobErrorSplineCoefsInvalid;
+  }
+  spline::CurveView curve(spline::kKnots.data(), src);
+  for (const float kKnot : spline::kKnots) {
+    const float kCd = curve.Eval(kKnot);
+    if (kCd < 0.0F || !std::isfinite(kCd)) {
+      return kLobErrorSplineCoefsInvalid;
+    }
+  }
+  std::copy_n(src, spline::kCoefsSize, &pout->drags[0]);
   return kLobErrorNone;
 }
 
@@ -612,13 +617,11 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
 
   if (pimpl->drag_table_mode == DragTableMode::kNativeCoefs) {
     assert(pimpl->table_ys != nullptr);
-    const float* src = pimpl->table_ys;
-    if (std::any_of(src, src + spline::kCoefsSize,
-                    [](float v) { return !std::isfinite(v); })) {
-      pout->error = kLobErrorSplineCoefsInvalid;
+    const LobErrorT kErr = BuildNativeSpline(pimpl->table_ys, pout);
+    if (kErr != kLobErrorNone) {
+      pout->error = kErr;
       return;
     }
-    std::copy_n(src, spline::kCoefsSize, &pout->drags[0]);
     return;
   }
 
