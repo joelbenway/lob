@@ -1531,78 +1531,87 @@ void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
   }
   auto* pimpl = Pimpl(pbuilder);
 
+  LobContext local_ctx{};
+  local_ctx.error = kLobErrorNotFormed;
+  local_ctx.stability_factor = NaN();
+  local_ctx.aerodynamic_jump = NaN();
+  local_ctx.spindrift_factor = NaN();
+  local_ctx.optic_height = NaN();
+  local_ctx.optic_offset = NaN();
+  local_ctx.zero_angle = NaN();
+  local_ctx.zero_azimuth = 0.0;
+  local_ctx.k_lapse = 0.0;
+  local_ctx.speed_of_sound = NaN();
+  local_ctx.drag_coeff = NaN();
+
+  local_ctx.mass = pimpl->mass_lbs.IsNaN() ? NaN() : pimpl->mass_lbs.Value();
+  local_ctx.velocity =
+      pimpl->velocity_fps.IsNaN() ? 0 : pimpl->velocity_fps.U16();
+  local_ctx.minimum_speed =
+      pimpl->minimum_speed_fps.IsNaN() ? 0 : pimpl->minimum_speed_fps.U16();
+  local_ctx.step_size = pimpl->step_size_in;
+  local_ctx.max_time =
+      pimpl->max_time_sec.IsNaN() ? NaN() : pimpl->max_time_sec.Value();
+  local_ctx.zero_angle =
+      pimpl->zero_angle_moa.IsNaN() ? NaN() : pimpl->zero_angle_moa.Value();
+  local_ctx.zero_azimuth =
+      pimpl->zero_azimuth_moa.IsNaN() ? 0.0 : pimpl->zero_azimuth_moa.Value();
+
+  BuildEnvironment(pimpl, &local_ctx);
+  if (local_ctx.error == kLobErrorNotFormed) {
+    BuildSpline(pimpl, &local_ctx);
+  }
+  if (local_ctx.error == kLobErrorNotFormed) {
+    BuildCoefficients(pimpl, &local_ctx);
+  }
+  if (local_ctx.error == kLobErrorNotFormed) {
+    BuildWind(pimpl, &local_ctx);
+  }
+  if (local_ctx.error == kLobErrorNotFormed) {
+    BuildOpticHeight(pimpl, &local_ctx);
+    BuildStability(pimpl, &local_ctx);
+  }
+  if (local_ctx.error == kLobErrorNotFormed) {
+    BuildCoriolis(pimpl, &local_ctx);
+  }
+  if (local_ctx.error == kLobErrorNotFormed) {
+    BuildBoatright(pimpl, &local_ctx);
+  }
+  if (local_ctx.error == kLobErrorNotFormed) {
+    BuildLitzAerodynamicJump(pimpl, &local_ctx);
+    BuildOptions(pimpl, &local_ctx);
+  }
+  if (local_ctx.error == kLobErrorNotFormed) {
+    BuildZeroAngle(pimpl, &local_ctx);
+  }
+  if (local_ctx.error == kLobErrorNotFormed) {
+    BuildZeroAzimuth(pimpl, &local_ctx);
+  }
+
+  if (local_ctx.error == kLobErrorNotFormed) {
+    local_ctx.error = kLobErrorNone;
+    *presult = local_ctx;
+    return;
+  }
+
+  // Atomic failure commit: preserve direct user configuration fields but clear all derived physics
   *presult = LobContext{};
-  presult->error = kLobErrorNotFormed;
+  presult->error = local_ctx.error;
   presult->stability_factor = NaN();
   presult->aerodynamic_jump = NaN();
   presult->spindrift_factor = NaN();
   presult->optic_height = NaN();
   presult->optic_offset = NaN();
-  presult->zero_angle = NaN();
-  presult->zero_azimuth = 0.0;
+  presult->zero_angle = local_ctx.zero_angle;
+  presult->zero_azimuth = local_ctx.zero_azimuth;
+  presult->mass = local_ctx.mass;
+  presult->velocity = local_ctx.velocity;
+  presult->minimum_speed = local_ctx.minimum_speed;
+  presult->step_size = local_ctx.step_size;
+  presult->max_time = local_ctx.max_time;
   presult->k_lapse = 0.0;
   presult->speed_of_sound = NaN();
   presult->drag_coeff = NaN();
-
-  presult->mass = pimpl->mass_lbs.IsNaN() ? NaN() : pimpl->mass_lbs.Value();
-  presult->velocity =
-      pimpl->velocity_fps.IsNaN() ? 0 : pimpl->velocity_fps.U16();
-  presult->minimum_speed =
-      pimpl->minimum_speed_fps.IsNaN() ? 0 : pimpl->minimum_speed_fps.U16();
-  presult->step_size = pimpl->step_size_in;
-  presult->max_time =
-      pimpl->max_time_sec.IsNaN() ? NaN() : pimpl->max_time_sec.Value();
-  presult->zero_angle =
-      pimpl->zero_angle_moa.IsNaN() ? NaN() : pimpl->zero_angle_moa.Value();
-  presult->zero_azimuth =
-      pimpl->zero_azimuth_moa.IsNaN() ? 0.0 : pimpl->zero_azimuth_moa.Value();
-
-  BuildEnvironment(pimpl, presult);
-  if (presult->error != kLobErrorNotFormed) {
-    return;
-  }
-  BuildSpline(pimpl, presult);
-  if (presult->error != kLobErrorNotFormed) {
-    return;
-  }
-  BuildCoefficients(pimpl, presult);
-  if (presult->error != kLobErrorNotFormed) {
-    return;
-  }
-  BuildWind(pimpl, presult);
-  if (presult->error != kLobErrorNotFormed) {
-    return;
-  }
-  BuildOpticHeight(pimpl, presult);
-  BuildStability(pimpl, presult);
-  if (presult->error != kLobErrorNotFormed) {
-    return;
-  }
-  BuildCoriolis(pimpl, presult);
-  if (presult->error != kLobErrorNotFormed) {
-    return;
-  }
-  BuildBoatright(pimpl, presult);
-  if (presult->error != kLobErrorNotFormed) {
-    return;
-  }
-  BuildLitzAerodynamicJump(pimpl, presult);
-  BuildOptions(pimpl, presult);
-  if (presult->error != kLobErrorNotFormed) {
-    return;
-  }
-  BuildZeroAngle(pimpl, presult);
-  if (presult->error != kLobErrorNotFormed) {
-    return;
-  }
-  BuildZeroAzimuth(pimpl, presult);
-  if (presult->error != kLobErrorNotFormed) {
-    return;
-  }
-
-  if (presult->error == kLobErrorNotFormed) {
-    presult->error = kLobErrorNone;
-  }
 }
 
 }  // extern "C"

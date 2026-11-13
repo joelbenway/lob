@@ -260,7 +260,7 @@ TEST(CApiTest, LobBuilderBuildFullyInitializesPresultAndPreventsStaleReuse) {
   EXPECT_EQ(ctx.error, kLobErrorBallisticCoefficientOOR);
   EXPECT_TRUE(std::isnan(ctx.drag_coeff));
   EXPECT_FLOAT_EQ(ctx.drags[0], 0.0F);
-  EXPECT_NEAR(ctx.speed_of_sound, 1116.45, 0.1);  // Reset from b2's 1052 to b3's 1116.45
+  EXPECT_TRUE(std::isnan(ctx.speed_of_sound));
 
   // Build 4 reusing the SAME ctx with early environment failure
   LobBuilder b4{};
