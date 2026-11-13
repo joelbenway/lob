@@ -221,6 +221,16 @@ TEST(FmaxTest, NaNSecond) {
   EXPECT_TRUE(std::isnan(lob::Fmax(kFive, kNaN)));
 }
 
+TEST(HelpersTest, HasGyroscopicSpin) {
+  constexpr double kRightHandStability = 1.5;
+  constexpr double kLeftHandStability = -1.5;
+  EXPECT_TRUE(lob::HasGyroscopicSpin(kRightHandStability));
+  EXPECT_TRUE(lob::HasGyroscopicSpin(kLeftHandStability));
+  EXPECT_FALSE(lob::HasGyroscopicSpin(0.0));
+  EXPECT_FALSE(lob::HasGyroscopicSpin(-0.0));
+  EXPECT_FALSE(lob::HasGyroscopicSpin(std::numeric_limits<double>::quiet_NaN()));
+}
+
 }  // namespace tests
 
 // This file is part of lob.

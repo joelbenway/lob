@@ -712,7 +712,7 @@ void BuildStability(Impl* pimpl, LobContext* pout) {
       kFtp * CalculateMillerTwistRuleStabilityFactor(
                  pimpl->diameter_in, GrainT(pimpl->mass_lbs), pimpl->length_in,
                  pimpl->twist_inches_per_turn, pimpl->velocity_fps);
-  if (std::isfinite(kSg) && std::abs(kSg) > 0.0) {
+  if (std::isfinite(kSg) && HasGyroscopicSpin(kSg)) {
     pout->stability_factor = kSg;
   }
 }
@@ -791,8 +791,7 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   if (pimpl->diameter_in.IsNaN() || pimpl->length_in.IsNaN() ||
       pimpl->mass_lbs.IsNaN() || pimpl->twist_inches_per_turn.IsNaN() ||
       AreEqual(pimpl->twist_inches_per_turn, InchPerTwistT(0)) ||
-      std::isnan(pout->stability_factor) ||
-      !(std::abs(pout->stability_factor) > 0.0) ||
+      !HasGyroscopicSpin(pout->stability_factor) ||
       std::isnan(pout->speed_of_sound) || pimpl->velocity_fps.IsNaN() ||
       (pimpl->drag_table_mode == DragTableMode::kStandard &&
        (pimpl->ballistic_coefficient_psi.IsNaN() ||
@@ -925,8 +924,7 @@ void BuildLitzAerodynamicJump(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  if (!std::isnan(pout->stability_factor) &&
-      std::abs(pout->stability_factor) > 0.0 &&
+  if (HasGyroscopicSpin(pout->stability_factor) &&
       !std::isnan(pimpl->diameter_in) && !std::isnan(pimpl->length_in) &&
       !pimpl->twist_inches_per_turn.IsNaN() &&
       !AreEqual(pimpl->twist_inches_per_turn, InchPerTwistT(0))) {

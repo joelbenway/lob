@@ -132,6 +132,10 @@ constexpr T Cos(T x) noexcept {
   return sum;
 }
 
+inline bool HasGyroscopicSpin(double stability_factor) noexcept {
+  return !std::isnan(stability_factor) && std::abs(stability_factor) > 0.0;
+}
+
 }  // namespace lob
 
 // This file is part of lob.

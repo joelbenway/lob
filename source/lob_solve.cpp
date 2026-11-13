@@ -10,6 +10,7 @@
 #include "calc.hpp"
 #include "cartesian.hpp"
 #include "eng_units.hpp"
+#include "helpers.hpp"
 #include "litz.hpp"
 #include "lob/lob.h"
 #include "ode.hpp"
@@ -67,7 +68,7 @@ void ApplyGyroscopicSpinDrift(const LobContext& ctx, LobOutput* pouts,
     }
     return;
   }
-  if (std::fabs(ctx.stability_factor) > 0.0) {
+  if (HasGyroscopicSpin(ctx.stability_factor)) {
     for (size_t i = 0; i < size; i++) {
       const double kD = litz::CalculateGyroscopicSpinDrift(
                             ctx.stability_factor, SecT(pouts[i].time_of_flight))
