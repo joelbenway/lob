@@ -37,6 +37,32 @@ enum class WindTableMode : uint8_t {
   kUniform,
 };
 
+
+bool HasLateralPerturbation(const LobContext& ctx) noexcept {
+  if (std::fabs(ctx.coriolis.sin_l) > 0.0 ||
+      std::fabs(ctx.coriolis.cos_l_cos_a) > 0.0) {
+    return true;
+  }
+  return std::any_of(
+      std::begin(ctx.wind_nodes), std::end(ctx.wind_nodes),
+      [](const LobWindNode& node) { return std::fabs(node.z_fps) > 0.0; });
+}
+
+double EstimateDragPerDistance(const LobContext& ctx,
+                               double velocity_fps) noexcept {
+  if (ctx.speed_of_sound <= 0.0) {
+    return 0.0;
+  }
+  spline::CurveView drag_curve(spline::kKnots.data(), &ctx.drags[0]);
+  const double kMach = velocity_fps / ctx.speed_of_sound;
+  const double kCd = drag_curve.Eval(MachT(kMach));
+  if (std::isfinite(kCd) && kCd > 0.0 && std::isfinite(ctx.drag_coeff) &&
+      ctx.drag_coeff > 0.0) {
+    return ctx.drag_coeff * kCd;
+  }
+  return 0.0;
+}
+
 }  // namespace
 
 class Impl {
@@ -60,6 +86,7 @@ class Impl {
   InchT nose_length_in{NaN()};
   double ogive_rtr{NaN()};
   FeetT optic_height_ft{NaN()};
+  FeetT optic_offset_ft{NaN()};
   RadiansT range_angle_rad{NaN()};
   PercentT relative_humidity_percent{NaN()};
   InchT tail_length_in{NaN()};
@@ -69,22 +96,23 @@ class Impl {
   RadiansT wind_heading_rad{NaN()};
   FpsT wind_speed_fps{NaN()};
   MoaT zero_angle_moa{NaN()};
+  MoaT zero_azimuth_moa{NaN()};
   FeetT zero_distance_ft{NaN()};
   FeetT zero_impact_height{NaN()};
 
   const LobWindPoint* wind_profile_points{nullptr};
   size_t wind_profile_count{0};
-  WindTableMode wind_table_mode{WindTableMode::kUniform};
   double wind_shear_exponent{0.0};
-
   size_t table_count{0};
   const float* table_xs{nullptr};
   const float* table_ys{nullptr};
+
   uint16_t step_size_in{0};
   LobAtmosphereReferenceT atmosphere_reference{
       kLobAtmosphereReferenceArmyStandardMetro};
   LobDragFunctionT drag_function{kLobDragFunctionG1};
   DragTableMode drag_table_mode{DragTableMode::kStandard};
+  WindTableMode wind_table_mode{WindTableMode::kUniform};
 };
 
 namespace {
@@ -599,6 +627,11 @@ void BuildOpticHeight(Impl* pimpl, LobContext* pout) {
     constexpr FeetT kDefaultOpticHeight = InchT(1.5);
     pout->optic_height = kDefaultOpticHeight.Value();
   }
+  if (!std::isnan(pimpl->optic_offset_ft)) {
+    pout->optic_offset = pimpl->optic_offset_ft.Value();
+  } else {
+    pout->optic_offset = 0.0;
+  }
 }
 
 void BuildStability(Impl* pimpl, LobContext* pout) {
@@ -872,18 +905,94 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
   }
 
   assert(pimpl->velocity_fps > FpsT(0));
-  const auto kVacuumSeed = RadiansT(
-      0.5 * kStandardGravityFtPerSecSq * pimpl->zero_distance_ft.Value() /
-      (pimpl->velocity_fps * pimpl->velocity_fps).Value());
-  const auto kClampedVacuumSeed =
-      std::max(constant::kMinAngle, std::min(constant::kMaxAngle, kVacuumSeed));
+  const double kDist = pimpl->zero_distance_ft.Value();
+  const double kV = pimpl->velocity_fps.Value();
+  const double kG = kStandardGravityFtPerSecSq;
+  const double kKdrag = EstimateDragPerDistance(*pout, kV);
+  const double kAnchorY = pout->optic_height;
+  const double kClimb = kAnchorY + pimpl->zero_impact_height.Value();
+  const double kSightAngle = std::atan(kClimb / kDist);
+  const double kDrop = (0.5 * kG * kDist / (kV * kV)) *
+                       (1.0 + ((2.0 / 3.0) * kKdrag * kDist));
+  const double kJump =
+      std::isnan(pout->aerodynamic_jump)
+          ? 0.0
+          : RadiansT(MoaT(pout->aerodynamic_jump)).Value();
+  const double kSeedAngle = kSightAngle + kDrop - kJump;
+
+  const auto kClampedSeed =
+      std::isfinite(kSeedAngle)
+          ? std::max(constant::kMinAngle,
+                     std::min(constant::kMaxAngle, RadiansT(kSeedAngle)))
+          : RadiansT(0.0);
   const MoaT kAngle = SolveAngle(*pout, pimpl->zero_distance_ft,
-                                 pimpl->zero_impact_height, kClampedVacuumSeed);
+                                 pimpl->zero_impact_height, kClampedSeed);
   if (std::isnan(kAngle)) {
     pout->error = kLobErrorZeroUnreachable;
     return;
   }
   pout->zero_angle = kAngle.Value();
+}
+
+void BuildZeroAzimuth(Impl* pimpl, LobContext* pout) {
+  assert(pimpl != nullptr && pout != nullptr);
+
+  if (!std::isnan(pimpl->zero_azimuth_moa)) {
+    if (pimpl->zero_azimuth_moa > constant::kMaxAngle ||
+        pimpl->zero_azimuth_moa < constant::kMinAngle) {
+      pout->error = kLobErrorZeroAngleOOR;
+      return;
+    }
+    pout->zero_azimuth = pimpl->zero_azimuth_moa.Value();
+    return;
+  }
+
+  if (!std::isnan(pimpl->zero_angle_moa)) {
+    // Portable zero path
+    if (pimpl->zero_distance_ft.IsNaN() ||
+        pimpl->zero_distance_ft <= FeetT(0)) {
+      pout->zero_azimuth = 0.0;
+      return;
+    }
+    // Explicit angle + zero distance: geometric solve without air
+    const RadiansT kGeoAzimuth(
+        std::atan(pout->optic_offset / pimpl->zero_distance_ft.Value()));
+    pout->zero_azimuth = MoaT(kGeoAzimuth).Value();
+    return;
+  }
+
+  if (pimpl->zero_distance_ft.IsNaN() || pimpl->zero_distance_ft <= FeetT(0)) {
+    return;
+  }
+
+  // Fast path: when no lateral forces (crosswind, Coriolis) act on the bullet,
+  // the horizontal trajectory is a straight line. For centered optics
+  // (optic_offset = 0), zero_azimuth is identically 0.0. For offset optics,
+  // the analytic closed-form geometric angle is exact.
+  const bool kHasOffset = std::fabs(pout->optic_offset) > 0.0;
+  if (!HasLateralPerturbation(*pout)) {
+    if (!kHasOffset) {
+      pout->zero_azimuth = 0.0;
+    } else {
+      const RadiansT kGeoAzimuth(
+          std::atan(pout->optic_offset / pimpl->zero_distance_ft.Value()));
+      pout->zero_azimuth = MoaT(kGeoAzimuth).Value();
+    }
+    return;
+  }
+
+  assert(pimpl->velocity_fps > FpsT(0));
+  const auto kGeoSeed =
+      RadiansT(std::atan(pout->optic_offset / pimpl->zero_distance_ft.Value()));
+  const auto kClampedSeed =
+      std::max(constant::kMinAngle, std::min(constant::kMaxAngle, kGeoSeed));
+  const MoaT kAzimuth =
+      SolveAngleAzimuth(*pout, pimpl->zero_distance_ft, kClampedSeed);
+  if (std::isnan(kAzimuth)) {
+    pout->error = kLobErrorZeroUnreachable;
+    return;
+  }
+  pout->zero_azimuth = kAzimuth.Value();
 }
 
 void BuildOptions(Impl* pimpl, LobContext* pout) {
@@ -1104,6 +1213,17 @@ LobBuilder* LobBuilderOpticHeightInches(LobBuilder* pbuilder, double value) {
   return pbuilder;
 }
 
+LobBuilder* LobBuilderOpticLateralOffsetInches(LobBuilder* pbuilder,
+                                               double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
+  auto* pimpl = Pimpl(pbuilder);
+  pimpl->optic_offset_ft =
+      std::isnan(value) ? FeetT(NaN()) : FeetT(InchT(-value));
+  return pbuilder;
+}
+
 LobBuilder* LobBuilderTwistInchesPerTurn(LobBuilder* pbuilder, double value) {
   if (pbuilder == nullptr) {
     return nullptr;
@@ -1119,6 +1239,15 @@ LobBuilder* LobBuilderZeroAngleMOA(LobBuilder* pbuilder, double value) {
   }
   auto* pimpl = Pimpl(pbuilder);
   pimpl->zero_angle_moa = MoaT(value);
+  return pbuilder;
+}
+
+LobBuilder* LobBuilderZeroAzimuthMOA(LobBuilder* pbuilder, double value) {
+  if (pbuilder == nullptr) {
+    return nullptr;
+  }
+  auto* pimpl = Pimpl(pbuilder);
+  pimpl->zero_azimuth_moa = MoaT(value);
   return pbuilder;
 }
 
@@ -1345,11 +1474,14 @@ void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
   presult->max_time = pimpl->max_time_sec.Value();
   presult->zero_angle =
       pimpl->zero_angle_moa.IsNaN() ? NaN() : pimpl->zero_angle_moa.Value();
+  presult->zero_azimuth =
+      pimpl->zero_azimuth_moa.IsNaN() ? 0.0 : pimpl->zero_azimuth_moa.Value();
 
   presult->error = kLobErrorNotFormed;
   presult->aerodynamic_jump = NaN();
   presult->spindrift_factor = NaN();
   presult->optic_height = NaN();
+  presult->optic_offset = NaN();
   presult->k_lapse = 0.0;
 
   BuildEnvironment(pimpl, presult);
@@ -1387,6 +1519,10 @@ void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
     return;
   }
   BuildZeroAngle(pimpl, presult);
+  if (presult->error != kLobErrorNotFormed) {
+    return;
+  }
+  BuildZeroAzimuth(pimpl, presult);
   if (presult->error != kLobErrorNotFormed) {
     return;
   }

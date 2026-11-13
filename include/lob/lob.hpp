@@ -125,9 +125,11 @@ struct Context {
   double speed_of_sound;    ///< @brief The local speed of sound in Fps.
   double mass;              ///< @brief Mass of the projectile in pounds.
   double optic_height;      ///< @brief Height of the optic above the bore.
+  double optic_offset;      ///< @brief Lateral offset of the optic (+ = shooter-left).
   Gravity gravity;          ///< @brief Gravity vector.
   Coriolis coriolis;        ///< @brief Coriolis effect parameters.
   double zero_angle;        ///< @brief Angle between sight and trajectory.
+  double zero_azimuth;      ///< @brief Lateral angle between sight and trajectory.
   double stability_factor;  ///< @brief Miller stability factor.
   double aerodynamic_jump;  ///< @brief Aerodynamic jump effect in Moa.
   double spindrift_factor;  ///< @brief Spin drift factor.
@@ -160,6 +162,9 @@ static_assert(offsetof(Context, mass) == offsetof(::LobContext, mass),
 static_assert(offsetof(Context, optic_height) ==
                   offsetof(::LobContext, optic_height),
               "optic_height offset drift");
+static_assert(offsetof(Context, optic_offset) ==
+                  offsetof(::LobContext, optic_offset),
+              "optic_offset offset drift");
 static_assert(offsetof(Context, gravity) == offsetof(::LobContext, gravity),
               "gravity offset drift");
 static_assert(offsetof(Context, coriolis) == offsetof(::LobContext, coriolis),
@@ -167,6 +172,9 @@ static_assert(offsetof(Context, coriolis) == offsetof(::LobContext, coriolis),
 static_assert(offsetof(Context, zero_angle) ==
                   offsetof(::LobContext, zero_angle),
               "zero_angle offset drift");
+static_assert(offsetof(Context, zero_azimuth) ==
+                  offsetof(::LobContext, zero_azimuth),
+              "zero_azimuth offset drift");
 static_assert(offsetof(Context, stability_factor) ==
                   offsetof(::LobContext, stability_factor),
               "stability_factor offset drift");
@@ -567,6 +575,18 @@ class Builder {
   }
 
   /**
+   * @brief Sets the lateral offset of the optic from the bore in inches.
+   * @note Positive indicates optic to the shooter's right of the bore (mapped
+   * to frame Z as -value / 12 ft in LobContext.optic_offset, where +Z is left).
+   * @param value The lateral offset in inches.
+   * @return A reference to the Builder object.
+   */
+  Builder& OpticLateralOffsetInches(double value) {
+    ::LobBuilderOpticLateralOffsetInches(&builder_, value);
+    return *this;
+  }
+
+  /**
    * @brief Sets the twist rate of the barrel in inches per turn.
    * @note Used to calculate adjustments for spin drift and aerodynamic jump.
    * @param value The twist rate in inches per turn.
@@ -587,6 +607,18 @@ class Builder {
    */
   Builder& ZeroAngleMOA(double value) {
     ::LobBuilderZeroAngleMOA(&builder_, value);
+    return *this;
+  }
+
+  /**
+   * @brief Sets the zero azimuth angle directly in MOA, bypassing numerical
+   * zero search.
+   * @param value The zero azimuth angle in MOA (+ = bore aimed to the left
+   * in frame Z, pointing toward shooter-right offset optic).
+   * @return A reference to the Builder object.
+   */
+  Builder& ZeroAzimuthMOA(double value) {
+    ::LobBuilderZeroAzimuthMOA(&builder_, value);
     return *this;
   }
 

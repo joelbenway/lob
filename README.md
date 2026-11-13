@@ -29,6 +29,9 @@ The following can be accounted for in lob's solutions:
    * Gyroscopic spin drift (standard empirical model or geometry-based precession/nutation)
    * Crosswind aerodynamic jump (standard empirical model or projectile geometry model)
    * Gyroscopic stability estimation via the Miller rule
+ * **Sight & Mounting Geometry**
+   * Optical centerline vertical height (`OpticHeightInches`)
+   * Lateral optic offset (`OpticLateralOffsetInches`, positive = right of bore) with 3D sight-line convergence at zero range
  * **Dual Solver Architecture**
    * **Forward solutions**: Computes trajectory drop, windage deflection, velocity, and time of flight (Mach number is calculated internally but not included in returned trajectory results)
    * **Inverse solutions**: Computes precise optic dial elevation and windage adjustments (in MOA) to hit a target at range; `SolveInverse` uses a closed-form geometric correction without iterative overhead, while `SolveInverseELR` uses iterative angle refinement for nonzero reached ranges
@@ -115,6 +118,7 @@ const lob::Context kBetterCtx =
   .InitialVelocityFps(2800)
   .ZeroAngleMOA(4.62)
   .OpticHeightInches(2.5)
+  .OpticLateralOffsetInches(0.0) // positive = right of bore
   .TwistInchesPerTurn(10.0)
   .AirPressureInHg(30.3)
   .TemperatureDegF(63.1)

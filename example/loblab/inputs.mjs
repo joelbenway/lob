@@ -33,6 +33,7 @@ const FIELD_LABELS = {
   minimumSpeedFps: "Minimum speed",
   noseLengthInch: "Nose length",
   ogiveRtR: "Ogive Rt/R",
+  opticLateralOffsetInches: "Lateral offset",
   projectileTier: "Projectile detail",
   rangeAngleDeg: "Range angle",
   relativeHumidityPercent: "Relative humidity",
@@ -353,6 +354,12 @@ export function readConfig(values) {
     0,
     Infinity,
   );
+  config.opticLateralOffsetInches = optionalNumber(
+    values,
+    "opticLateralOffsetInches",
+    -Infinity,
+    Infinity,
+  );
 
   config.weatherSource = choice(values, "weatherSource", [
     "standard",
@@ -575,6 +582,9 @@ export function applyConfig(builder, config) {
   }
   if (config.sightHeightInches !== undefined) {
     builder.opticHeightInches(config.sightHeightInches);
+  }
+  if (config.opticLateralOffsetInches !== undefined) {
+    builder.opticLateralOffsetInches(config.opticLateralOffsetInches);
   }
 
   if (config.weatherSource === "altitude") {

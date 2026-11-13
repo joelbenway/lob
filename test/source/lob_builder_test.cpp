@@ -1652,6 +1652,51 @@ TEST_F(BuilderTestFixture, CustomTableBoatrightUsesDirectCd) {
   EXPECT_NEAR(kCustom.aerodynamic_jump, kStandard.aerodynamic_jump, 0.5);
 }
 
+TEST_F(BuilderTestFixture, OpticLateralOffsetDefaultAndSetter) {
+  SetupTestBuilder(*puut);
+  const lob::Context kCtxDefault = puut->Build();
+  EXPECT_DOUBLE_EQ(kCtxDefault.optic_offset, 0.0);
+
+  // Positive offset: 1.5 inches to shooter's right -> -1.5 / 12 feet in frame Z
+  constexpr double kOffsetInches = 1.5;
+  constexpr double kInchesPerFoot = 12.0;
+  constexpr double kExpectedOffsetFt = -kOffsetInches / kInchesPerFoot;
+  constexpr double kTol = 1e-9;
+  puut->OpticLateralOffsetInches(kOffsetInches);
+  const lob::Context kCtxOffset = puut->Build();
+  EXPECT_NEAR(kCtxOffset.optic_offset, kExpectedOffsetFt, kTol);
+
+  // NaN input defaults to 0.0
+  puut->OpticLateralOffsetInches(std::numeric_limits<double>::quiet_NaN());
+  const lob::Context kCtxNan = puut->Build();
+  EXPECT_DOUBLE_EQ(kCtxNan.optic_offset, 0.0);
+}
+
+TEST_F(BuilderTestFixture, ZeroAzimuthDirectSetterAndOOR) {
+  SetupTestBuilder(*puut);
+  const lob::Context kCtxDefault = puut->Build();
+  EXPECT_DOUBLE_EQ(kCtxDefault.zero_azimuth, 0.0);
+
+  // Valid zero azimuth (MOA)
+  constexpr double kAzimuthMoa = -3.25;
+  puut->ZeroAzimuthMOA(kAzimuthMoa);
+  const lob::Context kCtxAzimuth = puut->Build();
+  EXPECT_EQ(kCtxAzimuth.error, lob::ErrorT::kNone);
+  EXPECT_DOUBLE_EQ(kCtxAzimuth.zero_azimuth, kAzimuthMoa);
+
+  // Out of range (beyond 45 degrees in MOA)
+  constexpr double kDegToMoa = 60.0;
+  constexpr double kOorMoa = 46.0 * kDegToMoa;
+  puut->ZeroAzimuthMOA(kOorMoa);
+  const lob::Context kCtxOor = puut->Build();
+  EXPECT_EQ(kCtxOor.error, lob::ErrorT::kZeroAngleOOR);
+
+  // Negative out of range
+  puut->ZeroAzimuthMOA(-kOorMoa);
+  const lob::Context kCtxNegOor = puut->Build();
+  EXPECT_EQ(kCtxNegOor.error, lob::ErrorT::kZeroAngleOOR);
+}
+
 }  // namespace tests
 
 // This file is part of lob.

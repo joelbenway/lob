@@ -98,10 +98,21 @@ A zero is either a distance or an angle, never both.
 | Zero impact height | Source is distance | 0 in |
 | Zero angle | Source is angle | None |
 | Sight height | Always | 1.5 in |
+| Sight lateral offset | Always | 0 in (positive = right of bore) |
 
-Sight height still affects the reported elevation when a zero angle is
-supplied; it is not part of the zero solution. Switching zero sources
-must clear the other source's fields so a stale value cannot be sent.
+Sight height and lateral offset still affect reported elevation and deflection when an explicit zero angle is supplied; they are not part of the explicit angle value. Switching zero sources must clear the other source's fields so a stale value cannot be sent.
+
+### Zero-state rules
+
+Zeros are recorded in the system frame. Both build solves (`BuildZeroAngle` and `BuildZeroAzimuth`) run against the sight planes.
+
+| caller set | vertical angle | lateral angle |
+|---|---|---|
+| nothing (no zero) | N/A — required error `kZeroDistanceOOR` | — |
+| zero distance (± impact height) | solved via `BuildZeroAngle`, absorbing elevation air | solved via `BuildZeroAzimuth`, absorbing lateral air / offset |
+| `zero_angle_moa` alone (portable zero) | use given angle | 0 — offset treated as pure plane shift; documented limitation |
+| `zero_angle_moa` + zero distance | use given angle, ignore distance | geometric lateral solve without air: $\phi = \operatorname{atan}(\text{anchor}_z / R_0)$ |
+| explicit zero angle, explicit distance, and offset = 0 | unchanged | 0 (identical to prior behavior) |
 
 ## Atmosphere gate
 

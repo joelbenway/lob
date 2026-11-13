@@ -71,8 +71,10 @@ TEST(LobCAPITest, BuilderNullptrReturnsNullptr) {
   EXPECT_EQ(LobBuilderMassGrains(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderInitialVelocityFps(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderOpticHeightInches(nullptr, kDummy), nullptr);
+  EXPECT_EQ(LobBuilderOpticLateralOffsetInches(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderTwistInchesPerTurn(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderZeroAngleMOA(nullptr, kDummy), nullptr);
+  EXPECT_EQ(LobBuilderZeroAzimuthMOA(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderZeroDistanceYds(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderZeroImpactHeightInches(nullptr, kDummy), nullptr);
   EXPECT_EQ(LobBuilderAltitudeOfFiringSiteFt(nullptr, kDummy), nullptr);
@@ -188,6 +190,17 @@ TEST(LobCAPITest, WindProfileBuildZeroesUnusedTail) {
   ASSERT_EQ(ctx.error, kLobErrorNone);
   ASSERT_EQ(ctx.wind_count, 2U);
   ExpectWindTailZeroed(ctx);
+}
+
+TEST(CApiTest, OpticLateralOffsetEntryPoints) {
+  constexpr double kOffsetInches = 1.5;
+  constexpr double kAzimuthMoa = -2.5;
+  LobBuilder builder{};
+  LobBuilderInit(&builder);
+  EXPECT_NE(LobBuilderOpticLateralOffsetInches(&builder, kOffsetInches),
+            nullptr);
+  EXPECT_NE(LobBuilderZeroAzimuthMOA(&builder, kAzimuthMoa), nullptr);
+  LobBuilderDestroy(&builder);
 }
 
 }  // namespace tests

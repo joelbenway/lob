@@ -20,36 +20,35 @@
 namespace lob {
 namespace {
 
-LobOutput OutputAtState(const TrajectoryStateT& s, const LobContext& ctx) {
+LobOutput OutputAtState(const TrajectoryStateT& s, double mass,
+                        const SightAnchor& anchor) {
   const FpsT kVelocity = s.V().Magnitude();
-  const FtLbsT kEnergy =
-      CalculateKineticEnergy(kVelocity, SlugT(LbsT(ctx.mass)));
+  const FtLbsT kEnergy = CalculateKineticEnergy(kVelocity, SlugT(LbsT(mass)));
   LobOutput out{};
   out.range = s.P().X().U32();
   out.velocity = kVelocity.U16();
   out.energy = kEnergy.U32();
-  out.elevation = InchT(s.P().Y() - FeetT(ctx.optic_height)).Value();
-  out.deflection = InchT(s.P().Z()).Value();
+  out.elevation = InchT(s.P().Y() - anchor.y).Value();
+  out.deflection = InchT(s.P().Z() - anchor.z).Value();
   out.time_of_flight = s.TOF().Value();
   return out;
 }
 
 LobOutput LerpOutput(const TrajectoryStateT& s_prev,
-                     const TrajectoryStateT& s_now, double alpha,
-                     const LobContext& ctx) {
+                     const TrajectoryStateT& s_now, double alpha, double mass,
+                     const SightAnchor& anchor) {
   const CartesianT<FeetT> kP = Lerp(s_prev.P(), s_now.P(), alpha);
   const CartesianT<FpsT> kV = Lerp(s_prev.V(), s_now.V(), alpha);
   const SecT kTof = Lerp(s_prev.TOF(), s_now.TOF(), alpha);
   const FpsT kVelocity = kV.Magnitude();
-  const FtLbsT kEnergy =
-      CalculateKineticEnergy(kVelocity, SlugT(LbsT(ctx.mass)));
+  const FtLbsT kEnergy = CalculateKineticEnergy(kVelocity, SlugT(LbsT(mass)));
 
   LobOutput out{};
   out.range = kP.X().U32();
   out.velocity = kVelocity.U16();
   out.energy = kEnergy.U32();
-  out.elevation = InchT(kP.Y() - FeetT(ctx.optic_height)).Value();
-  out.deflection = InchT(kP.Z()).Value();
+  out.elevation = InchT(kP.Y() - anchor.y).Value();
+  out.deflection = InchT(kP.Z() - anchor.z).Value();
   out.time_of_flight = kTof.Value();
   return out;
 }
@@ -57,21 +56,23 @@ LobOutput LerpOutput(const TrajectoryStateT& s_prev,
 void ApplyGyroscopicSpinDrift(const LobContext& ctx, LobOutput* pouts,
                               size_t size) {
   assert(pouts != nullptr);
+  const double kThresholdInches = InchT(FeetT(-ctx.optic_height)).Value();
+
   if (!std::isnan(ctx.spindrift_factor)) {
     for (size_t i = 0; i < size; i++) {
-      if (InchT(pouts[i].elevation) < InchT(FeetT(-ctx.optic_height))) {
-        pouts[i].deflection +=
-            ctx.spindrift_factor * std::fabs(pouts[i].elevation);
+      if (pouts[i].elevation < kThresholdInches) {
+        const double kD = ctx.spindrift_factor * std::fabs(pouts[i].elevation);
+        pouts[i].deflection += kD;
       }
     }
     return;
   }
   if (std::fabs(ctx.stability_factor) > 0.0) {
     for (size_t i = 0; i < size; i++) {
-      pouts[i].deflection +=
-          litz::CalculateGyroscopicSpinDrift(ctx.stability_factor,
-                                             SecT(pouts[i].time_of_flight))
-              .Value();
+      const double kD = litz::CalculateGyroscopicSpinDrift(
+                            ctx.stability_factor, SecT(pouts[i].time_of_flight))
+                            .Value();
+      pouts[i].deflection += kD;
     }
   }
 }
@@ -104,13 +105,16 @@ template <typename StepFunc>
 size_t SolveRanges(const LobContext& ctx, const uint32_t* pranges,
                    LobOutput* pouts, size_t size, StepFunc step) {
   const FpsT kMinimumSpeed(ctx.minimum_speed);
-  const auto kAngle = RadiansT(MoaT(ctx.zero_angle + ctx.aerodynamic_jump));
+  const SightAnchor kAnchor = GetSightAnchor(ctx);
+  const double kTheta =
+      RadiansT(MoaT(ctx.zero_angle + ctx.aerodynamic_jump)).Value();
+  const double kPhi = RadiansT(MoaT(ctx.zero_azimuth)).Value();
+  const FpsT kV = FpsT(ctx.velocity);
 
   TrajectoryStateT s(
       CartesianT<FeetT>(FeetT(0.0)),
-      CartesianT<FpsT>(FpsT(ctx.velocity) * std::cos(kAngle.Value()),
-                       FpsT(ctx.velocity) * std::sin(kAngle.Value()),
-                       FpsT(0.0)));
+      CartesianT<FpsT>(kV * std::cos(kTheta) * std::cos(kPhi),
+                       kV * std::sin(kTheta), kV * std::sin(kPhi)));
   size_t index = 0;
 
   spline::CurveView curve(spline::kKnots.data(), &ctx.drags[0]);
@@ -123,7 +127,7 @@ size_t SolveRanges(const LobContext& ctx, const uint32_t* pranges,
     }
 
     if (s.P().X() >= FeetT(pranges[index])) {
-      pouts[index] = OutputAtState(s, ctx);
+      pouts[index] = OutputAtState(s, ctx.mass, kAnchor);
       index++;
     }
 
@@ -134,7 +138,7 @@ size_t SolveRanges(const LobContext& ctx, const uint32_t* pranges,
     if (s.TOF() >= SecT(ctx.max_time) && kS.TOF() < SecT(ctx.max_time)) {
       const double kAlpha =
           ((SecT(ctx.max_time) - kS.TOF()) / (s.TOF() - kS.TOF())).Value();
-      pouts[index] = LerpOutput(kS, s, kAlpha, ctx);
+      pouts[index] = LerpOutput(kS, s, kAlpha, ctx.mass, kAnchor);
       index++;
       break;
     }
@@ -143,14 +147,14 @@ size_t SolveRanges(const LobContext& ctx, const uint32_t* pranges,
       const double kAlpha = ((kMinimumSpeed - kS.V().Magnitude()) /
                              (s.V().Magnitude() - kS.V().Magnitude()))
                                 .Value();
-      pouts[index] = LerpOutput(kS, s, kAlpha, ctx);
+      pouts[index] = LerpOutput(kS, s, kAlpha, ctx.mass, kAnchor);
       index++;
       break;
     }
     // If vertical velocity exceeds 3x horizontal, consider falling straight
     // down.
     if (std::abs(s.V().Y().Value()) > s.V().X().Value() * 3) {
-      pouts[index] = OutputAtState(s, ctx);
+      pouts[index] = OutputAtState(s, ctx.mass, kAnchor);
       index++;
       break;
     }

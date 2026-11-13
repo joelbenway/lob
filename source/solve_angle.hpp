@@ -31,14 +31,27 @@ inline RadiansT FastInverseAngle(RadiansT launch_angle, FeetT residual,
   return std::atan(std::tan(launch_angle) - (residual / range).Value());
 }
 
+struct SightAnchor {
+  FeetT y;
+  FeetT z;
+};
+
+inline SightAnchor GetSightAnchor(const LobContext& ctx) noexcept {
+  return {FeetT(ctx.optic_height), FeetT(ctx.optic_offset)};
+}
+
 namespace detail {
 inline TrajectoryStateT MakeInitialState(const LobContext& ctx,
                                          RadiansT launch_angle) noexcept {
   const FpsT kVelocity = FpsT(ctx.velocity);
-  const RadiansT kAngle = launch_angle + RadiansT(MoaT(ctx.aerodynamic_jump));
-  return {CartesianT<FeetT>(FeetT(0.0)),
-          CartesianT<FpsT>(kVelocity * std::cos(kAngle.Value()),
-                           kVelocity * std::sin(kAngle.Value()), FpsT(0.0))};
+  const double kTheta =
+      (launch_angle + RadiansT(MoaT(ctx.aerodynamic_jump))).Value();
+  const double kPhi = RadiansT(MoaT(ctx.zero_azimuth)).Value();
+  return {
+      CartesianT<FeetT>(FeetT(0.0)),
+      CartesianT<FpsT>(kVelocity * std::cos(kTheta) * std::cos(kPhi),
+                       kVelocity * std::sin(kTheta),
+                       kVelocity * std::sin(kPhi))};
 }
 
 inline bool IsTerminal(const TrajectoryStateT& s, const LobContext& ctx,
@@ -88,6 +101,58 @@ inline MoaT SolveAngleImpl(const LobContext& ctx, FeetT range,
   }
   return MoaT(NaN());
 }
+
+inline TrajectoryStateT MakeInitialStateAzimuth(
+    const LobContext& ctx, RadiansT launch_azimuth) noexcept {
+  const FpsT kVelocity = FpsT(ctx.velocity);
+  const RadiansT kElev = RadiansT(MoaT(ctx.zero_angle + ctx.aerodynamic_jump));
+  return {CartesianT<FeetT>(FeetT(0.0)),
+          CartesianT<FpsT>(kVelocity * std::cos(kElev.Value()) *
+                               std::cos(launch_azimuth.Value()),
+                           kVelocity * std::sin(kElev.Value()),
+                           kVelocity * std::sin(launch_azimuth.Value()))};
+}
+
+template <typename StepFunc>
+inline FeetT FireToTargetAzimuth(const LobContext& ctx, FeetT range,
+                                 RadiansT launch_azimuth, StepFunc step) {
+  TrajectoryStateT s = MakeInitialStateAzimuth(ctx, launch_azimuth);
+  const FpsT kMinimumSpeed = FpsT(ctx.minimum_speed);
+  spline::CurveView drag_curve(spline::kKnots.data(), &ctx.drags[0]);
+  while (s.P().X() < range) {
+    if (IsTerminal(s, ctx, kMinimumSpeed)) {
+      return FeetT(NaN());
+    }
+    step(ctx, &s, &drag_curve, range);
+  }
+  return s.P().Z() - FeetT(ctx.optic_offset);
+}
+
+template <typename StepFunc>
+inline MoaT SolveAngleAzimuthImpl(const LobContext& ctx, FeetT range,
+                                  RadiansT seed, RadiansT tolerance,
+                                  StepFunc step) {
+  constexpr size_t kMaxIterations = 10;
+  auto fire = [&](RadiansT launch_azimuth) -> FeetT {
+    return FireToTargetAzimuth(ctx, range, launch_azimuth, step);
+  };
+  RadiansT phi = seed;
+  FeetT f = fire(phi);
+  for (size_t iter = 0; iter < kMaxIterations && std::isfinite(f.Value());
+       ++iter) {
+    const RadiansT kPhiNext = FastInverseAngle(phi, f, range);
+    if (kPhiNext < constant::kMinAngle || kPhiNext > constant::kMaxAngle ||
+        std::isnan(kPhiNext.Value())) {
+      return MoaT(NaN());
+    }
+    if (std::abs((kPhiNext - phi).Value()) <= tolerance.Value()) {
+      return MoaT(kPhiNext);
+    }
+    phi = kPhiNext;
+    f = fire(phi);
+  }
+  return MoaT(NaN());
+}
 }  // namespace detail
 
 inline MoaT SolveAngle(const LobContext& ctx, FeetT range, FeetT impact_height,
@@ -95,6 +160,12 @@ inline MoaT SolveAngle(const LobContext& ctx, FeetT range, FeetT impact_height,
                        RadiansT tolerance = constant::kDefaultAngleTolerance) {
   return detail::SolveAngleImpl(ctx, range, impact_height, seed, tolerance,
                                 SolveStep);
+}
+
+inline MoaT SolveAngleAzimuth(
+    const LobContext& ctx, FeetT range, RadiansT seed,
+    RadiansT tolerance = constant::kDefaultAngleTolerance) {
+  return detail::SolveAngleAzimuthImpl(ctx, range, seed, tolerance, SolveStep);
 }
 
 inline MoaT SolveAngleELR(

@@ -407,6 +407,36 @@ test("applyConfig selects one zero and one wind source", () => {
   assert.ok(!profileNames.includes("windHeading"));
 });
 
+test("readConfig parses optic lateral offset", () => {
+  const config = readConfig({
+    ...valid,
+    opticLateralOffsetInches: "1.25",
+  });
+  assert.equal(config.opticLateralOffsetInches, 1.25);
+});
+
+test("readConfig validates non-finite optic lateral offset", () => {
+  assert.throws(
+    () => readConfig({ ...valid, opticLateralOffsetInches: "NaN" }),
+    /Lateral offset must be a finite number/,
+  );
+});
+
+test("applyConfig forwards optic lateral offset to builder", () => {
+  const { builder, calls } = recordingBuilder();
+  applyConfig(
+    builder,
+    readConfig({
+      ...valid,
+      opticLateralOffsetInches: "1.5",
+    }),
+  );
+  const offsetCall = calls.find(
+    ([name]) => name === "opticLateralOffsetInches",
+  );
+  assert.deepEqual(offsetCall, ["opticLateralOffsetInches", 1.5]);
+});
+
 // This file is part of lob.
 //
 // lob is free software: you can redistribute it and/or modify it under the

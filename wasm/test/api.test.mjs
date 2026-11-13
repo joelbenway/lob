@@ -50,6 +50,38 @@ test("builder setters are chainable", () => {
   builder.dispose();
 });
 
+test("builder exposes opticLateralOffsetInches", () => {
+  const builder = new Builder();
+  assert.strictEqual(typeof builder.opticLateralOffsetInches, "function");
+  assert.strictEqual(builder.opticLateralOffsetInches(1.5), builder);
+  builder.dispose();
+});
+
+test("builder exposes zeroAzimuthMoa and zeroAzimuthMOA alias", () => {
+  const builder = new Builder();
+  assert.strictEqual(typeof builder.zeroAzimuthMoa, "function");
+  assert.strictEqual(typeof builder.zeroAzimuthMOA, "function");
+  assert.strictEqual(builder.zeroAzimuthMoa(-1.25), builder);
+  assert.strictEqual(builder.zeroAzimuthMOA(2.5), builder);
+  builder.dispose();
+});
+
+test("row-0 deflection equals positive lateral offset in inches", () => {
+  const solver = new Builder()
+    .initialVelocityFps(2750)
+    .ballisticCoefficientPsi(0.372)
+    .zeroDistanceYds(100)
+    .opticHeightInches(1.5)
+    .opticLateralOffsetInches(1.5)
+    .build();
+
+  const [row0] = solver.solveYds([0]);
+  assert.strictEqual(row0.elevationInch, -1.5);
+  // Bullet is at Z=0, sight is at Z=-1.5 in -> bullet is +1.5 in to shooter's left
+  assert.strictEqual(row0.deflectionInch, 1.5);
+  solver.dispose();
+});
+
 test("solveYds returns forward solutions with rows in range order", () => {
   const context = makeBuilder().build();
   const rows = context.solveYds([0, 100, 200, 300]);
