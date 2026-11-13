@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -201,6 +202,78 @@ TEST(CApiTest, OpticLateralOffsetEntryPoints) {
             nullptr);
   EXPECT_NE(LobBuilderZeroAzimuthMOA(&builder, kAzimuthMoa), nullptr);
   LobBuilderDestroy(&builder);
+}
+
+TEST(CApiTest, LobBuilderBuildFullyInitializesPresultAndPreventsStaleReuse) {
+  constexpr double kDiameter = 0.308;
+  constexpr double kLength = 1.25;
+  constexpr double kMassGrains = 175.0;
+  constexpr double kTwist = 10.0;
+  constexpr uint16_t kVelocity = 2600U;
+  constexpr double kZeroDistanceYds = 100.0;
+  constexpr double kBc = 0.505;
+
+  LobBuilder b1{};
+  LobBuilderInit(&b1);
+  LobBuilderDiameterInch(&b1, kDiameter);
+  LobBuilderLengthInch(&b1, kLength);
+  LobBuilderMassGrains(&b1, kMassGrains);
+  LobBuilderTwistInchesPerTurn(&b1, kTwist);
+  LobBuilderInitialVelocityFps(&b1, kVelocity);
+  LobBuilderZeroDistanceYds(&b1, kZeroDistanceYds);
+  LobBuilderBallisticCoefficientPsi(&b1, kBc);
+
+  LobContext ctx{};
+  LobBuilderBuild(&b1, &ctx);
+  LobBuilderDestroy(&b1);
+
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  EXPECT_FALSE(std::isnan(ctx.stability_factor));
+  EXPECT_GT(ctx.stability_factor, 1.0);
+
+  // Build 2 reusing the SAME ctx with a builder that has no twist/diameter/mass
+  // and temperature 0 deg F (speed of sound ~1052 fps)
+  LobBuilder b2{};
+  LobBuilderInit(&b2);
+  LobBuilderTemperatureDegF(&b2, 0.0);
+  LobBuilderInitialVelocityFps(&b2, kVelocity);
+  LobBuilderZeroDistanceYds(&b2, kZeroDistanceYds);
+  LobBuilderBallisticCoefficientPsi(&b2, kBc);
+
+  LobBuilderBuild(&b2, &ctx);
+  LobBuilderDestroy(&b2);
+
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  EXPECT_TRUE(std::isnan(ctx.stability_factor));
+  EXPECT_NEAR(ctx.speed_of_sound, 1052.0, 5.0);
+
+  // Build 3 reusing the SAME ctx with an invalid BC
+  LobBuilder b3{};
+  LobBuilderInit(&b3);
+  LobBuilderInitialVelocityFps(&b3, kVelocity);
+  LobBuilderZeroDistanceYds(&b3, kZeroDistanceYds);
+  LobBuilderBallisticCoefficientPsi(&b3, -1.0);
+
+  LobBuilderBuild(&b3, &ctx);
+  LobBuilderDestroy(&b3);
+
+  EXPECT_EQ(ctx.error, kLobErrorBallisticCoefficientOOR);
+  EXPECT_TRUE(std::isnan(ctx.drag_coeff));
+  EXPECT_FLOAT_EQ(ctx.drags[0], 0.0F);
+  EXPECT_NEAR(ctx.speed_of_sound, 1116.45, 0.1);  // Reset from b2's 1052 to b3's 1116.45
+
+  // Build 4 reusing the SAME ctx with early environment failure
+  LobBuilder b4{};
+  LobBuilderInit(&b4);
+  LobBuilderAirPressureInHg(&b4, -1.0);
+
+  LobBuilderBuild(&b4, &ctx);
+  LobBuilderDestroy(&b4);
+
+  EXPECT_EQ(ctx.error, kLobErrorAirPressureOOR);
+  EXPECT_TRUE(std::isnan(ctx.speed_of_sound));
+  EXPECT_TRUE(std::isnan(ctx.drag_coeff));
+  EXPECT_FLOAT_EQ(ctx.drags[0], 0.0F);
 }
 
 }  // namespace tests

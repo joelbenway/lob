@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <type_traits>
 
 #include "constants.hpp"
@@ -241,12 +242,22 @@ class StrongT {
   constexpr T Value() const { return value_; }
   constexpr float Float() const { return static_cast<float>(value_); }
   constexpr uint32_t U32() const {
-    return IsNaN() || value_ < 0 ? 0U
-                                 : static_cast<uint32_t>(std::round(value_));
+    return IsNaN() || value_ <= 0
+               ? 0U
+               : (std::round(value_) >=
+                          static_cast<double>(
+                              std::numeric_limits<uint32_t>::max())
+                      ? std::numeric_limits<uint32_t>::max()
+                      : static_cast<uint32_t>(std::round(value_)));
   }
   constexpr uint16_t U16() const {
-    return IsNaN() || value_ < 0 ? 0U
-                                 : static_cast<uint16_t>(std::round(value_));
+    return IsNaN() || value_ <= 0
+               ? 0U
+               : (std::round(value_) >=
+                          static_cast<double>(
+                              std::numeric_limits<uint16_t>::max())
+                      ? std::numeric_limits<uint16_t>::max()
+                      : static_cast<uint16_t>(std::round(value_)));
   }
 
  private:

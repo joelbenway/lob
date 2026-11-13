@@ -37,6 +37,8 @@ enum class WindTableMode : uint8_t {
   kUniform,
 };
 
+constexpr double kAbsoluteZeroDegF = -459.67;
+constexpr double kMaxBallisticCoefficient = 1e5;
 
 bool HasLateralPerturbation(const LobContext& ctx) noexcept {
   if (std::fabs(ctx.coriolis.sin_l) > 0.0 ||
@@ -151,6 +153,11 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
     pimpl->range_angle_rad = RadiansT(DegreesT(0));
   }
 
+  if (!std::isfinite(pimpl->range_angle_rad.Value())) {
+    pout->error = kLobErrorRangeAngleOOR;
+    return;
+  }
+
   const bool kRangeAngleValid = pimpl->range_angle_rad > DegreesT(-90.0) &&
                                 pimpl->range_angle_rad < DegreesT(90.0);
   if (!kRangeAngleValid) {
@@ -169,43 +176,52 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
                       std::cos(pimpl->range_angle_rad.Value());
   }
 
+  auto is_altitude_valid = [](FeetT altitude) -> bool {
+    return std::isfinite(altitude.Value()) &&
+           FeetT(-isa::kStratosphereAltitudeFt) < altitude &&
+           altitude < FeetT(isa::kStratosphereAltitudeFt);
+  };
+
   if (!std::isnan(pimpl->altitude_ft)) {
-    altitude_of_firing_site = pimpl->altitude_ft;
-    altitude_of_barometer = std::isnan(pimpl->altitude_of_barometer_ft)
-                                ? pimpl->altitude_ft
-                                : pimpl->altitude_of_barometer_ft;
-    altitude_of_thermometer = std::isnan(pimpl->altitude_of_thermometer_ft)
-                                  ? pimpl->altitude_ft
-                                  : pimpl->altitude_of_thermometer_ft;
-
-    auto is_altitude_valid = [](FeetT altitude) -> bool {
-      return FeetT(-isa::kStratosphereAltitudeFt) < altitude &&
-             altitude < FeetT(isa::kStratosphereAltitudeFt);
-    };
-
-    if (!is_altitude_valid(altitude_of_firing_site)) {
+    if (!is_altitude_valid(pimpl->altitude_ft)) {
       pout->error = kLobErrorAltitudeOfFiringSiteOOR;
       return;
     }
+    altitude_of_firing_site = pimpl->altitude_ft;
+  }
 
-    if (!is_altitude_valid(altitude_of_barometer)) {
+  if (!std::isnan(pimpl->altitude_of_barometer_ft)) {
+    if (!is_altitude_valid(pimpl->altitude_of_barometer_ft)) {
       pout->error = kLobErrorAltitudeOfBarometerOOR;
       return;
     }
+    altitude_of_barometer = pimpl->altitude_of_barometer_ft;
+  } else {
+    altitude_of_barometer = altitude_of_firing_site;
+  }
 
-    if (!is_altitude_valid(altitude_of_thermometer)) {
+  if (!std::isnan(pimpl->altitude_of_thermometer_ft)) {
+    if (!is_altitude_valid(pimpl->altitude_of_thermometer_ft)) {
       pout->error = kLobErrorAltitudeOfThermometerOOR;
       return;
     }
-
-    temperature_at_firing_site = CalculateTemperatureAtAltitude(
-        altitude_of_firing_site, DegFT(isa::kSeaLevelDegF));
-    pressure_at_firing_site = BarometricFormula(
-        altitude_of_firing_site, InHgT(isa::kSeaLevelPressureInHg),
-        DegFT(isa::kSeaLevelDegF));
+    altitude_of_thermometer = pimpl->altitude_of_thermometer_ft;
+  } else {
+    altitude_of_thermometer = altitude_of_firing_site;
   }
 
+  temperature_at_firing_site = CalculateTemperatureAtAltitude(
+      altitude_of_firing_site, DegFT(isa::kSeaLevelDegF));
+  pressure_at_firing_site = BarometricFormula(
+      altitude_of_firing_site, InHgT(isa::kSeaLevelPressureInHg),
+      DegFT(isa::kSeaLevelDegF));
+
   if (!std::isnan(pimpl->temperature_deg_f)) {
+    if (!std::isfinite(pimpl->temperature_deg_f.Value()) ||
+        pimpl->temperature_deg_f < DegFT(kAbsoluteZeroDegF)) {
+      pout->error = kLobErrorAltitudeOfThermometerOOR;
+      return;
+    }
     temperature_at_firing_site = CalculateTemperatureAtAltitude(
         altitude_of_firing_site - altitude_of_thermometer,
         pimpl->temperature_deg_f);
@@ -215,7 +231,8 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
   }
 
   if (!std::isnan(pimpl->air_pressure_in_hg)) {
-    if (pimpl->air_pressure_in_hg < InHgT(0.0)) {
+    if (!std::isfinite(pimpl->air_pressure_in_hg.Value()) ||
+        pimpl->air_pressure_in_hg <= InHgT(0.0)) {
       pout->error = kLobErrorAirPressureOOR;
       return;
     }
@@ -228,7 +245,8 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
     pimpl->relative_humidity_percent = PercentT(isa::kSeaLevelHumidityPercent);
   }
 
-  if (pimpl->relative_humidity_percent < PercentT(0.0) ||
+  if (!std::isfinite(pimpl->relative_humidity_percent.Value()) ||
+      pimpl->relative_humidity_percent < PercentT(0.0) ||
       pimpl->relative_humidity_percent > PercentT(100.0)) {
     pout->error = kLobErrorHumidityOOR;
     return;
@@ -446,8 +464,6 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
       pout->error = kBuildErr;
       return;
     }
-    pimpl->ballistic_coefficient_psi = PmsiT(1);
-    pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
     return;
   }
 
@@ -462,7 +478,6 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
       pout->error = kBuildErr;
       return;
     }
-    pimpl->ballistic_coefficient_psi = PmsiT(1);
     return;
   }
 
@@ -475,8 +490,18 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
       return;
     }
     std::copy_n(src, spline::kCoefsSize, &pout->drags[0]);
-    pimpl->ballistic_coefficient_psi = PmsiT(1);
-    pimpl->atmosphere_reference = kLobAtmosphereReferenceIcao;
+    return;
+  }
+
+  if (pimpl->ballistic_coefficient_psi.IsNaN()) {
+    pout->error = kLobErrorBallisticCoefficientRequired;
+    return;
+  }
+
+  if (!std::isfinite(pimpl->ballistic_coefficient_psi.Value()) ||
+      pimpl->ballistic_coefficient_psi <= PmsiT(0.0) ||
+      pimpl->ballistic_coefficient_psi > PmsiT(kMaxBallisticCoefficient)) {
+    pout->error = kLobErrorBallisticCoefficientOOR;
     return;
   }
 
@@ -497,14 +522,18 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
 void BuildCoefficients(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
-  if (pimpl->ballistic_coefficient_psi.IsNaN()) {
-    pout->error = kLobErrorBallisticCoefficientRequired;
-    return;
-  }
+  if (pimpl->drag_table_mode == DragTableMode::kStandard) {
+    if (pimpl->ballistic_coefficient_psi.IsNaN()) {
+      pout->error = kLobErrorBallisticCoefficientRequired;
+      return;
+    }
 
-  if (pimpl->ballistic_coefficient_psi <= PmsiT(0.0)) {
-    pout->error = kLobErrorBallisticCoefficientOOR;
-    return;
+    if (!std::isfinite(pimpl->ballistic_coefficient_psi.Value()) ||
+        pimpl->ballistic_coefficient_psi <= PmsiT(0.0) ||
+        pimpl->ballistic_coefficient_psi > PmsiT(kMaxBallisticCoefficient)) {
+      pout->error = kLobErrorBallisticCoefficientOOR;
+      return;
+    }
   }
 
   assert(!pimpl->air_density_lbs_per_cu_ft.IsNaN());
@@ -555,11 +584,12 @@ void BuildUniformWind(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
   if (std::isnan(pimpl->wind_heading_rad)) {
-    pimpl->wind_heading_rad = DegreesT(0);
+    pimpl->wind_heading_rad = HeadingDegToRad(0.0);
   }
 
   const DegreesT kFullTurn(kDegreesPerTurn);
-  if (pimpl->wind_heading_rad > kFullTurn ||
+  if (!std::isfinite(pimpl->wind_heading_rad.Value()) ||
+      pimpl->wind_heading_rad > kFullTurn ||
       pimpl->wind_heading_rad < kFullTurn * -1) {
     pout->error = kLobErrorWindHeadingOOR;
     return;
@@ -567,6 +597,11 @@ void BuildUniformWind(Impl* pimpl, LobContext* pout) {
 
   if (std::isnan(pimpl->wind_speed_fps)) {
     pimpl->wind_speed_fps = FpsT(0);
+  }
+
+  if (!std::isfinite(pimpl->wind_speed_fps.Value())) {
+    pout->error = kLobErrorWindProfileInvalid;
+    return;
   }
 
   const double kCos = std::cos(pimpl->range_angle_rad.Value());
@@ -637,38 +672,49 @@ void BuildOpticHeight(Impl* pimpl, LobContext* pout) {
 void BuildStability(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
-  if (pimpl->velocity_fps.IsNaN() || pimpl->velocity_fps <= FpsT(0)) {
+  if (pimpl->velocity_fps.IsNaN() || pimpl->velocity_fps <= FpsT(0) ||
+      !std::isfinite(pimpl->velocity_fps.Value())) {
     pout->error = kLobErrorInitialVelocityRequired;
     return;
   }
 
-  if (pimpl->diameter_in <= InchT(0)) {
+  if (!pimpl->diameter_in.IsNaN() &&
+      (!std::isfinite(pimpl->diameter_in.Value()) ||
+       pimpl->diameter_in <= InchT(0))) {
     pout->error = kLobErrorDiameterOOR;
     return;
   }
 
-  if (pimpl->length_in <= InchT(0)) {
+  if (!pimpl->length_in.IsNaN() &&
+      (!std::isfinite(pimpl->length_in.Value()) ||
+       pimpl->length_in <= InchT(0))) {
     pout->error = kLobErrorLengthOOR;
     return;
   }
 
-  if (pimpl->mass_lbs < LbsT(0)) {
+  if (!pimpl->mass_lbs.IsNaN() &&
+      (!std::isfinite(pimpl->mass_lbs.Value()) ||
+       pimpl->mass_lbs < LbsT(0))) {
     pout->error = kLobErrorMassOOR;
     return;
   }
 
   if (pimpl->diameter_in.IsNaN() || pimpl->length_in.IsNaN() ||
       pimpl->mass_lbs.IsNaN() || pimpl->twist_inches_per_turn.IsNaN() ||
+      !std::isfinite(pimpl->twist_inches_per_turn.Value()) ||
       AreEqual(pimpl->twist_inches_per_turn, InchPerTwistT(0))) {
     return;
   }
 
   const double kFtp = CalculateMillerTwistRuleCorrectionFactor(
       pimpl->air_density_lbs_per_cu_ft);
-  pout->stability_factor =
+  const double kSg =
       kFtp * CalculateMillerTwistRuleStabilityFactor(
                  pimpl->diameter_in, GrainT(pimpl->mass_lbs), pimpl->length_in,
                  pimpl->twist_inches_per_turn, pimpl->velocity_fps);
+  if (std::isfinite(kSg) && std::abs(kSg) > 0.0) {
+    pout->stability_factor = kSg;
+  }
 }
 
 void BuildCoriolis(Impl* pimpl, LobContext* pout) {
@@ -736,8 +782,13 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   // Fast path: skip heavy Caliber math if geometry incomplete (common)
   if (pimpl->diameter_in.IsNaN() || pimpl->length_in.IsNaN() ||
       pimpl->mass_lbs.IsNaN() || pimpl->twist_inches_per_turn.IsNaN() ||
-      std::isnan(pout->stability_factor) || std::isnan(pout->speed_of_sound) ||
-      pimpl->velocity_fps.IsNaN() || pimpl->ballistic_coefficient_psi.IsNaN()) {
+      AreEqual(pimpl->twist_inches_per_turn, InchPerTwistT(0)) ||
+      std::isnan(pout->stability_factor) ||
+      !(std::abs(pout->stability_factor) > 0.0) ||
+      std::isnan(pout->speed_of_sound) || pimpl->velocity_fps.IsNaN() ||
+      (pimpl->drag_table_mode == DragTableMode::kStandard &&
+       (pimpl->ballistic_coefficient_psi.IsNaN() ||
+        !std::isfinite(pimpl->ballistic_coefficient_psi.Value())))) {
     return;
   }
 
@@ -754,7 +805,9 @@ void BuildBoatright(Impl* pimpl, LobContext* pout) {
   const GrainT kMass = pimpl->mass_lbs;
   const InchPerTwistT kTwist(pimpl->twist_inches_per_turn);
   const double kSg(pout->stability_factor);
-  const PmsiT kBc(pimpl->ballistic_coefficient_psi);
+  const PmsiT kBc(pimpl->drag_table_mode == DragTableMode::kStandard
+                      ? pimpl->ballistic_coefficient_psi
+                      : PmsiT(1));
   const FpsT kZWind(pout->wind_nodes[0].z_fps);
   const LbsPerCuFtT kAirDensity = pimpl->air_density_lbs_per_cu_ft;
 
@@ -864,8 +917,11 @@ void BuildLitzAerodynamicJump(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  if (!std::isnan(pout->stability_factor) && !std::isnan(pimpl->diameter_in) &&
-      !std::isnan(pimpl->length_in)) {
+  if (!std::isnan(pout->stability_factor) &&
+      std::abs(pout->stability_factor) > 0.0 &&
+      !std::isnan(pimpl->diameter_in) && !std::isnan(pimpl->length_in) &&
+      !pimpl->twist_inches_per_turn.IsNaN() &&
+      !AreEqual(pimpl->twist_inches_per_turn, InchPerTwistT(0))) {
     pout->aerodynamic_jump =
         litz::CalculateAerodynamicJump(pout->stability_factor,
                                        pimpl->diameter_in, pimpl->length_in,
@@ -881,7 +937,8 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
   if (!std::isnan(pimpl->zero_angle_moa)) {
-    if (pimpl->zero_angle_moa > constant::kMaxAngle ||
+    if (!std::isfinite(pimpl->zero_angle_moa.Value()) ||
+        pimpl->zero_angle_moa > constant::kMaxAngle ||
         pimpl->zero_angle_moa < constant::kMinAngle) {
       pout->error = kLobErrorZeroAngleOOR;
     }
@@ -893,7 +950,8 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  if (pimpl->zero_distance_ft <= FeetT(0)) {
+  if (!std::isfinite(pimpl->zero_distance_ft.Value()) ||
+      pimpl->zero_distance_ft <= FeetT(0)) {
     pout->error = kLobErrorZeroDistanceOOR;
     return;
   }
@@ -938,7 +996,8 @@ void BuildZeroAzimuth(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
   if (!std::isnan(pimpl->zero_azimuth_moa)) {
-    if (pimpl->zero_azimuth_moa > constant::kMaxAngle ||
+    if (!std::isfinite(pimpl->zero_azimuth_moa.Value()) ||
+        pimpl->zero_azimuth_moa > constant::kMaxAngle ||
         pimpl->zero_azimuth_moa < constant::kMinAngle) {
       pout->error = kLobErrorZeroAngleOOR;
       return;
@@ -998,7 +1057,8 @@ void BuildZeroAzimuth(Impl* pimpl, LobContext* pout) {
 void BuildOptions(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
-  if (pout->max_time < 0.0) {
+  if (!std::isnan(pimpl->max_time_sec) &&
+      (!std::isfinite(pimpl->max_time_sec.Value()) || pout->max_time < 0.0)) {
     pout->error = kLobErrorMaximumTimeOOR;
     return;
   }
@@ -1465,24 +1525,31 @@ void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
   }
   auto* pimpl = Pimpl(pbuilder);
 
-  presult->mass = pimpl->mass_lbs.Value();
+  *presult = LobContext{};
+  presult->error = kLobErrorNotFormed;
+  presult->stability_factor = NaN();
+  presult->aerodynamic_jump = NaN();
+  presult->spindrift_factor = NaN();
+  presult->optic_height = NaN();
+  presult->optic_offset = NaN();
+  presult->zero_angle = NaN();
+  presult->zero_azimuth = 0.0;
+  presult->k_lapse = 0.0;
+  presult->speed_of_sound = NaN();
+  presult->drag_coeff = NaN();
+
+  presult->mass = pimpl->mass_lbs.IsNaN() ? NaN() : pimpl->mass_lbs.Value();
   presult->velocity =
       pimpl->velocity_fps.IsNaN() ? 0 : pimpl->velocity_fps.U16();
   presult->minimum_speed =
       pimpl->minimum_speed_fps.IsNaN() ? 0 : pimpl->minimum_speed_fps.U16();
   presult->step_size = pimpl->step_size_in;
-  presult->max_time = pimpl->max_time_sec.Value();
+  presult->max_time =
+      pimpl->max_time_sec.IsNaN() ? NaN() : pimpl->max_time_sec.Value();
   presult->zero_angle =
       pimpl->zero_angle_moa.IsNaN() ? NaN() : pimpl->zero_angle_moa.Value();
   presult->zero_azimuth =
       pimpl->zero_azimuth_moa.IsNaN() ? 0.0 : pimpl->zero_azimuth_moa.Value();
-
-  presult->error = kLobErrorNotFormed;
-  presult->aerodynamic_jump = NaN();
-  presult->spindrift_factor = NaN();
-  presult->optic_height = NaN();
-  presult->optic_offset = NaN();
-  presult->k_lapse = 0.0;
 
   BuildEnvironment(pimpl, presult);
   if (presult->error != kLobErrorNotFormed) {
