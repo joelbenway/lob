@@ -406,6 +406,89 @@ TEST(SolveAngleTest, SolveAngleAzimuthDefaultSeedMatchesExplicitAzimuthSeed) {
   EXPECT_NEAR(kAzDefault.Value(), ctx.zero_azimuth, 1.0e-6);
 }
 
+TEST(SolveAngleTest, EstimateDragPerDistanceInvalidInputsReturnZero) {
+  LobContext ctx{};
+  ctx.speed_of_sound = 0.0;
+  EXPECT_DOUBLE_EQ(lob::EstimateDragPerDistance(ctx, 3000.0), 0.0);
+  ctx.speed_of_sound = 1116.45;
+  ctx.drag_coeff = 0.0;
+  EXPECT_DOUBLE_EQ(lob::EstimateDragPerDistance(ctx, 3000.0), 0.0);
+}
+
+TEST(SolveAngleTest, EstimateAerodynamicSeedInvalidInputsReturnZero) {
+  LobContext ctx{};
+  ctx.velocity = 3000;
+  EXPECT_DOUBLE_EQ(
+      lob::EstimateAerodynamicSeed(ctx, lob::FeetT(0.0), lob::FeetT(0.0))
+          .Value(),
+      0.0);
+  EXPECT_DOUBLE_EQ(
+      lob::EstimateAerodynamicSeed(ctx, lob::FeetT(-10.0), lob::FeetT(0.0))
+          .Value(),
+      0.0);
+  EXPECT_DOUBLE_EQ(lob::EstimateAerodynamicSeed(
+                       ctx, lob::FeetT(lob::NaN<double>()), lob::FeetT(0.0))
+                       .Value(),
+                   0.0);
+  ctx.velocity = 0;
+  EXPECT_DOUBLE_EQ(
+      lob::EstimateAerodynamicSeed(ctx, lob::FeetT(300.0), lob::FeetT(0.0))
+          .Value(),
+      0.0);
+  ctx.velocity = 3000;
+  ctx.aerodynamic_jump = std::numeric_limits<double>::infinity();
+  EXPECT_DOUBLE_EQ(
+      lob::EstimateAerodynamicSeed(ctx, lob::FeetT(300.0), lob::FeetT(0.0))
+          .Value(),
+      0.0);
+}
+
+TEST(SolveAngleTest, EstimateAzimuthSeedInvalidInputsReturnZero) {
+  LobContext ctx{};
+  EXPECT_DOUBLE_EQ(lob::EstimateAzimuthSeed(ctx, lob::FeetT(0.0)).Value(), 0.0);
+  EXPECT_DOUBLE_EQ(lob::EstimateAzimuthSeed(ctx, lob::FeetT(-100.0)).Value(),
+                   0.0);
+  EXPECT_DOUBLE_EQ(
+      lob::EstimateAzimuthSeed(ctx, lob::FeetT(lob::NaN<double>())).Value(),
+      0.0);
+}
+
+TEST_F(SolveAngleELRTest, FireToTargetAzimuthTerminalReturnsNaN) {
+  ctx.minimum_speed = 50000.0;
+  const auto kResidual = lob::detail::FireToTargetAzimuth(
+      ctx, lob::FeetT(300.0), lob::RadiansT(0.0), lob::SolveStep);
+  EXPECT_TRUE(kResidual.IsNaN());
+}
+
+TEST_F(SolveAngleELRTest, SolveAngleAzimuthImplAngleOORReturnsNaN) {
+  auto bad_step = [](const LobContext&, lob::TrajectoryStateT* s,
+                     lob::spline::CurveView*, lob::FeetT range) {
+    *s = lob::TrajectoryStateT(
+        lob::CartesianT<lob::FeetT>(range, lob::FeetT(0.0), lob::FeetT(1e6)),
+        s->V());
+  };
+  const auto kResult = lob::detail::SolveAngleAzimuthImpl(
+      ctx, lob::FeetT(300.0), lob::RadiansT(0.0),
+      lob::constant::kDefaultAngleTolerance, bad_step);
+  EXPECT_TRUE(kResult.IsNaN());
+}
+
+TEST_F(SolveAngleELRTest, SolveAngleAzimuthImplExhaustionReturnsNaN) {
+  auto oscillating_step = [](const LobContext&, lob::TrajectoryStateT* s,
+                             lob::spline::CurveView*, lob::FeetT range) {
+    static bool flip = false;
+    flip = !flip;
+    *s = lob::TrajectoryStateT(
+        lob::CartesianT<lob::FeetT>(range, lob::FeetT(0.0),
+                                    lob::FeetT(flip ? 10.0 : -10.0)),
+        s->V());
+  };
+  const auto kResult = lob::detail::SolveAngleAzimuthImpl(
+      ctx, lob::FeetT(300.0), lob::RadiansT(0.0), lob::RadiansT(1e-12),
+      oscillating_step);
+  EXPECT_TRUE(kResult.IsNaN());
+}
+
 }  // namespace
 }  // namespace tests
 

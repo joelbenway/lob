@@ -70,10 +70,10 @@ void ApplyGyroscopicSpinDrift(const LobContext& ctx, LobOutput* pouts,
   }
   if (HasGyroscopicSpin(ctx.stability_factor)) {
     for (size_t i = 0; i < size; i++) {
-      const double kD = litz::CalculateGyroscopicSpinDrift(
-                            ctx.stability_factor, SecT(pouts[i].time_of_flight))
-                            .Value();
-      pouts[i].deflection += kD;
+      pouts[i].deflection +=
+          litz::CalculateGyroscopicSpinDrift(ctx.stability_factor,
+                                             SecT(pouts[i].time_of_flight))
+              .Value();
     }
   }
 }

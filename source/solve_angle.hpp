@@ -90,10 +90,8 @@ inline RadiansT EstimateAzimuthSeed(const LobContext& ctx,
   }
   const double kOffset = std::isnan(ctx.optic_offset) ? 0.0 : ctx.optic_offset;
   const double kSeed = std::atan(kOffset / range.Value());
-  return std::isfinite(kSeed)
-             ? std::max(constant::kMinAngle,
-                        std::min(constant::kMaxAngle, RadiansT(kSeed)))
-             : RadiansT(0.0);
+  return std::max(constant::kMinAngle,
+                  std::min(constant::kMaxAngle, RadiansT(kSeed)));
 }
 
 namespace detail {

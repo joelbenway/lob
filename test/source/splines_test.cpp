@@ -511,6 +511,17 @@ TEST(SplinesBuildTest, ReturnsKnotsMinusOneForMultipleKnots) {
   EXPECT_EQ(kCount, kN - 1);
 }
 
+TEST(SplinesBuildTest, ReturnsZeroWhenKnotsOrSizeLessThanTwo) {
+  const float kKnot = 0.0F;
+  float coef[4]{};
+  EXPECT_EQ(lob::spline::Build<float>(kLinearX.data(), kLineFn.data(),
+                                      kLinearX.size(), &kKnot, 1, coef),
+            0U);
+  EXPECT_EQ(lob::spline::Build<float>(kLinearX.data(), kLineFn.data(), 1,
+                                      kLinearX.data(), kLinearX.size(), coef),
+            0U);
+}
+
 TEST(SplinesBuildTest, BuiltCoefsReproduceSourceDataAtKnots) {
   constexpr auto kN = size_t{5};
   std::array<float, kN> knots{0, 1, 2, 3, 4};

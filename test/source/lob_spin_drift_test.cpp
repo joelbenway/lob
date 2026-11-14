@@ -443,6 +443,20 @@ TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDriftFast) {
                    kTimeOfFlightError});
 }
 
+TEST_F(LobSpinTestFixture, LitzSpinDriftFallbackWhenBulletGeometryOmitted) {
+  ASSERT_NE(puut, nullptr);
+  constexpr double kBarrelTwist = 11.0;
+  const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist).Build();
+  EXPECT_TRUE(std::isnan(kContext.spindrift_factor));
+  EXPECT_TRUE(lob::HasGyroscopicSpin(kContext.stability_factor));
+
+  std::array<uint32_t, 2> ranges = {0, 3000};
+  std::array<lob::Output, 2> solutions = {};
+  const size_t size = lob::Solve(kContext, ranges, &solutions);
+  EXPECT_EQ(size, 2U);
+  EXPECT_GT(solutions[1].deflection, 0.0);
+}
+
 }  // namespace tests
 
 // This file is part of lob.

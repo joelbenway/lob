@@ -1004,9 +1004,8 @@ void BuildZeroAzimuth(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  if (pimpl->zero_distance_ft.IsNaN() || pimpl->zero_distance_ft <= FeetT(0)) {
-    return;
-  }
+  assert(!pimpl->zero_distance_ft.IsNaN() &&
+         pimpl->zero_distance_ft > FeetT(0));
 
   // Fast path: when no lateral forces (crosswind, Coriolis) act on the bullet,
   // the horizontal trajectory is a straight line. For centered optics

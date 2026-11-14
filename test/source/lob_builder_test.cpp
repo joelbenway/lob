@@ -1951,6 +1951,57 @@ TEST_F(BuilderTestFixture, CoriolisAzimuthAndLatitudeValidatedIndependently) {
   EXPECT_EQ(puut->Build().error, lob::ErrorT::kLatitudeOOR);
 }
 
+TEST(LobBuilderTest, RangeAngleNonFiniteReturnsError) {
+  const auto kResult =
+      lob::Builder()
+          .ZeroDistanceYds(100.0)
+          .BallisticCoefficientPsi(0.5)
+          .InitialVelocityFps(2800)
+          .RangeAngleDeg(std::numeric_limits<double>::infinity())
+          .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kRangeAngleOOR);
+}
+
+TEST(LobBuilderTest, NativeSplineNegativeCdAtLastKnotReturnsError) {
+  std::array<float, lob::spline::kCoefsSize> coefs{};
+  coefs.fill(0.1F);
+  // Cause PolyVal on the last segment to evaluate to a negative Cd
+  coefs[4 * (lob::spline::kSegmentCount - 1) + 1] = -100.0F;
+  const auto kResult = lob::Builder()
+                           .InitialVelocityFps(2800)
+                           .ZeroAngleMOA(5.0)
+                           .SplineCoefficients(coefs.data())
+                           .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kSplineCoefsInvalid);
+}
+
+TEST(LobBuilderTest,
+     ExplicitZeroAngleWithZeroDistanceComputesGeometricAzimuth) {
+  const auto kResult = lob::Builder()
+                           .InitialVelocityFps(2800)
+                           .BallisticCoefficientPsi(0.5)
+                           .ZeroAngleMOA(5.0)
+                           .ZeroDistanceYds(100.0)
+                           .OpticLateralOffsetInches(1.5)
+                           .Build();
+  ASSERT_EQ(kResult.error, lob::ErrorT::kNone);
+  const double expected_rad = std::atan((-1.5 / 12.0) / 300.0);
+  EXPECT_NEAR(kResult.zero_azimuth,
+              lob::MoaT(lob::RadiansT(expected_rad)).Value(), 1e-6);
+}
+
+TEST(LobBuilderTest, ZeroAzimuthUnreachableReturnsError) {
+  const auto kResult = lob::Builder()
+                           .BallisticCoefficientPsi(0.436)
+                           .InitialVelocityFps(3100)
+                           .ZeroDistanceYds(1.0)
+                           .OpticLateralOffsetInches(100.0)
+                           .WindSpeedMph(10.0)
+                           .WindHeadingDeg(90.0)
+                           .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kZeroUnreachable);
+}
+
 }  // namespace tests
 
 // This file is part of lob.

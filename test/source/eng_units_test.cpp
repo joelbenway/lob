@@ -202,6 +202,10 @@ TEST(EngUnitTests, U32) {
   EXPECT_EQ(kA.U32(), kB);
   const TestT kNaN(lob::NaN<double>());
   EXPECT_EQ(kNaN.U32(), 0U);
+  const TestT kLarge(1e12);
+  EXPECT_EQ(kLarge.U32(), std::numeric_limits<uint32_t>::max());
+  const TestT kNeg(-5.0);
+  EXPECT_EQ(kNeg.U32(), 0U);
 }
 
 TEST(EngUnitTests, U16) {
