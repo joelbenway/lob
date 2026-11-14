@@ -50,6 +50,8 @@ set(NPM_COMMAND
     "${NPM_COMMAND}"
     CACHE STRING "npm command to use")
 
+# Note: format-check and format-fix invoke npm scripts that require installed
+# npm packages (e.g. via 'npm install' or 'npm ci' at the project root).
 add_custom_target(
   format-check
   COMMAND

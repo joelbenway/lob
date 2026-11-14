@@ -121,7 +121,7 @@ Available if `BUILD_DOCS` is enabled. Builds to documentation using Doxygen. The
 
 #### `format-check` and `format-fix`
 
-These targets run the clang-format tool on the codebase to check errors and to fix them respectively. Customization available using the `FORMAT_PATTERNS` and `FORMAT_COMMAND` cache variables.
+These targets run `clang-format` on C/C++ sources and `prettier` (via `${NPM_COMMAND} run format:check` and `${NPM_COMMAND} run format`) on JavaScript, TypeScript, JSON, and HTML sources to check errors and fix them respectively. Note that running these targets requires installed npm dependencies (`npm install` or `npm ci` at the repository root). Customization of C/C++ formatting is available using the `FORMAT_PATTERNS` and `FORMAT_COMMAND` cache variables.
 
 #### `run-examples`
 
