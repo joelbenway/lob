@@ -1026,15 +1026,17 @@ void RefineCoupledZero(Impl* pimpl, LobContext* pout) {
 
     const MoaT kRefinedAngle =
         SolveAngle(*pout, pimpl->zero_distance_ft, pimpl->zero_impact_height);
-    if (!std::isnan(kRefinedAngle)) {
-      const double kAngleDiff =
-          std::abs(kRefinedAngle.Value() - pout->zero_angle);
-      pout->zero_angle = kRefinedAngle.Value();
+    if (std::isnan(kRefinedAngle)) {
+      pout->error = kLobErrorZeroUnreachable;
+      return;
+    }
+    const double kAngleDiff =
+        std::abs(kRefinedAngle.Value() - pout->zero_angle);
+    pout->zero_angle = kRefinedAngle.Value();
 
-      if (kAzDiff <= MoaT(constant::kDefaultAngleTolerance).Value() &&
-          kAngleDiff <= MoaT(constant::kDefaultAngleTolerance).Value()) {
-        break;
-      }
+    if (kAzDiff <= MoaT(constant::kDefaultAngleTolerance).Value() &&
+        kAngleDiff <= MoaT(constant::kDefaultAngleTolerance).Value()) {
+      break;
     }
   }
 }
