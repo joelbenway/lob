@@ -104,10 +104,11 @@ Sight height and lateral offset still affect reported elevation and deflection w
 
 ### Zero-state rules
 
-Zeros are recorded in the system frame. Both build solves (`BuildZeroAngle` and `BuildZeroAzimuth`) run against the sight planes.
+Zeros are recorded in the system frame. Both build solves (`BuildZeroAngle` and `BuildZeroAzimuth`) run against the sight planes. When `zero_azimuth_moa` is explicitly supplied, it takes precedence over all other lateral zero rules, and the lateral angle equals the supplied value (after range checking). The table below applies when `zero_azimuth_moa` is unset.
 
 | caller set | vertical angle | lateral angle |
 |---|---|---|
+| explicit `zero_azimuth_moa` (any other zero fields) | per vertical rules below | use given azimuth angle directly |
 | nothing (no zero) | N/A — required error `kZeroDistanceOOR` | — |
 | zero distance (± impact height) | solved via `BuildZeroAngle`, absorbing elevation air | solved via `BuildZeroAzimuth`, absorbing lateral air / offset |
 | `zero_angle_moa` alone (portable zero) | use given angle | 0 — offset treated as pure plane shift; documented limitation |

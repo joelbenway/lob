@@ -89,7 +89,7 @@ context is built rather than on every step.
 
 ## Frame and signs
 
-`lob` coordinates are right-handed in the firing-site frame:
+`lob` coordinates are left-handed in the firing-site frame:
 - **$+X$**: down-range along the horizontal bore azimuth
 - **$+Y$**: vertical, positive up
 - **$+Z$**: lateral horizontal, **positive to the shooter's left**

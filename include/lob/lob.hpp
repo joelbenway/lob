@@ -615,7 +615,7 @@ class Builder {
    * @brief Sets the zero azimuth angle directly in MOA, bypassing numerical
    * zero search.
    * @param value The zero azimuth angle in MOA (+ = bore aimed to the left
-   * in frame Z, pointing toward shooter-right offset optic).
+   * in frame Z, pointing toward shooter-left offset optic).
    * @return A reference to the Builder object.
    */
   Builder& ZeroAzimuthMOA(double value) {

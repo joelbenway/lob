@@ -436,7 +436,7 @@ LOB_EXPORT extern LobBuilder* LobBuilderZeroAngleMOA(LobBuilder* pbuilder,
  * from zeroing conditions.
  * @param pbuilder Pointer to the builder.
  * @param value The zero azimuth angle in MOA (+ = bore aimed left in frame Z,
- * toward shooter-right offset optic).
+ * toward shooter-left offset optic).
  * @return Pointer to the builder, or nullptr if pbuilder is null.
  */
 LOB_EXPORT extern LobBuilder* LobBuilderZeroAzimuthMOA(LobBuilder* pbuilder,

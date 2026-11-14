@@ -27,8 +27,8 @@ Small arms fire control, tank gunnery, and automated turret targeting all employ
 
 - The bore is angled laterally by a solved zero azimuth $\phi_0$ so that the bullet trajectory crosses the line of sight precisely at the zero distance $R_0$.
 - A "parallel" zero (bore kept strictly parallel to the sight axis) leaves an uncompensated horizontal offset at all ranges and cannot place impacts on the sensor reticle / tracking track.
-- In `lob`, `BuildZeroAzimuth` solves for $\phi_0$ at build time, ensuring forward deflection and inverse windage hold at $R_0$ both converge to zero.
-- When zeroing in the presence of crosswind, Coriolis, or sheared wind profiles, `BuildZeroAzimuth` absorbs lateral drift into $\phi_0$, matching the physical action of zeroing a sight. When lateral perturbations are absent, a closed-form geometric fast path solves $\phi_0 = \arctan(\text{offset} / R_0)$ with zero ODE integration overhead.
+- In `lob`, `BuildZeroAzimuth` solves for $\phi_0$ at build time, ensuring forward deflection and inverse windage hold at $R_0$ converge to the line of sight.
+- When zeroing in the presence of crosswind, Coriolis, or sheared wind profiles, `BuildZeroAzimuth` absorbs lateral aerodynamic drift into $\phi_0$, matching the physical action of zeroing a sight. Gyroscopic spin drift is treated as an aerodynamic trajectory deflection and is not absorbed into $\phi_0$ (consistent with standard ballistics tables where raw spin drift is reported at all ranges). When lateral perturbations are absent (and for level fire with $\text{gravity}_x = 0$), a closed-form geometric fast path solves $\phi_0 = \arctan(\text{offset} / R_0)$ with zero ODE integration overhead.
 
 ## Direct / Portable Azimuth Zero
 
@@ -36,5 +36,5 @@ When using portable zero angles or calibrated turret offsets from external fire-
 
 ## Scope and Limitations
 
-- **No parallel zero:** Trajectories always converge to the sight line at zero distance.
-- **No lateral impact offset:** Lateral zeroing is always dead-on at $R_0$ (no counterpart to vertical `zero_impact_height`).
+- **No parallel zero (distance-based zeroing):** When a zero distance is configured, trajectories always converge to the sight line at zero distance. For portable zero angles without a zero distance or explicit azimuth, azimuth defaults to zero, leaving an uncompensated horizontal offset across the trajectory.
+- **No lateral impact offset (distance-based zeroing):** Lateral zeroing is always dead-on at $R_0$ (no counterpart to vertical `zero_impact_height`).

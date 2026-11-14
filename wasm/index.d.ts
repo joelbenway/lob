@@ -165,7 +165,7 @@ export class Builder {
   /** Set bore sight angle relative to optical axis, in MOA. */
   zeroAngleMoa(value: number): this;
 
-  /** Set bore azimuth angle relative to optical axis, in MOA (+ = aimed left in frame Z, toward shooter-right offset optic). */
+  /** Set bore azimuth angle relative to optical axis, in MOA (+ = aimed left in frame Z, toward shooter-left offset optic). */
   zeroAzimuthMoa(value: number): this;
   /** Alias for zeroAzimuthMoa. */
   zeroAzimuthMOA(value: number): this;
