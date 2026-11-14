@@ -306,7 +306,7 @@ constexpr double kUsecPerSec = 1E6;
 // Temperature
 constexpr double kDegFPerDegC = 1.8;
 constexpr double kFreezePointDegF = 32.0;
-constexpr double kAbsoluteZeroDegF = -459.67;
+constexpr double kAbsoluteZeroDegF = lob::kAbsoluteZeroDegF;
 constexpr double kAbsoluteZeroDegC =
     (kAbsoluteZeroDegF - kFreezePointDegF) / kDegFPerDegC;
 }  // namespace convert

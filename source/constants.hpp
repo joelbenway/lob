@@ -11,6 +11,7 @@ constexpr double kPi = 3.14159265358979323846;
 constexpr int32_t kDegreesPerTurn = 360;
 constexpr double kStandardGravityFtPerSecSq = 32.17405;
 constexpr double kWindReferenceHeightFt = 1.0;
+constexpr double kAbsoluteZeroDegF = -459.67;
 
 namespace isa {
 constexpr double kSeaLevelDegF = 59.0;

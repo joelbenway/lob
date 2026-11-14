@@ -37,7 +37,6 @@ enum class WindTableMode : uint8_t {
   kUniform,
 };
 
-constexpr double kAbsoluteZeroDegF = -459.67;
 constexpr double kMaxBallisticCoefficient = 1e5;
 
 bool HasLateralPerturbation(const LobContext& ctx) noexcept {
