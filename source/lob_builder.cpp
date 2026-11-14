@@ -348,12 +348,18 @@ LobErrorT ValidateCustomTable(Impl* pimpl) {
 LobErrorT BuildCustomTableSpline(Impl* pimpl, LobContext* pout) {
   spline::Build(pimpl->table_xs, pimpl->table_ys, pimpl->table_count,
                 spline::kKnots.data(), spline::kKnotCount, &pout->drags[0]);
-  spline::CurveView curve(spline::kKnots.data(), &pout->drags[0]);
-  for (const float kKnot : spline::kKnots) {
-    const float kCd = curve.Eval(kKnot);
+  for (size_t i = 0; i < spline::kSegmentCount; ++i) {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+    const float kCd = pout->drags[4 * i];
     if (kCd < 0.0F || !std::isfinite(kCd)) {
       return kLobErrorMachDragTableInvalid;
     }
+  }
+  const float kLastCd = spline::detail::PolyVal(
+      &pout->drags[4 * (spline::kSegmentCount - 1)],
+      spline::kKnots.back() - spline::kKnots[spline::kSegmentCount - 1]);
+  if (kLastCd < 0.0F || !std::isfinite(kLastCd)) {
+    return kLobErrorMachDragTableInvalid;
   }
   return kLobErrorNone;
 }
@@ -412,12 +418,18 @@ LobErrorT BuildNativeSpline(const float* src, LobContext* pout) {
                   [](float v) { return !std::isfinite(v); })) {
     return kLobErrorSplineCoefsInvalid;
   }
-  spline::CurveView curve(spline::kKnots.data(), src);
-  for (const float kKnot : spline::kKnots) {
-    const float kCd = curve.Eval(kKnot);
+  for (size_t i = 0; i < spline::kSegmentCount; ++i) {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    const float kCd = src[4 * i];
     if (kCd < 0.0F || !std::isfinite(kCd)) {
       return kLobErrorSplineCoefsInvalid;
     }
+  }
+  const float kLastCd = spline::detail::PolyVal(
+      &src[4 * (spline::kSegmentCount - 1)],
+      spline::kKnots.back() - spline::kKnots[spline::kSegmentCount - 1]);
+  if (kLastCd < 0.0F || !std::isfinite(kLastCd)) {
+    return kLobErrorSplineCoefsInvalid;
   }
   std::copy_n(src, spline::kCoefsSize, &pout->drags[0]);
   return kLobErrorNone;
