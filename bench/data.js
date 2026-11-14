@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794335544056,
+  "lastUpdate": 1794699428698,
   "repoUrl": "https://github.com/joelbenway/lob",
   "entries": {
     "lob instruction counts": [
@@ -860,6 +860,75 @@ window.BENCHMARK_DATA = {
           {
             "name": "lob_bench/solve_inverse_elr",
             "value": 1177794.98,
+            "unit": "Ir/op"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "addbaafc4495136aee357f7442c6c2b9060247ff",
+          "message": "Merge pull request #52 from joelbenway/feat/optic-offset-and-cant\n\nFeat/optic offset and cant",
+          "timestamp": "2026-11-14T17:10:47-06:00",
+          "tree_id": "3b027e0026c507405a165263d4173540648e3c86",
+          "url": "https://github.com/joelbenway/lob/commit/addbaafc4495136aee357f7442c6c2b9060247ff"
+        },
+        "date": 1794699428131,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "lob_bench/build_basic",
+            "value": 717,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_full",
+            "value": 1960,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_custom_table",
+            "value": 5211.001,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_boatright",
+            "value": 2878.006,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_zero_search",
+            "value": 39305.005,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_basic",
+            "value": 248546.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_elr",
+            "value": 286945.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse",
+            "value": 249642.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse_elr",
+            "value": 1178373.98,
             "unit": "Ir/op"
           }
         ]
