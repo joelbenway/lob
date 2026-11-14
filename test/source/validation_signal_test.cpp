@@ -531,22 +531,15 @@ constexpr size_t kSplineTableSize = 13;
 constexpr size_t kSplineTransonicBegin = 2;  // Mach 0.8 entry
 constexpr size_t kSplineTransonicEnd = 6;    // Mach 1.2 entry
 constexpr float kSplineShiftCd = 5e-3F;      // §8.6 perturbation
-inline void SplineBaseTable(std::array<float, kSplineTableSize>* machs,
-                            std::array<float, kSplineTableSize>* drags) {
-  static constexpr std::array<float, kSplineTableSize> kMach = {
-      {0.0F, 0.5F, 0.8F, 0.925F, 1.0F, 1.1F, 1.2F, 1.5F, 2.0F, 2.5F, 3.0F, 3.7F,
-       5.0F}};
-  static constexpr std::array<float, kSplineTableSize> kDrag = {
-      {0.11980F, 0.11940F, 0.12420F, 0.16600F, 0.38030F, 0.40140F, 0.38840F,
-       0.34400F, 0.29800F, 0.26700F, 0.24240F, 0.20600F, 0.16180F}};
-  *machs = kMach;
-  *drags = kDrag;
-}
+constexpr std::array<float, kSplineTableSize> kSplineMach = {
+    {0.0F, 0.5F, 0.8F, 0.925F, 1.0F, 1.1F, 1.2F, 1.5F, 2.0F, 2.5F, 3.0F, 3.7F,
+     5.0F}};
+constexpr std::array<float, kSplineTableSize> kSplineBaseDrag = {
+    {0.11980F, 0.11940F, 0.12420F, 0.16600F, 0.38030F, 0.40140F, 0.38840F,
+     0.34400F, 0.29800F, 0.26700F, 0.24240F, 0.20600F, 0.16180F}};
 
 inline lob::Context BuildC1Spline(bool shifted) {
-  std::array<float, kSplineTableSize> machs{};
-  std::array<float, kSplineTableSize> drags{};
-  SplineBaseTable(&machs, &drags);
+  std::array<float, kSplineTableSize> drags = kSplineBaseDrag;
   if (shifted) {
     // +/-5e-3 Cd shift on the transonic band (0.8-1.2) — the §8.6 mapping.
     for (size_t idx = kSplineTransonicBegin; idx <= kSplineTransonicEnd;
@@ -556,7 +549,7 @@ inline lob::Context BuildC1Spline(bool shifted) {
   }
   lob::Builder b = tests::MakeC1IcaoBuilder();
   return b.BallisticCoefficientPsi(std::numeric_limits<double>::quiet_NaN())
-      .MachVsDragTable(machs, drags)
+      .MachVsDragTable(kSplineMach, drags)
       .Build();
 }
 
