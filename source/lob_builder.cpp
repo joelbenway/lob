@@ -505,26 +505,12 @@ void BuildSpline(Impl* pimpl, LobContext* pout) {
 
   for (size_t i = 0; i < spline::kCoefsSize; ++i) {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-    pout->drags[i] = coefs->at(i) * kScale;
+    pout->drags[i] = (*coefs)[i] * kScale;
   }
 }
 
 void BuildCoefficients(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
-
-  if (pimpl->drag_table_mode == DragTableMode::kStandard) {
-    if (pimpl->ballistic_coefficient_psi.IsNaN()) {
-      pout->error = kLobErrorBallisticCoefficientRequired;
-      return;
-    }
-
-    if (!std::isfinite(pimpl->ballistic_coefficient_psi.Value()) ||
-        pimpl->ballistic_coefficient_psi <= PmsiT(0.0) ||
-        pimpl->ballistic_coefficient_psi > PmsiT(kMaxBallisticCoefficient)) {
-      pout->error = kLobErrorBallisticCoefficientOOR;
-      return;
-    }
-  }
 
   assert(!pimpl->air_density_lbs_per_cu_ft.IsNaN());
   constexpr double kDragScale =
