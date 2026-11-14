@@ -2079,6 +2079,26 @@ TEST(LobBuilderTest, CoupledZeroingSatisfiesZeroResidualsAtZeroDistance) {
   EXPECT_NEAR(out.deflection, 0.0, kResidualTolInches);
 }
 
+TEST(LobBuilderTest, CoupledZeroingRefinedSolveAngleNaNReturnsUnreachable) {
+  constexpr double kBc = 0.2;
+  constexpr double kDiameter = 0.308;
+  constexpr double kMassGrains = 168.0;
+  constexpr uint16_t kVelocityFps = 400U;
+  constexpr double kZeroDistanceYds = 781.0;
+  constexpr double kWindSpeedMph = 20.0;
+  constexpr double kWindHeadingDeg = 90.0;
+  const auto kCtx = lob::Builder()
+                        .BallisticCoefficientPsi(kBc)
+                        .DiameterInch(kDiameter)
+                        .MassGrains(kMassGrains)
+                        .InitialVelocityFps(kVelocityFps)
+                        .ZeroDistanceYds(kZeroDistanceYds)
+                        .WindSpeedMph(kWindSpeedMph)
+                        .WindHeadingDeg(kWindHeadingDeg)
+                        .Build();
+  EXPECT_EQ(kCtx.error, lob::ErrorT::kZeroUnreachable);
+}
+
 }  // namespace tests
 
 // This file is part of lob.
