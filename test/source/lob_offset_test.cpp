@@ -182,13 +182,15 @@ TEST(LobOffsetTest, NonFiniteOpticHeightRejected) {
 }
 
 TEST(LobOffsetTest, InclinedShotWithOffsetOptic) {
+  constexpr double kInclinedAngleDeg = 30.0;
+  constexpr uint32_t kZeroDistanceFt = 300U;
   lob::Builder b;
   b.DiameterInch(kDiameter)
       .MassGrains(kMassGrains)
       .InitialVelocityFps(kMuzzleVelocityFps)
       .BallisticCoefficientPsi(kBcPsi)
       .ZeroDistanceYds(kZeroDistanceYds)
-      .RangeAngleDeg(30.0)
+      .RangeAngleDeg(kInclinedAngleDeg)
       .OpticHeightInches(kOpticHeightInches)
       .OpticLateralOffsetInches(kOpticOffsetInches);
   const lob::Context kCtx = b.Build();
@@ -196,7 +198,7 @@ TEST(LobOffsetTest, InclinedShotWithOffsetOptic) {
   EXPECT_NE(kCtx.gravity.x, 0.0);
 
   constexpr size_t kCount = 1;
-  const std::array<uint32_t, kCount> kRanges = {300};  // 100 yd
+  const std::array<uint32_t, kCount> kRanges = {kZeroDistanceFt};  // 100 yd
   std::array<lob::Output, kCount> fwd{};
   lob::Solve(kCtx, kRanges, &fwd);
   EXPECT_NEAR(fwd.at(0).deflection, 0.0, kTolTight);

@@ -592,9 +592,9 @@ TEST(SplinesTableEvaluatorTest,
   EXPECT_NEAR(res.dy, direct.dy, kEps);
 
   // Repeated evaluation at the same point within interval
-  const auto resRepeat = evaluator.Eval(kXOff2);
-  EXPECT_NEAR(resRepeat.y, kExpectedYOff2, kEps);
-  EXPECT_NEAR(resRepeat.dy, kExpectedDyOff2, kEps);
+  const auto kResRepeat = evaluator.Eval(kXOff2);
+  EXPECT_NEAR(kResRepeat.y, kExpectedYOff2, kEps);
+  EXPECT_NEAR(kResRepeat.dy, kExpectedDyOff2, kEps);
 
   // Segment 0 right endpoint / Segment 1 left endpoint: 1.0
   res = evaluator.Eval(kX1);
@@ -633,9 +633,9 @@ TEST(SplinesTableEvaluatorTest,
   EXPECT_NEAR(res.dy, direct.dy, kEps);
 
   // Repeated evaluation after skipping intervals
-  const auto resRepeatSkipped = evaluator.Eval(kXOff4);
-  EXPECT_NEAR(resRepeatSkipped.y, kExpectedYOff4, kEps);
-  EXPECT_NEAR(resRepeatSkipped.dy, kExpectedDyOff4, kEps);
+  const auto kResRepeatSkipped = evaluator.Eval(kXOff4);
+  EXPECT_NEAR(kResRepeatSkipped.y, kExpectedYOff4, kEps);
+  EXPECT_NEAR(kResRepeatSkipped.dy, kExpectedDyOff4, kEps);
 
   // Segment 3 right endpoint: 4.0
   res = evaluator.Eval(kX4);

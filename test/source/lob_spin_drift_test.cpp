@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "eng_units.hpp"
+#include "helpers.hpp"
 #include "lob/lob.hpp"
 #include "testing.hpp"
 

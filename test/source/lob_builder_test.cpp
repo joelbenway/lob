@@ -2071,12 +2071,9 @@ TEST(LobBuilderTest, CoupledZeroingSatisfiesZeroResidualsAtZeroDistance) {
                         .WindHeadingDeg(kWindHeadingDeg)
                         .Build();
   ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
-
-  LobOutput out{};
+  lob::Output out{};
   constexpr uint32_t kZeroDistanceFt = 300U;
-  const auto kOutputs = LobSolve(reinterpret_cast<const LobContext*>(&kCtx),
-                                 &kZeroDistanceFt, &out, 1U);
-  ASSERT_EQ(kOutputs, 1U);
+  ASSERT_EQ(lob::Solve(kCtx, kZeroDistanceFt, &out), 1U);
   constexpr double kResidualTolInches = 0.05;
   EXPECT_NEAR(out.elevation, 0.0, kResidualTolInches);
   EXPECT_NEAR(out.deflection, 0.0, kResidualTolInches);
