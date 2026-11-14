@@ -125,11 +125,10 @@ struct Context {
   double speed_of_sound;  ///< @brief The local speed of sound in Fps.
   double mass;            ///< @brief Mass of the projectile in pounds.
   double optic_height;    ///< @brief Height of the optic above the bore.
-  double
-      optic_offset;  ///< @brief Lateral offset of the optic (+ = shooter-left).
-  Gravity gravity;   ///< @brief Gravity vector.
-  Coriolis coriolis;    ///< @brief Coriolis effect parameters.
-  double zero_angle;    ///< @brief Angle between sight and trajectory.
+  double optic_offset;    ///< @brief Lateral offset of the optic.
+  Gravity gravity;        ///< @brief Gravity vector.
+  Coriolis coriolis;      ///< @brief Coriolis effect parameters.
+  double zero_angle;      ///< @brief Angle between sight and trajectory.
   double zero_azimuth;  ///< @brief Lateral angle between sight and trajectory.
   double stability_factor;  ///< @brief Miller stability factor.
   double aerodynamic_jump;  ///< @brief Aerodynamic jump effect in Moa.
