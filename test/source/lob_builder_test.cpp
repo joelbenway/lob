@@ -2010,19 +2010,76 @@ TEST(LobBuilderTest,
 TEST(LobBuilderTest, ZeroAzimuthUnreachableReturnsError) {
   constexpr double kBc = 0.436;
   constexpr uint16_t kVelocityFps = 3100U;
-  constexpr double kZeroDistanceYds = 1.0;
-  constexpr double kOpticOffsetInches = 100.0;
-  constexpr double kWindSpeedMph = 10.0;
+  constexpr double kZeroDistanceYds = 100.0;
+  constexpr double kWindSpeedMph = 5000.0;
   constexpr double kWindHeadingDeg = 90.0;
   const auto kResult = lob::Builder()
                            .BallisticCoefficientPsi(kBc)
                            .InitialVelocityFps(kVelocityFps)
                            .ZeroDistanceYds(kZeroDistanceYds)
-                           .OpticLateralOffsetInches(kOpticOffsetInches)
                            .WindSpeedMph(kWindSpeedMph)
                            .WindHeadingDeg(kWindHeadingDeg)
                            .Build();
   EXPECT_EQ(kResult.error, lob::ErrorT::kZeroUnreachable);
+}
+
+TEST(LobBuilderTest, GeometricZeroAzimuthOutOfRangeExplicitAngleReturnsError) {
+  constexpr double kBc = 0.436;
+  constexpr uint16_t kVelocityFps = 3100U;
+  constexpr double kZeroAngleMoa = 5.0;
+  constexpr double kZeroDistanceYds = 0.1;
+  constexpr double kOpticOffsetInches = 12.0;
+  const auto kResult = lob::Builder()
+                           .BallisticCoefficientPsi(kBc)
+                           .InitialVelocityFps(kVelocityFps)
+                           .ZeroAngleMOA(kZeroAngleMoa)
+                           .ZeroDistanceYds(kZeroDistanceYds)
+                           .OpticLateralOffsetInches(kOpticOffsetInches)
+                           .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kZeroAngleOOR);
+}
+
+TEST(LobBuilderTest, GeometricZeroAzimuthOutOfRangeFastPathReturnsError) {
+  constexpr double kBc = 0.436;
+  constexpr uint16_t kVelocityFps = 3100U;
+  constexpr double kZeroDistanceYds = 0.1;
+  constexpr double kOpticOffsetInches = 12.0;
+  const auto kResult = lob::Builder()
+                           .BallisticCoefficientPsi(kBc)
+                           .InitialVelocityFps(kVelocityFps)
+                           .ZeroDistanceYds(kZeroDistanceYds)
+                           .OpticLateralOffsetInches(kOpticOffsetInches)
+                           .Build();
+  EXPECT_EQ(kResult.error, lob::ErrorT::kZeroAngleOOR);
+}
+
+TEST(LobBuilderTest, CoupledZeroingSatisfiesZeroResidualsAtZeroDistance) {
+  constexpr double kBc = 0.436;
+  constexpr uint16_t kVelocityFps = 3000U;
+  constexpr double kZeroDistanceYds = 100.0;
+  constexpr double kWindSpeedMph = 10.0;
+  constexpr double kWindHeadingDeg = 90.0;
+  constexpr double kOpticOffsetInches = 1.0;
+  constexpr double kOpticHeightInches = 1.5;
+  const auto kCtx = lob::Builder()
+                        .BallisticCoefficientPsi(kBc)
+                        .InitialVelocityFps(kVelocityFps)
+                        .ZeroDistanceYds(kZeroDistanceYds)
+                        .OpticHeightInches(kOpticHeightInches)
+                        .OpticLateralOffsetInches(kOpticOffsetInches)
+                        .WindSpeedMph(kWindSpeedMph)
+                        .WindHeadingDeg(kWindHeadingDeg)
+                        .Build();
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+
+  LobOutput out{};
+  constexpr uint32_t kZeroDistanceFt = 300U;
+  const auto kOutputs = LobSolve(reinterpret_cast<const LobContext*>(&kCtx),
+                                 &kZeroDistanceFt, &out, 1U);
+  ASSERT_EQ(kOutputs, 1U);
+  constexpr double kResidualTolInches = 0.05;
+  EXPECT_NEAR(out.elevation, 0.0, kResidualTolInches);
+  EXPECT_NEAR(out.deflection, 0.0, kResidualTolInches);
 }
 
 }  // namespace tests

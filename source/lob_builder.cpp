@@ -938,6 +938,78 @@ void BuildLitzAerodynamicJump(Impl* pimpl, LobContext* pout) {
   pout->aerodynamic_jump = MoaT(0).Value();
 }
 
+void BuildZeroAzimuth(Impl* pimpl, LobContext* pout) {
+  assert(pimpl != nullptr && pout != nullptr);
+
+  if (!std::isnan(pimpl->zero_azimuth_moa)) {
+    if (!std::isfinite(pimpl->zero_azimuth_moa.Value()) ||
+        pimpl->zero_azimuth_moa > constant::kMaxAngle ||
+        pimpl->zero_azimuth_moa < constant::kMinAngle) {
+      pout->error = kLobErrorZeroAngleOOR;
+      return;
+    }
+    pout->zero_azimuth = pimpl->zero_azimuth_moa.Value();
+    return;
+  }
+
+  if (!std::isnan(pimpl->zero_angle_moa)) {
+    // Portable zero path
+    if (pimpl->zero_distance_ft.IsNaN() ||
+        pimpl->zero_distance_ft <= FeetT(0)) {
+      pout->zero_azimuth = 0.0;
+      return;
+    }
+    // Explicit angle + zero distance: geometric solve without air
+    const RadiansT kGeoAzimuth(
+        std::atan(pout->optic_offset / pimpl->zero_distance_ft.Value()));
+    if (!std::isfinite(kGeoAzimuth.Value()) ||
+        kGeoAzimuth > constant::kMaxAngle ||
+        kGeoAzimuth < constant::kMinAngle) {
+      pout->error = kLobErrorZeroAngleOOR;
+      return;
+    }
+    pout->zero_azimuth = MoaT(kGeoAzimuth).Value();
+    return;
+  }
+
+  if (pimpl->zero_distance_ft.IsNaN()) {
+    pout->zero_azimuth = 0.0;
+    return;
+  }
+
+  if (!std::isfinite(pimpl->zero_distance_ft.Value()) ||
+      pimpl->zero_distance_ft <= FeetT(0)) {
+    pout->zero_azimuth = 0.0;
+    return;
+  }
+
+  // Fast path: when no lateral forces (crosswind, Coriolis) act on the bullet,
+  // the horizontal trajectory is a straight line. For centered optics
+  // (optic_offset = 0), zero_azimuth is identically 0.0. For offset optics,
+  // the analytic closed-form geometric angle is exact.
+  const bool kHasOffset = std::fabs(pout->optic_offset) > 0.0;
+  if (!HasLateralPerturbation(*pout) &&
+      (!kHasOffset || AreEqual(pout->gravity.x, 0.0))) {
+    if (!kHasOffset) {
+      pout->zero_azimuth = 0.0;
+    } else {
+      const RadiansT kGeoAzimuth(
+          std::atan(pout->optic_offset / pimpl->zero_distance_ft.Value()));
+      if (!std::isfinite(kGeoAzimuth.Value()) ||
+          kGeoAzimuth > constant::kMaxAngle ||
+          kGeoAzimuth < constant::kMinAngle) {
+        pout->error = kLobErrorZeroAngleOOR;
+        return;
+      }
+      pout->zero_azimuth = MoaT(kGeoAzimuth).Value();
+    }
+    return;
+  }
+
+  pout->zero_azimuth =
+      MoaT(EstimateAzimuthSeed(*pout, pimpl->zero_distance_ft)).Value();
+}
+
 void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
@@ -974,62 +1046,37 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
     return;
   }
   pout->zero_angle = kAngle.Value();
-}
 
-void BuildZeroAzimuth(Impl* pimpl, LobContext* pout) {
-  assert(pimpl != nullptr && pout != nullptr);
-
-  if (!std::isnan(pimpl->zero_azimuth_moa)) {
-    if (!std::isfinite(pimpl->zero_azimuth_moa.Value()) ||
-        pimpl->zero_azimuth_moa > constant::kMaxAngle ||
-        pimpl->zero_azimuth_moa < constant::kMinAngle) {
-      pout->error = kLobErrorZeroAngleOOR;
-      return;
-    }
-    pout->zero_azimuth = pimpl->zero_azimuth_moa.Value();
-    return;
-  }
-
-  if (!std::isnan(pimpl->zero_angle_moa)) {
-    // Portable zero path
-    if (pimpl->zero_distance_ft.IsNaN() ||
-        pimpl->zero_distance_ft <= FeetT(0)) {
-      pout->zero_azimuth = 0.0;
-      return;
-    }
-    // Explicit angle + zero distance: geometric solve without air
-    const RadiansT kGeoAzimuth(
-        std::atan(pout->optic_offset / pimpl->zero_distance_ft.Value()));
-    pout->zero_azimuth = MoaT(kGeoAzimuth).Value();
-    return;
-  }
-
-  assert(!pimpl->zero_distance_ft.IsNaN() &&
-         pimpl->zero_distance_ft > FeetT(0));
-
-  // Fast path: when no lateral forces (crosswind, Coriolis) act on the bullet,
-  // the horizontal trajectory is a straight line. For centered optics
-  // (optic_offset = 0), zero_azimuth is identically 0.0. For offset optics,
-  // the analytic closed-form geometric angle is exact.
+  // If lateral forces act on the bullet and azimuth was not explicitly set,
+  // iterate coupled vertical and lateral solves until both residuals converge.
   const bool kHasOffset = std::fabs(pout->optic_offset) > 0.0;
-  if (!HasLateralPerturbation(*pout) &&
-      (!kHasOffset || AreEqual(pout->gravity.x, 0.0))) {
-    if (!kHasOffset) {
-      pout->zero_azimuth = 0.0;
-    } else {
-      const RadiansT kGeoAzimuth(
-          std::atan(pout->optic_offset / pimpl->zero_distance_ft.Value()));
-      pout->zero_azimuth = MoaT(kGeoAzimuth).Value();
-    }
-    return;
-  }
+  if (std::isnan(pimpl->zero_azimuth_moa) &&
+      (HasLateralPerturbation(*pout) ||
+       (kHasOffset && !AreEqual(pout->gravity.x, 0.0)))) {
+    constexpr size_t kMaxCoupledIterations = 4;
+    for (size_t iter = 0; iter < kMaxCoupledIterations; ++iter) {
+      const MoaT kAzimuth = SolveAngleAzimuth(*pout, pimpl->zero_distance_ft);
+      if (std::isnan(kAzimuth)) {
+        pout->error = kLobErrorZeroUnreachable;
+        return;
+      }
+      const double kAzDiff = std::abs(kAzimuth.Value() - pout->zero_azimuth);
+      pout->zero_azimuth = kAzimuth.Value();
 
-  const MoaT kAzimuth = SolveAngleAzimuth(*pout, pimpl->zero_distance_ft);
-  if (std::isnan(kAzimuth)) {
-    pout->error = kLobErrorZeroUnreachable;
-    return;
+      const MoaT kRefinedAngle =
+          SolveAngle(*pout, pimpl->zero_distance_ft, pimpl->zero_impact_height);
+      if (!std::isnan(kRefinedAngle)) {
+        const double kAngleDiff =
+            std::abs(kRefinedAngle.Value() - pout->zero_angle);
+        pout->zero_angle = kRefinedAngle.Value();
+
+        if (kAzDiff <= MoaT(constant::kDefaultAngleTolerance).Value() &&
+            kAngleDiff <= MoaT(constant::kDefaultAngleTolerance).Value()) {
+          break;
+        }
+      }
+    }
   }
-  pout->zero_azimuth = kAzimuth.Value();
 }
 
 void BuildOptions(Impl* pimpl, LobContext* pout) {
@@ -1557,10 +1604,10 @@ void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
     BuildOptions(pimpl, presult);
   }
   if (presult->error == kLobErrorNotFormed) {
-    BuildZeroAngle(pimpl, presult);
+    BuildZeroAzimuth(pimpl, presult);
   }
   if (presult->error == kLobErrorNotFormed) {
-    BuildZeroAzimuth(pimpl, presult);
+    BuildZeroAngle(pimpl, presult);
   }
 
   if (presult->error == kLobErrorNotFormed) {
