@@ -593,25 +593,32 @@ void BuildUniformWind(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  const double kCos = std::cos(pimpl->range_angle_rad.Value());
-  const double kSin = std::sin(pimpl->range_angle_rad.Value());
-
   LobWindNode* wind_nodes = &pout->wind_nodes[0];
+  wind_nodes[0].range_ft = 0U;
 
-  double wind_x_fps = 0.0;
-  double wind_z_fps = 0.0;
-  if (pimpl->wind_speed_fps > FpsT(0) || pimpl->wind_speed_fps < FpsT(0)) {
-    wind_x_fps =
+  if (!(pimpl->wind_speed_fps > FpsT(0) || pimpl->wind_speed_fps < FpsT(0))) {
+    wind_nodes[0].x_fps = 0.0;
+    wind_nodes[0].y_fps = 0.0;
+    wind_nodes[0].z_fps = 0.0;
+  } else {
+    const double wind_x_fps =
         FpsT(pimpl->wind_speed_fps * std::sin(pimpl->wind_heading_rad.Value()))
             .Value();
-    wind_z_fps =
+    const double wind_z_fps =
         FpsT(pimpl->wind_speed_fps * std::cos(pimpl->wind_heading_rad.Value()))
             .Value();
+    wind_nodes[0].z_fps = wind_z_fps;
+    if (!(pimpl->range_angle_rad > RadiansT(0) ||
+          pimpl->range_angle_rad < RadiansT(0))) {
+      wind_nodes[0].x_fps = wind_x_fps;
+      wind_nodes[0].y_fps = 0.0;
+    } else {
+      const double kCos = std::cos(pimpl->range_angle_rad.Value());
+      const double kSin = std::sin(pimpl->range_angle_rad.Value());
+      wind_nodes[0].x_fps = wind_x_fps * kCos;
+      wind_nodes[0].y_fps = -wind_x_fps * kSin;
+    }
   }
-  wind_nodes[0].range_ft = 0U;
-  wind_nodes[0].x_fps = wind_x_fps * kCos;
-  wind_nodes[0].y_fps = -wind_x_fps * kSin;
-  wind_nodes[0].z_fps = wind_z_fps;
   pout->wind_count = 1;
 }
 
