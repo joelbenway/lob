@@ -724,7 +724,7 @@ void BuildCoriolis(Impl* pimpl, LobContext* pout) {
     }
   }
 
-  if (!std::isnan(pimpl->azimuth_rad) && !std::isnan(pimpl->latitude_rad)) {
+  if (!pimpl->azimuth_rad.IsNaN() && !pimpl->latitude_rad.IsNaN()) {
     constexpr double k2Omega = 2.0 * kAngularVelocityOfEarthRadPerSec;
     const double kSinL = std::sin(pimpl->latitude_rad.Value());
     const double kCosL = std::cos(pimpl->latitude_rad.Value());
@@ -735,10 +735,6 @@ void BuildCoriolis(Impl* pimpl, LobContext* pout) {
     pout->coriolis.cos_l_sin_a = kCosL2Omega * kSinA;
     pout->coriolis.sin_l = k2Omega * kSinL;
     pout->coriolis.cos_l_cos_a = kCosL2Omega * kCosA;
-  } else {
-    pout->coriolis.cos_l_sin_a = 0;
-    pout->coriolis.sin_l = 0;
-    pout->coriolis.cos_l_cos_a = 0;
   }
 }
 
