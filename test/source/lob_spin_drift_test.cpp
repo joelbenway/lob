@@ -446,15 +446,17 @@ TEST_F(LobSpinTestFixture, BoatrightLeftHandSpinDriftFast) {
 TEST_F(LobSpinTestFixture, LitzSpinDriftFallbackWhenBulletGeometryOmitted) {
   ASSERT_NE(puut, nullptr);
   constexpr double kBarrelTwist = 11.0;
+  constexpr uint32_t kDownrangeDistanceFt = 3000U;
+  constexpr size_t kRangeCount = 2;
   const auto kContext = puut->TwistInchesPerTurn(kBarrelTwist).Build();
   EXPECT_TRUE(std::isnan(kContext.spindrift_factor));
   EXPECT_TRUE(lob::HasGyroscopicSpin(kContext.stability_factor));
 
-  std::array<uint32_t, 2> ranges = {0, 3000};
-  std::array<lob::Output, 2> solutions = {};
-  const size_t size = lob::Solve(kContext, ranges, &solutions);
-  EXPECT_EQ(size, 2U);
-  EXPECT_GT(solutions[1].deflection, 0.0);
+  const std::array<uint32_t, kRangeCount> kRanges = {0, kDownrangeDistanceFt};
+  std::array<lob::Output, kRangeCount> solutions = {};
+  const size_t kSize = lob::Solve(kContext, kRanges, &solutions);
+  EXPECT_EQ(kSize, kRangeCount);
+  EXPECT_GT(solutions.at(1).deflection, 0.0);
 }
 
 }  // namespace tests
