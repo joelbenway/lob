@@ -106,7 +106,7 @@ inline TrajectoryStateT MakeInitialState(const LobContext& ctx,
   return {CartesianT<FeetT>(FeetT(0.0)),
           CartesianT<FpsT>(kVelocity * std::cos(kTheta) * std::cos(kPhi),
                            kVelocity * std::sin(kTheta),
-                           kVelocity * std::sin(kPhi))};
+                           kVelocity * std::cos(kTheta) * std::sin(kPhi))};
 }
 
 inline bool IsTerminal(const TrajectoryStateT& s, const LobContext& ctx,
@@ -165,7 +165,8 @@ inline TrajectoryStateT MakeInitialStateAzimuth(
           CartesianT<FpsT>(kVelocity * std::cos(kElev.Value()) *
                                std::cos(launch_azimuth.Value()),
                            kVelocity * std::sin(kElev.Value()),
-                           kVelocity * std::sin(launch_azimuth.Value()))};
+                           kVelocity * std::cos(kElev.Value()) *
+                               std::sin(launch_azimuth.Value()))};
 }
 
 template <typename StepFunc>

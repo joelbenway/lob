@@ -112,10 +112,10 @@ size_t SolveRanges(const LobContext& ctx, const uint32_t* pranges,
   const double kPhi = RadiansT(MoaT(ctx.zero_azimuth)).Value();
   const FpsT kV = FpsT(ctx.velocity);
 
-  TrajectoryStateT s(
-      CartesianT<FeetT>(FeetT(0.0)),
-      CartesianT<FpsT>(kV * std::cos(kTheta) * std::cos(kPhi),
-                       kV * std::sin(kTheta), kV * std::sin(kPhi)));
+  TrajectoryStateT s(CartesianT<FeetT>(FeetT(0.0)),
+                     CartesianT<FpsT>(kV * std::cos(kTheta) * std::cos(kPhi),
+                                      kV * std::sin(kTheta),
+                                      kV * std::cos(kTheta) * std::sin(kPhi)));
   size_t index = 0;
 
   spline::CurveView curve(spline::kKnots.data(), &ctx.drags[0]);
