@@ -533,10 +533,10 @@ constexpr size_t kSplineTransonicEnd = 6;    // Mach 1.2 entry
 constexpr float kSplineShiftCd = 5e-3F;      // §8.6 perturbation
 inline void SplineBaseTable(std::array<float, kSplineTableSize>* machs,
                             std::array<float, kSplineTableSize>* drags) {
-  const std::array<float, kSplineTableSize> kMach = {
+  static constexpr std::array<float, kSplineTableSize> kMach = {
       {0.0F, 0.5F, 0.8F, 0.925F, 1.0F, 1.1F, 1.2F, 1.5F, 2.0F, 2.5F, 3.0F, 3.7F,
        5.0F}};
-  const std::array<float, kSplineTableSize> kDrag = {
+  static constexpr std::array<float, kSplineTableSize> kDrag = {
       {0.11980F, 0.11940F, 0.12420F, 0.16600F, 0.38030F, 0.40140F, 0.38840F,
        0.34400F, 0.29800F, 0.26700F, 0.24240F, 0.20600F, 0.16180F}};
   *machs = kMach;
