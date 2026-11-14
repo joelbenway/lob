@@ -206,7 +206,7 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
 
   if (!std::isnan(pimpl->temperature_deg_f)) {
     if (!std::isfinite(pimpl->temperature_deg_f.Value()) ||
-        pimpl->temperature_deg_f < DegFT(kAbsoluteZeroDegF)) {
+        pimpl->temperature_deg_f <= DegFT(kAbsoluteZeroDegF)) {
       pout->error = kLobErrorAltitudeOfThermometerOOR;
       return;
     }
@@ -654,12 +654,20 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
 void BuildOpticHeight(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
   if (!std::isnan(pimpl->optic_height_ft)) {
+    if (!std::isfinite(pimpl->optic_height_ft.Value())) {
+      pout->error = kLobErrorZeroAngleOOR;
+      return;
+    }
     pout->optic_height = pimpl->optic_height_ft.Value();
   } else {
     constexpr FeetT kDefaultOpticHeight = InchT(1.5);
     pout->optic_height = kDefaultOpticHeight.Value();
   }
   if (!std::isnan(pimpl->optic_offset_ft)) {
+    if (!std::isfinite(pimpl->optic_offset_ft.Value())) {
+      pout->error = kLobErrorZeroAngleOOR;
+      return;
+    }
     pout->optic_offset = pimpl->optic_offset_ft.Value();
   } else {
     pout->optic_offset = 0.0;
@@ -1005,7 +1013,8 @@ void BuildZeroAzimuth(Impl* pimpl, LobContext* pout) {
   // (optic_offset = 0), zero_azimuth is identically 0.0. For offset optics,
   // the analytic closed-form geometric angle is exact.
   const bool kHasOffset = std::fabs(pout->optic_offset) > 0.0;
-  if (!HasLateralPerturbation(*pout)) {
+  if (!HasLateralPerturbation(*pout) &&
+      (!kHasOffset || AreEqual(pout->gravity.x, 0.0))) {
     if (!kHasOffset) {
       pout->zero_azimuth = 0.0;
     } else {

@@ -1919,6 +1919,10 @@ TEST_F(BuilderTestFixture,
   puut->TemperatureDegF(std::numeric_limits<double>::infinity());
   EXPECT_EQ(puut->Build().error, lob::ErrorT::kAltitudeOfThermometerOOR);
 
+  // Exact absolute zero (-459.67°F) -> kAltitudeOfThermometerOOR
+  puut->TemperatureDegF(-459.67);
+  EXPECT_EQ(puut->Build().error, lob::ErrorT::kAltitudeOfThermometerOOR);
+
   // Cold temperature below -69.7°F (-100°F) should not be clamped
   puut->TemperatureDegF(kExtremeColdTemp);
   const lob::Context kCtxCold = puut->Build();

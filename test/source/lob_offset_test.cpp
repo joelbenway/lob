@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 
 #include "lob/lob.hpp"
 
@@ -154,6 +155,51 @@ TEST(LobOffsetTest, NormativeWorkedExamplePhase1) {
   EXPECT_NEAR(inv.at(0).deflection, 0.0, kTolTight);
   EXPECT_GT(inv.at(1).deflection,
             0.0);  // Inverse hold is positive (aim left / dial right)
+}
+
+TEST(LobOffsetTest, NonFiniteOpticOffsetRejected) {
+  lob::Builder b;
+  b.DiameterInch(kDiameter)
+      .MassGrains(kMassGrains)
+      .InitialVelocityFps(kMuzzleVelocityFps)
+      .BallisticCoefficientPsi(kBcPsi)
+      .ZeroAngleMOA(0.0)
+      .OpticLateralOffsetInches(std::numeric_limits<double>::infinity());
+  const lob::Context kCtx = b.Build();
+  EXPECT_EQ(kCtx.error, lob::ErrorT::kZeroAngleOOR);
+}
+
+TEST(LobOffsetTest, NonFiniteOpticHeightRejected) {
+  lob::Builder b;
+  b.DiameterInch(kDiameter)
+      .MassGrains(kMassGrains)
+      .InitialVelocityFps(kMuzzleVelocityFps)
+      .BallisticCoefficientPsi(kBcPsi)
+      .ZeroAngleMOA(0.0)
+      .OpticHeightInches(std::numeric_limits<double>::infinity());
+  const lob::Context kCtx = b.Build();
+  EXPECT_EQ(kCtx.error, lob::ErrorT::kZeroAngleOOR);
+}
+
+TEST(LobOffsetTest, InclinedShotWithOffsetOptic) {
+  lob::Builder b;
+  b.DiameterInch(kDiameter)
+      .MassGrains(kMassGrains)
+      .InitialVelocityFps(kMuzzleVelocityFps)
+      .BallisticCoefficientPsi(kBcPsi)
+      .ZeroDistanceYds(kZeroDistanceYds)
+      .RangeAngleDeg(30.0)
+      .OpticHeightInches(kOpticHeightInches)
+      .OpticLateralOffsetInches(kOpticOffsetInches);
+  const lob::Context kCtx = b.Build();
+  EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
+  EXPECT_NE(kCtx.gravity.x, 0.0);
+
+  constexpr size_t kCount = 1;
+  const std::array<uint32_t, kCount> kRanges = {300};  // 100 yd
+  std::array<lob::Output, kCount> fwd{};
+  lob::Solve(kCtx, kRanges, &fwd);
+  EXPECT_NEAR(fwd.at(0).deflection, 0.0, kTolTight);
 }
 
 }  // namespace
