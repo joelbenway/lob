@@ -4,10 +4,12 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 
 #include "cartesian.hpp"
+#include "constants.hpp"
 #include "eng_units.hpp"
 #include "helpers.hpp"
 #include "lob/lob.h"
@@ -38,6 +40,64 @@ struct SightAnchor {
 
 inline SightAnchor GetSightAnchor(const LobContext& ctx) noexcept {
   return {FeetT(ctx.optic_height), FeetT(ctx.optic_offset)};
+}
+
+inline double EstimateDragPerDistance(const LobContext& ctx,
+                                      double velocity_fps) noexcept {
+  if (ctx.speed_of_sound <= 0.0) {
+    return 0.0;
+  }
+  spline::CurveView drag_curve(spline::kKnots.data(), &ctx.drags[0]);
+  const double kMach = velocity_fps / ctx.speed_of_sound;
+  const double kCd = drag_curve.Eval(MachT(kMach));
+  if (std::isfinite(kCd) && kCd > 0.0 && std::isfinite(ctx.drag_coeff) &&
+      ctx.drag_coeff > 0.0) {
+    return ctx.drag_coeff * kCd;
+  }
+  return 0.0;
+}
+
+inline RadiansT EstimateAerodynamicSeed(const LobContext& ctx, FeetT range,
+                                       FeetT impact_height) noexcept {
+  if (!std::isfinite(range.Value()) || range <= FeetT(0.0) ||
+      ctx.velocity == 0) {
+    return RadiansT(0.0);
+  }
+  const double kDist = range.Value();
+  const double kV = static_cast<double>(ctx.velocity);
+  const double kG = kStandardGravityFtPerSecSq;
+  const double kKdrag = EstimateDragPerDistance(ctx, kV);
+  const double kAnchorY =
+      std::isnan(ctx.optic_height) ? 0.0 : ctx.optic_height;
+  const double kImpactY =
+      impact_height.IsNaN() ? 0.0 : impact_height.Value();
+  const double kClimb = kAnchorY + kImpactY;
+  const double kSightAngle = std::atan(kClimb / kDist);
+  const double kDrop = (0.5 * kG * kDist / (kV * kV)) *
+                       (1.0 + ((2.0 / 3.0) * kKdrag * kDist));
+  const double kJump =
+      std::isnan(ctx.aerodynamic_jump)
+          ? 0.0
+          : RadiansT(MoaT(ctx.aerodynamic_jump)).Value();
+  const double kSeedAngle = kSightAngle + kDrop - kJump;
+  return std::isfinite(kSeedAngle)
+             ? std::max(constant::kMinAngle,
+                        std::min(constant::kMaxAngle, RadiansT(kSeedAngle)))
+             : RadiansT(0.0);
+}
+
+inline RadiansT EstimateAzimuthSeed(const LobContext& ctx,
+                                   FeetT range) noexcept {
+  if (!std::isfinite(range.Value()) || range <= FeetT(0.0)) {
+    return RadiansT(0.0);
+  }
+  const double kOffset =
+      std::isnan(ctx.optic_offset) ? 0.0 : ctx.optic_offset;
+  const double kSeed = std::atan(kOffset / range.Value());
+  return std::isfinite(kSeed)
+             ? std::max(constant::kMinAngle,
+                        std::min(constant::kMaxAngle, RadiansT(kSeed)))
+             : RadiansT(0.0);
 }
 
 namespace detail {
@@ -155,24 +215,35 @@ inline MoaT SolveAngleAzimuthImpl(const LobContext& ctx, FeetT range,
 }
 }  // namespace detail
 
-inline MoaT SolveAngle(const LobContext& ctx, FeetT range, FeetT impact_height,
-                       RadiansT seed,
+inline MoaT SolveAngle(const LobContext& ctx, FeetT range,
+                       FeetT impact_height = FeetT(0.0),
+                       RadiansT seed = RadiansT(NaN()),
                        RadiansT tolerance = constant::kDefaultAngleTolerance) {
-  return detail::SolveAngleImpl(ctx, range, impact_height, seed, tolerance,
-                                SolveStep);
+  const RadiansT kEffectiveSeed =
+      std::isnan(seed.Value()) ? EstimateAerodynamicSeed(ctx, range, impact_height)
+                               : seed;
+  return detail::SolveAngleImpl(ctx, range, impact_height, kEffectiveSeed,
+                                tolerance, SolveStep);
 }
 
 inline MoaT SolveAngleAzimuth(
-    const LobContext& ctx, FeetT range, RadiansT seed,
+    const LobContext& ctx, FeetT range, RadiansT seed = RadiansT(NaN()),
     RadiansT tolerance = constant::kDefaultAngleTolerance) {
-  return detail::SolveAngleAzimuthImpl(ctx, range, seed, tolerance, SolveStep);
+  const RadiansT kEffectiveSeed =
+      std::isnan(seed.Value()) ? EstimateAzimuthSeed(ctx, range) : seed;
+  return detail::SolveAngleAzimuthImpl(ctx, range, kEffectiveSeed, tolerance,
+                                       SolveStep);
 }
 
 inline MoaT SolveAngleELR(
-    const LobContext& ctx, FeetT range, FeetT impact_height, RadiansT seed,
+    const LobContext& ctx, FeetT range, FeetT impact_height = FeetT(0.0),
+    RadiansT seed = RadiansT(NaN()),
     RadiansT tolerance = constant::kDefaultAngleTolerance) {
-  return detail::SolveAngleImpl(ctx, range, impact_height, seed, tolerance,
-                                SolveStepELR);
+  const RadiansT kEffectiveSeed =
+      std::isnan(seed.Value()) ? EstimateAerodynamicSeed(ctx, range, impact_height)
+                               : seed;
+  return detail::SolveAngleImpl(ctx, range, impact_height, kEffectiveSeed,
+                                tolerance, SolveStepELR);
 }
 
 }  // namespace lob

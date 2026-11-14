@@ -49,20 +49,7 @@ bool HasLateralPerturbation(const LobContext& ctx) noexcept {
       [](const LobWindNode& node) { return std::fabs(node.z_fps) > 0.0; });
 }
 
-double EstimateDragPerDistance(const LobContext& ctx,
-                               double velocity_fps) noexcept {
-  if (ctx.speed_of_sound <= 0.0) {
-    return 0.0;
-  }
-  spline::CurveView drag_curve(spline::kKnots.data(), &ctx.drags[0]);
-  const double kMach = velocity_fps / ctx.speed_of_sound;
-  const double kCd = drag_curve.Eval(MachT(kMach));
-  if (std::isfinite(kCd) && kCd > 0.0 && std::isfinite(ctx.drag_coeff) &&
-      ctx.drag_coeff > 0.0) {
-    return ctx.drag_coeff * kCd;
-  }
-  return 0.0;
-}
+
 
 }  // namespace
 
@@ -970,29 +957,8 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
     pimpl->zero_impact_height = FeetT(0.0);
   }
 
-  assert(pimpl->velocity_fps > FpsT(0));
-  const double kDist = pimpl->zero_distance_ft.Value();
-  const double kV = pimpl->velocity_fps.Value();
-  const double kG = kStandardGravityFtPerSecSq;
-  const double kKdrag = EstimateDragPerDistance(*pout, kV);
-  const double kAnchorY = pout->optic_height;
-  const double kClimb = kAnchorY + pimpl->zero_impact_height.Value();
-  const double kSightAngle = std::atan(kClimb / kDist);
-  const double kDrop = (0.5 * kG * kDist / (kV * kV)) *
-                       (1.0 + ((2.0 / 3.0) * kKdrag * kDist));
-  const double kJump =
-      std::isnan(pout->aerodynamic_jump)
-          ? 0.0
-          : RadiansT(MoaT(pout->aerodynamic_jump)).Value();
-  const double kSeedAngle = kSightAngle + kDrop - kJump;
-
-  const auto kClampedSeed =
-      std::isfinite(kSeedAngle)
-          ? std::max(constant::kMinAngle,
-                     std::min(constant::kMaxAngle, RadiansT(kSeedAngle)))
-          : RadiansT(0.0);
   const MoaT kAngle = SolveAngle(*pout, pimpl->zero_distance_ft,
-                                 pimpl->zero_impact_height, kClampedSeed);
+                                 pimpl->zero_impact_height);
   if (std::isnan(kAngle)) {
     pout->error = kLobErrorZeroUnreachable;
     return;
@@ -1048,13 +1014,7 @@ void BuildZeroAzimuth(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  assert(pimpl->velocity_fps > FpsT(0));
-  const auto kGeoSeed =
-      RadiansT(std::atan(pout->optic_offset / pimpl->zero_distance_ft.Value()));
-  const auto kClampedSeed =
-      std::max(constant::kMinAngle, std::min(constant::kMaxAngle, kGeoSeed));
-  const MoaT kAzimuth =
-      SolveAngleAzimuth(*pout, pimpl->zero_distance_ft, kClampedSeed);
+  const MoaT kAzimuth = SolveAngleAzimuth(*pout, pimpl->zero_distance_ft);
   if (std::isnan(kAzimuth)) {
     pout->error = kLobErrorZeroUnreachable;
     return;
