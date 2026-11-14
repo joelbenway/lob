@@ -145,15 +145,15 @@ typedef struct {
  * provided LobBuilder.
  */
 typedef struct {
-  double drag_coeff;        ///< @brief Drag coefficient scaling factor.
-  double speed_of_sound;    ///< @brief The local speed of sound in Fps.
-  double mass;              ///< @brief Mass of the projectile in pounds.
-  double optic_height;      ///< @brief Height of the optic above the bore.
-  double optic_offset;      ///< @brief Lateral offset of the optic (+ = shooter-left).
-  LobGravity gravity;       ///< @brief Gravity vector.
-  LobCoriolis coriolis;     ///< @brief Coriolis effect parameters.
-  double zero_angle;        ///< @brief Angle between sight and trajectory.
-  double zero_azimuth;      ///< @brief Lateral angle between sight and trajectory.
+  double drag_coeff;      ///< @brief Drag coefficient scaling factor.
+  double speed_of_sound;  ///< @brief The local speed of sound in Fps.
+  double mass;            ///< @brief Mass of the projectile in pounds.
+  double optic_height;    ///< @brief Height of the optic above the bore.
+  double optic_offset;    ///< @brief Lateral offset of the optic.
+  LobGravity gravity;     ///< @brief Gravity vector.
+  LobCoriolis coriolis;   ///< @brief Coriolis effect parameters.
+  double zero_angle;      ///< @brief Angle between sight and trajectory.
+  double zero_azimuth;  ///< @brief Lateral angle between sight and trajectory.
   double stability_factor;  ///< @brief Miller stability factor.
   double aerodynamic_jump;  ///< @brief Aerodynamic jump effect in Moa.
   double spindrift_factor;  ///< @brief Spin drift factor.
@@ -406,7 +406,6 @@ LOB_EXPORT extern LobBuilder* LobBuilderOpticHeightInches(LobBuilder* pbuilder,
  */
 LOB_EXPORT extern LobBuilder* LobBuilderOpticLateralOffsetInches(
     LobBuilder* pbuilder, double value);
-
 
 /**
  * @brief Sets the twist rate of the barrel in inches per turn.

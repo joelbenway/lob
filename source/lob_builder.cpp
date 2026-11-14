@@ -50,8 +50,6 @@ bool HasLateralPerturbation(const LobContext& ctx) noexcept {
       [](const LobWindNode& node) { return std::fabs(node.z_fps) > 0.0; });
 }
 
-
-
 }  // namespace
 
 class Impl {
@@ -684,16 +682,14 @@ void BuildStability(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  if (!pimpl->length_in.IsNaN() &&
-      (!std::isfinite(pimpl->length_in.Value()) ||
-       pimpl->length_in <= InchT(0))) {
+  if (!pimpl->length_in.IsNaN() && (!std::isfinite(pimpl->length_in.Value()) ||
+                                    pimpl->length_in <= InchT(0))) {
     pout->error = kLobErrorLengthOOR;
     return;
   }
 
   if (!pimpl->mass_lbs.IsNaN() &&
-      (!std::isfinite(pimpl->mass_lbs.Value()) ||
-       pimpl->mass_lbs < LbsT(0))) {
+      (!std::isfinite(pimpl->mass_lbs.Value()) || pimpl->mass_lbs < LbsT(0))) {
     pout->error = kLobErrorMassOOR;
     return;
   }
@@ -963,8 +959,8 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
     pimpl->zero_impact_height = FeetT(0.0);
   }
 
-  const MoaT kAngle = SolveAngle(*pout, pimpl->zero_distance_ft,
-                                 pimpl->zero_impact_height);
+  const MoaT kAngle =
+      SolveAngle(*pout, pimpl->zero_distance_ft, pimpl->zero_impact_height);
   if (std::isnan(kAngle)) {
     pout->error = kLobErrorZeroUnreachable;
     return;

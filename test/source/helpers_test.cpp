@@ -228,7 +228,8 @@ TEST(HelpersTest, HasGyroscopicSpin) {
   EXPECT_TRUE(lob::HasGyroscopicSpin(kLeftHandStability));
   EXPECT_FALSE(lob::HasGyroscopicSpin(0.0));
   EXPECT_FALSE(lob::HasGyroscopicSpin(-0.0));
-  EXPECT_FALSE(lob::HasGyroscopicSpin(std::numeric_limits<double>::quiet_NaN()));
+  EXPECT_FALSE(
+      lob::HasGyroscopicSpin(std::numeric_limits<double>::quiet_NaN()));
 }
 
 }  // namespace tests

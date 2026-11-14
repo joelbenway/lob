@@ -573,7 +573,8 @@ TEST(EngUnitsTests, SpeedConversions) {
 TEST(EngUnitsTests, TemperatureConversions) {
   constexpr double kTestValueDegC = 0.0;
   constexpr double kTestValueDegF = 32.0;
-  constexpr double kTestValueDegR = kTestValueDegF - lob::convert::kAbsoluteZeroDegF;
+  constexpr double kTestValueDegR =
+      kTestValueDegF - lob::convert::kAbsoluteZeroDegF;
   constexpr double kTestValueDegK = 273.15;
   EXPECT_DOUBLE_EQ(lob::DegFT(lob::DegCT(kTestValueDegC)).Value(),
                    kTestValueDegF);

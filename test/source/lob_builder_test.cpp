@@ -1885,7 +1885,8 @@ TEST_F(BuilderTestFixture,
 
 TEST_F(BuilderTestFixture,
        NonFiniteAndExtremeScalarInputsProduceCorrectOorErrors) {
-  // Probe 7: Non-finite inputs must not slip through to solver or cause underflow.
+  // Probe 7: Non-finite inputs must not slip through to solver or cause
+  // underflow.
   constexpr uint16_t kVelocity = 2800U;
   constexpr double kZeroDist = 100.0;
   constexpr double kBc = 0.400;
