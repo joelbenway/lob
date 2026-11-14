@@ -667,6 +667,23 @@ TEST_F(BuilderTestFixture, MachVsDragTableNarrowHighExtrapolationInvalid) {
             lob::ErrorT::kMachDragTableInvalid);
 }
 
+TEST_F(BuilderTestFixture, MachVsDragTableInteriorKnotExtrapolationInvalid) {
+  constexpr float kStartMach = 1.0F;
+  constexpr float kEndMach = 5.0F;
+  constexpr float kStartDrag = 0.01F;
+  constexpr float kEndDrag = 1.0F;
+  const std::array<float, 2> kMachs = {kStartMach, kEndMach};
+  const std::array<float, 2> kDrags = {kStartDrag, kEndDrag};
+  EXPECT_EQ(puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+                .InitialVelocityFps(kM70MuzzleVelocity)
+                .ZeroDistanceYds(kJackOConnorZeroYardage)
+                .ZeroImpactHeightInches(kJackOConnorZeroHeight)
+                .MachVsDragTable(kMachs, kDrags)
+                .Build()
+                .error,
+            lob::ErrorT::kMachDragTableInvalid);
+}
+
 TEST_F(BuilderTestFixture, MachVsDragTableCoverageTooShort) {
   const std::array<float, 1> kMachs = {0.5F};
   const std::array<float, 1> kDrags = {0.0F};
@@ -1522,6 +1539,34 @@ TEST_F(BuilderTestFixture, SplineCoefficientsInvalidNonFinite) {
   EXPECT_EQ(kInfinite.error, lob::ErrorT::kSplineCoefsInvalid);
 }
 
+TEST_F(BuilderTestFixture, SplineCoefficientsNegativeKnot) {
+  constexpr float kBaseDrag = 0.5F;
+  constexpr float kNegativeDragLow = -0.1F;
+  constexpr float kNegativeDragHigh = -0.2F;
+  constexpr uint16_t kVelocityFps = 2800U;
+  constexpr double kZeroAngle = 5.0;
+  constexpr auto kLastSegmentKnotIdx = static_cast<size_t>(4 * 14);
+
+  std::array<float, lob::kLobCoeffsSize> bad{};
+  bad.fill(kBaseDrag);
+  bad[0] = kNegativeDragLow;
+  const lob::Context kBadLow = lob::Builder()
+                                   .SplineCoefficients(bad.data())
+                                   .InitialVelocityFps(kVelocityFps)
+                                   .ZeroAngleMOA(kZeroAngle)
+                                   .Build();
+  EXPECT_EQ(kBadLow.error, lob::ErrorT::kSplineCoefsInvalid);
+
+  bad.fill(kBaseDrag);
+  bad[kLastSegmentKnotIdx] = kNegativeDragHigh;
+  const lob::Context kBadHigh = lob::Builder()
+                                    .SplineCoefficients(bad.data())
+                                    .InitialVelocityFps(kVelocityFps)
+                                    .ZeroAngleMOA(kZeroAngle)
+                                    .Build();
+  EXPECT_EQ(kBadHigh.error, lob::ErrorT::kSplineCoefsInvalid);
+}
+
 TEST_F(BuilderTestFixture, SplineCoefficientsLastCallWins) {
   const lob::Context kSrc = lob::Builder()
                                 .BallisticCoefficientPsi(0.5)
@@ -1650,6 +1695,256 @@ TEST_F(BuilderTestFixture, CustomTableBoatrightUsesDirectCd) {
   // Custom table's Cd is direct, so its jump should be close to standard's
   // (within 10% — the mass/diameter conversion would make it ~30% different)
   EXPECT_NEAR(kCustom.aerodynamic_jump, kStandard.aerodynamic_jump, 0.5);
+}
+
+TEST_F(BuilderTestFixture, OpticLateralOffsetDefaultAndSetter) {
+  SetupTestBuilder(*puut);
+  const lob::Context kCtxDefault = puut->Build();
+  EXPECT_DOUBLE_EQ(kCtxDefault.optic_offset, 0.0);
+
+  // Positive offset: 1.5 inches to shooter's right -> -1.5 / 12 feet in frame Z
+  constexpr double kOffsetInches = 1.5;
+  constexpr double kInchesPerFoot = 12.0;
+  constexpr double kExpectedOffsetFt = -kOffsetInches / kInchesPerFoot;
+  constexpr double kTol = 1e-9;
+  puut->OpticLateralOffsetInches(kOffsetInches);
+  const lob::Context kCtxOffset = puut->Build();
+  EXPECT_NEAR(kCtxOffset.optic_offset, kExpectedOffsetFt, kTol);
+
+  // NaN input defaults to 0.0
+  puut->OpticLateralOffsetInches(std::numeric_limits<double>::quiet_NaN());
+  const lob::Context kCtxNan = puut->Build();
+  EXPECT_DOUBLE_EQ(kCtxNan.optic_offset, 0.0);
+}
+
+TEST_F(BuilderTestFixture, ZeroAzimuthDirectSetterAndOOR) {
+  SetupTestBuilder(*puut);
+  const lob::Context kCtxDefault = puut->Build();
+  EXPECT_DOUBLE_EQ(kCtxDefault.zero_azimuth, 0.0);
+
+  // Valid zero azimuth (MOA)
+  constexpr double kAzimuthMoa = -3.25;
+  puut->ZeroAzimuthMOA(kAzimuthMoa);
+  const lob::Context kCtxAzimuth = puut->Build();
+  EXPECT_EQ(kCtxAzimuth.error, lob::ErrorT::kNone);
+  EXPECT_DOUBLE_EQ(kCtxAzimuth.zero_azimuth, kAzimuthMoa);
+
+  // Out of range (beyond 45 degrees in MOA)
+  constexpr double kDegToMoa = 60.0;
+  constexpr double kOorMoa = 46.0 * kDegToMoa;
+  puut->ZeroAzimuthMOA(kOorMoa);
+  const lob::Context kCtxOor = puut->Build();
+  EXPECT_EQ(kCtxOor.error, lob::ErrorT::kZeroAngleOOR);
+
+  // Negative out of range
+  puut->ZeroAzimuthMOA(-kOorMoa);
+  const lob::Context kCtxNegOor = puut->Build();
+  EXPECT_EQ(kCtxNegOor.error, lob::ErrorT::kZeroAngleOOR);
+}
+
+TEST_F(BuilderTestFixture, BuildDoesNotMutateBuilderAcrossSubsequentBuilds) {
+  // Probe 1: Army BC bands followed by custom table must not mutate
+  // atmosphere_reference or ballistic_coefficient_psi for later bands builds.
+  constexpr uint16_t kVelocity = 2800U;
+  constexpr double kZeroDist = 100.0;
+  const std::array<float, 2> kFps = {1500.0F, 3000.0F};
+  const std::array<float, 2> kBcs = {0.450F, 0.420F};
+  const std::array<float, 2> kCustomXs = {0.0F, 5.0F};
+  const std::array<float, 2> kCustomYs = {0.2F, 0.3F};
+
+  puut->InitialVelocityFps(kVelocity)
+      .ZeroDistanceYds(kZeroDist)
+      .BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+      .BCVelocityBands(kFps, kBcs);
+  const lob::Context kCtx1 = puut->Build();
+  ASSERT_EQ(kCtx1.error, lob::ErrorT::kNone);
+  const float kInitialDrag0 = kCtx1.drags[0];
+
+  // Configure custom table on same builder without Reset
+  puut->MachVsDragTable(kCustomXs.data(), kCustomYs.data(), kCustomXs.size());
+  const lob::Context kCtxTable = puut->Build();
+  ASSERT_EQ(kCtxTable.error, lob::ErrorT::kNone);
+
+  // Switch back to Army BC bands on same builder without Reset
+  puut->BCAtmosphere(lob::AtmosphereReferenceT::kArmyStandardMetro)
+      .BCVelocityBands(kFps, kBcs);
+  const lob::Context kCtx2 = puut->Build();
+  ASSERT_EQ(kCtx2.error, lob::ErrorT::kNone);
+  EXPECT_FLOAT_EQ(kCtx2.drags[0], kInitialDrag0);
+}
+
+TEST_F(BuilderTestFixture, NonSpinningProjectileDoesNotReceiveAerodynamicJump) {
+  // Probe 3: Projectile without twist or mass must have NaN stability
+  // and zero aerodynamic jump, not Sg=0 evaluation.
+  constexpr uint16_t kVelocity = 2750U;
+  constexpr double kZeroDist = 100.0;
+  constexpr double kBc = 0.372;
+  constexpr double kDiameter = 0.224;
+  constexpr double kLength = 1.0;
+  constexpr double kWindSpeedMph = 10.0;
+  constexpr double kWindHeadingDeg = 90.0;
+
+  puut->InitialVelocityFps(kVelocity)
+      .ZeroDistanceYds(kZeroDist)
+      .BallisticCoefficientPsi(kBc)
+      .DiameterInch(kDiameter)
+      .LengthInch(kLength)
+      .WindSpeedMph(kWindSpeedMph)
+      .WindHeadingDeg(kWindHeadingDeg);
+
+  // Case A: No twist and no mass
+  const lob::Context kCtxNoTwist = puut->Build();
+  ASSERT_EQ(kCtxNoTwist.error, lob::ErrorT::kNone);
+  EXPECT_TRUE(std::isnan(kCtxNoTwist.stability_factor));
+  EXPECT_DOUBLE_EQ(kCtxNoTwist.aerodynamic_jump, 0.0);
+
+  // Case B: Twist explicitly 0
+  puut->TwistInchesPerTurn(0.0);
+  const lob::Context kCtxZeroTwist = puut->Build();
+  ASSERT_EQ(kCtxZeroTwist.error, lob::ErrorT::kNone);
+  EXPECT_TRUE(std::isnan(kCtxZeroTwist.stability_factor));
+  EXPECT_DOUBLE_EQ(kCtxZeroTwist.aerodynamic_jump, 0.0);
+}
+
+TEST_F(BuilderTestFixture, MinimumEnergyVelocityClampsWithoutUint16Overflow) {
+  // Probe 4: 1 grain + 65,535 ft-lbs minimum energy yields > 170,000 fps.
+  // Must clamp to UINT16_MAX (65535) without integer wrap (40,740).
+  constexpr uint16_t kVelocity = 3000U;
+  constexpr double kBc = 0.400;
+  constexpr double kMass1 = 1.0;
+  constexpr double kMass2 = 2.0;
+  constexpr uint16_t kMaxEnergy = 65535U;
+
+  puut->InitialVelocityFps(kVelocity)
+      .ZeroAngleMOA(0.0)
+      .BallisticCoefficientPsi(kBc)
+      .MassGrains(kMass1)
+      .MinimumEnergy(kMaxEnergy);
+  const lob::Context kCtx1 = puut->Build();
+  ASSERT_EQ(kCtx1.error, lob::ErrorT::kNone);
+  EXPECT_EQ(kCtx1.minimum_speed, kMaxEnergy);
+
+  // 2 grains + 65,535 ft-lbs minimum energy
+  puut->MassGrains(kMass2);
+  const lob::Context kCtx2 = puut->Build();
+  ASSERT_EQ(kCtx2.error, lob::ErrorT::kNone);
+  EXPECT_EQ(kCtx2.minimum_speed, kMaxEnergy);
+}
+
+TEST_F(BuilderTestFixture, WindSpeedWithoutHeadingDefaultsToTailwind) {
+  // Probe 5: Setting wind speed without heading must default to 12 o'clock
+  // tailwind (x = speed, z = 0), not 3 o'clock crosswind (z = speed, x = 0).
+  constexpr uint16_t kVelocity = 2800U;
+  constexpr double kZeroDist = 100.0;
+  constexpr double kBc = 0.400;
+  constexpr double kWindSpeedMph = 10.0;
+  constexpr double kFeetPerMile = 5280.0;
+  constexpr double kSecondsPerHour = 3600.0;
+  constexpr double kExpectedXFps =
+      kWindSpeedMph * kFeetPerMile / kSecondsPerHour;
+
+  puut->InitialVelocityFps(kVelocity)
+      .ZeroDistanceYds(kZeroDist)
+      .BallisticCoefficientPsi(kBc)
+      .WindSpeedMph(kWindSpeedMph);
+  const lob::Context kCtx = puut->Build();
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+  EXPECT_NEAR(kCtx.wind_nodes[0].x_fps, kExpectedXFps, 1e-4);
+  EXPECT_NEAR(kCtx.wind_nodes[0].z_fps, 0.0, 1e-12);
+}
+
+TEST_F(BuilderTestFixture,
+       BarometerAltitudeCorrectsPressureWithoutFiringSiteAltitude) {
+  // Probe 6: Barometer altitude at 5,280 ft with pressure 30 inHg must
+  // adjust pressure relative to default sea level firing site.
+  // Barometer altitude at 70,000 ft alone must trigger kAltitudeOfBarometerOOR.
+  constexpr uint16_t kVelocity = 2800U;
+  constexpr double kZeroDist = 100.0;
+  constexpr double kBc = 0.400;
+  constexpr double kPressure = 30.0;
+  constexpr double kBaroAlt = 5280.0;
+  constexpr double kBaroAltOor = 70000.0;
+
+  puut->InitialVelocityFps(kVelocity)
+      .ZeroDistanceYds(kZeroDist)
+      .BallisticCoefficientPsi(kBc)
+      .AirPressureInHg(kPressure);
+
+  const lob::Context kCtxSeaLevelBaro = puut->Build();
+  ASSERT_EQ(kCtxSeaLevelBaro.error, lob::ErrorT::kNone);
+
+  puut->AltitudeOfBarometerFt(kBaroAlt);
+  const lob::Context kCtxElevatedBaro = puut->Build();
+  ASSERT_EQ(kCtxElevatedBaro.error, lob::ErrorT::kNone);
+  EXPECT_NE(kCtxElevatedBaro.drag_coeff, kCtxSeaLevelBaro.drag_coeff);
+
+  puut->AltitudeOfBarometerFt(kBaroAltOor);
+  const lob::Context kCtxOorBaro = puut->Build();
+  EXPECT_EQ(kCtxOorBaro.error, lob::ErrorT::kAltitudeOfBarometerOOR);
+}
+
+TEST_F(BuilderTestFixture,
+       NonFiniteAndExtremeScalarInputsProduceCorrectOorErrors) {
+  // Probe 7: Non-finite inputs must not slip through to solver or cause
+  // underflow.
+  constexpr uint16_t kVelocity = 2800U;
+  constexpr double kZeroDist = 100.0;
+  constexpr double kBc = 0.400;
+  constexpr double kExtremeBc = 1e308;
+  constexpr double kExtremeColdTemp = -100.0;
+  constexpr double kSosColdThreshold = 950.0;
+
+  puut->InitialVelocityFps(kVelocity)
+      .ZeroDistanceYds(kZeroDist)
+      .BallisticCoefficientPsi(kBc);
+
+  // Pressure inf -> kAirPressureOOR
+  puut->AirPressureInHg(std::numeric_limits<double>::infinity());
+  EXPECT_EQ(puut->Build().error, lob::ErrorT::kAirPressureOOR);
+  puut->AirPressureInHg(lob::isa::kSeaLevelPressureInHg);
+
+  // BC inf and BC 1e308 -> kBallisticCoefficientOOR
+  puut->BallisticCoefficientPsi(std::numeric_limits<double>::infinity());
+  EXPECT_EQ(puut->Build().error, lob::ErrorT::kBallisticCoefficientOOR);
+  puut->BallisticCoefficientPsi(kExtremeBc);
+  EXPECT_EQ(puut->Build().error, lob::ErrorT::kBallisticCoefficientOOR);
+  puut->BallisticCoefficientPsi(kBc);
+
+  // Wind speed inf -> kWindProfileInvalid
+  puut->WindSpeedMph(std::numeric_limits<double>::infinity());
+  EXPECT_EQ(puut->Build().error, lob::ErrorT::kWindProfileInvalid);
+  puut->WindSpeedMph(0.0);
+
+  // Temperature inf -> kAltitudeOfThermometerOOR
+  puut->TemperatureDegF(std::numeric_limits<double>::infinity());
+  EXPECT_EQ(puut->Build().error, lob::ErrorT::kAltitudeOfThermometerOOR);
+
+  // Cold temperature below -69.7°F (-100°F) should not be clamped
+  puut->TemperatureDegF(kExtremeColdTemp);
+  const lob::Context kCtxCold = puut->Build();
+  ASSERT_EQ(kCtxCold.error, lob::ErrorT::kNone);
+  EXPECT_LT(kCtxCold.speed_of_sound, kSosColdThreshold);
+}
+
+TEST_F(BuilderTestFixture, CoriolisAzimuthAndLatitudeValidatedIndependently) {
+  constexpr uint16_t kVelocity = 2800U;
+  constexpr double kZeroDist = 100.0;
+  constexpr double kBc = 0.400;
+  constexpr double kOorAzimuth = 999.0;
+  constexpr double kOorLatitude = 200.0;
+
+  puut->InitialVelocityFps(kVelocity)
+      .ZeroDistanceYds(kZeroDist)
+      .BallisticCoefficientPsi(kBc);
+
+  // Azimuth alone out of range trips kAzimuthOOR
+  puut->AzimuthDeg(kOorAzimuth);
+  EXPECT_EQ(puut->Build().error, lob::ErrorT::kAzimuthOOR);
+
+  // Latitude alone out of range trips kLatitudeOOR
+  puut->AzimuthDeg(std::numeric_limits<double>::quiet_NaN());
+  puut->LatitudeDeg(kOorLatitude);
+  EXPECT_EQ(puut->Build().error, lob::ErrorT::kLatitudeOOR);
 }
 
 }  // namespace tests

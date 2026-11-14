@@ -145,13 +145,15 @@ typedef struct {
  * provided LobBuilder.
  */
 typedef struct {
-  double drag_coeff;        ///< @brief Drag coefficient scaling factor.
-  double speed_of_sound;    ///< @brief The local speed of sound in Fps.
-  double mass;              ///< @brief Mass of the projectile in pounds.
-  double optic_height;      ///< @brief Height of the optic above the bore.
-  LobGravity gravity;       ///< @brief Gravity vector.
-  LobCoriolis coriolis;     ///< @brief Coriolis effect parameters.
-  double zero_angle;        ///< @brief Angle between sight and trajectory.
+  double drag_coeff;      ///< @brief Drag coefficient scaling factor.
+  double speed_of_sound;  ///< @brief The local speed of sound in Fps.
+  double mass;            ///< @brief Mass of the projectile in pounds.
+  double optic_height;    ///< @brief Height of the optic above the bore.
+  double optic_offset;    ///< @brief Lateral offset of the optic.
+  LobGravity gravity;     ///< @brief Gravity vector.
+  LobCoriolis coriolis;   ///< @brief Coriolis effect parameters.
+  double zero_angle;      ///< @brief Angle between sight and trajectory.
+  double zero_azimuth;  ///< @brief Lateral angle between sight and trajectory.
   double stability_factor;  ///< @brief Miller stability factor.
   double aerodynamic_jump;  ///< @brief Aerodynamic jump effect in Moa.
   double spindrift_factor;  ///< @brief Spin drift factor.
@@ -395,6 +397,17 @@ LOB_EXPORT extern LobBuilder* LobBuilderOpticHeightInches(LobBuilder* pbuilder,
                                                           double value);
 
 /**
+ * @brief Sets the lateral offset of the optic from the bore in inches.
+ * @note Positive indicates optic to the shooter's right of the bore (mapped
+ * to frame Z as -value / 12 ft in LobContext.optic_offset, where +Z is left).
+ * @param pbuilder Pointer to the builder.
+ * @param value The lateral offset in inches.
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
+ */
+LOB_EXPORT extern LobBuilder* LobBuilderOpticLateralOffsetInches(
+    LobBuilder* pbuilder, double value);
+
+/**
  * @brief Sets the twist rate of the barrel in inches per turn.
  * @note Used to calculate adjustments for spin drift and aerodynamic jump.
  * @param pbuilder Pointer to the builder.
@@ -415,6 +428,19 @@ LOB_EXPORT extern LobBuilder* LobBuilderTwistInchesPerTurn(LobBuilder* pbuilder,
  */
 LOB_EXPORT extern LobBuilder* LobBuilderZeroAngleMOA(LobBuilder* pbuilder,
                                                      double value);
+
+/**
+ * @brief Sets the lateral angle between the sight and launch vector used to
+ * achieve zero (bypassing numerical zero search).
+ * @note Useful for calibrated offset optics or when firing conditions differ
+ * from zeroing conditions.
+ * @param pbuilder Pointer to the builder.
+ * @param value The zero azimuth angle in MOA (+ = bore aimed left in frame Z,
+ * toward shooter-right offset optic).
+ * @return Pointer to the builder, or nullptr if pbuilder is null.
+ */
+LOB_EXPORT extern LobBuilder* LobBuilderZeroAzimuthMOA(LobBuilder* pbuilder,
+                                                       double value);
 
 /**
  * @brief Sets the zero distance in yards.

@@ -16,6 +16,7 @@
 #include "eng_units.hpp"
 #include "helpers.hpp"
 #include "lob/lob.h"
+#include "lob/lob.hpp"
 #include "ode.hpp"
 #include "solve_step.hpp"
 #include "splines.hpp"
@@ -270,6 +271,139 @@ TEST(BuilderZeroAngleTest, MatchesSolveAngleELR) {
   const lob::MoaT kAngle = lob::SolveAngle(ctx, kRange, lob::FeetT(0.0), kSeed);
   ASSERT_FALSE(kAngle.IsNaN());
   EXPECT_NEAR(kAngle.Value(), ctx.zero_angle, 1.0e-6);
+}
+
+TEST(SolveAngleTest, AzimuthConvergenceWithOffset) {
+  constexpr double kDiameter = 0.224;
+  constexpr double kMassGrains = 77.0;
+  constexpr uint16_t kMuzzleVelocityFps = 2750;
+  constexpr double kBcPsi = 0.372;
+  constexpr double kZeroDistanceYds = 100.0;
+  constexpr double kOpticHeightInches = 1.5;
+  constexpr double kOpticOffsetInches = 1.5;
+  constexpr double kExpectedAzimuthMoa = -1.432;
+  constexpr double kTol = 0.05;
+
+  lob::Builder builder;
+  builder.DiameterInch(kDiameter)
+      .MassGrains(kMassGrains)
+      .InitialVelocityFps(kMuzzleVelocityFps)
+      .BallisticCoefficientPsi(kBcPsi)
+      .ZeroDistanceYds(kZeroDistanceYds)
+      .OpticHeightInches(kOpticHeightInches)
+      .OpticLateralOffsetInches(kOpticOffsetInches);
+  const lob::Context kCtx = builder.Build();
+
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+  EXPECT_LT(kCtx.zero_azimuth, 0.0);
+  EXPECT_NEAR(kCtx.zero_azimuth, kExpectedAzimuthMoa, kTol);
+}
+
+TEST(SolveAngleTest, AzimuthZeroWhenNoLateralForcesAndNoOffset) {
+  constexpr double kDiameter = 0.224;
+  constexpr double kMassGrains = 77.0;
+  constexpr uint16_t kMuzzleVelocityFps = 2750;
+  constexpr double kBcPsi = 0.372;
+  constexpr double kZeroDistanceYds = 100.0;
+  constexpr double kOpticHeightInches = 1.5;
+  constexpr double kOpticOffsetInches = 0.0;
+
+  lob::Builder builder;
+  builder.DiameterInch(kDiameter)
+      .MassGrains(kMassGrains)
+      .InitialVelocityFps(kMuzzleVelocityFps)
+      .BallisticCoefficientPsi(kBcPsi)
+      .ZeroDistanceYds(kZeroDistanceYds)
+      .OpticHeightInches(kOpticHeightInches)
+      .OpticLateralOffsetInches(kOpticOffsetInches);
+  const lob::Context kCtx = builder.Build();
+
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+  EXPECT_DOUBLE_EQ(kCtx.zero_azimuth, 0.0);
+}
+
+TEST(SolveAngleTest, AzimuthAbsorbsCrosswindAtZero) {
+  constexpr double kDiameter = 0.224;
+  constexpr double kMassGrains = 77.0;
+  constexpr uint16_t kMuzzleVelocityFps = 2750;
+  constexpr double kBcPsi = 0.372;
+  constexpr double kZeroDistanceYds = 100.0;
+  constexpr double kWindSpeedMph = 10.0;
+  constexpr double kWindHeadingDeg = 90.0;
+
+  lob::Builder builder;
+  builder.DiameterInch(kDiameter)
+      .MassGrains(kMassGrains)
+      .InitialVelocityFps(kMuzzleVelocityFps)
+      .BallisticCoefficientPsi(kBcPsi)
+      .ZeroDistanceYds(kZeroDistanceYds)
+      .WindSpeedMph(kWindSpeedMph)
+      .WindHeadingDeg(kWindHeadingDeg);
+  const lob::Context kCtx = builder.Build();
+
+  ASSERT_EQ(kCtx.error, lob::ErrorT::kNone);
+  EXPECT_LT(kCtx.zero_azimuth, 0.0);
+}
+
+TEST(SolveAngleTest, SolveAngleDefaultSeedMatchesExplicitAerodynamicSeed) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kZeroDistanceYards = 200.0;
+
+  LobBuilder builder{};
+  LobBuilderInit(&builder);
+  LobBuilderBallisticCoefficientPsi(&builder, kTestBC);
+  LobBuilderInitialVelocityFps(&builder, kTestMuzzleVelocity);
+  LobBuilderZeroDistanceYds(&builder, kZeroDistanceYards);
+  LobContext ctx{};
+  LobBuilderBuild(&builder, &ctx);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  LobBuilderDestroy(&builder);
+
+  const lob::FeetT kRange = lob::FeetT(lob::YardT(kZeroDistanceYards));
+  const auto kExplicitSeed =
+      lob::EstimateAerodynamicSeed(ctx, kRange, lob::FeetT(0.0));
+  const lob::MoaT kAngleExplicit =
+      lob::SolveAngle(ctx, kRange, lob::FeetT(0.0), kExplicitSeed);
+  const lob::MoaT kAngleDefault = lob::SolveAngle(ctx, kRange);
+
+  ASSERT_FALSE(kAngleExplicit.IsNaN());
+  ASSERT_FALSE(kAngleDefault.IsNaN());
+  EXPECT_DOUBLE_EQ(kAngleExplicit.Value(), kAngleDefault.Value());
+  EXPECT_NEAR(kAngleDefault.Value(), ctx.zero_angle, 1.0e-6);
+}
+
+TEST(SolveAngleTest, SolveAngleAzimuthDefaultSeedMatchesExplicitAzimuthSeed) {
+  const double kTestBC = 0.436;
+  const uint16_t kTestMuzzleVelocity = 3100U;
+  const double kZeroDistanceYards = 100.0;
+  constexpr double kOpticOffsetInches = 1.5;
+  constexpr double kWindSpeedMph = 10.0;
+  constexpr double kWindHeadingDeg = 90.0;
+
+  LobBuilder builder{};
+  LobBuilderInit(&builder);
+  LobBuilderBallisticCoefficientPsi(&builder, kTestBC);
+  LobBuilderInitialVelocityFps(&builder, kTestMuzzleVelocity);
+  LobBuilderZeroDistanceYds(&builder, kZeroDistanceYards);
+  LobBuilderOpticLateralOffsetInches(&builder, kOpticOffsetInches);
+  LobBuilderWindSpeedMph(&builder, kWindSpeedMph);
+  LobBuilderWindHeadingDeg(&builder, kWindHeadingDeg);
+  LobContext ctx{};
+  LobBuilderBuild(&builder, &ctx);
+  ASSERT_EQ(ctx.error, kLobErrorNone);
+  LobBuilderDestroy(&builder);
+
+  const lob::FeetT kRange = lob::FeetT(lob::YardT(kZeroDistanceYards));
+  const auto kExplicitSeed = lob::EstimateAzimuthSeed(ctx, kRange);
+  const lob::MoaT kAzExplicit =
+      lob::SolveAngleAzimuth(ctx, kRange, kExplicitSeed);
+  const lob::MoaT kAzDefault = lob::SolveAngleAzimuth(ctx, kRange);
+
+  ASSERT_FALSE(kAzExplicit.IsNaN());
+  ASSERT_FALSE(kAzDefault.IsNaN());
+  EXPECT_DOUBLE_EQ(kAzExplicit.Value(), kAzDefault.Value());
+  EXPECT_NEAR(kAzDefault.Value(), ctx.zero_azimuth, 1.0e-6);
 }
 
 }  // namespace

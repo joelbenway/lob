@@ -18,7 +18,6 @@ const FIELD_LABELS = {
   baseDiameterInch: "Base diameter",
   bc: "Ballistic coefficient",
   bcAtmosphere: "BC atmosphere",
-  coefficientsText: "Spline coefficients",
   diameterInch: "Diameter",
   dragFunction: "Drag function",
   dragSource: "Drag source",
@@ -33,6 +32,7 @@ const FIELD_LABELS = {
   minimumSpeedFps: "Minimum speed",
   noseLengthInch: "Nose length",
   ogiveRtR: "Ogive Rt/R",
+  opticLateralOffsetInches: "Lateral offset",
   projectileTier: "Projectile detail",
   rangeAngleDeg: "Range angle",
   relativeHumidityPercent: "Relative humidity",
@@ -193,21 +193,6 @@ function parseDragTable(text) {
   return { machs, drags };
 }
 
-function parseCoefficients(text) {
-  const label = fieldLabel("coefficientsText");
-  if (typeof text !== "string" || text.trim() === "") {
-    throw new RangeError(`${label} is required`);
-  }
-  const values = text
-    .split(/[\s,]+/)
-    .filter((value) => value !== "")
-    .map(Number);
-  if (values.length !== 60 || values.some((value) => !Number.isFinite(value))) {
-    throw new RangeError(`${label} must contain exactly 60 finite numbers`);
-  }
-  return values;
-}
-
 function parseWindProfile(text) {
   const parsed = rows(text, "windProfileText", 3, 4);
   const label = fieldLabel("windProfileText");
@@ -238,12 +223,7 @@ function parseWindProfile(text) {
 }
 
 export function readConfig(values) {
-  const dragSource = choice(values, "dragSource", [
-    "bc",
-    "bands",
-    "table",
-    "coefficients",
-  ]);
+  const dragSource = choice(values, "dragSource", ["bc", "bands", "table"]);
   const config = { dragSource };
 
   if (dragSource === "bc" || dragSource === "bands") {
@@ -258,9 +238,6 @@ export function readConfig(values) {
   }
   if (dragSource === "table") {
     config.dragTable = parseDragTable(values.dragTableText);
-  }
-  if (dragSource === "coefficients") {
-    config.coefficients = parseCoefficients(values.coefficientsText);
   }
 
   config.projectileTier = choice(values, "projectileTier", [
@@ -351,6 +328,12 @@ export function readConfig(values) {
     values,
     "sightHeightInches",
     0,
+    Infinity,
+  );
+  config.opticLateralOffsetInches = optionalNumber(
+    values,
+    "opticLateralOffsetInches",
+    -Infinity,
     Infinity,
   );
 
@@ -538,9 +521,6 @@ export function applyConfig(builder, config) {
     case "table":
       builder.machVsDragTable(config.dragTable.machs, config.dragTable.drags);
       break;
-    case "coefficients":
-      builder.splineCoefficients(config.coefficients);
-      break;
   }
 
   if (config.projectileTier !== "bc") {
@@ -575,6 +555,9 @@ export function applyConfig(builder, config) {
   }
   if (config.sightHeightInches !== undefined) {
     builder.opticHeightInches(config.sightHeightInches);
+  }
+  if (config.opticLateralOffsetInches !== undefined) {
+    builder.opticLateralOffsetInches(config.opticLateralOffsetInches);
   }
 
   if (config.weatherSource === "altitude") {

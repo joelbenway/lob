@@ -292,6 +292,10 @@ inline bool ApplyScalar(lob::Builder* builder, const std::string& input,
     builder->OpticHeightInches(value);
     return true;
   }
+  if (input == "optic_lateral_offset_in") {
+    builder->OpticLateralOffsetInches(value);
+    return true;
+  }
   if (input == "pressure_inhg") {
     builder->AirPressureInHg(value);
     return true;

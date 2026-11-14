@@ -87,6 +87,19 @@ Only the latitude and azimuth of the shot are involved, and the
 coefficients collapse to three scalars that get computed once when the
 context is built rather than on every step.
 
+## Frame and signs
+
+`lob` coordinates are right-handed in the firing-site frame:
+- **$+X$**: down-range along the horizontal bore azimuth
+- **$+Y$**: vertical, positive up
+- **$+Z$**: lateral horizontal, **positive to the shooter's left**
+
+This sign convention is pinned to the in-repo C6c mortar crosswind test oracle: a crosswind from the shooter's right (wind heading $90^\circ$) pushes air toward $+Z$ (left), producing a positive aerodynamic drag acceleration $+a_z$ that displaces the bullet to the left ($+Z$).
+
+Conversely, in builder and caller-facing conventions:
+- `OpticLateralOffsetInches`: positive places the optic to the **shooter's right** (corresponding to $-Z$ in the internal solver frame).
+- `deflection`: forward output is measured as bullet position minus line-of-sight plane, so positive deflection means the bullet is to the shooter's left of the reticle.
+
 Where the ballistic coefficient is folded in depends on how the drag
 curve was supplied. A standard curve carries it, scaled into the curve
 itself, so the density scaling applied each step stays a pure

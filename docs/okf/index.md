@@ -23,6 +23,7 @@ For the full C API reference, including every function signature, error code, an
 - [Solver Context](solver-context.md)
 - [Solver Input State Machine](solver-input-state-machine.md)
 - [Point-Mass Model](point-mass-model.md)
+- [Optic Lateral Offset and Convergence](optic-offset.md)
 - [Atmospheric Model](atmospheric-model.md)
 - [Drag Model](drag-model.md)
 - [Spin Drift and Aerodynamic Jump](spin-drift-and-aerodynamic-jump.md)

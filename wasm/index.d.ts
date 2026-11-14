@@ -156,11 +156,19 @@ export class Builder {
   /** Set sight height above bore axis, in inches. */
   opticHeightInches(value: number): this;
 
+  /** Set sight centerline lateral offset from bore, in inches. Positive is right. */
+  opticLateralOffsetInches(value: number): this;
+
   /** Set barrel rifling twist rate, in inches per turn. Positive is right-hand. */
   twistInchesPerTurn(value: number): this;
 
   /** Set bore sight angle relative to optical axis, in MOA. */
   zeroAngleMoa(value: number): this;
+
+  /** Set bore azimuth angle relative to optical axis, in MOA (+ = aimed left in frame Z, toward shooter-right offset optic). */
+  zeroAzimuthMoa(value: number): this;
+  /** Alias for zeroAzimuthMoa. */
+  zeroAzimuthMOA(value: number): this;
 
   /** Set zero distance, in yards. */
   zeroDistanceYds(value: number): this;
