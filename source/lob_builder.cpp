@@ -938,6 +938,18 @@ void BuildLitzAerodynamicJump(Impl* pimpl, LobContext* pout) {
   pout->aerodynamic_jump = MoaT(0).Value();
 }
 
+void AssignGeometricZeroAzimuth(double optic_offset, FeetT zero_distance_ft,
+                                LobContext* pout) {
+  const RadiansT kGeoAzimuth(
+      std::atan(optic_offset / zero_distance_ft.Value()));
+  if (!std::isfinite(kGeoAzimuth.Value()) ||
+      kGeoAzimuth > constant::kMaxAngle || kGeoAzimuth < constant::kMinAngle) {
+    pout->error = kLobErrorZeroAngleOOR;
+    return;
+  }
+  pout->zero_azimuth = MoaT(kGeoAzimuth).Value();
+}
+
 void BuildZeroAzimuth(Impl* pimpl, LobContext* pout) {
   assert(pimpl != nullptr && pout != nullptr);
 
@@ -960,24 +972,13 @@ void BuildZeroAzimuth(Impl* pimpl, LobContext* pout) {
       return;
     }
     // Explicit angle + zero distance: geometric solve without air
-    const RadiansT kGeoAzimuth(
-        std::atan(pout->optic_offset / pimpl->zero_distance_ft.Value()));
-    if (!std::isfinite(kGeoAzimuth.Value()) ||
-        kGeoAzimuth > constant::kMaxAngle ||
-        kGeoAzimuth < constant::kMinAngle) {
-      pout->error = kLobErrorZeroAngleOOR;
-      return;
-    }
-    pout->zero_azimuth = MoaT(kGeoAzimuth).Value();
+    AssignGeometricZeroAzimuth(pout->optic_offset, pimpl->zero_distance_ft,
+                               pout);
     return;
   }
 
-  if (pimpl->zero_distance_ft.IsNaN()) {
-    pout->zero_azimuth = 0.0;
-    return;
-  }
-
-  if (!std::isfinite(pimpl->zero_distance_ft.Value()) ||
+  if (pimpl->zero_distance_ft.IsNaN() ||
+      !std::isfinite(pimpl->zero_distance_ft.Value()) ||
       pimpl->zero_distance_ft <= FeetT(0)) {
     pout->zero_azimuth = 0.0;
     return;
@@ -993,21 +994,49 @@ void BuildZeroAzimuth(Impl* pimpl, LobContext* pout) {
     if (!kHasOffset) {
       pout->zero_azimuth = 0.0;
     } else {
-      const RadiansT kGeoAzimuth(
-          std::atan(pout->optic_offset / pimpl->zero_distance_ft.Value()));
-      if (!std::isfinite(kGeoAzimuth.Value()) ||
-          kGeoAzimuth > constant::kMaxAngle ||
-          kGeoAzimuth < constant::kMinAngle) {
-        pout->error = kLobErrorZeroAngleOOR;
-        return;
-      }
-      pout->zero_azimuth = MoaT(kGeoAzimuth).Value();
+      AssignGeometricZeroAzimuth(pout->optic_offset, pimpl->zero_distance_ft,
+                                 pout);
     }
     return;
   }
 
   pout->zero_azimuth =
       MoaT(EstimateAzimuthSeed(*pout, pimpl->zero_distance_ft)).Value();
+}
+
+void RefineCoupledZero(Impl* pimpl, LobContext* pout) {
+  assert(pimpl != nullptr && pout != nullptr);
+
+  const bool kHasOffset = std::fabs(pout->optic_offset) > 0.0;
+  if (!std::isnan(pimpl->zero_azimuth_moa) ||
+      (!HasLateralPerturbation(*pout) &&
+       (!kHasOffset || AreEqual(pout->gravity.x, 0.0)))) {
+    return;
+  }
+
+  constexpr size_t kMaxCoupledIterations = 4;
+  for (size_t iter = 0; iter < kMaxCoupledIterations; ++iter) {
+    const MoaT kAzimuth = SolveAngleAzimuth(*pout, pimpl->zero_distance_ft);
+    if (std::isnan(kAzimuth)) {
+      pout->error = kLobErrorZeroUnreachable;
+      return;
+    }
+    const double kAzDiff = std::abs(kAzimuth.Value() - pout->zero_azimuth);
+    pout->zero_azimuth = kAzimuth.Value();
+
+    const MoaT kRefinedAngle =
+        SolveAngle(*pout, pimpl->zero_distance_ft, pimpl->zero_impact_height);
+    if (!std::isnan(kRefinedAngle)) {
+      const double kAngleDiff =
+          std::abs(kRefinedAngle.Value() - pout->zero_angle);
+      pout->zero_angle = kRefinedAngle.Value();
+
+      if (kAzDiff <= MoaT(constant::kDefaultAngleTolerance).Value() &&
+          kAngleDiff <= MoaT(constant::kDefaultAngleTolerance).Value()) {
+        break;
+      }
+    }
+  }
 }
 
 void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
@@ -1047,36 +1076,7 @@ void BuildZeroAngle(Impl* pimpl, LobContext* pout) {
   }
   pout->zero_angle = kAngle.Value();
 
-  // If lateral forces act on the bullet and azimuth was not explicitly set,
-  // iterate coupled vertical and lateral solves until both residuals converge.
-  const bool kHasOffset = std::fabs(pout->optic_offset) > 0.0;
-  if (std::isnan(pimpl->zero_azimuth_moa) &&
-      (HasLateralPerturbation(*pout) ||
-       (kHasOffset && !AreEqual(pout->gravity.x, 0.0)))) {
-    constexpr size_t kMaxCoupledIterations = 4;
-    for (size_t iter = 0; iter < kMaxCoupledIterations; ++iter) {
-      const MoaT kAzimuth = SolveAngleAzimuth(*pout, pimpl->zero_distance_ft);
-      if (std::isnan(kAzimuth)) {
-        pout->error = kLobErrorZeroUnreachable;
-        return;
-      }
-      const double kAzDiff = std::abs(kAzimuth.Value() - pout->zero_azimuth);
-      pout->zero_azimuth = kAzimuth.Value();
-
-      const MoaT kRefinedAngle =
-          SolveAngle(*pout, pimpl->zero_distance_ft, pimpl->zero_impact_height);
-      if (!std::isnan(kRefinedAngle)) {
-        const double kAngleDiff =
-            std::abs(kRefinedAngle.Value() - pout->zero_angle);
-        pout->zero_angle = kRefinedAngle.Value();
-
-        if (kAzDiff <= MoaT(constant::kDefaultAngleTolerance).Value() &&
-            kAngleDiff <= MoaT(constant::kDefaultAngleTolerance).Value()) {
-          break;
-        }
-      }
-    }
-  }
+  RefineCoupledZero(pimpl, pout);
 }
 
 void BuildOptions(Impl* pimpl, LobContext* pout) {
