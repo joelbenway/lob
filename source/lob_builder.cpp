@@ -1506,25 +1506,17 @@ void LobBuilderBuild(LobBuilder* pbuilder, LobContext* presult) {
   presult->stability_factor = NaN();
   presult->aerodynamic_jump = NaN();
   presult->spindrift_factor = NaN();
-  presult->optic_height = NaN();
-  presult->optic_offset = NaN();
-  presult->zero_angle = NaN();
-  presult->zero_azimuth = 0.0;
   presult->k_lapse = 0.0;
   presult->speed_of_sound = NaN();
   presult->drag_coeff = NaN();
   presult->coriolis = LobCoriolis{};
 
-  presult->mass = pimpl->mass_lbs.IsNaN() ? NaN() : pimpl->mass_lbs.Value();
-  presult->velocity =
-      pimpl->velocity_fps.IsNaN() ? 0 : pimpl->velocity_fps.U16();
-  presult->minimum_speed =
-      pimpl->minimum_speed_fps.IsNaN() ? 0 : pimpl->minimum_speed_fps.U16();
+  presult->mass = pimpl->mass_lbs.Value();
+  presult->velocity = pimpl->velocity_fps.U16();
+  presult->minimum_speed = pimpl->minimum_speed_fps.U16();
   presult->step_size = pimpl->step_size_in;
-  presult->max_time =
-      pimpl->max_time_sec.IsNaN() ? NaN() : pimpl->max_time_sec.Value();
-  presult->zero_angle =
-      pimpl->zero_angle_moa.IsNaN() ? NaN() : pimpl->zero_angle_moa.Value();
+  presult->max_time = pimpl->max_time_sec.Value();
+  presult->zero_angle = pimpl->zero_angle_moa.Value();
   presult->zero_azimuth =
       pimpl->zero_azimuth_moa.IsNaN() ? 0.0 : pimpl->zero_azimuth_moa.Value();
 
