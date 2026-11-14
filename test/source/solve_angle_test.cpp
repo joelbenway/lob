@@ -10,6 +10,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 
 #include "cartesian.hpp"
 #include "constants.hpp"
@@ -447,11 +448,12 @@ TEST(SolveAngleTest, EstimateAerodynamicSeedInvalidInputsReturnZero) {
 
 TEST(SolveAngleTest, EstimateAzimuthSeedInvalidInputsReturnZero) {
   constexpr lob::FeetT kRangeNeg(-100.0);
-  LobContext ctx{};
-  EXPECT_DOUBLE_EQ(lob::EstimateAzimuthSeed(ctx, lob::FeetT(0.0)).Value(), 0.0);
-  EXPECT_DOUBLE_EQ(lob::EstimateAzimuthSeed(ctx, kRangeNeg).Value(), 0.0);
+  const LobContext kCtx{};
+  EXPECT_DOUBLE_EQ(lob::EstimateAzimuthSeed(kCtx, lob::FeetT(0.0)).Value(),
+                   0.0);
+  EXPECT_DOUBLE_EQ(lob::EstimateAzimuthSeed(kCtx, kRangeNeg).Value(), 0.0);
   EXPECT_DOUBLE_EQ(
-      lob::EstimateAzimuthSeed(ctx, lob::FeetT(lob::NaN<double>())).Value(),
+      lob::EstimateAzimuthSeed(kCtx, lob::FeetT(lob::NaN<double>())).Value(),
       0.0);
 }
 
