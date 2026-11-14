@@ -511,6 +511,162 @@ TEST(SplinesBuildTest, ReturnsKnotsMinusOneForMultipleKnots) {
   EXPECT_EQ(kCount, kN - 1);
 }
 
+TEST(SplinesBuildTest, ReturnsZeroWhenKnotsOrSizeLessThanTwo) {
+  constexpr size_t kSingleKnotCount = 1;
+  constexpr size_t kSingleTableSize = 1;
+  constexpr size_t kSegmentCoefCount = 4;
+  const float kKnot = 0.0F;
+  std::array<float, kSegmentCoefCount> coef{};
+  EXPECT_EQ(lob::spline::Build<float>(kLinearX.data(), kLineFn.data(),
+                                      kLinearX.size(), &kKnot, kSingleKnotCount,
+                                      coef.data()),
+            0U);
+  EXPECT_EQ(lob::spline::Build<float>(kLinearX.data(), kLineFn.data(),
+                                      kSingleTableSize, kLinearX.data(),
+                                      kLinearX.size(), coef.data()),
+            0U);
+}
+
+TEST(SplinesTableEvaluatorTest,
+     NonlinearTableEvaluatorOffTableKnotsAndIntervals) {
+  lob::spline::detail::TableEvaluator<float> evaluator(kFcX.data(), kFcY.data(),
+                                                       kFcX.size());
+
+  constexpr float kX0 = 0.0F;
+  constexpr float kExpectedY0 = 0.0F;
+  constexpr float kExpectedDy0 = 1.0F;
+
+  constexpr float kXOff1 = 0.25F;
+  constexpr float kExpectedYOff1 = 0.296875F;
+  constexpr float kExpectedDyOff1 = 1.3125F;
+
+  constexpr float kXOff2 = 0.75F;
+  constexpr float kExpectedYOff2 = 0.890625F;
+  constexpr float kExpectedDyOff2 = 0.8125F;
+
+  constexpr float kX1 = 1.0F;
+  constexpr float kExpectedY1 = 1.0F;
+  constexpr float kExpectedDy1 = 0.0F;
+
+  constexpr float kXOff3 = 1.5F;
+  constexpr float kExpectedYOff3 = 0.625F;
+  constexpr float kExpectedDyOff3 = -1.25F;
+
+  constexpr float kX2 = 2.0F;
+  constexpr float kExpectedY2 = 0.0F;
+  constexpr float kExpectedDy2 = -1.0F;
+
+  constexpr float kXOff4 = 3.5F;
+  constexpr float kExpectedYOff4 = -0.625F;
+  constexpr float kExpectedDyOff4 = 1.25F;
+
+  constexpr float kX4 = 4.0F;
+  constexpr float kExpectedY4 = 0.0F;
+  constexpr float kExpectedDy4 = 1.0F;
+
+  // Segment 0: endpoint 0.0
+  auto res = evaluator.Eval(kX0);
+  EXPECT_NEAR(res.y, kExpectedY0, kEps);
+  EXPECT_NEAR(res.dy, kExpectedDy0, kEps);
+  auto direct = lob::spline::detail::EvalWithDeriv<float>(
+      kFcX.data(), kFcY.data(), kFcX.size(), kX0);
+  EXPECT_NEAR(res.y, direct.y, kEps);
+  EXPECT_NEAR(res.dy, direct.dy, kEps);
+
+  // Segment 0: off-table knot 0.25
+  res = evaluator.Eval(kXOff1);
+  EXPECT_NEAR(res.y, kExpectedYOff1, kEps);
+  EXPECT_NEAR(res.dy, kExpectedDyOff1, kEps);
+  direct = lob::spline::detail::EvalWithDeriv<float>(kFcX.data(), kFcY.data(),
+                                                     kFcX.size(), kXOff1);
+  EXPECT_NEAR(res.y, direct.y, kEps);
+  EXPECT_NEAR(res.dy, direct.dy, kEps);
+
+  // Segment 0: repeated evaluation within the same interval [0, 1] at 0.75
+  res = evaluator.Eval(kXOff2);
+  EXPECT_NEAR(res.y, kExpectedYOff2, kEps);
+  EXPECT_NEAR(res.dy, kExpectedDyOff2, kEps);
+  direct = lob::spline::detail::EvalWithDeriv<float>(kFcX.data(), kFcY.data(),
+                                                     kFcX.size(), kXOff2);
+  EXPECT_NEAR(res.y, direct.y, kEps);
+  EXPECT_NEAR(res.dy, direct.dy, kEps);
+
+  // Repeated evaluation at the same point within interval
+  const auto kResRepeat = evaluator.Eval(kXOff2);
+  EXPECT_NEAR(kResRepeat.y, kExpectedYOff2, kEps);
+  EXPECT_NEAR(kResRepeat.dy, kExpectedDyOff2, kEps);
+
+  // Segment 0 right endpoint / Segment 1 left endpoint: 1.0
+  res = evaluator.Eval(kX1);
+  EXPECT_NEAR(res.y, kExpectedY1, kEps);
+  EXPECT_NEAR(res.dy, kExpectedDy1, kEps);
+  direct = lob::spline::detail::EvalWithDeriv<float>(kFcX.data(), kFcY.data(),
+                                                     kFcX.size(), kX1);
+  EXPECT_NEAR(res.y, direct.y, kEps);
+  EXPECT_NEAR(res.dy, direct.dy, kEps);
+
+  // Segment 1: advance to interval [1, 2] at 1.5
+  res = evaluator.Eval(kXOff3);
+  EXPECT_NEAR(res.y, kExpectedYOff3, kEps);
+  EXPECT_NEAR(res.dy, kExpectedDyOff3, kEps);
+  direct = lob::spline::detail::EvalWithDeriv<float>(kFcX.data(), kFcY.data(),
+                                                     kFcX.size(), kXOff3);
+  EXPECT_NEAR(res.y, direct.y, kEps);
+  EXPECT_NEAR(res.dy, direct.dy, kEps);
+
+  // Segment 1 right endpoint: 2.0
+  res = evaluator.Eval(kX2);
+  EXPECT_NEAR(res.y, kExpectedY2, kEps);
+  EXPECT_NEAR(res.dy, kExpectedDy2, kEps);
+  direct = lob::spline::detail::EvalWithDeriv<float>(kFcX.data(), kFcY.data(),
+                                                     kFcX.size(), kX2);
+  EXPECT_NEAR(res.y, direct.y, kEps);
+  EXPECT_NEAR(res.dy, direct.dy, kEps);
+
+  // Skipping interval [2, 3] to evaluate in interval [3, 4] at 3.5
+  res = evaluator.Eval(kXOff4);
+  EXPECT_NEAR(res.y, kExpectedYOff4, kEps);
+  EXPECT_NEAR(res.dy, kExpectedDyOff4, kEps);
+  direct = lob::spline::detail::EvalWithDeriv<float>(kFcX.data(), kFcY.data(),
+                                                     kFcX.size(), kXOff4);
+  EXPECT_NEAR(res.y, direct.y, kEps);
+  EXPECT_NEAR(res.dy, direct.dy, kEps);
+
+  // Repeated evaluation after skipping intervals
+  const auto kResRepeatSkipped = evaluator.Eval(kXOff4);
+  EXPECT_NEAR(kResRepeatSkipped.y, kExpectedYOff4, kEps);
+  EXPECT_NEAR(kResRepeatSkipped.dy, kExpectedDyOff4, kEps);
+
+  // Segment 3 right endpoint: 4.0
+  res = evaluator.Eval(kX4);
+  EXPECT_NEAR(res.y, kExpectedY4, kEps);
+  EXPECT_NEAR(res.dy, kExpectedDy4, kEps);
+  direct = lob::spline::detail::EvalWithDeriv<float>(kFcX.data(), kFcY.data(),
+                                                     kFcX.size(), kX4);
+  EXPECT_NEAR(res.y, direct.y, kEps);
+  EXPECT_NEAR(res.dy, direct.dy, kEps);
+}
+
+TEST(SplinesTableEvaluatorTest, SkippedIntervalForcesTangentRecomputation) {
+  lob::spline::detail::TableEvaluator<float> evaluator(kFcX.data(), kFcY.data(),
+                                                       kFcX.size());
+
+  constexpr float kXInterval1 = 1.5F;
+  constexpr float kXInterval3 = 3.5F;
+  constexpr float kExpectedYInterval3 = -0.625F;
+  constexpr float kExpectedDyInterval3 = 1.25F;
+
+  evaluator.Eval(kXInterval1);
+
+  const auto kRes = evaluator.Eval(kXInterval3);
+  EXPECT_NEAR(kRes.y, kExpectedYInterval3, kEps);
+  EXPECT_NEAR(kRes.dy, kExpectedDyInterval3, kEps);
+  const auto kDirect = lob::spline::detail::EvalWithDeriv<float>(
+      kFcX.data(), kFcY.data(), kFcX.size(), kXInterval3);
+  EXPECT_NEAR(kRes.y, kDirect.y, kEps);
+  EXPECT_NEAR(kRes.dy, kDirect.dy, kEps);
+}
+
 TEST(SplinesBuildTest, BuiltCoefsReproduceSourceDataAtKnots) {
   constexpr auto kN = size_t{5};
   std::array<float, kN> knots{0, 1, 2, 3, 4};

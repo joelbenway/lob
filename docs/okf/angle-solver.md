@@ -150,6 +150,19 @@ initial velocity is built. So the angle the solver searches over is the
 inverse adjustments inherit jump identically. Neither caller has to
 remember to apply it, which is one more way the two paths cannot drift.
 
+## The Lateral Zero
+
+Just as the vertical zero angle $\theta$ converges the trajectory to cross the optical line-of-sight in elevation at zero range $R_0$, a lateral zero azimuth $\phi$ converges the trajectory to cross the sight plane laterally:
+
+```text
+f_z(φ) = Z_at_range(φ) - optic_offset
+```
+
+`BuildZeroAzimuth` solves for $\phi$ using the same `FastInverseAngle` iteration shape, with elevation fixed at $\theta + \text{aerodynamic\_jump}$.
+
+- **Convergence with lateral offset:** When the optic is offset laterally (e.g., $1.5\text{ in}$ to the right, $Z = -0.125\text{ ft}$), the bore must angle towards the right ($\phi < 0$) by approximately $\operatorname{atan}(\text{optic\_offset} / R_0)$ so that the trajectory intersects the sight plane at $R_0$.
+- **Convergence in wind:** If zeroing in crosswind, Coriolis, or sheared wind, `BuildZeroAzimuth` absorbs the lateral drift at $R_0$, matching real-world zeroing practice where the shooter dials the windage turret dead-on at the zero range.
+
 ## Why sharing matters
 
 **Consistency.** The zero a rifle is zeroed with and the adjustments

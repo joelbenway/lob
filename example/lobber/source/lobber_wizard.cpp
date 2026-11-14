@@ -48,22 +48,23 @@ constexpr size_t kMaxBands = 16;
 constexpr size_t kMaxWindStations = 8;
 
 constexpr double kDefaultG1Bc = 0.426;
-constexpr double kDefaultG7Bc = 0.218;
+constexpr double kDefaultG7Bc = 0.243;
 constexpr double kDefaultOtherBc = 0.300;
 
-constexpr double kDefaultMvFps = 2800.0;
+constexpr double kDefaultMvFps = 2700.0;
 constexpr double kMaxMvFps = 65535.0;
 constexpr double kDefaultMassGrains = 168.0;
 constexpr double kDefaultCaliberInch = 0.308;
-constexpr double kDefaultBulletLengthInch = 1.215;
-constexpr double kDefaultTwistInches = 10.0;
-constexpr double kDefaultNoseLengthInch = 0.69;
-constexpr double kDefaultMeplatDiameterInch = 0.065;
-constexpr double kDefaultBaseDiameterInch = 0.242;
-constexpr double kDefaultTailLengthInch = 0.14;
-constexpr double kDefaultOgiveRatio = 0.90;
+constexpr double kDefaultBulletLengthInch = 1.24;
+constexpr double kDefaultTwistInches = 11.0;
+constexpr double kDefaultNoseLengthInch = 0.6;
+constexpr double kDefaultMeplatDiameterInch = 0.05;
+constexpr double kDefaultBaseDiameterInch = 0.28;
+constexpr double kDefaultTailLengthInch = 0.2;
+constexpr double kDefaultOgiveRatio = 0.50;
 
 constexpr double kDefaultOpticHeightInch = 1.5;
+constexpr double kDefaultOpticLateralOffsetInch = 0.0;
 constexpr double kDefaultZeroDistanceYards = 100.0;
 constexpr double kDefaultZeroImpactHeightInch = 0.0;
 constexpr double kDefaultZeroAngleMoa = 0.0;
@@ -71,8 +72,8 @@ constexpr double kDefaultZeroAngleMoa = 0.0;
 constexpr double kDefaultWindSpeedMph = 10.0;
 constexpr double kDefaultWindHeadingClock = 3.0;
 
-constexpr double kDefaultLatitudeDeg = 45.0;
-constexpr double kDefaultAzimuthDeg = 90.0;
+constexpr double kDefaultLatitudeDeg = 40.0;
+constexpr double kDefaultAzimuthDeg = 270.0;
 
 constexpr double kDefaultStepSizeInch = 36.0;
 constexpr double kDefaultMaxRangeYds = 1000.0;
@@ -230,13 +231,11 @@ int PromptDragFunction() {
 }
 
 int PromptBcAtmosphere() {
-  constexpr int kDefaultIcaoChoice = 2;
-  const std::vector<std::string> kAtmoOptions = {"Army Standard Metro (ASM)",
-                                                 "ICAO Reference Atmosphere"};
+  const std::vector<std::string> kAtmoOptions = {"ICAO Reference Atmosphere",
+                                                 "Army Standard Metro (ASM)"};
   const int kChoice =
-      PromptChoice("Select BC atmosphere reference standard:", kAtmoOptions,
-                   kDefaultIcaoChoice);
-  return (kChoice == 2) ? 1 : 0;
+      PromptChoice("Select BC atmosphere reference standard:", kAtmoOptions, 1);
+  return (kChoice == 1) ? 1 : 0;
 }
 
 void WizardDragSingleBc(nlohmann::json* j) {
@@ -432,70 +431,12 @@ void WizardDragCustomTable(nlohmann::json* j) {
   }
   (*j)["SplineFitTable"] = std::move(jtable);
 }
-
-std::vector<float> PromptInteractiveSplineCoefficients() {
-  std::cout << "Enter or paste the 60 space/comma separated floating point "
-               "coefficients (press Enter for sample coefficients):\n";
-  std::vector<float> coefs;
-  while (coefs.size() < lob::kLobCoeffsSize) {
-    const std::string kLine = ReadLine("> ");
-    if (!std::cin) {
-      break;
-    }
-    if (kLine.empty()) {
-      if (coefs.empty()) {
-        const auto kSampleCtx =
-            lob::Builder()
-                .BallisticCoefficientPsi(kDefaultG7Bc)
-                .BCDragFunction(lob::DragFunctionT::kG7)
-                .InitialVelocityFps(static_cast<uint16_t>(kDefaultMvFps))
-                .ZeroAngleMOA(kDefaultZeroAngleMoa)
-                .Build();
-        coefs.assign(kSampleCtx.drags.begin(), kSampleCtx.drags.end());
-        std::cout << "Using sample spline coefficients (60 floats).\n";
-        break;
-      }
-      continue;
-    }
-    const auto kParsed = ParseSplineCoefficientsFromString(kLine);
-    for (const float kVal : kParsed) {
-      coefs.push_back(kVal);
-      if (coefs.size() == lob::kLobCoeffsSize) {
-        break;
-      }
-    }
-    std::cout << "Read " << coefs.size() << "/" << lob::kLobCoeffsSize
-              << " coefficients.\n";
-  }
-  return coefs;
-}
-
-std::vector<float> LoadSplineCoefficientsFromFileOrInteractive() {
-  const std::string kFilePath = ReadLine(
-      "Load 60 spline coefficients from file or paste? (enter path or press "
-      "Enter to paste): ");
-  if (!kFilePath.empty()) {
-    const std::string kContent = ReadFileToString(kFilePath);
-    auto coefs = ParseSplineCoefficientsFromString(kContent);
-    if (coefs.size() == lob::kLobCoeffsSize) {
-      return coefs;
-    }
-  }
-  return PromptInteractiveSplineCoefficients();
-}
-
-void WizardDragSplineCoefficients(nlohmann::json* j) {
-  (*j)["DragSource"] = "coefficients";
-  const auto kCoefs = LoadSplineCoefficientsFromFileOrInteractive();
-  (*j)["SplineCoefficients"] = kCoefs;
-}
-
 void WizardPhaseDrag(nlohmann::json* j) {
   PrintPhaseBanner(kPhaseDrag, kTotalPhases, "Drag Source");
 
   const std::vector<std::string> kDragOptions = {
       "Single Ballistic Coefficient (BC)", "BC Velocity Bands",
-      "Custom Mach vs. Cd Table", "Native Spline Coefficients (60 floats)"};
+      "Custom Mach vs. Cd Table"};
   const int kChoice =
       PromptChoice("Select projectile drag representation:", kDragOptions, 1);
 
@@ -508,9 +449,6 @@ void WizardPhaseDrag(nlohmann::json* j) {
       break;
     case 3:
       WizardDragCustomTable(j);
-      break;
-    case 4:
-      WizardDragSplineCoefficients(j);
       break;
     default:
       WizardDragSingleBc(j);
@@ -662,6 +600,13 @@ void WizardPhaseZero(nlohmann::json* j) {
     (*j)["OpticHeightInches"] = kOpticHt;
   }
 
+  const double kOpticLateral = PromptDouble(
+      "Enter sight/optic lateral offset in inches (+ right, - left)",
+      /*required=*/false, kDefaultOpticLateralOffsetInch);
+  if (!std::isnan(kOpticLateral)) {
+    (*j)["OpticLateralOffsetInches"] = kOpticLateral;
+  }
+
   const std::vector<std::string> kZeroOptions = {
       "Zero by Distance (standard zero range in yards)",
       "Zero by Angle (known bore-to-sight angle in MOA)"};
@@ -748,7 +693,7 @@ void WizardPhaseAtmosphere(nlohmann::json* j) {
   PrintPhaseBanner(kPhaseAtmosphere, kTotalPhases, "Atmosphere & Weather");
 
   const std::vector<std::string> kAtmoSources = {
-      "Standard Sea-Level ISA (29.92 inHg, 59°F, 0% RH)",
+      "Standard Sea-Level ICAO (29.92 inHg, 59°F, 0% RH)",
       "Altitude-derived atmosphere (derives pressure/temp from altitude)",
       "Measured station weather (user-entered pressure, temp, humidity)"};
   const int kChoice =
@@ -761,7 +706,7 @@ void WizardPhaseAtmosphere(nlohmann::json* j) {
 
     const double kRh =
         PromptDouble("Enter relative humidity in percent (0-100)",
-                     /*required=*/false, kNaN, "ISA default");
+                     /*required=*/false, kNaN, "ICAO default");
     if (!std::isnan(kRh)) {
       (*j)["RelativeHumidityPercent"] = kRh;
     }
@@ -894,7 +839,9 @@ void WizardPhaseWind(nlohmann::json* j) {
   const int kChoice = PromptChoice("Select wind environment:", kWindSources,
                                    kDefaultCalmChoice);
 
-  if (kChoice == 2) {
+  if (kChoice == 1) {
+    (*j)["WindSpeedMph"] = 0.0;
+  } else if (kChoice == 2) {
     const double kWspd =
         PromptDouble("Enter wind speed in miles per hour (mph)",
                      /*required=*/true, kDefaultWindSpeedMph);
@@ -1134,8 +1081,13 @@ void PrintConfigurationReview(const nlohmann::json& j) {
   if (j.contains("AltitudeOfFiringSiteFt")) {
     std::cout << "  Altitude:         " << j["AltitudeOfFiringSiteFt"]
               << " ft\n";
+  } else if (j.contains("AirPressureInHg") || j.contains("TemperatureDegF")) {
+    std::cout << "  Atmosphere:       Measured\n";
+  } else {
+    std::cout << "  Atmosphere:       Standard (ICAO)\n";
   }
-  if (j.contains("WindSpeedMph")) {
+  if (j.contains("WindSpeedMph") && j["WindSpeedMph"].is_number() &&
+      j["WindSpeedMph"].get<double>() > 0.0) {
     std::cout << "  Wind:             " << j["WindSpeedMph"] << " mph\n";
   } else if (j.contains("WindProfile")) {
     std::cout << "  Wind:             Profile (" << j["WindProfile"].size()

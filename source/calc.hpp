@@ -17,7 +17,8 @@ constexpr DegFT CalculateTemperatureAtAltitude(FeetT altitude,
                                                DegFT temperature) {
   const DegFT kTemperature =
       temperature - DegFT(isa::kLapseDegFPerFt * altitude.Value());
-  return std::max(kTemperature, DegFT(isa::kMinimumTempDegF));
+  const DegFT kMinTemp = std::min(temperature, DegFT(isa::kMinimumTempDegF));
+  return std::max(kTemperature, kMinTemp);
 }
 
 // Page 166 of Modern Exterior Ballistics - McCoy

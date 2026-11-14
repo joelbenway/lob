@@ -131,7 +131,7 @@ test("readConfig parses and validates band rows", () => {
   );
 });
 
-test("readConfig parses custom tables and native coefficients", () => {
+test("readConfig parses custom tables", () => {
   const table = readConfig({
     ...valid,
     dragSource: "table",
@@ -141,23 +141,6 @@ test("readConfig parses custom tables and native coefficients", () => {
     machs: [0, 1, 2],
     drags: [0.12, 0.25, 0.38],
   });
-
-  const coefficients = Array.from({ length: 60 }, (_, index) => String(index));
-  const native = readConfig({
-    ...valid,
-    dragSource: "coefficients",
-    coefficientsText: coefficients.join(" "),
-  });
-  assert.equal(native.coefficients.length, 60);
-  assert.throws(
-    () =>
-      readConfig({
-        ...valid,
-        dragSource: "coefficients",
-        coefficientsText: "1 2 3",
-      }),
-    /coefficients/,
-  );
 });
 
 test("readConfig enforces projectile tiers", () => {
@@ -350,17 +333,6 @@ test("applyConfig selects exactly one drag source", () => {
       },
       ["machVsDragTable"],
     ],
-    [
-      "coefficients",
-      {
-        ...valid,
-        dragSource: "coefficients",
-        coefficientsText: Array.from({ length: 60 }, (_, i) => String(i)).join(
-          " ",
-        ),
-      },
-      ["splineCoefficients"],
-    ],
   ];
 
   for (const [name, values, expected] of cases) {
@@ -372,7 +344,6 @@ test("applyConfig selects exactly one drag source", () => {
           "ballisticCoefficientPsi",
           "bcVelocityBands",
           "machVsDragTable",
-          "splineCoefficients",
           "bcDragFunction",
           "bcAtmosphere",
         ].includes(call),
@@ -405,6 +376,36 @@ test("applyConfig selects one zero and one wind source", () => {
   assert.ok(profileNames.includes("windProfile"));
   assert.ok(!profileNames.includes("windSpeedMph"));
   assert.ok(!profileNames.includes("windHeading"));
+});
+
+test("readConfig parses optic lateral offset", () => {
+  const config = readConfig({
+    ...valid,
+    opticLateralOffsetInches: "1.25",
+  });
+  assert.equal(config.opticLateralOffsetInches, 1.25);
+});
+
+test("readConfig validates non-finite optic lateral offset", () => {
+  assert.throws(
+    () => readConfig({ ...valid, opticLateralOffsetInches: "NaN" }),
+    /Lateral offset must be a finite number/,
+  );
+});
+
+test("applyConfig forwards optic lateral offset to builder", () => {
+  const { builder, calls } = recordingBuilder();
+  applyConfig(
+    builder,
+    readConfig({
+      ...valid,
+      opticLateralOffsetInches: "1.5",
+    }),
+  );
+  const offsetCall = calls.find(
+    ([name]) => name === "opticLateralOffsetInches",
+  );
+  assert.deepEqual(offsetCall, ["opticLateralOffsetInches", 1.5]);
 });
 
 // This file is part of lob.

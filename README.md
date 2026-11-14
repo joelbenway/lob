@@ -1,7 +1,7 @@
 <img alt="Pretty proud of this hand-coded svg" src="docs/lob.svg" width="100%"></img>
 
 # lob
-This is lob, a useful and free exterior ballistics calculation library written in industrial-strength C++. :rocket:
+This is lob, an easy-to-use, accurate, and fast ballistics engine that runs anywhere. Written in industrial-strength C++.
 
 [![CI](https://github.com/joelbenway/lob/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/joelbenway/lob/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob) [![npm](https://img.shields.io/npm/v/@joelbenway/lob.svg)](https://www.npmjs.com/package/@joelbenway/lob) [![C++14](https://img.shields.io/badge/C%2B%2B-14-blue.svg)](https://isocpp.org/) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](COPYING.md)
 
@@ -29,6 +29,9 @@ The following can be accounted for in lob's solutions:
    * Gyroscopic spin drift (standard empirical model or geometry-based precession/nutation)
    * Crosswind aerodynamic jump (standard empirical model or projectile geometry model)
    * Gyroscopic stability estimation via the Miller rule
+ * **Sight & Mounting Geometry**
+   * Optical centerline vertical height (`OpticHeightInches`)
+   * Lateral optic offset (`OpticLateralOffsetInches`, positive = right of bore) with 3D sight-line convergence at zero range
  * **Dual Solver Architecture**
    * **Forward solutions**: Computes trajectory drop, windage deflection, velocity, and time of flight (Mach number is calculated internally but not included in returned trajectory results)
    * **Inverse solutions**: Computes precise optic dial elevation and windage adjustments (in MOA) to hit a target at range; `SolveInverse` uses a closed-form geometric correction without iterative overhead, while `SolveInverseELR` uses iterative angle refinement for nonzero reached ranges
@@ -115,6 +118,7 @@ const lob::Context kBetterCtx =
   .InitialVelocityFps(2800)
   .ZeroAngleMOA(4.62)
   .OpticHeightInches(2.5)
+  .OpticLateralOffsetInches(0.0) // positive = right of bore
   .TwistInchesPerTurn(10.0)
   .AirPressureInHg(30.3)
   .TemperatureDegF(63.1)

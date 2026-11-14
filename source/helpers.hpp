@@ -47,8 +47,12 @@ constexpr bool IsInf(T x) {
 
 template <typename T>
 constexpr bool IsNan(T x) {
+#if defined(__GNUC__) || defined(__clang__)
+  return __builtin_isnan(x);
+#else
   return !(x <= std::numeric_limits<T>::max()) &&
          !(x >= -std::numeric_limits<T>::max());
+#endif
 }
 
 template <typename T>
@@ -130,6 +134,10 @@ constexpr T Cos(T x) noexcept {
     sum += term;
   }
   return sum;
+}
+
+inline bool HasGyroscopicSpin(double stability_factor) noexcept {
+  return !std::isnan(stability_factor) && std::abs(stability_factor) > 0.0;
 }
 
 }  // namespace lob

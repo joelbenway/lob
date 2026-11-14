@@ -101,6 +101,49 @@ constexpr Result<T> EvalWithDeriv(const T* x, const T* y, size_t n, T v) {
   return Result<T>{PolyVal(&c[0], kT), PolyDeriv(&c[0], kT)};
 }
 
+template <typename T>
+class TableEvaluator {
+ public:
+  constexpr TableEvaluator(const T* x, const T* y, size_t n)
+      : x_(x), y_(y), n_(n) {}
+
+  constexpr Result<T> Eval(T v) {
+    while (cursor_ + 1 < n_ - 1 && x_[cursor_ + 1] <= v) {
+      ++cursor_;
+    }
+    if (cursor_ != cur_interval_) {
+      UpdateInterval(cursor_);
+    }
+    const T kT = v - x_[cursor_];
+    return Result<T>{PolyVal(&c_[0], kT), PolyDeriv(&c_[0], kT)};
+  }
+
+ private:
+  constexpr void UpdateInterval(size_t new_interval) {
+    T m0 = T(0);
+    if (new_interval == cur_interval_ + 1 && has_m1_) {
+      m0 = prev_m1_;
+    } else {
+      m0 = Tangent(x_, y_, n_, new_interval);
+    }
+    const T kM1 = Tangent(x_, y_, n_, new_interval + 1);
+    Hermite(x_[new_interval], x_[new_interval + 1], y_[new_interval],
+            y_[new_interval + 1], m0, kM1, &c_[0]);
+    cur_interval_ = new_interval;
+    prev_m1_ = kM1;
+    has_m1_ = true;
+  }
+
+  const T* x_{nullptr};
+  const T* y_{nullptr};
+  size_t n_{0};
+  size_t cursor_{0};
+  size_t cur_interval_{static_cast<size_t>(-1)};
+  T prev_m1_{0};
+  bool has_m1_{false};
+  T c_[4]{};  // NOLINT
+};
+
 }  // namespace detail
 
 constexpr size_t kKnotCount = 16;
@@ -214,8 +257,16 @@ constexpr void Segment(const T* machs, const T* drags, size_t size, T knot1,
 template <typename T>
 constexpr size_t Build(const T* machs, const T* drags, size_t size,
                        const T* knots, size_t n_knots, T* coefs_out) {
+  if (n_knots < 2 || size < 2) {
+    return 0;
+  }
+  detail::TableEvaluator<T> eval(machs, drags, size);
+  detail::Result<T> p = eval.Eval(knots[0]);
   for (size_t i = 0; i + 1 < n_knots; ++i) {
-    Segment(machs, drags, size, knots[i], knots[i + 1], coefs_out + (4 * i));
+    const detail::Result<T> kQ = eval.Eval(knots[i + 1]);
+    detail::Hermite(knots[i], knots[i + 1], p.y, kQ.y, p.dy, kQ.dy,
+                    coefs_out + (4 * i));
+    p = kQ;
   }
   return n_knots - 1;
 }

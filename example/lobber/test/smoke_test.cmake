@@ -80,6 +80,24 @@ if(NOT HAS_WIND EQUAL -1)
 endif()
 message(STATUS "PASS: --json")
 
+# --json with optic lateral offset
+file(WRITE "lateral_offset_temp.json" "{\"DragSource\":\"bc\",\"BCDragFunction\":5,\"BallisticCoefficientPsi\":0.243,\"InitialVelocityFps\":2700,\"OpticHeightInches\":1.5,\"OpticLateralOffsetInches\":1.5,\"ZeroDistanceYds\":100,\"Ranges\":[0,100]}")
+execute_process(
+  COMMAND "${LOBBER}" --json
+  INPUT_FILE "lateral_offset_temp.json"
+  RESULT_VARIABLE LAT_RES
+  OUTPUT_VARIABLE LAT_OUT
+  ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+file(REMOVE "lateral_offset_temp.json")
+if(NOT LAT_RES EQUAL 0)
+  message(FATAL_ERROR "lateral offset solve exited ${LAT_RES}")
+endif()
+string(REGEX MATCH "\"deflection\":[ ]*1\\.5" FOUND_LAT "${LAT_OUT}")
+if(NOT FOUND_LAT)
+  message(FATAL_ERROR "lateral offset expected deflection 1.5 at range 0, got ${LAT_OUT}")
+endif()
+message(STATUS "PASS: optic lateral offset")
+
 # forward table mode
 execute_process(
   COMMAND "${LOBBER}"

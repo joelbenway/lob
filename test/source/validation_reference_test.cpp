@@ -264,6 +264,34 @@ TEST(ReferenceDecomposition, C1Icao) {
   }
 }
 
+TEST(ReferenceDecomposition, OpticLateralOffsetJsonRoundTrip) {
+  constexpr double kOffsetIn = 1.5;
+  constexpr double kDiameter = 0.224;
+  constexpr double kMassGrains = 77.0;
+  constexpr uint16_t kMuzzleVelocityFps = 2750;
+  constexpr double kBcPsi = 0.372;
+  constexpr double kZeroDistanceYds = 100.0;
+  constexpr double kExpectedOffsetFt = -0.125;
+  constexpr double kTol = 1e-6;
+
+  const nlohmann::json kRoot = {{"optic_lateral_offset_in", kOffsetIn}};
+  EXPECT_TRUE(kRoot.at("optic_lateral_offset_in").is_number());
+  EXPECT_DOUBLE_EQ(kRoot.at("optic_lateral_offset_in").get<double>(),
+                   kOffsetIn);
+
+  lob::Builder builder;
+  builder.DiameterInch(kDiameter)
+      .MassGrains(kMassGrains)
+      .InitialVelocityFps(kMuzzleVelocityFps)
+      .BallisticCoefficientPsi(kBcPsi)
+      .ZeroDistanceYds(kZeroDistanceYds)
+      .OpticLateralOffsetInches(
+          kRoot.at("optic_lateral_offset_in").get<double>());
+  const lob::Context kCtx = builder.Build();
+  EXPECT_EQ(kCtx.error, lob::ErrorT::kNone);
+  EXPECT_NEAR(kCtx.optic_offset, kExpectedOffsetFt, kTol);
+}
+
 }  // namespace tests
 
 // ---- Task 4: offline full-matrix driver + coverage matrix ----
