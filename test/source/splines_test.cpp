@@ -647,6 +647,26 @@ TEST(SplinesTableEvaluatorTest,
   EXPECT_NEAR(res.dy, direct.dy, kEps);
 }
 
+TEST(SplinesTableEvaluatorTest, SkippedIntervalForcesTangentRecomputation) {
+  lob::spline::detail::TableEvaluator<float> evaluator(kFcX.data(), kFcY.data(),
+                                                       kFcX.size());
+
+  constexpr float kXInterval1 = 1.5F;
+  constexpr float kXInterval3 = 3.5F;
+  constexpr float kExpectedYInterval3 = -0.625F;
+  constexpr float kExpectedDyInterval3 = 1.25F;
+
+  evaluator.Eval(kXInterval1);
+
+  const auto kRes = evaluator.Eval(kXInterval3);
+  EXPECT_NEAR(kRes.y, kExpectedYInterval3, kEps);
+  EXPECT_NEAR(kRes.dy, kExpectedDyInterval3, kEps);
+  const auto kDirect = lob::spline::detail::EvalWithDeriv<float>(
+      kFcX.data(), kFcY.data(), kFcX.size(), kXInterval3);
+  EXPECT_NEAR(kRes.y, kDirect.y, kEps);
+  EXPECT_NEAR(kRes.dy, kDirect.dy, kEps);
+}
+
 TEST(SplinesBuildTest, BuiltCoefsReproduceSourceDataAtKnots) {
   constexpr auto kN = size_t{5};
   std::array<float, kN> knots{0, 1, 2, 3, 4};
