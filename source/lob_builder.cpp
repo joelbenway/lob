@@ -1025,14 +1025,11 @@ void BuildOptions(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  const FpsT kMinSpeed =
-      pimpl->minimum_energy_ft_lbs.IsNaN()
-          ? FpsT(0)
-          : CalculateVelocityFromKineticEnergy(pimpl->minimum_energy_ft_lbs,
-                                               SlugT(pimpl->mass_lbs));
-  pout->minimum_speed =
-      std::max(pout->minimum_speed,
-               kMinSpeed.IsNaN() ? static_cast<uint16_t>(0) : kMinSpeed.U16());
+  if (!pimpl->minimum_energy_ft_lbs.IsNaN()) {
+    const FpsT kMinSpeed = CalculateVelocityFromKineticEnergy(
+        pimpl->minimum_energy_ft_lbs, SlugT(pimpl->mass_lbs));
+    pout->minimum_speed = std::max(pout->minimum_speed, kMinSpeed.U16());
+  }
 }
 
 void CleanFailureState(LobContext* presult) noexcept {
