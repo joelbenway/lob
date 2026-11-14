@@ -751,17 +751,25 @@ uint16_t JsonToU16(const nlohmann::json& j, const std::string& key) {
 
 lob::AtmosphereReferenceT JsonToAtmosphere(const nlohmann::json& j,
                                            const std::string& key) {
-  if (!j.contains(key) || j[key].is_null()) {
+  std::string lookup_key = key;
+  if (!j.contains(lookup_key)) {
+    if (key == "BCAtmosphere" && j.contains("bcAtmosphere")) {
+      lookup_key = "bcAtmosphere";
+    } else {
+      return lob::AtmosphereReferenceT::kIcao;
+    }
+  }
+  if (j[lookup_key].is_null()) {
     return lob::AtmosphereReferenceT::kIcao;
   }
-  if (j[key].is_string()) {
-    const std::string kVal = j[key].get<std::string>();
+  if (j[lookup_key].is_string()) {
+    const std::string kVal = j[lookup_key].get<std::string>();
     if (kVal == "1" || kVal == "2" || kVal == "icao" || kVal == "ICAO") {
       return lob::AtmosphereReferenceT::kIcao;
     }
     return lob::AtmosphereReferenceT::kArmyStandardMetro;
   }
-  const double kV = JsonToDouble(j, key);
+  const double kV = JsonToDouble(j, lookup_key);
   if (std::isnan(kV)) {
     return lob::AtmosphereReferenceT::kIcao;
   }
@@ -1199,6 +1207,7 @@ std::vector<uint32_t> ParseRanges(const nlohmann::json& j) {
 
 lob::Context BuildContextFromJson(const nlohmann::json& j) {
   lob::Builder builder;
+  builder.BCAtmosphere(lob::AtmosphereReferenceT::kIcao);
   DragBuffers buffers;
   std::vector<lob::WindPoint> wind_points;
 

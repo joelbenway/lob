@@ -231,13 +231,11 @@ int PromptDragFunction() {
 }
 
 int PromptBcAtmosphere() {
-  constexpr int kDefaultIcaoChoice = 2;
-  const std::vector<std::string> kAtmoOptions = {"Army Standard Metro (ASM)",
-                                                 "ICAO Reference Atmosphere"};
+  const std::vector<std::string> kAtmoOptions = {"ICAO Reference Atmosphere",
+                                                 "Army Standard Metro (ASM)"};
   const int kChoice =
-      PromptChoice("Select BC atmosphere reference standard:", kAtmoOptions,
-                   kDefaultIcaoChoice);
-  return (kChoice == 2) ? 1 : 0;
+      PromptChoice("Select BC atmosphere reference standard:", kAtmoOptions, 1);
+  return (kChoice == 1) ? 1 : 0;
 }
 
 void WizardDragSingleBc(nlohmann::json* j) {
@@ -695,7 +693,7 @@ void WizardPhaseAtmosphere(nlohmann::json* j) {
   PrintPhaseBanner(kPhaseAtmosphere, kTotalPhases, "Atmosphere & Weather");
 
   const std::vector<std::string> kAtmoSources = {
-      "Standard Sea-Level ISA (29.92 inHg, 59°F, 0% RH)",
+      "Standard Sea-Level ICAO (29.92 inHg, 59°F, 0% RH)",
       "Altitude-derived atmosphere (derives pressure/temp from altitude)",
       "Measured station weather (user-entered pressure, temp, humidity)"};
   const int kChoice =
@@ -708,7 +706,7 @@ void WizardPhaseAtmosphere(nlohmann::json* j) {
 
     const double kRh =
         PromptDouble("Enter relative humidity in percent (0-100)",
-                     /*required=*/false, kNaN, "ISA default");
+                     /*required=*/false, kNaN, "ICAO default");
     if (!std::isnan(kRh)) {
       (*j)["RelativeHumidityPercent"] = kRh;
     }
@@ -841,7 +839,9 @@ void WizardPhaseWind(nlohmann::json* j) {
   const int kChoice = PromptChoice("Select wind environment:", kWindSources,
                                    kDefaultCalmChoice);
 
-  if (kChoice == 2) {
+  if (kChoice == 1) {
+    (*j)["WindSpeedMph"] = 0.0;
+  } else if (kChoice == 2) {
     const double kWspd =
         PromptDouble("Enter wind speed in miles per hour (mph)",
                      /*required=*/true, kDefaultWindSpeedMph);
@@ -1081,8 +1081,13 @@ void PrintConfigurationReview(const nlohmann::json& j) {
   if (j.contains("AltitudeOfFiringSiteFt")) {
     std::cout << "  Altitude:         " << j["AltitudeOfFiringSiteFt"]
               << " ft\n";
+  } else if (j.contains("AirPressureInHg") || j.contains("TemperatureDegF")) {
+    std::cout << "  Atmosphere:       Measured\n";
+  } else {
+    std::cout << "  Atmosphere:       Standard (ICAO)\n";
   }
-  if (j.contains("WindSpeedMph")) {
+  if (j.contains("WindSpeedMph") && j["WindSpeedMph"].is_number() &&
+      j["WindSpeedMph"].get<double>() > 0.0) {
     std::cout << "  Wind:             " << j["WindSpeedMph"] << " mph\n";
   } else if (j.contains("WindProfile")) {
     std::cout << "  Wind:             Profile (" << j["WindProfile"].size()
