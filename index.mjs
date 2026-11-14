@@ -600,6 +600,24 @@ export class Builder {
   }
 
   /**
+   * Set sight centerline lateral offset from bore, in inches.
+   *
+   * Positive values place the optic to the shooter's right of the bore.
+   * Default is 0.0 (sight in bore vertical plane).
+   *
+   * @param {number} value Lateral offset in inches (e.g., 1.5).
+   * @returns {this}
+   * @throws {TypeError} If `value` is not a number.
+   * @throws {RangeError} If `value` is non-finite.
+   */
+  opticLateralOffsetInches(value) {
+    return this.#call(
+      "_LobBuilderOpticLateralOffsetInches",
+      finiteNumber(value, "opticLateralOffsetInches"),
+    );
+  }
+
+  /**
    * Set barrel rifling twist rate, in inches per turn.
    *
    * Positive values indicate right-hand (clockwise) twist. Used for spin drift
@@ -632,6 +650,31 @@ export class Builder {
       "_LobBuilderZeroAngleMOA",
       finiteNumber(value, "zeroAngleMoa"),
     );
+  }
+
+  /**
+   * Set bore azimuth angle relative to optical axis, in Minutes of Angle (MOA).
+   *
+   * @param {number} value Zero azimuth angle in MOA.
+   * @returns {this}
+   * @throws {TypeError} If `value` is not a number.
+   * @throws {RangeError} If `value` is non-finite.
+   */
+  zeroAzimuthMoa(value) {
+    return this.#call(
+      "_LobBuilderZeroAzimuthMOA",
+      finiteNumber(value, "zeroAzimuthMoa"),
+    );
+  }
+
+  /**
+   * Alias for zeroAzimuthMoa.
+   *
+   * @param {number} value Zero azimuth angle in MOA.
+   * @returns {this}
+   */
+  zeroAzimuthMOA(value) {
+    return this.zeroAzimuthMoa(value);
   }
 
   /**

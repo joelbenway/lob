@@ -33,6 +33,7 @@ var group__api__c =
       [ "max_time", "structLobContext.html#a60d1d5394cb1b2d7bb34cd7d63ad400a", null ],
       [ "minimum_speed", "structLobContext.html#a9239b3631836f6a21555df6fce312d79", null ],
       [ "optic_height", "structLobContext.html#a956628cb3077d84056333e61aa41ebc0", null ],
+      [ "optic_offset", "structLobContext.html#a4f839831e6214570001b56bd1f37b40b", null ],
       [ "speed_of_sound", "structLobContext.html#a4a308d5e7d07f6c43c866e62c55e6e34", null ],
       [ "spindrift_factor", "structLobContext.html#ad2aa539f05b9bd9216938cc703786f87", null ],
       [ "stability_factor", "structLobContext.html#a786a416a2818a403112312d7b5ee6c51", null ],
@@ -41,7 +42,8 @@ var group__api__c =
       [ "wind_count", "structLobContext.html#a5bc4ffb762fe33addaf672956cf9f271", null ],
       [ "wind_nodes", "structLobContext.html#a46bd3ecacba7eaa7486dc4ac022907e8", null ],
       [ "wind_shear_exponent", "structLobContext.html#a2c8f11953d413dd8167075dff1fa161b", null ],
-      [ "zero_angle", "structLobContext.html#a9ca54c01a93bc026ab39daf548cdcade", null ]
+      [ "zero_angle", "structLobContext.html#a9ca54c01a93bc026ab39daf548cdcade", null ],
+      [ "zero_azimuth", "structLobContext.html#aa5ebcd4f91ba0d4f605e6a350a4fe595", null ]
     ] ],
     [ "LobOutput", "structLobOutput.html", [
       [ "deflection", "structLobOutput.html#af583f649044dea69e29dbbb636aefb1c", null ],
@@ -150,6 +152,7 @@ var group__api__c =
     [ "LobBuilderNoseLengthInch", "group__api__c.html#gad438a477f85b933330dccbf1b2315049", null ],
     [ "LobBuilderOgiveRtR", "group__api__c.html#ga7860a7c5e19428975cd257d9af3d5d9d", null ],
     [ "LobBuilderOpticHeightInches", "group__api__c.html#ga23ebddec5ef04a1e627ba159fbd395b7", null ],
+    [ "LobBuilderOpticLateralOffsetInches", "group__api__c.html#ga4f1170d1690ca13b86d551ec58cfc07d", null ],
     [ "LobBuilderRangeAngleDeg", "group__api__c.html#ga9f6880bcb6e50f636481c5a21ac12201", null ],
     [ "LobBuilderRelativeHumidityPercent", "group__api__c.html#ga385d006c49a94a4459652d1286f927bf", null ],
     [ "LobBuilderReset", "group__api__c.html#ga612d044abb7eab0a5c9e967765fe5557", null ],
@@ -166,6 +169,7 @@ var group__api__c =
     [ "LobBuilderWindSpeedFps", "group__api__c.html#ga19f40b6b2f133567d2f7e113e79d7b2d", null ],
     [ "LobBuilderWindSpeedMph", "group__api__c.html#gaf886ef31f651e49876e4dffce7e3a957", null ],
     [ "LobBuilderZeroAngleMOA", "group__api__c.html#ga8593e1ab47be197e456238ae82ed387b", null ],
+    [ "LobBuilderZeroAzimuthMOA", "group__api__c.html#gad4822c5cf638d30f39758546d93efe83", null ],
     [ "LobBuilderZeroDistanceYds", "group__api__c.html#gacfdfce2c3b94303d4568b0a452af1420", null ],
     [ "LobBuilderZeroImpactHeightInches", "group__api__c.html#gaa4ea311c5397e32a56f064d0381a871d", null ],
     [ "LobCmToIn", "group__api__c.html#ga5bb7260b99ba60c9a6cdea92a8316ea9", null ],

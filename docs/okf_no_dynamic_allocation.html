@@ -64,7 +64,7 @@ lob. If not, see <https://www.gnu.org/licenses/>.
     <div class="lob-header-brand">
       <div id="projectalign">
         <div id="projectname">
-          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.14.0</span>
+          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.15.0</span>
         </div>
         <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
       </div>
@@ -156,7 +156,7 @@ $(function(){initNavTree('okf_no_dynamic_allocation.html',''); initResizable(tru
 <p>  
 </div>
 </p>
-<h1><a class="anchor" id="autotoc_md80"></a>
+<h1><a class="anchor" id="autotoc_md81"></a>
 No Dynamic Allocation</h1>
 <p>lob never allocates from the heap and never throws. Builders stage into an inline buffer, tables are borrowed rather than copied, and the integration state is a small fixed footprint.</p>
 <p>The motive is callers the library author never meets: embedded targets and real-time contexts that forbid heap use, and integrators who want to vendor the library with no allocator hooks. The consequence is a caller contract (borrowed tables must outlive the build) stated on the builder surface rather than hidden. </p>

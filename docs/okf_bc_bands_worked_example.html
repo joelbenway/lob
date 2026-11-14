@@ -64,7 +64,7 @@ lob. If not, see <https://www.gnu.org/licenses/>.
     <div class="lob-header-brand">
       <div id="projectalign">
         <div id="projectname">
-          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.14.0</span>
+          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.15.0</span>
         </div>
         <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
       </div>
@@ -156,17 +156,17 @@ $(function(){initNavTree('okf_bc_bands_worked_example.html',''); initResizable(t
 <p>  
 </div>
 </p>
-<h1><a class="anchor" id="autotoc_md19"></a>
+<h1><a class="anchor" id="autotoc_md20"></a>
 BC Bands Worked Example</h1>
 <p>A concrete example of <a class="el" href="okf_bc_velocity_band_transformation.html">BC/Velocity-Band Transformation</a>, using coefficients that are also used by the test suite so the result is checkable.</p>
-<h2><a class="anchor" id="autotoc_md20"></a>
+<h2><a class="anchor" id="autotoc_md21"></a>
 The measurements</h2>
 <p>A bullet measured at three velocities, each with a G7-referenced coefficient that rises as velocity increases (from 0.20 at 2000 fps to 0.40 at 3000 fps).</p>
 <div class="fragment"><div class="line">2000 fps  -&gt;  BC 0.20</div>
 <div class="line">2500 fps  -&gt;  BC 0.30</div>
 <div class="line">3000 fps  -&gt;  BC 0.40</div>
 </div><!-- fragment --><p>Read the low coefficient at low speed correctly. A coefficient is a divisor, so the low-speed measurement means <em>more</em> drag than the reference bullet, not less. The bullet is losing more speed early and saving it late, which is what a low-drag superbullet does.</p>
-<h2><a class="anchor" id="autotoc_md21"></a>
+<h2><a class="anchor" id="autotoc_md22"></a>
 The resulting curve</h2>
 <p>Below the slowest band the curve is the reference divided by the first coefficient. Between bands it is the smooth interpolation. Above the fastest band it is the reference divided by the last coefficient.</p>
 <div class="image">
@@ -174,7 +174,7 @@ The resulting curve</h2>
 <div class="caption">
 Reference drag curve against the curve transformed from velocity bands</div></div>
 <p>The visible features are the ones <a class="el" href="okf_bc_velocity_band_transformation.html">the transformation</a> promises: the curve is smooth everywhere, with no kinks at the measured Mach numbers, and outside the measured range it runs parallel to the reference curve, shifted by the edge coefficient.</p>
-<h2><a class="anchor" id="autotoc_md22"></a>
+<h2><a class="anchor" id="autotoc_md23"></a>
 Building the context</h2>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;array&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cassert&gt;</span></div>
@@ -200,29 +200,29 @@ Building the context</h2>
 <div class="line">std::array&lt;uint32_t, 4&gt; kRanges = {300U, 600U, 900U, 1200U};</div>
 <div class="line">std::array&lt;lob::Output, 4&gt; kOutputs = {};</div>
 <div class="line"><a class="code hl_function" href="group__api__cpp.html#ga931309ce695a3cdf584ea5f04de2c613">lob::Solve</a>(kCtx, kRanges, kOutputs.data(), kRanges.size());</div>
-<div class="ttc" id="aclasslob_1_1Builder_html"><div class="ttname"><a href="classlob_1_1Builder.html">lob::Builder</a></div><div class="ttdoc">Builder class for constructing Context objects with a friendly interface.</div><div class="ttdef"><b>Definition</b> lob.hpp:228</div></div>
-<div class="ttc" id="aclasslob_1_1Builder_html_a026a493100562d3f29a29daf1c1e78f9"><div class="ttname"><a href="classlob_1_1Builder.html#a026a493100562d3f29a29daf1c1e78f9">lob::Builder::Build</a></div><div class="ttdeci">Context Build()</div><div class="ttdoc">Builds the Context object with the configured parameters.</div><div class="ttdef"><b>Definition</b> lob.hpp:884</div></div>
-<div class="ttc" id="aclasslob_1_1Builder_html_a28054c75083a0a94571c712fd1974cba"><div class="ttname"><a href="classlob_1_1Builder.html#a28054c75083a0a94571c712fd1974cba">lob::Builder::MassGrains</a></div><div class="ttdeci">Builder &amp; MassGrains(double value)</div><div class="ttdoc">Sets the projectile mass in grains.</div><div class="ttdef"><b>Definition</b> lob.hpp:544</div></div>
-<div class="ttc" id="aclasslob_1_1Builder_html_a4e47b37db5f4f4444d144fe0e8c9d630"><div class="ttname"><a href="classlob_1_1Builder.html#a4e47b37db5f4f4444d144fe0e8c9d630">lob::Builder::InitialVelocityFps</a></div><div class="ttdeci">Builder &amp; InitialVelocityFps(uint16_t value)</div><div class="ttdoc">Sets the initial velocity of the projectile in feet per second.</div><div class="ttdef"><b>Definition</b> lob.hpp:554</div></div>
-<div class="ttc" id="aclasslob_1_1Builder_html_a6de29e4b466aecb3f02b71cb35faec7a"><div class="ttname"><a href="classlob_1_1Builder.html#a6de29e4b466aecb3f02b71cb35faec7a">lob::Builder::DiameterInch</a></div><div class="ttdeci">Builder &amp; DiameterInch(double value)</div><div class="ttdoc">Sets the projectile diameter (caliber) in inches.</div><div class="ttdef"><b>Definition</b> lob.hpp:326</div></div>
-<div class="ttc" id="aclasslob_1_1Builder_html_a9317f76f7e5269e26992d8e964349aac"><div class="ttname"><a href="classlob_1_1Builder.html#a9317f76f7e5269e26992d8e964349aac">lob::Builder::BCAtmosphere</a></div><div class="ttdeci">Builder &amp; BCAtmosphere(AtmosphereReferenceT type)</div><div class="ttdoc">Sets the atmosphere reference associated with ballistic coefficient.</div><div class="ttdef"><b>Definition</b> lob.hpp:276</div></div>
-<div class="ttc" id="aclasslob_1_1Builder_html_a960f31fd350b46ef9d48fbe1ad28d671"><div class="ttname"><a href="classlob_1_1Builder.html#a960f31fd350b46ef9d48fbe1ad28d671">lob::Builder::BCVelocityBands</a></div><div class="ttdeci">Builder &amp; BCVelocityBands(const float *pfps, const float *pbcvs, size_t size)</div><div class="ttdoc">Loads ballistic coefficients measured at multiple velocities.</div><div class="ttdef"><b>Definition</b> lob.hpp:461</div></div>
-<div class="ttc" id="aclasslob_1_1Builder_html_a987f8630ca3411d3c4b3b5a20b7a31a8"><div class="ttname"><a href="classlob_1_1Builder.html#a987f8630ca3411d3c4b3b5a20b7a31a8">lob::Builder::ZeroDistanceYds</a></div><div class="ttdeci">Builder &amp; ZeroDistanceYds(double value)</div><div class="ttdoc">Sets the zero distance in yards.</div><div class="ttdef"><b>Definition</b> lob.hpp:598</div></div>
-<div class="ttc" id="aclasslob_1_1Builder_html_ab05bc635e647fe972048a77990a7f018"><div class="ttname"><a href="classlob_1_1Builder.html#ab05bc635e647fe972048a77990a7f018">lob::Builder::BCDragFunction</a></div><div class="ttdeci">Builder &amp; BCDragFunction(DragFunctionT type)</div><div class="ttdoc">Sets the drag function associated with ballistic coefficient.</div><div class="ttdef"><b>Definition</b> lob.hpp:301</div></div>
-<div class="ttc" id="agroup__api__cpp_html_ga931309ce695a3cdf584ea5f04de2c613"><div class="ttname"><a href="group__api__cpp.html#ga931309ce695a3cdf584ea5f04de2c613">lob::Solve</a></div><div class="ttdeci">size_t Solve(const Context &amp;ctx, const uint32_t *pranges, Output *pouts, size_t size)</div><div class="ttdoc">Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution.</div><div class="ttdef"><b>Definition</b> lob.hpp:906</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html"><div class="ttname"><a href="classlob_1_1Builder.html">lob::Builder</a></div><div class="ttdoc">Builder class for constructing Context objects with a friendly interface.</div><div class="ttdef"><b>Definition</b> lob.hpp:236</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html_a026a493100562d3f29a29daf1c1e78f9"><div class="ttname"><a href="classlob_1_1Builder.html#a026a493100562d3f29a29daf1c1e78f9">lob::Builder::Build</a></div><div class="ttdeci">Context Build()</div><div class="ttdoc">Builds the Context object with the configured parameters.</div><div class="ttdef"><b>Definition</b> lob.hpp:916</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html_a28054c75083a0a94571c712fd1974cba"><div class="ttname"><a href="classlob_1_1Builder.html#a28054c75083a0a94571c712fd1974cba">lob::Builder::MassGrains</a></div><div class="ttdeci">Builder &amp; MassGrains(double value)</div><div class="ttdoc">Sets the projectile mass in grains.</div><div class="ttdef"><b>Definition</b> lob.hpp:552</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html_a4e47b37db5f4f4444d144fe0e8c9d630"><div class="ttname"><a href="classlob_1_1Builder.html#a4e47b37db5f4f4444d144fe0e8c9d630">lob::Builder::InitialVelocityFps</a></div><div class="ttdeci">Builder &amp; InitialVelocityFps(uint16_t value)</div><div class="ttdoc">Sets the initial velocity of the projectile in feet per second.</div><div class="ttdef"><b>Definition</b> lob.hpp:562</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html_a6de29e4b466aecb3f02b71cb35faec7a"><div class="ttname"><a href="classlob_1_1Builder.html#a6de29e4b466aecb3f02b71cb35faec7a">lob::Builder::DiameterInch</a></div><div class="ttdeci">Builder &amp; DiameterInch(double value)</div><div class="ttdoc">Sets the projectile diameter (caliber) in inches.</div><div class="ttdef"><b>Definition</b> lob.hpp:334</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html_a9317f76f7e5269e26992d8e964349aac"><div class="ttname"><a href="classlob_1_1Builder.html#a9317f76f7e5269e26992d8e964349aac">lob::Builder::BCAtmosphere</a></div><div class="ttdeci">Builder &amp; BCAtmosphere(AtmosphereReferenceT type)</div><div class="ttdoc">Sets the atmosphere reference associated with ballistic coefficient.</div><div class="ttdef"><b>Definition</b> lob.hpp:284</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html_a960f31fd350b46ef9d48fbe1ad28d671"><div class="ttname"><a href="classlob_1_1Builder.html#a960f31fd350b46ef9d48fbe1ad28d671">lob::Builder::BCVelocityBands</a></div><div class="ttdeci">Builder &amp; BCVelocityBands(const float *pfps, const float *pbcvs, size_t size)</div><div class="ttdoc">Loads ballistic coefficients measured at multiple velocities.</div><div class="ttdef"><b>Definition</b> lob.hpp:469</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html_a987f8630ca3411d3c4b3b5a20b7a31a8"><div class="ttname"><a href="classlob_1_1Builder.html#a987f8630ca3411d3c4b3b5a20b7a31a8">lob::Builder::ZeroDistanceYds</a></div><div class="ttdeci">Builder &amp; ZeroDistanceYds(double value)</div><div class="ttdoc">Sets the zero distance in yards.</div><div class="ttdef"><b>Definition</b> lob.hpp:630</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html_ab05bc635e647fe972048a77990a7f018"><div class="ttname"><a href="classlob_1_1Builder.html#ab05bc635e647fe972048a77990a7f018">lob::Builder::BCDragFunction</a></div><div class="ttdeci">Builder &amp; BCDragFunction(DragFunctionT type)</div><div class="ttdoc">Sets the drag function associated with ballistic coefficient.</div><div class="ttdef"><b>Definition</b> lob.hpp:309</div></div>
+<div class="ttc" id="agroup__api__cpp_html_ga931309ce695a3cdf584ea5f04de2c613"><div class="ttname"><a href="group__api__cpp.html#ga931309ce695a3cdf584ea5f04de2c613">lob::Solve</a></div><div class="ttdeci">size_t Solve(const Context &amp;ctx, const uint32_t *pranges, Output *pouts, size_t size)</div><div class="ttdoc">Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution.</div><div class="ttdef"><b>Definition</b> lob.hpp:938</div></div>
 <div class="ttc" id="agroup__api__cpp_html_gga2e7ff94aacf70d3b766e7b21975616e2ada4c2f65235e8e914d278ed812f822c6"><div class="ttname"><a href="group__api__cpp.html#gga2e7ff94aacf70d3b766e7b21975616e2ada4c2f65235e8e914d278ed812f822c6">lob::AtmosphereReferenceT::kIcao</a></div><div class="ttdeci">@ kIcao</div><div class="ttdoc">International Civil Aviation Organization (ICAO)</div><div class="ttdef"><b>Definition</b> lob.hpp:44</div></div>
 <div class="ttc" id="agroup__api__cpp_html_gga7da6daf158000ec72c4f3099a205705fa35c3ace1970663a16e5c65baa5941b13"><div class="ttname"><a href="group__api__cpp.html#gga7da6daf158000ec72c4f3099a205705fa35c3ace1970663a16e5c65baa5941b13">lob::ErrorT::kNone</a></div><div class="ttdeci">@ kNone</div><div class="ttdef"><b>Definition</b> lob.hpp:70</div></div>
 <div class="ttc" id="agroup__api__cpp_html_gga9b4bcd567a8054959d0a30ac4f869853a8ba6ff9cf381d9af5017e5e60dacff9b"><div class="ttname"><a href="group__api__cpp.html#gga9b4bcd567a8054959d0a30ac4f869853a8ba6ff9cf381d9af5017e5e60dacff9b">lob::DragFunctionT::kG7</a></div><div class="ttdeci">@ kG7</div><div class="ttdoc">G7 drag function.</div><div class="ttdef"><b>Definition</b> lob.hpp:35</div></div>
 <div class="ttc" id="alob_8hpp_html"><div class="ttname"><a href="lob_8hpp.html">lob.hpp</a></div></div>
 <div class="ttc" id="astructlob_1_1Context_html"><div class="ttname"><a href="structlob_1_1Context.html">lob::Context</a></div><div class="ttdoc">Structure of parameters consumed by the solver.</div><div class="ttdef"><b>Definition</b> lob.hpp:123</div></div>
-<div class="ttc" id="astructlob_1_1Context_html_afa1af60aaa2a463c43ddf65be7d942e6"><div class="ttname"><a href="structlob_1_1Context.html#afa1af60aaa2a463c43ddf65be7d942e6">lob::Context::error</a></div><div class="ttdeci">ErrorT error</div><div class="ttdoc">Error status after build.</div><div class="ttdef"><b>Definition</b> lob.hpp:144</div></div>
+<div class="ttc" id="astructlob_1_1Context_html_afa1af60aaa2a463c43ddf65be7d942e6"><div class="ttname"><a href="structlob_1_1Context.html#afa1af60aaa2a463c43ddf65be7d942e6">lob::Context::error</a></div><div class="ttdeci">ErrorT error</div><div class="ttdoc">Error status after build.</div><div class="ttdef"><b>Definition</b> lob.hpp:146</div></div>
 </div><!-- fragment --><p>Note that the reference curve here is G7 rather than G1. The reference is independent of the transformation, and any of the standard curves can be transformed.</p>
-<h2><a class="anchor" id="autotoc_md23"></a>
+<h2><a class="anchor" id="autotoc_md24"></a>
 What changes relative to a single coefficient</h2>
 <p>The comparison worth making is against using the middle coefficient for the whole flight. That produces a proportionally scaled curve, which is the wrong <em>shape</em> rather than merely the wrong size.</p>
 <p>Because the bands say the bullet is draggier than the reference at low speed and slipperier at high speed, the trajectory drops less early and more late than the single-coefficient baseline. At short range the bands-based solution is the flatter one; at long range it is the steeper one. A single coefficient that happens to match at one range is simultaneously optimistic at another, and the bands remove that trade-off rather than relocating it.</p>
 <p>This is the entire reason to supply bands. Not a better constant, a better shape.</p>
-<h2><a class="anchor" id="autotoc_md24"></a>
+<h2><a class="anchor" id="autotoc_md25"></a>
 Related</h2>
 <ul>
 <li><a class="el" href="okf_bc_velocity_band_transformation.html">BC/Velocity-Band Transformation</a>: the method and its edge cases.</li>

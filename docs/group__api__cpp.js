@@ -12,6 +12,7 @@ var group__api__cpp =
       [ "max_time", "structlob_1_1Context.html#ae9a8eec7677b940b6746ab07bc6cd1b7", null ],
       [ "minimum_speed", "structlob_1_1Context.html#a41770bd12461d57bd53c62086648810c", null ],
       [ "optic_height", "structlob_1_1Context.html#a48e85fb08b0b01ad74a5247e6d5c172c", null ],
+      [ "optic_offset", "structlob_1_1Context.html#a60b212cf6c40f9c5a6a4062e5ae74509", null ],
       [ "speed_of_sound", "structlob_1_1Context.html#a034dba0e58d07c987c7fda04fe67dc1c", null ],
       [ "spindrift_factor", "structlob_1_1Context.html#a1c42f08aa8f7e5e237d059395711e6b0", null ],
       [ "stability_factor", "structlob_1_1Context.html#a034dcdf5cf4a619c644f4a66e1866793", null ],
@@ -20,7 +21,8 @@ var group__api__cpp =
       [ "wind_count", "structlob_1_1Context.html#aed3a7f5a6361cbd5f61f9d34bf8f6ddb", null ],
       [ "wind_nodes", "structlob_1_1Context.html#aadadd6bd0f9c283c0a653d3a14978040", null ],
       [ "wind_shear_exponent", "structlob_1_1Context.html#a9fbf7d6a74adc7b3974173ec74816bdd", null ],
-      [ "zero_angle", "structlob_1_1Context.html#a13c4a8bc06a1a1ce23cda7c9770c892e", null ]
+      [ "zero_angle", "structlob_1_1Context.html#a13c4a8bc06a1a1ce23cda7c9770c892e", null ],
+      [ "zero_azimuth", "structlob_1_1Context.html#ad5a1df98a4bd1b20034e985f0862b04a", null ]
     ] ],
     [ "lob::Builder", "classlob_1_1Builder.html", [
       [ "Builder", "classlob_1_1Builder.html#a9a6f54d138c3056e38ae2616069ac0d3", null ],
@@ -63,6 +65,7 @@ var group__api__cpp =
       [ "operator=", "classlob_1_1Builder.html#a32c9b2b2afe8ba67157502351612835d", null ],
       [ "operator=", "classlob_1_1Builder.html#a0f87fac85fae2e6cb5d496524478ac01", null ],
       [ "OpticHeightInches", "classlob_1_1Builder.html#a88e732a7ac663e2a7c39c332fd5cc489", null ],
+      [ "OpticLateralOffsetInches", "classlob_1_1Builder.html#af1544079f29e21c36853e2f31b3cde0a", null ],
       [ "RangeAngleDeg", "classlob_1_1Builder.html#aa4cd1eed7abc570cf882063ed95f8f05", null ],
       [ "RelativeHumidityPercent", "classlob_1_1Builder.html#af6d9b61a429c8c61e53f62da17d85fe3", null ],
       [ "Reset", "classlob_1_1Builder.html#a983a5d1d5208c71807cc2119f55a9b7a", null ],
@@ -83,6 +86,7 @@ var group__api__cpp =
       [ "WindSpeedFps", "classlob_1_1Builder.html#ae43859a5274611dc13ae73220e309fbe", null ],
       [ "WindSpeedMph", "classlob_1_1Builder.html#aaaf1878d0e9d13246f8da0a8ff4d10f2", null ],
       [ "ZeroAngleMOA", "classlob_1_1Builder.html#a0ee43fe5c9cdae49a0e1f63826618425", null ],
+      [ "ZeroAzimuthMOA", "classlob_1_1Builder.html#a799f30899746374c0965d088407ff75c", null ],
       [ "ZeroDistanceYds", "classlob_1_1Builder.html#a987f8630ca3411d3c4b3b5a20b7a31a8", null ],
       [ "ZeroImpactHeightInches", "classlob_1_1Builder.html#ab85138ca550a2985e12422124ee865dc", null ]
     ] ],

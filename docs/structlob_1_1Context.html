@@ -64,7 +64,7 @@ lob. If not, see <https://www.gnu.org/licenses/>.
     <div class="lob-header-brand">
       <div id="projectalign">
         <div id="projectname">
-          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.14.0</span>
+          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.15.0</span>
         </div>
         <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
       </div>
@@ -176,6 +176,9 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a48e85fb08b0b01ad74a5247e6d5c172c" id="r_a48e85fb08b0b01ad74a5247e6d5c172c"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a48e85fb08b0b01ad74a5247e6d5c172c">optic_height</a></td></tr>
 <tr class="memdesc:a48e85fb08b0b01ad74a5247e6d5c172c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Height of the optic above the bore.  <br /></td></tr>
 <tr class="separator:a48e85fb08b0b01ad74a5247e6d5c172c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60b212cf6c40f9c5a6a4062e5ae74509" id="r_a60b212cf6c40f9c5a6a4062e5ae74509"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a60b212cf6c40f9c5a6a4062e5ae74509">optic_offset</a></td></tr>
+<tr class="memdesc:a60b212cf6c40f9c5a6a4062e5ae74509"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lateral offset of the optic.  <br /></td></tr>
+<tr class="separator:a60b212cf6c40f9c5a6a4062e5ae74509"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6fac645ee61e14d3f4fafacae68ce4b6" id="r_a6fac645ee61e14d3f4fafacae68ce4b6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__api__cpp.html#ga678840e09a95b34161f4463dfe73c046">Gravity</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6fac645ee61e14d3f4fafacae68ce4b6">gravity</a></td></tr>
 <tr class="memdesc:a6fac645ee61e14d3f4fafacae68ce4b6"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="group__api__cpp.html#ga678840e09a95b34161f4463dfe73c046" title="Gravity vector. See LobGravity for member details.">Gravity</a> vector.  <br /></td></tr>
 <tr class="separator:a6fac645ee61e14d3f4fafacae68ce4b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -185,6 +188,9 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a13c4a8bc06a1a1ce23cda7c9770c892e" id="r_a13c4a8bc06a1a1ce23cda7c9770c892e"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a13c4a8bc06a1a1ce23cda7c9770c892e">zero_angle</a></td></tr>
 <tr class="memdesc:a13c4a8bc06a1a1ce23cda7c9770c892e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Angle between sight and trajectory.  <br /></td></tr>
 <tr class="separator:a13c4a8bc06a1a1ce23cda7c9770c892e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad5a1df98a4bd1b20034e985f0862b04a" id="r_ad5a1df98a4bd1b20034e985f0862b04a"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad5a1df98a4bd1b20034e985f0862b04a">zero_azimuth</a></td></tr>
+<tr class="memdesc:ad5a1df98a4bd1b20034e985f0862b04a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lateral angle between sight and trajectory.  <br /></td></tr>
+<tr class="separator:ad5a1df98a4bd1b20034e985f0862b04a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a034dcdf5cf4a619c644f4a66e1866793" id="r_a034dcdf5cf4a619c644f4a66e1866793"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a034dcdf5cf4a619c644f4a66e1866793">stability_factor</a></td></tr>
 <tr class="memdesc:a034dcdf5cf4a619c644f4a66e1866793"><td class="mdescLeft">&#160;</td><td class="mdescRight">Miller stability factor.  <br /></td></tr>
 <tr class="separator:a034dcdf5cf4a619c644f4a66e1866793"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -405,6 +411,22 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a60b212cf6c40f9c5a6a4062e5ae74509" name="a60b212cf6c40f9c5a6a4062e5ae74509"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60b212cf6c40f9c5a6a4062e5ae74509">&#9670;&#160;</a></span>optic_offset</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double lob::Context::optic_offset</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Lateral offset of the optic. </p>
+
+</div>
+</div>
 <a id="a034dba0e58d07c987c7fda04fe67dc1c" name="a034dba0e58d07c987c7fda04fe67dc1c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a034dba0e58d07c987c7fda04fe67dc1c">&#9670;&#160;</a></span>speed_of_sound</h2>
 
@@ -546,6 +568,22 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Angle between sight and trajectory. </p>
+
+</div>
+</div>
+<a id="ad5a1df98a4bd1b20034e985f0862b04a" name="ad5a1df98a4bd1b20034e985f0862b04a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad5a1df98a4bd1b20034e985f0862b04a">&#9670;&#160;</a></span>zero_azimuth</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double lob::Context::zero_azimuth</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Lateral angle between sight and trajectory. </p>
 
 </div>
 </div>

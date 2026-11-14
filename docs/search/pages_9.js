@@ -1,7 +1,4 @@
 var searchData=
 [
-  ['machine_0',['Solver Input State Machine',['../okf_solver_input_state_machine.html',1,'okf_guides']]],
-  ['mass_20model_1',['Point-Mass Model',['../okf_point_mass_model.html',1,'okf_concepts']]],
-  ['mechanics_2',['Angle Solver Mechanics',['../okf_angle_solver.html',1,'okf_decisions']]],
-  ['model_3',['Model',['../okf_atmospheric_model.html',1,'Atmospheric Model'],['../okf_drag_model.html',1,'Drag Model'],['../okf_point_mass_model.html',1,'Point-Mass Model']]]
+  ['lateral_20offset_20and_20sight_20convergence_0',['Optic Lateral Offset and Sight Convergence',['../okf_optic_offset.html',1,'okf_concepts']]]
 ];

@@ -64,7 +64,7 @@ lob. If not, see <https://www.gnu.org/licenses/>.
     <div class="lob-header-brand">
       <div id="projectalign">
         <div id="projectname">
-          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.14.0</span>
+          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.15.0</span>
         </div>
         <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
       </div>
@@ -260,12 +260,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a88e732a7ac663e2a7c39c332fd5cc489" id="r_a88e732a7ac663e2a7c39c332fd5cc489"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a88e732a7ac663e2a7c39c332fd5cc489">OpticHeightInches</a> (double value)</td></tr>
 <tr class="memdesc:a88e732a7ac663e2a7c39c332fd5cc489"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the height of the optic above the bore in inches.  <br /></td></tr>
 <tr class="separator:a88e732a7ac663e2a7c39c332fd5cc489"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af1544079f29e21c36853e2f31b3cde0a" id="r_af1544079f29e21c36853e2f31b3cde0a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af1544079f29e21c36853e2f31b3cde0a">OpticLateralOffsetInches</a> (double value)</td></tr>
+<tr class="memdesc:af1544079f29e21c36853e2f31b3cde0a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the lateral offset of the optic from the bore in inches.  <br /></td></tr>
+<tr class="separator:af1544079f29e21c36853e2f31b3cde0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adfd57fb857614231be3371ee2defb794" id="r_adfd57fb857614231be3371ee2defb794"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adfd57fb857614231be3371ee2defb794">TwistInchesPerTurn</a> (double value)</td></tr>
 <tr class="memdesc:adfd57fb857614231be3371ee2defb794"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the twist rate of the barrel in inches per turn.  <br /></td></tr>
 <tr class="separator:adfd57fb857614231be3371ee2defb794"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ee43fe5c9cdae49a0e1f63826618425" id="r_a0ee43fe5c9cdae49a0e1f63826618425"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0ee43fe5c9cdae49a0e1f63826618425">ZeroAngleMOA</a> (double value)</td></tr>
 <tr class="memdesc:a0ee43fe5c9cdae49a0e1f63826618425"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the angle between the sight and launch angle used to achieve zero.  <br /></td></tr>
 <tr class="separator:a0ee43fe5c9cdae49a0e1f63826618425"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a799f30899746374c0965d088407ff75c" id="r_a799f30899746374c0965d088407ff75c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a799f30899746374c0965d088407ff75c">ZeroAzimuthMOA</a> (double value)</td></tr>
+<tr class="memdesc:a799f30899746374c0965d088407ff75c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the zero azimuth angle directly in MOA, bypassing numerical zero search.  <br /></td></tr>
+<tr class="separator:a799f30899746374c0965d088407ff75c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a987f8630ca3411d3c4b3b5a20b7a31a8" id="r_a987f8630ca3411d3c4b3b5a20b7a31a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a987f8630ca3411d3c4b3b5a20b7a31a8">ZeroDistanceYds</a> (double value)</td></tr>
 <tr class="memdesc:a987f8630ca3411d3c4b3b5a20b7a31a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the zero distance in yards.  <br /></td></tr>
 <tr class="separator:a987f8630ca3411d3c4b3b5a20b7a31a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1704,6 +1710,41 @@ template&lt;size_t N&gt; </div>
 
 </div>
 </div>
+<a id="af1544079f29e21c36853e2f31b3cde0a" name="af1544079f29e21c36853e2f31b3cde0a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af1544079f29e21c36853e2f31b3cde0a">&#9670;&#160;</a></span>OpticLateralOffsetInches()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp; lob::Builder::OpticLateralOffsetInches </td>
+          <td>(</td>
+          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the lateral offset of the optic from the bore in inches. </p>
+<dl class="section note"><dt>Note</dt><dd>Positive indicates optic to the shooter's right of the bore (mapped to frame Z as -value / 12 ft in <a class="el" href="structLobContext.html#a4f839831e6214570001b56bd1f37b40b" title="Lateral offset of the optic.">LobContext.optic_offset</a>, where +Z is left). </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">value</td><td>The lateral offset in inches. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the <a class="el" href="classlob_1_1Builder.html" title="Builder class for constructing Context objects with a friendly interface.">Builder</a> object. </dd></dl>
+
+</div>
+</div>
 <a id="aa4cd1eed7abc570cf882063ed95f8f05" name="aa4cd1eed7abc570cf882063ed95f8f05"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa4cd1eed7abc570cf882063ed95f8f05">&#9670;&#160;</a></span>RangeAngleDeg()</h2>
 
@@ -2380,6 +2421,40 @@ template&lt;size_t N&gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">value</td><td>The zero angle in MOA. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the <a class="el" href="classlob_1_1Builder.html" title="Builder class for constructing Context objects with a friendly interface.">Builder</a> object. </dd></dl>
+
+</div>
+</div>
+<a id="a799f30899746374c0965d088407ff75c" name="a799f30899746374c0965d088407ff75c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a799f30899746374c0965d088407ff75c">&#9670;&#160;</a></span>ZeroAzimuthMOA()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classlob_1_1Builder.html">Builder</a> &amp; lob::Builder::ZeroAzimuthMOA </td>
+          <td>(</td>
+          <td class="paramtype">double</td>          <td class="paramname"><span class="paramname"><em>value</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the zero azimuth angle directly in MOA, bypassing numerical zero search. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">value</td><td>The zero azimuth angle in MOA (+ = bore aimed to the left in frame Z, pointing toward shooter-left offset optic). </td></tr>
   </table>
   </dd>
 </dl>

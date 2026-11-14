@@ -64,7 +64,7 @@ lob. If not, see <https://www.gnu.org/licenses/>.
     <div class="lob-header-brand">
       <div id="projectalign">
         <div id="projectname">
-          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.14.0</span>
+          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.15.0</span>
         </div>
         <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
       </div>
@@ -148,10 +148,10 @@ $(function(){initNavTree('okf_getting_started.html',''); initResizable(true); })
   <div class="headertitle"><div class="title">Basic Worked Example</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="autotoc_md52"></a>
+<div class="textblock"><h1><a class="anchor" id="autotoc_md53"></a>
 Basic Worked Example</h1>
 <p>This is the shortest path from nothing to a trajectory. Build instructions for the library itself live in the repository's build document; this page covers getting a number out of it.</p>
-<h2><a class="anchor" id="autotoc_md53"></a>
+<h2><a class="anchor" id="autotoc_md54"></a>
 The shape of every call</h2>
 <p>Every lob call has the same three moves, whatever you are asking for.</p>
 <p>Configure a builder, build a context from it, then solve against that context. The builder is the only mutable thing and it is mutable only during configuration. Once you have a context, it is fixed, and you can solve against it as many times as you like.</p>
@@ -162,15 +162,15 @@ The shape of every call</h2>
 <div class="line">                                  .<a class="code hl_function" href="classlob_1_1Builder.html#a4e47b37db5f4f4444d144fe0e8c9d630">InitialVelocityFps</a>(2700)</div>
 <div class="line">                                  .<a class="code hl_function" href="classlob_1_1Builder.html#a987f8630ca3411d3c4b3b5a20b7a31a8">ZeroDistanceYds</a>(100.0)</div>
 <div class="line">                                  .<a class="code hl_function" href="classlob_1_1Builder.html#a026a493100562d3f29a29daf1c1e78f9">Build</a>();</div>
-<div class="ttc" id="aclasslob_1_1Builder_html"><div class="ttname"><a href="classlob_1_1Builder.html">lob::Builder</a></div><div class="ttdoc">Builder class for constructing Context objects with a friendly interface.</div><div class="ttdef"><b>Definition</b> lob.hpp:228</div></div>
-<div class="ttc" id="aclasslob_1_1Builder_html_a026a493100562d3f29a29daf1c1e78f9"><div class="ttname"><a href="classlob_1_1Builder.html#a026a493100562d3f29a29daf1c1e78f9">lob::Builder::Build</a></div><div class="ttdeci">Context Build()</div><div class="ttdoc">Builds the Context object with the configured parameters.</div><div class="ttdef"><b>Definition</b> lob.hpp:884</div></div>
-<div class="ttc" id="aclasslob_1_1Builder_html_a4e47b37db5f4f4444d144fe0e8c9d630"><div class="ttname"><a href="classlob_1_1Builder.html#a4e47b37db5f4f4444d144fe0e8c9d630">lob::Builder::InitialVelocityFps</a></div><div class="ttdeci">Builder &amp; InitialVelocityFps(uint16_t value)</div><div class="ttdoc">Sets the initial velocity of the projectile in feet per second.</div><div class="ttdef"><b>Definition</b> lob.hpp:554</div></div>
-<div class="ttc" id="aclasslob_1_1Builder_html_a5b38687d35683ec09b2208465e55fd5a"><div class="ttname"><a href="classlob_1_1Builder.html#a5b38687d35683ec09b2208465e55fd5a">lob::Builder::BallisticCoefficientPsi</a></div><div class="ttdeci">Builder &amp; BallisticCoefficientPsi(double value)</div><div class="ttdoc">Sets the ballistic coefficient (Psi).</div><div class="ttdef"><b>Definition</b> lob.hpp:266</div></div>
-<div class="ttc" id="aclasslob_1_1Builder_html_a987f8630ca3411d3c4b3b5a20b7a31a8"><div class="ttname"><a href="classlob_1_1Builder.html#a987f8630ca3411d3c4b3b5a20b7a31a8">lob::Builder::ZeroDistanceYds</a></div><div class="ttdeci">Builder &amp; ZeroDistanceYds(double value)</div><div class="ttdoc">Sets the zero distance in yards.</div><div class="ttdef"><b>Definition</b> lob.hpp:598</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html"><div class="ttname"><a href="classlob_1_1Builder.html">lob::Builder</a></div><div class="ttdoc">Builder class for constructing Context objects with a friendly interface.</div><div class="ttdef"><b>Definition</b> lob.hpp:236</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html_a026a493100562d3f29a29daf1c1e78f9"><div class="ttname"><a href="classlob_1_1Builder.html#a026a493100562d3f29a29daf1c1e78f9">lob::Builder::Build</a></div><div class="ttdeci">Context Build()</div><div class="ttdoc">Builds the Context object with the configured parameters.</div><div class="ttdef"><b>Definition</b> lob.hpp:916</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html_a4e47b37db5f4f4444d144fe0e8c9d630"><div class="ttname"><a href="classlob_1_1Builder.html#a4e47b37db5f4f4444d144fe0e8c9d630">lob::Builder::InitialVelocityFps</a></div><div class="ttdeci">Builder &amp; InitialVelocityFps(uint16_t value)</div><div class="ttdoc">Sets the initial velocity of the projectile in feet per second.</div><div class="ttdef"><b>Definition</b> lob.hpp:562</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html_a5b38687d35683ec09b2208465e55fd5a"><div class="ttname"><a href="classlob_1_1Builder.html#a5b38687d35683ec09b2208465e55fd5a">lob::Builder::BallisticCoefficientPsi</a></div><div class="ttdeci">Builder &amp; BallisticCoefficientPsi(double value)</div><div class="ttdoc">Sets the ballistic coefficient (Psi).</div><div class="ttdef"><b>Definition</b> lob.hpp:274</div></div>
+<div class="ttc" id="aclasslob_1_1Builder_html_a987f8630ca3411d3c4b3b5a20b7a31a8"><div class="ttname"><a href="classlob_1_1Builder.html#a987f8630ca3411d3c4b3b5a20b7a31a8">lob::Builder::ZeroDistanceYds</a></div><div class="ttdeci">Builder &amp; ZeroDistanceYds(double value)</div><div class="ttdoc">Sets the zero distance in yards.</div><div class="ttdef"><b>Definition</b> lob.hpp:630</div></div>
 <div class="ttc" id="alob_8hpp_html"><div class="ttname"><a href="lob_8hpp.html">lob.hpp</a></div></div>
 <div class="ttc" id="astructlob_1_1Context_html"><div class="ttname"><a href="structlob_1_1Context.html">lob::Context</a></div><div class="ttdoc">Structure of parameters consumed by the solver.</div><div class="ttdef"><b>Definition</b> lob.hpp:123</div></div>
 </div><!-- fragment --><p>That is already a complete, if minimal, problem definition: a bullet with this ballistic coefficient, leaving the muzzle at this velocity, zeroed at this distance. Everything you leave out takes a documented default, so this builds successfully.</p>
-<h2><a class="anchor" id="autotoc_md54"></a>
+<h2><a class="anchor" id="autotoc_md55"></a>
 Your first forward solve</h2>
 <p>A forward solve answers "where does this land". You give it ranges, it gives you back a result for each.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;array&gt;</span></div>
@@ -199,32 +199,32 @@ Your first forward solve</h2>
 <div class="line">              &lt;&lt; kResults[i].elevation &lt;&lt; <span class="stringliteral">&quot; inches\n&quot;</span>;</div>
 <div class="line">  }</div>
 <div class="line">}</div>
-<div class="ttc" id="agroup__api__cpp_html_ga931309ce695a3cdf584ea5f04de2c613"><div class="ttname"><a href="group__api__cpp.html#ga931309ce695a3cdf584ea5f04de2c613">lob::Solve</a></div><div class="ttdeci">size_t Solve(const Context &amp;ctx, const uint32_t *pranges, Output *pouts, size_t size)</div><div class="ttdoc">Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution.</div><div class="ttdef"><b>Definition</b> lob.hpp:906</div></div>
+<div class="ttc" id="agroup__api__cpp_html_ga931309ce695a3cdf584ea5f04de2c613"><div class="ttname"><a href="group__api__cpp.html#ga931309ce695a3cdf584ea5f04de2c613">lob::Solve</a></div><div class="ttdeci">size_t Solve(const Context &amp;ctx, const uint32_t *pranges, Output *pouts, size_t size)</div><div class="ttdoc">Solves the exterior ballistics problem for a given set of ranges. Results contain a forward-solution.</div><div class="ttdef"><b>Definition</b> lob.hpp:938</div></div>
 <div class="ttc" id="agroup__api__cpp_html_gga7da6daf158000ec72c4f3099a205705fa35c3ace1970663a16e5c65baa5941b13"><div class="ttname"><a href="group__api__cpp.html#gga7da6daf158000ec72c4f3099a205705fa35c3ace1970663a16e5c65baa5941b13">lob::ErrorT::kNone</a></div><div class="ttdeci">@ kNone</div><div class="ttdef"><b>Definition</b> lob.hpp:70</div></div>
-<div class="ttc" id="astructlob_1_1Context_html_afa1af60aaa2a463c43ddf65be7d942e6"><div class="ttname"><a href="structlob_1_1Context.html#afa1af60aaa2a463c43ddf65be7d942e6">lob::Context::error</a></div><div class="ttdeci">ErrorT error</div><div class="ttdoc">Error status after build.</div><div class="ttdef"><b>Definition</b> lob.hpp:144</div></div>
+<div class="ttc" id="astructlob_1_1Context_html_afa1af60aaa2a463c43ddf65be7d942e6"><div class="ttname"><a href="structlob_1_1Context.html#afa1af60aaa2a463c43ddf65be7d942e6">lob::Context::error</a></div><div class="ttdeci">ErrorT error</div><div class="ttdoc">Error status after build.</div><div class="ttdef"><b>Definition</b> lob.hpp:146</div></div>
 </div><!-- fragment --><p>The array overloads exist so that the sizes cannot disagree with each other. Raw pointer forms are available and take an explicit count.</p>
 <p>Always check the context's error before solving, and always use the count that comes back rather than assuming every range was solved.</p>
-<h2><a class="anchor" id="autotoc_md55"></a>
+<h2><a class="anchor" id="autotoc_md56"></a>
 Now the inverse</h2>
 <p>An inverse solve answers the question a shooter actually has: what do I hold or wind by at this range. The inputs are the same ranges; the outputs are now adjustments rather than raw drop and drift.</p>
 <div class="fragment"><div class="line"><span class="keyword">const</span> std::array&lt;uint32_t, 3&gt; kRanges = {300U, 600U, 900U};</div>
 <div class="line">std::array&lt;lob::Output, 3&gt; kResults = {};</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">const</span> <span class="keywordtype">size_t</span> solved = <a class="code hl_function" href="group__api__cpp.html#gae421dd3de679d130370106e2dae8bf8f">lob::SolveInverse</a>(kContext, kRanges, &amp;kResults);</div>
-<div class="ttc" id="agroup__api__cpp_html_gae421dd3de679d130370106e2dae8bf8f"><div class="ttname"><a href="group__api__cpp.html#gae421dd3de679d130370106e2dae8bf8f">lob::SolveInverse</a></div><div class="ttdeci">size_t SolveInverse(const Context &amp;ctx, const uint32_t *pranges, Output *pouts, size_t size)</div><div class="ttdoc">Solves the exterior ballistics problem for a given set of ranges. Results contain an inverse-solution...</div><div class="ttdef"><b>Definition</b> lob.hpp:1008</div></div>
+<div class="ttc" id="agroup__api__cpp_html_gae421dd3de679d130370106e2dae8bf8f"><div class="ttname"><a href="group__api__cpp.html#gae421dd3de679d130370106e2dae8bf8f">lob::SolveInverse</a></div><div class="ttdeci">size_t SolveInverse(const Context &amp;ctx, const uint32_t *pranges, Output *pouts, size_t size)</div><div class="ttdoc">Solves the exterior ballistics problem for a given set of ranges. Results contain an inverse-solution...</div><div class="ttdef"><b>Definition</b> lob.hpp:1040</div></div>
 </div><!-- fragment --><p>Same context, same ranges, different question. The elevation that came back in inches is now an adjustment in minutes of arc measured from the zero. This is the cheap answer: one forward solve plus the closed-form geometric correction, no iteration.</p>
 <p>For the authoritative answer — a lapse-scaled iterative refinement of every range, for extreme shots and published tables — call <code><a class="el" href="group__api__cpp.html#ga8bb9455feb64d05395e19ab9ec2bacf9" title="Solves the exterior ballistics problem with lapse-scaled air. Results contain an inverse-solution.">lob::SolveInverseELR</a></code> instead. It starts from the cheap answer above and iterates from there.</p>
 <p>Ranges must be in increasing order. A table that is not is rejected rather than quietly sorted, so that a mistake shows up as a mistake.</p>
-<h2><a class="anchor" id="autotoc_md56"></a>
+<h2><a class="anchor" id="autotoc_md57"></a>
 Adding real data</h2>
 <p>The minimal example is deliberately sparse. A fuller description comes from describing the bullet properly, because the more you say, the more of lob's models can engage.</p>
 <p>Bullet geometry, such as its diameter, length, nose profile, meplat and base, unlocks the higher-fidelity spin corrections and the velocity-band drag transformation. A muzzle crosswind is needed before aerodynamic jump can be computed at all. Weather conditions replace the standard atmosphere defaults, and every one of them can be specified independently, with the rest defaulted.</p>
 <p>If you have a manufacturer's velocity-dependent coefficients, supply them as bands rather than picking one. That is the difference between a proportionally scaled standard curve and a curve shaped like your bullet.</p>
-<h2><a class="anchor" id="autotoc_md57"></a>
+<h2><a class="anchor" id="autotoc_md58"></a>
 Units</h2>
 <p><a class="el" href="classBuilder.html">Builder</a> setters name their unit. There is no setter that takes a bare double, so the compiler will stop you from passing feet where inches were meant, and from passing a mass where a length was meant.</p>
 <p>Solutions come back in American customary units, the convention lob is built around. The C layer exposes unit conversions for callers who need to work in something else.</p>
-<h2><a class="anchor" id="autotoc_md58"></a>
+<h2><a class="anchor" id="autotoc_md59"></a>
 Where to go next</h2>
 <p>For what the numbers mean and how they are computed, the ballistic model chapter is the reference. For why the library is shaped this way, the design decisions chapter. For what has and has not been verified, and the list of things that are still unproven, read the validation page before relying on a result for anything that matters. </p>
 </div></div><!-- contents -->

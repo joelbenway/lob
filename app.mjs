@@ -46,7 +46,6 @@ function syncVisibility() {
     "drag-bc": dragSource === "bc",
     "drag-bands": dragSource === "bands",
     "drag-table": dragSource === "table",
-    "drag-coefficients": dragSource === "coefficients",
     "drag-bc-ref": dragSource === "bc" || dragSource === "bands",
     "tier-mass": tier !== "bc",
     "tier-stability": tier === "stability" || tier === "full",
@@ -252,7 +251,6 @@ function updateSummary(config, elr, inverse) {
     bc: `BC ${config.bc} (${config.dragFunction}, ${atmosphere})`,
     bands: `velocity bands (${config.dragFunction}, ${atmosphere})`,
     table: "custom Mach/Cd table",
-    coefficients: "native spline coefficients",
   }[config.dragSource];
   const tier = {
     bc: "BC only",

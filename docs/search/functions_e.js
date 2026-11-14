@@ -6,5 +6,7 @@ var searchData=
   ['operator_3d_3',['operator=',['../classlob_1_1Builder.html#a0f87fac85fae2e6cb5d496524478ac01',1,'lob::Builder::operator=(const Builder &amp;rhs)'],['../classlob_1_1Builder.html#a32c9b2b2afe8ba67157502351612835d',1,'lob::Builder::operator=(Builder &amp;&amp;rhs) noexcept']]],
   ['operator_3d_3d_4',['operator==',['../group__api__cpp.html#ga1fced6ca7ae724ad17f0d4de92cc31c2',1,'lob::operator==(::LobErrorT a, ErrorT b) noexcept'],['../group__api__cpp.html#gaad3fdd20b38a3e93e779b6325b569234',1,'lob::operator==(ErrorT a, ::LobErrorT b) noexcept']]],
   ['opticheightinches_5',['OpticHeightInches',['../classlob_1_1Builder.html#a88e732a7ac663e2a7c39c332fd5cc489',1,'lob::Builder']]],
-  ['opticheightinches_6',['opticHeightInches',['../classBuilder.html#afa141d74a99c7e496e2ab5cbea41125a',1,'Builder']]]
+  ['opticheightinches_6',['opticHeightInches',['../classBuilder.html#afa141d74a99c7e496e2ab5cbea41125a',1,'Builder']]],
+  ['opticlateraloffsetinches_7',['OpticLateralOffsetInches',['../classlob_1_1Builder.html#af1544079f29e21c36853e2f31b3cde0a',1,'lob::Builder']]],
+  ['opticlateraloffsetinches_8',['opticLateralOffsetInches',['../classBuilder.html#a629c57916688faa12c9f772b3b86a13e',1,'Builder']]]
 ];

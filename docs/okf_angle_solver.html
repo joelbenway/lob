@@ -64,7 +64,7 @@ lob. If not, see <https://www.gnu.org/licenses/>.
     <div class="lob-header-brand">
       <div id="projectalign">
         <div id="projectname">
-          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.14.0</span>
+          <a href="index.html"><span class="logo-lob">lob</span><span class="logo-docs">docs</span></a><span id="projectnumber">&#160;0.15.0</span>
         </div>
         <div id="projectbrief">Exterior ballistics library — API + technical reference</div>
       </div>
@@ -197,10 +197,19 @@ Seeds carry intent</h2>
 </ul>
 <p>One subtlety is deliberately inside the trajectory rather than at each call site: aerodynamic jump is added to the launch angle when the initial velocity is built. So the angle the solver searches over is the <em>mechanical</em> angle the shooter thinks in, and both the zero and the inverse adjustments inherit jump identically. Neither caller has to remember to apply it, which is one more way the two paths cannot drift.</p>
 <h2><a class="anchor" id="autotoc_md5"></a>
+The Lateral Zero</h2>
+<p>Just as the vertical zero angle $\theta$ converges the trajectory to cross the optical line-of-sight in elevation at zero range $R_0$, a lateral zero azimuth $\phi$ converges the trajectory to cross the sight plane laterally:</p>
+<div class="fragment"><div class="line">f_z(φ) = Z_at_range(φ) - optic_offset</div>
+</div><!-- fragment --><p><code>BuildZeroAzimuth</code> solves for $\phi$ using the same <code>FastInverseAngle</code> iteration shape, with elevation fixed at $\theta + \text{aerodynamic_jump}$.</p>
+<ul>
+<li><b>Convergence with lateral offset:</b> When the optic is offset laterally (e.g., $1.5\text{ in}$ to the right, $Z = -0.125\text{ ft}$), the bore must angle towards the right ($\phi &lt; 0$) by approximately $\operatorname{atan}(\text{optic_offset} / R_0)$ so that the trajectory intersects the sight plane at $R_0$.</li>
+<li><b>Convergence in wind:</b> If zeroing in crosswind, Coriolis, or sheared wind, <code>BuildZeroAzimuth</code> absorbs the lateral drift at $R_0$, matching real-world zeroing practice where the shooter dials the windage turret dead-on at the zero range.</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md6"></a>
 Why sharing matters</h2>
 <p><b>Consistency.</b> The zero a rifle is zeroed with and the adjustments that assume that zero come out of identical tolerance, bounds, iteration policy, and jump handling. Split the routine and each of those becomes a place the two can disagree.</p>
 <p><b>Maintenance.</b> A fix to convergence behavior, a change to the bounds, a new failure mode: it applies to both features at once, and one guard inside the shared routine is a smaller and safer diff than the same guard repeated at every call site.</p>
-<h2><a class="anchor" id="autotoc_md6"></a>
+<h2><a class="anchor" id="autotoc_md7"></a>
 What backs it up</h2>
 <p>The solver tests pin the properties the design depends on:</p>
 <ul>
@@ -209,7 +218,7 @@ What backs it up</h2>
 <li><b>Iteration earns its keep.</b> The ELR refined answer starts from the single geometric step and agrees with it where the lapse correction is small, including when aerodynamic jump is nonzero. Where lapse scaling matters — long, high shots — the iteration is allowed to depart from the closed-form answer, because that departure is the whole point of the ELR path.</li>
 <li><b>The two density variants agree</b> where both are valid, so for ordinary trajectories the fast and ELR operations stay close. Where they do not agree, the caller chose which physics to pay for by choosing which operation to call.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md7"></a>
+<h2><a class="anchor" id="autotoc_md8"></a>
 Related</h2>
 <ul>
 <li><a class="el" href="okf_heun_integration.html">Heun Integration</a>: the integrator that fires each candidate trajectory.</li>
