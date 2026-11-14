@@ -242,22 +242,24 @@ class StrongT {
   constexpr T Value() const { return value_; }
   constexpr float Float() const { return static_cast<float>(value_); }
   constexpr uint32_t U32() const {
-    return IsNaN() || value_ <= 0
-               ? 0U
-               : (std::round(value_) >=
-                          static_cast<double>(
-                              std::numeric_limits<uint32_t>::max())
-                      ? std::numeric_limits<uint32_t>::max()
-                      : static_cast<uint32_t>(std::round(value_)));
+    if (IsNaN() || value_ <= 0) {
+      return 0U;
+    }
+    const double kRounded = std::round(value_);
+    if (kRounded >= static_cast<double>(std::numeric_limits<uint32_t>::max())) {
+      return std::numeric_limits<uint32_t>::max();
+    }
+    return static_cast<uint32_t>(kRounded);
   }
   constexpr uint16_t U16() const {
-    return IsNaN() || value_ <= 0
-               ? 0U
-               : (std::round(value_) >=
-                          static_cast<double>(
-                              std::numeric_limits<uint16_t>::max())
-                      ? std::numeric_limits<uint16_t>::max()
-                      : static_cast<uint16_t>(std::round(value_)));
+    if (IsNaN() || value_ <= 0) {
+      return 0U;
+    }
+    const double kRounded = std::round(value_);
+    if (kRounded >= static_cast<double>(std::numeric_limits<uint16_t>::max())) {
+      return std::numeric_limits<uint16_t>::max();
+    }
+    return static_cast<uint16_t>(kRounded);
   }
 
  private:
