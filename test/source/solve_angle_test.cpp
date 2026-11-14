@@ -407,24 +407,28 @@ TEST(SolveAngleTest, SolveAngleAzimuthDefaultSeedMatchesExplicitAzimuthSeed) {
 }
 
 TEST(SolveAngleTest, EstimateDragPerDistanceInvalidInputsReturnZero) {
+  constexpr double kTestVelocityFps = 3000.0;
+  constexpr double kTestSpeedOfSoundFps = 1116.45;
   LobContext ctx{};
   ctx.speed_of_sound = 0.0;
-  EXPECT_DOUBLE_EQ(lob::EstimateDragPerDistance(ctx, 3000.0), 0.0);
-  ctx.speed_of_sound = 1116.45;
+  EXPECT_DOUBLE_EQ(lob::EstimateDragPerDistance(ctx, kTestVelocityFps), 0.0);
+  ctx.speed_of_sound = kTestSpeedOfSoundFps;
   ctx.drag_coeff = 0.0;
-  EXPECT_DOUBLE_EQ(lob::EstimateDragPerDistance(ctx, 3000.0), 0.0);
+  EXPECT_DOUBLE_EQ(lob::EstimateDragPerDistance(ctx, kTestVelocityFps), 0.0);
 }
 
 TEST(SolveAngleTest, EstimateAerodynamicSeedInvalidInputsReturnZero) {
+  constexpr uint16_t kTestVelocityFps = 3000U;
+  constexpr lob::FeetT kRangeNeg(-10.0);
+  constexpr lob::FeetT kRangePos(300.0);
   LobContext ctx{};
-  ctx.velocity = 3000;
+  ctx.velocity = kTestVelocityFps;
   EXPECT_DOUBLE_EQ(
       lob::EstimateAerodynamicSeed(ctx, lob::FeetT(0.0), lob::FeetT(0.0))
           .Value(),
       0.0);
   EXPECT_DOUBLE_EQ(
-      lob::EstimateAerodynamicSeed(ctx, lob::FeetT(-10.0), lob::FeetT(0.0))
-          .Value(),
+      lob::EstimateAerodynamicSeed(ctx, kRangeNeg, lob::FeetT(0.0)).Value(),
       0.0);
   EXPECT_DOUBLE_EQ(lob::EstimateAerodynamicSeed(
                        ctx, lob::FeetT(lob::NaN<double>()), lob::FeetT(0.0))
@@ -432,60 +436,66 @@ TEST(SolveAngleTest, EstimateAerodynamicSeedInvalidInputsReturnZero) {
                    0.0);
   ctx.velocity = 0;
   EXPECT_DOUBLE_EQ(
-      lob::EstimateAerodynamicSeed(ctx, lob::FeetT(300.0), lob::FeetT(0.0))
-          .Value(),
+      lob::EstimateAerodynamicSeed(ctx, kRangePos, lob::FeetT(0.0)).Value(),
       0.0);
-  ctx.velocity = 3000;
+  ctx.velocity = kTestVelocityFps;
   ctx.aerodynamic_jump = std::numeric_limits<double>::infinity();
   EXPECT_DOUBLE_EQ(
-      lob::EstimateAerodynamicSeed(ctx, lob::FeetT(300.0), lob::FeetT(0.0))
-          .Value(),
+      lob::EstimateAerodynamicSeed(ctx, kRangePos, lob::FeetT(0.0)).Value(),
       0.0);
 }
 
 TEST(SolveAngleTest, EstimateAzimuthSeedInvalidInputsReturnZero) {
+  constexpr lob::FeetT kRangeNeg(-100.0);
   LobContext ctx{};
   EXPECT_DOUBLE_EQ(lob::EstimateAzimuthSeed(ctx, lob::FeetT(0.0)).Value(), 0.0);
-  EXPECT_DOUBLE_EQ(lob::EstimateAzimuthSeed(ctx, lob::FeetT(-100.0)).Value(),
-                   0.0);
+  EXPECT_DOUBLE_EQ(lob::EstimateAzimuthSeed(ctx, kRangeNeg).Value(), 0.0);
   EXPECT_DOUBLE_EQ(
       lob::EstimateAzimuthSeed(ctx, lob::FeetT(lob::NaN<double>())).Value(),
       0.0);
 }
 
 TEST_F(SolveAngleELRTest, FireToTargetAzimuthTerminalReturnsNaN) {
-  ctx.minimum_speed = 50000.0;
+  constexpr uint16_t kTerminalMinimumSpeed = 50000U;
+  constexpr lob::FeetT kTargetRange(300.0);
+  ctx.minimum_speed = kTerminalMinimumSpeed;
   const auto kResidual = lob::detail::FireToTargetAzimuth(
-      ctx, lob::FeetT(300.0), lob::RadiansT(0.0), lob::SolveStep);
+      ctx, kTargetRange, lob::RadiansT(0.0), lob::SolveStep);
   EXPECT_TRUE(kResidual.IsNaN());
 }
 
 TEST_F(SolveAngleELRTest, SolveAngleAzimuthImplAngleOORReturnsNaN) {
-  auto bad_step = [](const LobContext&, lob::TrajectoryStateT* s,
-                     lob::spline::CurveView*, lob::FeetT range) {
+  constexpr lob::FeetT kTargetRange(300.0);
+  constexpr double kHugeZDistance = 1e6;
+  auto bad_step = [&](const LobContext&, lob::TrajectoryStateT* s,
+                      lob::spline::CurveView*, lob::FeetT range) {
     *s = lob::TrajectoryStateT(
-        lob::CartesianT<lob::FeetT>(range, lob::FeetT(0.0), lob::FeetT(1e6)),
+        lob::CartesianT<lob::FeetT>(range, lob::FeetT(0.0),
+                                    lob::FeetT(kHugeZDistance)),
         s->V());
   };
   const auto kResult = lob::detail::SolveAngleAzimuthImpl(
-      ctx, lob::FeetT(300.0), lob::RadiansT(0.0),
+      ctx, kTargetRange, lob::RadiansT(0.0),
       lob::constant::kDefaultAngleTolerance, bad_step);
   EXPECT_TRUE(kResult.IsNaN());
 }
 
 TEST_F(SolveAngleELRTest, SolveAngleAzimuthImplExhaustionReturnsNaN) {
-  auto oscillating_step = [](const LobContext&, lob::TrajectoryStateT* s,
-                             lob::spline::CurveView*, lob::FeetT range) {
+  constexpr lob::FeetT kTargetRange(300.0);
+  constexpr double kOscillationOffsetFt = 10.0;
+  constexpr lob::RadiansT kTightTolerance(1e-12);
+  auto oscillating_step = [&](const LobContext&, lob::TrajectoryStateT* s,
+                              lob::spline::CurveView*, lob::FeetT range) {
     static bool flip = false;
     flip = !flip;
     *s = lob::TrajectoryStateT(
-        lob::CartesianT<lob::FeetT>(range, lob::FeetT(0.0),
-                                    lob::FeetT(flip ? 10.0 : -10.0)),
+        lob::CartesianT<lob::FeetT>(
+            range, lob::FeetT(0.0),
+            lob::FeetT(flip ? kOscillationOffsetFt : -kOscillationOffsetFt)),
         s->V());
   };
   const auto kResult = lob::detail::SolveAngleAzimuthImpl(
-      ctx, lob::FeetT(300.0), lob::RadiansT(0.0), lob::RadiansT(1e-12),
-      oscillating_step);
+      ctx, kTargetRange, lob::RadiansT(0.0), kTightTolerance, oscillating_step);
   EXPECT_TRUE(kResult.IsNaN());
 }
 

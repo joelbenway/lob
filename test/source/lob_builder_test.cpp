@@ -1920,7 +1920,8 @@ TEST_F(BuilderTestFixture,
   EXPECT_EQ(puut->Build().error, lob::ErrorT::kAltitudeOfThermometerOOR);
 
   // Exact absolute zero (-459.67°F) -> kAltitudeOfThermometerOOR
-  puut->TemperatureDegF(-459.67);
+  constexpr double kAbsoluteZeroDegF = -459.67;
+  puut->TemperatureDegF(kAbsoluteZeroDegF);
   EXPECT_EQ(puut->Build().error, lob::ErrorT::kAltitudeOfThermometerOOR);
 
   // Cold temperature below -69.7°F (-100°F) should not be clamped
@@ -1952,24 +1953,31 @@ TEST_F(BuilderTestFixture, CoriolisAzimuthAndLatitudeValidatedIndependently) {
 }
 
 TEST(LobBuilderTest, RangeAngleNonFiniteReturnsError) {
+  constexpr double kZeroDistanceYds = 100.0;
+  constexpr double kBc = 0.5;
+  constexpr uint16_t kVelocityFps = 2800U;
   const auto kResult =
       lob::Builder()
-          .ZeroDistanceYds(100.0)
-          .BallisticCoefficientPsi(0.5)
-          .InitialVelocityFps(2800)
+          .ZeroDistanceYds(kZeroDistanceYds)
+          .BallisticCoefficientPsi(kBc)
+          .InitialVelocityFps(kVelocityFps)
           .RangeAngleDeg(std::numeric_limits<double>::infinity())
           .Build();
   EXPECT_EQ(kResult.error, lob::ErrorT::kRangeAngleOOR);
 }
 
 TEST(LobBuilderTest, NativeSplineNegativeCdAtLastKnotReturnsError) {
+  constexpr float kBaseCd = 0.1F;
+  constexpr float kNegativeLinearSlope = -100.0F;
+  constexpr uint16_t kVelocityFps = 2800U;
+  constexpr double kZeroAngleMoa = 5.0;
   std::array<float, lob::spline::kCoefsSize> coefs{};
-  coefs.fill(0.1F);
+  coefs.fill(kBaseCd);
   // Cause PolyVal on the last segment to evaluate to a negative Cd
-  coefs[4 * (lob::spline::kSegmentCount - 1) + 1] = -100.0F;
+  coefs.at((4 * (lob::spline::kSegmentCount - 1)) + 1) = kNegativeLinearSlope;
   const auto kResult = lob::Builder()
-                           .InitialVelocityFps(2800)
-                           .ZeroAngleMOA(5.0)
+                           .InitialVelocityFps(kVelocityFps)
+                           .ZeroAngleMOA(kZeroAngleMoa)
                            .SplineCoefficients(coefs.data())
                            .Build();
   EXPECT_EQ(kResult.error, lob::ErrorT::kSplineCoefsInvalid);
@@ -1977,27 +1985,42 @@ TEST(LobBuilderTest, NativeSplineNegativeCdAtLastKnotReturnsError) {
 
 TEST(LobBuilderTest,
      ExplicitZeroAngleWithZeroDistanceComputesGeometricAzimuth) {
+  constexpr uint16_t kVelocityFps = 2800U;
+  constexpr double kBc = 0.5;
+  constexpr double kZeroAngleMoa = 5.0;
+  constexpr double kZeroDistanceYds = 100.0;
+  constexpr double kZeroDistanceFt = kZeroDistanceYds * 3.0;
+  constexpr double kOpticLateralOffsetInches = 1.5;
+  constexpr double kOpticLateralOffsetFt = -kOpticLateralOffsetInches / 12.0;
+  constexpr double kTol = 1e-6;
   const auto kResult = lob::Builder()
-                           .InitialVelocityFps(2800)
-                           .BallisticCoefficientPsi(0.5)
-                           .ZeroAngleMOA(5.0)
-                           .ZeroDistanceYds(100.0)
-                           .OpticLateralOffsetInches(1.5)
+                           .InitialVelocityFps(kVelocityFps)
+                           .BallisticCoefficientPsi(kBc)
+                           .ZeroAngleMOA(kZeroAngleMoa)
+                           .ZeroDistanceYds(kZeroDistanceYds)
+                           .OpticLateralOffsetInches(kOpticLateralOffsetInches)
                            .Build();
   ASSERT_EQ(kResult.error, lob::ErrorT::kNone);
-  const double expected_rad = std::atan((-1.5 / 12.0) / 300.0);
+  const double kExpectedRad =
+      std::atan(kOpticLateralOffsetFt / kZeroDistanceFt);
   EXPECT_NEAR(kResult.zero_azimuth,
-              lob::MoaT(lob::RadiansT(expected_rad)).Value(), 1e-6);
+              lob::MoaT(lob::RadiansT(kExpectedRad)).Value(), kTol);
 }
 
 TEST(LobBuilderTest, ZeroAzimuthUnreachableReturnsError) {
+  constexpr double kBc = 0.436;
+  constexpr uint16_t kVelocityFps = 3100U;
+  constexpr double kZeroDistanceYds = 1.0;
+  constexpr double kOpticOffsetInches = 100.0;
+  constexpr double kWindSpeedMph = 10.0;
+  constexpr double kWindHeadingDeg = 90.0;
   const auto kResult = lob::Builder()
-                           .BallisticCoefficientPsi(0.436)
-                           .InitialVelocityFps(3100)
-                           .ZeroDistanceYds(1.0)
-                           .OpticLateralOffsetInches(100.0)
-                           .WindSpeedMph(10.0)
-                           .WindHeadingDeg(90.0)
+                           .BallisticCoefficientPsi(kBc)
+                           .InitialVelocityFps(kVelocityFps)
+                           .ZeroDistanceYds(kZeroDistanceYds)
+                           .OpticLateralOffsetInches(kOpticOffsetInches)
+                           .WindSpeedMph(kWindSpeedMph)
+                           .WindHeadingDeg(kWindHeadingDeg)
                            .Build();
   EXPECT_EQ(kResult.error, lob::ErrorT::kZeroUnreachable);
 }
