@@ -43,22 +43,25 @@ set(FORMAT_COMMAND
     CACHE STRING "Formatter to use")
 
 find_program(NPM_COMMAND NAMES npm npm.cmd)
-if(NOT NPM_COMMAND)
-  set(NPM_COMMAND npm)
-endif()
 set(NPM_COMMAND
     "${NPM_COMMAND}"
     CACHE STRING "npm command to use")
 
-# Note: format-check and format-fix invoke npm scripts that require installed
-# npm packages (e.g. via 'npm install' or 'npm ci' at the project root).
+# If npm is found, format-check and format-fix also invoke npm scripts to format
+# JavaScript, TypeScript, JSON, and HTML sources (requiring npm dependencies).
+set(NPM_FORMAT_CHECK_CMD)
+set(NPM_FORMAT_FIX_CMD)
+if(NPM_COMMAND)
+  set(NPM_FORMAT_CHECK_CMD COMMAND "${NPM_COMMAND}" run format:check)
+  set(NPM_FORMAT_FIX_CMD COMMAND "${NPM_COMMAND}" run format)
+endif()
+
 add_custom_target(
   format-check
   COMMAND
     "${CMAKE_COMMAND}" -D "FORMAT_COMMAND=${FORMAT_COMMAND}" -D
     "PATTERNS=${FORMAT_PATTERNS}" -P "${PROJECT_SOURCE_DIR}/cmake/lint.cmake"
-  COMMAND
-    "${NPM_COMMAND}" run format:check
+  ${NPM_FORMAT_CHECK_CMD}
   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
   COMMENT "Linting the code"
   VERBATIM)
@@ -69,8 +72,7 @@ add_custom_target(
     "${CMAKE_COMMAND}" -D "FORMAT_COMMAND=${FORMAT_COMMAND}" -D
     "PATTERNS=${FORMAT_PATTERNS}" -D FIX=YES -P
     "${PROJECT_SOURCE_DIR}/cmake/lint.cmake"
-  COMMAND
-    "${NPM_COMMAND}" run format
+  ${NPM_FORMAT_FIX_CMD}
   WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
   COMMENT "Fixing the code"
   VERBATIM)
