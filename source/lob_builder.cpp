@@ -197,11 +197,14 @@ void BuildEnvironment(Impl* pimpl, LobContext* pout) {
     altitude_of_thermometer = altitude_of_firing_site;
   }
 
-  temperature_at_firing_site = CalculateTemperatureAtAltitude(
-      altitude_of_firing_site, DegFT(isa::kSeaLevelDegF));
-  pressure_at_firing_site = BarometricFormula(
-      altitude_of_firing_site, InHgT(isa::kSeaLevelPressureInHg),
-      DegFT(isa::kSeaLevelDegF));
+  if (altitude_of_firing_site > FeetT(0) ||
+      altitude_of_firing_site < FeetT(0)) {
+    temperature_at_firing_site = CalculateTemperatureAtAltitude(
+        altitude_of_firing_site, DegFT(isa::kSeaLevelDegF));
+    pressure_at_firing_site = BarometricFormula(
+        altitude_of_firing_site, InHgT(isa::kSeaLevelPressureInHg),
+        DegFT(isa::kSeaLevelDegF));
+  }
 
   if (!std::isnan(pimpl->temperature_deg_f)) {
     if (!std::isfinite(pimpl->temperature_deg_f.Value()) ||
