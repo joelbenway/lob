@@ -214,8 +214,16 @@ constexpr void Segment(const T* machs, const T* drags, size_t size, T knot1,
 template <typename T>
 constexpr size_t Build(const T* machs, const T* drags, size_t size,
                        const T* knots, size_t n_knots, T* coefs_out) {
+  if (n_knots < 2) {
+    return 0;
+  }
+  detail::Result<T> p = detail::EvalWithDeriv(machs, drags, size, knots[0]);
   for (size_t i = 0; i + 1 < n_knots; ++i) {
-    Segment(machs, drags, size, knots[i], knots[i + 1], coefs_out + (4 * i));
+    const detail::Result<T> q =
+        detail::EvalWithDeriv(machs, drags, size, knots[i + 1]);
+    detail::Hermite(knots[i], knots[i + 1], p.y, q.y, p.dy, q.dy,
+                    coefs_out + (4 * i));
+    p = q;
   }
   return n_knots - 1;
 }
