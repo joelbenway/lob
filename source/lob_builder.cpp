@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 
 #include "boatright.hpp"
@@ -601,22 +602,22 @@ void BuildUniformWind(Impl* pimpl, LobContext* pout) {
     wind_nodes[0].y_fps = 0.0;
     wind_nodes[0].z_fps = 0.0;
   } else {
-    const double wind_x_fps =
+    const double kWindXFps =
         FpsT(pimpl->wind_speed_fps * std::sin(pimpl->wind_heading_rad.Value()))
             .Value();
-    const double wind_z_fps =
+    const double kWindZFps =
         FpsT(pimpl->wind_speed_fps * std::cos(pimpl->wind_heading_rad.Value()))
             .Value();
-    wind_nodes[0].z_fps = wind_z_fps;
+    wind_nodes[0].z_fps = kWindZFps;
     if (!(pimpl->range_angle_rad > RadiansT(0) ||
           pimpl->range_angle_rad < RadiansT(0))) {
-      wind_nodes[0].x_fps = wind_x_fps;
+      wind_nodes[0].x_fps = kWindXFps;
       wind_nodes[0].y_fps = 0.0;
     } else {
       const double kCos = std::cos(pimpl->range_angle_rad.Value());
       const double kSin = std::sin(pimpl->range_angle_rad.Value());
-      wind_nodes[0].x_fps = wind_x_fps * kCos;
-      wind_nodes[0].y_fps = -wind_x_fps * kSin;
+      wind_nodes[0].x_fps = kWindXFps * kCos;
+      wind_nodes[0].y_fps = -kWindXFps * kSin;
     }
   }
   pout->wind_count = 1;
@@ -644,9 +645,10 @@ void BuildWind(Impl* pimpl, LobContext* pout) {
     return;
   }
 
-  LobWindNode* wind_nodes = &pout->wind_nodes[0];
-  for (size_t i = pout->wind_count; i < LOB_WIND_POINTS; i++) {
-    wind_nodes[i] = LobWindNode{};
+  if (pout->wind_count < LOB_WIND_POINTS) {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+    std::memset(&pout->wind_nodes[pout->wind_count], 0,
+                (LOB_WIND_POINTS - pout->wind_count) * sizeof(LobWindNode));
   }
 }
 
