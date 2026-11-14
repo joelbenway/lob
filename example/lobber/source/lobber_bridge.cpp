@@ -498,6 +498,14 @@ void ApplyZero(lob::Builder* builder, const nlohmann::json& j) {
   if (!std::isnan(optic_ht) && optic_ht >= 0.0) {
     builder->OpticHeightInches(optic_ht);
   }
+
+  double optic_lateral = JsonToDouble(j, "OpticLateralOffsetInches");
+  if (std::isnan(optic_lateral)) {
+    optic_lateral = JsonToDouble(j, "opticLateralOffsetInches");
+  }
+  if (!std::isnan(optic_lateral)) {
+    builder->OpticLateralOffsetInches(optic_lateral);
+  }
 }
 
 void ApplyAtmosphere(lob::Builder* builder, const nlohmann::json& j) {

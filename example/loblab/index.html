@@ -45,7 +45,6 @@ Please see end of file for extended copyright information
               <option value="bc" selected>Ballistic coefficient</option>
               <option value="bands">BC velocity bands</option>
               <option value="table">Custom Mach/Cd table</option>
-              <option value="coefficients">Native spline coefficients</option>
             </select>
           </div>
 
@@ -93,19 +92,6 @@ Please see end of file for extended copyright information
             <small>One <code>mach,cd</code> pair per row.</small>
           </div>
 
-          <div class="field" data-group="drag-coefficients">
-            <label for="coefficientsText">Spline coefficients</label>
-            <textarea
-              id="coefficientsText"
-              name="coefficientsText"
-              rows="5"
-              spellcheck="false"
-              placeholder="60 numbers"
-            ></textarea>
-            <small
-              >Exactly 60 finite numbers, whitespace or comma separated.</small
-            >
-          </div>
 
           <div class="field-grid" data-group="drag-bc-ref">
             <div class="field">

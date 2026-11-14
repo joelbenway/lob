@@ -48,22 +48,23 @@ constexpr size_t kMaxBands = 16;
 constexpr size_t kMaxWindStations = 8;
 
 constexpr double kDefaultG1Bc = 0.426;
-constexpr double kDefaultG7Bc = 0.218;
+constexpr double kDefaultG7Bc = 0.243;
 constexpr double kDefaultOtherBc = 0.300;
 
-constexpr double kDefaultMvFps = 2800.0;
+constexpr double kDefaultMvFps = 2700.0;
 constexpr double kMaxMvFps = 65535.0;
 constexpr double kDefaultMassGrains = 168.0;
 constexpr double kDefaultCaliberInch = 0.308;
-constexpr double kDefaultBulletLengthInch = 1.215;
-constexpr double kDefaultTwistInches = 10.0;
-constexpr double kDefaultNoseLengthInch = 0.69;
-constexpr double kDefaultMeplatDiameterInch = 0.065;
-constexpr double kDefaultBaseDiameterInch = 0.242;
-constexpr double kDefaultTailLengthInch = 0.14;
-constexpr double kDefaultOgiveRatio = 0.90;
+constexpr double kDefaultBulletLengthInch = 1.24;
+constexpr double kDefaultTwistInches = 11.0;
+constexpr double kDefaultNoseLengthInch = 0.6;
+constexpr double kDefaultMeplatDiameterInch = 0.05;
+constexpr double kDefaultBaseDiameterInch = 0.28;
+constexpr double kDefaultTailLengthInch = 0.2;
+constexpr double kDefaultOgiveRatio = 0.50;
 
 constexpr double kDefaultOpticHeightInch = 1.5;
+constexpr double kDefaultOpticLateralOffsetInch = 0.0;
 constexpr double kDefaultZeroDistanceYards = 100.0;
 constexpr double kDefaultZeroImpactHeightInch = 0.0;
 constexpr double kDefaultZeroAngleMoa = 0.0;
@@ -71,8 +72,8 @@ constexpr double kDefaultZeroAngleMoa = 0.0;
 constexpr double kDefaultWindSpeedMph = 10.0;
 constexpr double kDefaultWindHeadingClock = 3.0;
 
-constexpr double kDefaultLatitudeDeg = 45.0;
-constexpr double kDefaultAzimuthDeg = 90.0;
+constexpr double kDefaultLatitudeDeg = 40.0;
+constexpr double kDefaultAzimuthDeg = 270.0;
 
 constexpr double kDefaultStepSizeInch = 36.0;
 constexpr double kDefaultMaxRangeYds = 1000.0;
@@ -432,70 +433,12 @@ void WizardDragCustomTable(nlohmann::json* j) {
   }
   (*j)["SplineFitTable"] = std::move(jtable);
 }
-
-std::vector<float> PromptInteractiveSplineCoefficients() {
-  std::cout << "Enter or paste the 60 space/comma separated floating point "
-               "coefficients (press Enter for sample coefficients):\n";
-  std::vector<float> coefs;
-  while (coefs.size() < lob::kLobCoeffsSize) {
-    const std::string kLine = ReadLine("> ");
-    if (!std::cin) {
-      break;
-    }
-    if (kLine.empty()) {
-      if (coefs.empty()) {
-        const auto kSampleCtx =
-            lob::Builder()
-                .BallisticCoefficientPsi(kDefaultG7Bc)
-                .BCDragFunction(lob::DragFunctionT::kG7)
-                .InitialVelocityFps(static_cast<uint16_t>(kDefaultMvFps))
-                .ZeroAngleMOA(kDefaultZeroAngleMoa)
-                .Build();
-        coefs.assign(kSampleCtx.drags.begin(), kSampleCtx.drags.end());
-        std::cout << "Using sample spline coefficients (60 floats).\n";
-        break;
-      }
-      continue;
-    }
-    const auto kParsed = ParseSplineCoefficientsFromString(kLine);
-    for (const float kVal : kParsed) {
-      coefs.push_back(kVal);
-      if (coefs.size() == lob::kLobCoeffsSize) {
-        break;
-      }
-    }
-    std::cout << "Read " << coefs.size() << "/" << lob::kLobCoeffsSize
-              << " coefficients.\n";
-  }
-  return coefs;
-}
-
-std::vector<float> LoadSplineCoefficientsFromFileOrInteractive() {
-  const std::string kFilePath = ReadLine(
-      "Load 60 spline coefficients from file or paste? (enter path or press "
-      "Enter to paste): ");
-  if (!kFilePath.empty()) {
-    const std::string kContent = ReadFileToString(kFilePath);
-    auto coefs = ParseSplineCoefficientsFromString(kContent);
-    if (coefs.size() == lob::kLobCoeffsSize) {
-      return coefs;
-    }
-  }
-  return PromptInteractiveSplineCoefficients();
-}
-
-void WizardDragSplineCoefficients(nlohmann::json* j) {
-  (*j)["DragSource"] = "coefficients";
-  const auto kCoefs = LoadSplineCoefficientsFromFileOrInteractive();
-  (*j)["SplineCoefficients"] = kCoefs;
-}
-
 void WizardPhaseDrag(nlohmann::json* j) {
   PrintPhaseBanner(kPhaseDrag, kTotalPhases, "Drag Source");
 
   const std::vector<std::string> kDragOptions = {
       "Single Ballistic Coefficient (BC)", "BC Velocity Bands",
-      "Custom Mach vs. Cd Table", "Native Spline Coefficients (60 floats)"};
+      "Custom Mach vs. Cd Table"};
   const int kChoice =
       PromptChoice("Select projectile drag representation:", kDragOptions, 1);
 
@@ -508,9 +451,6 @@ void WizardPhaseDrag(nlohmann::json* j) {
       break;
     case 3:
       WizardDragCustomTable(j);
-      break;
-    case 4:
-      WizardDragSplineCoefficients(j);
       break;
     default:
       WizardDragSingleBc(j);
@@ -660,6 +600,13 @@ void WizardPhaseZero(nlohmann::json* j) {
                    /*required=*/false, kDefaultOpticHeightInch);
   if (!std::isnan(kOpticHt)) {
     (*j)["OpticHeightInches"] = kOpticHt;
+  }
+
+  const double kOpticLateral = PromptDouble(
+      "Enter sight/optic lateral offset in inches (+ right, - left)",
+      /*required=*/false, kDefaultOpticLateralOffsetInch);
+  if (!std::isnan(kOpticLateral)) {
+    (*j)["OpticLateralOffsetInches"] = kOpticLateral;
   }
 
   const std::vector<std::string> kZeroOptions = {

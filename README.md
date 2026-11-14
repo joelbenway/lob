@@ -1,7 +1,7 @@
 <img alt="Pretty proud of this hand-coded svg" src="docs/lob.svg" width="100%"></img>
 
 # lob
-This is lob, a useful and free exterior ballistics calculation library written in industrial-strength C++. :rocket:
+This is lob, an easy-to-use, accurate, and fast ballistics engine that runs anywhere. Written in industrial-strength C++.
 
 [![CI](https://github.com/joelbenway/lob/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/joelbenway/lob/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/joelbenway/lob/graph/badge.svg?token=5ROLMIO2VR)](https://codecov.io/gh/joelbenway/lob) [![npm](https://img.shields.io/npm/v/@joelbenway/lob.svg)](https://www.npmjs.com/package/@joelbenway/lob) [![C++14](https://img.shields.io/badge/C%2B%2B-14-blue.svg)](https://isocpp.org/) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](COPYING.md)
 
