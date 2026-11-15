@@ -278,13 +278,22 @@ std::vector<BandPoint> PromptInteractiveBands() {
     }
     if (kLine.empty()) {
       if (bands.empty()) {
-        constexpr float kSampleBand1Fps = 2000.0F;
-        constexpr float kSampleBand1Bc = 0.235F;
-        constexpr float kSampleBand2Fps = 2700.0F;
-        constexpr float kSampleBand2Bc = 0.243F;
+        constexpr float kSampleBand1Fps = 1250.0F;
+        constexpr float kSampleBand1Bc = 0.213F;
+        constexpr float kSampleBand2Fps = 1750.0F;
+        constexpr float kSampleBand2Bc = 0.213F;
+        constexpr float kSampleBand3Fps = 2250.0F;
+        constexpr float kSampleBand3Bc = 0.217F;
+        constexpr float kSampleBand4Fps = 2750.0F;
+        constexpr float kSampleBand4Bc = 0.223F;
+        constexpr float kSampleBand5Fps = 3250.0F;
+        constexpr float kSampleBand5Bc = 0.226F;
         bands = {{kSampleBand1Fps, kSampleBand1Bc},
-                 {kSampleBand2Fps, kSampleBand2Bc}};
-        std::cout << "Using sample velocity bands (2 stations).\n";
+                 {kSampleBand2Fps, kSampleBand2Bc},
+                 {kSampleBand3Fps, kSampleBand3Bc},
+                 {kSampleBand4Fps, kSampleBand4Bc},
+                 {kSampleBand5Fps, kSampleBand5Bc}};
+        std::cout << "Using sample velocity bands (5 stations).\n";
         break;
       }
       if (bands.size() >= kMinPoints) {
