@@ -41,6 +41,7 @@ if(EMSCRIPTEN)
   add_custom_target(
     lob_loblab ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/loblab"
+    COMMAND
       ${CMAKE_COMMAND} -E copy_if_different
       "${PROJECT_SOURCE_DIR}/example/loblab/index.html"
       "${PROJECT_SOURCE_DIR}/example/loblab/commercial.html"

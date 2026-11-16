@@ -36,7 +36,7 @@ NOW, THEREFORE, in consideration of the mutual covenants contained herein and ot
   1. Use, compile, link (statically or dynamically), modify, and adapt the Software internally for the purpose of developing, testing, and maintaining Licensee Products;
   2. Embed or integrate compiled binary forms of the Software (including native object code, shared libraries, static archives, and WebAssembly bytecode) into Licensee Products; and
   3. Market, distribute, sublicense, sell, deploy, and make available compiled or embedded instances of the Software solely as an integrated component of Licensee Products to end users and customers, without royalty payments or per-unit distribution fees.
-* **2.3 Affiliates and Contractors:** Licensee's Affiliates may exercise the rights granted in this Agreement, provided that their employees were included in the Headcount used to determine the license tier. Contractors may access and use the Software solely to perform services for Licensee or its Affiliates, and only under written confidentiality obligations at least as protective as those in this Agreement. Licensee is responsible for the compliance of its Affiliates and Contractors with this Agreement.
+* **2.3 Affiliates and Contractors:** Licensee's Affiliates may exercise the rights granted in this Agreement, provided that their employees were included in the Headcount used to determine the license tier on the Effective Date (subject to Section 4.3). Contractors may access and use the Software solely to perform services for Licensee or its Affiliates, and only under written confidentiality obligations at least as protective as those in this Agreement. Licensee is responsible for the compliance of its Affiliates and Contractors with this Agreement.
 
 ---
 
@@ -111,7 +111,7 @@ NOW, THEREFORE, in consideration of the mutual covenants contained herein and ot
 
 * **11.1 Term:** This Agreement takes effect on the Effective Date and continues perpetually, subject to Section 11.2.
 * **11.2 Termination for Cause:** Either party may terminate this Agreement upon thirty (30) days' written notice if the other party materially breaches this Agreement and fails to cure such breach within the thirty-day period.
-* **11.3 Effect of Termination:** Upon termination for Licensee's uncured material breach, Licensee's right to modify or develop new products using the Software shall cease. However, end users who previously acquired Licensee Products distributed in good faith prior to termination shall retain their rights to continue using those products.
+* **11.3 Effect of Termination:** Upon termination of this Agreement for any reason, Licensee's right to modify or develop new products using the Software shall cease. However, end users who previously acquired Licensee Products distributed in good faith prior to termination shall retain their rights to continue using those products.
 * **11.4 Survival:** Sections 6, 7.3, 7.4, 8, 9, 10, and 12 survive any termination of this Agreement.
 
 ---

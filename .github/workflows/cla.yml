@@ -27,6 +27,6 @@ jobs:
           path-to-signatures: 'signatures/version-1.0/cla.json'
           path-to-document: 'https://github.com/joelbenway/lob/blob/master/CLA.md'
           branch: 'cla-signatures'
-          allowlist: 'joelbenway,bot*,*bot*,dependabot[bot],coderabbitai[bot],github-actions[bot]'
+          allowlist: 'joelbenway,dependabot[bot],coderabbitai[bot],github-actions[bot]'
           empty-commit-flag: false
           origin-server-name: 'github.com'

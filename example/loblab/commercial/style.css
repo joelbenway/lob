@@ -196,6 +196,9 @@
 }
 
 @media (prefers-color-scheme: dark) {
+  .button:not(.button-outline) {
+    color: var(--paper);
+  }
   .button-outline:hover {
     color: var(--paper);
   }
