@@ -131,5 +131,4 @@ To purchase a commercial license, request an invoice, or inquire about enterpris
 
 * **Licensor:** 4th Box LLC
 * **Commercial Inquiries:** [lob@benway.me](mailto:lob@benway.me)
-* **Online Licensing Portal:** <https://joelbenway.github.io/lob/commercial>
 * **Repository:** <https://github.com/joelbenway/lob>
