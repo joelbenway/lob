@@ -130,5 +130,6 @@ NOW, THEREFORE, in consideration of the mutual covenants contained herein and ot
 To purchase a commercial license, request an invoice, or inquire about enterprise terms:
 
 * **Licensor:** 4th Box LLC
-* **Commercial Inquiries:** <https://joel.benway.me>
+* **Commercial Inquiries:** [lob@benway.me](mailto:lob@benway.me)
+* **Online Licensing Portal:** <https://joelbenway.github.io/lob/commercial>
 * **Repository:** <https://github.com/joelbenway/lob>
