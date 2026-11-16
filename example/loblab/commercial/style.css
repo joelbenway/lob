@@ -3,56 +3,73 @@
  * Please see end of file for extended copyright information
  */
 
+/* Theme surface and badge tokens aligned with loblab's color system */
 :root {
-  --text-main: #141b22;
-  --text-body: #242f3d;
-  --text-dim: #445161;
-  --surface-card: #fffdf8;
-  --surface-subtle: #f6f3eb;
-  --border-subtle: #d3cbbe;
-  --border-strong: #aba08f;
+  --surface-nested: #ffffff;
+  --surface-subtle: #f4f1ea;
+  --badge-bg: #fff8e8;
+  --badge-border: #dfcbb0;
+  --badge-text: #7b2e17;
+  --tag-bg: #ece7dc;
+  --tag-text: var(--ink);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-nested: #1e1b17;
+    --surface-subtle: #1c1a16;
+    --badge-bg: #332720;
+    --badge-border: #4a3e30;
+    --badge-text: var(--accent-dark);
+    --tag-bg: #332d25;
+    --tag-text: var(--ink);
+  }
 }
 
 .hero p:not(.eyebrow) {
-  color: var(--text-body);
-  font-size: 1.08rem;
+  color: var(--ink);
+  font-size: 1.05rem;
   line-height: 1.55;
+  opacity: 0.92;
 }
 
 .eyebrow {
-  color: var(--accent-dark);
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 0 0 0.35rem;
 }
 
 .selector-card {
   border-top: 4px solid var(--accent);
-  background: var(--surface-card);
 }
 
 .section-lead {
   max-width: 48rem;
   margin: 0.25rem 0 1.25rem;
-  color: var(--text-body);
-  font-size: 1rem;
+  color: var(--ink);
+  font-size: 0.98rem;
   line-height: 1.55;
+  opacity: 0.9;
 }
 
 .selector-box {
   display: grid;
   gap: 1.25rem;
   padding: 1.5rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--line);
   border-radius: 0.6rem;
-  background: var(--surface-card);
-  box-shadow: 0 1px 3px rgb(23 32 42 / 0.05);
+  background: var(--surface-nested);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
 }
 
 .tier-details {
   display: grid;
   gap: 1.1rem;
   padding-top: 1.1rem;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--line);
 }
 
 .tier-summary-header {
@@ -67,21 +84,21 @@
   display: inline-block;
   padding: 0.25rem 0.65rem;
   margin-bottom: 0.35rem;
-  color: var(--accent-dark);
-  font-size: 0.78rem;
-  font-weight: 800;
+  color: var(--badge-text);
+  font-size: 0.76rem;
+  font-weight: 750;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  background: #fbf0d8;
-  border: 1px solid #dfcbb0;
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
   border-radius: 1rem;
 }
 
 .tier-title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.45rem;
   font-weight: 800;
-  color: var(--text-main);
+  color: var(--ink);
   letter-spacing: -0.01em;
 }
 
@@ -99,14 +116,14 @@
 
 .tier-fee-note {
   font-size: 0.82rem;
-  color: var(--text-dim);
-  font-weight: 600;
+  color: var(--muted);
+  font-weight: 550;
 }
 
 .tier-description {
   margin: 0;
-  color: var(--text-body);
-  font-size: 1.05rem;
+  color: var(--ink);
+  font-size: 1rem;
   line-height: 1.55;
 }
 
@@ -115,13 +132,13 @@
   border-left: 4px solid var(--accent);
   background: var(--surface-subtle);
   border-radius: 0 0.4rem 0.4rem 0;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   line-height: 1.5;
-  color: var(--text-main);
+  color: var(--ink);
 }
 
 .tier-callout strong {
-  color: var(--accent-dark);
+  color: var(--accent);
 }
 
 .action-row {
@@ -140,7 +157,7 @@
   padding: 0.7rem 1.5rem;
   color: #fff;
   font-weight: 750;
-  font-size: 1rem;
+  font-size: 0.98rem;
   text-decoration: none;
   border-radius: 0.45rem;
   background: var(--accent);
@@ -167,8 +184,8 @@
 }
 
 .button-outline {
-  color: var(--accent-dark);
-  background: #fff;
+  color: var(--accent);
+  background: var(--surface-nested);
   border: 1.5px solid var(--accent);
   font-weight: 750;
 }
@@ -178,15 +195,21 @@
   background: var(--accent);
 }
 
+@media (prefers-color-scheme: dark) {
+  .button-outline:hover {
+    color: var(--paper);
+  }
+}
+
 .checkout-action {
-  font-size: 1.08rem;
+  font-size: 1.05rem;
   padding: 0.8rem 1.85rem;
 }
 
 .secure-notice {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-weight: 550;
+  color: var(--muted);
 }
 
 /* Tier Comparison Grid */
@@ -202,10 +225,10 @@
   display: flex;
   flex-direction: column;
   padding: 1.35rem 1.2rem;
-  border: 1.5px solid var(--border-subtle);
+  border: 1px solid var(--line);
   border-radius: 0.65rem;
-  background: var(--surface-card);
-  box-shadow: 0 1px 3px rgb(23 32 42 / 0.04);
+  background: var(--surface-nested);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.04);
   cursor: pointer;
   transition:
     border-color 0.15s ease,
@@ -215,13 +238,13 @@
 
 .tier-card:hover {
   border-color: var(--accent);
-  box-shadow: 0 4px 14px rgb(23 32 42 / 0.09);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.12);
   transform: translateY(-2px);
 }
 
 .tier-card.popular {
   border: 2px solid var(--accent);
-  background: #fffdf8;
+  background: var(--card);
 }
 
 .popular-ribbon {
@@ -238,6 +261,12 @@
   border-radius: 0.25rem;
 }
 
+@media (prefers-color-scheme: dark) {
+  .popular-ribbon {
+    color: var(--paper);
+  }
+}
+
 .tier-card-header {
   margin-bottom: 1rem;
 }
@@ -245,8 +274,8 @@
 .tier-card h3 {
   margin: 0 0 0.35rem;
   font-size: 1.2rem;
-  font-weight: 850;
-  color: var(--text-main);
+  font-weight: 800;
+  color: var(--ink);
 }
 
 .tier-card-price {
@@ -259,11 +288,11 @@
 .tier-card-headcount {
   display: inline-block;
   margin-top: 0.35rem;
-  padding: 0.15rem 0.45rem;
-  font-size: 0.78rem;
-  color: var(--text-main);
-  background: var(--surface-subtle);
-  border: 1px solid var(--border-subtle);
+  padding: 0.15rem 0.5rem;
+  font-size: 0.76rem;
+  color: var(--tag-text);
+  background: var(--tag-bg);
+  border: 1px solid var(--line);
   border-radius: 0.3rem;
   font-weight: 750;
   text-transform: uppercase;
@@ -273,8 +302,8 @@
 .tier-card-features {
   margin: 0 0 1.25rem;
   padding-left: 1.15rem;
-  font-size: 0.9rem;
-  color: var(--text-body);
+  font-size: 0.88rem;
+  color: var(--ink);
   line-height: 1.6;
   flex-grow: 1;
 }
@@ -302,10 +331,10 @@
 
 .feature-item {
   padding: 1.25rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--line);
   border-radius: 0.6rem;
-  background: var(--surface-card);
-  box-shadow: 0 1px 2px rgb(23 32 42 / 0.03);
+  background: var(--surface-nested);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.03);
 }
 
 .feature-icon {
@@ -317,25 +346,26 @@
   margin: 0 0 0.45rem;
   font-size: 1.05rem;
   font-weight: 800;
-  color: var(--text-main);
+  color: var(--ink);
 }
 
 .feature-item p {
   margin: 0;
-  font-size: 0.92rem;
-  color: var(--text-body);
+  font-size: 0.9rem;
+  color: var(--ink);
   line-height: 1.6;
+  opacity: 0.9;
 }
 
 /* FAQ Section */
 .faq-section {
   display: grid;
-  gap: 1.15rem;
+  gap: 1.25rem;
 }
 
 .faq-item {
   padding-bottom: 1.15rem;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--line);
 }
 
 .faq-item:last-child {
@@ -344,22 +374,25 @@
 }
 
 .faq-item h3 {
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.45rem;
   font-size: 1.05rem;
   font-weight: 800;
-  color: var(--text-main);
+  color: var(--ink);
 }
 
 .faq-item p {
   margin: 0;
-  font-size: 0.95rem;
-  color: var(--text-body);
+  font-size: 0.94rem;
+  color: var(--ink);
   line-height: 1.6;
+  opacity: 0.92;
 }
 
 .faq-item a {
   color: var(--accent);
   font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .faq-item a:hover {
@@ -373,7 +406,7 @@
   text-align: center;
   font-size: 0.9rem;
   font-weight: 550;
-  color: var(--text-dim);
+  color: var(--muted);
 }
 
 .footer a {
