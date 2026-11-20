@@ -237,7 +237,6 @@
   border-radius: 0.65rem;
   background: var(--surface-nested);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.04);
-  cursor: pointer;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease,
@@ -248,11 +247,6 @@
   border-color: var(--accent);
   box-shadow: 0 4px 12px rgb(0 0 0 / 0.12);
   transform: translateY(-2px);
-}
-
-.tier-card:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
 }
 
 .tier-card.popular {
@@ -332,6 +326,25 @@
 .tier-card .button {
   width: 100%;
   text-align: center;
+}
+
+.tier-select-btn {
+  width: 100%;
+  min-height: 2.25rem;
+  margin-top: 0.45rem;
+  padding: 0.4rem 0.75rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 650;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+}
+
+.tier-select-btn:hover {
+  color: var(--ink);
+  background: var(--surface-subtle);
+  border-color: var(--line);
 }
 
 /* Feature Grid */

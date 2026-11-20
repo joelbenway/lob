@@ -126,7 +126,7 @@ Please see end of file for extended copyright information
       <section class="card">
         <h2>All Commercial Tiers at a Glance</h2>
         <div class="tiers-grid">
-          <div class="tier-card" data-tier="inventor" tabindex="0">
+          <div class="tier-card">
             <div class="tier-card-header">
               <h3>Inventor</h3>
               <div class="tier-card-price">$999</div>
@@ -148,9 +148,12 @@ Please see end of file for extended copyright information
             >
               Buy Inventor ($999)
             </a>
+            <button type="button" class="tier-select-btn" data-tier="inventor">
+              View Inventor details
+            </button>
           </div>
 
-          <div class="tier-card popular" data-tier="starter" tabindex="0">
+          <div class="tier-card popular">
             <div class="popular-ribbon">Most Popular</div>
             <div class="tier-card-header">
               <h3>Starter</h3>
@@ -173,9 +176,12 @@ Please see end of file for extended copyright information
             >
               Buy Starter ($2,999)
             </a>
+            <button type="button" class="tier-select-btn" data-tier="starter">
+              View Starter details
+            </button>
           </div>
 
-          <div class="tier-card" data-tier="team" tabindex="0">
+          <div class="tier-card">
             <div class="tier-card-header">
               <h3>Team</h3>
               <div class="tier-card-price">$5,999</div>
@@ -197,9 +203,12 @@ Please see end of file for extended copyright information
             >
               Buy Team ($5,999)
             </a>
+            <button type="button" class="tier-select-btn" data-tier="team">
+              View Team details
+            </button>
           </div>
 
-          <div class="tier-card" data-tier="business" tabindex="0">
+          <div class="tier-card">
             <div class="tier-card-header">
               <h3>Business</h3>
               <div class="tier-card-price">$9,999</div>
@@ -221,9 +230,12 @@ Please see end of file for extended copyright information
             >
               Buy Business ($9,999)
             </a>
+            <button type="button" class="tier-select-btn" data-tier="business">
+              View Business details
+            </button>
           </div>
 
-          <div class="tier-card" data-tier="enterprise" tabindex="0">
+          <div class="tier-card">
             <div class="tier-card-header">
               <h3>Enterprise</h3>
               <div class="tier-card-price">$16,999</div>
@@ -245,9 +257,16 @@ Please see end of file for extended copyright information
             >
               Buy Enterprise ($16,999)
             </a>
+            <button
+              type="button"
+              class="tier-select-btn"
+              data-tier="enterprise"
+            >
+              View Enterprise details
+            </button>
           </div>
 
-          <div class="tier-card custom" data-tier="corporate" tabindex="0">
+          <div class="tier-card custom">
             <div class="tier-card-header">
               <h3>Corporate</h3>
               <div class="tier-card-price">Custom</div>
@@ -267,6 +286,9 @@ Please see end of file for extended copyright information
             >
               Contact Us →
             </a>
+            <button type="button" class="tier-select-btn" data-tier="corporate">
+              View Corporate details
+            </button>
           </div>
         </div>
       </section>
@@ -502,17 +524,6 @@ Please see end of file for extended copyright information
         }
       }
 
-      function selectTierFromCard(card) {
-        const tierKey = card.getAttribute("data-tier");
-        if (tierKey) {
-          select.value = tierKey;
-          updateTier(tierKey);
-          document.getElementById("license-selector").scrollIntoView({
-            behavior: "smooth",
-          });
-        }
-      }
-
       select.addEventListener("change", (e) => {
         updateTier(e.target.value);
       });
@@ -520,17 +531,17 @@ Please see end of file for extended copyright information
       // Sync UI with the active <select> value (handles browser form restoration)
       updateTier(select.value);
 
-      // Quick click or keyboard selection on tier cards updates the selector
-      document.querySelectorAll(".tier-card").forEach((card) => {
-        card.addEventListener("click", (e) => {
-          if (e.target.closest("a")) return;
-          selectTierFromCard(card);
-        });
-        card.addEventListener("keydown", (e) => {
-          if (e.target.closest("a")) return;
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            selectTierFromCard(card);
+      // Dedicated native buttons in tier cards select the tier and move focus to the selector
+      document.querySelectorAll(".tier-select-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          const tierKey = button.getAttribute("data-tier");
+          if (tierKey) {
+            select.value = tierKey;
+            updateTier(tierKey);
+            select.focus({ preventScroll: true });
+            document.getElementById("license-selector").scrollIntoView({
+              behavior: "smooth",
+            });
           }
         });
       });
