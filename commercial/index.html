@@ -1,0 +1,564 @@
+<!doctype html>
+<!--
+Copyright (c) 2026  Joel Benway
+SPDX-License-Identifier: GPL-3.0-or-later
+Please see end of file for extended copyright information
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Commercial licensing for the lob external ballistics solver. Perpetual licenses, GPLv3 copyleft exemption, lifetime updates, and royalty-free distribution by 4th Box LLC."
+    />
+    <title>lob · Commercial Licensing</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="hero-links" aria-label="Commercial licensing resources">
+        <a href="../">loblab</a>
+        <a href="https://joelbenway.github.io/lob/docs/">Documentation</a>
+        <a href="https://joelbenway.github.io/lob/bench">Benchmarks</a>
+        <a href="https://github.com/joelbenway/lob">GitHub</a>
+        <a href="mailto:lob@benway.me?subject=Lob%20Commercial%20Inquiry"
+          >Contact</a
+        >
+      </nav>
+      <p class="eyebrow">4th Box LLC · Commercial Licensing</p>
+      <h1>
+        <span class="logo-lob">lob</span
+        ><span class="logo-lab">commercial</span>
+      </h1>
+      <p>
+        Perpetual commercial licenses for closed-source proprietary software,
+        smart optics, ballistic apps, and embedded firmware. Full exemption from
+        GPLv3 copyleft terms, lifetime updates, and 100% royalty-free
+        distribution.
+      </p>
+    </header>
+
+    <main class="layout">
+      <!-- Interactive Selector Card -->
+      <section class="card selector-card" id="license-selector">
+        <h2>Select License Tier</h2>
+        <p class="section-lead">
+          Tier is determined by your total headcount on the date of purchase.
+          <strong>No upgrade fees for growth</strong>—your license remains fully
+          valid as your team expands.
+        </p>
+
+        <div class="selector-box">
+          <div class="field">
+            <label for="tier-select">Choose your organization size</label>
+            <select
+              id="tier-select"
+              aria-label="Select commercial license tier"
+            >
+              <option value="inventor">
+                Inventor (Solo developer working alone) — $999
+              </option>
+              <option value="starter" selected>
+                Starter (1–9 employees) — $2,999
+              </option>
+              <option value="team">Team (10–29 employees) — $5,999</option>
+              <option value="business">
+                Business (30–99 employees) — $9,999
+              </option>
+              <option value="enterprise">
+                Enterprise (100–249 employees) — $16,999
+              </option>
+              <option value="corporate">
+                Corporate / Global (250+ employees) — Custom Invoicing
+              </option>
+            </select>
+          </div>
+
+          <div class="tier-details" id="tier-details">
+            <div class="tier-summary-header">
+              <div>
+                <span class="tier-badge" id="tier-badge">1–9 Employees</span>
+                <h3 class="tier-title" id="tier-title">Starter Tier</h3>
+              </div>
+              <div class="tier-price-box">
+                <span class="tier-price" id="tier-price">$2,999</span>
+                <span class="tier-fee-note" id="tier-fee-note"
+                  >one-time · perpetual</span
+                >
+              </div>
+            </div>
+
+            <p class="tier-description" id="tier-description">
+              Perpetual commercial license for companies, startups, or teams
+              with 1 to 9 employees. Unlimited products, lifetime updates, and
+              royalty-free distribution.
+            </p>
+
+            <div class="tier-callout" id="tier-callout">
+              <strong>Checkout Details:</strong>
+              <span id="tier-callout-text">
+                Licensed to your legal company entity. Company name and Tax ID /
+                VAT collection supported on official invoice.
+              </span>
+            </div>
+
+            <div class="action-row">
+              <a
+                id="checkout-btn"
+                class="button checkout-action"
+                href="https://buy.stripe.com/test_5kQfZgavedyX0kye542go01"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Purchase Starter License ($2,999) →
+              </a>
+              <span class="secure-notice" id="secure-notice">
+                🔒 Secure Stripe Checkout · Instant PDF receipt from 4th Box LLC
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side-by-Side Tier Overview -->
+      <section class="card">
+        <h2>All Commercial Tiers at a Glance</h2>
+        <div class="tiers-grid">
+          <div class="tier-card">
+            <div class="tier-card-header">
+              <h3>Inventor</h3>
+              <div class="tier-card-price">$999</div>
+              <div class="tier-card-headcount">Solo developer</div>
+            </div>
+            <ul class="tier-card-features">
+              <li>Individual developer working alone</li>
+              <li>No corporate entity or team</li>
+              <li>Personal name on license</li>
+              <li>Full GPLv3 copyleft waiver</li>
+              <li>Perpetual & royalty-free</li>
+              <li>Lifetime updates included</li>
+            </ul>
+            <a
+              class="button button-outline"
+              href="https://buy.stripe.com/test_4gM3cugTC7az1oC9OO2go00"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Buy Inventor ($999)
+            </a>
+            <button type="button" class="tier-select-btn" data-tier="inventor">
+              View Inventor details
+            </button>
+          </div>
+
+          <div class="tier-card popular">
+            <div class="popular-ribbon">Most Popular</div>
+            <div class="tier-card-header">
+              <h3>Starter</h3>
+              <div class="tier-card-price">$2,999</div>
+              <div class="tier-card-headcount">1–9 employees</div>
+            </div>
+            <ul class="tier-card-features">
+              <li>Companies & startups (1–9 staff)</li>
+              <li>Multiple developers & contractors</li>
+              <li>Licensed to company entity</li>
+              <li>Full GPLv3 copyleft waiver</li>
+              <li>Perpetual & royalty-free</li>
+              <li>Lifetime updates included</li>
+            </ul>
+            <a
+              class="button"
+              href="https://buy.stripe.com/test_5kQfZgavedyX0kye542go01"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Buy Starter ($2,999)
+            </a>
+            <button type="button" class="tier-select-btn" data-tier="starter">
+              View Starter details
+            </button>
+          </div>
+
+          <div class="tier-card">
+            <div class="tier-card-header">
+              <h3>Team</h3>
+              <div class="tier-card-price">$5,999</div>
+              <div class="tier-card-headcount">10–29 employees</div>
+            </div>
+            <ul class="tier-card-features">
+              <li>Growing companies (10–29 staff)</li>
+              <li>Unlimited developers & apps</li>
+              <li>Licensed to company entity</li>
+              <li>Full GPLv3 copyleft waiver</li>
+              <li>Perpetual & royalty-free</li>
+              <li>Lifetime updates included</li>
+            </ul>
+            <a
+              class="button button-outline"
+              href="https://buy.stripe.com/test_7sY7sK5aUamL9V82mm2go02"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Buy Team ($5,999)
+            </a>
+            <button type="button" class="tier-select-btn" data-tier="team">
+              View Team details
+            </button>
+          </div>
+
+          <div class="tier-card">
+            <div class="tier-card-header">
+              <h3>Business</h3>
+              <div class="tier-card-price">$9,999</div>
+              <div class="tier-card-headcount">30–99 employees</div>
+            </div>
+            <ul class="tier-card-features">
+              <li>Established business (30–99 staff)</li>
+              <li>Unlimited developers & hardware</li>
+              <li>Licensed to company entity</li>
+              <li>Full GPLv3 copyleft waiver</li>
+              <li>Perpetual & royalty-free</li>
+              <li>Lifetime updates included</li>
+            </ul>
+            <a
+              class="button button-outline"
+              href="https://buy.stripe.com/test_fZufZgfPygL9c3g4uu2go03"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Buy Business ($9,999)
+            </a>
+            <button type="button" class="tier-select-btn" data-tier="business">
+              View Business details
+            </button>
+          </div>
+
+          <div class="tier-card">
+            <div class="tier-card-header">
+              <h3>Enterprise</h3>
+              <div class="tier-card-price">$16,999</div>
+              <div class="tier-card-headcount">100–249 employees</div>
+            </div>
+            <ul class="tier-card-features">
+              <li>Mid-to-large business (100–249 staff)</li>
+              <li>Unlimited products & teams</li>
+              <li>Licensed to company entity</li>
+              <li>Full GPLv3 copyleft waiver</li>
+              <li>Perpetual & royalty-free</li>
+              <li>Lifetime updates included</li>
+            </ul>
+            <a
+              class="button button-outline"
+              href="https://buy.stripe.com/test_aFa9ASdHqcuT3wKf982go04"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Buy Enterprise ($16,999)
+            </a>
+            <button
+              type="button"
+              class="tier-select-btn"
+              data-tier="enterprise"
+            >
+              View Enterprise details
+            </button>
+          </div>
+
+          <div class="tier-card custom">
+            <div class="tier-card-header">
+              <h3>Corporate</h3>
+              <div class="tier-card-price">Custom</div>
+              <div class="tier-card-headcount">250+ employees</div>
+            </div>
+            <ul class="tier-card-features">
+              <li>Global / enterprise (250+ staff)</li>
+              <li>Custom invoicing & PO billing</li>
+              <li>ACH / wire transfers supported</li>
+              <li>Vendor security onboarding</li>
+              <li>Dedicated licensing terms</li>
+              <li>Lifetime updates included</li>
+            </ul>
+            <a
+              class="button button-outline"
+              href="mailto:lob@benway.me?subject=Lob%20Commercial%20License%20Inquiry%20(Corporate)&amp;body=Company%20Name%3A%0AEstimated%20Headcount%3A%0ATier%20of%20Interest%3A%20Corporate%20%2F%20Custom%0A%0AQuestions%20or%20Requirements%3A%0A"
+            >
+              Contact Us →
+            </a>
+            <button type="button" class="tier-select-btn" data-tier="corporate">
+              View Corporate details
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- License Highlights -->
+      <section class="card">
+        <h2>Commercial License Highlights</h2>
+        <div class="features-grid">
+          <div class="feature-item">
+            <div class="feature-icon">🛡️</div>
+            <h3>GPLv3 Copyleft Waiver</h3>
+            <p>
+              Embed <code>lob</code> into proprietary mobile apps, desktop
+              solvers, smart weapon sights, or rangefinder firmware without any
+              obligation to disclose or publish your intellectual property.
+            </p>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">⚡</div>
+            <h3>100% Royalty-Free</h3>
+            <p>
+              One-time payment. Zero per-unit royalties, zero per-download fees,
+              and zero recurring subscriptions. Ship a million units with zero
+              additional payments owed.
+            </p>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">🔄</div>
+            <h3>Lifetime Updates</h3>
+            <p>
+              Your license includes all future performance optimizations, bug
+              fixes, numerical solver improvements, and minor/major version
+              releases of <code>lob</code> for life.
+            </p>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">🏛️</div>
+            <h3>Issued by 4th Box LLC</h3>
+            <p>
+              Direct, legally binding agreement governed by Wisconsin law.
+              Backed by our Contributor License Agreement (CLA) ensuring
+              complete title integrity and clean intellectual property chain of
+              custody.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Frequently Asked Questions -->
+      <section class="card faq-section">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+          <h3>How is headcount measured?</h3>
+          <p>
+            Headcount is measured by the total number of employees (full-time
+            and part-time) across your organization and affiliates on the
+            <strong>Effective Date</strong> of purchase. Under Section 4.3 of
+            our
+            <a
+              href="https://github.com/joelbenway/lob/blob/master/COMMERCIAL.md"
+              >COMMERCIAL.md</a
+            >, there are
+            <strong>no upgrade fees if your team grows later</strong>.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <h3>What proof of license do I receive?</h3>
+          <p>
+            Upon checkout, Stripe immediately issues an official, itemized PDF
+            receipt and invoice identifying <strong>4th Box LLC</strong> as
+            Licensor and your designated name or company as Licensee. That
+            receipt, combined with the timeless terms in
+            <a
+              href="https://github.com/joelbenway/lob/blob/master/COMMERCIAL.md"
+              >COMMERCIAL.md</a
+            >, constitutes your legally binding proof of commercial license.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <h3>Can I pay via Bank Wire, ACH, or Purchase Order?</h3>
+          <p>
+            Yes! For corporate accounting, purchase orders, ACH, or bank wires,
+            contact us at
+            <a href="mailto:lob@benway.me">lob@benway.me</a>. We will promptly
+            generate an official invoice with payment instructions.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <h3>Where can I read the full legal agreement?</h3>
+          <p>
+            The complete, binding agreement is published in the repository at
+            <a
+              href="https://github.com/joelbenway/lob/blob/master/COMMERCIAL.md"
+              >COMMERCIAL.md</a
+            >. For open-source use under the copyleft license, see
+            <a href="https://github.com/joelbenway/lob/blob/master/COPYING.md"
+              >COPYING.md</a
+            >.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        Licensed by 4th Box LLC ·
+        <a href="mailto:lob@benway.me">lob@benway.me</a> ·
+        <a href="https://github.com/joelbenway/lob/blob/master/COMMERCIAL.md"
+          >Commercial Terms</a
+        >
+        ·
+        <a href="https://github.com/joelbenway/lob/blob/master/COPYING.md"
+          >GPLv3 License</a
+        >
+        ·
+        <a href="https://github.com/joelbenway/lob">GitHub</a>
+      </p>
+    </footer>
+
+    <script>
+      const tiers = {
+        inventor: {
+          badge: "Solo Developer",
+          title: "Inventor Tier",
+          price: "$999",
+          description:
+            "Perpetual commercial license strictly for an individual solo developer working alone without employees or outside contractors.",
+          callout:
+            "Personal license issued directly to you as a named individual. No company or business name required at checkout.",
+          url: "https://buy.stripe.com/test_4gM3cugTC7az1oC9OO2go00",
+          buttonText: "Purchase Inventor License ($999) →",
+        },
+        starter: {
+          badge: "1–9 Employees",
+          title: "Starter Tier",
+          price: "$2,999",
+          description:
+            "Perpetual commercial license for companies, startups, or teams with 1 to 9 employees. Unlimited products, lifetime updates, and royalty-free distribution.",
+          callout:
+            "Licensed to your legal company entity. Company name and Tax ID / VAT collection supported on official invoice.",
+          url: "https://buy.stripe.com/test_5kQfZgavedyX0kye542go01",
+          buttonText: "Purchase Starter License ($2,999) →",
+        },
+        team: {
+          badge: "10–29 Employees",
+          title: "Team Tier",
+          price: "$5,999",
+          description:
+            "Perpetual commercial license for organizations with 10 to 29 employees. Covers all software engineers, hardware products, and applications.",
+          callout:
+            "Licensed to your legal company entity. Company name and Tax ID / VAT collection supported on official invoice.",
+          url: "https://buy.stripe.com/test_7sY7sK5aUamL9V82mm2go02",
+          buttonText: "Purchase Team License ($5,999) →",
+        },
+        business: {
+          badge: "30–99 Employees",
+          title: "Business Tier",
+          price: "$9,999",
+          description:
+            "Perpetual commercial license for established businesses with 30 to 99 employees. Unlimited products, firmware builds, and internal developers.",
+          callout:
+            "Licensed to your legal company entity. Company name and Tax ID / VAT collection supported on official invoice.",
+          url: "https://buy.stripe.com/test_fZufZgfPygL9c3g4uu2go03",
+          buttonText: "Purchase Business License ($9,999) →",
+        },
+        enterprise: {
+          badge: "100–249 Employees",
+          title: "Enterprise Tier",
+          price: "$16,999",
+          description:
+            "Perpetual commercial license for enterprises with 100 to 249 employees. Complete organization-wide usage across all divisions and affiliates.",
+          callout:
+            "Licensed to your legal company entity. Company name and Tax ID / VAT collection supported on official invoice.",
+          url: "https://buy.stripe.com/test_aFa9ASdHqcuT3wKf982go04",
+          buttonText: "Purchase Enterprise License ($16,999) →",
+        },
+        corporate: {
+          badge: "250+ Employees",
+          title: "Corporate / Global Tier",
+          price: "Custom",
+          feeNote: "custom invoicing · perpetual",
+          description:
+            "Tailored commercial licensing for large global corporations, defense contractors, and organizations with 250+ employees.",
+          callout:
+            "Custom invoicing, vendor compliance documentation, PO / Net 30 terms, and ACH / wire payments supported.",
+          url: "mailto:lob@benway.me?subject=Lob%20Commercial%20License%20Inquiry%20(Corporate)&body=Company%20Name%3A%0AEstimated%20Headcount%3A%0ATier%20of%20Interest%3A%20Corporate%20%2F%20Custom%0A%0AQuestions%20or%20Requirements%3A%0A",
+          buttonText: "Contact for Corporate Licensing →",
+          secureNotice:
+            "✉️ Direct invoicing from 4th Box LLC · PO / Net 30 & ACH / wire supported",
+          external: false,
+        },
+      };
+
+      const defaultFeeNote = "one-time · perpetual";
+      const defaultSecureNotice =
+        "🔒 Secure Stripe Checkout · Instant PDF receipt from 4th Box LLC";
+
+      const select = document.getElementById("tier-select");
+      const badge = document.getElementById("tier-badge");
+      const title = document.getElementById("tier-title");
+      const price = document.getElementById("tier-price");
+      const feeNote = document.getElementById("tier-fee-note");
+      const desc = document.getElementById("tier-description");
+      const calloutText = document.getElementById("tier-callout-text");
+      const btn = document.getElementById("checkout-btn");
+      const secureNotice = document.getElementById("secure-notice");
+
+      function updateTier(key) {
+        const t = tiers[key];
+        if (!t) return;
+        badge.textContent = t.badge;
+        title.textContent = t.title;
+        price.textContent = t.price;
+        feeNote.textContent = t.feeNote || defaultFeeNote;
+        desc.textContent = t.description;
+        calloutText.textContent = t.callout;
+        btn.href = t.url;
+        btn.textContent = t.buttonText;
+        secureNotice.textContent = t.secureNotice || defaultSecureNotice;
+        if (t.external === false) {
+          btn.removeAttribute("target");
+          btn.removeAttribute("rel");
+        } else {
+          btn.target = "_blank";
+          btn.rel = "noopener noreferrer";
+        }
+      }
+
+      select.addEventListener("change", (e) => {
+        updateTier(e.target.value);
+      });
+
+      // Sync UI with the active <select> value (handles browser form restoration)
+      updateTier(select.value);
+
+      // Dedicated native buttons in tier cards select the tier and move focus to the selector
+      document.querySelectorAll(".tier-select-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          const tierKey = button.getAttribute("data-tier");
+          if (tierKey) {
+            select.value = tierKey;
+            updateTier(tierKey);
+            select.focus({ preventScroll: true });
+            document.getElementById("license-selector").scrollIntoView({
+              behavior: "smooth",
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
+<!--
+This file is part of lob.
+
+lob is free software: you can redistribute it and/or modify it under the terms
+of the GNU General Public License as published by the Free Software Foundation,
+either version 3 of the License, or (at your option) any later version.
+
+lob is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+lob. If not, see <https://www.gnu.org/licenses/>.
+-->
