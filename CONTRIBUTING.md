@@ -20,6 +20,12 @@ Before creating a PR, consider opening an issue to discuss the problem and solut
 
 Follow the style you see! This project uses a format and style from the Google style guide for C++. The style and formatting is enforced by CI. Consult the [`HACKING.md`](HACKING.md) document for details on how to run the style checks locally as cmake targets.
 
+## Contributor License Agreement (CLA)
+
+Lob is offered under a dual-licensing model: open source under **GPL-3.0-or-later** and under **Commercial Licenses** for proprietary and embedded integrations.
+
+To ensure contributions can be distributed under both licensing models, all contributors must agree to the [lob Contributor License Agreement](CLA.md). When you open a pull request, the automated **CLA Assistant** will prompt you to electronically sign the CLA directly within GitHub. You only need to sign the CLA once.
+
 ## Code of Conduct
 
 Please see the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) document.
