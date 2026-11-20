@@ -84,7 +84,9 @@ Please see end of file for extended copyright information
               </div>
               <div class="tier-price-box">
                 <span class="tier-price" id="tier-price">$2,999</span>
-                <span class="tier-fee-note">one-time · perpetual</span>
+                <span class="tier-fee-note" id="tier-fee-note"
+                  >one-time · perpetual</span
+                >
               </div>
             </div>
 
@@ -110,9 +112,9 @@ Please see end of file for extended copyright information
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Purchase Commercial License →
+                Purchase Starter License ($2,999) →
               </a>
-              <span class="secure-notice">
+              <span class="secure-notice" id="secure-notice">
                 🔒 Secure Stripe Checkout · Instant PDF receipt from 4th Box LLC
               </span>
             </div>
@@ -124,7 +126,7 @@ Please see end of file for extended copyright information
       <section class="card">
         <h2>All Commercial Tiers at a Glance</h2>
         <div class="tiers-grid">
-          <div class="tier-card" data-tier="inventor">
+          <div class="tier-card" data-tier="inventor" tabindex="0">
             <div class="tier-card-header">
               <h3>Inventor</h3>
               <div class="tier-card-price">$999</div>
@@ -148,7 +150,7 @@ Please see end of file for extended copyright information
             </a>
           </div>
 
-          <div class="tier-card popular" data-tier="starter">
+          <div class="tier-card popular" data-tier="starter" tabindex="0">
             <div class="popular-ribbon">Most Popular</div>
             <div class="tier-card-header">
               <h3>Starter</h3>
@@ -173,7 +175,7 @@ Please see end of file for extended copyright information
             </a>
           </div>
 
-          <div class="tier-card" data-tier="team">
+          <div class="tier-card" data-tier="team" tabindex="0">
             <div class="tier-card-header">
               <h3>Team</h3>
               <div class="tier-card-price">$5,999</div>
@@ -197,7 +199,7 @@ Please see end of file for extended copyright information
             </a>
           </div>
 
-          <div class="tier-card" data-tier="business">
+          <div class="tier-card" data-tier="business" tabindex="0">
             <div class="tier-card-header">
               <h3>Business</h3>
               <div class="tier-card-price">$9,999</div>
@@ -221,7 +223,7 @@ Please see end of file for extended copyright information
             </a>
           </div>
 
-          <div class="tier-card" data-tier="enterprise">
+          <div class="tier-card" data-tier="enterprise" tabindex="0">
             <div class="tier-card-header">
               <h3>Enterprise</h3>
               <div class="tier-card-price">$16,999</div>
@@ -245,7 +247,7 @@ Please see end of file for extended copyright information
             </a>
           </div>
 
-          <div class="tier-card custom" data-tier="corporate">
+          <div class="tier-card custom" data-tier="corporate" tabindex="0">
             <div class="tier-card-header">
               <h3>Corporate</h3>
               <div class="tier-card-price">Custom</div>
@@ -452,22 +454,32 @@ Please see end of file for extended copyright information
           badge: "250+ Employees",
           title: "Corporate / Global Tier",
           price: "Custom",
+          feeNote: "custom invoicing · perpetual",
           description:
             "Tailored commercial licensing for large global corporations, defense contractors, and organizations with 250+ employees.",
           callout:
             "Custom invoicing, vendor compliance documentation, PO / Net 30 terms, and ACH / wire payments supported.",
           url: "mailto:lob@benway.me?subject=Lob%20Commercial%20License%20Inquiry%20(Corporate)&body=Company%20Name%3A%0AEstimated%20Headcount%3A%0ATier%20of%20Interest%3A%20Corporate%20%2F%20Custom%0A%0AQuestions%20or%20Requirements%3A%0A",
           buttonText: "Contact for Corporate Licensing →",
+          secureNotice:
+            "✉️ Direct invoicing from 4th Box LLC · PO / Net 30 & ACH / wire supported",
+          external: false,
         },
       };
+
+      const defaultFeeNote = "one-time · perpetual";
+      const defaultSecureNotice =
+        "🔒 Secure Stripe Checkout · Instant PDF receipt from 4th Box LLC";
 
       const select = document.getElementById("tier-select");
       const badge = document.getElementById("tier-badge");
       const title = document.getElementById("tier-title");
       const price = document.getElementById("tier-price");
+      const feeNote = document.getElementById("tier-fee-note");
       const desc = document.getElementById("tier-description");
       const calloutText = document.getElementById("tier-callout-text");
       const btn = document.getElementById("checkout-btn");
+      const secureNotice = document.getElementById("secure-notice");
 
       function updateTier(key) {
         const t = tiers[key];
@@ -475,27 +487,50 @@ Please see end of file for extended copyright information
         badge.textContent = t.badge;
         title.textContent = t.title;
         price.textContent = t.price;
+        feeNote.textContent = t.feeNote || defaultFeeNote;
         desc.textContent = t.description;
         calloutText.textContent = t.callout;
         btn.href = t.url;
         btn.textContent = t.buttonText;
+        secureNotice.textContent = t.secureNotice || defaultSecureNotice;
+        if (t.external === false) {
+          btn.removeAttribute("target");
+          btn.removeAttribute("rel");
+        } else {
+          btn.target = "_blank";
+          btn.rel = "noopener noreferrer";
+        }
+      }
+
+      function selectTierFromCard(card) {
+        const tierKey = card.getAttribute("data-tier");
+        if (tierKey) {
+          select.value = tierKey;
+          updateTier(tierKey);
+          document.getElementById("license-selector").scrollIntoView({
+            behavior: "smooth",
+          });
+        }
       }
 
       select.addEventListener("change", (e) => {
         updateTier(e.target.value);
       });
 
-      // Quick click on tier cards updates the selector
+      // Sync UI with the active <select> value (handles browser form restoration)
+      updateTier(select.value);
+
+      // Quick click or keyboard selection on tier cards updates the selector
       document.querySelectorAll(".tier-card").forEach((card) => {
         card.addEventListener("click", (e) => {
-          if (e.target.tagName.toLowerCase() === "a") return;
-          const tierKey = card.getAttribute("data-tier");
-          if (tierKey) {
-            select.value = tierKey;
-            updateTier(tierKey);
-            document.getElementById("license-selector").scrollIntoView({
-              behavior: "smooth",
-            });
+          if (e.target.closest("a")) return;
+          selectTierFromCard(card);
+        });
+        card.addEventListener("keydown", (e) => {
+          if (e.target.closest("a")) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            selectTierFromCard(card);
           }
         });
       });

@@ -36,7 +36,7 @@ NOW, THEREFORE, in consideration of the mutual covenants contained herein and ot
   1. Use, compile, link (statically or dynamically), modify, and adapt the Software internally for the purpose of developing, testing, and maintaining Licensee Products;
   2. Embed or integrate compiled binary forms of the Software (including native object code, shared libraries, static archives, and WebAssembly bytecode) into Licensee Products; and
   3. Market, distribute, sublicense, sell, deploy, and make available compiled or embedded instances of the Software solely as an integrated component of Licensee Products to end users and customers, without royalty payments or per-unit distribution fees.
-* **2.3 Affiliates and Contractors:** Licensee's Affiliates may exercise the rights granted in this Agreement, provided that their employees were included in the Headcount used to determine the license tier on the Effective Date (subject to Section 4.3). Contractors may access and use the Software solely to perform services for Licensee or its Affiliates, and only under written confidentiality obligations at least as protective as those in this Agreement. Licensee is responsible for the compliance of its Affiliates and Contractors with this Agreement.
+* **2.3 Affiliates and Contractors:** Licensee's Affiliates may exercise the rights granted in this Agreement, provided that their employees were included in the Headcount used to determine the license tier on the Effective Date (subject to Section 4.3). Contractors may access and use the Software solely to perform services for Licensee or its Affiliates, and only under written obligations at least as protective of Licensor's rights as the license restrictions in Section 3 of this Agreement. Licensee is responsible for the compliance of its Affiliates and Contractors with this Agreement. Notwithstanding the foregoing, where the Order specifies an individual solo-developer tier (such as the Inventor tier), the license is granted solely to the named individual Licensee acting on their own behalf, and does not extend to any legal entity, Affiliate, or Contractor.
 
 ---
 
@@ -52,7 +52,7 @@ NOW, THEREFORE, in consideration of the mutual covenants contained herein and ot
 ### 4. Fees, Tiering, and Payment
 
 * **4.1 One-Time License Fee:** In consideration of the rights granted herein, Licensee shall pay Licensor the one-time license fee specified in the Order.
-* **4.2 Tier Determined by Headcount at Purchase:** The applicable license tier and fee are determined solely by Licensee's Headcount on the Effective Date, according to Licensor's published pricing in effect at the time of purchase. Licensee represents that the Headcount it reports at purchase is accurate. If the reported Headcount was understated, Licensee shall pay the difference between the fee paid and the fee for the correct tier.
+* **4.2 Tier Determined by Eligibility and Headcount at Purchase:** The applicable license tier and fee are determined solely by Licensee's tier eligibility and Headcount on the Effective Date, according to Licensor's published pricing in effect at the time of purchase. Licensee represents that the eligibility status and Headcount it reports at purchase are accurate. If tier eligibility was misrepresented or the reported Headcount was understated, Licensee shall pay the difference between the fee paid and the fee for the correct tier.
 * **4.3 No Upgrade Fees for Growth:** Licensee is **not required to pay upgrade fees or additional license fees** if Licensee's Headcount increases after the Effective Date.
 * **4.4 Royalty-Free Distribution:** All distribution of Licensee Products incorporating the Software is **100% royalty-free**, with zero per-unit, per-device, or per-download fees owed to Licensor.
 * **4.5 Taxes:** All fees are exclusive of applicable taxes, levies, or duties (such as sales, use, value-added, or withholding taxes), which remain Licensee's responsibility.
@@ -111,8 +111,8 @@ NOW, THEREFORE, in consideration of the mutual covenants contained herein and ot
 
 * **11.1 Term:** This Agreement takes effect on the Effective Date and continues perpetually, subject to Section 11.2.
 * **11.2 Termination for Cause:** Either party may terminate this Agreement upon thirty (30) days' written notice if the other party materially breaches this Agreement and fails to cure such breach within the thirty-day period.
-* **11.3 Effect of Termination:** Upon termination of this Agreement for any reason, Licensee's right to modify or develop new products using the Software shall cease. However, end users who previously acquired Licensee Products distributed in good faith prior to termination shall retain their rights to continue using those products.
-* **11.4 Survival:** Sections 6, 7.3, 7.4, 8, 9, 10, and 12 survive any termination of this Agreement.
+* **11.3 Effect of Termination:** Upon termination of this Agreement for any reason, all licenses granted to Licensee under Section 2 shall immediately cease, and Licensee shall cease all use, modification, development, and further distribution of the Software (including distribution of Licensee Products incorporating the Software). However, end users who previously acquired Licensee Products distributed in good faith prior to termination shall retain their rights to continue using those products.
+* **11.4 Survival:** Sections 3, 4.2, 4.5, 6, 7.3, 7.4, 8, 9, 10, 11.3, and 12 survive any termination of this Agreement.
 
 ---
 

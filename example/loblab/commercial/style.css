@@ -42,6 +42,11 @@
   margin: 0 0 0.35rem;
 }
 
+/* Keep stacked single-column layout across desktop widths (overrides ../style.css 2-column grid) */
+.layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .selector-card {
   border-top: 4px solid var(--accent);
 }
@@ -243,6 +248,11 @@
   border-color: var(--accent);
   box-shadow: 0 4px 12px rgb(0 0 0 / 0.12);
   transform: translateY(-2px);
+}
+
+.tier-card:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .tier-card.popular {
