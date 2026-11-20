@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794699428698,
+  "lastUpdate": 1795214023515,
   "repoUrl": "https://github.com/joelbenway/lob",
   "entries": {
     "lob instruction counts": [
@@ -884,6 +884,75 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/joelbenway/lob/commit/addbaafc4495136aee357f7442c6c2b9060247ff"
         },
         "date": 1794699428131,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "lob_bench/build_basic",
+            "value": 717,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_full",
+            "value": 1960,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_custom_table",
+            "value": 5211.001,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_boatright",
+            "value": 2878.006,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_zero_search",
+            "value": 39305.005,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_basic",
+            "value": 248546.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_elr",
+            "value": 286945.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse",
+            "value": 249642.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse_elr",
+            "value": 1178373.98,
+            "unit": "Ir/op"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2e9e73a3479387e07541ac165ea3d55043e13679",
+          "message": "Merge pull request #53 from joelbenway/feat/cla\n\nFeat/cla",
+          "timestamp": "2026-11-20T17:11:01-05:00",
+          "tree_id": "163e607ccebfaa4684b52a58485cbcb67997cc9d",
+          "url": "https://github.com/joelbenway/lob/commit/2e9e73a3479387e07541ac165ea3d55043e13679"
+        },
+        "date": 1795214022446,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
