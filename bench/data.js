@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795214023515,
+  "lastUpdate": 1795310344512,
   "repoUrl": "https://github.com/joelbenway/lob",
   "entries": {
     "lob instruction counts": [
@@ -953,6 +953,75 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/joelbenway/lob/commit/2e9e73a3479387e07541ac165ea3d55043e13679"
         },
         "date": 1795214022446,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "lob_bench/build_basic",
+            "value": 717,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_full",
+            "value": 1960,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_custom_table",
+            "value": 5211.001,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_boatright",
+            "value": 2878.006,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/build_zero_search",
+            "value": 39305.005,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_basic",
+            "value": 248546.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_elr",
+            "value": 286945.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse",
+            "value": 249642.995,
+            "unit": "Ir/op"
+          },
+          {
+            "name": "lob_bench/solve_inverse_elr",
+            "value": 1178373.98,
+            "unit": "Ir/op"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "157863269+joelbenway@users.noreply.github.com",
+            "name": "Joel Benway",
+            "username": "joelbenway"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "46240eb9e33fb7c1b63be1fe373fef65fc5b5ce3",
+          "message": "Merge pull request #54 from joelbenway/feat/finalize-commercial-page\n\nchore: remove commercial web portal and direct inquiries to joel.benw…",
+          "timestamp": "2026-11-21T19:58:32-05:00",
+          "tree_id": "cded823943b199cf0ca99064f42ce9c03902ff1e",
+          "url": "https://github.com/joelbenway/lob/commit/46240eb9e33fb7c1b63be1fe373fef65fc5b5ce3"
+        },
+        "date": 1795310344069,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
