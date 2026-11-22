@@ -52,7 +52,7 @@ NOW, THEREFORE, in consideration of the mutual covenants contained herein and ot
 ### 4. Fees, Tiering, and Payment
 
 * **4.1 One-Time License Fee:** In consideration of the rights granted herein, Licensee shall pay Licensor the one-time license fee specified in the Order.
-* **4.2 Tier Determined by Eligibility and Headcount on the Effective Date:** The applicable license tier and the one-time license fee stated in the Order are determined solely by Licensee's tier eligibility and Headcount on the Effective Date, according to Licensor's published pricing in effect on the Effective Date. Licensee represents that the eligibility status and Headcount it reports are accurate as of the Effective Date. If tier eligibility was misrepresented or the reported Headcount was understated, Licensee shall pay the difference between the fee paid and the fee for the correct tier based on Licensor's published pricing in effect on the Effective Date.
+* **4.2 Tier Determined by Eligibility and Headcount on the Effective Date:** The applicable license tier and the one-time license fee stated in the Order are determined solely by Licensee's tier eligibility and Headcount on the Effective Date, according to Licensor's pricing schedule in effect on the Effective Date. Licensee represents that the eligibility status and Headcount it reports are accurate as of the Effective Date. If tier eligibility was misrepresented or the reported Headcount was understated, Licensee shall pay the difference between the fee paid and the fee for the correct tier based on Licensor's pricing schedule in effect on the Effective Date.
 * **4.3 No Upgrade Fees for Growth:** Licensee is **not required to pay upgrade fees or additional license fees** if Licensee's Headcount increases after the Effective Date.
 * **4.4 Royalty-Free Distribution:** All distribution of Licensee Products incorporating the Software is **100% royalty-free**, with zero per-unit, per-device, or per-download fees owed to Licensor.
 * **4.5 Taxes:** All fees are exclusive of applicable taxes, levies, or duties (such as sales, use, value-added, or withholding taxes), which remain Licensee's responsibility.
@@ -130,5 +130,5 @@ NOW, THEREFORE, in consideration of the mutual covenants contained herein and ot
 To purchase a commercial license, request an invoice, or inquire about enterprise terms:
 
 * **Licensor:** 4th Box LLC
-* **Commercial Inquiries:** [lob@benway.me](mailto:lob@benway.me)
+* **Commercial Inquiries:** <https://joel.benway.me>
 * **Repository:** <https://github.com/joelbenway/lob>

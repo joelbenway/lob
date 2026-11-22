@@ -44,17 +44,12 @@ if(EMSCRIPTEN)
     COMMAND
       ${CMAKE_COMMAND} -E copy_if_different
       "${PROJECT_SOURCE_DIR}/example/loblab/index.html"
-      "${PROJECT_SOURCE_DIR}/example/loblab/commercial.html"
       "${PROJECT_SOURCE_DIR}/example/loblab/style.css"
       "${PROJECT_SOURCE_DIR}/example/loblab/app.mjs"
       "${PROJECT_SOURCE_DIR}/example/loblab/inputs.mjs"
       "${PROJECT_SOURCE_DIR}/example/loblab/plot.mjs"
       "${CMAKE_BINARY_DIR}/index.mjs" "${CMAKE_BINARY_DIR}/lob.mjs"
       "${CMAKE_BINARY_DIR}/lob.wasm" "${CMAKE_BINARY_DIR}/loblab"
-    COMMAND
-      ${CMAKE_COMMAND} -E copy_directory
-      "${PROJECT_SOURCE_DIR}/example/loblab/commercial"
-      "${CMAKE_BINARY_DIR}/loblab/commercial"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/solver"
     COMMAND
       ${CMAKE_COMMAND} -E copy_directory
