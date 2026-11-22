@@ -177,6 +177,6 @@ See the [CONTRIBUTING](CONTRIBUTING.md) document.
 **lob** is offered under a dual-licensing model:
 
 * **Open Source:** Licensed under the GNU General Public License v3 or later ([`COPYING.md`](COPYING.md)).
-* **Commercial License:** Available for proprietary products, closed-source integrations, or environments that cannot comply with GPLv3 copyleft terms ([`COMMERCIAL.md`](COMMERCIAL.md)). For commercial licensing tiers, enterprise terms, custom invoicing, or general inquiries, contact [lob@benway.me](mailto:lob@benway.me).
+* **Commercial License:** Available from **4th Box LLC** for proprietary products, closed-source integrations, or environments that cannot comply with GPLv3 copyleft terms ([`COMMERCIAL.md`](COMMERCIAL.md)). Perpetual, royalty-free licenses are available for solo developers and organizations; visit [joel.benway.me](https://joel.benway.me) to get in touch about pricing and licensing.
 
 Lob will help you hit your target! :dart:
